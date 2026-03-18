@@ -1,13 +1,33 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/hooks/useAuth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const getStoredContactpersoon = (memberId: number): string | null => {
+  try {
+    const stored = localStorage.getItem(`bcd-contactpersoon-${memberId}`);
+    return stored;
+  } catch { return null; }
+};
+
+const setStoredContactpersoon = (memberId: number, naam: string | null) => {
+  try {
+    if (naam) localStorage.setItem(`bcd-contactpersoon-${memberId}`, naam);
+    else localStorage.removeItem(`bcd-contactpersoon-${memberId}`);
+  } catch {}
+};
 
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const member = allMembers.find((m) => String(m.id) === id);
+  
+  const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
+  const [contactpersoon, setContactpersoon] = useState(defaultCp);
 
   if (!member) {
     return (
@@ -158,22 +178,53 @@ const MemberDetail = () => {
             </h3>
             <div className="space-y-4">
               {member.contacten.length > 0 ? (
-                member.contacten.map((c, i) => (
-                  <div key={i} className={i > 0 ? "pt-3 border-t border-border" : ""}>
-                    <p className="font-medium">{c.naam}</p>
-                    {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
-                    {c.email && (
-                      <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
-                        <Mail size={13} /> {c.email}
-                      </a>
-                    )}
-                    {c.telefoon && (
-                      <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                        <Phone size={13} /> {c.telefoon}
-                      </p>
-                    )}
-                  </div>
-                ))
+                member.contacten.map((c, i) => {
+                  const isSelected = contactpersoon === c.naam;
+                  return (
+                    <div key={i} className={`${i > 0 ? "pt-3 border-t border-border" : ""} flex items-start gap-3`}>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="mt-0.5">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  const newVal = checked ? c.naam : "";
+                                  setContactpersoon(newVal);
+                                  setStoredContactpersoon(member.id, newVal || null);
+                                }}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{isSelected ? "Contactpersoon deselecteren" : "Markeer als contactpersoon"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <div className="flex-1">
+                        <p className="font-medium inline-flex items-center gap-1.5">
+                          {c.naam}
+                          {isSelected && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-semibold uppercase tracking-wide">
+                              <UserCheck size={10} /> Contactpersoon
+                            </span>
+                          )}
+                        </p>
+                        {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
+                        {c.email && (
+                          <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                            <Mail size={13} /> {c.email}
+                          </a>
+                        )}
+                        {c.telefoon && (
+                          <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                            <Phone size={13} /> {c.telefoon}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
               ) : (
                 <p className="text-sm text-muted-foreground">Geen contactpersonen bekend</p>
               )}
