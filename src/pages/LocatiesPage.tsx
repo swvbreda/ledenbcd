@@ -12,7 +12,6 @@ interface CityData {
   naam: string;
   aantalLeden: number;
   aantalLocaties: number;
-  stadsdelen: string[];
   leden: { id: number; naam: string; aantalLocaties: number }[];
   totaalNL: number;
   marktPct: number;
