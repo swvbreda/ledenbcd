@@ -102,7 +102,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Clock size={18} className="text-success" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{avgYears} jr</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{withYears.length} met data</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{memberYears.length} met data</p>
       </div>
     </div>
   );

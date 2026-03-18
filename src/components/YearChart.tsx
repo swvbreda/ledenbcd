@@ -1,5 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import type { Member } from "@/data/types";
+import { getMembershipYears } from "@/lib/membership";
 
 const YearChart = ({ members }: { members: Member[] }) => {
   const buckets = [
@@ -7,13 +8,15 @@ const YearChart = ({ members }: { members: Member[] }) => {
     { label: "5-10 jr", min: 5, max: 10 },
     { label: "10-20 jr", min: 11, max: 20 },
     { label: "20-30 jr", min: 21, max: 30 },
-    { label: "30-40 jr", min: 31, max: 40 },
-    { label: "40+ jr", min: 41, max: 999 },
+    { label: "30+ jr", min: 31, max: 999 },
   ];
 
   const data = buckets.map((b) => ({
     name: b.label,
-    count: members.filter((m) => m.jarenLid !== null && m.jarenLid >= b.min && m.jarenLid <= b.max).length,
+    count: members.filter((m) => {
+      const years = getMembershipYears(m);
+      return years !== null && years >= b.min && years <= b.max;
+    }).length,
   }));
 
   return (
