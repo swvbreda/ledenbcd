@@ -34,7 +34,7 @@ const MarktaandeelPage = () => {
     .map(([city, bcd]) => ({ city, total: 0, bcd, pct: 0 }))
     .sort((a, b) => b.bcd - a.bcd);
 
-  const marketPct = Math.round((totalMembers / totalNL) * 100);
+  const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
   // G4 stats
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
