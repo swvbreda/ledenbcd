@@ -3,10 +3,13 @@ import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { allRepresented } from "@/hooks/useMembers";
+import { getMembershipYears } from "@/lib/membership";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
-  // Members with 20+ years
-  const longMembers = (members || []).filter((m) => m.jarenLid && m.jarenLid >= 20);
+  const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
+  const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
+
+  const longMembers = withYears.filter((x) => x.years >= 20);
   const longPct = members?.length ? Math.round((longMembers.length / members.length) * 100) : 0;
 
   // Cities with >50% representation
@@ -21,19 +24,21 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     return total > 0 && (bcd / total) >= 0.5;
   }).length;
 
-  // New members this year (instroom current year)
+  // New members this year
   const currentYear = new Date().getFullYear();
   const currentYearData = verloopDetail.find((d) => d.year === currentYear);
   const newThisYear = currentYearData?.instroom || 0;
 
   // Average membership duration
-  const withYears = (members || []).filter((m) => m.jarenLid);
   const avgYears = withYears.length
-    ? Math.round(withYears.reduce((s, m) => s + (m.jarenLid || 0), 0) / withYears.length)
+    ? Math.round(withYears.reduce((s, x) => s + x.years, 0) / withYears.length)
     : 0;
 
   // Longest member
-  const longest = (members || []).reduce((max, m) => (m.jarenLid || 0) > (max.jarenLid || 0) ? m : max, (members || [])[0]);
+  const longest = withYears.reduce<{ member: Member; years: number } | null>(
+    (max, x) => (!max || x.years > max.years ? x : max),
+    null
+  );
 
   const facts = [
     {
@@ -67,8 +72,8 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     {
       icon: Award,
       label: "Langst lid",
-      value: `${longest?.jarenLid || 0} jr`,
-      detail: longest?.naam || "",
+      value: `${longest?.years || 0} jr`,
+      detail: longest?.member.naam || "",
       color: "text-success",
     },
   ];
