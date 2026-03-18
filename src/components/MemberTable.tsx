@@ -137,7 +137,35 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 </td>
                 {isAdmin && (
                   <>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{eigenaar || "—"}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        {eigenaar || "—"}
+                        {member.oprichter && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help text-amber-500">★</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Oprichter van de bond</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {member.bestuursfunctie && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{member.bestuursfunctie}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{contactpersoon || "—"}</td>
                   </>
                 )}
