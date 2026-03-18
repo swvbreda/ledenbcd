@@ -25,7 +25,7 @@ const LidmaatschapsduurChart = () => {
     <div className="bg-card rounded-lg border border-border p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Ledengroei per periode</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Van {first} naar {current} leden sinds 2005
+        BCD opgericht in 1994 · Van {first} naar {current} leden geregistreerd sinds 2005
       </p>
 
       <div className="space-y-3">
