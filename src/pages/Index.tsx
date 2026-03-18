@@ -24,12 +24,12 @@ const Index = () => {
 
       <StatCards members={allMembers} />
 
-      <VerloopChart />
-
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <VerloopChart />
         <LidmaatschapsduurChart members={allMembers} />
-        <LedenPerStadOverzicht members={allMembers} />
       </div>
+
+      <LedenPerStadOverzicht members={allMembers} />
 
       <JubileumOverzicht members={allMembers} />
     </div>
