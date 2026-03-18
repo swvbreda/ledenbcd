@@ -33,7 +33,6 @@ const navItems = [
   { title: "Oud-leden", url: "/oud-leden", icon: UserMinus },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Statistieken", url: "/statistieken", icon: BarChart3 },
-  { title: "Marktaandeel", url: "/marktaandeel", icon: PieChart },
 ];
 
 export function AppSidebar() {
