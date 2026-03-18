@@ -177,7 +177,9 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
             {member ? (
-              <p className="text-[11px] text-primary leading-tight mt-0.5">{member.naam}</p>
+              <p className="text-[11px] text-primary leading-tight mt-0.5">
+                {member.naam}{member.plaats ? ` · ${member.plaats}` : ""}
+              </p>
             ) : bl.coffeeshop ? (
               <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
             ) : (
