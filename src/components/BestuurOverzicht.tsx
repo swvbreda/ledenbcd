@@ -156,10 +156,10 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         >
           <div className="relative shrink-0">
             {photo ? (
-              <img src={photo} alt={bl.naam} className="w-10 h-10 rounded-full object-cover" />
+              <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <User size={18} className="text-muted-foreground" />
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                <User size={22} className="text-muted-foreground" />
               </div>
             )}
             {showUpload && (
