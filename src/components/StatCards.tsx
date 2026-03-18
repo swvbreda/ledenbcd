@@ -82,7 +82,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       {/* Marktaandeel gauge */}
       <div
         className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
-        onClick={() => navigate("/marktaandeel")}
+        onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Marktaandeel</p>
