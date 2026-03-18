@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { allLeads } from "@/hooks/useMembers";
+import { getMembershipYears } from "@/lib/membership";
 
 interface MemberTableProps {
   members: Member[];
@@ -34,6 +35,13 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       const bv = getGemeenten(b).length;
       return sortAsc ? av - bv : bv - av;
     }
+
+    if (sortKey === "jarenLid") {
+      const av = getMembershipYears(a) ?? -1;
+      const bv = getMembershipYears(b) ?? -1;
+      return sortAsc ? av - bv : bv - av;
+    }
+
     const av = a[sortKey] ?? 0;
     const bv = b[sortKey] ?? 0;
     if (typeof av === "string" && typeof bv === "string") {
@@ -63,6 +71,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         <table className="w-full text-sm font-body">
           <thead>
             <tr className="border-b border-border bg-muted/50">
+              <th
+                className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24"
+                onClick={() => handleSort("id")}
+              >
+                <span className="inline-flex items-center gap-1">Lidnr. <SortIcon col="id" /></span>
+              </th>
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
                 <span className="inline-flex items-center gap-1">Naam <SortIcon col="naam" /></span>
               </th>
@@ -91,6 +105,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             {displayMembers.map((member) => {
               const isLead = allLeads.some((l) => l.id === member.id);
               const gemeenten = getGemeenten(member);
+              const jarenLid = getMembershipYears(member);
               const eigenaar = member.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam || "";
               const storedCp = (() => { try { return localStorage.getItem(`bcd-contactpersoon-${member.id}`); } catch { return null; } })();
               const contactpersoon = storedCp || member.contactpersoon || member.contacten[0]?.naam || "";
@@ -100,6 +115,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
+                <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                  {isLead ? "—" : member.id}
+                </td>
                 <td className="px-4 py-3 font-medium font-display">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
@@ -120,17 +138,17 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  {member.jarenLid ? (
+                  {jarenLid !== null ? (
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        member.jarenLid >= 30
+                        jarenLid >= 30
                           ? "bg-success/10 text-success"
-                          : member.jarenLid >= 10
+                          : jarenLid >= 10
                           ? "bg-primary/10 text-primary"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {member.jarenLid} jr
+                      {jarenLid} jr
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
