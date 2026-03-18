@@ -42,7 +42,15 @@ const StatCards = ({ members }: StatCardsProps) => {
     (m) => !m.contacten?.length || !m.contacten.some(c => c.telefoon) || !m.contacten.some(c => c.email)
   ).length;
 
-  // Mini gauge SVG component
+  // Build per-member missing fields
+  const incompleteMemberDetails = members
+    .map((m) => {
+      const missing = COMPLETENESS_FIELDS.filter(f => !f.check(m)).map(f => f.label);
+      return { member: m, missing };
+    })
+    .filter(x => x.missing.length > 0)
+    .sort((a, b) => b.missing.length - a.missing.length);
+
   const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
     const radius = 28;
     const stroke = 5;
