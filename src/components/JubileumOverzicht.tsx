@@ -3,7 +3,7 @@ import { Award } from "lucide-react";
 import type { Member } from "@/data/types";
 
 const JUBILEA = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-const CURRENT_YEAR = 2026;
+const CURRENT_YEAR = new Date().getFullYear();
 
 interface JubileumEntry {
   member: Member;
