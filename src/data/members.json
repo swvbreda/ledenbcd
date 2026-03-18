@@ -7428,50 +7428,6 @@
     "email2": null
   },
   {
-    "id": 127,
-    "naam": "Coffeeshop Mediterrané",
-    "plaats": "Amsterdam",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "oprichtingsDatum": null,
-    "contactpersoon": "Moustapha El Mahdioui",
-    "functie": "Eigenaar",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Coffeeshop Mediterrané",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Coffeeshop Mediterrané",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "Spuistraat 80",
-        "postcode": "1012 TX"
-      }
-    ],
-    "contacten": [
-      {
-        "naam": "Moustapha El Mahdioui",
-        "functie": "Eigenaar",
-        "telefoon": "",
-        "email": ""
-      }
-    ],
-    "kvk": null,
-    "factuurEmail": null,
-    "factuurBedrijfsnaam": null,
-    "factuurKvk": null,
-    "factuurAdres": null,
-    "factuurPostcode": null,
-    "factuurPlaats": null,
-    "factuurTelefoon": null,
-    "contactpersoon2": null,
-    "functie2": null,
-    "telefoon2": null,
-    "email2": null
-  },
-  {
     "id": 128,
     "naam": "Coffeeshop Haarlem",
     "plaats": "Haarlem",
