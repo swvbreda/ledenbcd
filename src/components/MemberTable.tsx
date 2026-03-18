@@ -79,10 +79,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <span className="inline-flex items-center gap-1">Jaren Lid <SortIcon col="jarenLid" /></span>
               </th>
               {isAdmin && (
-                <>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
-                </>
+                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
               )}
               <th className="px-4 py-3 w-10" />
             </tr>
@@ -137,38 +134,35 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   )}
                 </td>
                 {isAdmin && (
-                  <>
-                    <td className="px-4 py-3 text-xs">
-                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                        {eigenaar || "—"}
-                        {member.oprichter && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-help text-amber-500">★</span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Oprichter van de bond</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {member.bestuursfunctie && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{member.bestuursfunctie}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{contactpersoon || "—"}</td>
-                  </>
+                  <td className="px-4 py-3 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      {contactpersoon || "—"}
+                      {member.oprichter && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help text-amber-500">★</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Oprichter van de bond</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {member.bestuursfunctie && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{member.bestuursfunctie}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </span>
+                  </td>
                 )}
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
