@@ -18,21 +18,33 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 90",
-        "postcode": "1012 GJ"
+        "postcode": "1012 GJ",
+        "contactpersoon": "Henk de Vries",
+        "functie": "Eigenaar",
+        "telefoon": "31653244418",
+        "email": "hjmdevries@hotmail.com"
       },
       {
         "naam": "The Bulldog Palace",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Leidseplein 17",
-        "postcode": "1017 PS"
+        "postcode": "1017 PS",
+        "contactpersoon": "Michel de Vries",
+        "functie": "Bestuur",
+        "telefoon": "31651311153",
+        "email": "mjcdevries@hotmail.com"
       },
       {
         "naam": "The Bulldog The Energy",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 220",
-        "postcode": "1012 GJ"
+        "postcode": "1012 GJ",
+        "contactpersoon": "Johan Sighet",
+        "functie": "Bestuur",
+        "telefoon": "",
+        "email": "johanterschegget@gmail.com"
       },
       {
         "naam": "The Bulldog Port",
@@ -70,7 +82,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Nieuwe Herengracht 71",
-        "postcode": "1011 RR"
+        "postcode": "1011 RR",
+        "contactpersoon": "Rob Bierings",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "hipporecords@gmail.com"
       }
     ],
     "kvk": "",
@@ -101,7 +117,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Korte Leidsedwarsstraat 77",
-        "postcode": "1017 PW"
+        "postcode": "1017 PW",
+        "contactpersoon": "Kenneth Westerborg",
+        "functie": "Eigenaar",
+        "telefoon": "31652854221",
+        "email": "k.westerborg@xs4all.nl"
       }
     ],
     "kvk": "33182341",
@@ -131,7 +151,11 @@
         "naam": "Coffeeshop Splif",
         "plaats": "Purmerend",
         "adres": "Achterdijk 76",
-        "postcode": "1441 DJ"
+        "postcode": "1441 DJ",
+        "contactpersoon": "Huub van den Brink",
+        "functie": "",
+        "telefoon": "31653229120",
+        "email": "huub@splif.nl"
       }
     ],
     "kvk": "34063089",
@@ -162,7 +186,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Haarlemmerstraat 64",
-        "postcode": "1013 ET"
+        "postcode": "1013 ET",
+        "contactpersoon": "Joachim Helms",
+        "functie": "Eigenaar",
+        "telefoon": "31655867690",
+        "email": "joahelms@gmail.com"
       },
       {
         "naam": "Green House",
@@ -214,7 +242,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "Van Boetzelaerstraat 29-31",
-        "postcode": "1051 CT"
+        "postcode": "1051 CT",
+        "contactpersoon": "Andre van Houten",
+        "functie": "Eigenaar",
+        "telefoon": "31655811272",
+        "email": "dre509@hotmail.com"
       }
     ],
     "kvk": "68451954",
@@ -245,7 +277,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Nieuw West",
         "adres": "Meer en Vaart 177A",
-        "postcode": "1068 LA"
+        "postcode": "1068 LA",
+        "contactpersoon": "Appie el Hajjiou",
+        "functie": "Eigenaar",
+        "telefoon": "31639002030",
+        "email": "stuurhetmij@icloud.com"
       }
     ],
     "kvk": "34191840",
@@ -276,7 +312,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Binnen Oranjestraat 9",
-        "postcode": "1013 HZ"
+        "postcode": "1013 HZ",
+        "contactpersoon": "Bernard van Nierop",
+        "functie": "Eigenaar",
+        "telefoon": "31625262730",
+        "email": "info@coffeeshop-relax.nl"
       },
       {
         "naam": "Coffeeshop Relax",
@@ -314,21 +354,33 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Singel 8",
-        "postcode": "1013 GA"
+        "postcode": "1013 GA",
+        "contactpersoon": "Mariska",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "aksiram1983@protonmail.com"
       },
       {
         "naam": "Boere Jongens",
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "Bonairestraat 78",
-        "postcode": "1058 AA"
+        "postcode": "1058 AA",
+        "contactpersoon": "Marcel Moria",
+        "functie": "Bedrijfsleider",
+        "telefoon": "31624806021",
+        "email": "Boerejongens.marcel@outlook.com"
       },
       {
         "naam": "Boere Jongens",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Utrechtsestraat 21",
-        "postcode": "1017 VH"
+        "postcode": "1017 VH",
+        "contactpersoon": "Sander",
+        "functie": "Bedrijfsleider",
+        "telefoon": "",
+        "email": "Sander-boerebij@hotmail.com"
       },
       {
         "naam": "Boere Jongens",
@@ -375,7 +427,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Kerkstraat 51H",
-        "postcode": "1017 GC"
+        "postcode": "1017 GC",
+        "contactpersoon": "Dennis van der Tien",
+        "functie": "Eigenaar",
+        "telefoon": "31621294893",
+        "email": "Dennis@Happyfeelingsamsterdam.nl"
       }
     ],
     "kvk": "",
@@ -406,7 +462,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Jonge Roelensteeg 12 H",
-        "postcode": "1012 PL"
+        "postcode": "1012 PL",
+        "contactpersoon": "Jimmy Lin",
+        "functie": "Eigenaar",
+        "telefoon": "31620878787",
+        "email": "jimmylin1945-@hotmail.com"
       }
     ],
     "kvk": "",
@@ -440,7 +500,11 @@
         "plaats": "Enschede",
         "stadsdeel": "Centrum",
         "adres": "Oldenzaalsestraast 103",
-        "postcode": "7511 DZ"
+        "postcode": "7511 DZ",
+        "contactpersoon": "Hendrik Appeldoorn",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "h.appeldoorn56@gmail.com"
       }
     ],
     "kvk": "6063448",
@@ -471,7 +535,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 189",
-        "postcode": "1012 EW"
+        "postcode": "1012 EW",
+        "contactpersoon": "Harold Kallan",
+        "functie": "Eigenaar",
+        "telefoon": "31654794485",
+        "email": "h.kallan@live.nl"
       }
     ],
     "kvk": "",
@@ -505,7 +573,11 @@
         "naam": "Coffeeshop Pink",
         "plaats": "Eindhoven",
         "adres": "Willemstraat 35",
-        "postcode": "5611 HB"
+        "postcode": "5611 HB",
+        "contactpersoon": "Lisa Lankes",
+        "functie": "Eigenaar",
+        "telefoon": "31653411227",
+        "email": "lisa@thepink.nl"
       }
     ],
     "kvk": "17081302",
@@ -539,7 +611,11 @@
         "naam": "Koffiehuis Sharon",
         "plaats": "Enschede",
         "adres": "Stadsgravenstraat 42",
-        "postcode": "7511 ES"
+        "postcode": "7511 ES",
+        "contactpersoon": "Daniel Minnegaal",
+        "functie": "Eigenaar",
+        "telefoon": "06 30 61 73 70",
+        "email": "koffiehuissharon@gmail.com"
       }
     ],
     "kvk": "6050054",
@@ -569,7 +645,11 @@
         "naam": "De Os",
         "plaats": "Leeuwarden",
         "adres": "Korfmakersstraat 2",
-        "postcode": "8911 LA"
+        "postcode": "8911 LA",
+        "contactpersoon": "Erik Drenth",
+        "functie": "Eigenaar",
+        "telefoon": "31629487783",
+        "email": "deos@xs4all.nl"
       }
     ],
     "kvk": "",
@@ -603,7 +683,11 @@
         "naam": "Superfly",
         "plaats": "Beverwijk",
         "adres": "Begijnhof 4",
-        "postcode": "1941 BP"
+        "postcode": "1941 BP",
+        "contactpersoon": "Martijn Vree",
+        "functie": "Eigenaar",
+        "telefoon": "31647320175",
+        "email": "administratie@superflybeverwijk.nl"
       }
     ],
     "kvk": "",
@@ -634,7 +718,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "Spaarndammerdijk 9",
-        "postcode": "1013 ZM"
+        "postcode": "1013 ZM",
+        "contactpersoon": "Giovanni de Vries",
+        "functie": "Eigenaar",
+        "telefoon": "31620347301",
+        "email": "thecorner.bv@gmail.com"
       }
     ],
     "kvk": "72163186",
@@ -669,7 +757,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Prinsengracht 476 H",
-        "postcode": "1017 KG"
+        "postcode": "1017 KG",
+        "contactpersoon": "Oussama al' Mobaress",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "ousmoba@gmail.com"
       }
     ],
     "kvk": "",
@@ -700,21 +792,33 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Utrechtsestraat 14",
-        "postcode": "1017 VN"
+        "postcode": "1017 VN",
+        "contactpersoon": "Jeroen van Ham",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "jeroen@vanhamholding.com"
       },
       {
         "naam": "Hunters Central",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Prins Hendrikkade 89",
-        "postcode": "1012 AE"
+        "postcode": "1012 AE",
+        "contactpersoon": "Martin",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": ""
       },
       {
         "naam": "Hunters",
         "plaats": "Amsterdam",
         "stadsdeel": "Noord",
         "adres": "Papaverweg 2",
-        "postcode": "1032 KH"
+        "postcode": "1032 KH",
+        "contactpersoon": "Dorine Buchener",
+        "functie": "",
+        "telefoon": "",
+        "email": "dorine@vanhamholding.com"
       },
       {
         "naam": "Hunters Happiness",
@@ -734,7 +838,11 @@
         "naam": "Hunters",
         "plaats": "Rotterdam",
         "adres": "Henegouwerlaan 73",
-        "postcode": "3032 CG"
+        "postcode": "3032 CG",
+        "contactpersoon": "Dennis Hoogland",
+        "functie": "Bedrijfsleider",
+        "telefoon": "",
+        "email": "dennis@sensiseeds.com"
       },
       {
         "naam": "Hunters",
@@ -795,7 +903,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Kerkstraat 39",
-        "postcode": "1017 GB"
+        "postcode": "1017 GB",
+        "contactpersoon": "Paul Krempel",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "administratie@coffeeshopdebroers.nl"
       }
     ],
     "kvk": "",
@@ -830,7 +942,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Oost",
         "adres": "Krugerplein 22",
-        "postcode": "1091 KZ"
+        "postcode": "1091 KZ",
+        "contactpersoon": "Mustapha Elargoubi",
+        "functie": "Manager",
+        "telefoon": "31611684555",
+        "email": "m.elargoubi@hotmail.com"
       }
     ],
     "kvk": "",
@@ -895,7 +1011,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Oudebrugsteeg 26",
-        "postcode": "1012 JP"
+        "postcode": "1012 JP",
+        "contactpersoon": "Rachid Bahida",
+        "functie": "Eigenaar",
+        "telefoon": "31653493258",
+        "email": "rachid.kroon@outlook.com"
       }
     ],
     "kvk": "77801946",
@@ -928,7 +1048,11 @@
         "naam": "Tuda Fruta",
         "plaats": "Rotterdam",
         "adres": "Admiraliteitskade 17a",
-        "postcode": "3063 EC"
+        "postcode": "3063 EC",
+        "contactpersoon": "Michel Wouters",
+        "functie": "Eigenaar",
+        "telefoon": "31638148151",
+        "email": "wouters.michel@gmail.com"
       }
     ],
     "kvk": "24237057",
@@ -958,7 +1082,11 @@
         "naam": "Cremers",
         "plaats": "Den Haag",
         "adres": "Prinsestraat 84",
-        "postcode": "2513 CG"
+        "postcode": "2513 CG",
+        "contactpersoon": "Gerard Cremers",
+        "functie": "Eigenaar",
+        "telefoon": "31639772553",
+        "email": "h.beheer.bv12@kpnplanet.nl"
       }
     ],
     "kvk": "27077111",
@@ -988,7 +1116,11 @@
         "naam": "Trefpunt",
         "plaats": "Rotterdam",
         "adres": "Botersloot 7",
-        "postcode": "3011 HE"
+        "postcode": "3011 HE",
+        "contactpersoon": "Ronald Moher",
+        "functie": "",
+        "telefoon": "",
+        "email": "info@tref.com"
       }
     ],
     "kvk": "69896208",
@@ -1023,7 +1155,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Marnixstraat 92",
-        "postcode": "1015 VZ"
+        "postcode": "1015 VZ",
+        "contactpersoon": "Azzouz",
+        "functie": "",
+        "telefoon": "31655348514",
+        "email": "azzouz1960@hotmail.com"
       }
     ],
     "kvk": "34210464",
@@ -1054,7 +1190,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Brouwersgracht 11",
-        "postcode": "1015 GA"
+        "postcode": "1015 GA",
+        "contactpersoon": "Yari Dekker",
+        "functie": "",
+        "telefoon": "06 38 87 44 92",
+        "email": "yari@othala-bv.nl"
       },
       {
         "naam": "De Republiek",
@@ -1111,7 +1251,11 @@
         "naam": "Yanks",
         "plaats": "Zandvoort",
         "adres": "Haltestraat 61",
-        "postcode": "2042 LL"
+        "postcode": "2042 LL",
+        "contactpersoon": "Toon van der Moot",
+        "functie": "Bedrijfsleider",
+        "telefoon": "31651213549",
+        "email": "toonvdmoot@gmail.com"
       }
     ],
     "kvk": "",
@@ -1142,7 +1286,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Amstel 8",
-        "postcode": "1017 AB"
+        "postcode": "1017 AB",
+        "contactpersoon": "Mauro Moro",
+        "functie": "Bedrijfsleider",
+        "telefoon": "31622987223",
+        "email": "facturen@familyfirstamsterdam.com"
       }
     ],
     "kvk": "70661545",
@@ -1177,7 +1325,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Sint Antoniesbreestraat 71",
-        "postcode": "1011 HB"
+        "postcode": "1011 HB",
+        "contactpersoon": "Jawi Heij",
+        "functie": "Bedrijfsleider",
+        "telefoon": "",
+        "email": "info@coffeeshopbluebird.nl"
       }
     ],
     "kvk": "70855412",
@@ -1211,7 +1363,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Handboogstraat 29",
-        "postcode": "1012 XM"
+        "postcode": "1012 XM",
+        "contactpersoon": "Paul Wilhelm",
+        "functie": "Eigenaar",
+        "telefoon": "31652562281",
+        "email": ""
       }
     ],
     "kvk": "",
@@ -1245,7 +1401,11 @@
         "naam": "Regine",
         "plaats": "Haarlem",
         "adres": "Gedempte Oude Gracht 28",
-        "postcode": "2011 GR"
+        "postcode": "2011 GR",
+        "contactpersoon": "Martin van der Eng",
+        "functie": "Eigenaar",
+        "telefoon": "31615315539",
+        "email": "info@coffeeshop-regine.nl"
       }
     ],
     "kvk": "",
@@ -1275,7 +1435,11 @@
         "naam": "De Rode Leeuw",
         "plaats": "Zwolle",
         "adres": "Rodeleeuwsteeg 4",
-        "postcode": "8011 TC"
+        "postcode": "8011 TC",
+        "contactpersoon": "Tim de Wilde",
+        "functie": "Eigenaar",
+        "telefoon": "3163001965",
+        "email": "timdewilde87@gmail.com"
       }
     ],
     "kvk": "70187738",
@@ -1305,7 +1469,11 @@
         "naam": "De Loods",
         "plaats": "Amersfoort",
         "adres": "Textielweg 11",
-        "postcode": "3812RV"
+        "postcode": "3812RV",
+        "contactpersoon": "Tim de Wilde / Marlies (boere)",
+        "functie": "Eigenaar",
+        "telefoon": "31630011965",
+        "email": "info@033horecabv.nl"
       }
     ],
     "kvk": "63786575",
@@ -1335,7 +1503,11 @@
         "naam": "Thunderbird",
         "plaats": "Enschede",
         "adres": "Wilhelminastraat 3",
-        "postcode": "7511 DM"
+        "postcode": "7511 DM",
+        "contactpersoon": "Peter",
+        "functie": "Eigenaar",
+        "telefoon": "31622724910",
+        "email": "thunderbirdenschede@ziggo.nl"
       }
     ],
     "kvk": "6054086",
@@ -1369,7 +1541,11 @@
         "naam": "De Ambassade",
         "plaats": "Zwijndrecht",
         "adres": "IJsselmeer 27",
-        "postcode": "3332 EX"
+        "postcode": "3332 EX",
+        "contactpersoon": "Edwin Bax",
+        "functie": "Eigenaar",
+        "telefoon": "31643415724",
+        "email": "edwin@ambassade-zwijndrecht.nl"
       }
     ],
     "kvk": "863240263",
@@ -1399,7 +1575,11 @@
         "naam": "The Mix",
         "plaats": "Enschede",
         "adres": "Havenstraatpassage 44-46",
-        "postcode": "7511 EX"
+        "postcode": "7511 EX",
+        "contactpersoon": "Greetje Nijboer",
+        "functie": "Eigenaar",
+        "telefoon": "31638138301",
+        "email": "nijboer.greetje@gmail.com"
       }
     ],
     "kvk": "6054708",
@@ -1434,7 +1614,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Zuid",
         "adres": "Stadionkade 107",
-        "postcode": "1076 BN"
+        "postcode": "1076 BN",
+        "contactpersoon": "Sadie Roelofsen",
+        "functie": "Eigenaar",
+        "telefoon": "31624277720",
+        "email": "sadie.roelofsen@gmail.com"
       }
     ],
     "kvk": "",
@@ -1469,7 +1653,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Korte Koningsstraat 2",
-        "postcode": "1011 GA"
+        "postcode": "1011 GA",
+        "contactpersoon": "Marco Zweep",
+        "functie": "Eigenaar",
+        "telefoon": "31650695275",
+        "email": "marcozweep@gmail.com"
       }
     ],
     "kvk": "34189051",
@@ -1499,7 +1687,11 @@
         "naam": "Roundabout 69",
         "plaats": "Maastricht",
         "adres": "Brusselsestraat 146A",
-        "postcode": "6211 PJ"
+        "postcode": "6211 PJ",
+        "contactpersoon": "Dirk Peereboom",
+        "functie": "Bedrijfsleider",
+        "telefoon": "31622411705",
+        "email": "dpeerboom@icloud.com"
       }
     ],
     "kvk": "69832455",
@@ -1533,7 +1725,11 @@
         "naam": "Roxanne",
         "plaats": "Schagen",
         "adres": "Laan 5",
-        "postcode": "1741 EA"
+        "postcode": "1741 EA",
+        "contactpersoon": "Dennis Kollof",
+        "functie": "Eigenaar",
+        "telefoon": "31651528769",
+        "email": "kollof666@hotmail.com"
       }
     ],
     "kvk": "55406505",
@@ -1564,7 +1760,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Zuid",
         "adres": "Amstelveenseweg 1160",
-        "postcode": "1081 JW"
+        "postcode": "1081 JW",
+        "contactpersoon": "Bart van der Vlugt",
+        "functie": "Eigenaar",
+        "telefoon": "31655333333",
+        "email": "bart@clubhome.nl"
       }
     ],
     "kvk": "33236532",
@@ -1598,7 +1798,11 @@
         "naam": "Oya",
         "plaats": "Gouda",
         "adres": "Lange Groenendaal 102",
-        "postcode": "2801 LV"
+        "postcode": "2801 LV",
+        "contactpersoon": "Rob ten Hove",
+        "functie": "Eigenaar",
+        "telefoon": "31653454768",
+        "email": "robyara1@hotmail.com"
       }
     ],
     "kvk": "",
@@ -1632,7 +1836,11 @@
         "naam": "Zero Zero",
         "plaats": "Arnhem",
         "adres": "Hommelseweg 19",
-        "postcode": "6821 LA"
+        "postcode": "6821 LA",
+        "contactpersoon": "Marjolein de Keijzer van Nimwegen",
+        "functie": "Eigenaar",
+        "telefoon": "06 55 17 75 52",
+        "email": "waldgraaf@live.nl"
       }
     ],
     "kvk": "9092392",
@@ -1662,7 +1870,11 @@
         "naam": "High Time",
         "plaats": "Alkmaar",
         "adres": "Spoorstraat 99",
-        "postcode": "1815 BJ"
+        "postcode": "1815 BJ",
+        "contactpersoon": "Penny Curiel Prins",
+        "functie": "Eigenaar",
+        "telefoon": "06 23 99 29 98",
+        "email": "everywoman14@hotmail.com"
       }
     ],
     "kvk": "",
@@ -1693,7 +1905,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Spuistraat 260",
-        "postcode": "1012 VW"
+        "postcode": "1012 VW",
+        "contactpersoon": "Mohamed Kamani",
+        "functie": "Eigenaar",
+        "telefoon": "06 87 18 28 77",
+        "email": "newtimes-amsterdam@outlook.com"
       }
     ],
     "kvk": "66383889",
@@ -1724,7 +1940,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Oost",
         "adres": "1e Oosterparkstraat 47",
-        "postcode": "1091 GV"
+        "postcode": "1091 GV",
+        "contactpersoon": "Robert Bobeldijk",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "oost@theplugcoffeeshops.nl"
       }
     ],
     "kvk": "",
@@ -1755,7 +1975,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Zuid",
         "adres": "Eerste van der Helststraat 70",
-        "postcode": "1072 NZ"
+        "postcode": "1072 NZ",
+        "contactpersoon": "John",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "katsu@katsu.nl"
       }
     ],
     "kvk": "",
@@ -1789,7 +2013,11 @@
         "naam": "Coffee and Dreams",
         "plaats": "Leiden",
         "adres": "Nieuwe Beestenmarkt 34a",
-        "postcode": "2312 CH"
+        "postcode": "2312 CH",
+        "contactpersoon": "Anton Verschelling",
+        "functie": "Eigenaar",
+        "telefoon": "06 22 93 62 68",
+        "email": "anton@indendoofpot.nl"
       }
     ],
     "kvk": "28067806",
@@ -1820,7 +2048,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Sint Antoniesbreestraat 77",
-        "postcode": "1011 HB"
+        "postcode": "1011 HB",
+        "contactpersoon": "Sandra Goedhart",
+        "functie": "Eigenaar",
+        "telefoon": "06 52 39 55 19",
+        "email": "reefer1@xs4all.nl"
       }
     ],
     "kvk": "",
@@ -1851,7 +2083,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "Jan Pieter Heijestraat 82",
-        "postcode": "1053 GS"
+        "postcode": "1053 GS",
+        "contactpersoon": "Henny van Breevoort",
+        "functie": "Eigenaar",
+        "telefoon": "06 10 75 62 98",
+        "email": "hennybreevoort@hotmail.com"
       }
     ],
     "kvk": "",
@@ -1886,7 +2122,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Nieuwmarkt 12",
-        "postcode": "1012 CR"
+        "postcode": "1012 CR",
+        "contactpersoon": "Harry Opuku",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "rockitamsterdam@gmail.com"
       }
     ],
     "kvk": "",
@@ -1921,7 +2161,11 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Langebrugsteeg 7A",
-        "postcode": "1012 GB"
+        "postcode": "1012 GB",
+        "contactpersoon": "Hans Oi",
+        "functie": "Eigenaar",
+        "telefoon": "06 54 77 51 31",
+        "email": "hans@kadinsky.nl"
       },
       {
         "naam": "Kadinsky",
@@ -1969,13 +2213,21 @@
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Brouwersgracht 137",
-        "postcode": "1015 GE"
+        "postcode": "1015 GE",
+        "contactpersoon": "Dick en Freek van de Graaf",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "brouwersgracht137@hotmail.com"
       },
       {
         "naam": "Coffeeshop 137 / 7th heaven",
         "plaats": "Leeuwarden",
         "adres": "Tuinen 38",
-        "postcode": "8911 KE"
+        "postcode": "8911 KE",
+        "contactpersoon": "Remy Tanis",
+        "functie": "Eigenaar",
+        "telefoon": "06 29 62 06 33",
+        "email": "leeuwarden@7thheaven.global"
       }
     ],
     "kvk": "",
