@@ -114,11 +114,13 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-muted-foreground text-xs">
-                    {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
-                  </span>
-                </td>
+                {isAdmin && (
+                  <td className="px-4 py-3">
+                    <span className="text-muted-foreground text-xs">
+                      {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
+                    </span>
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </td>
