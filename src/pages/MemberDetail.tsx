@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2 } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -384,6 +384,35 @@ const MemberDetail = () => {
           ))}
         </div>
       </div>
+
+      {/* Aanverwante leden */}
+      {member.aanverwant && member.aanverwant.length > 0 && (
+        <div className="bg-card rounded-lg border border-border p-5">
+          <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+            <Link2 size={16} className="text-primary" /> Aanverwant
+          </h3>
+          <div className="space-y-2">
+            {member.aanverwant.map((relId) => {
+              const rel = allMembers.find((m) => m.id === relId);
+              if (!rel) return null;
+              return (
+                <div
+                  key={relId}
+                  className="flex items-center gap-3 p-3 border border-border rounded-md hover:bg-muted/20 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/leden/${relId}`)}
+                >
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">
+                    {rel.id}
+                  </span>
+                  <span className="font-medium font-display">{rel.naam}</span>
+                  <span className="text-sm text-muted-foreground">{rel.plaats}</span>
+                  <ExternalLink size={13} className="ml-auto text-muted-foreground" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
