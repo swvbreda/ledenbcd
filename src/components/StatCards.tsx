@@ -80,42 +80,60 @@ const StatCards = ({ members }: StatCardsProps) => {
       </div>
 
       {showIncomplete && incompleteMemberDetails.length > 0 && (
-        <div className="bg-card rounded-lg border border-border p-5">
-          <h3 className="text-sm font-semibold font-display mb-1">Onvolledige gegevens</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            {incompleteMemberDetails.length} leden missen één of meer velden
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-12">#</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Naam</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Ontbrekend</th>
-                </tr>
-              </thead>
-              <tbody>
-                {incompleteMemberDetails.map(({ member, missing }) => (
-                  <tr
-                    key={member.id}
-                    className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/leden/${member.id}`)}
-                  >
-                    <td className="px-3 py-2 text-muted-foreground">{member.id}</td>
-                    <td className="px-3 py-2 font-medium font-display">{member.naam}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {missing.map(f => (
-                          <span key={f} className="px-2 py-0.5 rounded text-xs bg-destructive/10 text-destructive">
-                            {f}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
+        <div className="bg-card rounded-lg border border-border p-5 space-y-5">
+          <div>
+            <h3 className="text-sm font-semibold font-display mb-1">Data Compleetheid per veld</h3>
+            <p className="text-xs text-muted-foreground mb-3">Percentage leden met ingevulde gegevens</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+              {COMPLETENESS_FIELDS.map((f) => {
+                const pct = Math.round((members.filter(f.check).length / members.length) * 100);
+                return (
+                  <div key={f.label} className="rounded-lg border border-border p-3 text-center">
+                    <p className="text-lg font-bold font-display" style={{ color: pct >= 80 ? 'hsl(var(--success))' : pct >= 50 ? 'hsl(32, 95%, 55%)' : 'hsl(var(--destructive))' }}>{pct}%</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{f.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold font-display mb-1">Onvolledige gegevens</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              {incompleteMemberDetails.length} leden missen één of meer velden
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-12">#</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Naam</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Ontbrekend</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {incompleteMemberDetails.map(({ member, missing }) => (
+                    <tr
+                      key={member.id}
+                      className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/leden/${member.id}`)}
+                    >
+                      <td className="px-3 py-2 text-muted-foreground">{member.id}</td>
+                      <td className="px-3 py-2 font-medium font-display">{member.naam}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {missing.map(f => (
+                            <span key={f} className="px-2 py-0.5 rounded text-xs bg-destructive/10 text-destructive">
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
