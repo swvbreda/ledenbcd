@@ -28,4 +28,8 @@ export interface Member {
   factuurPostcode?: string;
   factuurPlaats?: string;
   factuurTelefoon?: string;
+  contactpersoon2?: string;
+  functie2?: string;
+  telefoon2?: string;
+  email2?: string;
 }
