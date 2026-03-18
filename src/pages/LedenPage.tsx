@@ -23,11 +23,14 @@ const LedenPage = () => {
     allMembers,
   } = useMembers();
 
+  const { members: mergedSearched } = useMergedMembers(searchedMembers);
+
   const archivedIds = useMemo(() => getArchivedIds(), []);
-  const archivedMembers = useMemo(
+  const archivedMembersRaw = useMemo(
     () => allMembersAndLeads.filter((m) => archivedIds.includes(m.id)),
     [archivedIds]
   );
+  const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
