@@ -139,7 +139,6 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <EditableField label="Naam" value={naam} onChange={setNaam} />
           <EditableField label="Plaats" value={plaats} onChange={setPlaats} />
-          <EditableField label="Bedrijfsnaam" value={bedrijfsnaam} onChange={setBedrijfsnaam} />
           <EditableField label="KVK" value={kvk} onChange={setKvk} />
           <EditableField label="Oprichtingsjaar" value={oprichtingJaar} onChange={setOprichtingJaar} type="number" />
           <EditableField label="Lid sinds" value={lidSinds} onChange={setLidSinds} type="number" />
