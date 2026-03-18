@@ -38,7 +38,7 @@ const StatCards = ({ members }: StatCardsProps) => {
   ).length;
 
   const stats = [
-    { label: "Totaal Leden", value: totalMembers, icon: Users, color: "text-primary", desc: `${totalLocations} locaties` },
+    { label: "Aangesloten Coffeeshops", value: totalMembers, icon: Users, color: "text-primary", desc: `${totalLocations} locaties` },
     { label: "Steden", value: uniqueCities, icon: Building2, color: "text-primary", desc: "verspreid over NL" },
     { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-success", desc: `${withYears.length} met data` },
     { label: "Compleetheid", value: `${Math.round(((totalMembers - incomplete) / totalMembers) * 100)}%`, icon: incomplete > 0 ? AlertTriangle : UserCheck, color: incomplete > 0 ? "text-destructive" : "text-success", desc: incomplete > 0 ? `${incomplete} onvolledig` : "Alle compleet", expandable: true },
