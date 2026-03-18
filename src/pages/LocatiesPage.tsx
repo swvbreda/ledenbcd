@@ -189,7 +189,7 @@ const LocatiesPage = () => {
       </div>
 
       <MapErrorBoundary>
-        <CityMap cities={filtered} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />
+        <CityMap cities={filtered} allCoffeeshopCities={perStad} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />
       </MapErrorBoundary>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
