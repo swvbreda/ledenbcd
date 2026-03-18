@@ -41,7 +41,7 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
 };
 
 const EXPERIMENT_GEMEENTEN = [
-  "Arnhem", "Breda", "Groningen", "Heerlen", "Hellevoetsluis",
+  "Arnhem", "Breda", "Groningen", "Heerlen", "Voorne aan Zee",
   "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
 ];
 
