@@ -1,7 +1,7 @@
 import verloopData from "@/data/verloop.json";
 
 const periods = [
-  { label: "Oprichting", range: "2005", start: 2005, end: 2005 },
+  { label: "Eerste registratie", range: "2005", start: 2005, end: 2005 },
   { label: "Groei", range: "2006–2010", start: 2006, end: 2010 },
   { label: "Stabiel", range: "2011–2015", start: 2011, end: 2015 },
   { label: "Groei", range: "2016–2020", start: 2016, end: 2020 },
