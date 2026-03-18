@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone } from "lucide-react";
+import { Shield, Mail, Phone, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
 
@@ -14,6 +14,16 @@ const bestuursleden: { naam: string; functie: string; lidId?: number; email?: st
   { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl" },
   { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl" },
 ];
+
+const getCities = (member?: Member): string[] => {
+  if (!member) return [];
+  const cities = new Set<string>();
+  for (const loc of member.locaties) {
+    const plaats = loc.plaats || member.plaats;
+    if (plaats) cities.add(plaats);
+  }
+  return Array.from(cities).sort();
+};
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
@@ -38,6 +48,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         {bestuursleden.map((bl) => {
           const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
           const contact = getContact(bl, member);
+          const cities = getCities(member);
           return (
             <div
               key={bl.naam}
@@ -50,6 +61,12 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
               <p className="text-xs text-muted-foreground">{bl.functie}</p>
               {member && (
                 <p className="text-xs text-primary mt-1.5">{member.naam}</p>
+              )}
+              {cities.length > 0 && (
+                <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                  <MapPin size={11} className="shrink-0" />
+                  {cities.join(", ")}
+                </p>
               )}
               <div className="mt-2 space-y-0.5">
                 {bl.bondEmail && (
