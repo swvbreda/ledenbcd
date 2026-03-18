@@ -134,7 +134,17 @@ const StatCards = ({ members }: StatCardsProps) => {
         </div>
       </div>
 
-      {showIncomplete && incompleteMemberDetails.length > 0 && (
+      {(() => {
+        const incompleteMemberDetails = members
+          .map((m) => {
+            const missing = COMPLETENESS_FIELDS.filter(f => !f.check(m)).map(f => f.label);
+            return { member: m, missing };
+          })
+          .filter(x => x.missing.length > 0)
+          .sort((a, b) => b.missing.length - a.missing.length);
+        return null;
+      })()}
+
         <div className="bg-card rounded-lg border border-border p-5 space-y-5">
           <div>
             <h3 className="text-sm font-semibold font-display mb-1">Data Compleetheid per veld</h3>
