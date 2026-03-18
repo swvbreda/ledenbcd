@@ -44,31 +44,3 @@ export interface Member {
   lidSinds?: number | null;
   lidJaren?: number[];
 }
-  id: number;
-  naam: string;
-  plaats: string;
-  stadsdeel: string;
-  jarenLid: number | null;
-  oprichtingJaar: number | null;
-  oprichtingsDatum?: string;
-  contactpersoon: string;
-  functie: string;
-  telefoon: string;
-  email: string;
-  bedrijfsnaam: string;
-  aantalLocaties: number;
-  locaties: Location[];
-  contacten: Contact[];
-  kvk?: string;
-  factuurEmail?: string;
-  factuurBedrijfsnaam?: string;
-  factuurKvk?: string;
-  factuurAdres?: string;
-  factuurPostcode?: string;
-  factuurPlaats?: string;
-  factuurTelefoon?: string;
-  contactpersoon2?: string;
-  functie2?: string;
-  telefoon2?: string;
-  email2?: string;
-}
