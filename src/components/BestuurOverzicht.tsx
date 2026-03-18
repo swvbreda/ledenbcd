@@ -176,11 +176,12 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
-            {member && (
+            {member ? (
               <p className="text-[11px] text-primary leading-tight mt-0.5">{member.naam}</p>
-            )}
-            {bl.coffeeshop && !member && (
+            ) : bl.coffeeshop ? (
               <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
+            ) : (
+              <p className="text-[11px] leading-tight mt-0.5">&nbsp;</p>
             )}
             <div className="flex flex-wrap items-center gap-x-3 mt-1">
               {bl.bondEmail && (
