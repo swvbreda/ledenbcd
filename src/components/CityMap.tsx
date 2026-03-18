@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import cityCoords from "@/data/cityCoords";
 
 interface CityMapProps {
-  cities: { naam: string; aantalLeden: number; aantalLocaties: number }[];
+  cities: { naam: string; aantalLeden: number; aantalLocaties: number; totaalNL?: number }[];
   onCityClick?: (city: string) => void;
 }
 
