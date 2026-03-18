@@ -95,10 +95,11 @@ const MarktaandeelPage = () => {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-medium w-[30%]">Stad</th>
-                <th className="text-right px-3 py-2 font-medium w-[15%]">Totaal</th>
-                <th className="text-right px-3 py-2 font-medium w-[15%]">BCD</th>
-                <th className="text-right px-3 py-2 font-medium w-[10%]">%</th>
-                <th className="px-3 py-2 w-[30%]"></th>
+                <th className="text-right px-3 py-2 font-medium w-[12%]">Totaal</th>
+                <th className="text-right px-3 py-2 font-medium w-[12%]">Leden</th>
+                <th className="text-right px-3 py-2 font-medium w-[12%]">Locaties</th>
+                <th className="text-right px-3 py-2 font-medium w-[8%]">%</th>
+                <th className="px-3 py-2 w-[26%]"></th>
               </tr>
             </thead>
             <tbody>
