@@ -193,6 +193,36 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                 </span>
               )}
             </div>
+
+            {/* Coffeeshop met locatie-icoon */}
+            {(member || bl.coffeeshop) && (() => {
+              let locations: string[] = [];
+              if (member) {
+                const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
+                locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
+              } else if (bl.coffeeshopPlaats) {
+                locations = bl.coffeeshopPlaats.split("/").map(s => s.trim());
+              }
+              return (
+                <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
+                  {member && (
+                    <p className="text-[11px] text-primary font-medium leading-tight">{member.naam}</p>
+                  )}
+                  {!member && bl.coffeeshop && (
+                    <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
+                  )}
+                  {locations.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                      {locations.map((city, i) => (
+                        <span key={i} className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                          <MapPin size={8} className="shrink-0 text-primary/60" />{city}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
