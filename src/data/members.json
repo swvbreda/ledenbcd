@@ -351,7 +351,10 @@
     "factuurAdres": "Stuivezandstraat 2",
     "factuurPostcode": "1058AL",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "204124801"
+    "factuurTelefoon": "204124801",
+    "contactpersoon2": "Marcel Moria",
+    "telefoon2": "31624806021",
+    "email2": "Boerejongens.marcel@outlook.com"
   },
   {
     "id": 10,
@@ -413,7 +416,10 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "06 20 87 87 87"
+    "factuurTelefoon": "06 20 87 87 87",
+    "contactpersoon2": "Yeliz Tarhan",
+    "telefoon2": "",
+    "email2": "abraxas.kantoor@gmail.com"
   },
   {
     "id": 12,
@@ -475,7 +481,11 @@
     "factuurAdres": "Oudezijds Voorburgwal 189",
     "factuurPostcode": "",
     "factuurPlaats": "1012 EW AMSTERDAM",
-    "factuurTelefoon": ""
+    "factuurTelefoon": "",
+    "contactpersoon2": "Sjahnaaz Kallan",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "06 21 27 27 00",
+    "functie2": "SjahnaazKallan@gmail.com"
   },
   {
     "id": 14,
@@ -505,7 +515,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "040 - 296 03 42"
+    "factuurTelefoon": "040 - 296 03 42",
+    "contactpersoon2": "Stef Couwenberg",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "06 11 39 69 86",
+    "functie2": "stef@thepink.nl"
   },
   {
     "id": 15,
@@ -565,7 +579,11 @@
     "factuurAdres": "Korfmakersstraat 2",
     "factuurPostcode": "",
     "factuurPlaats": "8911 LA LEEUWARDEN",
-    "factuurTelefoon": ""
+    "factuurTelefoon": "",
+    "contactpersoon2": "Guus Out Heleen Frees",
+    "telefoon2": "",
+    "email2": "",
+    "functie2": "outguus@hotmail.com"
   },
   {
     "id": 17,
@@ -626,7 +644,11 @@
     "factuurAdres": "Spaarndammerdijk 9",
     "factuurPostcode": "",
     "factuurPlaats": "1013 ZM AMSTERDAM",
-    "factuurTelefoon": "613500224"
+    "factuurTelefoon": "613500224",
+    "contactpersoon2": "Dennis de Vries",
+    "telefoon2": "",
+    "email2": "31613500224",
+    "functie2": ""
   },
   {
     "id": 20,
@@ -749,7 +771,10 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "31612039551"
+    "factuurTelefoon": "31612039551",
+    "contactpersoon2": "Dorine Buchener",
+    "telefoon2": "",
+    "email2": ""
   },
   {
     "id": 22,
@@ -780,7 +805,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "643175159"
+    "factuurTelefoon": "643175159",
+    "contactpersoon2": "Teun Oudejans",
+    "telefoon2": "Eigenaar",
+    "email2": "643175159",
+    "functie2": "info@coffeeshopdebroers.nl"
   },
   {
     "id": 23,
@@ -790,7 +819,7 @@
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Directie",
-    "functie": "",
+    "functie": "Manager",
     "telefoon": "06 11 68 45 55",
     "email": "m.elargoubi@hotmail.com",
     "bedrijfsnaam": "Nagtegaal",
@@ -811,7 +840,10 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "611684555"
+    "factuurTelefoon": "611684555",
+    "contactpersoon2": "Mustapha Elargoubi",
+    "telefoon2": "31611684555",
+    "email2": "m.elargoubi@hotmail.com"
   },
   {
     "id": 24,
@@ -852,7 +884,7 @@
     "jarenLid": 27,
     "oprichtingJaar": 1999,
     "contactpersoon": "Rachid Bahida",
-    "functie": "",
+    "functie": "Eigenaar",
     "telefoon": "06 53 49 32 58",
     "email": "rachid.kroon@outlook.com",
     "bedrijfsnaam": "De Kroon Twee",
@@ -873,7 +905,10 @@
     "factuurAdres": "Oudebrugsteeg 26",
     "factuurPostcode": "",
     "factuurPlaats": "1012 JP AMSTERDAM",
-    "factuurTelefoon": "06 53 49 32 58"
+    "factuurTelefoon": "06 53 49 32 58",
+    "contactpersoon2": "Rachid Bahida",
+    "telefoon2": "31653493258",
+    "email2": "rachid.kroon@outlook.com"
   },
   {
     "id": 26,
@@ -963,7 +998,11 @@
     "factuurAdres": "Botersloot 7",
     "factuurPostcode": "",
     "factuurPlaats": "3011 HE ROTTERDAM",
-    "factuurTelefoon": "629009299"
+    "factuurTelefoon": "629009299",
+    "contactpersoon2": "Mo Embarki",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31629009299",
+    "functie2": "info@tref.com"
   },
   {
     "id": 29,
@@ -1092,7 +1131,7 @@
     "jarenLid": 9,
     "oprichtingJaar": 2017,
     "contactpersoon": "Mauro Moro",
-    "functie": "",
+    "functie": "Bedrijfsleider",
     "telefoon": "06 22 98 72 23",
     "email": "facturen@familyfirstamsterdam.com",
     "bedrijfsnaam": "Family First",
@@ -1113,7 +1152,11 @@
     "factuurAdres": "Amstel 36",
     "factuurPostcode": "",
     "factuurPlaats": "1017 AB AMSTERDAM",
-    "factuurTelefoon": "622987223"
+    "factuurTelefoon": "622987223",
+    "contactpersoon2": "Mauro Moro",
+    "telefoon2": "",
+    "email2": "",
+    "functie2": ""
   },
   {
     "id": 34,
@@ -1123,7 +1166,7 @@
     "jarenLid": 13,
     "oprichtingJaar": 2013,
     "contactpersoon": "Jawi",
-    "functie": "",
+    "functie": "Bedrijfsleider",
     "telefoon": "02 06 22 52 32",
     "email": "info@coffeeshopbluebird.nl",
     "bedrijfsnaam": "Blue Bird Horeca BV",
@@ -1144,7 +1187,10 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "020- 622 52 32"
+    "factuurTelefoon": "020- 622 52 32",
+    "contactpersoon2": "Jawi Heij",
+    "telefoon2": "",
+    "email2": ""
   },
   {
     "id": 35,
@@ -1175,7 +1221,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "06 - 54 27 16 76"
+    "factuurTelefoon": "06 - 54 27 16 76",
+    "contactpersoon2": "Jason den Enting",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31654271676",
+    "functie2": "jason@dampkring.amsterdam"
   },
   {
     "id": 36,
@@ -1295,7 +1345,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "623465512"
+    "factuurTelefoon": "623465512",
+    "contactpersoon2": "Jos Nieuwerth",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31623465512",
+    "functie2": ""
   },
   {
     "id": 40,
@@ -1355,7 +1409,11 @@
     "factuurAdres": "Havenstraatpassage 44-46",
     "factuurPostcode": "",
     "factuurPlaats": "7511 EX ENSCHEDE",
-    "factuurTelefoon": "(06) 48 56 80 81"
+    "factuurTelefoon": "(06) 48 56 80 81",
+    "contactpersoon2": "Tugrulhan",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31648568081",
+    "functie2": "fmailmix@gmail.com"
   },
   {
     "id": 42,
@@ -1386,7 +1444,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "(062) 4277720"
+    "factuurTelefoon": "(062) 4277720",
+    "contactpersoon2": "Reslyn Brinkman",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "",
+    "functie2": "reslyn_1983@hotmail.com"
   },
   {
     "id": 43,
@@ -1427,7 +1489,7 @@
     "jarenLid": 9,
     "oprichtingJaar": 2017,
     "contactpersoon": "Dirk Peereboom",
-    "functie": "",
+    "functie": "Bedrijfsleider",
     "telefoon": "06 22 41 17 05",
     "email": "dpeerboom@icloud.com",
     "bedrijfsnaam": "Papeby Beheer BV",
@@ -1447,7 +1509,11 @@
     "factuurAdres": "Brusselsestraat 146 a",
     "factuurPostcode": "",
     "factuurPlaats": "6211 PJ MAASTRICHT",
-    "factuurTelefoon": "06 - 22 41 17 05"
+    "factuurTelefoon": "06 - 22 41 17 05",
+    "contactpersoon2": "Dirk Peereboom",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31622411705",
+    "functie2": "dpeerboom@icloud.com"
   },
   {
     "id": 45,
@@ -1508,7 +1574,11 @@
     "factuurAdres": "Amstelveenseweg 1160",
     "factuurPostcode": "",
     "factuurPlaats": "1081 JW AMSTERDAM",
-    "factuurTelefoon": "(020) 6420681"
+    "factuurTelefoon": "(020) 6420681",
+    "contactpersoon2": "Brian Spaander",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31624209459",
+    "functie2": "ericschaay@gmail.com, spaander@me.com, brian@theborder.nl"
   },
   {
     "id": 47,
@@ -1538,7 +1608,11 @@
     "factuurAdres": "Lange Groenendaal 102",
     "factuurPostcode": "",
     "factuurPlaats": "2801 LV GOUDA",
-    "factuurTelefoon": ""
+    "factuurTelefoon": "",
+    "contactpersoon2": "Sirun Das",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "",
+    "functie2": "minicooper30@hotmail.com"
   },
   {
     "id": 48,
@@ -1691,7 +1765,11 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "(020) 6752617"
+    "factuurTelefoon": "(020) 6752617",
+    "contactpersoon2": "Appie",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "31616819040",
+    "functie2": "appie@katsu.nl"
   },
   {
     "id": 53,
@@ -1783,7 +1861,11 @@
     "factuurAdres": "J. P. Heijestraat 82",
     "factuurPostcode": "",
     "factuurPlaats": "1053 GS AMSTERDAM",
-    "factuurTelefoon": "(061) 0756298"
+    "factuurTelefoon": "(061) 0756298",
+    "contactpersoon2": "Kiek Wouda",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "",
+    "functie2": "kiekwou534@msn.com"
   },
   {
     "id": 56,
@@ -1814,7 +1896,11 @@
     "factuurAdres": "Nieuwmarkt 12",
     "factuurPostcode": "",
     "factuurPlaats": "1012 CR AMSTERDAM",
-    "factuurTelefoon": "06 11 92 70 92"
+    "factuurTelefoon": "06 11 92 70 92",
+    "contactpersoon2": "Roy",
+    "telefoon2": "Bedrijfsleider",
+    "email2": "06 34 49 59 02",
+    "functie2": ""
   },
   {
     "id": 57,
@@ -1859,7 +1945,10 @@
     "factuurAdres": "",
     "factuurPostcode": "",
     "factuurPlaats": "",
-    "factuurTelefoon": "06 25 01 76 36"
+    "factuurTelefoon": "06 25 01 76 36",
+    "contactpersoon2": "Silver Graven",
+    "telefoon2": "31625017636",
+    "email2": "silver@kadinsky.nl"
   },
   {
     "id": 60,
@@ -1896,7 +1985,10 @@
     "factuurAdres": "Brouwersgracht 137",
     "factuurPostcode": "",
     "factuurPlaats": "1015 GE AMSTERDAM",
-    "factuurTelefoon": ""
+    "factuurTelefoon": "",
+    "contactpersoon2": "Lolita Teleng van de Graaf",
+    "telefoon2": "31630932966",
+    "email2": ""
   },
   {
     "id": 61,
@@ -1986,7 +2078,10 @@
     "factuurAdres": "Neutronweg 11",
     "factuurPostcode": "1627 LG",
     "factuurPlaats": "Hoorn",
-    "factuurTelefoon": "06 29 53 25 85"
+    "factuurTelefoon": "06 29 53 25 85",
+    "contactpersoon2": "Johnny Elbers",
+    "telefoon2": "",
+    "email2": "bluetomato@xs4all.nl"
   },
   {
     "id": 64,
@@ -2395,7 +2490,10 @@
     "factuurAdres": "Tamboerstraat 12 B",
     "factuurPostcode": "3034 PV",
     "factuurPlaats": "Rotterdam",
-    "factuurTelefoon": "06 52 21 48 83"
+    "factuurTelefoon": "06 52 21 48 83",
+    "contactpersoon2": "Said Bouazzata",
+    "telefoon2": "06 21 99 19 39",
+    "email2": "info@topadmini.nl"
   },
   {
     "id": 77,
@@ -2547,7 +2645,10 @@
     "factuurAdres": "Nieuwmarkt 4a",
     "factuurPostcode": "1012 CR",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "02 02 23 55 62"
+    "factuurTelefoon": "02 02 23 55 62",
+    "contactpersoon2": "Sarah van der Hoorn",
+    "telefoon2": "31624747020",
+    "email2": ""
   },
   {
     "id": 82,
@@ -2607,7 +2708,10 @@
     "factuurAdres": "Vlaamsegas 30",
     "factuurPostcode": "6511 HR",
     "factuurPlaats": "Nijmegen",
-    "factuurTelefoon": "06 54 95 08 50"
+    "factuurTelefoon": "06 54 95 08 50",
+    "contactpersoon2": "Stan Esmeijer",
+    "telefoon2": "+31 6 21246966",
+    "email2": "stan@kronkel.nl"
   },
   {
     "id": 84,
@@ -2697,7 +2801,10 @@
     "factuurAdres": "Krocht 8",
     "factuurPostcode": "2011 PT",
     "factuurPlaats": "Haarlem",
-    "factuurTelefoon": "30 69 74 66 39 29"
+    "factuurTelefoon": "30 69 74 66 39 29",
+    "contactpersoon2": "Chelsea & Sil (moeder Hus)",
+    "telefoon2": "31 6 46885981 31611203950",
+    "email2": ""
   },
   {
     "id": 87,
@@ -2849,7 +2956,10 @@
     "factuurAdres": "Verheeskade 30",
     "factuurPostcode": "2521 BN",
     "factuurPlaats": "Den Haag",
-    "factuurTelefoon": "06 21 27 41 43"
+    "factuurTelefoon": "06 21 27 41 43",
+    "contactpersoon2": "Judith van Rijn",
+    "telefoon2": "31643197040",
+    "email2": ""
   },
   {
     "id": 92,
@@ -2940,7 +3050,10 @@
     "factuurAdres": "Munterstraat 4",
     "factuurPostcode": "6811 GP",
     "factuurPlaats": "Arnhem",
-    "factuurTelefoon": ""
+    "factuurTelefoon": "",
+    "contactpersoon2": "Sankara Derksen, Sander Plamont",
+    "telefoon2": "31613659391, 31642528679",
+    "email2": "jointventure026@gmail.com, Sanderplamont@gmail.com"
   },
   {
     "id": 95,
@@ -3159,7 +3272,10 @@
     "factuurAdres": "Voorstraat 81",
     "factuurPostcode": "3512 AL",
     "factuurPlaats": "Utrecht",
-    "factuurTelefoon": "03 02 30 20 39"
+    "factuurTelefoon": "03 02 30 20 39",
+    "contactpersoon2": "Jeffrey van Eijndt",
+    "telefoon2": "31627442423",
+    "email2": "jeff_eijndt@hotmail.com"
   },
   {
     "id": 102,
@@ -3233,7 +3349,10 @@
     "factuurAdres": "Haringpakkerssteeg 3",
     "factuurPostcode": "1012 LR",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "06 55 76 23 84"
+    "factuurTelefoon": "06 55 76 23 84",
+    "contactpersoon2": "Youri",
+    "telefoon2": "31645990260",
+    "email2": ""
   },
   {
     "id": 104,
@@ -3355,7 +3474,10 @@
     "factuurAdres": "Westerstraat 121",
     "factuurPostcode": "1015 LZ",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "06 46 30 00 68"
+    "factuurTelefoon": "06 46 30 00 68",
+    "contactpersoon2": "Willem van den Berg",
+    "telefoon2": "31646300068",
+    "email2": "Spiritamsterdam@protonmail.com"
   },
   {
     "id": 108,
@@ -3489,7 +3611,10 @@
     "factuurAdres": "Meint Veningastraat 74",
     "factuurPostcode": "9601 KH",
     "factuurPlaats": "Hoogezand",
-    "factuurTelefoon": "06 83 19 80 73"
+    "factuurTelefoon": "06 83 19 80 73",
+    "contactpersoon2": "Sarah Plenter",
+    "telefoon2": "31683198073",
+    "email2": ""
   },
   {
     "id": 112,
@@ -3651,7 +3776,10 @@
     "factuurAdres": "Molukkenstraat 581",
     "factuurPostcode": "1095 BJ",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "(063) 0379701"
+    "factuurTelefoon": "(063) 0379701",
+    "contactpersoon2": "Patrick de Vries",
+    "telefoon2": "31611119992",
+    "email2": ""
   },
   {
     "id": 116,
@@ -3713,6 +3841,9 @@
     "factuurAdres": "Geldersekade 2",
     "factuurPostcode": "1012 BH",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "06 41 80 09 32"
+    "factuurTelefoon": "06 41 80 09 32",
+    "contactpersoon2": "Hussein Ali Pour",
+    "telefoon2": "31641800932",
+    "email2": ""
   }
 ]
