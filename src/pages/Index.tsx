@@ -1,17 +1,12 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import StatCards from "@/components/StatCards";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
-import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
-import StedenDekkingOverzicht from "@/components/StedenDekkingOverzicht";
+import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
 import { allMembers } from "@/hooks/useMembers";
 
 const Index = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div>
@@ -30,10 +25,7 @@ const Index = () => {
         <LidmaatschapsduurChart members={allMembers} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <LedenPerStadOverzicht members={allMembers} />
-        <StedenDekkingOverzicht members={allMembers} />
-      </div>
+      <GemeentenOverzicht members={allMembers} />
 
       <JubileumOverzicht members={allMembers} />
     </div>
