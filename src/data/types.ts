@@ -48,4 +48,5 @@ export interface Member {
   facebook?: string;
   googleMaps?: string;
   bestuursfunctie?: string;
+  oprichter?: boolean;
 }

@@ -44,6 +44,11 @@ const MemberDetail = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
             <h2 className="text-xl sm:text-2xl font-bold font-display">{member.naam}</h2>
+            {member.oprichter && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-xs font-semibold">
+                ★ Oprichter BCD
+              </span>
+            )}
             {member.bestuursfunctie && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent/15 text-accent-foreground rounded-md text-xs font-semibold">
                 <Shield size={13} />
