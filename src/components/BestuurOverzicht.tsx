@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone, MapPin, User, Camera, Home, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
@@ -45,22 +45,11 @@ const aspiranten: BestuurslidData[] = [
 const slugify = (name: string) =>
   name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
-const getCities = (member?: Member): string[] => {
-  if (!member) return [];
-  const cities = new Set<string>();
-  for (const loc of member.locaties) {
-    const plaats = loc.plaats || member.plaats;
-    if (plaats) cities.add(plaats);
-  }
-  return Array.from(cities).sort();
-};
-
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const allBestuursleden = [...bestuursleden, ...aspiranten];
@@ -135,125 +124,86 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return false;
   };
 
-  const canSeePrivate = isAdmin || !!currentUserBoardMember;
-
   const renderCard = (bl: BestuurslidData, isAspirant = false) => {
     const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
     const photo = getPhoto(bl);
     const showUpload = canUpload(bl);
-    const isExpanded = expanded === bl.naam;
 
     return (
       <div
         key={bl.naam}
-        className={`border border-border rounded-md p-3 transition-colors ${
-          isAspirant ? "border-dashed" : ""
-        }`}
+        className={`group flex items-center gap-4 rounded-lg border p-3 transition-colors ${
+          isAspirant ? "border-dashed border-border" : "border-border"
+        } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
+        onClick={() => member && navigate(`/leden/${member.id}`)}
       >
-        <div
-          className={`flex items-start gap-3 flex-row-reverse ${member ? "cursor-pointer" : ""}`}
-          onClick={() => member && navigate(`/leden/${member.id}`)}
-        >
-          <div className="relative shrink-0">
-            {photo ? (
-              <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <User size={22} className="text-muted-foreground" />
-              </div>
-            )}
-            {showUpload && (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpload(bl.naam, file);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRefs.current[bl.naam]?.click();
-                  }}
-                  disabled={uploading === bl.naam}
-                  className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
-                  title="Foto uploaden"
-                >
-                  <Camera size={10} />
-                </button>
-              </>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-sm">{bl.naam}</p>
-            <p className="text-xs text-muted-foreground">{bl.functie}</p>
-          </div>
+        {/* Photo */}
+        <div className="relative shrink-0">
+          {photo ? (
+            <img src={photo} alt={bl.naam} className="w-12 h-12 rounded-full object-cover ring-2 ring-border" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center ring-2 ring-border">
+              <User size={20} className="text-muted-foreground/60" />
+            </div>
+          )}
+          {showUpload && (
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(bl.naam, file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRefs.current[bl.naam]?.click();
+                }}
+                disabled={uploading === bl.naam}
+                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
+                title="Foto uploaden"
+              >
+                <Camera size={10} />
+              </button>
+            </>
+          )}
         </div>
 
-        {member && (
-          <p className="text-xs text-primary mt-1.5 cursor-pointer" onClick={() => navigate(`/leden/${member.id}`)}>{member.naam}</p>
-        )}
-        {bl.coffeeshop && !member && (
-          <p className="text-xs text-primary mt-1.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
-        )}
-        {bl.privePlaats && !canSeePrivate && (
-          <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-            <MapPin size={11} className="shrink-0" />
-            {bl.privePlaats}
-          </p>
-        )}
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-sm leading-tight">{bl.naam}</p>
+          <p className="text-xs text-muted-foreground">{bl.functie}</p>
+          {member && (
+            <p className="text-xs text-primary mt-0.5">{member.naam}</p>
+          )}
+          {bl.coffeeshop && !member && (
+            <p className="text-xs text-primary mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
+          )}
+        </div>
 
-        <div className="mt-2 space-y-0.5">
+        {/* Contact — right side */}
+        <div className="shrink-0 text-right space-y-0.5">
           {bl.bondEmail && (
             <a
               href={`mailto:${bl.bondEmail}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 text-xs text-primary hover:underline transition-colors"
+              className="flex items-center justify-end gap-1.5 text-xs text-primary hover:underline transition-colors"
             >
-              <Mail size={11} /> {bl.bondEmail}
+              <span className="hidden lg:inline">{bl.bondEmail}</span>
+              <Mail size={12} className="lg:hidden" />
             </a>
           )}
           {bl.telefoon && (
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Phone size={11} /> {bl.telefoon}
+            <p className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
+              {bl.telefoon}
             </p>
           )}
         </div>
-
-        {/* Private details - only for logged-in board members / admins */}
-        {canSeePrivate && bl.priveAdres && (
-          <div className="mt-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(isExpanded ? null : bl.naam);
-              }}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Home size={11} />
-              <span>Privégegevens</span>
-              {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            </button>
-            {isExpanded && (
-              <div className="mt-1.5 pl-4 space-y-0.5 text-xs text-muted-foreground border-l-2 border-border">
-                <p>{bl.priveAdres}</p>
-                {bl.privePostcode && <p>{bl.privePostcode} {bl.privePlaats}</p>}
-                {!bl.privePostcode && bl.privePlaats && <p>{bl.privePlaats}</p>}
-                {bl.email && (
-                  <a href={`mailto:${bl.email}`} onClick={(e) => e.stopPropagation()} className="block text-primary hover:underline">
-                    {bl.email}
-                  </a>
-                )}
-                {bl.geboortedatum && <p>Geb. {bl.geboortedatum}</p>}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   };
@@ -267,17 +217,19 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         </h3>
         <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
+      <div className="space-y-2">
         {bestuursleden.map((bl) => renderCard(bl))}
       </div>
 
       {aspiranten.length > 0 && (
         <>
-          <h4 className="text-xs font-semibold font-display flex items-center gap-2 mt-5 mb-3 text-muted-foreground uppercase tracking-wider">
-            <Users size={14} />
-            Aspirant
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="flex items-center gap-2 mt-5 mb-3">
+            <Users size={13} className="text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="space-y-2">
             {aspiranten.map((bl) => renderCard(bl, true))}
           </div>
         </>
