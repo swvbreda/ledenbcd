@@ -260,30 +260,6 @@
     "factuurEmail": "joahelms@gmail.com"
   },
   {
-    "id": 61,
-    "naam": "Strain Hunters",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Centrum",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Strain Hunters",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Strain Hunters",
-        "plaats": "Amsterdam",
-        "adres": "Singel 387",
-        "postcode": "1012 WN",
-        "stadsdeel": "Centrum"
-      }
-    ],
-    "contacten": []
-  },
-  {
     "id": 6,
     "naam": "Chapiteau",
     "plaats": "Amsterdam",
@@ -583,14 +559,14 @@
     "aantalLocaties": 2,
     "locaties": [
       {
-        "naam": "Terps Army",
+        "naam": "Terps Army 1",
         "plaats": "Amsterdam",
         "adres": "Nieuwe Nieuwstraat 32HS",
         "postcode": "1012 NH",
         "stadsdeel": "Centrum"
       },
       {
-        "naam": "Terps Army",
+        "naam": "Terps Army 2",
         "plaats": "Amsterdam",
         "adres": "Zieseniskade 22",
         "postcode": "1017 RT",
@@ -965,46 +941,6 @@
     "factuurKvk": "72163186",
     "factuurPostcode": "1013 ZM",
     "factuurEmail": "thecorner.bv@gmail.com"
-  },
-  {
-    "id": 19,
-    "naam": "Sensimilla",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Nieuw West",
-    "jarenLid": 45,
-    "oprichtingJaar": 1981,
-    "contactpersoon": "Appie el Hajjiou",
-    "functie": "Eigenaar",
-    "telefoon": "06 39 00 20 30",
-    "email": "stuurhetmij@icloud.com",
-    "bedrijfsnaam": "Sensimilla",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Sensimilla",
-        "plaats": "Amsterdam",
-        "adres": "Meer en Vaart 177A",
-        "postcode": "1068 LA",
-        "stadsdeel": "Nieuw West"
-      }
-    ],
-    "contacten": [
-      {
-        "naam": "Appie el Hajjiou",
-        "functie": "Eigenaar",
-        "telefoon": "06 39 00 20 30",
-        "email": "stuurhetmij@icloud.com"
-      }
-    ],
-    "oprichtingsDatum": "1981-01-01",
-    "kvk": "34191840",
-    "factuurTelefoon": "639002030",
-    "factuurBedrijfsnaam": "Sensimilla",
-    "factuurKvk": "34191840",
-    "factuurAdres": "Meer en Vaart 177 B",
-    "factuurPostcode": "1068 LA",
-    "factuurPlaats": "Amsterdam",
-    "factuurEmail": "stuurhetmij@icloud.com"
   },
   {
     "id": 20,
@@ -2648,13 +2584,27 @@
     "telefoon": "06 54 77 51 31",
     "email": "hans@kadinsky.nl",
     "bedrijfsnaam": "Fortune BV",
-    "aantalLocaties": 1,
+    "aantalLocaties": 3,
     "locaties": [
       {
         "naam": "Kadinsky",
         "plaats": "Amsterdam",
         "adres": "Langebrugsteeg 7A",
         "postcode": "1012 GB",
+        "stadsdeel": "Centrum"
+      },
+      {
+        "naam": "Kadinsky",
+        "plaats": "Amsterdam",
+        "adres": "Rosmarijnsteeg 9",
+        "postcode": "1012 RP",
+        "stadsdeel": "Centrum"
+      },
+      {
+        "naam": "Kadinsky",
+        "plaats": "Amsterdam",
+        "adres": "Zoutsteeg 14",
+        "postcode": "1012 LX",
         "stadsdeel": "Centrum"
       }
     ],
@@ -2664,38 +2614,7 @@
         "functie": "Eigenaar",
         "telefoon": "06 54 77 51 31",
         "email": "hans@kadinsky.nl"
-      }
-    ],
-    "factuurBedrijfsnaam": "Fortune BV",
-    "factuurTelefoon": "06 25 01 76 36",
-    "factuurAdres": "Zoutsteeg 14 1hoog",
-    "factuurPostcode": "1012 LX",
-    "factuurPlaats": "Amsterdam",
-    "factuurEmail": "hans@kadinsky.nl"
-  },
-  {
-    "id": 58,
-    "naam": "Kadinsky",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Centrum",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "Silver Graven",
-    "functie": "Bedrijfsleider",
-    "telefoon": "06 25 01 76 36",
-    "email": "silver@kadinsky.nl",
-    "bedrijfsnaam": "Kadinsky",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Kadinsky",
-        "plaats": "Amsterdam",
-        "adres": "Rosmarijnsteeg 9",
-        "postcode": "1012 RP",
-        "stadsdeel": "Centrum"
-      }
-    ],
-    "contacten": [
+      },
       {
         "naam": "Silver Graven",
         "functie": "Bedrijfsleider",
@@ -2703,36 +2622,6 @@
         "email": "silver@kadinsky.nl"
       }
     ],
-    "factuurBedrijfsnaam": "Fortune BV",
-    "factuurTelefoon": "06 25 01 76 36",
-    "factuurAdres": "Zoutsteeg 14 1hoog",
-    "factuurPostcode": "1012 LX",
-    "factuurPlaats": "Amsterdam",
-    "factuurEmail": "hans@kadinsky.nl"
-  },
-  {
-    "id": 59,
-    "naam": "Kadinsky",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Centrum",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Kadinsky",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Kadinsky",
-        "plaats": "Amsterdam",
-        "adres": "Zoutsteeg 14",
-        "postcode": "1012 LX",
-        "stadsdeel": "Centrum"
-      }
-    ],
-    "contacten": [],
     "factuurBedrijfsnaam": "Fortune BV",
     "factuurTelefoon": "06 25 01 76 36",
     "factuurAdres": "Zoutsteeg 14 1hoog",
@@ -3335,30 +3224,6 @@
     "factuurBedrijfsnaam": "Prix d'Ami",
     "factuurPostcode": "1012 LR",
     "factuurEmail": "lesley.bijlsma@orisflex.nl"
-  },
-  {
-    "id": 81,
-    "naam": "The Noon",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Centrum",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "The Noon",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "The Noon",
-        "plaats": "Amsterdam",
-        "adres": "Zieseniskade 22",
-        "postcode": "1017 RT",
-        "stadsdeel": "Centrum"
-      }
-    ],
-    "contacten": []
   },
   {
     "id": 82,
