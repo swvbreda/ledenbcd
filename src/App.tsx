@@ -13,6 +13,7 @@ import LedenPage from "./pages/LedenPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import StatistiekenPage from "./pages/StatistiekenPage";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <SidebarProvider>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route
                 element={
                   <ProtectedRoute>
