@@ -2,7 +2,7 @@ import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
 import ExportButton from "@/components/ExportButton";
-import { useMembers } from "@/hooks/useMembers";
+import { useMembers, allMembers as membersOnly, allLeads } from "@/hooks/useMembers";
 
 const LedenPage = () => {
   const {
