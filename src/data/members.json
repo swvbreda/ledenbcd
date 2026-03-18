@@ -4563,5 +4563,55 @@
     "factuurPostcode": "3035ER",
     "factuurPlaats": "Rotterdam",
     "factuurEmail": "nultien_rotterdam@hotmail.com"
+  },
+  {
+    "id": 119,
+    "naam": "Out of time",
+    "plaats": "Rotterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": 1982,
+    "contactpersoon": "Ger Dekker",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "info@outoftime.nl",
+    "bedrijfsnaam": "Sunny Time Bv",
+    "aantalLocaties": 2,
+    "locaties": [
+      {
+        "naam": "Out of Time",
+        "plaats": "Rotterdam",
+        "adres": "Nieuwe Binnenweg 363",
+        "postcode": "3023 GH"
+      },
+      {
+        "naam": "Out of Time's Puck",
+        "plaats": "Rotterdam",
+        "adres": "Sandelingplein 2",
+        "postcode": "3075 EH"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Ger Dekker",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "info@outoftime.nl"
+      },
+      {
+        "naam": "Iris Dekker",
+        "functie": "",
+        "telefoon": "",
+        "email": "Iris@outoftime.nl"
+      }
+    ],
+    "oprichtingsDatum": "1982-11-30",
+    "kvk": "54085527",
+    "factuurBedrijfsnaam": "Sunny Time Bv",
+    "factuurKvk": "54085527",
+    "factuurAdres": "Nieuwe Binnenweg 363",
+    "factuurPostcode": "3023 EJ",
+    "factuurPlaats": "Rotterdam",
+    "factuurEmail": "info@outoftime.nl"
   }
 ]
