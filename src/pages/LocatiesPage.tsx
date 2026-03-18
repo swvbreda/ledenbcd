@@ -8,11 +8,17 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
 
+interface StadsdeelData {
+  naam: string;
+  aantalLocaties: number;
+}
+
 interface CityData {
   naam: string;
   aantalLeden: number;
   aantalLocaties: number;
   leden: { id: number; naam: string; aantalLocaties: number }[];
+  stadsdelen: StadsdeelData[];
   totaalNL: number;
   marktPct: number;
 }
