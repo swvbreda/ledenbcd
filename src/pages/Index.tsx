@@ -4,6 +4,7 @@ import StatCards from "@/components/StatCards";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
+import StedenDekkingOverzicht from "@/components/StedenDekkingOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
 import { allMembers } from "@/hooks/useMembers";
@@ -29,7 +30,10 @@ const Index = () => {
         <LidmaatschapsduurChart members={allMembers} />
       </div>
 
-      <LedenPerStadOverzicht members={allMembers} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <LedenPerStadOverzicht members={allMembers} />
+        <StedenDekkingOverzicht members={allMembers} />
+      </div>
 
       <JubileumOverzicht members={allMembers} />
     </div>
