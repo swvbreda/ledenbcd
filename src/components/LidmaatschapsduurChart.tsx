@@ -1,7 +1,7 @@
 import verloopData from "@/data/verloop.json";
 
 const periods = [
-  { label: "Oprichting", range: "2005", start: 2005, end: 2005 },
+  { label: "Eerste registratie", range: "2005", start: 2005, end: 2005 },
   { label: "Groei", range: "2006–2010", start: 2006, end: 2010 },
   { label: "Stabiel", range: "2011–2015", start: 2011, end: 2015 },
   { label: "Groei", range: "2016–2020", start: 2016, end: 2020 },
@@ -25,7 +25,7 @@ const LidmaatschapsduurChart = () => {
     <div className="bg-card rounded-lg border border-border p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Ledengroei per periode</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Van {first} naar {current} leden sinds 2005
+        BCD opgericht in 1994 · Van {first} naar {current} leden geregistreerd sinds 2005
       </p>
 
       <div className="space-y-3">
