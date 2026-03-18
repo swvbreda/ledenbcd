@@ -8,7 +8,7 @@
     "oprichtingJaar": 1975,
     "contactpersoon": "Henk de Vries",
     "functie": "Eigenaar",
-    "telefoon": "31653244418",
+    "telefoon": "06 53 24 44 18",
     "email": "hjmdevries@hotmail.com",
     "bedrijfsnaam": "Leidseplein beheer B.V.",
     "aantalLocaties": 5,
@@ -51,13 +51,13 @@
       {
         "naam": "Henk de Vries",
         "functie": "Eigenaar",
-        "telefoon": "31653244418",
+        "telefoon": "06 53 24 44 18",
         "email": "hjmdevries@hotmail.com"
       },
       {
         "naam": "Michel de Vries",
         "functie": "Bestuur",
-        "telefoon": "31651311153",
+        "telefoon": "06 51 31 11 53",
         "email": "mjcdevries@hotmail.com"
       },
       {
@@ -70,7 +70,7 @@
     "oprichtingsDatum": "1975-11-15",
     "factuurEmail": "administratie@leidsepleinbeheer.nl",
     "factuurBedrijfsnaam": "Leidseplein beheer B.V.",
-    "factuurTelefoon": "(065) 3244418",
+    "factuurTelefoon": "06 53 24 44 18",
     "oprichter": true
   },
   {
@@ -105,7 +105,7 @@
     ],
     "factuurAdres": "Nieuwe Herengracht 71 hs",
     "factuurPlaats": "1011 RR AMSTERDAM",
-    "factuurTelefoon": "(020) 4223134"
+    "factuurTelefoon": "020 422 31 34"
   },
   {
     "id": 3,
@@ -116,7 +116,7 @@
     "oprichtingJaar": 1991,
     "contactpersoon": "Kenneth Westerborg",
     "functie": "Eigenaar",
-    "telefoon": "31652854221",
+    "telefoon": "06 52 85 42 21",
     "email": "k.westerborg@xs4all.nl",
     "bedrijfsnaam": "Get Down",
     "aantalLocaties": 1,
@@ -133,7 +133,7 @@
       {
         "naam": "Kenneth Westerborg",
         "functie": "Eigenaar",
-        "telefoon": "31652854221",
+        "telefoon": "06 52 85 42 21",
         "email": "k.westerborg@xs4all.nl"
       }
     ],
@@ -150,7 +150,7 @@
     "oprichtingJaar": 1984,
     "contactpersoon": "Huub van den Brink",
     "functie": "",
-    "telefoon": "31653229120",
+    "telefoon": "06 53 22 91 20",
     "email": "huub@splif.nl",
     "bedrijfsnaam": "Coffeeshop Splif",
     "aantalLocaties": 1,
@@ -166,7 +166,7 @@
       {
         "naam": "Huub van den Brink",
         "functie": "",
-        "telefoon": "31653229120",
+        "telefoon": "06 53 22 91 20",
         "email": "huub@splif.nl"
       }
     ],
@@ -185,7 +185,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Joachim Helms",
     "functie": "Eigenaar",
-    "telefoon": "31655867690",
+    "telefoon": "06 55 86 76 90",
     "email": "joahelms@gmail.com",
     "bedrijfsnaam": "Penultimate III BV.",
     "aantalLocaties": 3,
@@ -216,12 +216,12 @@
       {
         "naam": "Joachim Helms",
         "functie": "Eigenaar",
-        "telefoon": "31655867690",
+        "telefoon": "06 55 86 76 90",
         "email": "joahelms@gmail.com"
       }
     ],
     "factuurBedrijfsnaam": "Penultimate III BV.",
-    "factuurTelefoon": "(06) 55 86 76 90"
+    "factuurTelefoon": "06 55 86 76 90"
   },
   {
     "id": 61,
@@ -256,7 +256,7 @@
     "oprichtingJaar": 1984,
     "contactpersoon": "Andre van Houten",
     "functie": "Eigenaar",
-    "telefoon": "31655811272",
+    "telefoon": "06 55 81 12 72",
     "email": "dre509@hotmail.com",
     "bedrijfsnaam": "Chapiteau Amsterdam BV",
     "aantalLocaties": 1,
@@ -273,14 +273,14 @@
       {
         "naam": "Andre van Houten",
         "functie": "Eigenaar",
-        "telefoon": "31655811272",
+        "telefoon": "06 55 81 12 72",
         "email": "dre509@hotmail.com"
       }
     ],
     "oprichtingsDatum": "1984-09-01",
     "kvk": "68451954",
     "factuurBedrijfsnaam": "Chapiteau Amsterdam BV",
-    "factuurTelefoon": "06- 55811272"
+    "factuurTelefoon": "06 55 81 12 72"
   },
   {
     "id": 7,
@@ -291,7 +291,7 @@
     "oprichtingJaar": 1981,
     "contactpersoon": "Appie el Hajjiou",
     "functie": "Eigenaar",
-    "telefoon": "31639002030",
+    "telefoon": "06 39 00 20 30",
     "email": "stuurhetmij@icloud.com",
     "bedrijfsnaam": "Sensimilla",
     "aantalLocaties": 1,
@@ -308,7 +308,7 @@
       {
         "naam": "Appie el Hajjiou",
         "functie": "Eigenaar",
-        "telefoon": "31639002030",
+        "telefoon": "06 39 00 20 30",
         "email": "stuurhetmij@icloud.com"
       }
     ],
@@ -325,7 +325,7 @@
     "oprichtingJaar": 2002,
     "contactpersoon": "Bernard van Nierop",
     "functie": "Eigenaar",
-    "telefoon": "31625262730",
+    "telefoon": "06 25 26 27 30",
     "email": "info@coffeeshop-relax.nl",
     "bedrijfsnaam": "Horeca maatschappij relax centrum",
     "aantalLocaties": 2,
@@ -349,7 +349,7 @@
       {
         "naam": "Bernard van Nierop",
         "functie": "Eigenaar",
-        "telefoon": "31625262730",
+        "telefoon": "06 25 26 27 30",
         "email": "info@coffeeshop-relax.nl"
       }
     ],
@@ -423,7 +423,7 @@
       {
         "naam": "Marcel Moria",
         "functie": "Bedrijfsleider",
-        "telefoon": "31624806021",
+        "telefoon": "06 24 80 60 21",
         "email": "Boerejongens.marcel@outlook.com"
       },
       {
@@ -450,7 +450,7 @@
     "oprichtingJaar": 1995,
     "contactpersoon": "Dennis van der Tien",
     "functie": "Eigenaar",
-    "telefoon": "31621294893",
+    "telefoon": "06 21 29 48 93",
     "email": "Dennis@Happyfeelingsamsterdam.nl",
     "bedrijfsnaam": "Happy Feelings",
     "aantalLocaties": 1,
@@ -467,14 +467,14 @@
       {
         "naam": "Dennis van der Tien",
         "functie": "Eigenaar",
-        "telefoon": "31621294893",
+        "telefoon": "06 21 29 48 93",
         "email": "Dennis@Happyfeelingsamsterdam.nl"
       }
     ],
     "factuurAdres": "Kerkstraat 51",
     "factuurPostcode": "1017 GC",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "(062) 1294893"
+    "factuurTelefoon": "06 21 29 48 93"
   },
   {
     "id": 11,
@@ -485,7 +485,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Erol",
     "functie": "",
-    "telefoon": "31653131296",
+    "telefoon": "06 53 13 12 96",
     "email": "s.ardic@live.com",
     "bedrijfsnaam": "Abraxas",
     "aantalLocaties": 1,
@@ -502,7 +502,7 @@
       {
         "naam": "Erol",
         "functie": "",
-        "telefoon": "31653131296",
+        "telefoon": "06 53 13 12 96",
         "email": "s.ardic@live.com"
       },
       {
@@ -568,7 +568,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Jimmy Lin",
     "functie": "Eigenaar",
-    "telefoon": "31620878787",
+    "telefoon": "06 20 87 87 87",
     "email": "jimmylin1945-@hotmail.com",
     "bedrijfsnaam": "Utopia Exploitatie BV",
     "aantalLocaties": 5,
@@ -612,7 +612,7 @@
       {
         "naam": "Jimmy Lin",
         "functie": "Eigenaar",
-        "telefoon": "31620878787",
+        "telefoon": "06 20 87 87 87",
         "email": "jimmylin1945-@hotmail.com"
       }
     ],
@@ -663,7 +663,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Harold Kallan",
     "functie": "Eigenaar",
-    "telefoon": "31654794485",
+    "telefoon": "06 54 79 44 85",
     "email": "h.kallan@live.nl",
     "bedrijfsnaam": "City Hall",
     "aantalLocaties": 1,
@@ -680,7 +680,7 @@
       {
         "naam": "Harold Kallan",
         "functie": "Eigenaar",
-        "telefoon": "31654794485",
+        "telefoon": "06 54 79 44 85",
         "email": "h.kallan@live.nl"
       },
       {
@@ -702,7 +702,7 @@
     "oprichtingJaar": 1984,
     "contactpersoon": "Lisa Lankes",
     "functie": "Eigenaar",
-    "telefoon": "31653411227",
+    "telefoon": "06 53 41 12 27",
     "email": "lisa@thepink.nl",
     "bedrijfsnaam": "E.D. Lankes Eindhoven B.V.",
     "aantalLocaties": 1,
@@ -718,7 +718,7 @@
       {
         "naam": "Lisa Lankes",
         "functie": "Eigenaar",
-        "telefoon": "31653411227",
+        "telefoon": "06 53 41 12 27",
         "email": "lisa@thepink.nl"
       },
       {
@@ -731,7 +731,7 @@
     "oprichtingsDatum": "1984-06-13",
     "kvk": "17081302",
     "factuurBedrijfsnaam": "E.D. Lankes Eindhoven B.V.",
-    "factuurTelefoon": "040 - 296 03 42"
+    "factuurTelefoon": "040 296 03 42"
   },
   {
     "id": 15,
@@ -776,7 +776,7 @@
     "oprichtingJaar": 1985,
     "contactpersoon": "Erik Drenth",
     "functie": "Eigenaar",
-    "telefoon": "31629487783",
+    "telefoon": "06 29 48 77 83",
     "email": "deos@xs4all.nl",
     "bedrijfsnaam": "Maya's Grow VOF",
     "aantalLocaties": 1,
@@ -792,7 +792,7 @@
       {
         "naam": "Erik Drenth",
         "functie": "Eigenaar",
-        "telefoon": "31629487783",
+        "telefoon": "06 29 48 77 83",
         "email": "deos@xs4all.nl"
       },
       {
@@ -816,7 +816,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Martijn Vree",
     "functie": "Eigenaar",
-    "telefoon": "31647320175",
+    "telefoon": "06 47 32 01 75",
     "email": "administratie@superflybeverwijk.nl",
     "bedrijfsnaam": "Superfly",
     "aantalLocaties": 1,
@@ -832,7 +832,7 @@
       {
         "naam": "Martijn Vree",
         "functie": "Eigenaar",
-        "telefoon": "31647320175",
+        "telefoon": "06 47 32 01 75",
         "email": "administratie@superflybeverwijk.nl"
       }
     ],
@@ -847,7 +847,7 @@
     "oprichtingJaar": 2018,
     "contactpersoon": "Giovanni de Vries",
     "functie": "Eigenaar",
-    "telefoon": "31620347301",
+    "telefoon": "06 20 34 73 01",
     "email": "thecorner.bv@gmail.com",
     "bedrijfsnaam": "The Corner BV.",
     "aantalLocaties": 1,
@@ -864,7 +864,7 @@
       {
         "naam": "Giovanni de Vries",
         "functie": "Eigenaar",
-        "telefoon": "31620347301",
+        "telefoon": "06 20 34 73 01",
         "email": "thecorner.bv@gmail.com"
       },
       {
@@ -890,7 +890,7 @@
     "oprichtingJaar": 1981,
     "contactpersoon": "Appie el Hajjiou",
     "functie": "Eigenaar",
-    "telefoon": "31639002030",
+    "telefoon": "06 39 00 20 30",
     "email": "stuurhetmij@icloud.com",
     "bedrijfsnaam": "Sensimilla",
     "aantalLocaties": 1,
@@ -907,7 +907,7 @@
       {
         "naam": "Appie el Hajjiou",
         "functie": "Eigenaar",
-        "telefoon": "31639002030",
+        "telefoon": "06 39 00 20 30",
         "email": "stuurhetmij@icloud.com"
       }
     ],
@@ -948,7 +948,7 @@
     "factuurEmail": "facturen@easytimes.nl",
     "factuurAdres": "Prinsengracht 476",
     "factuurPlaats": "1017 KG AMSTERDAM",
-    "factuurTelefoon": "(061) 8111010"
+    "factuurTelefoon": "06 18 11 10 10"
   },
   {
     "id": 21,
@@ -1075,7 +1075,7 @@
       }
     ],
     "oprichtingsDatum": "1905-05-28",
-    "factuurTelefoon": "31612039551"
+    "factuurTelefoon": "06 12 03 95 51"
   },
   {
     "id": 22,
@@ -1127,7 +1127,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Mustapha Elargoubi",
     "functie": "Manager",
-    "telefoon": "31611684555",
+    "telefoon": "06 11 68 45 55",
     "email": "m.elargoubi@hotmail.com",
     "bedrijfsnaam": "Nachtegaal",
     "aantalLocaties": 1,
@@ -1144,7 +1144,7 @@
       {
         "naam": "Mustapha Elargoubi",
         "functie": "Manager",
-        "telefoon": "31611684555",
+        "telefoon": "06 11 68 45 55",
         "email": "m.elargoubi@hotmail.com"
       }
     ],
@@ -1159,7 +1159,7 @@
     "oprichtingJaar": 2021,
     "contactpersoon": "",
     "functie": "",
-    "telefoon": "31615390503",
+    "telefoon": "06 15 39 05 03",
     "email": "coffeeshophetgelderse@gmail.com",
     "bedrijfsnaam": "Terptown B.V.",
     "aantalLocaties": 1,
@@ -1187,7 +1187,7 @@
     "oprichtingJaar": 1999,
     "contactpersoon": "Rachid Bahida",
     "functie": "Eigenaar",
-    "telefoon": "31653493258",
+    "telefoon": "06 53 49 32 58",
     "email": "rachid.kroon@outlook.com",
     "bedrijfsnaam": "De Kroon Twee",
     "aantalLocaties": 1,
@@ -1204,7 +1204,7 @@
       {
         "naam": "Rachid Bahida",
         "functie": "Eigenaar",
-        "telefoon": "31653493258",
+        "telefoon": "06 53 49 32 58",
         "email": "rachid.kroon@outlook.com"
       }
     ],
@@ -1223,7 +1223,7 @@
     "oprichtingJaar": 1990,
     "contactpersoon": "Michel Wouters",
     "functie": "Eigenaar",
-    "telefoon": "31638148151",
+    "telefoon": "06 38 14 81 51",
     "email": "wouters.michel@gmail.com",
     "bedrijfsnaam": "Toeda BV",
     "aantalLocaties": 1,
@@ -1239,7 +1239,7 @@
       {
         "naam": "Michel Wouters",
         "functie": "Eigenaar",
-        "telefoon": "31638148151",
+        "telefoon": "06 38 14 81 51",
         "email": "wouters.michel@gmail.com"
       }
     ],
@@ -1248,7 +1248,7 @@
     "factuurBedrijfsnaam": "Toeda BV",
     "factuurAdres": "Chris bennekerslaan 47-48",
     "factuurPlaats": "3061 EE ROTTERDAM",
-    "factuurTelefoon": "06-38 14 81 51"
+    "factuurTelefoon": "06 38 14 81 51"
   },
   {
     "id": 27,
@@ -1259,7 +1259,7 @@
     "oprichtingJaar": 1990,
     "contactpersoon": "Gerard Cremers",
     "functie": "Eigenaar",
-    "telefoon": "31639772553",
+    "telefoon": "06 39 77 25 53",
     "email": "h.beheer.bv12@kpnplanet.nl",
     "bedrijfsnaam": "Cremers",
     "aantalLocaties": 1,
@@ -1275,13 +1275,13 @@
       {
         "naam": "Gerard Cremers",
         "functie": "Eigenaar",
-        "telefoon": "31639772553",
+        "telefoon": "06 39 77 25 53",
         "email": "h.beheer.bv12@kpnplanet.nl"
       }
     ],
     "oprichtingsDatum": "1990-03-10",
     "kvk": "27077111",
-    "factuurTelefoon": "06 - 39 77 25 53"
+    "factuurTelefoon": "06 39 77 25 53"
   },
   {
     "id": 28,
@@ -1334,7 +1334,7 @@
     "oprichtingJaar": 2005,
     "contactpersoon": "Azzouz",
     "functie": "",
-    "telefoon": "31655348514",
+    "telefoon": "06 55 34 85 14",
     "email": "azzouz1960@hotmail.com",
     "bedrijfsnaam": "Bronx 2008 BV",
     "aantalLocaties": 1,
@@ -1351,7 +1351,7 @@
       {
         "naam": "Azzouz",
         "functie": "",
-        "telefoon": "31655348514",
+        "telefoon": "06 55 34 85 14",
         "email": "azzouz1960@hotmail.com"
       }
     ],
@@ -1391,7 +1391,7 @@
       }
     ],
     "factuurBedrijfsnaam": "Othala B.V.",
-    "factuurTelefoon": "(06) 38 87 44 92"
+    "factuurTelefoon": "06 38 87 44 92"
   },
   {
     "id": 63,
@@ -1501,7 +1501,7 @@
     "oprichtingJaar": 1983,
     "contactpersoon": "Toon van der Moot",
     "functie": "Bedrijfsleider",
-    "telefoon": "31651213549",
+    "telefoon": "06 51 21 35 49",
     "email": "toonvdmoot@gmail.com",
     "bedrijfsnaam": "Yanks",
     "aantalLocaties": 1,
@@ -1517,12 +1517,12 @@
       {
         "naam": "Toon van der Moot",
         "functie": "Bedrijfsleider",
-        "telefoon": "31651213549",
+        "telefoon": "06 51 21 35 49",
         "email": "toonvdmoot@gmail.com"
       }
     ],
     "oprichtingsDatum": "1983-02-15",
-    "factuurTelefoon": "06 - 51 21 35 49"
+    "factuurTelefoon": "06 51 21 35 49"
   },
   {
     "id": 33,
@@ -1533,7 +1533,7 @@
     "oprichtingJaar": 2017,
     "contactpersoon": "Mauro Moro",
     "functie": "Bedrijfsleider",
-    "telefoon": "31622987223",
+    "telefoon": "06 22 98 72 23",
     "email": "facturen@familyfirstamsterdam.com",
     "bedrijfsnaam": "Family First",
     "aantalLocaties": 1,
@@ -1550,7 +1550,7 @@
       {
         "naam": "Mauro Moro",
         "functie": "Bedrijfsleider",
-        "telefoon": "31622987223",
+        "telefoon": "06 22 98 72 23",
         "email": "facturen@familyfirstamsterdam.com"
       },
       {
@@ -1599,7 +1599,7 @@
     "oprichtingsDatum": "2013-03-12",
     "kvk": "70855412",
     "factuurBedrijfsnaam": "Blue Bird Horeca BV",
-    "factuurTelefoon": "020- 622 52 32"
+    "factuurTelefoon": "020 622 52 32"
   },
   {
     "id": 35,
@@ -1610,7 +1610,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Paul Wilhelm",
     "functie": "Eigenaar",
-    "telefoon": "31652562281",
+    "telefoon": "06 52 56 22 81",
     "email": "",
     "bedrijfsnaam": "Dampkring The Original",
     "aantalLocaties": 1,
@@ -1627,7 +1627,7 @@
       {
         "naam": "Paul Wilhelm",
         "functie": "Eigenaar",
-        "telefoon": "31652562281",
+        "telefoon": "06 52 56 22 81",
         "email": ""
       },
       {
@@ -1637,7 +1637,7 @@
         "email": "jason@dampkring.amsterdam"
       }
     ],
-    "factuurTelefoon": "06 - 54 27 16 76"
+    "factuurTelefoon": "06 54 27 16 76"
   },
   {
     "id": 36,
@@ -1648,7 +1648,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Martin van der Eng",
     "functie": "Eigenaar",
-    "telefoon": "31615315539",
+    "telefoon": "06 15 31 55 39",
     "email": "info@coffeeshop-regine.nl",
     "bedrijfsnaam": "Regine",
     "aantalLocaties": 1,
@@ -1665,11 +1665,11 @@
       {
         "naam": "Martin van der Eng",
         "functie": "Eigenaar",
-        "telefoon": "31615315539",
+        "telefoon": "06 15 31 55 39",
         "email": "info@coffeeshop-regine.nl"
       }
     ],
-    "factuurTelefoon": "06 15315539"
+    "factuurTelefoon": "06 15 31 55 39"
   },
   {
     "id": 37,
@@ -1715,7 +1715,7 @@
     "oprichtingJaar": 2024,
     "contactpersoon": "Tim de Wilde / Marlies (boere)",
     "functie": "Eigenaar",
-    "telefoon": "31630011965",
+    "telefoon": "06 30 01 19 65",
     "email": "info@033horecabv.nl",
     "bedrijfsnaam": "De Loods",
     "aantalLocaties": 1,
@@ -1731,7 +1731,7 @@
       {
         "naam": "Tim de Wilde / Marlies (boere)",
         "functie": "Eigenaar",
-        "telefoon": "31630011965",
+        "telefoon": "06 30 01 19 65",
         "email": "info@033horecabv.nl"
       }
     ],
@@ -1747,7 +1747,7 @@
     "oprichtingJaar": 1993,
     "contactpersoon": "Peter",
     "functie": "Eigenaar",
-    "telefoon": "31622724910",
+    "telefoon": "06 22 72 49 10",
     "email": "thunderbirdenschede@ziggo.nl",
     "bedrijfsnaam": "Thunderbird",
     "aantalLocaties": 1,
@@ -1763,7 +1763,7 @@
       {
         "naam": "Peter",
         "functie": "Eigenaar",
-        "telefoon": "31622724910",
+        "telefoon": "06 22 72 49 10",
         "email": "thunderbirdenschede@ziggo.nl"
       },
       {
@@ -1786,7 +1786,7 @@
     "oprichtingJaar": 2021,
     "contactpersoon": "Edwin Bax",
     "functie": "Eigenaar",
-    "telefoon": "31643415724",
+    "telefoon": "06 43 41 57 24",
     "email": "edwin@ambassade-zwijndrecht.nl",
     "bedrijfsnaam": "De Ambassade",
     "aantalLocaties": 1,
@@ -1802,7 +1802,7 @@
       {
         "naam": "Edwin Bax",
         "functie": "Eigenaar",
-        "telefoon": "31643415724",
+        "telefoon": "06 43 41 57 24",
         "email": "edwin@ambassade-zwijndrecht.nl"
       }
     ],
@@ -1821,7 +1821,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Greetje Nijboer",
     "functie": "Eigenaar",
-    "telefoon": "31638138301",
+    "telefoon": "06 38 13 83 01",
     "email": "nijboer.greetje@gmail.com",
     "bedrijfsnaam": "The Mix",
     "aantalLocaties": 1,
@@ -1837,7 +1837,7 @@
       {
         "naam": "Greetje Nijboer",
         "functie": "Eigenaar",
-        "telefoon": "31638138301",
+        "telefoon": "06 38 13 83 01",
         "email": "nijboer.greetje@gmail.com"
       },
       {
@@ -1850,7 +1850,7 @@
     "kvk": "6054708",
     "factuurAdres": "Havenstraatpassage 44-46",
     "factuurPlaats": "7511 EX ENSCHEDE",
-    "factuurTelefoon": "(06) 48 56 80 81"
+    "factuurTelefoon": "06 48 56 80 81"
   },
   {
     "id": 42,
@@ -1861,7 +1861,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Sadie Roelofsen",
     "functie": "Eigenaar",
-    "telefoon": "31624277720",
+    "telefoon": "06 24 27 77 20",
     "email": "sadie.roelofsen@gmail.com",
     "bedrijfsnaam": "De Kade",
     "aantalLocaties": 1,
@@ -1878,7 +1878,7 @@
       {
         "naam": "Sadie Roelofsen",
         "functie": "Eigenaar",
-        "telefoon": "31624277720",
+        "telefoon": "06 24 27 77 20",
         "email": "sadie.roelofsen@gmail.com"
       },
       {
@@ -1888,7 +1888,7 @@
         "email": "reslyn_1983@hotmail.com"
       }
     ],
-    "factuurTelefoon": "(062) 4277720"
+    "factuurTelefoon": "06 24 27 77 20"
   },
   {
     "id": 43,
@@ -1899,7 +1899,7 @@
     "oprichtingJaar": 2002,
     "contactpersoon": "Marco Zweep",
     "functie": "Eigenaar",
-    "telefoon": "31650695275",
+    "telefoon": "06 50 69 52 75",
     "email": "marcozweep@gmail.com",
     "bedrijfsnaam": "Solo",
     "aantalLocaties": 1,
@@ -1916,7 +1916,7 @@
       {
         "naam": "Marco Zweep",
         "functie": "Eigenaar",
-        "telefoon": "31650695275",
+        "telefoon": "06 50 69 52 75",
         "email": "marcozweep@gmail.com"
       }
     ],
@@ -1924,7 +1924,7 @@
     "kvk": "34189051",
     "factuurAdres": "Korte Koningsstraat 2",
     "factuurPlaats": "1011 GA AMSTERDAM",
-    "factuurTelefoon": "(06) 50 69 52 75"
+    "factuurTelefoon": "06 50 69 52 75"
   },
   {
     "id": 44,
@@ -1935,7 +1935,7 @@
     "oprichtingJaar": 2017,
     "contactpersoon": "Dirk Peereboom",
     "functie": "Bedrijfsleider",
-    "telefoon": "31622411705",
+    "telefoon": "06 22 41 17 05",
     "email": "dpeerboom@icloud.com",
     "bedrijfsnaam": "Papeby Beheer BV",
     "aantalLocaties": 1,
@@ -1951,7 +1951,7 @@
       {
         "naam": "Dirk Peereboom",
         "functie": "Bedrijfsleider",
-        "telefoon": "31622411705",
+        "telefoon": "06 22 41 17 05",
         "email": "dpeerboom@icloud.com"
       },
       {
@@ -1966,7 +1966,7 @@
     "factuurBedrijfsnaam": "Papeby Beheer BV",
     "factuurAdres": "Brusselsestraat 146 a",
     "factuurPlaats": "6211 PJ MAASTRICHT",
-    "factuurTelefoon": "06 - 22 41 17 05"
+    "factuurTelefoon": "06 22 41 17 05"
   },
   {
     "id": 45,
@@ -1977,7 +1977,7 @@
     "oprichtingJaar": 1992,
     "contactpersoon": "Dennis Kollof",
     "functie": "Eigenaar",
-    "telefoon": "31651528769",
+    "telefoon": "06 51 52 87 69",
     "email": "kollof666@hotmail.com",
     "bedrijfsnaam": "Roxanne",
     "aantalLocaties": 1,
@@ -1993,13 +1993,13 @@
       {
         "naam": "Dennis Kollof",
         "functie": "Eigenaar",
-        "telefoon": "31651528769",
+        "telefoon": "06 51 52 87 69",
         "email": "kollof666@hotmail.com"
       }
     ],
     "oprichtingsDatum": "1992-02-22",
     "kvk": "55406505",
-    "factuurTelefoon": "06 - 51 52 87 69"
+    "factuurTelefoon": "06 51 52 87 69"
   },
   {
     "id": 46,
@@ -2010,7 +2010,7 @@
     "oprichtingJaar": 1992,
     "contactpersoon": "Bart van der Vlugt",
     "functie": "Eigenaar",
-    "telefoon": "31655333333",
+    "telefoon": "06 55 33 33 33",
     "email": "bart@clubhome.nl",
     "bedrijfsnaam": "The Border",
     "aantalLocaties": 1,
@@ -2027,7 +2027,7 @@
       {
         "naam": "Bart van der Vlugt",
         "functie": "Eigenaar",
-        "telefoon": "31655333333",
+        "telefoon": "06 55 33 33 33",
         "email": "bart@clubhome.nl"
       },
       {
@@ -2041,7 +2041,7 @@
     "kvk": "33236532",
     "factuurAdres": "Amstelveenseweg 1160",
     "factuurPlaats": "1081 JW AMSTERDAM",
-    "factuurTelefoon": "(020) 6420681"
+    "factuurTelefoon": "020 642 06 81"
   },
   {
     "id": 47,
@@ -2052,7 +2052,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Rob ten Hove",
     "functie": "Eigenaar",
-    "telefoon": "31653454768",
+    "telefoon": "06 53 45 47 68",
     "email": "robyara1@hotmail.com",
     "bedrijfsnaam": "Oya",
     "aantalLocaties": 1,
@@ -2068,7 +2068,7 @@
       {
         "naam": "Rob ten Hove",
         "functie": "Eigenaar",
-        "telefoon": "31653454768",
+        "telefoon": "06 53 45 47 68",
         "email": "robyara1@hotmail.com"
       },
       {
@@ -2113,7 +2113,7 @@
     "kvk": "9092392",
     "factuurAdres": "Hommelseweg 19",
     "factuurPlaats": "6821 LA ARNHEM",
-    "factuurTelefoon": "06 - 55 17 75 52"
+    "factuurTelefoon": "06 55 17 75 52"
   },
   {
     "id": 49,
@@ -2144,7 +2144,7 @@
         "email": "everywoman14@hotmail.com"
       }
     ],
-    "factuurTelefoon": "(072) 5151999"
+    "factuurTelefoon": "072 515 19 99"
   },
   {
     "id": 50,
@@ -2249,7 +2249,7 @@
         "email": "appie@katsu.nl"
       }
     ],
-    "factuurTelefoon": "(020) 6752617"
+    "factuurTelefoon": "020 675 26 17"
   },
   {
     "id": 53,
@@ -2284,7 +2284,7 @@
     "kvk": "28067806",
     "factuurAdres": "Nieuwe Beestenmarkt 34 a",
     "factuurPlaats": "2312 CH LEIDEN",
-    "factuurTelefoon": "06 - 22 93 62 68"
+    "factuurTelefoon": "06 22 93 62 68"
   },
   {
     "id": 54,
@@ -2318,7 +2318,7 @@
     ],
     "factuurAdres": "Sint Antoniesbreestraat 77",
     "factuurPlaats": "1011 HB AMSTERDAM",
-    "factuurTelefoon": "06 - 52 39 55 19"
+    "factuurTelefoon": "06 52 39 55 19"
   },
   {
     "id": 55,
@@ -2358,7 +2358,7 @@
     ],
     "factuurAdres": "J. P. Heijestraat 82",
     "factuurPlaats": "1053 GS AMSTERDAM",
-    "factuurTelefoon": "(061) 0756298"
+    "factuurTelefoon": "06 10 75 62 98"
   },
   {
     "id": 56,
@@ -2442,7 +2442,7 @@
     "oprichtingJaar": null,
     "contactpersoon": "Silver Graven",
     "functie": "Bedrijfsleider",
-    "telefoon": "31625017636",
+    "telefoon": "06 25 01 76 36",
     "email": "silver@kadinsky.nl",
     "bedrijfsnaam": "Kadinsky",
     "aantalLocaties": 1,
@@ -2459,7 +2459,7 @@
       {
         "naam": "Silver Graven",
         "functie": "Bedrijfsleider",
-        "telefoon": "31625017636",
+        "telefoon": "06 25 01 76 36",
         "email": "silver@kadinsky.nl"
       }
     ]
@@ -2565,7 +2565,7 @@
     ],
     "factuurAdres": "Markt 59",
     "factuurPlaats": "1941 BV BEVERWIJK",
-    "factuurTelefoon": "(025) 1225625"
+    "factuurTelefoon": "025 122 56 25"
   },
   {
     "id": 68,
@@ -2622,7 +2622,7 @@
     ],
     "factuurAdres": "Woestduinstraat 76",
     "factuurPlaats": "1058 KA AMSTERDAM",
-    "factuurTelefoon": "(061) 6919181"
+    "factuurTelefoon": "06 16 91 91 81"
   },
   {
     "id": 70,
@@ -2657,7 +2657,7 @@
     "oprichtingsDatum": "1991-10-07",
     "factuurAdres": "Elandsgracht 3-hs",
     "factuurPlaats": "1016 TM AMSTERDAM",
-    "factuurTelefoon": "(020) 6383984"
+    "factuurTelefoon": "020 638 39 84"
   },
   {
     "id": 71,
@@ -2698,7 +2698,7 @@
     "factuurBedrijfsnaam": "Blue Tomato BV",
     "factuurAdres": "Neutronweg 11",
     "factuurPlaats": "1627 LG HOORN",
-    "factuurTelefoon": "06- 29 53 25 85"
+    "factuurTelefoon": "06 29 53 25 85"
   },
   {
     "id": 72,
@@ -2738,7 +2738,7 @@
     ],
     "factuurAdres": "Nieuwmarkt 4a",
     "factuurPlaats": "1012 CR AMSTERDAM",
-    "factuurTelefoon": "(020) 2235562"
+    "factuurTelefoon": "020 223 55 62"
   },
   {
     "id": 73,
@@ -2772,7 +2772,7 @@
     "oprichtingsDatum": "2008-11-04",
     "kvk": "14071987",
     "factuurBedrijfsnaam": "El Barco BV",
-    "factuurTelefoon": "06 - 53 68 90 53"
+    "factuurTelefoon": "06 53 68 90 53"
   },
   {
     "id": 74,
@@ -2806,7 +2806,7 @@
     "oprichtingsDatum": "1988-06-01",
     "factuurAdres": "Deldenerstraat 14",
     "factuurPlaats": "7551 AE HENGELO",
-    "factuurTelefoon": "074 - 250 2377"
+    "factuurTelefoon": "074 250 23 77"
   },
   {
     "id": 75,
@@ -2840,7 +2840,7 @@
     ],
     "factuurAdres": "de Clerqstraat 30",
     "factuurPlaats": "1052 NE AMSTERDAM",
-    "factuurTelefoon": "(020) 6854810"
+    "factuurTelefoon": "020 685 48 10"
   },
   {
     "id": 76,
@@ -2875,7 +2875,7 @@
     "kvk": "5062077",
     "factuurAdres": "Korte Woldpromenade 8",
     "factuurPlaats": "8331 JK STEENWIJK",
-    "factuurTelefoon": "06 - 28 34 42 56"
+    "factuurTelefoon": "06 28 34 42 56"
   },
   {
     "id": 77,
@@ -3027,7 +3027,7 @@
     "oprichtingsDatum": "1981-03-25",
     "factuurAdres": "Haringpakkerssteeg 3",
     "factuurPlaats": "1012 LR AMSTERDAM",
-    "factuurTelefoon": "(065) 5762384"
+    "factuurTelefoon": "06 55 76 23 84"
   },
   {
     "id": 81,
@@ -3109,7 +3109,7 @@
     ],
     "factuurAdres": "Marnixstraat 194",
     "factuurPlaats": "1016 SZ AMSTERDAM",
-    "factuurTelefoon": "(020) 4270712"
+    "factuurTelefoon": "020 427 07 12"
   },
   {
     "id": 84,
@@ -3142,7 +3142,7 @@
       }
     ],
     "oprichtingsDatum": "1992-12-12",
-    "factuurTelefoon": "(020) 4222020"
+    "factuurTelefoon": "020 422 20 20"
   },
   {
     "id": 85,
@@ -3180,7 +3180,7 @@
         "email": ""
       }
     ],
-    "factuurTelefoon": "(063) 0379701"
+    "factuurTelefoon": "06 30 37 97 01"
   },
   {
     "id": 86,
@@ -3191,7 +3191,7 @@
     "oprichtingJaar": 2001,
     "contactpersoon": "Myrthe Aarden",
     "functie": "Eigenaar",
-    "telefoon": "06 422 06 872",
+    "telefoon": "06 42 20 68 72",
     "email": "",
     "bedrijfsnaam": "Coffeeshop Aarden",
     "aantalLocaties": 2,
@@ -3213,7 +3213,7 @@
       {
         "naam": "Myrthe Aarden",
         "functie": "Eigenaar",
-        "telefoon": "06 422 06 872",
+        "telefoon": "06 42 20 68 72",
         "email": ""
       }
     ],
@@ -3290,7 +3290,7 @@
     ],
     "factuurAdres": "Kloveniersburgwal 42",
     "factuurPlaats": "1012 CW AMSTERDAM",
-    "factuurTelefoon": "06-51490640"
+    "factuurTelefoon": "06 51 49 06 40"
   },
   {
     "id": 89,
@@ -3326,7 +3326,7 @@
     "kvk": "33282179",
     "factuurAdres": "Vasumweg 4 C",
     "factuurPlaats": "1033 SC AMSTERDAM",
-    "factuurTelefoon": "06 - 21 48 22 17"
+    "factuurTelefoon": "06 21 48 22 17"
   },
   {
     "id": 90,
@@ -3365,7 +3365,7 @@
     ],
     "factuurAdres": "Voorstraat 81",
     "factuurPlaats": "3512 AL UTRECHT",
-    "factuurTelefoon": "(030) 2302039"
+    "factuurTelefoon": "030 230 20 39"
   },
   {
     "id": 91,
@@ -3401,7 +3401,7 @@
     "factuurAdres": "Postbus 3130",
     "factuurPostcode": "3130CC",
     "factuurPlaats": "Vlaardingen",
-    "factuurTelefoon": "(010) 435 56 35"
+    "factuurTelefoon": "010 435 56 35"
   },
   {
     "id": 92,
