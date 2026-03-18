@@ -256,10 +256,7 @@ const LocatiesPage = () => {
                             <span className="text-xs text-muted-foreground ml-1.5">({lid.aantalLocaties} loc)</span>
                           )}
                         </td>
-                        <td colSpan={4} />
-                        <td className="px-4 py-2.5">
-                          <ExternalLink size={12} className="text-muted-foreground/40" />
-                        </td>
+                        <td colSpan={3} />
                       </tr>
                     ))}
                 </React.Fragment>
