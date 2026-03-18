@@ -10,11 +10,11 @@ const VerloopChart = () => {
 
   const current = data[data.length - 1];
   const previous = data[data.length - 2];
-  const first = data[0];
+  const fiveYearsAgo = data.find(d => d.year === current.year - 5) || data[0];
 
   const yoyGrowth = previous ? Math.round(((current.leden - previous.leden) / previous.leden) * 100) : 0;
   const yoyAbsolute = previous ? current.leden - previous.leden : 0;
-  const totalGrowth = Math.round(((current.leden - first.leden) / first.leden) * 100);
+  const fiveYrGrowth = Math.round(((current.leden - fiveYearsAgo.leden) / fiveYearsAgo.leden) * 100);
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
@@ -63,9 +63,9 @@ const VerloopChart = () => {
             <p className="text-xs text-muted-foreground">+{yoyAbsolute} leden</p>
           </div>
           <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Sinds {first.year}</p>
-            <p className="text-3xl font-bold font-display text-primary">+{totalGrowth}%</p>
-            <p className="text-xs text-muted-foreground">+{current.leden - first.leden} leden</p>
+            <p className="text-xs text-muted-foreground mb-1">Laatste 5 jaar</p>
+            <p className="text-3xl font-bold font-display text-primary">+{fiveYrGrowth}%</p>
+            <p className="text-xs text-muted-foreground">+{current.leden - fiveYearsAgo.leden} leden</p>
           </div>
         </div>
       </div>
