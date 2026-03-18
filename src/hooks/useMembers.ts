@@ -1,8 +1,12 @@
 import { useState, useMemo } from "react";
 import membersData from "@/data/members.json";
+import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
 
 export const allMembers = membersData as Member[];
+export const allLeads = leadsData as Member[];
+/** Members + leads combined — use for market share / representation calculations */
+export const allRepresented = [...allMembers, ...allLeads] as Member[];
 
 export function useMembers() {
   const [searchQuery, setSearchQuery] = useState("");
