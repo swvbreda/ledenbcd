@@ -7124,5 +7124,117 @@
     ],
     "lidSinds": 2009,
     "website": "https://www.voyagersamsterdam.com"
+  },
+  {
+    "id": 118,
+    "naam": "Coffee-Shop Bamboo",
+    "plaats": "Schiedam",
+    "stadsdeel": "",
+    "jarenLid": 0,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "+31 10 503 6507",
+    "email": "",
+    "bedrijfsnaam": "Coffee-Shop Bamboo",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffee-Shop Bamboo",
+        "plaats": "Schiedam",
+        "adres": "Parkweg 379",
+        "postcode": "",
+        "stadsdeel": ""
+      }
+    ],
+    "contacten": [],
+    "lidSinds": 2026,
+    "lidJaren": [
+      2026
+    ]
+  },
+  {
+    "id": 119,
+    "naam": "Coffeeshop Freak",
+    "plaats": "Utrecht",
+    "stadsdeel": "",
+    "jarenLid": 0,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Coffeeshop Freak",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Freak",
+        "plaats": "Utrecht",
+        "adres": "",
+        "postcode": "",
+        "stadsdeel": ""
+      }
+    ],
+    "contacten": [],
+    "lidSinds": 2026,
+    "lidJaren": [
+      2026
+    ]
+  },
+  {
+    "id": 120,
+    "naam": "Purple Rain",
+    "plaats": "Breda",
+    "stadsdeel": "",
+    "jarenLid": 0,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Purple Rain",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Purple Rain",
+        "plaats": "Breda",
+        "adres": "",
+        "postcode": "",
+        "stadsdeel": ""
+      }
+    ],
+    "contacten": [],
+    "lidSinds": 2026,
+    "lidJaren": [
+      2026
+    ]
+  },
+  {
+    "id": 121,
+    "naam": "Toermalijn",
+    "plaats": "Tilburg",
+    "stadsdeel": "",
+    "jarenLid": 0,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Toermalijn",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Toermalijn",
+        "plaats": "Tilburg",
+        "adres": "",
+        "postcode": "",
+        "stadsdeel": ""
+      }
+    ],
+    "contacten": [],
+    "lidSinds": 2026,
+    "lidJaren": [
+      2026
+    ]
   }
 ]
