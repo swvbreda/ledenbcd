@@ -146,7 +146,7 @@ const MarktaandeelPage = () => {
                         className="border-b border-border/30 bg-muted/10 hover:bg-muted/20 cursor-pointer transition-colors"
                         onClick={(e) => { e.stopPropagation(); navigate(`/leden/${m.id}`); }}
                       >
-                        <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={2}>
+                        <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={3}>
                           <span className="inline-flex items-center gap-2">
                             <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
                             <span className="font-medium text-foreground">{m.naam}</span>
