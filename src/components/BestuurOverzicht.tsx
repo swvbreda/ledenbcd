@@ -1,13 +1,14 @@
-import { Shield, Mail, Phone, MapPin } from "lucide-react";
+import { Shield, Mail, Phone, MapPin, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
+import simonePhoto from "@/assets/bestuur/simone-van-breda.jpg";
 
 interface BestuurOverzichtProps {
   members: Member[];
 }
 
-const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; bondEmail?: string; telefoon?: string }[] = [
-  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 868 752 31" },
+const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; bondEmail?: string; telefoon?: string; foto?: string }[] = [
+  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 868 752 31", foto: simonePhoto },
   { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl" },
   { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl" },
   { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl" },
@@ -60,8 +61,23 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
               }`}
               onClick={() => member && navigate(`/leden/${member.id}`)}
             >
-              <p className="font-medium text-sm">{bl.naam}</p>
-              <p className="text-xs text-muted-foreground">{bl.functie}</p>
+              <div className="flex items-start gap-3">
+                {bl.foto ? (
+                  <img
+                    src={bl.foto}
+                    alt={bl.naam}
+                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <User size={18} className="text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">{bl.naam}</p>
+                  <p className="text-xs text-muted-foreground">{bl.functie}</p>
+                </div>
+              </div>
               {member && (
                 <p className="text-xs text-primary mt-1.5">{member.naam}</p>
               )}
