@@ -1,65 +1,100 @@
-import verloopData from "@/data/verloop.json";
+import { TrendingUp, Building2, Clock, UserPlus, Award } from "lucide-react";
+import type { Member } from "@/data/types";
+import coffeeshopData from "@/data/coffeeshops-nl.json";
+import verloopDetail from "@/data/verloop-detail.json";
+import { allRepresented } from "@/hooks/useMembers";
 
-const periods = [
-  { label: "Eerste registratie", range: "2005", start: 2005, end: 2005 },
-  { label: "Groei", range: "2006–2010", start: 2006, end: 2010 },
-  { label: "Stabiel", range: "2011–2015", start: 2011, end: 2015 },
-  { label: "Groei", range: "2016–2020", start: 2016, end: 2020 },
-  { label: "Versnelling", range: "2021–2026", start: 2021, end: 2026 },
-];
+const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
+  // Members with 20+ years
+  const longMembers = (members || []).filter((m) => m.jarenLid && m.jarenLid >= 20);
+  const longPct = members?.length ? Math.round((longMembers.length / members.length) * 100) : 0;
 
-const LidmaatschapsduurChart = () => {
-  const entries = Object.entries(verloopData).map(([y, c]) => ({ year: Number(y), count: c as number }));
-  const current = entries[entries.length - 1]?.count || 0;
-  const first = entries[0]?.count || 0;
-
-  const bars = periods.map((p) => {
-    const endVal = entries.find((e) => e.year === p.end)?.count || 0;
-    const prevVal = p.start === 2005 ? 0 : entries.find((e) => e.year === p.start - 1)?.count || 0;
-    return { ...p, added: endVal - prevVal, endVal };
+  // Cities with >50% representation
+  const perStad = coffeeshopData.perStad as Record<string, number>;
+  const represented = allRepresented;
+  const cityCount: Record<string, number> = {};
+  represented.forEach((m) => {
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
+  const citiesOver50 = Object.entries(perStad).filter(([city, total]) => {
+    const bcd = cityCount[city] || 0;
+    return total > 0 && (bcd / total) >= 0.5;
+  }).length;
 
-  const maxAdded = Math.max(...bars.map((b) => b.added));
+  // New members this year (instroom current year)
+  const currentYear = new Date().getFullYear();
+  const currentYearData = verloopDetail.find((d) => d.year === currentYear);
+  const newThisYear = currentYearData?.instroom || 0;
+
+  // Average membership duration
+  const withYears = (members || []).filter((m) => m.jarenLid);
+  const avgYears = withYears.length
+    ? Math.round(withYears.reduce((s, m) => s + (m.jarenLid || 0), 0) / withYears.length)
+    : 0;
+
+  // Longest member
+  const longest = (members || []).reduce((max, m) => (m.jarenLid || 0) > (max.jarenLid || 0) ? m : max, (members || [])[0]);
+
+  const facts = [
+    {
+      icon: Clock,
+      label: "Langer dan 20 jaar lid",
+      value: `${longPct}%`,
+      detail: `${longMembers.length} leden`,
+      color: "text-primary",
+    },
+    {
+      icon: Building2,
+      label: "Gemeenten >50% vertegenwoordigd",
+      value: `${citiesOver50}`,
+      detail: `van ${Object.keys(perStad).length} gemeenten`,
+      color: "text-success",
+    },
+    {
+      icon: UserPlus,
+      label: `Nieuwe leden in ${currentYear}`,
+      value: `${newThisYear}`,
+      detail: currentYearData ? `${currentYearData.uitstroom} uitgestroomd` : "",
+      color: "text-primary",
+    },
+    {
+      icon: TrendingUp,
+      label: "Gem. lidmaatschapsduur",
+      value: `${avgYears} jr`,
+      detail: `${withYears.length} leden met data`,
+      color: "text-primary",
+    },
+    {
+      icon: Award,
+      label: "Langst lid",
+      value: `${longest?.jarenLid || 0} jr`,
+      detail: longest?.naam || "",
+      color: "text-success",
+    },
+  ];
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold font-display mb-1">Ledengroei per periode</h3>
+      <h3 className="text-sm font-semibold font-display mb-1">Kernfeiten</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        BCD opgericht in 1994 · Van {first} naar {current} leden geregistreerd sinds 2005
+        Belangrijke cijfers over het ledenbestand
       </p>
 
       <div className="space-y-3">
-        {bars.map((b) => {
-          const pct = maxAdded > 0 ? (b.added / maxAdded) * 100 : 0;
-          return (
-            <div key={b.range}>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{b.range}</span>
-                  <span className="text-muted-foreground">{b.label}</span>
-                </div>
-                <div className="flex items-center gap-2 tabular-nums">
-                  <span className="text-success font-medium">+{b.added}</span>
-                  <span className="text-muted-foreground">→ {b.endVal}</span>
-                </div>
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
+        {facts.map((f) => (
+          <div key={f.label} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+            <div className={`shrink-0 ${f.color}`}>
+              <f.icon size={18} />
             </div>
-          );
-        })}
-      </div>
-
-      {/* Current year highlight */}
-      <div className="mt-4 p-3 bg-muted/30 rounded-lg flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Meeste groei in</span>
-        <span className="text-sm font-semibold font-display">
-          {bars.reduce((max, b) => (b.added > max.added ? b : max), bars[0]).range}
-        </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">{f.label}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-lg font-bold font-display leading-tight">{f.value}</p>
+              {f.detail && <p className="text-xs text-muted-foreground">{f.detail}</p>}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
