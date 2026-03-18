@@ -1,15 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import StatCards from "@/components/StatCards";
-import MemberTable from "@/components/MemberTable";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
+import JubileumOverzicht from "@/components/JubileumOverzicht";
 import { allMembers } from "@/hooks/useMembers";
 
 const Index = () => {
   const navigate = useNavigate();
-
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -29,18 +28,7 @@ const Index = () => {
         <LedenPerStadOverzicht members={allMembers} />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold font-display">Alle Leden</h3>
-          <button
-            onClick={() => navigate("/leden")}
-            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-          >
-            Volledig overzicht <ArrowRight size={14} />
-          </button>
-        </div>
-        <MemberTable members={allMembers} compact />
-      </div>
+      <JubileumOverzicht members={allMembers} />
     </div>
   );
 };
