@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
+import { useAuth } from "@/hooks/useAuth";
 
 const MemberDetail = () => {
   const { id } = useParams();
