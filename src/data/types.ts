@@ -22,4 +22,10 @@ export interface Member {
   locaties: Location[];
   kvk?: string;
   factuurEmail?: string;
+  factuurBedrijfsnaam?: string;
+  factuurKvk?: string;
+  factuurAdres?: string;
+  factuurPostcode?: string;
+  factuurPlaats?: string;
+  factuurTelefoon?: string;
 }
