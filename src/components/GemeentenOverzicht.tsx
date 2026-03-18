@@ -47,12 +47,14 @@ const EXPERIMENT_GEMEENTEN = [
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  // Use allRepresented (members + leads) for market share calculations
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD locations per city
+  // Count represented locations per city (members + leads)
   const cityCount: Record<string, number> = {};
   const cityMembers: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) {
       cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
       cityMembers[m.plaats] = (cityMembers[m.plaats] || 0) + 1;
