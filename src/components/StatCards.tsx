@@ -17,7 +17,10 @@ const StatCards = ({ members }: StatCardsProps) => {
   const uniqueCities = new Set(members.map((m) => m.plaats).filter(Boolean)).size;
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
   const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
+  const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
+  const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
+  const marketPct = Math.round((representedLocations / totalNL) * 100);
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
   const repCityCount: Record<string, number> = {};
