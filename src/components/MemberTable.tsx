@@ -79,7 +79,10 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <span className="inline-flex items-center gap-1">Jaren Lid <SortIcon col="jarenLid" /></span>
               </th>
               {isAdmin && (
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+                <>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+                </>
               )}
               <th className="px-4 py-3 w-10" />
             </tr>
