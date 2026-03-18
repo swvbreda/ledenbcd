@@ -1,7 +1,7 @@
 {
   "_bron": "Adressenlijst coffeeshops 2024 (560 locaties)",
   "_peildatum": "2024",
-  "totaalNL": 560,
+  "totaalNL": 562,
   "perStad": {
     "Amsterdam": 167,
     "Rotterdam": 38,
@@ -81,7 +81,6 @@
     "Zeist": 1,
     "Woerden": 1,
     "Mijdrecht": 1,
-    "Hellevoetsluis": 1,
     "Sittard": 1,
     "Etten-Leur": 1,
     "Driebergen": 1,
@@ -105,6 +104,7 @@
     "Zuidlaren": 1,
     "Stadskanaal": 1,
     "Farmsum": 1,
-    "Zaanstad": 3
+    "Zaanstad": 3,
+    "Voorne aan Zee": 2
   }
 }

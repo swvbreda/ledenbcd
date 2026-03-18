@@ -3977,8 +3977,8 @@
   {
     "id": 100,
     "naam": "John & Co",
-    "plaats": "Hellevoetsluis",
-    "stadsdeel": "Nieuw Helvoet",
+    "plaats": "Voorne aan Zee",
+    "stadsdeel": "Hellevoetsluis",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Nizar",
@@ -3990,10 +3990,10 @@
     "locaties": [
       {
         "naam": "John & Co",
-        "plaats": "Hellevoetsluis",
+        "plaats": "Voorne aan Zee",
         "adres": "Stephensonweg 1",
         "postcode": "3225 LW",
-        "stadsdeel": "Nieuw Helvoet"
+        "stadsdeel": "Hellevoetsluis"
       }
     ],
     "contacten": [

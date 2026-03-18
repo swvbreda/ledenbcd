@@ -36,7 +36,7 @@ const cityCoords: Record<string, [number, number]> = {
   "Deventer": [52.2551, 6.1639],
   "Oss": [51.7652, 5.5183],
   "Hoogezand": [53.1615, 6.7621],
-  "Hellevoetsluis": [51.8268, 4.1331],
+  "Voorne aan Zee": [51.8268, 4.1331],
   "Mijdrecht": [52.2069, 4.8647],
   "Wormer": [52.4976, 4.8199],
   "Vlaardingen": [51.9128, 4.3418],
