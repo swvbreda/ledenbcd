@@ -6,13 +6,13 @@ interface BestuurOverzichtProps {
   members: Member[];
 }
 
-const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; telefoon?: string }[] = [
-  { naam: "Simone van Breda", functie: "Voorzitter", email: "simone@coffeeshopbond.nl", telefoon: "06 868 752 31" },
-  { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5 },
-  { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8 },
-  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4 },
-  { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21 },
-  { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14 },
+const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; bondEmail?: string; telefoon?: string }[] = [
+  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 868 752 31" },
+  { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl" },
+  { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl" },
+  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl" },
+  { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl" },
+  { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl" },
 ];
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
