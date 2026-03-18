@@ -167,7 +167,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </div>
           <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
-              {EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => m.plaats === g)).length}/10
+              {EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
             </span>
             {" "}gemeenten met BCD-leden
           </div>
