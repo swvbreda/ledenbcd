@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, MapPin, Building2, Clock, AlertTriangle, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Building2, Clock, AlertTriangle, UserCheck, ChevronDown, ChevronUp, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 
@@ -30,6 +30,10 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalMembers = members.length;
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const uniqueCities = new Set(members.map((m) => m.plaats).filter(Boolean)).size;
+  const totalNLCities = Object.keys(coffeeshopData.perStad).length;
+  const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
+  const totalNL = coffeeshopData.totaalNL;
+  const marketPct = Math.round((totalLocations / totalNL) * 100);
   const withYears = members.filter((m) => m.jarenLid);
   const avgYears = withYears.length
     ? Math.round(withYears.reduce((sum, m) => sum + (m.jarenLid || 0), 0) / withYears.length)
@@ -37,13 +41,6 @@ const StatCards = ({ members }: StatCardsProps) => {
   const incomplete = members.filter(
     (m) => !m.contacten?.length || !m.contacten.some(c => c.telefoon) || !m.contacten.some(c => c.email)
   ).length;
-
-  const stats = [
-    { label: "Aangesloten Coffeeshops", value: totalLocations, icon: Users, color: "text-primary", desc: `${totalMembers} leden` },
-    { label: "Gemeenten", value: uniqueCities, icon: Building2, color: "text-primary", desc: `${Math.round((uniqueCities / Object.keys(coffeeshopData.perStad).length) * 100)}% van coffeeshopgemeenten` },
-    { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-success", desc: `${withYears.length} met data` },
-    { label: "Compleetheid", value: `${Math.round(((totalMembers - incomplete) / totalMembers) * 100)}%`, icon: incomplete > 0 ? AlertTriangle : UserCheck, color: incomplete > 0 ? "text-destructive" : "text-success", desc: incomplete > 0 ? `${incomplete} onvolledig` : "Alle compleet", expandable: true },
-  ];
 
   // Build per-member missing fields
   const incompleteMemberDetails = members
@@ -54,9 +51,42 @@ const StatCards = ({ members }: StatCardsProps) => {
     .filter(x => x.missing.length > 0)
     .sort((a, b) => b.missing.length - a.missing.length);
 
+  const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
+    const radius = 28;
+    const stroke = 5;
+    const circumference = Math.PI * radius; // half circle
+    const filled = (pct / 100) * circumference;
+    return (
+      <svg width="70" height="42" viewBox="0 0 70 42" className="mx-auto">
+        <path
+          d="M 7 38 A 28 28 0 0 1 63 38"
+          fill="none"
+          stroke="hsl(var(--muted))"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+        />
+        <path
+          d="M 7 38 A 28 28 0 0 1 63 38"
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${circumference}`}
+        />
+      </svg>
+    );
+  };
+
+  const stats = [
+    { label: "Aangesloten Coffeeshops", value: totalLocations, icon: Users, color: "text-primary", desc: `${totalMembers} leden` },
+    { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-success", desc: `${withYears.length} met data` },
+    { label: "Compleetheid", value: `${Math.round(((totalMembers - incomplete) / totalMembers) * 100)}%`, icon: incomplete > 0 ? AlertTriangle : UserCheck, color: incomplete > 0 ? "text-destructive" : "text-success", desc: incomplete > 0 ? `${incomplete} onvolledig` : "Alle compleet", expandable: true },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Regular stat cards */}
         {stats.map((stat) => {
           const Icon = stat.icon;
           const isExpandable = 'expandable' in stat && stat.expandable;
@@ -78,6 +108,38 @@ const StatCards = ({ members }: StatCardsProps) => {
             </div>
           );
         })}
+
+        {/* Gemeenten gauge card */}
+        <div
+          className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+          onClick={() => navigate("/locaties")}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
+            <Building2 size={18} className="text-primary" />
+          </div>
+          <div className="mt-1">
+            <MiniGauge pct={cityPct} color="hsl(var(--primary))" />
+            <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{cityPct}%</p>
+            <p className="text-xs text-muted-foreground text-center">{uniqueCities}/{totalNLCities} gemeenten</p>
+          </div>
+        </div>
+
+        {/* Marktaandeel gauge card */}
+        <div
+          className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+          onClick={() => navigate("/marktaandeel")}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Marktaandeel</p>
+            <PieChart size={18} className="text-primary" />
+          </div>
+          <div className="mt-1">
+            <MiniGauge pct={marketPct} color="hsl(var(--success))" />
+            <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
+            <p className="text-xs text-muted-foreground text-center">{totalLocations}/{totalNL} locaties</p>
+          </div>
+        </div>
       </div>
 
       {showIncomplete && incompleteMemberDetails.length > 0 && (
