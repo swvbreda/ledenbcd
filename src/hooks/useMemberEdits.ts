@@ -46,6 +46,27 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   return { member: merged, isLoading };
 }
 
+/** Apply all edits to an array of members */
+export function useMergedMembers(members: Member[]): { members: Member[]; isLoading: boolean } {
+  const { data: editsMap, isLoading } = useMemberEdits();
+
+  const merged = useMemo(() => {
+    if (!editsMap || editsMap.size === 0) return members;
+    return members.map((m) => {
+      const edits = editsMap.get(m.id);
+      if (!edits) return m;
+      return {
+        ...m,
+        ...edits,
+        locaties: edits.locaties || m.locaties,
+        contacten: edits.contacten || m.contacten,
+      };
+    });
+  }, [members, editsMap]);
+
+  return { members: merged, isLoading };
+}
+
 export function useSaveMemberEdit() {
   const queryClient = useQueryClient();
 
