@@ -791,6 +791,18 @@
         "functie": "Eigenaar",
         "telefoon": "31620878787",
         "email": "jimmylin1945-@hotmail.com"
+      },
+      {
+        "naam": "Erol",
+        "functie": "",
+        "telefoon": "31653131296",
+        "email": "s.ardic@live.com"
+      },
+      {
+        "naam": "Yeliz Tarhan",
+        "functie": "",
+        "telefoon": "",
+        "email": "abraxas.kantoor@gmail.com"
       }
     ],
     "lidJaren": [
@@ -2327,7 +2339,7 @@
     "id": 36,
     "naam": "Regine",
     "plaats": "Haarlem",
-    "stadsdeel": "",
+    "stadsdeel": "West",
     "jarenLid": 0,
     "oprichtingJaar": null,
     "contactpersoon": "Martin van der Eng",
@@ -4725,9 +4737,15 @@
         "functie": "",
         "telefoon": "",
         "email": "1ehulp@hotmail.nl"
+      },
+      {
+        "naam": "Johnny Elbers",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "bluetomato@xs4all.nl"
       }
     ],
-    "oprichtingsDatum": "",
+    "oprichtingsDatum": "12-03",
     "lidJaren": [
       2019,
       2020,
@@ -4738,7 +4756,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2019
+    "lidSinds": 2019,
+    "functie2": "Eigenaar"
   },
   {
     "id": 64,
@@ -4782,6 +4801,12 @@
         "functie": "",
         "telefoon": "31 6 46885981 31611203950",
         "email": ""
+      },
+      {
+        "naam": "Rachid",
+        "functie": "Eigenaar",
+        "telefoon": "06 16 91 91 81",
+        "email": "willemrabeat@hotmail.com"
       }
     ],
     "oprichtingsDatum": "11-03",
@@ -4978,9 +5003,15 @@
         "functie": "Eigenaar",
         "telefoon": "",
         "email": ""
+      },
+      {
+        "naam": "Myrthe Aarden",
+        "functie": "Eigenaar",
+        "telefoon": "06 422 06 872",
+        "email": ""
       }
     ],
-    "oprichtingsDatum": "",
+    "oprichtingsDatum": "01-01",
     "lidSinds": 2006,
     "lidJaren": [
       2006,
@@ -5004,7 +5035,8 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "email2": "aardenhoreca@zeelandnet.nl"
   },
   {
     "id": 68,
@@ -6075,7 +6107,7 @@
     "naam": "Empire/ DreamTeam Haarlem BV",
     "plaats": "Haarlem",
     "stadsdeel": "",
-    "jarenLid": 0,
+    "jarenLid": 44,
     "oprichtingJaar": 1982,
     "contactpersoon": "Hus",
     "functie": "Eigenaar",
@@ -6108,9 +6140,15 @@
         "functie": "Eigenaar",
         "telefoon": "30 69 74 66 39 29",
         "email": "Chelseakales@gmail.com"
+      },
+      {
+        "naam": "Chelsea & Sil (moeder Hus)",
+        "functie": "",
+        "telefoon": "31 6 46885981 31611203950",
+        "email": ""
       }
     ],
-    "oprichtingsDatum": "",
+    "oprichtingsDatum": "11-03",
     "lidJaren": [
       2026
     ],
@@ -7421,7 +7459,7 @@
         "email": "info@nieuwenederlandscheschool.nl"
       }
     ],
-    "oprichtingsDatum": "",
+    "oprichtingsDatum": "05-08",
     "lidSinds": 2022,
     "lidJaren": [
       2022,
@@ -8138,5 +8176,299 @@
     "lidJaren": [
       2026
     ]
+  },
+  {
+    "id": 123,
+    "naam": "The Noon",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "oprichtingsDatum": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "The Noon",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "The Noon",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Zieseniskade 22",
+        "postcode": "1017 RT"
+      }
+    ],
+    "contacten": [],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 124,
+    "naam": "Het Ballonnetje",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "oprichtingsDatum": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Het Ballonnetje",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Het Ballonnetje",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Roetersstraat 12",
+        "postcode": "1018 WD"
+      }
+    ],
+    "contacten": [],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 125,
+    "naam": "1e Hulp",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 42,
+    "oprichtingJaar": 1984,
+    "oprichtingsDatum": null,
+    "contactpersoon": "Dhr. M. El Mesri",
+    "functie": "",
+    "telefoon": "",
+    "email": "1ehulp@hotmail.nl",
+    "bedrijfsnaam": "1e Hulp",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "1e Hulp",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Marnixstraat 194",
+        "postcode": "1016 TJ"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Dhr. M. El Mesri",
+        "functie": "",
+        "telefoon": "",
+        "email": "1ehulp@hotmail.nl"
+      }
+    ],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": "Marnixstraat 194",
+    "factuurPostcode": null,
+    "factuurPlaats": "1016 SZ AMSTERDAM",
+    "factuurTelefoon": "(020) 4270712",
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 126,
+    "naam": "Coffeshop Paradox",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "oprichtingsDatum": null,
+    "contactpersoon": "Ludo Bossaert",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Coffeshop Paradox",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeshop Paradox",
+        "plaats": "Amsterdam",
+        "stadsdeel": "",
+        "adres": "Eerste Bloemdwarsstraat 2r",
+        "postcode": "1016 KS"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Ludo Bossaert",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": ""
+      }
+    ],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 127,
+    "naam": "Coffeeshop Mediterrané",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "oprichtingsDatum": null,
+    "contactpersoon": "Moustapha El Mahdioui",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Coffeeshop Mediterrané",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Mediterrané",
+        "plaats": "Amsterdam",
+        "stadsdeel": "",
+        "adres": "Spuistraat 80",
+        "postcode": "1012 TX"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Moustapha El Mahdioui",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": ""
+      }
+    ],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 128,
+    "naam": "Coffeeshop Haarlem",
+    "plaats": "Haarlem",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": 2023,
+    "oprichtingsDatum": "01-01",
+    "contactpersoon": "Martin van der Eng",
+    "functie": "Eigenaar",
+    "telefoon": "06 15 31 55 39",
+    "email": "Info@justbudha.com",
+    "bedrijfsnaam": "Samamado bv",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Haarlem",
+        "plaats": "Haarlem",
+        "stadsdeel": "",
+        "adres": "Doelstraat 29",
+        "postcode": "2011 XB"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Martin van der Eng",
+        "functie": "Eigenaar",
+        "telefoon": "06 15 31 55 39",
+        "email": "Info@justbudha.com"
+      }
+    ],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": "Samamado bv",
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
+  },
+  {
+    "id": 129,
+    "naam": "Coffee-Shop Bamboo",
+    "plaats": "Schiedam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "oprichtingsDatum": null,
+    "contactpersoon": "Asma Salahi",
+    "functie": "",
+    "telefoon": "06 30 48 60 05",
+    "email": "",
+    "bedrijfsnaam": "Coffee-Shop Bamboo",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffee-Shop Bamboo",
+        "plaats": "Schiedam",
+        "stadsdeel": "",
+        "adres": "",
+        "postcode": ""
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Asma Salahi",
+        "functie": "",
+        "telefoon": "06 30 48 60 05",
+        "email": ""
+      }
+    ],
+    "kvk": null,
+    "factuurEmail": null,
+    "factuurBedrijfsnaam": null,
+    "factuurKvk": null,
+    "factuurAdres": null,
+    "factuurPostcode": null,
+    "factuurPlaats": null,
+    "factuurTelefoon": null,
+    "contactpersoon2": null,
+    "functie2": null,
+    "telefoon2": null,
+    "email2": null
   }
 ]
