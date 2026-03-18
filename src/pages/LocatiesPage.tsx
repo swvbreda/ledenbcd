@@ -12,6 +12,33 @@ interface CityData {
   leden: { id: number; naam: string; aantalLocaties: number }[];
 }
 
+class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("Locatieskaart kon niet worden geladen", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-card rounded-lg border border-border p-4 text-sm text-muted-foreground">
+          De kaart is tijdelijk niet beschikbaar, maar alle steden en locaties staan hieronder in de tabel.
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const LocatiesPage = () => {
   const [search, setSearch] = useState("");
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
@@ -65,7 +92,10 @@ const LocatiesPage = () => {
 
   const handleSort = (key: typeof sortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
-    else { setSortKey(key); setSortAsc(key === "naam"); }
+    else {
+      setSortKey(key);
+      setSortAsc(key === "naam");
+    }
   };
 
   const SortIcon = ({ col }: { col: typeof sortKey }) => {
@@ -101,10 +131,9 @@ const LocatiesPage = () => {
         </div>
       </div>
 
-      <CityMap
-        cities={filtered}
-        onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)}
-      />
+      <MapErrorBoundary>
+        <CityMap cities={filtered} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />
+      </MapErrorBoundary>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
@@ -170,8 +199,7 @@ const LocatiesPage = () => {
                         </td>
                         <td colSpan={3} />
                       </tr>
-                    ))
-                  }
+                    ))}
                 </React.Fragment>
               ))}
             </tbody>
