@@ -108,11 +108,10 @@ const MarktaandeelPage = () => {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-medium w-[30%]">Stad</th>
-                <th className="text-right px-3 py-2 font-medium w-[12%]">Totaal</th>
-                <th className="text-right px-3 py-2 font-medium w-[12%]">Leden</th>
-                <th className="text-right px-3 py-2 font-medium w-[12%]">Locaties</th>
-                <th className="text-right px-3 py-2 font-medium w-[8%]">%</th>
-                <th className="px-3 py-2 w-[26%]"></th>
+                <th className="text-right px-3 py-2 font-medium w-[15%]">Totaal</th>
+                <th className="text-right px-3 py-2 font-medium w-[15%]">BCD</th>
+                <th className="text-right px-3 py-2 font-medium w-[10%]">%</th>
+                <th className="px-3 py-2 w-[30%]"></th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +129,6 @@ const MarktaandeelPage = () => {
                     >
                       <td className="px-3 py-1.5 font-medium truncate">{city}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums">{cityMembers.length || 0}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">
                         <span className={pct >= 30 ? "text-success font-medium" : pct > 0 ? "text-foreground" : "text-muted-foreground"}>
@@ -152,7 +150,7 @@ const MarktaandeelPage = () => {
                         className="border-b border-border/30 bg-muted/10 hover:bg-muted/20 cursor-pointer transition-colors"
                         onClick={(e) => { e.stopPropagation(); navigate(`/leden/${m.id}`); }}
                       >
-                        <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={3}>
+                        <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={2}>
                           <span className="inline-flex items-center gap-2">
                             <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
                             <span className="font-medium text-foreground">{m.naam}</span>
