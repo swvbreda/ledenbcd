@@ -110,7 +110,7 @@ const MemberTable = ({ members, searchQuery }: MemberTableProps) => {
                 {expandedId === member.id && (
                   <tr key={`${member.id}-detail`} className="bg-muted/20">
                     <td colSpan={6} className="px-6 py-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contactgegevens</h4>
                           <p className="font-medium">{member.contactpersoon || "—"}</p>
@@ -128,6 +128,34 @@ const MemberTable = ({ members, searchQuery }: MemberTableProps) => {
                           {member.bedrijfsnaam && (
                             <p className="text-xs mt-2 text-muted-foreground">
                               Bedrijf: <span className="text-foreground">{member.bedrijfsnaam}</span>
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Factuurgegevens</h4>
+                          {member.factuurBedrijfsnaam ? (
+                            <p className="font-medium text-xs">{member.factuurBedrijfsnaam}</p>
+                          ) : (
+                            <p className="text-muted-foreground text-xs">—</p>
+                          )}
+                          {member.factuurKvk && (
+                            <p className="text-xs text-muted-foreground mt-0.5">KVK: {member.factuurKvk}</p>
+                          )}
+                          {member.factuurAdres && (
+                            <p className="text-xs mt-1 text-muted-foreground">
+                              {member.factuurAdres}
+                              {member.factuurPostcode && <>, {member.factuurPostcode}</>}
+                              {member.factuurPlaats && <> {member.factuurPlaats}</>}
+                            </p>
+                          )}
+                          {member.factuurEmail && (
+                            <p className="flex items-center gap-1 text-xs mt-1 text-primary">
+                              <Mail size={12} /> {member.factuurEmail}
+                            </p>
+                          )}
+                          {member.factuurTelefoon && (
+                            <p className="flex items-center gap-1 text-xs mt-0.5 text-muted-foreground">
+                              <Phone size={12} /> {member.factuurTelefoon}
                             </p>
                           )}
                         </div>
