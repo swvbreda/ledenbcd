@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 
 const MemberDetail = () => {
@@ -39,9 +39,15 @@ const MemberDetail = () => {
           <ArrowLeft size={18} />
         </button>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
             <h2 className="text-xl sm:text-2xl font-bold font-display">{member.naam}</h2>
+            {member.bestuursfunctie && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent/15 text-accent-foreground rounded-md text-xs font-semibold">
+                <Shield size={13} />
+                {member.bestuursfunctie}
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">

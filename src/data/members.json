@@ -286,7 +286,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "bestuursfunctie": "Bestuurder"
   },
   {
     "id": 5,
@@ -374,7 +375,8 @@
     ],
     "lidSinds": 2005,
     "website": "https://greenhousecoffeeshops.com",
-    "instagram": "greenhousecoffeeshops"
+    "instagram": "greenhousecoffeeshops",
+    "bestuursfunctie": "Bestuurder / Woordvoerder"
   },
   {
     "id": 6,
@@ -553,7 +555,8 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "bestuursfunctie": "Bestuurder / Penningmeester"
   },
   {
     "id": 9,
@@ -1031,7 +1034,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "bestuursfunctie": "Bestuurder"
   },
   {
     "id": 15,
@@ -1523,7 +1527,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2009
+    "lidSinds": 2009,
+    "bestuursfunctie": "Bestuurder"
   },
   {
     "id": 22,
