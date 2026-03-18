@@ -18,6 +18,7 @@ const StatistiekenPage = () => {
       <StatCards members={allMembers} />
 
       <VerloopChart />
+      <InstroomUitstroomChart />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <CityChart members={allMembers} />

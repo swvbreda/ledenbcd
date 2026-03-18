@@ -39,6 +39,8 @@ const Index = () => {
         <VerloopChart />
       </div>
 
+      <InstroomUitstroomChart />
+
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold font-display">Recente Leden (&le; 10 jaar)</h3>
