@@ -10,10 +10,11 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled = (pct / 100) * circumference;
+  const gap = circumference - filled;
   const center = size / 2;
 
   return (
-    <svg width={size} height={size} className="block">
+    <svg width={size} height={size} className="block" style={{ transform: "rotate(-90deg)" }}>
       <circle
         cx={center}
         cy={center}
@@ -22,18 +23,18 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
         stroke="hsl(var(--muted))"
         strokeWidth={strokeWidth}
       />
-      <circle
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke={pct >= 30 ? "hsl(var(--success))" : "hsl(var(--primary))"}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={`${filled} ${circumference}`}
-        strokeDashoffset={circumference * 0.25}
-        transform={`rotate(-90 ${center} ${center})`}
-      />
+      {pct > 0 && (
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={pct >= 30 ? "hsl(var(--success))" : "hsl(var(--primary))"}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${gap}`}
+        />
+      )}
     </svg>
   );
 };
@@ -59,19 +60,23 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
 
   const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
-  // Cities where BCD has presence, sorted by share descending, then top cities by size
-  const citiesWithBcd = Object.entries(perStad)
-    .map(([city, total]) => {
+  // Curated list: G4, provincial capitals, and key cities
+  const featuredCities = [
+    "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", // G4
+    "Groningen", "Leeuwarden", "Zwolle", "Arnhem", "Enschede", // Oost & Noord
+    "Maastricht", "Eindhoven", "Breda", "Tilburg", // Zuid
+    "Haarlem", "Leiden", "Nijmegen", // Overig
+  ];
+
+  const topCities = featuredCities
+    .filter((city) => perStad[city]) // only cities in WODC data
+    .map((city) => {
+      const total = perStad[city] || 0;
       const bcd = cityCount[city] || 0;
       const leden = cityMembers[city] || 0;
       const pct = total > 0 ? Math.round((bcd / total) * 100) : 0;
       return { city, total, bcd, leden, pct };
-    })
-    .filter((c) => c.bcd > 0)
-    .sort((a, b) => b.pct - a.pct);
-
-  // Show up to 15 cities with BCD presence
-  const topCities = citiesWithBcd.slice(0, 15);
+    });
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
