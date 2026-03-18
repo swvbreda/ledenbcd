@@ -59,16 +59,19 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
 
   const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
-  // Top cities by total coffeeshops, with BCD data
-  const topCities = Object.entries(perStad)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
+  // Cities where BCD has presence, sorted by share descending, then top cities by size
+  const citiesWithBcd = Object.entries(perStad)
     .map(([city, total]) => {
       const bcd = cityCount[city] || 0;
       const leden = cityMembers[city] || 0;
       const pct = total > 0 ? Math.round((bcd / total) * 100) : 0;
       return { city, total, bcd, leden, pct };
-    });
+    })
+    .filter((c) => c.bcd > 0)
+    .sort((a, b) => b.pct - a.pct);
+
+  // Show up to 15 cities with BCD presence
+  const topCities = citiesWithBcd.slice(0, 15);
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
