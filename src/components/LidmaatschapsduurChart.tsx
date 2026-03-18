@@ -54,7 +54,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
       icon: UserPlus,
       label: `Nieuwe leden in ${currentYear}`,
       value: `${newThisYear}`,
-      detail: currentYearData ? `${currentYearData.uitstroom} uitgestroomd` : "",
+      detail: "",
       color: "text-primary",
     },
     {
