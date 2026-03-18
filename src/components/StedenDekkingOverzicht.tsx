@@ -2,17 +2,19 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { allRepresented } from "@/hooks/useMembers";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
-  const totalMembers = members.length;
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  // Use represented (members + leads) for market share
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD locations per city
+  // Count represented locations per city
   const cityCount: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
