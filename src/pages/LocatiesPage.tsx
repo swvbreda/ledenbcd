@@ -194,17 +194,17 @@ const LocatiesPage = () => {
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm font-body">
+          <table className="w-full text-sm font-body table-fixed">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
                   <span className="inline-flex items-center gap-1">Stad <SortIcon col="naam" /></span>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("aantalLocaties")}>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-16" onClick={() => handleSort("aantalLocaties")}>
                   <span className="inline-flex items-center gap-1">BCD <SortIcon col="aantalLocaties" /></span>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground w-20">Totaal</th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("marktPct")}>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-16">Totaal</th>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("marktPct")}>
                   <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
                 </th>
               </tr>
@@ -216,18 +216,18 @@ const LocatiesPage = () => {
                     className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => setExpandedCity(expandedCity === city.naam ? null : city.naam)}
                   >
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-2 font-medium font-display">
-                        <MapPin size={14} className="text-primary" />
+                    <td className="px-3 py-2">
+                      <span className="inline-flex items-center gap-1.5 font-medium font-display text-sm">
+                        <MapPin size={12} className="text-primary shrink-0" />
                         {city.naam}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center tabular-nums">{city.aantalLocaties}</td>
-                    <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">{city.totaalNL || "—"}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-3 py-2 text-right tabular-nums">{city.aantalLocaties}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{city.totaalNL || "—"}</td>
+                    <td className="px-3 py-2">
                       {city.totaalNL > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${city.marktPct >= 30 ? "bg-success" : "bg-primary/60"}`}
                               style={{ width: `${Math.min(city.marktPct, 100)}%` }}
@@ -238,7 +238,7 @@ const LocatiesPage = () => {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground text-right block">—</span>
                       )}
                     </td>
                   </tr>
@@ -250,10 +250,10 @@ const LocatiesPage = () => {
                         className="border-b border-border bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
                         onClick={() => navigate(`/leden/${lid.id}`)}
                       >
-                        <td className="pl-10 pr-4 py-2.5">
-                          <span className="font-medium font-display text-sm">{lid.naam}</span>
+                        <td className="pl-8 pr-3 py-1.5">
+                          <span className="font-medium font-display text-xs">{lid.naam}</span>
                           {lid.aantalLocaties > 1 && (
-                            <span className="text-xs text-muted-foreground ml-1.5">({lid.aantalLocaties} loc)</span>
+                            <span className="text-[10px] text-muted-foreground ml-1">({lid.aantalLocaties})</span>
                           )}
                         </td>
                         <td colSpan={3} />
