@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, MapPin, Mail, Phone, ExternalLink, Shield } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 
 interface MemberTableProps {
@@ -14,6 +15,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const sorted = [...members].sort((a, b) => {
     const av = a[sortKey] ?? 0;
@@ -65,7 +67,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </th>
               ))}
-              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
+              {isAdmin && <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>}
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
@@ -112,11 +114,13 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-muted-foreground text-xs">
-                    {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
-                  </span>
-                </td>
+                {isAdmin && (
+                  <td className="px-4 py-3">
+                    <span className="text-muted-foreground text-xs">
+                      {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
+                    </span>
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </td>

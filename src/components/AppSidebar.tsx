@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,7 +26,7 @@ const navItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -68,7 +68,10 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border px-4 py-3 space-y-2">
         {!collapsed && user && (
-          <p className="text-xs text-sidebar-foreground/50 truncate">{user.email}</p>
+          <div className="flex items-center gap-1.5">
+            {isAdmin && <Shield size={12} className="text-primary shrink-0" />}
+            <p className="text-xs text-sidebar-foreground/50 truncate">{user.email}</p>
+          </div>
         )}
         <button
           onClick={signOut}
