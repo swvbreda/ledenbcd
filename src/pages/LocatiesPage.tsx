@@ -105,7 +105,6 @@ const LocatiesPage = () => {
           naam: plaats,
           aantalLeden: 0,
           aantalLocaties: count,
-          stadsdelen: [],
           leden: [],
           totaalNL: totaal,
           marktPct: totaal > 0 ? Math.round((count / totaal) * 100) : 0,
