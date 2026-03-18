@@ -123,12 +123,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                  {isLead ? "—" : member.id}
+                  {memberIsLead ? "—" : member.id}
                 </td>
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
-                    {isLead && (
+                    {memberIsLead && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         Lead
                       </span>
