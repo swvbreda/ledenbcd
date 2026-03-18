@@ -4343,7 +4343,7 @@
   {
     "id": 121,
     "naam": "Smokery",
-    "plaats": "Wormer",
+    "plaats": "Zaanstad",
     "stadsdeel": "",
     "jarenLid": null,
     "oprichtingJaar": null,
@@ -4356,7 +4356,7 @@
     "locaties": [
       {
         "naam": "Smokery",
-        "plaats": "Wormer",
+        "plaats": "Zaanstad",
         "adres": "",
         "postcode": ""
       }
