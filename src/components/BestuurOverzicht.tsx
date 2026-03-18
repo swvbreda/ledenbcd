@@ -12,7 +12,7 @@ interface BestuurOverzichtProps {
 }
 
 const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; bondEmail?: string; telefoon?: string; defaultFoto?: string }[] = [
-  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 868 752 31", defaultFoto: simonePhoto },
+  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 46 44 26 67", defaultFoto: simonePhoto },
   { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl" },
   { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl" },
   { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl" },
