@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { archiveMember, restoreMember, isArchived } from "@/hooks/useArchive";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
@@ -28,6 +35,7 @@ const MemberDetail = () => {
   
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
+  const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
 
   if (!member) {
     return (
@@ -76,26 +84,99 @@ const MemberDetail = () => {
               </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <MapPin size={14} /> {member.plaats}
-            </span>
-            {member.stadsdeel && (
-              <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
-            )}
-            {member.jarenLid !== null && (
-              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                member.jarenLid >= 30
-                  ? "bg-success/10 text-success"
-                  : member.jarenLid >= 10
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}>
-                {member.jarenLid} jaar lid
+          {isAdmin && (
+            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <MapPin size={14} /> {member.plaats}
               </span>
-            )}
-          </div>
+              {member.stadsdeel && (
+                <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
+              )}
+              {member.jarenLid !== null && (
+                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                  member.jarenLid >= 30
+                    ? "bg-success/10 text-success"
+                    : member.jarenLid >= 10
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {member.jarenLid} jaar lid
+                </span>
+              )}
+              {archived && (
+                <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded text-xs font-medium">
+                  Gearchiveerd
+                </span>
+              )}
+            </div>
+          )}
+          {!isAdmin && (
+            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <MapPin size={14} /> {member.plaats}
+              </span>
+              {member.stadsdeel && (
+                <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
+              )}
+              {member.jarenLid !== null && (
+                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                  member.jarenLid >= 30
+                    ? "bg-success/10 text-success"
+                    : member.jarenLid >= 10
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {member.jarenLid} jaar lid
+                </span>
+              )}
+            </div>
+          )}
         </div>
+        {isAdmin && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {archived ? (
+                <Button variant="outline" size="sm" className="gap-1.5 text-primary">
+                  <ArchiveRestore size={14} /> Herstellen
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
+                  <Archive size={14} /> Archiveren
+                </Button>
+              )}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {archived ? "Lid herstellen?" : "Lid archiveren?"}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {archived
+                    ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
+                    : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (archived) {
+                      restoreMember(member.id);
+                      setArchived(false);
+                      toast.success(`${member.naam} is hersteld`);
+                    } else {
+                      archiveMember(member.id);
+                      setArchived(true);
+                      toast.success(`${member.naam} is gearchiveerd`);
+                    }
+                  }}
+                >
+                  {archived ? "Herstellen" : "Archiveren"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Oprichting & KVK */}
