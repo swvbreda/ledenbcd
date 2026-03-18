@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import membersData from "@/data/members.json";
 import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
+import { getArchivedIds } from "@/hooks/useArchive";
 
 export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
