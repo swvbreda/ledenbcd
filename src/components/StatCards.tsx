@@ -3,7 +3,7 @@ import { Users, Building2, MapPin, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
-import { getMembershipYears } from "@/lib/membership";
+// getMembershipYears no longer needed for stat cards
 
 interface StatCardsProps {
   members: Member[];
