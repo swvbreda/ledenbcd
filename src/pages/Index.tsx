@@ -31,15 +31,15 @@ const Index = () => {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold font-display">Recente Leden (&le; 10 jaar)</h3>
+          <h3 className="text-lg font-semibold font-display">Alle Leden</h3>
           <button
             onClick={() => navigate("/leden")}
             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
           >
-            Alle leden <ArrowRight size={14} />
+            Volledig overzicht <ArrowRight size={14} />
           </button>
         </div>
-        <MemberTable members={recentMembers} compact />
+        <MemberTable members={allMembers} compact />
       </div>
     </div>
   );
