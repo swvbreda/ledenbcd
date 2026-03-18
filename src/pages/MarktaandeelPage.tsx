@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Member } from "@/data/types";
 import { allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
@@ -14,6 +14,7 @@ const MarktaandeelPage = () => {
   const totalMembers = members.length;
   const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   // Group members by city
   const membersByCity: Record<string, Member[]> = {};
@@ -88,8 +89,20 @@ const MarktaandeelPage = () => {
         ))}
       </div>
 
-      {/* Full table */}
+      {/* Search + Full table */}
       <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <div className="px-3 py-2 border-b border-border">
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Zoek een stad..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed">
             <thead>
@@ -103,7 +116,7 @@ const MarktaandeelPage = () => {
               </tr>
             </thead>
             <tbody>
-              {allCities.map(({ city, total, bcd, pct }) => {
+              {allCities.filter(({ city }) => city.toLowerCase().includes(search.toLowerCase())).map(({ city, total, bcd, pct }) => {
                 const cityMembers = membersByCity[city] || [];
                 const isExpanded = expandedCity === city;
                 return (
