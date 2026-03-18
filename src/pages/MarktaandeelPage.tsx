@@ -199,9 +199,9 @@ const MarktaandeelPage = () => {
               </div>
             ))}
           </div>
-          {expandedCity && membersByCity[expandedCity] && !perStad[expandedCity] && (
+          {expandedCity && representedByCity[expandedCity] && !perStad[expandedCity] && (
             <div className="mt-3 bg-card rounded border border-border/50 divide-y divide-border/30">
-              {membersByCity[expandedCity].map((m) => (
+              {representedByCity[expandedCity].map((m) => (
                 <div
                   key={m.id}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/20 cursor-pointer transition-colors"
