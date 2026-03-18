@@ -297,36 +297,36 @@ const MemberDetail = () => {
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
                   <FileText size={16} className="text-primary" /> Factuurgegevens
                 </h3>
-                <div className="space-y-2">
-                  {(member.factuurBedrijfsnaam || member.bedrijfsnaam) ? (
-                    <p className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam}</p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Geen bedrijfsnaam</p>
-                  )}
-                  {(member.factuurKvk || member.kvk) && (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Hash size={13} /> KVK: <span className="font-mono">{member.factuurKvk || member.kvk}</span>
-                    </p>
-                  )}
-                  {member.factuurAdres && (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      <p>{member.factuurAdres}</p>
-                      <p>
+                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                  <span className="text-muted-foreground">Bedrijfsnaam</span>
+                  <span className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam || "—"}</span>
+
+                  <span className="text-muted-foreground">KVK</span>
+                  <span className="font-mono">{member.factuurKvk || member.kvk || "—"}</span>
+
+                  <span className="text-muted-foreground">Adres</span>
+                  <span>
+                    {member.factuurAdres ? (
+                      <>
+                        {member.factuurAdres}
+                        <br />
                         {member.factuurPostcode && <>{member.factuurPostcode} </>}
                         {member.factuurPlaats}
-                      </p>
-                    </div>
-                  )}
-                  {member.factuurEmail && (
-                    <a href={`mailto:${member.factuurEmail}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
-                      <Mail size={13} /> {member.factuurEmail}
-                    </a>
-                  )}
-                  {member.factuurTelefoon && (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                      <Phone size={13} /> {member.factuurTelefoon}
-                    </p>
-                  )}
+                      </>
+                    ) : "—"}
+                  </span>
+
+                  <span className="text-muted-foreground">E-mail</span>
+                  <span>
+                    {member.factuurEmail ? (
+                      <a href={`mailto:${member.factuurEmail}`} className="text-primary hover:underline">
+                        {member.factuurEmail}
+                      </a>
+                    ) : "—"}
+                  </span>
+
+                  <span className="text-muted-foreground">Telefoon</span>
+                  <span>{member.factuurTelefoon || "—"}</span>
                 </div>
               </div>
             </div>
