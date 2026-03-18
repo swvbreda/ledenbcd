@@ -118,7 +118,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
                   {isLead ? "—" : member.id}
                 </td>
-                <td className="px-4 py-3 font-medium font-display">
+                <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
                     {isLead && (
