@@ -152,7 +152,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
               }`}
               onClick={() => member && navigate(`/leden/${member.id}`)}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 flex-row-reverse">
                 <div className="relative shrink-0">
                   {photo ? (
                     <img
