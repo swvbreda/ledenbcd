@@ -93,7 +93,7 @@ const LedenPage = () => {
           </div>
         )
       ) : (
-        <MemberTable members={searchedMembers} />
+        <MemberTable members={mergedSearched} />
       )}
     </div>
   );
