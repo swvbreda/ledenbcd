@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone, User, Camera, Users } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
@@ -31,7 +31,7 @@ const bestuursleden: BestuurslidData[] = [
   { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 46 44 26 67", defaultFoto: simonePhoto, priveAdres: "De Weterungsbrugmolen 3", privePostcode: "1188 GV", privePlaats: "Amstelveen" },
   { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl", email: "joahelms@gmail.com", telefoon: "06 55 86 76 90", priveAdres: "Haarlemmerstraat 64", privePostcode: "1013 ET", privePlaats: "Amsterdam", coffeeshop: "Greenhouse", coffeeshopPlaats: "Amsterdam" },
   { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl", email: "info@coffeeshop-relax.nl", telefoon: "06 25 26 27 30", priveAdres: "Graafwillemlaan 48", privePostcode: "1181 EH", privePlaats: "Amstelveen", geboortedatum: "25-02-1973", coffeeshop: "Relax", coffeeshopPlaats: "Amsterdam" },
-  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl", email: "huub@splif.nl", telefoon: "06 53 22 91 20", priveAdres: "Westwijk 11", privePlaats: "Middenbeemster", coffeeshop: "Splif" },
+  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl", email: "huub@splif.nl", telefoon: "06 53 22 91 20", priveAdres: "Westwijk 11", privePlaats: "Middenbeemster", coffeeshop: "Splif", coffeeshopPlaats: "Noord-Beemster" },
   { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl", email: "dorine@vanhamholding.com", telefoon: "06 57 59 65 34", priveAdres: "Julianastraat 48", privePostcode: "1165 GW", privePlaats: "Halfweg", coffeeshop: "Hunters", coffeeshopPlaats: "Amsterdam" },
   { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl", telefoon: "06 11 39 69 86", priveAdres: "Welle 2", privePostcode: "5507NX", privePlaats: "Veldhoven", geboortedatum: "21-05-1980", coffeeshop: "The Pink", coffeeshopPlaats: "Eindhoven" },
 ];
@@ -176,16 +176,19 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
-            {member ? (
-              <p className="text-[11px] text-primary leading-tight mt-0.5">
-                {member.naam}{member.plaats ? ` · ${member.plaats}` : ""}
+            
+            {/* Coffeeshop met locatie-icoon, op eigen regel */}
+            {(member || bl.coffeeshop) && (
+              <p className="flex items-center gap-1 text-[11px] text-primary leading-tight mt-1.5 pt-1.5 border-t border-border/50">
+                <MapPin size={10} className="shrink-0" />
+                {member
+                  ? <>{member.naam}{member.plaats ? ` · ${member.plaats}` : ""}</>
+                  : <>{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</>
+                }
               </p>
-            ) : bl.coffeeshop ? (
-              <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
-            ) : (
-              <p className="text-[11px] leading-tight mt-0.5">&nbsp;</p>
             )}
-            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+            
+            <div className="flex flex-wrap items-center gap-x-3 mt-1.5">
               {bl.bondEmail && (
                 <a
                   href={`mailto:${bl.bondEmail}`}
