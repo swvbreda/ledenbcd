@@ -1,35 +1,5 @@
 [
   {
-    "id": 118,
-    "naam": "Coffee-Shop Bamboo",
-    "plaats": "Schiedam",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "Asma Salahi",
-    "functie": "",
-    "telefoon": "06 30 48 60 05",
-    "email": "",
-    "bedrijfsnaam": "Coffee-Shop Bamboo",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Coffee-Shop Bamboo",
-        "plaats": "Schiedam",
-        "adres": "Parkweg 373",
-        "postcode": "3114 JH"
-      }
-    ],
-    "contacten": [
-      {
-        "naam": "Asma Salahi",
-        "functie": "",
-        "telefoon": "06 30 48 60 05",
-        "email": ""
-      }
-    ]
-  },
-  {
     "id": 119,
     "naam": "Out of time",
     "plaats": "Rotterdam",
