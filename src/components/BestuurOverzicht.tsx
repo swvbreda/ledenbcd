@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone, MapPin, User, Camera } from "lucide-react";
+import { Shield, Mail, Phone, MapPin, User, Camera, Home, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
@@ -11,13 +11,35 @@ interface BestuurOverzichtProps {
   members: Member[];
 }
 
-const bestuursleden: { naam: string; functie: string; lidId?: number; email?: string; bondEmail?: string; telefoon?: string; defaultFoto?: string }[] = [
-  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 46 44 26 67", defaultFoto: simonePhoto },
-  { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl" },
-  { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl" },
-  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl" },
-  { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl" },
-  { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl" },
+interface BestuurslidData {
+  naam: string;
+  functie: string;
+  lidId?: number;
+  email?: string;
+  bondEmail?: string;
+  telefoon?: string;
+  defaultFoto?: string;
+  priveAdres?: string;
+  privePostcode?: string;
+  privePlaats?: string;
+  geboortedatum?: string;
+  coffeeshop?: string;
+  coffeeshopPlaats?: string;
+}
+
+const bestuursleden: BestuurslidData[] = [
+  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 46 44 26 67", defaultFoto: simonePhoto, priveAdres: "De Weterungsbrugmolen 3", privePostcode: "1188 GV", privePlaats: "Amstelveen" },
+  { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl", email: "joahelms@gmail.com", telefoon: "06 55 86 76 90", priveAdres: "Haarlemmerstraat 64", privePostcode: "1013 ET", privePlaats: "Amsterdam", coffeeshop: "Greenhouse", coffeeshopPlaats: "Amsterdam" },
+  { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl", email: "info@coffeeshop-relax.nl", telefoon: "06 25 26 27 30", priveAdres: "Graafwillemlaan 48", privePostcode: "1181 EH", privePlaats: "Amstelveen", geboortedatum: "25-02-1973", coffeeshop: "Relax", coffeeshopPlaats: "Amsterdam" },
+  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl", email: "huub@splif.nl", telefoon: "06 53 22 91 20", priveAdres: "Westwijk 11", privePlaats: "Middenbeemster", coffeeshop: "Splif" },
+  { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl", email: "dorine@vanhamholding.com", telefoon: "06 57 59 65 34", priveAdres: "Julianastraat 48", privePostcode: "1165 GW", privePlaats: "Halfweg", coffeeshop: "Hunters", coffeeshopPlaats: "Amsterdam" },
+  { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl", telefoon: "06 11 39 69 86", priveAdres: "Welle 2", privePostcode: "5507NX", privePlaats: "Veldhoven", geboortedatum: "21-05-1980", coffeeshop: "The Pink", coffeeshopPlaats: "Eindhoven" },
+];
+
+const aspiranten: BestuurslidData[] = [
+  { naam: "Tim de Wilde", functie: "Kandidaat Bestuurslid", telefoon: "06 30 01 19 65", privePlaats: "Amersfoort", coffeeshop: "Loods", coffeeshopPlaats: "Zwolle / Amersfoort" },
+  { naam: "Hannes Poppinghaus", functie: "Woordvoerder Arnhem", telefoon: "06 43 20 68 88", privePlaats: "Arnhem", coffeeshop: "Lucky Luke", coffeeshopPlaats: "Arnhem" },
+  { naam: "Tugrulhan", functie: "Woordvoerder Enschede", telefoon: "06 48 56 80 81", privePlaats: "Enschede", coffeeshop: "Cafe de Mix", coffeeshopPlaats: "Enschede" },
 ];
 
 const slugify = (name: string) =>
@@ -35,21 +57,22 @@ const getCities = (member?: Member): string[] => {
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // Find which board member the current user is (match by email)
+  const allBestuursleden = [...bestuursleden, ...aspiranten];
+
   const currentUserBoardMember = user?.email
-    ? bestuursleden.find(
+    ? allBestuursleden.find(
         (bl) =>
           bl.bondEmail?.toLowerCase() === user.email?.toLowerCase() ||
           bl.email?.toLowerCase() === user.email?.toLowerCase()
       )
     : null;
 
-  // Load photos from storage on mount
   useEffect(() => {
     const loadPhotos = async () => {
       const { data } = await supabase.storage.from("bestuur-photos").list();
@@ -78,16 +101,13 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
       toast.error("Afbeelding mag maximaal 5MB zijn");
       return;
     }
-
     const slug = slugify(blNaam);
     const ext = file.name.split(".").pop() || "jpg";
     const filePath = `${slug}.${ext}`;
-
     setUploading(blNaam);
     const { error } = await supabase.storage
       .from("bestuur-photos")
       .upload(filePath, file, { upsert: true });
-
     if (error) {
       toast.error("Upload mislukt: " + error.message);
     } else {
@@ -102,29 +122,140 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     setUploading(null);
   };
 
-  const getContact = (bl: typeof bestuursleden[0], member?: Member) => {
-    if (bl.telefoon) return { telefoon: bl.telefoon };
-    if (!member) return {};
-    const contact = member.contacten.find(
-      (c) => bl.naam.includes(c.naam) || c.naam.includes(bl.naam.split(" ").pop() || "")
-    );
-    if (contact) return { telefoon: contact.telefoon };
-    return { telefoon: member.telefoon };
-  };
-
-  const getPhoto = (bl: typeof bestuursleden[0]) => {
+  const getPhoto = (bl: BestuurslidData) => {
     const slug = slugify(bl.naam);
     if (photos[slug]) return photos[slug];
     if (bl.defaultFoto) return bl.defaultFoto;
     return null;
   };
 
-  const canUpload = (bl: typeof bestuursleden[0]) => {
+  const canUpload = (bl: BestuurslidData) => {
     if (!user) return false;
-    // Board members can upload their own photo
     if (currentUserBoardMember?.naam === bl.naam) return true;
-    // Admins can upload any photo
     return false;
+  };
+
+  const canSeePrivate = isAdmin || !!currentUserBoardMember;
+
+  const renderCard = (bl: BestuurslidData, isAspirant = false) => {
+    const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
+    const photo = getPhoto(bl);
+    const showUpload = canUpload(bl);
+    const isExpanded = expanded === bl.naam;
+
+    return (
+      <div
+        key={bl.naam}
+        className={`border border-border rounded-md p-3 transition-colors ${
+          isAspirant ? "border-dashed" : ""
+        }`}
+      >
+        <div
+          className={`flex items-start gap-3 flex-row-reverse ${member ? "cursor-pointer" : ""}`}
+          onClick={() => member && navigate(`/leden/${member.id}`)}
+        >
+          <div className="relative shrink-0">
+            {photo ? (
+              <img src={photo} alt={bl.naam} className="w-10 h-10 rounded-full object-cover" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <User size={18} className="text-muted-foreground" />
+              </div>
+            )}
+            {showUpload && (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpload(bl.naam, file);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRefs.current[bl.naam]?.click();
+                  }}
+                  disabled={uploading === bl.naam}
+                  className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+                  title="Foto uploaden"
+                >
+                  <Camera size={10} />
+                </button>
+              </>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-sm">{bl.naam}</p>
+            <p className="text-xs text-muted-foreground">{bl.functie}</p>
+          </div>
+        </div>
+
+        {member && (
+          <p className="text-xs text-primary mt-1.5 cursor-pointer" onClick={() => navigate(`/leden/${member.id}`)}>{member.naam}</p>
+        )}
+        {bl.coffeeshop && !member && (
+          <p className="text-xs text-primary mt-1.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
+        )}
+        {bl.privePlaats && !canSeePrivate && (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+            <MapPin size={11} className="shrink-0" />
+            {bl.privePlaats}
+          </p>
+        )}
+
+        <div className="mt-2 space-y-0.5">
+          {bl.bondEmail && (
+            <a
+              href={`mailto:${bl.bondEmail}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-xs text-primary hover:underline transition-colors"
+            >
+              <Mail size={11} /> {bl.bondEmail}
+            </a>
+          )}
+          {bl.telefoon && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Phone size={11} /> {bl.telefoon}
+            </p>
+          )}
+        </div>
+
+        {/* Private details - only for logged-in board members / admins */}
+        {canSeePrivate && bl.priveAdres && (
+          <div className="mt-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(isExpanded ? null : bl.naam);
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Home size={11} />
+              <span>Privégegevens</span>
+              {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+            </button>
+            {isExpanded && (
+              <div className="mt-1.5 pl-4 space-y-0.5 text-xs text-muted-foreground border-l-2 border-border">
+                <p>{bl.priveAdres}</p>
+                {bl.privePostcode && <p>{bl.privePostcode} {bl.privePlaats}</p>}
+                {!bl.privePostcode && bl.privePlaats && <p>{bl.privePlaats}</p>}
+                {bl.email && (
+                  <a href={`mailto:${bl.email}`} onClick={(e) => e.stopPropagation()} className="block text-primary hover:underline">
+                    {bl.email}
+                  </a>
+                )}
+                {bl.geboortedatum && <p>Geb. {bl.geboortedatum}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -137,95 +268,20 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {bestuursleden.map((bl) => {
-          const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
-          const contact = getContact(bl, member);
-          const cities = getCities(member);
-          const photo = getPhoto(bl);
-          const showUpload = canUpload(bl);
-
-          return (
-            <div
-              key={bl.naam}
-              className={`border border-border rounded-md p-3 transition-colors ${
-                member ? "hover:bg-muted/30 cursor-pointer" : ""
-              }`}
-              onClick={() => member && navigate(`/leden/${member.id}`)}
-            >
-              <div className="flex items-start gap-3 flex-row-reverse">
-                <div className="relative shrink-0">
-                  {photo ? (
-                    <img
-                      src={photo}
-                      alt={bl.naam}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <User size={18} className="text-muted-foreground" />
-                    </div>
-                  )}
-                  {showUpload && (
-                    <>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUpload(bl.naam, file);
-                          e.target.value = "";
-                        }}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          fileInputRefs.current[bl.naam]?.click();
-                        }}
-                        disabled={uploading === bl.naam}
-                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
-                        title="Foto uploaden"
-                      >
-                        <Camera size={10} />
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">{bl.naam}</p>
-                  <p className="text-xs text-muted-foreground">{bl.functie}</p>
-                </div>
-              </div>
-              {member && (
-                <p className="text-xs text-primary mt-1.5">{member.naam}</p>
-              )}
-              {cities.length > 0 && (
-                <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <MapPin size={11} className="shrink-0" />
-                  {cities.join(", ")}
-                </p>
-              )}
-              <div className="mt-2 space-y-0.5">
-                {bl.bondEmail && (
-                  <a
-                    href={`mailto:${bl.bondEmail}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 text-xs text-primary hover:underline transition-colors"
-                  >
-                    <Mail size={11} /> {bl.bondEmail}
-                  </a>
-                )}
-                {contact.telefoon && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Phone size={11} /> {contact.telefoon}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {bestuursleden.map((bl) => renderCard(bl))}
       </div>
+
+      {aspiranten.length > 0 && (
+        <>
+          <h4 className="text-xs font-semibold font-display flex items-center gap-2 mt-5 mb-3 text-muted-foreground uppercase tracking-wider">
+            <Users size={14} />
+            Aspirant
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {aspiranten.map((bl) => renderCard(bl, true))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
