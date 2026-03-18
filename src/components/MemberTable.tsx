@@ -29,7 +29,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
 
+  const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
+
   const sorted = [...members].sort((a, b) => {
+    // Leads always at the bottom
+    const aLead = isLead(a);
+    const bLead = isLead(b);
+    if (aLead !== bLead) return aLead ? 1 : -1;
+
     if (sortKey === "gemeenten") {
       const av = getGemeenten(a).length;
       const bv = getGemeenten(b).length;
@@ -103,7 +110,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           </thead>
           <tbody>
             {displayMembers.map((member) => {
-              const isLead = allLeads.some((l) => l.id === member.id);
+              const memberIsLead = isLead(member);
               const gemeenten = getGemeenten(member);
               const jarenLid = getMembershipYears(member);
               const eigenaar = member.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam || "";
@@ -116,12 +123,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                  {isLead ? "—" : member.id}
+                  {memberIsLead ? "—" : member.id}
                 </td>
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
-                    {isLead && (
+                    {memberIsLead && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         Lead
                       </span>
