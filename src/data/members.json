@@ -988,7 +988,7 @@
   },
   {
     "id": 21,
-    "naam": "Hunters Downtown",
+    "naam": "Hunters",
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 41,
@@ -997,11 +997,11 @@
     "functie": "Eigenaar",
     "telefoon": "",
     "email": "jeroen@vanhamholding.com",
-    "bedrijfsnaam": "Hunters Downtown",
+    "bedrijfsnaam": "Hunters",
     "aantalLocaties": 13,
     "locaties": [
       {
-        "naam": "Hunters Downtown",
+        "naam": "Hunters",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Reguliersdwarsstraat 22",
