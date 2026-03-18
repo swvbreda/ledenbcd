@@ -144,74 +144,81 @@ const MemberDetail = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Contactpersonen */}
-        <div className="bg-card rounded-lg border border-border p-5">
-          <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-            <Users size={16} className="text-primary" /> Contactpersonen ({member.contacten.length})
-          </h3>
-          <div className="space-y-4">
-            {member.contacten.length > 0 ? (
-              member.contacten.map((c, i) => (
-                <div key={i} className={i > 0 ? "pt-3 border-t border-border" : ""}>
-                  <p className="font-medium">{c.naam}</p>
-                  {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
-                  {c.email && (
-                    <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
-                      <Mail size={13} /> {c.email}
-                    </a>
-                  )}
-                  {c.telefoon && (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                      <Phone size={13} /> {c.telefoon}
-                    </p>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">Geen contactpersonen bekend</p>
-            )}
+      {isAdmin ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Contactpersonen */}
+          <div className="bg-card rounded-lg border border-border p-5">
+            <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+              <Users size={16} className="text-primary" /> Contactpersonen ({member.contacten.length})
+            </h3>
+            <div className="space-y-4">
+              {member.contacten.length > 0 ? (
+                member.contacten.map((c, i) => (
+                  <div key={i} className={i > 0 ? "pt-3 border-t border-border" : ""}>
+                    <p className="font-medium">{c.naam}</p>
+                    {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
+                    {c.email && (
+                      <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                        <Mail size={13} /> {c.email}
+                      </a>
+                    )}
+                    {c.telefoon && (
+                      <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                        <Phone size={13} /> {c.telefoon}
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Geen contactpersonen bekend</p>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Factuurgegevens */}
-        <div className="bg-card rounded-lg border border-border p-5">
-          <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-            <FileText size={16} className="text-primary" /> Factuurgegevens
-          </h3>
-           <div className="space-y-2">
-            {(member.factuurBedrijfsnaam || member.bedrijfsnaam) ? (
-              <p className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Geen bedrijfsnaam</p>
-            )}
-            {(member.factuurKvk || member.kvk) && (
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Hash size={13} /> KVK: <span className="font-mono">{member.factuurKvk || member.kvk}</span>
-              </p>
-            )}
-            {member.factuurAdres && (
-              <div className="text-sm text-muted-foreground mt-2">
-                <p>{member.factuurAdres}</p>
-                <p>
-                  {member.factuurPostcode && <>{member.factuurPostcode} </>}
-                  {member.factuurPlaats}
+          {/* Factuurgegevens */}
+          <div className="bg-card rounded-lg border border-border p-5">
+            <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+              <FileText size={16} className="text-primary" /> Factuurgegevens
+            </h3>
+             <div className="space-y-2">
+              {(member.factuurBedrijfsnaam || member.bedrijfsnaam) ? (
+                <p className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Geen bedrijfsnaam</p>
+              )}
+              {(member.factuurKvk || member.kvk) && (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Hash size={13} /> KVK: <span className="font-mono">{member.factuurKvk || member.kvk}</span>
                 </p>
-              </div>
-            )}
-            {member.factuurEmail && (
-              <a href={`mailto:${member.factuurEmail}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
-                <Mail size={13} /> {member.factuurEmail}
-              </a>
-            )}
-            {member.factuurTelefoon && (
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                <Phone size={13} /> {member.factuurTelefoon}
-              </p>
-            )}
+              )}
+              {member.factuurAdres && (
+                <div className="text-sm text-muted-foreground mt-2">
+                  <p>{member.factuurAdres}</p>
+                  <p>
+                    {member.factuurPostcode && <>{member.factuurPostcode} </>}
+                    {member.factuurPlaats}
+                  </p>
+                </div>
+              )}
+              {member.factuurEmail && (
+                <a href={`mailto:${member.factuurEmail}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                  <Mail size={13} /> {member.factuurEmail}
+                </a>
+              )}
+              {member.factuurTelefoon && (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                  <Phone size={13} /> {member.factuurTelefoon}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-3 text-muted-foreground">
+          <Lock size={16} />
+          <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor bestuursleden.</p>
+        </div>
+      )}
 
       {/* Locaties */}
       <div className="bg-card rounded-lg border border-border p-5">
