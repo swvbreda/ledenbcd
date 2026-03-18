@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import StatCards from "@/components/StatCards";
 import MemberTable from "@/components/MemberTable";
-import CityChart from "@/components/CityChart";
-import StadsdeelChart from "@/components/StadsdeelChart";
-import YearChart from "@/components/YearChart";
 import VerloopChart from "@/components/VerloopChart";
-import InstroomUitstroomChart from "@/components/InstroomUitstroomChart";
+import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
+import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
 import { allMembers } from "@/hooks/useMembers";
 
 const Index = () => {
@@ -29,17 +27,12 @@ const Index = () => {
 
       <StatCards members={allMembers} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <CityChart members={allMembers} />
-        <StadsdeelChart members={allMembers} />
-      </div>
+      <VerloopChart />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <YearChart members={allMembers} />
-        <VerloopChart />
+        <LidmaatschapsduurChart members={allMembers} />
+        <LedenPerStadOverzicht members={allMembers} />
       </div>
-
-      <InstroomUitstroomChart />
 
       <div>
         <div className="flex items-center justify-between mb-3">
