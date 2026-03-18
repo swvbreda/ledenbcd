@@ -66,7 +66,7 @@ const MemberDetail = () => {
       </div>
 
       {/* Oprichting & KVK */}
-      {(member.oprichtingsDatum || member.oprichtingJaar || member.kvk) && (
+      {(member.oprichtingsDatum || member.oprichtingJaar || member.lidSinds) && (
         <div className="bg-card rounded-lg border border-border p-5 flex flex-wrap gap-6">
           {(member.oprichtingsDatum || member.oprichtingJaar) && (
             <div className="flex items-center gap-2 text-sm">
@@ -77,20 +77,6 @@ const MemberDetail = () => {
                   ? formatDate(member.oprichtingsDatum)
                   : member.oprichtingJaar}
               </span>
-            </div>
-          )}
-          {member.kvk && (
-            <div className="flex items-center gap-2 text-sm">
-              <Hash size={16} className="text-primary" />
-              <span className="text-muted-foreground">KVK:</span>
-              <span className="font-medium font-mono">{member.kvk}</span>
-            </div>
-          )}
-          {member.bedrijfsnaam && (
-            <div className="flex items-center gap-2 text-sm">
-              <Building2 size={16} className="text-primary" />
-              <span className="text-muted-foreground">Bedrijf:</span>
-              <span className="font-medium">{member.bedrijfsnaam}</span>
             </div>
           )}
           {member.lidSinds && (
