@@ -19,14 +19,13 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
 
   const getContact = (bl: typeof bestuursleden[0], member?: Member) => {
-    if (bl.email || bl.telefoon) return { email: bl.email, telefoon: bl.telefoon };
+    if (bl.telefoon) return { telefoon: bl.telefoon };
     if (!member) return {};
-    // Find the matching contact person in the member's contacts
     const contact = member.contacten.find(
       (c) => bl.naam.includes(c.naam) || c.naam.includes(bl.naam.split(" ").pop() || "")
     );
-    if (contact) return { email: contact.email, telefoon: contact.telefoon };
-    return { email: member.email, telefoon: member.telefoon };
+    if (contact) return { telefoon: contact.telefoon };
+    return { telefoon: member.telefoon };
   };
 
   return (
@@ -60,15 +59,6 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                     className="flex items-center gap-1.5 text-xs text-primary hover:underline transition-colors"
                   >
                     <Mail size={11} /> {bl.bondEmail}
-                  </a>
-                )}
-                {contact.email && contact.email !== bl.bondEmail && (
-                  <a
-                    href={`mailto:${contact.email}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Mail size={11} /> {contact.email}
                   </a>
                 )}
                 {contact.telefoon && (
