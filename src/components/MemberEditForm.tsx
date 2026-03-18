@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Member, Contact, Location } from "@/data/types";
 import { useSaveMemberEdit } from "@/hooks/useMemberEdits";
+
+const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
 interface Props {
   member: Member;
