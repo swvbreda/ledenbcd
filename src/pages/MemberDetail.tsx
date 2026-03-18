@@ -1,13 +1,33 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, Building2, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/hooks/useAuth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const getStoredContactpersoon = (memberId: number): string | null => {
+  try {
+    const stored = localStorage.getItem(`bcd-contactpersoon-${memberId}`);
+    return stored;
+  } catch { return null; }
+};
+
+const setStoredContactpersoon = (memberId: number, naam: string | null) => {
+  try {
+    if (naam) localStorage.setItem(`bcd-contactpersoon-${memberId}`, naam);
+    else localStorage.removeItem(`bcd-contactpersoon-${memberId}`);
+  } catch {}
+};
 
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const member = allMembers.find((m) => String(m.id) === id);
+  
+  const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
+  const [contactpersoon, setContactpersoon] = useState(defaultCp);
 
   if (!member) {
     return (
