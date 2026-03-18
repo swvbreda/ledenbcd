@@ -11,11 +11,12 @@ const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const members = allMembers;
   const totalMembers = members.length;
+  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD members per city
+  // Count BCD locations per city
   const cityCount: Record<string, number> = {};
   members.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + 1;
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
   // All cities from NL data, enriched with BCD data
