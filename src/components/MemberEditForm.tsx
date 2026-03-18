@@ -176,7 +176,19 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <EditableField label="Naam" value={c.naam} onChange={(v) => updateContact(i, "naam", v)} />
-              <EditableField label="Functie" value={c.functie} onChange={(v) => updateContact(i, "functie", v)} />
+              <div>
+                <label className="text-xs text-muted-foreground block mb-0.5">Functie</label>
+                <Select value={c.functie || ""} onValueChange={(v) => updateContact(i, "functie", v)}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Selecteer functie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FUNCTIE_OPTIONS.map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <EditableField label="E-mail" value={c.email} onChange={(v) => updateContact(i, "email", v)} />
               <EditableField label="Telefoon" value={c.telefoon} onChange={(v) => updateContact(i, "telefoon", v)} />
             </div>
