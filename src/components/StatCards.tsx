@@ -40,7 +40,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
   const stats = [
     { label: "Aangesloten Coffeeshops", value: totalLocations, icon: Users, color: "text-primary", desc: `${totalMembers} leden` },
-    { label: "Steden", value: uniqueCities, icon: Building2, color: "text-primary", desc: "verspreid over NL" },
+    { label: "Gemeenten", value: uniqueCities, icon: Building2, color: "text-primary", desc: `${Math.round((uniqueCities / Object.keys(coffeeshopData.perStad).length) * 100)}% van coffeeshopgemeenten` },
     { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-success", desc: `${withYears.length} met data` },
     { label: "Compleetheid", value: `${Math.round(((totalMembers - incomplete) / totalMembers) * 100)}%`, icon: incomplete > 0 ? AlertTriangle : UserCheck, color: incomplete > 0 ? "text-destructive" : "text-success", desc: incomplete > 0 ? `${incomplete} onvolledig` : "Alle compleet", expandable: true },
   ];
