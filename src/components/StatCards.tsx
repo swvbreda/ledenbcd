@@ -3,6 +3,7 @@ import { Users, Building2, Clock, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
+import { getMembershipYears } from "@/lib/membership";
 
 interface StatCardsProps {
   members: Member[];
@@ -17,12 +18,11 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
   const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
-  // Market share includes leads (represented but not yet members)
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const marketPct = Math.round((representedLocations / totalNL) * 100);
-  const withYears = members.filter((m) => m.jarenLid);
-  const avgYears = withYears.length
-    ? Math.round(withYears.reduce((sum, m) => sum + (m.jarenLid || 0), 0) / withYears.length)
+  const memberYears = members.map((m) => getMembershipYears(m)).filter((y): y is number => y !== null);
+  const avgYears = memberYears.length
+    ? Math.round(memberYears.reduce((sum, y) => sum + y, 0) / memberYears.length)
     : 0;
 
   const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
