@@ -72,7 +72,10 @@
     "factuurBedrijfsnaam": "Leidseplein beheer B.V.",
     "factuurTelefoon": "06 53 24 44 18",
     "oprichter": true,
-    "lidSinds": 1994
+    "lidSinds": 1994,
+    "factuurAdres": "Postbus 20669",
+    "factuurPostcode": "1001 NR",
+    "factuurPlaats": "Amsterdam"
   },
   {
     "id": 2,
@@ -106,7 +109,10 @@
     ],
     "factuurAdres": "Nieuwe Herengracht 71 hs",
     "factuurPlaats": "1011 RR AMSTERDAM",
-    "factuurTelefoon": "020 422 31 34"
+    "factuurTelefoon": "020 422 31 34",
+    "factuurBedrijfsnaam": "Hortus de Overkant",
+    "factuurPostcode": "1011 RR",
+    "factuurEmail": "hipporecords@gmail.com"
   },
   {
     "id": 3,
@@ -140,7 +146,13 @@
     ],
     "oprichtingsDatum": "1991-03-28",
     "kvk": "33182341",
-    "factuurTelefoon": "652854221"
+    "factuurTelefoon": "652854221",
+    "factuurBedrijfsnaam": "Get Down",
+    "factuurKvk": "33182341",
+    "factuurAdres": "Korte Leidsedwarsstraat 77 sou",
+    "factuurPostcode": "1017 PW",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "k.westerborg@xs4all.nl"
   },
   {
     "id": 4,
@@ -175,7 +187,10 @@
     "factuurEmail": "Huub@spliff.nl",
     "factuurAdres": "Westdijk 11",
     "factuurPostcode": "1463 PA",
-    "factuurPlaats": "Noord-Beemster"
+    "factuurPlaats": "Noord-Beemster",
+    "factuurBedrijfsnaam": "Coffeeshop Splif",
+    "factuurKvk": "34063089",
+    "factuurTelefoon": "06 53 22 91 20"
   },
   {
     "id": 5,
@@ -222,7 +237,11 @@
       }
     ],
     "factuurBedrijfsnaam": "Penultimate III BV.",
-    "factuurTelefoon": "06 55 86 76 90"
+    "factuurTelefoon": "06 55 86 76 90",
+    "factuurAdres": "Haarlemmerstraat 64",
+    "factuurPostcode": "1013 ET",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "joahelms@gmail.com"
   },
   {
     "id": 61,
@@ -281,7 +300,12 @@
     "oprichtingsDatum": "1984-09-01",
     "kvk": "68451954",
     "factuurBedrijfsnaam": "Chapiteau Amsterdam BV",
-    "factuurTelefoon": "06 55 81 12 72"
+    "factuurTelefoon": "06 55 81 12 72",
+    "factuurKvk": "68451954",
+    "factuurAdres": "Van Boetzelaerstraat 29-31",
+    "factuurPostcode": "1051 CT",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "dre509@hotmail.com"
   },
   {
     "id": 7,
@@ -315,7 +339,13 @@
     ],
     "oprichtingsDatum": "1981-01-01",
     "kvk": "34191840",
-    "factuurTelefoon": "639002030"
+    "factuurTelefoon": "639002030",
+    "factuurBedrijfsnaam": "Sensimilla",
+    "factuurKvk": "34191840",
+    "factuurAdres": "Meer en Vaart 177 B",
+    "factuurPostcode": "1068 LA",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "stuurhetmij@icloud.com"
   },
   {
     "id": 8,
@@ -440,7 +470,8 @@
     "factuurAdres": "Stuivezandstraat 2",
     "factuurPostcode": "1058AL",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "204124801"
+    "factuurTelefoon": "204124801",
+    "factuurKvk": "34303512"
   },
   {
     "id": 10,
@@ -475,7 +506,9 @@
     "factuurAdres": "Kerkstraat 51",
     "factuurPostcode": "1017 GC",
     "factuurPlaats": "Amsterdam",
-    "factuurTelefoon": "06 21 29 48 93"
+    "factuurTelefoon": "06 21 29 48 93",
+    "factuurBedrijfsnaam": "Happy Feelings",
+    "factuurEmail": "Dennis@Happyfeelingsamsterdam.nl"
   },
   {
     "id": 11,
@@ -512,7 +545,13 @@
         "telefoon": "",
         "email": "abraxas.kantoor@gmail.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Abraxas",
+    "factuurTelefoon": "06 53 13 12 96",
+    "factuurAdres": "Jonge Roelensteeg 12 - 14",
+    "factuurPostcode": "1012 PL",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "s.ardic@live.com"
   },
   {
     "id": 62,
@@ -618,7 +657,11 @@
       }
     ],
     "factuurBedrijfsnaam": "Utopia Exploitatie BV",
-    "factuurTelefoon": "06 20 87 87 87"
+    "factuurTelefoon": "06 20 87 87 87",
+    "factuurAdres": "Nieuwezijdsvoorburgwal 132",
+    "factuurPostcode": "1012 SH",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "jimmylin1945-@hotmail.com"
   },
   {
     "id": 12,
@@ -653,7 +696,11 @@
     "kvk": "6063448",
     "factuurAdres": "Oldenzaalsestraat 103",
     "factuurPlaats": "7511 DZ ENSCHEDE",
-    "factuurTelefoon": "06 13 72 76 50"
+    "factuurTelefoon": "06 13 72 76 50",
+    "factuurBedrijfsnaam": "De Molen",
+    "factuurKvk": "6063448",
+    "factuurPostcode": "7511 DZ",
+    "factuurEmail": "h.appeldoorn56@gmail.com"
   },
   {
     "id": 13,
@@ -692,7 +739,10 @@
       }
     ],
     "factuurAdres": "Oudezijds Voorburgwal 189",
-    "factuurPlaats": "1012 EW AMSTERDAM"
+    "factuurPlaats": "1012 EW AMSTERDAM",
+    "factuurBedrijfsnaam": "City Hall",
+    "factuurPostcode": "1012 EW",
+    "factuurEmail": "h.kallan@live.nl"
   },
   {
     "id": 14,
@@ -732,7 +782,12 @@
     "oprichtingsDatum": "1984-06-13",
     "kvk": "17081302",
     "factuurBedrijfsnaam": "E.D. Lankes Eindhoven B.V.",
-    "factuurTelefoon": "040 296 03 42"
+    "factuurTelefoon": "040 296 03 42",
+    "factuurKvk": "17081302",
+    "factuurAdres": "Willemstraat 35",
+    "factuurPostcode": "5611 HB",
+    "factuurPlaats": "Eindhoven",
+    "factuurEmail": "lisa@thepink.nl"
   },
   {
     "id": 15,
@@ -766,7 +821,11 @@
     "kvk": "6050054",
     "factuurAdres": "Stadsgravenstraat 42",
     "factuurPlaats": "7511 ES ENSCHEDE",
-    "factuurTelefoon": "630617370"
+    "factuurTelefoon": "630617370",
+    "factuurBedrijfsnaam": "Koffiehuis Sharon",
+    "factuurKvk": "6050054",
+    "factuurPostcode": "7511 ES",
+    "factuurEmail": "koffiehuissharon@gmail.com"
   },
   {
     "id": 16,
@@ -806,7 +865,9 @@
     "oprichtingsDatum": "1985-12-01",
     "factuurBedrijfsnaam": "Maya's Grow VOF",
     "factuurAdres": "Korfmakersstraat 2",
-    "factuurPlaats": "8911 LA LEEUWARDEN"
+    "factuurPlaats": "8911 LA LEEUWARDEN",
+    "factuurPostcode": "8911 LA",
+    "factuurEmail": "deos@xs4all.nl, erikenwina@hotmail.com"
   },
   {
     "id": 17,
@@ -837,7 +898,12 @@
         "email": "administratie@superflybeverwijk.nl"
       }
     ],
-    "factuurTelefoon": "647320175"
+    "factuurTelefoon": "647320175",
+    "factuurBedrijfsnaam": "Superfly",
+    "factuurAdres": "Kruisweg 1043",
+    "factuurPostcode": "2131 CS",
+    "factuurPlaats": "Hoofddorp",
+    "factuurEmail": "administratie@superflybeverwijk.nl"
   },
   {
     "id": 18,
@@ -880,7 +946,10 @@
     "factuurBedrijfsnaam": "The Corner BV.",
     "factuurAdres": "Spaarndammerdijk 9",
     "factuurPlaats": "1013 ZM AMSTERDAM",
-    "factuurTelefoon": "613500224"
+    "factuurTelefoon": "613500224",
+    "factuurKvk": "72163186",
+    "factuurPostcode": "1013 ZM",
+    "factuurEmail": "thecorner.bv@gmail.com"
   },
   {
     "id": 19,
@@ -914,7 +983,13 @@
     ],
     "oprichtingsDatum": "1981-01-01",
     "kvk": "34191840",
-    "factuurTelefoon": "639002030"
+    "factuurTelefoon": "639002030",
+    "factuurBedrijfsnaam": "Sensimilla",
+    "factuurKvk": "34191840",
+    "factuurAdres": "Meer en Vaart 177 B",
+    "factuurPostcode": "1068 LA",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "stuurhetmij@icloud.com"
   },
   {
     "id": 20,
@@ -949,7 +1024,9 @@
     "factuurEmail": "facturen@easytimes.nl",
     "factuurAdres": "Prinsengracht 476",
     "factuurPlaats": "1017 KG AMSTERDAM",
-    "factuurTelefoon": "06 18 11 10 10"
+    "factuurTelefoon": "06 18 11 10 10",
+    "factuurBedrijfsnaam": "Easy Times",
+    "factuurPostcode": "1017 KG"
   },
   {
     "id": 21,
@@ -1177,7 +1254,12 @@
     "oprichtingsDatum": "2021-01-07",
     "kvk": "83267212",
     "factuurBedrijfsnaam": "Terptown B.V.",
-    "factuurTelefoon": "615390503"
+    "factuurTelefoon": "615390503",
+    "factuurKvk": "83267212",
+    "factuurAdres": "Geldersekade 54 Hs",
+    "factuurPostcode": "1012 BK",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "coffeeshophetgelderse@gmail.com"
   },
   {
     "id": 25,
@@ -1213,7 +1295,11 @@
     "kvk": "77801946",
     "factuurAdres": "Oudebrugsteeg 26",
     "factuurPlaats": "1012 JP AMSTERDAM",
-    "factuurTelefoon": "06 53 49 32 58"
+    "factuurTelefoon": "06 53 49 32 58",
+    "factuurBedrijfsnaam": "De Kroon Twee",
+    "factuurKvk": "77801946",
+    "factuurPostcode": "1012 JP",
+    "factuurEmail": "rachid.kroon@outlook.com"
   },
   {
     "id": 26,
@@ -1249,7 +1335,10 @@
     "factuurBedrijfsnaam": "Toeda BV",
     "factuurAdres": "Chris bennekerslaan 47-48",
     "factuurPlaats": "3061 EE ROTTERDAM",
-    "factuurTelefoon": "06 38 14 81 51"
+    "factuurTelefoon": "06 38 14 81 51",
+    "factuurKvk": "24237057",
+    "factuurPostcode": "3061 EE",
+    "factuurEmail": "wouters.michel@gmail.com"
   },
   {
     "id": 27,
@@ -1324,7 +1413,10 @@
     "factuurBedrijfsnaam": "Trefpunt KM BV",
     "factuurAdres": "Botersloot 7",
     "factuurPlaats": "3011 HE ROTTERDAM",
-    "factuurTelefoon": "629009299"
+    "factuurTelefoon": "629009299",
+    "factuurKvk": "69896208",
+    "factuurPostcode": "3011 HE",
+    "factuurEmail": "info@tref.com"
   },
   {
     "id": 29,
@@ -1359,7 +1451,12 @@
     "oprichtingsDatum": "2005-06-01",
     "kvk": "34210464",
     "factuurBedrijfsnaam": "Bronx 2008 BV",
-    "factuurTelefoon": "655348514"
+    "factuurTelefoon": "655348514",
+    "factuurKvk": "34210464",
+    "factuurAdres": "Marnixstraat 92 H",
+    "factuurPostcode": "1015 VZ",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "azzouz1960@hotmail.com"
   },
   {
     "id": 30,
@@ -1392,7 +1489,11 @@
       }
     ],
     "factuurBedrijfsnaam": "Othala B.V.",
-    "factuurTelefoon": "06 38 87 44 92"
+    "factuurTelefoon": "06 38 87 44 92",
+    "factuurAdres": "Gibraltarstraat 36",
+    "factuurPostcode": "1055 NP",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "yari@othala-bv.nl"
   },
   {
     "id": 63,
@@ -1523,7 +1624,12 @@
       }
     ],
     "oprichtingsDatum": "1983-02-15",
-    "factuurTelefoon": "06 51 21 35 49"
+    "factuurTelefoon": "06 51 21 35 49",
+    "factuurBedrijfsnaam": "Yanks",
+    "factuurAdres": "Postbus 374",
+    "factuurPostcode": "2040 AJ",
+    "factuurPlaats": "Zandvoort",
+    "factuurEmail": "toonvdmoot@gmail.com"
   },
   {
     "id": 33,
@@ -1565,7 +1671,11 @@
     "kvk": "70661545",
     "factuurAdres": "Amstel 36",
     "factuurPlaats": "1017 AB AMSTERDAM",
-    "factuurTelefoon": "622987223"
+    "factuurTelefoon": "622987223",
+    "factuurBedrijfsnaam": "Family First",
+    "factuurKvk": "70661545",
+    "factuurPostcode": "1017 AB",
+    "factuurEmail": "facturen@familyfirstamsterdam.com"
   },
   {
     "id": 34,
@@ -1600,7 +1710,12 @@
     "oprichtingsDatum": "2013-03-12",
     "kvk": "70855412",
     "factuurBedrijfsnaam": "Blue Bird Horeca BV",
-    "factuurTelefoon": "020 622 52 32"
+    "factuurTelefoon": "020 622 52 32",
+    "factuurKvk": "70855412",
+    "factuurAdres": "Sint Antoniesbreestraat 71",
+    "factuurPostcode": "1011 HB",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@coffeeshopbluebird.nl"
   },
   {
     "id": 35,
@@ -1638,7 +1753,12 @@
         "email": "jason@dampkring.amsterdam"
       }
     ],
-    "factuurTelefoon": "06 54 27 16 76"
+    "factuurTelefoon": "06 54 27 16 76",
+    "factuurBedrijfsnaam": "Dampkring the Original",
+    "factuurAdres": "Handboogstraat 29",
+    "factuurPostcode": "1012 XM",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "jason@dampkring.amsterdam"
   },
   {
     "id": 36,
@@ -1670,7 +1790,12 @@
         "email": "info@coffeeshop-regine.nl"
       }
     ],
-    "factuurTelefoon": "06 15 31 55 39"
+    "factuurTelefoon": "06 15 31 55 39",
+    "factuurBedrijfsnaam": "Regine",
+    "factuurAdres": "Bilderdijkstraat 188H",
+    "factuurPostcode": "1053 LE",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@coffeeshop-regine.nl"
   },
   {
     "id": 37,
@@ -1705,7 +1830,11 @@
     "kvk": "70187738",
     "factuurAdres": "Rodeleeuwsteeg 4",
     "factuurPlaats": "8011TC ZWOLLE",
-    "factuurTelefoon": "630011965"
+    "factuurTelefoon": "630011965",
+    "factuurBedrijfsnaam": "De Rode Leeuw",
+    "factuurKvk": "70187738",
+    "factuurPostcode": "8011TC",
+    "factuurEmail": "timdewilde87@gmail.com"
   },
   {
     "id": 38,
@@ -1737,7 +1866,14 @@
       }
     ],
     "oprichtingsDatum": "2024-11-11",
-    "kvk": "63786575"
+    "kvk": "63786575",
+    "factuurBedrijfsnaam": "033 Horeca BV.",
+    "factuurKvk": "63786575",
+    "factuurTelefoon": "06 37 86 575",
+    "factuurAdres": "Textielweg 11",
+    "factuurPostcode": "3812 RV",
+    "factuurPlaats": "Amersfoort",
+    "factuurEmail": "info@033horecabv.nl"
   },
   {
     "id": 39,
@@ -1776,7 +1912,13 @@
     ],
     "oprichtingsDatum": "1993-01-03",
     "kvk": "6054086",
-    "factuurTelefoon": "623465512"
+    "factuurTelefoon": "623465512",
+    "factuurBedrijfsnaam": "Thunderbird",
+    "factuurKvk": "6054086",
+    "factuurAdres": "Wilhelminstraat 3",
+    "factuurPostcode": "7511 DM",
+    "factuurPlaats": "Enschede",
+    "factuurEmail": "thunderbirdenschede@ziggo.nl"
   },
   {
     "id": 40,
@@ -1811,7 +1953,11 @@
     "kvk": "863240263",
     "factuurAdres": "IJsselmeer 27",
     "factuurPlaats": "3332 EX ZWIJNDRECHT",
-    "factuurTelefoon": "643415724"
+    "factuurTelefoon": "643415724",
+    "factuurBedrijfsnaam": "De Ambassade",
+    "factuurKvk": "863240263",
+    "factuurPostcode": "3332 EX",
+    "factuurEmail": "edwin@ambassade-zwijndrecht.nl"
   },
   {
     "id": 41,
@@ -1851,7 +1997,11 @@
     "kvk": "6054708",
     "factuurAdres": "Havenstraatpassage 44-46",
     "factuurPlaats": "7511 EX ENSCHEDE",
-    "factuurTelefoon": "06 48 56 80 81"
+    "factuurTelefoon": "06 48 56 80 81",
+    "factuurBedrijfsnaam": "The Mix",
+    "factuurKvk": "6054708",
+    "factuurPostcode": "7511 EX",
+    "factuurEmail": "fmailmix@gmail.com"
   },
   {
     "id": 42,
@@ -1889,7 +2039,12 @@
         "email": "reslyn_1983@hotmail.com"
       }
     ],
-    "factuurTelefoon": "06 24 27 77 20"
+    "factuurTelefoon": "06 24 27 77 20",
+    "factuurBedrijfsnaam": "De Kade",
+    "factuurAdres": "Stadionkade 107",
+    "factuurPostcode": "1076 BN",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "sadie.roelofsen@gmail.com"
   },
   {
     "id": 43,
@@ -1925,7 +2080,11 @@
     "kvk": "34189051",
     "factuurAdres": "Korte Koningsstraat 2",
     "factuurPlaats": "1011 GA AMSTERDAM",
-    "factuurTelefoon": "06 50 69 52 75"
+    "factuurTelefoon": "06 50 69 52 75",
+    "factuurBedrijfsnaam": "Solo",
+    "factuurKvk": "34189051",
+    "factuurPostcode": "1011 GA",
+    "factuurEmail": "marcozweep@gmail.com"
   },
   {
     "id": 44,
@@ -1967,7 +2126,10 @@
     "factuurBedrijfsnaam": "Papeby Beheer BV",
     "factuurAdres": "Brusselsestraat 146 a",
     "factuurPlaats": "6211 PJ MAASTRICHT",
-    "factuurTelefoon": "06 22 41 17 05"
+    "factuurTelefoon": "06 22 41 17 05",
+    "factuurKvk": "69832455",
+    "factuurPostcode": "6211 PJ",
+    "factuurEmail": "dpeerboom@icloud.com"
   },
   {
     "id": 45,
@@ -2000,7 +2162,13 @@
     ],
     "oprichtingsDatum": "1992-02-22",
     "kvk": "55406505",
-    "factuurTelefoon": "06 51 52 87 69"
+    "factuurTelefoon": "06 51 52 87 69",
+    "factuurBedrijfsnaam": "Roxanne",
+    "factuurKvk": "55406505",
+    "factuurAdres": "Laan 5",
+    "factuurPostcode": "1741 EA",
+    "factuurPlaats": "Schagen",
+    "factuurEmail": "kollof666@hotmail.com"
   },
   {
     "id": 46,
@@ -2042,7 +2210,11 @@
     "kvk": "33236532",
     "factuurAdres": "Amstelveenseweg 1160",
     "factuurPlaats": "1081 JW AMSTERDAM",
-    "factuurTelefoon": "020 642 06 81"
+    "factuurTelefoon": "020 642 06 81",
+    "factuurBedrijfsnaam": "The Border",
+    "factuurKvk": "33236532",
+    "factuurPostcode": "1081 JW",
+    "factuurEmail": "bart@clubhome.nl; ericschaay@gmail.com"
   },
   {
     "id": 47,
@@ -2080,7 +2252,10 @@
       }
     ],
     "factuurAdres": "Lange Groenendaal 102",
-    "factuurPlaats": "2801 LV GOUDA"
+    "factuurPlaats": "2801 LV GOUDA",
+    "factuurBedrijfsnaam": "Oya",
+    "factuurPostcode": "2801 LV",
+    "factuurEmail": "robyara1@hotmail.com"
   },
   {
     "id": 48,
@@ -2114,7 +2289,11 @@
     "kvk": "9092392",
     "factuurAdres": "Hommelseweg 19",
     "factuurPlaats": "6821 LA ARNHEM",
-    "factuurTelefoon": "06 55 17 75 52"
+    "factuurTelefoon": "06 55 17 75 52",
+    "factuurBedrijfsnaam": "Zero Zero",
+    "factuurKvk": "9092392",
+    "factuurPostcode": "6821 LA",
+    "factuurEmail": "waldgraaf@live.nl"
   },
   {
     "id": 49,
@@ -2145,7 +2324,12 @@
         "email": "everywoman14@hotmail.com"
       }
     ],
-    "factuurTelefoon": "072 515 19 99"
+    "factuurTelefoon": "072 515 19 99",
+    "factuurBedrijfsnaam": "High Time",
+    "factuurAdres": "Spoorstraat 99",
+    "factuurPostcode": "1815 BJ",
+    "factuurPlaats": "Alkmaar",
+    "factuurEmail": "everywoman14@hotmail.com"
   },
   {
     "id": 50,
@@ -2180,7 +2364,11 @@
     "kvk": "66383889",
     "factuurAdres": "Spuistraat 260",
     "factuurPlaats": "1012 VW AMSTERDAM",
-    "factuurTelefoon": "687182877"
+    "factuurTelefoon": "687182877",
+    "factuurBedrijfsnaam": "New Times",
+    "factuurKvk": "66383889",
+    "factuurPostcode": "1012 VW",
+    "factuurEmail": "newtimes-amsterdam@outlook.com"
   },
   {
     "id": 51,
@@ -2212,7 +2400,11 @@
         "email": "oost@theplugcoffeeshops.nl"
       }
     ],
-    "factuurEmail": "oost@theplugcoffeeshops.nl"
+    "factuurEmail": "oost@theplugcoffeeshops.nl",
+    "factuurBedrijfsnaam": "Speak Easy",
+    "factuurAdres": "1e Oosterparkstraat 47",
+    "factuurPostcode": "1091 GV",
+    "factuurPlaats": "Amsterdam"
   },
   {
     "id": 52,
@@ -2250,7 +2442,12 @@
         "email": "appie@katsu.nl"
       }
     ],
-    "factuurTelefoon": "020 675 26 17"
+    "factuurTelefoon": "020 675 26 17",
+    "factuurBedrijfsnaam": "Katsu",
+    "factuurAdres": "Eerste van der Helstraat 70",
+    "factuurPostcode": "1072 NZ",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "katsu@katsu.nl"
   },
   {
     "id": 53,
@@ -2285,7 +2482,11 @@
     "kvk": "28067806",
     "factuurAdres": "Nieuwe Beestenmarkt 34 a",
     "factuurPlaats": "2312 CH LEIDEN",
-    "factuurTelefoon": "06 22 93 62 68"
+    "factuurTelefoon": "06 22 93 62 68",
+    "factuurBedrijfsnaam": "Coffee and Dreams",
+    "factuurKvk": "28067806",
+    "factuurPostcode": "2312 CH",
+    "factuurEmail": "anton@indendoofpot.nl"
   },
   {
     "id": 54,
@@ -2319,7 +2520,10 @@
     ],
     "factuurAdres": "Sint Antoniesbreestraat 77",
     "factuurPlaats": "1011 HB AMSTERDAM",
-    "factuurTelefoon": "06 52 39 55 19"
+    "factuurTelefoon": "06 52 39 55 19",
+    "factuurBedrijfsnaam": "Reefer",
+    "factuurPostcode": "1011 HB",
+    "factuurEmail": "reefer1@xs4all.nl"
   },
   {
     "id": 55,
@@ -2359,7 +2563,10 @@
     ],
     "factuurAdres": "J. P. Heijestraat 82",
     "factuurPlaats": "1053 GS AMSTERDAM",
-    "factuurTelefoon": "06 10 75 62 98"
+    "factuurTelefoon": "06 10 75 62 98",
+    "factuurBedrijfsnaam": "Kashmir",
+    "factuurPostcode": "1053 GS",
+    "factuurEmail": "hennybreevoort@hotmail.com"
   },
   {
     "id": 56,
@@ -2399,7 +2606,10 @@
     ],
     "factuurAdres": "Nieuwmarkt 12",
     "factuurPlaats": "1012 CR AMSTERDAM",
-    "factuurTelefoon": "06 11 92 70 92"
+    "factuurTelefoon": "06 11 92 70 92",
+    "factuurBedrijfsnaam": "Rock-It",
+    "factuurPostcode": "1012 CR",
+    "factuurEmail": "rockitamsterdam@gmail.com"
   },
   {
     "id": 57,
@@ -2432,7 +2642,11 @@
       }
     ],
     "factuurBedrijfsnaam": "Fortune BV",
-    "factuurTelefoon": "06 25 01 76 36"
+    "factuurTelefoon": "06 25 01 76 36",
+    "factuurAdres": "Zoutsteeg 14 1hoog",
+    "factuurPostcode": "1012 LX",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "hans@kadinsky.nl"
   },
   {
     "id": 58,
@@ -2463,7 +2677,13 @@
         "telefoon": "06 25 01 76 36",
         "email": "silver@kadinsky.nl"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Fortune BV",
+    "factuurTelefoon": "06 25 01 76 36",
+    "factuurAdres": "Zoutsteeg 14 1hoog",
+    "factuurPostcode": "1012 LX",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "hans@kadinsky.nl"
   },
   {
     "id": 59,
@@ -2487,7 +2707,13 @@
         "stadsdeel": "Centrum"
       }
     ],
-    "contacten": []
+    "contacten": [],
+    "factuurBedrijfsnaam": "Fortune BV",
+    "factuurTelefoon": "06 25 01 76 36",
+    "factuurAdres": "Zoutsteeg 14 1hoog",
+    "factuurPostcode": "1012 LX",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "hans@kadinsky.nl"
   },
   {
     "id": 60,
@@ -2533,7 +2759,10 @@
     ],
     "factuurBedrijfsnaam": "Coffeeshop 137",
     "factuurAdres": "Brouwersgracht 137",
-    "factuurPlaats": "1015 GE AMSTERDAM"
+    "factuurPlaats": "1015 GE AMSTERDAM",
+    "factuurTelefoon": "06 30 93 29 66",
+    "factuurPostcode": "1015 GE",
+    "factuurEmail": "brouwersgracht137@hotmail.com"
   },
   {
     "id": 67,
@@ -2566,7 +2795,10 @@
     ],
     "factuurAdres": "Markt 59",
     "factuurPlaats": "1941 BV BEVERWIJK",
-    "factuurTelefoon": "025 122 56 25"
+    "factuurTelefoon": "025 122 56 25",
+    "factuurBedrijfsnaam": "Tafne",
+    "factuurPostcode": "1941 BV",
+    "factuurEmail": "d.zijp@hotmail.com"
   },
   {
     "id": 68,
@@ -2589,7 +2821,13 @@
         "postcode": "2011 GR"
       }
     ],
-    "contacten": []
+    "contacten": [],
+    "factuurBedrijfsnaam": "Regine",
+    "factuurTelefoon": "06 15 31 55 39",
+    "factuurAdres": "Bilderdijkstraat 188H",
+    "factuurPostcode": "1053 LE",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@coffeeshop-regine.nl"
   },
   {
     "id": 69,
@@ -2623,7 +2861,10 @@
     ],
     "factuurAdres": "Woestduinstraat 76",
     "factuurPlaats": "1058 KA AMSTERDAM",
-    "factuurTelefoon": "06 16 91 91 81"
+    "factuurTelefoon": "06 16 91 91 81",
+    "factuurBedrijfsnaam": "Bullwacki",
+    "factuurPostcode": "1058 KA",
+    "factuurEmail": "willemrabeat@hotmail.com"
   },
   {
     "id": 70,
@@ -2658,7 +2899,10 @@
     "oprichtingsDatum": "1991-10-07",
     "factuurAdres": "Elandsgracht 3-hs",
     "factuurPlaats": "1016 TM AMSTERDAM",
-    "factuurTelefoon": "020 638 39 84"
+    "factuurTelefoon": "020 638 39 84",
+    "factuurBedrijfsnaam": "Coffeeshop Johnny",
+    "factuurPostcode": "1016 TM",
+    "factuurEmail": "coffeeshop-johnny@xs4all.nl"
   },
   {
     "id": 71,
@@ -2699,7 +2943,9 @@
     "factuurBedrijfsnaam": "Blue Tomato BV",
     "factuurAdres": "Neutronweg 11",
     "factuurPlaats": "1627 LG HOORN",
-    "factuurTelefoon": "06 29 53 25 85"
+    "factuurTelefoon": "06 29 53 25 85",
+    "factuurPostcode": "1627 LG",
+    "factuurEmail": "bluetom@xs4all.nl"
   },
   {
     "id": 72,
@@ -2739,7 +2985,10 @@
     ],
     "factuurAdres": "Nieuwmarkt 4a",
     "factuurPlaats": "1012 CR AMSTERDAM",
-    "factuurTelefoon": "020 223 55 62"
+    "factuurTelefoon": "020 223 55 62",
+    "factuurBedrijfsnaam": "De Jolly Joker",
+    "factuurPostcode": "1012 CR",
+    "factuurEmail": "petrarietsnijder@icloud.com"
   },
   {
     "id": 73,
@@ -2773,7 +3022,12 @@
     "oprichtingsDatum": "2008-11-04",
     "kvk": "14071987",
     "factuurBedrijfsnaam": "El Barco BV",
-    "factuurTelefoon": "06 53 68 90 53"
+    "factuurTelefoon": "06 53 68 90 53",
+    "factuurKvk": "14071987",
+    "factuurAdres": "Maaspromenade 11 A01",
+    "factuurPostcode": "6211 HS",
+    "factuurPlaats": "Maastricht",
+    "factuurEmail": "stephan429@hotmail.com"
   },
   {
     "id": 74,
@@ -2807,7 +3061,10 @@
     "oprichtingsDatum": "1988-06-01",
     "factuurAdres": "Deldenerstraat 14",
     "factuurPlaats": "7551 AE HENGELO",
-    "factuurTelefoon": "074 250 23 77"
+    "factuurTelefoon": "074 250 23 77",
+    "factuurBedrijfsnaam": "Coffeeshop Rokade",
+    "factuurPostcode": "7551 AE",
+    "factuurEmail": "rokadecrew@gmail.com"
   },
   {
     "id": 75,
@@ -2841,7 +3098,10 @@
     ],
     "factuurAdres": "de Clerqstraat 30",
     "factuurPlaats": "1052 NE AMSTERDAM",
-    "factuurTelefoon": "020 685 48 10"
+    "factuurTelefoon": "020 685 48 10",
+    "factuurBedrijfsnaam": "Second Cheech & Chong's",
+    "factuurPostcode": "1052 NE",
+    "factuurEmail": "lahmejm@gmail.com"
   },
   {
     "id": 76,
@@ -2876,7 +3136,11 @@
     "kvk": "5062077",
     "factuurAdres": "Korte Woldpromenade 8",
     "factuurPlaats": "8331 JK STEENWIJK",
-    "factuurTelefoon": "06 28 34 42 56"
+    "factuurTelefoon": "06 28 34 42 56",
+    "factuurBedrijfsnaam": "Coffeeshop Alien",
+    "factuurKvk": "5062077",
+    "factuurPostcode": "8331 JK",
+    "factuurEmail": "alienende@gmail.com"
   },
   {
     "id": 77,
@@ -2914,7 +3178,12 @@
         "email": ""
       }
     ],
-    "factuurTelefoon": "641800932"
+    "factuurTelefoon": "641800932",
+    "factuurBedrijfsnaam": "Voyagers",
+    "factuurAdres": "Geldersekade 2",
+    "factuurPostcode": "1012 BH",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "henriettezwart@yahoo.com"
   },
   {
     "id": 78,
@@ -2948,7 +3217,10 @@
     ],
     "factuurAdres": "Hoofdweg 174 BG",
     "factuurPlaats": "1057 DC AMSTERDAM",
-    "factuurTelefoon": "06 52 46 88 09"
+    "factuurTelefoon": "06 52 46 88 09",
+    "factuurBedrijfsnaam": "Ruthless",
+    "factuurPostcode": "1057 DC",
+    "factuurEmail": "oncirak@hotmail.com"
   },
   {
     "id": 79,
@@ -2987,7 +3259,13 @@
     ],
     "oprichtingsDatum": "2000-07-13",
     "kvk": "2070529",
-    "factuurTelefoon": "06 83 19 80 73"
+    "factuurTelefoon": "06 83 19 80 73",
+    "factuurBedrijfsnaam": "The Happy Family",
+    "factuurKvk": "2070529",
+    "factuurAdres": "Meint Veningastraat 74",
+    "factuurPostcode": "9601 KH",
+    "factuurPlaats": "Hoogezand",
+    "factuurEmail": "thehappyfamilybv@gmail.com"
   },
   {
     "id": 80,
@@ -3028,7 +3306,10 @@
     "oprichtingsDatum": "1981-03-25",
     "factuurAdres": "Haringpakkerssteeg 3",
     "factuurPlaats": "1012 LR AMSTERDAM",
-    "factuurTelefoon": "06 55 76 23 84"
+    "factuurTelefoon": "06 55 76 23 84",
+    "factuurBedrijfsnaam": "Prix d'Ami",
+    "factuurPostcode": "1012 LR",
+    "factuurEmail": "lesley.bijlsma@orisflex.nl"
   },
   {
     "id": 81,
@@ -3143,7 +3424,12 @@
       }
     ],
     "oprichtingsDatum": "1992-12-12",
-    "factuurTelefoon": "020 422 20 20"
+    "factuurTelefoon": "020 422 20 20",
+    "factuurBedrijfsnaam": "The Rookies",
+    "factuurAdres": "Postbus 696",
+    "factuurPostcode": "1180 AR",
+    "factuurPlaats": "Amstelveen",
+    "factuurEmail": "mark@rookies.nl"
   },
   {
     "id": 85,
@@ -3181,7 +3467,12 @@
         "email": ""
       }
     ],
-    "factuurTelefoon": "06 30 37 97 01"
+    "factuurTelefoon": "06 30 37 97 01",
+    "factuurBedrijfsnaam": "The Stud",
+    "factuurAdres": "Molukkenstraat 581",
+    "factuurPostcode": "1095 BJ",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "silviow1968@gmail.com"
   },
   {
     "id": 86,
@@ -3221,7 +3512,10 @@
     "oprichtingsDatum": "2001-01-01",
     "kvk": "22059624",
     "factuurAdres": "Grote Markt 7",
-    "factuurPlaats": "4461 AH GOES"
+    "factuurPlaats": "4461 AH GOES",
+    "factuurBedrijfsnaam": "Coffeeshop Aarden",
+    "factuurPostcode": "4461 AH",
+    "factuurEmail": "info@coffeeshopaarden.nl; aardenhoreca@zeelandnet.nl"
   },
   {
     "id": 87,
@@ -3291,7 +3585,10 @@
     ],
     "factuurAdres": "Kloveniersburgwal 42",
     "factuurPlaats": "1012 CW AMSTERDAM",
-    "factuurTelefoon": "06 51 49 06 40"
+    "factuurTelefoon": "06 51 49 06 40",
+    "factuurBedrijfsnaam": "Goa",
+    "factuurPostcode": "1012 CW",
+    "factuurEmail": "ronnie809@hotmail.com"
   },
   {
     "id": 89,
@@ -3327,7 +3624,11 @@
     "kvk": "33282179",
     "factuurAdres": "Vasumweg 4 C",
     "factuurPlaats": "1033 SC AMSTERDAM",
-    "factuurTelefoon": "06 21 48 22 17"
+    "factuurTelefoon": "06 21 48 22 17",
+    "factuurBedrijfsnaam": "Funny People",
+    "factuurKvk": "33282179",
+    "factuurPostcode": "1033 SC",
+    "factuurEmail": "vandenberg42@outlook.com"
   },
   {
     "id": 90,
@@ -3366,7 +3667,10 @@
     ],
     "factuurAdres": "Voorstraat 81",
     "factuurPlaats": "3512 AL UTRECHT",
-    "factuurTelefoon": "030 230 20 39"
+    "factuurTelefoon": "030 230 20 39",
+    "factuurBedrijfsnaam": "Pleasure",
+    "factuurPostcode": "3512 AL",
+    "factuurEmail": "jeff_eijndt@hotmail.com"
   },
   {
     "id": 91,
@@ -3402,7 +3706,9 @@
     "factuurAdres": "Postbus 3130",
     "factuurPostcode": "3130CC",
     "factuurPlaats": "Vlaardingen",
-    "factuurTelefoon": "010 435 56 35"
+    "factuurTelefoon": "010 435 56 35",
+    "factuurKvk": "54046947",
+    "factuurEmail": "thebullvld@icloud.com"
   },
   {
     "id": 92,
@@ -3439,7 +3745,12 @@
         "telefoon": "",
         "email": "jointventure026@gmail.com, Sanderplamont@gmail.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Joint Venture",
+    "factuurAdres": "Munterstraat 4",
+    "factuurPostcode": "6811 GP",
+    "factuurPlaats": "Arnhem",
+    "factuurEmail": "jointventure026@gmail.com, S"
   },
   {
     "id": 93,
@@ -3470,7 +3781,13 @@
         "telefoon": "06 43 20 68 88",
         "email": "info@luckylukearnhem.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Lucky Luke",
+    "factuurTelefoon": "06 43 20 68 88",
+    "factuurAdres": "Sonsbeeksingel 91",
+    "factuurPostcode": "6821 AC",
+    "factuurPlaats": "Arnhem",
+    "factuurEmail": "info@luckylukearnhem.com"
   },
   {
     "id": 94,
@@ -3501,7 +3818,13 @@
         "telefoon": "06 47 93 99 62",
         "email": "gerrit-riethorst@hotmail.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Uncle Sam",
+    "factuurTelefoon": "06 47 93 99 62",
+    "factuurAdres": "Driekoningenstraat 21-A",
+    "factuurPostcode": "6828 EL",
+    "factuurPlaats": "Arnhem",
+    "factuurEmail": "gerrit-riethorst@hotmail.com"
   },
   {
     "id": 95,
@@ -3537,7 +3860,13 @@
         "telefoon": "",
         "email": ""
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Waterman BV",
+    "factuurTelefoon": "06 21 27 41 43",
+    "factuurAdres": "Verheeskade 30",
+    "factuurPostcode": "2521 BN",
+    "factuurPlaats": "Den Haag",
+    "factuurEmail": "hsmile@xs4all.nl"
   },
   {
     "id": 96,
@@ -3567,7 +3896,12 @@
         "telefoon": "",
         "email": "Pluto_headshop@hotmail.nl"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Pluto",
+    "factuurAdres": "Nieuwe binnenweg 54",
+    "factuurPostcode": "3015 BB",
+    "factuurPlaats": "Rotterdam",
+    "factuurEmail": "Pluto_headshop@hotmail.nl"
   },
   {
     "id": 97,
@@ -3598,7 +3932,13 @@
         "email": "Jwpanders@gmail.com"
       }
     ],
-    "oprichtingsDatum": "1992-12-12"
+    "oprichtingsDatum": "1992-12-12",
+    "factuurBedrijfsnaam": "Piramide",
+    "factuurTelefoon": "06 43 82 60 90",
+    "factuurAdres": "Karpelstraat 43-A",
+    "factuurPostcode": "1404 HW",
+    "factuurPlaats": "Hilversum",
+    "factuurEmail": "Jwpanders@gmail.com"
   },
   {
     "id": 98,
@@ -3672,7 +4012,13 @@
         "telefoon": "06 42 47 59 40",
         "email": "Kent1@live.nl"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "NCC Power Flower",
+    "factuurTelefoon": "06 42 47 59 40",
+    "factuurAdres": "Arnhemseweg 181",
+    "factuurPostcode": "7331 BH",
+    "factuurPlaats": "Apeldoorn",
+    "factuurEmail": "Kent1@live.nl"
   },
   {
     "id": 100,
@@ -3702,7 +4048,13 @@
         "telefoon": "06 18 03 16 60",
         "email": "nizar@john-en-co.nl"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "John & Co",
+    "factuurTelefoon": "06 18 03 16 60",
+    "factuurAdres": "Stephensonweg 1",
+    "factuurPostcode": "3225 LW",
+    "factuurPlaats": "Hellevoetsluis",
+    "factuurEmail": "nizar@john-en-co.nl"
   },
   {
     "id": 101,
@@ -3733,7 +4085,12 @@
         "email": "Spiritamsterdam@protonmail.com"
       }
     ],
-    "factuurBedrijfsnaam": "The Spirit v.o.f."
+    "factuurBedrijfsnaam": "The Spirit v.o.f.",
+    "factuurTelefoon": "06 46 30 00 68",
+    "factuurAdres": "Westerstraat 121",
+    "factuurPostcode": "1015 LZ",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "Spiritamsterdam@protonmail.com"
   },
   {
     "id": 102,
@@ -3764,7 +4121,13 @@
         "email": "kayo@roostbv.nl"
       }
     ],
-    "oprichtingsDatum": "1985-08-12"
+    "oprichtingsDatum": "1985-08-12",
+    "factuurBedrijfsnaam": "High times",
+    "factuurTelefoon": "06 83 09 14 93",
+    "factuurAdres": "Roostenlaan 24-A",
+    "factuurPostcode": "5644 PR",
+    "factuurPlaats": "Eindhoven",
+    "factuurEmail": "kayo@roostbv.nl"
   },
   {
     "id": 103,
@@ -3794,7 +4157,13 @@
         "telefoon": "06 16 24 94 84",
         "email": "dejungle-oss@hotmail.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "De Jungle",
+    "factuurTelefoon": "06 16 24 94 84",
+    "factuurAdres": "Kromstraat 112",
+    "factuurPostcode": "5345 AE",
+    "factuurPlaats": "Oss",
+    "factuurEmail": "dejungle-oss@hotmail.com"
   },
   {
     "id": 104,
@@ -3825,7 +4194,12 @@
         "email": "coffeeshopgalaxy@gmail.com"
       }
     ],
-    "factuurBedrijfsnaam": "Koffieshop Galaxy B.V."
+    "factuurBedrijfsnaam": "Koffieshop Galaxy B.V.",
+    "factuurTelefoon": "06 14 32 00 00",
+    "factuurAdres": "Weimarstraat 245",
+    "factuurPostcode": "2562 HH",
+    "factuurPlaats": "Den Haag",
+    "factuurEmail": "coffeeshopgalaxy@gmail.com"
   },
   {
     "id": 105,
@@ -3862,7 +4236,13 @@
         "email": "stan@kronkel.nl"
       }
     ],
-    "oprichtingsDatum": "1905-06-08"
+    "oprichtingsDatum": "1905-06-08",
+    "factuurBedrijfsnaam": "De Kronkel",
+    "factuurTelefoon": "06 54 95 08 50",
+    "factuurAdres": "Vlaamsegas 30",
+    "factuurPostcode": "6511 HR",
+    "factuurPlaats": "Nijmegen",
+    "factuurEmail": "g.esmeijer@icloud.com"
   },
   {
     "id": 106,
@@ -3904,7 +4284,13 @@
         "telefoon": "06 52 21 48 83",
         "email": "sandramoumouh@icloud.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Koffie Rif Hilversum",
+    "factuurTelefoon": "06 82 10 10 33",
+    "factuurAdres": "Leeuwenstraat 34",
+    "factuurPostcode": "1211 EV",
+    "factuurPlaats": "Hilversum",
+    "factuurEmail": "abdelhakbazzahi@hotmail.com"
   },
   {
     "id": 107,
@@ -3934,7 +4320,12 @@
         "telefoon": "06 41 79 01 90",
         "email": ""
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Club Media",
+    "factuurAdres": "Gerard Douwstraat 85",
+    "factuurPostcode": "1072 VN",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@coffeeshopclubmedia.nl"
   },
   {
     "id": 108,
@@ -3994,7 +4385,11 @@
         "telefoon": "",
         "email": ""
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "Coffeeshop Mediterrané",
+    "factuurAdres": "Spuistraat 80",
+    "factuurPostcode": "1012 TX",
+    "factuurPlaats": "Amsterdam"
   },
   {
     "id": 110,
@@ -4025,7 +4420,11 @@
         "email": "management@greyarea.nl"
       }
     ],
-    "factuurBedrijfsnaam": "Grey Area BV"
+    "factuurBedrijfsnaam": "Grey Area BV",
+    "factuurAdres": "Oude Leliestraat 2",
+    "factuurPostcode": "1015 AW",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@greyarea.nl"
   },
   {
     "id": 111,
@@ -4048,7 +4447,11 @@
         "postcode": "1092 GB"
       }
     ],
-    "contacten": []
+    "contacten": [],
+    "factuurBedrijfsnaam": "Crashlight",
+    "factuurAdres": "Pretoriusstraat 67",
+    "factuurPostcode": "1092 GB",
+    "factuurPlaats": "Amsterdam"
   },
   {
     "id": 112,
@@ -4079,7 +4482,12 @@
         "email": "rutger.cranssen@your.global"
       }
     ],
-    "oprichtingsDatum": "2001-09-11"
+    "oprichtingsDatum": "2001-09-11",
+    "factuurBedrijfsnaam": "De Steeg",
+    "factuurAdres": "Rietveld 1",
+    "factuurPostcode": "3443 XA",
+    "factuurPlaats": "Woerden",
+    "factuurEmail": "info@coffeeshopdesteeg.nl"
   },
   {
     "id": 113,
@@ -4103,7 +4511,12 @@
         "stadsdeel": "Oost"
       }
     ],
-    "contacten": []
+    "contacten": [],
+    "factuurBedrijfsnaam": "Coffeeshop Oost",
+    "factuurAdres": "3E Oosterparkstraat 73",
+    "factuurPostcode": "1091 JV",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "info@coffeeshopoost.nl"
   },
   {
     "id": 114,
@@ -4134,7 +4547,12 @@
         "email": "youri.balou@hotmail.com"
       }
     ],
-    "factuurBedrijfsnaam": "Balou Amsterdam B.V."
+    "factuurBedrijfsnaam": "Balou Amsterdam B.V.",
+    "factuurTelefoon": "06 45 99 02 60",
+    "factuurAdres": "Halvemaansteeg 5",
+    "factuurPostcode": "1017 CR",
+    "factuurPlaats": "Amsterdam",
+    "factuurEmail": "youri.balou@hotmail.com"
   },
   {
     "id": 115,
@@ -4170,7 +4588,8 @@
         "telefoon": "",
         "email": "reddouann@gmail.com"
       }
-    ]
+    ],
+    "factuurBedrijfsnaam": "KVK 54085527"
   },
   {
     "id": 116,
@@ -4234,7 +4653,14 @@
       }
     ],
     "oprichtingsDatum": "2019-10-31",
-    "kvk": "76255484"
+    "kvk": "76255484",
+    "factuurBedrijfsnaam": "Coffeeshop 010 B.V.",
+    "factuurKvk": "76255484",
+    "factuurTelefoon": "06 30 48 60 05",
+    "factuurAdres": "Noordsingel 201",
+    "factuurPostcode": "3035ER",
+    "factuurPlaats": "Rotterdam",
+    "factuurEmail": "nultien_rotterdam@hotmail.com"
   },
   {
     "id": 118,
@@ -4309,7 +4735,12 @@
     ],
     "oprichtingsDatum": "1982-11-30",
     "kvk": "54085527",
-    "factuurBedrijfsnaam": "Sunny Time Bv"
+    "factuurBedrijfsnaam": "Sunny Time Bv",
+    "factuurKvk": "54085527",
+    "factuurAdres": "Nieuwe Binnenweg 363",
+    "factuurPostcode": "3023 EJ",
+    "factuurPlaats": "Rotterdam",
+    "factuurEmail": "info@outoftime.nl"
   },
   {
     "id": 120,
