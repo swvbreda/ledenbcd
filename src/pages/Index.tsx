@@ -20,6 +20,8 @@ const Index = () => {
         </p>
       </div>
 
+      <BestuurOverzicht members={allMembers} />
+
       <StatCards members={allMembers} />
 
       <VerloopChart />
@@ -28,8 +30,6 @@ const Index = () => {
         <LidmaatschapsduurChart members={allMembers} />
         <LedenPerStadOverzicht members={allMembers} />
       </div>
-
-      <BestuurOverzicht members={allMembers} />
 
       <JubileumOverzicht members={allMembers} />
     </div>
