@@ -3,7 +3,7 @@
     "id": 120,
     "naam": "Purple Rain",
     "plaats": "Breda",
-    "stadsdeel": "",
+    "stadsdeel": "Nieuw Ginneken",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Naoufel",
@@ -17,7 +17,8 @@
         "naam": "Purple Rain",
         "plaats": "Breda",
         "adres": "Willemstraat 12",
-        "postcode": "4811 AK"
+        "postcode": "4811 AK",
+        "stadsdeel": "Nieuw Ginneken"
       }
     ],
     "contacten": [
@@ -39,7 +40,7 @@
     "id": 121,
     "naam": "Smokery",
     "plaats": "Zaanstad",
-    "stadsdeel": "",
+    "stadsdeel": "Wormerveer-Noord",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Maikel",
@@ -53,7 +54,8 @@
         "naam": "Smokery",
         "plaats": "Wormerveer",
         "adres": "Marktstraat 33",
-        "postcode": "1521 EA"
+        "postcode": "1521 EA",
+        "stadsdeel": "Wormerveer-Noord"
       }
     ],
     "contacten": [
@@ -69,7 +71,7 @@
     "id": 122,
     "naam": "Coffeeshop Freak",
     "plaats": "Utrecht",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Carlo Theulen",
@@ -83,7 +85,8 @@
         "naam": "Coffeeshop Freak",
         "plaats": "Utrecht",
         "adres": "Breedstraat 55",
-        "postcode": "3512 TV"
+        "postcode": "3512 TV",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -99,7 +102,7 @@
     "id": 123,
     "naam": "Dr Pleasure",
     "plaats": "Deventer",
-    "stadsdeel": "",
+    "stadsdeel": "Zandweerd",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Raymond",
@@ -113,7 +116,8 @@
         "naam": "Dr Pleasure",
         "plaats": "Deventer",
         "adres": "Brinkgreverweg 70",
-        "postcode": "7413AD"
+        "postcode": "7413AD",
+        "stadsdeel": "Zandweerd"
       }
     ],
     "contacten": [
@@ -130,7 +134,7 @@
     "id": 124,
     "naam": "Toermalijn",
     "plaats": "Tilburg",
-    "stadsdeel": "",
+    "stadsdeel": "Korvel",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Alex van Veen",
@@ -144,7 +148,8 @@
         "naam": "Toermalijn",
         "plaats": "Tilburg",
         "adres": "Korvelplein 95",
-        "postcode": "5025 JG"
+        "postcode": "5025 JG",
+        "stadsdeel": "Korvel"
       }
     ],
     "contacten": [

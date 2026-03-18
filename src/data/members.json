@@ -161,7 +161,7 @@
     "id": 4,
     "naam": "Coffeeshop Splif",
     "plaats": "Purmerend",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 42,
     "oprichtingJaar": 1984,
     "contactpersoon": "Huub van den Brink",
@@ -175,7 +175,8 @@
         "naam": "Coffeeshop Splif",
         "plaats": "Purmerend",
         "adres": "Achterdijk 76",
-        "postcode": "1441 DJ"
+        "postcode": "1441 DJ",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -746,7 +747,7 @@
     "id": 14,
     "naam": "Coffeeshop Pink",
     "plaats": "Eindhoven",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 42,
     "oprichtingJaar": 1984,
     "contactpersoon": "Lisa Lankes",
@@ -760,7 +761,8 @@
         "naam": "Coffeeshop Pink",
         "plaats": "Eindhoven",
         "adres": "Willemstraat 35",
-        "postcode": "5611 HB"
+        "postcode": "5611 HB",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -792,7 +794,7 @@
     "id": 15,
     "naam": "Koffiehuis Sharon",
     "plaats": "Enschede",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Daniel Minnegaal",
@@ -806,7 +808,8 @@
         "naam": "Koffiehuis Sharon",
         "plaats": "Enschede",
         "adres": "Stadsgravenstraat 42",
-        "postcode": "7511 ES"
+        "postcode": "7511 ES",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -830,7 +833,7 @@
     "id": 16,
     "naam": "De Os",
     "plaats": "Leeuwarden",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 41,
     "oprichtingJaar": 1985,
     "contactpersoon": "Erik Drenth",
@@ -844,7 +847,8 @@
         "naam": "De Os",
         "plaats": "Leeuwarden",
         "adres": "Korfmakersstraat 2",
-        "postcode": "8911 LA"
+        "postcode": "8911 LA",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -873,7 +877,7 @@
     "id": 17,
     "naam": "Superfly",
     "plaats": "Beverwijk",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Martijn Vree",
@@ -887,7 +891,8 @@
         "naam": "Superfly",
         "plaats": "Beverwijk",
         "adres": "Begijnhof 4",
-        "postcode": "1941 BP"
+        "postcode": "1941 BP",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1280,7 +1285,7 @@
     "id": 26,
     "naam": "Tuda Fruta",
     "plaats": "Rotterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Kralingen-Crooswijk",
     "jarenLid": 36,
     "oprichtingJaar": 1990,
     "contactpersoon": "Michel Wouters",
@@ -1294,7 +1299,8 @@
         "naam": "Tuda Fruta",
         "plaats": "Rotterdam",
         "adres": "Admiraliteitskade 17a",
-        "postcode": "3063 EC"
+        "postcode": "3063 EC",
+        "stadsdeel": "Kralingen-Crooswijk"
       }
     ],
     "contacten": [
@@ -1320,7 +1326,7 @@
     "id": 27,
     "naam": "Cremers",
     "plaats": "Den Haag",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 36,
     "oprichtingJaar": 1990,
     "contactpersoon": "Gerard Cremers",
@@ -1334,7 +1340,8 @@
         "naam": "Cremers",
         "plaats": "Den Haag",
         "adres": "Prinsestraat 84",
-        "postcode": "2513 CG"
+        "postcode": "2513 CG",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1354,7 +1361,7 @@
     "id": 28,
     "naam": "Trefpunt",
     "plaats": "Rotterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 29,
     "oprichtingJaar": 1997,
     "contactpersoon": "Ronald Moher",
@@ -1368,7 +1375,8 @@
         "naam": "Trefpunt",
         "plaats": "Rotterdam",
         "adres": "Botersloot 7",
-        "postcode": "3011 HE"
+        "postcode": "3011 HE",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1553,7 +1561,7 @@
     "id": 66,
     "naam": "Espresso",
     "plaats": "Mijdrecht",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "",
@@ -1567,7 +1575,8 @@
         "naam": "Espresso",
         "plaats": "Mijdrecht",
         "adres": "Rondweg 1B",
-        "postcode": "3641 SC"
+        "postcode": "3641 SC",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [],
@@ -1577,7 +1586,7 @@
     "id": 31,
     "naam": "Yanks",
     "plaats": "Zandvoort",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 43,
     "oprichtingJaar": 1983,
     "contactpersoon": "Toon van der Moot",
@@ -1591,7 +1600,8 @@
         "naam": "Yanks",
         "plaats": "Zandvoort",
         "adres": "Haltestraat 61",
-        "postcode": "2042 LL"
+        "postcode": "2042 LL",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1783,7 +1793,7 @@
     "id": 37,
     "naam": "De Rode Leeuw",
     "plaats": "Zwolle",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 27,
     "oprichtingJaar": 2017,
     "contactpersoon": "Tim de Wilde",
@@ -1797,7 +1807,8 @@
         "naam": "De Rode Leeuw",
         "plaats": "Zwolle",
         "adres": "Rodeleeuwsteeg 4",
-        "postcode": "8011 TC"
+        "postcode": "8011 TC",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1826,7 +1837,7 @@
     "id": 38,
     "naam": "De Loods",
     "plaats": "Amersfoort",
-    "stadsdeel": "",
+    "stadsdeel": "Noord",
     "jarenLid": 2,
     "oprichtingJaar": 2024,
     "contactpersoon": "Tim de Wilde / Marlies (boere)",
@@ -1840,7 +1851,8 @@
         "naam": "De Loods",
         "plaats": "Amersfoort",
         "adres": "Textielweg 11",
-        "postcode": "3812RV"
+        "postcode": "3812RV",
+        "stadsdeel": "Noord"
       }
     ],
     "contacten": [
@@ -1869,7 +1881,7 @@
     "id": 39,
     "naam": "Thunderbird",
     "plaats": "Enschede",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 33,
     "oprichtingJaar": 1993,
     "contactpersoon": "Peter",
@@ -1883,7 +1895,8 @@
         "naam": "Thunderbird",
         "plaats": "Enschede",
         "adres": "Wilhelminastraat 3",
-        "postcode": "7511 DM"
+        "postcode": "7511 DM",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1915,7 +1928,7 @@
     "id": 40,
     "naam": "De Ambassade",
     "plaats": "Zwijndrecht",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 5,
     "oprichtingJaar": 2021,
     "contactpersoon": "Edwin Bax",
@@ -1929,7 +1942,8 @@
         "naam": "De Ambassade",
         "plaats": "Zwijndrecht",
         "adres": "IJsselmeer 27",
-        "postcode": "3332 EX"
+        "postcode": "3332 EX",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -1955,7 +1969,7 @@
     "id": 41,
     "naam": "The Mix",
     "plaats": "Enschede",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Greetje Nijboer",
@@ -1969,7 +1983,8 @@
         "naam": "The Mix",
         "plaats": "Enschede",
         "adres": "Havenstraatpassage 44-46",
-        "postcode": "7511 EX"
+        "postcode": "7511 EX",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -2083,7 +2098,7 @@
     "id": 44,
     "naam": "Roundabout 69",
     "plaats": "Maastricht",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": 9,
     "oprichtingJaar": 2017,
     "contactpersoon": "Dirk Peereboom",
@@ -2097,7 +2112,8 @@
         "naam": "Roundabout 69",
         "plaats": "Maastricht",
         "adres": "Brusselsestraat 146A",
-        "postcode": "6211 PJ"
+        "postcode": "6211 PJ",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -2129,7 +2145,7 @@
     "id": 45,
     "naam": "Roxanne",
     "plaats": "Schagen",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 34,
     "oprichtingJaar": 1992,
     "contactpersoon": "Dennis Kollof",
@@ -2143,7 +2159,8 @@
         "naam": "Roxanne",
         "plaats": "Schagen",
         "adres": "Laan 5",
-        "postcode": "1741 EA"
+        "postcode": "1741 EA",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -2216,7 +2233,7 @@
     "id": 47,
     "naam": "Oya",
     "plaats": "Gouda",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Rob ten Hove",
@@ -2230,7 +2247,8 @@
         "naam": "Oya",
         "plaats": "Gouda",
         "adres": "Lange Groenendaal 102",
-        "postcode": "2801 LV"
+        "postcode": "2801 LV",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -2257,7 +2275,7 @@
     "id": 48,
     "naam": "Zero Zero",
     "plaats": "Arnhem",
-    "stadsdeel": "",
+    "stadsdeel": "Spijkerkwartier",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Marjolein de Keijzer van Nimwegen",
@@ -2271,7 +2289,8 @@
         "naam": "Zero Zero",
         "plaats": "Arnhem",
         "adres": "Hommelseweg 19",
-        "postcode": "6821 LA"
+        "postcode": "6821 LA",
+        "stadsdeel": "Spijkerkwartier"
       }
     ],
     "contacten": [
@@ -2295,7 +2314,7 @@
     "id": 49,
     "naam": "High Time",
     "plaats": "Alkmaar",
-    "stadsdeel": "",
+    "stadsdeel": "Overdie",
     "jarenLid": null,
     "oprichtingJaar": 1985,
     "contactpersoon": "Penny Curiel Prins",
@@ -2309,7 +2328,8 @@
         "naam": "High Time",
         "plaats": "Alkmaar",
         "adres": "Spoorstraat 99",
-        "postcode": "1815 BJ"
+        "postcode": "1815 BJ",
+        "stadsdeel": "Overdie"
       }
     ],
     "contacten": [
@@ -2449,7 +2469,7 @@
     "id": 53,
     "naam": "Coffee and Dreams",
     "plaats": "Leiden",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": 31,
     "oprichtingJaar": 1995,
     "contactpersoon": "Anton Verschelling",
@@ -2463,7 +2483,8 @@
         "naam": "Coffee and Dreams",
         "plaats": "Leiden",
         "adres": "Nieuwe Beestenmarkt 34a",
-        "postcode": "2312 CH"
+        "postcode": "2312 CH",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -2718,7 +2739,7 @@
     "id": 67,
     "naam": "Tafne",
     "plaats": "Beverwijk",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Danny Zijp",
@@ -2732,13 +2753,15 @@
         "naam": "Tafne",
         "plaats": "Beverwijk",
         "adres": "Kloosterstraat 23",
-        "postcode": "1941 BN"
+        "postcode": "1941 BN",
+        "stadsdeel": "Centrum"
       },
       {
         "naam": "Regine",
         "plaats": "Haarlem",
         "adres": "Gedempte Oude Gracht 28",
-        "postcode": "2011 GR"
+        "postcode": "2011 GR",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -2836,7 +2859,7 @@
     "id": 71,
     "naam": "Blue Tomato",
     "plaats": "Hoorn",
-    "stadsdeel": "",
+    "stadsdeel": "Hoorn-Noord",
     "jarenLid": 13,
     "oprichtingJaar": 2013,
     "contactpersoon": "Michael",
@@ -2850,7 +2873,8 @@
         "naam": "Blue Tomato",
         "plaats": "Hoorn",
         "adres": "Neutronweg 11",
-        "postcode": "1627 LG"
+        "postcode": "1627 LG",
+        "stadsdeel": "Hoorn-Noord"
       }
     ],
     "contacten": [
@@ -2923,7 +2947,7 @@
     "id": 73,
     "naam": "Coffeeshop Mississippi",
     "plaats": "Maastricht",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": 18,
     "oprichtingJaar": 2008,
     "contactpersoon": "Stephan Korsten",
@@ -2937,7 +2961,8 @@
         "naam": "Coffeeshop Mississippi",
         "plaats": "Maastricht",
         "adres": "Maaspromenade 11 A01",
-        "postcode": "6211 HS"
+        "postcode": "6211 HS",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -2963,7 +2988,7 @@
     "id": 74,
     "naam": "Coffeeshop Rokade",
     "plaats": "Hengelo",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 38,
     "oprichtingJaar": 1988,
     "contactpersoon": "Willem Heerbaart",
@@ -2977,7 +3002,8 @@
         "naam": "Coffeeshop Rokade",
         "plaats": "Hengelo",
         "adres": "Deldenerstraat 14",
-        "postcode": "7551 AE"
+        "postcode": "7551 AE",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -3038,7 +3064,7 @@
     "id": 76,
     "naam": "Coffeeshop Alien",
     "plaats": "Steenwijk",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 27,
     "oprichtingJaar": 1999,
     "contactpersoon": "Alien van der Ende",
@@ -3052,7 +3078,8 @@
         "naam": "Coffeeshop Alien",
         "plaats": "Steenwijk",
         "adres": "Korte Woldpromenade 8",
-        "postcode": "8331 JK"
+        "postcode": "8331 JK",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -3158,7 +3185,7 @@
     "id": 79,
     "naam": "The Happy Family",
     "plaats": "Hoogezand",
-    "stadsdeel": "",
+    "stadsdeel": "Hoogezand",
     "jarenLid": 26,
     "oprichtingJaar": 2000,
     "contactpersoon": "Oussama al' Mobaress",
@@ -3172,7 +3199,8 @@
         "naam": "The Happy Family",
         "plaats": "Hoogezand",
         "adres": "Meint Veningastraat 74",
-        "postcode": "9601 KH"
+        "postcode": "9601 KH",
+        "stadsdeel": "Hoogezand"
       }
     ],
     "contacten": [
@@ -3390,7 +3418,7 @@
     "id": 86,
     "naam": "Coffeeshop Aarden",
     "plaats": "Goes",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 25,
     "oprichtingJaar": 2001,
     "contactpersoon": "Myrthe Aarden",
@@ -3404,13 +3432,15 @@
         "naam": "Coffeeshop Aarden",
         "plaats": "Goes",
         "adres": "Grote Markt 7",
-        "postcode": "4461 AH"
+        "postcode": "4461 AH",
+        "stadsdeel": "Centrum"
       },
       {
         "naam": "Plan B / Coffeeshop Aarden",
         "plaats": "Vlissingen",
         "adres": "Paul Krugerstraat 7",
-        "postcode": "4381 GN"
+        "postcode": "4381 GN",
+        "stadsdeel": "Middelburg"
       }
     ],
     "contacten": [
@@ -3548,7 +3578,7 @@
     "id": 90,
     "naam": "Pleasure",
     "plaats": "Utrecht",
-    "stadsdeel": "",
+    "stadsdeel": "Binnenstad",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Theo en Geertje",
@@ -3562,7 +3592,8 @@
         "naam": "Pleasure",
         "plaats": "Utrecht",
         "adres": "Voorstraat 81",
-        "postcode": "3512 AL"
+        "postcode": "3512 AL",
+        "stadsdeel": "Binnenstad"
       }
     ],
     "contacten": [
@@ -3590,7 +3621,7 @@
     "id": 91,
     "naam": "The Bull",
     "plaats": "Vlaardingen",
-    "stadsdeel": "",
+    "stadsdeel": "Vlaardingen Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Ron",
@@ -3604,7 +3635,8 @@
         "naam": "The Bull",
         "plaats": "Vlaardingen",
         "adres": "Koningin Wilhelminahaven NZ 11 B",
-        "postcode": "3134KE"
+        "postcode": "3134KE",
+        "stadsdeel": "Vlaardingen Centrum"
       }
     ],
     "contacten": [
@@ -3744,7 +3776,7 @@
     "id": 95,
     "naam": "Happy Smile",
     "plaats": "Den Haag",
-    "stadsdeel": "",
+    "stadsdeel": "Laakkwartier en Spoorwijk",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Alex Ligtvoet",
@@ -3758,7 +3790,8 @@
         "naam": "Happy Smile",
         "plaats": "Den Haag",
         "adres": "Verheeskade 30",
-        "postcode": "2521 BN"
+        "postcode": "2521 BN",
+        "stadsdeel": "Laakkwartier en Spoorwijk"
       }
     ],
     "contacten": [
@@ -3822,7 +3855,7 @@
     "id": 97,
     "naam": "Piramide",
     "plaats": "Bussum",
-    "stadsdeel": "",
+    "stadsdeel": "Bussum-Zuid",
     "jarenLid": 34,
     "oprichtingJaar": 1992,
     "contactpersoon": "Willem Panders",
@@ -3836,7 +3869,8 @@
         "naam": "Piramide",
         "plaats": "Bussum",
         "adres": "Kapelstraat 43-A",
-        "postcode": "1404 HW"
+        "postcode": "1404 HW",
+        "stadsdeel": "Bussum-Zuid"
       }
     ],
     "contacten": [
@@ -3860,7 +3894,7 @@
     "id": 98,
     "naam": "Empire",
     "plaats": "Haarlem",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": 44,
     "oprichtingJaar": 1982,
     "contactpersoon": "Hus",
@@ -3874,7 +3908,8 @@
         "naam": "Empire",
         "plaats": "Haarlem",
         "adres": "Krocht 8",
-        "postcode": "2011 PT"
+        "postcode": "2011 PT",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -3899,7 +3934,7 @@
     "id": 99,
     "naam": "NCC Power Flower",
     "plaats": "Apeldoorn",
-    "stadsdeel": "",
+    "stadsdeel": "Apeldoorn-Noordoost",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Derek Kent",
@@ -3913,13 +3948,15 @@
         "naam": "NCC Power Flower",
         "plaats": "Apeldoorn",
         "adres": "Arnhemseweg 181",
-        "postcode": "7331 BH"
+        "postcode": "7331 BH",
+        "stadsdeel": "Apeldoorn-Noordoost"
       },
       {
         "naam": "NCC Power Flower",
         "plaats": "Amsterdam",
         "adres": "Admiraal de Ruijterweg 104",
-        "postcode": "1056 GP"
+        "postcode": "1056 GP",
+        "stadsdeel": "West"
       }
     ],
     "contacten": [
@@ -3941,7 +3978,7 @@
     "id": 100,
     "naam": "John & Co",
     "plaats": "Hellevoetsluis",
-    "stadsdeel": "",
+    "stadsdeel": "Nieuw Helvoet",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Nizar",
@@ -3955,7 +3992,8 @@
         "naam": "John & Co",
         "plaats": "Hellevoetsluis",
         "adres": "Stephensonweg 1",
-        "postcode": "3225 LW"
+        "postcode": "3225 LW",
+        "stadsdeel": "Nieuw Helvoet"
       }
     ],
     "contacten": [
@@ -3977,7 +4015,7 @@
     "id": 101,
     "naam": "Spirit",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Oost",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Willem van den Berg",
@@ -3991,7 +4029,8 @@
         "naam": "Spirit",
         "plaats": "Amsterdam",
         "adres": "Czaar Peterstraat 2a",
-        "postcode": "1018 PR"
+        "postcode": "1018 PR",
+        "stadsdeel": "Oost"
       }
     ],
     "contacten": [
@@ -4013,7 +4052,7 @@
     "id": 102,
     "naam": "High times",
     "plaats": "Eindhoven",
-    "stadsdeel": "",
+    "stadsdeel": "Stratum",
     "jarenLid": 41,
     "oprichtingJaar": 1985,
     "contactpersoon": "Kayo Ramsahai",
@@ -4027,7 +4066,8 @@
         "naam": "High times",
         "plaats": "Eindhoven",
         "adres": "Roostenlaan 24a",
-        "postcode": "5644 PR"
+        "postcode": "5644 PR",
+        "stadsdeel": "Stratum"
       }
     ],
     "contacten": [
@@ -4051,7 +4091,7 @@
     "id": 103,
     "naam": "De Jungle",
     "plaats": "Oss",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Linda",
@@ -4065,7 +4105,8 @@
         "naam": "De Jungle",
         "plaats": "Oss",
         "adres": "Kromstraat 112",
-        "postcode": "5345 AE"
+        "postcode": "5345 AE",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4087,7 +4128,7 @@
     "id": 104,
     "naam": "Galaxy",
     "plaats": "Den Haag",
-    "stadsdeel": "",
+    "stadsdeel": "Regentessekwartier",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Dave van der Tak",
@@ -4101,7 +4142,8 @@
         "naam": "Galaxy",
         "plaats": "Den Haag",
         "adres": "Weimarstraat 245",
-        "postcode": "2562 HH"
+        "postcode": "2562 HH",
+        "stadsdeel": "Regentessekwartier"
       }
     ],
     "contacten": [
@@ -4123,7 +4165,7 @@
     "id": 105,
     "naam": "De Kronkel",
     "plaats": "Nijmegen",
-    "stadsdeel": "",
+    "stadsdeel": "Nijmegen-Oost",
     "jarenLid": 40,
     "oprichtingJaar": 1986,
     "contactpersoon": "Gilbert Esmeijer",
@@ -4137,7 +4179,8 @@
         "naam": "De Kronkel",
         "plaats": "Nijmegen",
         "adres": "Vlaamsegas 30",
-        "postcode": "6511 HR"
+        "postcode": "6511 HR",
+        "stadsdeel": "Nijmegen-Oost"
       }
     ],
     "contacten": [
@@ -4167,7 +4210,7 @@
     "id": 106,
     "naam": "Koffie Rif Hilversum",
     "plaats": "Hilversum",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Abdel Hakbazzhi",
@@ -4181,13 +4224,15 @@
         "naam": "Koffie Rif Hilversum",
         "plaats": "Hilversum",
         "adres": "Leeuwenstraat 34",
-        "postcode": "1211 EP"
+        "postcode": "1211 EP",
+        "stadsdeel": "Centrum"
       },
       {
         "naam": "Coffeeshop Rif Rotterdam",
         "plaats": "Rotterdam",
         "adres": "Tamboerstraat 42",
-        "postcode": "3082 VZ"
+        "postcode": "3082 VZ",
+        "stadsdeel": "Charlois"
       }
     ],
     "contacten": [
@@ -4215,7 +4260,7 @@
     "id": 107,
     "naam": "Club Media",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Zuid",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Jeroen Roeleveld",
@@ -4229,7 +4274,8 @@
         "naam": "Club Media",
         "plaats": "Amsterdam",
         "adres": "Gerard Doustraat 85",
-        "postcode": "1072 VN"
+        "postcode": "1072 VN",
+        "stadsdeel": "Zuid"
       }
     ],
     "contacten": [
@@ -4250,7 +4296,7 @@
     "id": 108,
     "naam": "Coffeshop Paradox",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Ludo Bossaert",
@@ -4264,7 +4310,8 @@
         "naam": "Coffeshop Paradox",
         "plaats": "Amsterdam",
         "adres": "Eerste Bloemdwarsstraat 2r",
-        "postcode": "1016 KS"
+        "postcode": "1016 KS",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4280,7 +4327,7 @@
     "id": 109,
     "naam": "Coffeeshop Mediterrané",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Moustapha El Mahdioui",
@@ -4294,7 +4341,8 @@
         "naam": "Coffeeshop Mediterrané",
         "plaats": "Amsterdam",
         "adres": "Spuistraat 80",
-        "postcode": "1012 TX"
+        "postcode": "1012 TX",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4314,7 +4362,7 @@
     "id": 110,
     "naam": "Grey Area",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "John Foster",
@@ -4328,7 +4376,8 @@
         "naam": "Grey Area",
         "plaats": "Amsterdam",
         "adres": "Oude Leliestraat 2",
-        "postcode": "1015 AW"
+        "postcode": "1015 AW",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4349,7 +4398,7 @@
     "id": 111,
     "naam": "Crashlight",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Oost",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "",
@@ -4363,7 +4412,8 @@
         "naam": "Crashlight",
         "plaats": "Amsterdam",
         "adres": "Pretoriusstraat 67",
-        "postcode": "1092 GB"
+        "postcode": "1092 GB",
+        "stadsdeel": "Oost"
       }
     ],
     "contacten": [],
@@ -4376,7 +4426,7 @@
     "id": 112,
     "naam": "De Steeg",
     "plaats": "Woerden",
-    "stadsdeel": "",
+    "stadsdeel": "Woerden-Oost",
     "jarenLid": 25,
     "oprichtingJaar": 2001,
     "contactpersoon": "Rutger Cranssen",
@@ -4390,7 +4440,8 @@
         "naam": "De Steeg",
         "plaats": "Woerden",
         "adres": "Rietveld 1",
-        "postcode": "3443 XA"
+        "postcode": "3443 XA",
+        "stadsdeel": "Woerden-Oost"
       }
     ],
     "contacten": [
@@ -4442,7 +4493,7 @@
     "id": 114,
     "naam": "Balou",
     "plaats": "Amsterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Youri Florijn",
@@ -4456,7 +4507,8 @@
         "naam": "Balou",
         "plaats": "Amsterdam",
         "adres": "Halvemaansteeg 5",
-        "postcode": "1017 CR"
+        "postcode": "1017 CR",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4515,7 +4567,7 @@
     "id": 116,
     "naam": "Coffeeshop Haarlem",
     "plaats": "Haarlem",
-    "stadsdeel": "",
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": 2023,
     "contactpersoon": "Martin van der Eng",
@@ -4529,7 +4581,8 @@
         "naam": "Coffeeshop Haarlem",
         "plaats": "Haarlem",
         "adres": "Doelstraat 29",
-        "postcode": "2011 XB"
+        "postcode": "2011 XB",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4547,7 +4600,7 @@
     "id": 117,
     "naam": "Coffeeshop 010 B.V.",
     "plaats": "Rotterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Noord",
     "jarenLid": 7,
     "oprichtingJaar": 2019,
     "contactpersoon": "Abdel  Salahi",
@@ -4561,13 +4614,15 @@
         "naam": "Coffeeshop 010 B.V.",
         "plaats": "Rotterdam",
         "adres": "noordsingel 201",
-        "postcode": "3035ER"
+        "postcode": "3035ER",
+        "stadsdeel": "Noord"
       },
       {
         "naam": "Coffee-Shop Bamboo",
         "plaats": "Schiedam",
         "adres": "Parkweg 373",
-        "postcode": "3114 JH"
+        "postcode": "3114 JH",
+        "stadsdeel": "Nieuwland"
       }
     ],
     "contacten": [
@@ -4599,7 +4654,7 @@
     "id": 119,
     "naam": "Out of time",
     "plaats": "Rotterdam",
-    "stadsdeel": "",
+    "stadsdeel": "Delfshaven",
     "jarenLid": null,
     "oprichtingJaar": 1982,
     "contactpersoon": "Ger Dekker",
@@ -4613,13 +4668,15 @@
         "naam": "Out of Time",
         "plaats": "Rotterdam",
         "adres": "Nieuwe Binnenweg 363",
-        "postcode": "3023 GH"
+        "postcode": "3023 GH",
+        "stadsdeel": "Delfshaven"
       },
       {
         "naam": "Out of Time's Puck",
         "plaats": "Rotterdam",
         "adres": "Sandelingplein 2",
-        "postcode": "3075 EH"
+        "postcode": "3075 EH",
+        "stadsdeel": "IJsselmonde"
       }
     ],
     "contacten": [
@@ -4685,7 +4742,7 @@
     "id": 126,
     "naam": "The Lounge",
     "plaats": "Haarlem",
-    "stadsdeel": null,
+    "stadsdeel": "Centrum",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Martin van der Eng",
@@ -4699,7 +4756,8 @@
         "naam": "The Lounge",
         "plaats": "Haarlem",
         "adres": "Doelstraat 29",
-        "postcode": "2011 XB"
+        "postcode": "2011 XB",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
@@ -4720,7 +4778,7 @@
     "id": 127,
     "naam": "Coffeeshop Rif Rotterdam",
     "plaats": "Rotterdam",
-    "stadsdeel": null,
+    "stadsdeel": "Noord",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Sandra Mamouh",
@@ -4734,7 +4792,8 @@
         "naam": "Coffeeshop Rif Rotterdam",
         "plaats": "Rotterdam",
         "adres": "Tamboerstraat 12 B",
-        "postcode": "3034 PV"
+        "postcode": "3034 PV",
+        "stadsdeel": "Noord"
       }
     ],
     "contacten": [
@@ -4761,7 +4820,7 @@
     "id": 128,
     "naam": "Coffeeshop Eastwood",
     "plaats": "Amsterdam",
-    "stadsdeel": null,
+    "stadsdeel": "Oost",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "Directie",
@@ -4775,7 +4834,8 @@
         "naam": "Coffeeshop Eastwood",
         "plaats": "Amsterdam",
         "adres": "Pieter Vlamingsstraat 286",
-        "postcode": "1093 AK"
+        "postcode": "1093 AK",
+        "stadsdeel": "Oost"
       }
     ],
     "contacten": [
@@ -4796,7 +4856,7 @@
     "id": 129,
     "naam": "El Marssa",
     "plaats": "Amsterdam",
-    "stadsdeel": null,
+    "stadsdeel": "West",
     "jarenLid": null,
     "oprichtingJaar": null,
     "contactpersoon": "A. Ouarghi",
@@ -4810,7 +4870,8 @@
         "naam": "El Marssa",
         "plaats": "Amsterdam",
         "adres": "Witte de Withstraat 106",
-        "postcode": "1057 ZG"
+        "postcode": "1057 ZG",
+        "stadsdeel": "West"
       }
     ],
     "contacten": [
