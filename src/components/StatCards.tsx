@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { Users, Building2, Clock, PieChart } from "lucide-react";
+import { Users, Building2, MapPin, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
-import { getMembershipYears } from "@/lib/membership";
+// getMembershipYears no longer needed for stat cards
 
 interface StatCardsProps {
   members: Member[];
@@ -18,12 +18,17 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
   const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
+  const perStad = coffeeshopData.perStad as Record<string, number>;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const marketPct = Math.round((representedLocations / totalNL) * 100);
-  const memberYears = members.map((m) => getMembershipYears(m)).filter((y): y is number => y !== null);
-  const avgYears = memberYears.length
-    ? Math.round(memberYears.reduce((sum, y) => sum + y, 0) / memberYears.length)
-    : 0;
+  const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
+  const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
+  const repCityCount: Record<string, number> = {};
+  allRepresented.forEach((m) => {
+    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+  });
+  const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
+  const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
 
   const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
     const radius = 28;
@@ -95,14 +100,20 @@ const StatCards = ({ members }: StatCardsProps) => {
         </div>
       </div>
 
-      {/* Gem. Lidmaatschap */}
-      <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+      {/* G4 dekking */}
+      <div
+        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        onClick={() => navigate("/locaties")}
+      >
         <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gem. Lidmaatschap</p>
-          <Clock size={18} className="text-success" />
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground">G4 dekking</p>
+          <MapPin size={18} className="text-success" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{avgYears} jr</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{memberYears.length} met data</p>
+        <div className="mt-1">
+          <MiniGauge pct={g4Pct} color="hsl(var(--success))" />
+          <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
+          <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
+        </div>
       </div>
     </div>
   );
