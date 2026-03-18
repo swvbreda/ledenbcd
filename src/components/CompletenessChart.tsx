@@ -3,13 +3,13 @@ import type { Member } from "@/data/types";
 
 const CompletenessChart = ({ members }: { members: Member[] }) => {
   const fields = [
-    { label: "Contactpersoon", check: (m: Member) => !!m.contactpersoon },
-    { label: "Telefoon", check: (m: Member) => !!m.telefoon },
-    { label: "Email", check: (m: Member) => !!m.email },
+    { label: "Contactpersoon", check: (m: Member) => m.contacten?.length > 0 },
+    { label: "Telefoon", check: (m: Member) => m.contacten?.some(c => !!c.telefoon) },
+    { label: "Email", check: (m: Member) => m.contacten?.some(c => !!c.email) },
+    { label: "KVK", check: (m: Member) => !!m.kvk },
     { label: "Factuur Bedrijf", check: (m: Member) => !!m.factuurBedrijfsnaam },
     { label: "Factuur Email", check: (m: Member) => !!m.factuurEmail },
-    { label: "Factuur Adres", check: (m: Member) => !!m.factuurAdres },
-    { label: "KVK", check: (m: Member) => !!m.factuurKvk },
+    { label: "Oprichtingsdatum", check: (m: Member) => !!m.oprichtingsDatum },
   ];
 
   const data = fields.map((f) => ({
