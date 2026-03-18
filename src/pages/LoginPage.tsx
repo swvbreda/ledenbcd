@@ -48,53 +48,81 @@ const LoginPage = () => {
         <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold font-display">BCD Ledenportaal</h1>
-            <p className="text-sm text-muted-foreground mt-1">Log in om verder te gaan</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {resetMode ? "Voer je e-mailadres in om je wachtwoord te herstellen" : "Log in om verder te gaan"}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-1 block">E-mail</label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="naam@voorbeeld.nl"
-                  required
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
+          {resetSent ? (
+            <div className="text-center space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Als er een account bestaat met dit e-mailadres, ontvang je een e-mail met een link om je wachtwoord te herstellen.
+              </p>
+              <button
+                onClick={() => { setResetMode(false); setResetSent(false); }}
+                className="text-sm text-primary hover:underline"
+              >
+                Terug naar inloggen
+              </button>
             </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-1 block">Wachtwoord</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+          ) : (
+            <form onSubmit={resetMode ? handleResetPassword : handleLogin} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">E-mail</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="naam@voorbeeld.nl"
+                    required
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
               </div>
-            </div>
 
-            {error && (
-              <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>
-            )}
+              {!resetMode && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-1 block">Wachtwoord</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-md py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <LogIn size={16} />
-              {loading ? "Bezig..." : "Inloggen"}
-            </button>
-          </form>
+              {error && (
+                <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-md py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <LogIn size={16} />
+                {loading ? "Bezig..." : resetMode ? "Verstuur herstel-e-mail" : "Inloggen"}
+              </button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => { setResetMode(!resetMode); setError(""); }}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {resetMode ? "Terug naar inloggen" : "Wachtwoord vergeten?"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
