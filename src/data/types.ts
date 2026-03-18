@@ -41,4 +41,6 @@ export interface Member {
   functie2?: string;
   telefoon2?: string;
   email2?: string;
+  lidSinds?: number | null;
+  lidJaren?: number[];
 }

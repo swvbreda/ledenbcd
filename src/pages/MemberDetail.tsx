@@ -93,6 +93,18 @@ const MemberDetail = () => {
               <span className="font-medium">{member.bedrijfsnaam}</span>
             </div>
           )}
+          {member.lidSinds && (
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar size={16} className="text-success" />
+              <span className="text-muted-foreground">Lid sinds:</span>
+              <span className="font-medium">{member.lidSinds}</span>
+              {member.lidJaren && (
+                <span className="text-xs text-muted-foreground">
+                  (gefactureerd: {member.lidJaren.join(", ")})
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
