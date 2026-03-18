@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import cityCoords from "@/data/cityCoords";
 
 interface CityMapProps {
-  cities: { naam: string; aantalLeden: number; aantalLocaties: number }[];
+  cities: { naam: string; aantalLeden: number; aantalLocaties: number; totaalNL?: number }[];
   onCityClick?: (city: string) => void;
 }
 
@@ -71,8 +71,9 @@ const CityMap = ({ cities, onCityClick }: CityMapProps) => {
         weight: 1.5,
       });
 
+      const totaalLabel = city.totaalNL ? `${city.totaalNL} totaal · ` : "";
       marker.bindTooltip(
-        `<div class="text-xs"><strong>${city.naam}</strong><br/>${city.aantalLeden} leden · ${city.aantalLocaties} locaties</div>`,
+        `<div class="text-xs"><strong>${city.naam}</strong><br/>${totaalLabel}${city.aantalLocaties} aangesloten</div>`,
         { direction: "top", offset: [0, -radius] },
       );
 
