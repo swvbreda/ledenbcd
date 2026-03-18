@@ -2,6 +2,7 @@ import StatCards from "@/components/StatCards";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
+import StedenDekkingOverzicht from "@/components/StedenDekkingOverzicht";
 import { allMembers } from "@/hooks/useMembers";
 
 const StatistiekenPage = () => {
