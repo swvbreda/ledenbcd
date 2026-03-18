@@ -119,7 +119,7 @@ const LocatiesPage = () => {
     let result = cities;
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((c) => c.naam.toLowerCase().includes(q) || c.stadsdelen.some((s) => s.toLowerCase().includes(q)));
+      result = result.filter((c) => c.naam.toLowerCase().includes(q));
     }
     return [...result].sort((a, b) => {
       const av = a[sortKey];
