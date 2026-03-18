@@ -6060,23 +6060,23 @@
     "stadsdeel": "",
     "jarenLid": 9,
     "oprichtingJaar": null,
-    "contactpersoon": "Theo en Geertje",
+    "contactpersoon": "Raymond",
     "functie": "Eigenaar",
-    "telefoon": "03 02 30 20 39",
-    "email": "jeff_eijndt@hotmail.com",
+    "telefoon": "06 14 80 45 07",
+    "email": "Admin@dr-pleasure.nl",
     "bedrijfsnaam": "Pleasure",
     "aantalLocaties": 1,
     "locaties": [
       {
         "naam": "Pleasure",
         "plaats": "Utrecht",
-        "adres": "Voorstraat 81",
-        "postcode": "3512 AL"
+        "adres": "Brinkgreverweg 70",
+        "postcode": "7413AD"
       }
     ],
     "kvk": "",
     "factuurEmail": "jeff_eijndt@hotmail.com",
-    "factuurBedrijfsnaam": "Pleasure",
+    "factuurBedrijfsnaam": "Riemer Consultancy B.V.",
     "factuurKvk": "",
     "factuurAdres": "Voorstraat 81",
     "factuurPostcode": "3512 AL",
@@ -6087,10 +6087,10 @@
     "email2": "jeff_eijndt@hotmail.com",
     "contacten": [
       {
-        "naam": "Theo en Geertje",
+        "naam": "Raymond",
         "functie": "Eigenaar",
-        "telefoon": "03 02 30 20 39",
-        "email": "jeff_eijndt@hotmail.com"
+        "telefoon": "06 14 80 45 07",
+        "email": "Admin@dr-pleasure.nl"
       }
     ],
     "oprichtingsDatum": "",
@@ -7243,5 +7243,40 @@
       2026
     ],
     "factuurBedrijfsnaam": "Stichting De Cirkel"
+  },
+  {
+    "id": 122,
+    "naam": "Smokery",
+    "plaats": "Wormer",
+    "stadsdeel": "",
+    "jarenLid": 0,
+    "oprichtingJaar": null,
+    "contactpersoon": "Maikel",
+    "functie": "",
+    "telefoon": "06 50 90 29 63",
+    "email": "inkoop@smokery.nl",
+    "bedrijfsnaam": "Smokery",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Smokery",
+        "plaats": "Wormer",
+        "adres": "",
+        "postcode": "",
+        "stadsdeel": ""
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Maikel",
+        "functie": "",
+        "telefoon": "06 50 90 29 63",
+        "email": "inkoop@smokery.nl"
+      }
+    ],
+    "lidSinds": 2026,
+    "lidJaren": [
+      2026
+    ]
   }
 ]
