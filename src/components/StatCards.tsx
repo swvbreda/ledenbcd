@@ -88,7 +88,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <div className="mt-1">
           <MiniGauge pct={marketPct} color="hsl(var(--success))" />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{totalLocations}/{totalNL} locaties</p>
+          <p className="text-xs text-muted-foreground text-center">{totalLocations}/{totalNL} coffeeshops</p>
         </div>
       </div>
 
