@@ -46,7 +46,7 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 const LocatiesPage = () => {
   const [search, setSearch] = useState("");
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<"naam" | "aantalLeden" | "aantalLocaties" | "marktPct">("aantalLeden");
+  const [sortKey, setSortKey] = useState<"naam" | "aantalLocaties" | "marktPct">("aantalLocaties");
   const [sortAsc, setSortAsc] = useState(false);
   const navigate = useNavigate();
 
