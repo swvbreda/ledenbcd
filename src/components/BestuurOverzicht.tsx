@@ -132,7 +132,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return (
       <div
         key={bl.naam}
-        className={`border rounded-md p-2.5 transition-colors ${
+        className={`border rounded-md p-2.5 transition-colors min-h-[120px] flex flex-col ${
           isAspirant ? "border-dashed border-border" : "border-border"
         } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => member && navigate(`/leden/${member.id}`)}
