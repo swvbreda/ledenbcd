@@ -125,9 +125,8 @@ const LocatiesPage = () => {
             </thead>
             <tbody>
               {filtered.map((city) => (
-                <>
+                <React.Fragment key={city.naam}>
                   <tr
-                    key={city.naam}
                     className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => setExpandedCity(expandedCity === city.naam ? null : city.naam)}
                   >
@@ -173,7 +172,7 @@ const LocatiesPage = () => {
                       </tr>
                     ))
                   }
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
