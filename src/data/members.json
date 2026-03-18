@@ -206,28 +206,42 @@
     "telefoon": "06 55 86 76 90",
     "email": "joahelms@gmail.com",
     "bedrijfsnaam": "Penultimate III BV.",
-    "aantalLocaties": 3,
+    "aantalLocaties": 5,
     "locaties": [
       {
-        "naam": "Green House",
+        "naam": "Green House Centrum",
         "plaats": "Amsterdam",
-        "adres": "Haarlemmerstraat 64",
-        "postcode": "1013 ET",
-        "stadsdeel": "Centrum"
-      },
-      {
-        "naam": "Green House",
-        "plaats": "Amsterdam",
-        "adres": "Tolstraat 91",
-        "postcode": "1074 VG",
-        "stadsdeel": "Zuid"
-      },
-      {
-        "naam": "Green House",
-        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 191",
-        "postcode": "1012 EW",
-        "stadsdeel": "Zuid"
+        "postcode": "1012 EW"
+      },
+      {
+        "naam": "Green House Namaste",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Waterlooplein 345",
+        "postcode": "1011 PG"
+      },
+      {
+        "naam": "Green House Tolstraat",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Zuid",
+        "adres": "Tolstraat 91",
+        "postcode": "1074 BC"
+      },
+      {
+        "naam": "Green House United",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Haarlemmerstraat 64",
+        "postcode": "1013 ES"
+      },
+      {
+        "naam": "Greenhouse Effect",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Nieuwmarkt 14",
+        "postcode": "1012 CR"
       }
     ],
     "contacten": [
@@ -411,39 +425,38 @@
     "aantalLocaties": 5,
     "locaties": [
       {
-        "naam": "Boere Jongens",
+        "naam": "Boerejongens BIJ",
         "plaats": "Amsterdam",
-        "adres": "Singel 8",
-        "postcode": "1013 GA",
-        "stadsdeel": "Centrum"
-      },
-      {
-        "naam": "Boere Jongens",
-        "plaats": "Amsterdam",
-        "adres": "Bonairestraat 78",
-        "postcode": "1058 AA",
-        "stadsdeel": "West"
-      },
-      {
-        "naam": "Boere Jongens",
-        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
         "adres": "Utrechtsestraat 21",
-        "postcode": "1017 VH",
-        "stadsdeel": "Centrum"
+        "postcode": "1017 VH"
       },
       {
-        "naam": "Boere Jongens",
+        "naam": "Boerejongens Center",
         "plaats": "Amsterdam",
-        "adres": "",
-        "postcode": "1052 LC",
-        "stadsdeel": "West"
+        "stadsdeel": "Centrum",
+        "adres": "Utrechtsestraat 47",
+        "postcode": "1017 VH"
       },
       {
-        "naam": "Boere Jongens",
+        "naam": "Boerejongens West",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Baarsjesweg 252",
+        "postcode": "1058 AC"
+      },
+      {
+        "naam": "Boerejongens Sloterdijk",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Radarweg 29",
+        "postcode": "1043 NX"
+      },
+      {
+        "naam": "Boerejongens Almere",
         "plaats": "Almere",
-        "adres": "Grote Markt 23",
-        "postcode": "1315 JA",
-        "stadsdeel": "Centrum"
+        "adres": "Stationsplein 137",
+        "postcode": "1315 KV"
       }
     ],
     "contacten": [
@@ -1005,14 +1018,21 @@
     "telefoon": "",
     "email": "ousmoba@gmail.com",
     "bedrijfsnaam": "Easy Times",
-    "aantalLocaties": 1,
+    "aantalLocaties": 2,
     "locaties": [
       {
-        "naam": "Easy Times",
+        "naam": "Easy Times Prinsengracht",
         "plaats": "Amsterdam",
-        "adres": "Prinsengracht 476 H",
-        "postcode": "1017 KG",
+        "adres": "Prinsengracht 476",
+        "postcode": "1017 KH",
         "stadsdeel": "Centrum"
+      },
+      {
+        "naam": "Easy Times Reguliersdwarsstraat",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Reguliersdwarsstraat 29",
+        "postcode": "1017 BK"
       }
     ],
     "contacten": [
@@ -1047,85 +1067,88 @@
       {
         "naam": "Hunters Downtown",
         "plaats": "Amsterdam",
-        "adres": "Utrechtsestraat 14",
-        "postcode": "1017 VN",
-        "stadsdeel": "Centrum"
+        "stadsdeel": "Centrum",
+        "adres": "Reguliersdwarsstraat 22",
+        "postcode": "1017 BM"
       },
       {
         "naam": "Hunters Central",
         "plaats": "Amsterdam",
-        "adres": "Prins Hendrikkade 89",
-        "postcode": "1012 AE",
-        "stadsdeel": "Centrum"
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "adres": "Papaverweg 2",
-        "postcode": "1032 KH",
-        "stadsdeel": "Noord"
+        "stadsdeel": "Centrum",
+        "adres": "Utrechtsestraat 14",
+        "postcode": "1017 VN"
       },
       {
         "naam": "Hunters Happiness",
         "plaats": "Amsterdam",
-        "adres": "Orteliusstraat 193",
-        "postcode": "1056 NP",
-        "stadsdeel": "West"
+        "stadsdeel": "Centrum",
+        "adres": "Korte Leidsedwarsstraat 47",
+        "postcode": "1017 PW"
       },
       {
-        "naam": "Hunters",
+        "naam": "Hunters Amsterdam West",
         "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Jan Evertsenstraat 55",
+        "postcode": "1057 BL"
+      },
+      {
+        "naam": "Hunters Amsterdam Noord (Papaverweg)",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Noord",
+        "adres": "Papaverweg 2",
+        "postcode": "1032 KJ"
+      },
+      {
+        "naam": "Hunters Amsterdam Noord (Waterlandplein)",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Noord",
         "adres": "Waterlandplein 7",
-        "postcode": "1024 LL",
-        "stadsdeel": "Noord"
+        "postcode": "1024 LG"
       },
       {
-        "naam": "Hunters",
-        "plaats": "Rotterdam",
-        "adres": "Henegouwerlaan 73",
-        "postcode": "3032 CG"
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Zandvoort",
-        "adres": "Stationsstraat 9-11",
-        "postcode": "2041 AA"
-      },
-      {
-        "naam": "Hunters",
+        "naam": "Hunters Haarlem",
         "plaats": "Haarlem",
         "adres": "Schoterweg 66",
-        "postcode": "2021 HJ"
+        "postcode": "2021 HZ"
       },
       {
-        "naam": "Hunters",
-        "plaats": "",
-        "adres": "",
-        "postcode": ""
+        "naam": "Hunters Zandvoort",
+        "plaats": "Zandvoort",
+        "adres": "Stationsstraat 9-11",
+        "postcode": "2042 LK"
       },
       {
-        "naam": "Hunters",
-        "plaats": "",
-        "adres": "",
-        "postcode": ""
+        "naam": "Hunters Rotterdam",
+        "plaats": "Rotterdam",
+        "adres": "Henegouwerlaan 73",
+        "postcode": "3021 CK"
       },
       {
-        "naam": "Hunters",
-        "plaats": "",
-        "adres": "",
-        "postcode": ""
+        "naam": "Hunters Coffeeshop Amsterdam Zuid-Oost",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Zuidoost",
+        "adres": "Bijlmerdreef 620",
+        "postcode": "1102 AA"
       },
       {
-        "naam": "Hunters",
-        "plaats": "",
-        "adres": "",
-        "postcode": ""
+        "naam": "Hunters Coffeeshop Amsterdam Oost",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Oost",
+        "adres": "Eerste van Swindenstraat 389",
+        "postcode": "1093 GB"
       },
       {
-        "naam": "Hunters",
-        "plaats": "",
-        "adres": "",
-        "postcode": ""
+        "naam": "Hunters Coffeeshop Almere",
+        "plaats": "Almere",
+        "adres": "Stationsplein 152",
+        "postcode": "1315 KV"
+      },
+      {
+        "naam": "Hunters Headlines Zaandam",
+        "plaats": "Zaandam",
+        "adres": "Westzijde 102",
+        "postcode": "1506 GK"
       }
     ],
     "contacten": [
@@ -3497,10 +3520,10 @@
         "postcode": "4461 AH"
       },
       {
-        "naam": "Coffeeshop Aarden",
+        "naam": "Plan B / Coffeeshop Aarden",
         "plaats": "Vlissingen",
-        "adres": "",
-        "postcode": ""
+        "adres": "Paul Krugerstraat 7",
+        "postcode": "4381 GN"
       }
     ],
     "contacten": [
@@ -4263,14 +4286,14 @@
       {
         "naam": "Koffie Rif Hilversum",
         "plaats": "Hilversum",
-        "adres": "Van leeuwenstraat 34",
-        "postcode": ""
+        "adres": "Leeuwenstraat 34",
+        "postcode": "1211 EP"
       },
       {
         "naam": "Coffeeshop Rif Rotterdam",
         "plaats": "Rotterdam",
-        "adres": "",
-        "postcode": ""
+        "adres": "Tamboerstraat 42",
+        "postcode": "3082 VZ"
       }
     ],
     "contacten": [
@@ -4681,8 +4704,8 @@
       {
         "naam": "Coffee-Shop Bamboo",
         "plaats": "Schiedam",
-        "adres": "",
-        "postcode": ""
+        "adres": "Parkweg 373",
+        "postcode": "3114 JH"
       }
     ],
     "contacten": [
@@ -4709,16 +4732,16 @@
     "aantalLocaties": 2,
     "locaties": [
       {
-        "naam": "Out of time",
+        "naam": "Out of Time",
         "plaats": "Rotterdam",
         "adres": "Nieuwe Binnenweg 363",
-        "postcode": "3023EK"
+        "postcode": "3023 GH"
       },
       {
-        "naam": "Out of time",
+        "naam": "Out of Time's Puck",
         "plaats": "Rotterdam",
-        "adres": "",
-        "postcode": ""
+        "adres": "Sandelingplein 2",
+        "postcode": "3075 EH"
       }
     ],
     "contacten": [
@@ -4796,7 +4819,7 @@
     "locaties": [
       {
         "naam": "Smokery",
-        "plaats": "Zaanstad",
+        "plaats": "Zaandam",
         "adres": "",
         "postcode": ""
       }
@@ -4888,8 +4911,8 @@
       {
         "naam": "Toermalijn",
         "plaats": "Tilburg",
-        "adres": "",
-        "postcode": ""
+        "adres": "Korvelplein 95",
+        "postcode": "5025 JG"
       }
     ],
     "contacten": [
