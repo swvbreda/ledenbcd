@@ -137,7 +137,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => member && navigate(`/leden/${member.id}`)}
       >
-        <div className="flex items-center gap-2.5 flex-row-reverse">
+        <div className="flex items-start gap-2.5 flex-row-reverse">
           <div className="relative shrink-0">
             {photo ? (
               <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
