@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, MapPin, Building2, Clock, AlertTriangle, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Building2, Clock, AlertTriangle, UserCheck, ChevronDown, ChevronUp, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 
