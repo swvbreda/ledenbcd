@@ -48,7 +48,7 @@ const VerloopChart = () => {
           </div>
         </div>
 
-        <div className="xl:w-52 shrink-0 flex xl:flex-col gap-4 xl:justify-center">
+        <div className="flex gap-3">
           <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Huidig</p>
             <p className="text-3xl font-bold font-display">{current.leden}</p>
