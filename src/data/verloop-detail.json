@@ -54,10 +54,40 @@
     "uitstroom": 6
   },
   {
+    "year": 2014,
+    "totaal": 79,
+    "instroom": 3,
+    "uitstroom": 13
+  },
+  {
+    "year": 2015,
+    "totaal": 73,
+    "instroom": 6,
+    "uitstroom": 12
+  },
+  {
+    "year": 2016,
+    "totaal": 75,
+    "instroom": 25,
+    "uitstroom": 23
+  },
+  {
+    "year": 2017,
+    "totaal": 95,
+    "instroom": 27,
+    "uitstroom": 7
+  },
+  {
+    "year": 2018,
+    "totaal": 98,
+    "instroom": 11,
+    "uitstroom": 8
+  },
+  {
     "year": 2019,
     "totaal": 93,
-    "instroom": 52,
-    "uitstroom": 48
+    "instroom": 14,
+    "uitstroom": 19
   },
   {
     "year": 2020,
@@ -94,5 +124,11 @@
     "totaal": 93,
     "instroom": 7,
     "uitstroom": 21
+  },
+  {
+    "year": 2026,
+    "totaal": 113,
+    "instroom": 42,
+    "uitstroom": 22
   }
 ]
