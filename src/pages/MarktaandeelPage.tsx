@@ -14,6 +14,7 @@ const MarktaandeelPage = () => {
   const totalMembers = members.length;
   const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   // Group members by city
   const membersByCity: Record<string, Member[]> = {};
