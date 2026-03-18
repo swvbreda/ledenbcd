@@ -66,10 +66,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
-        {!collapsed && (
-          <p className="text-xs text-sidebar-foreground/50">113 leden · maart 2026</p>
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-3 space-y-2">
+        {!collapsed && user && (
+          <p className="text-xs text-sidebar-foreground/50 truncate">{user.email}</p>
         )}
+        <button
+          onClick={signOut}
+          className="flex items-center gap-2 text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors w-full"
+        >
+          <LogOut size={14} />
+          {!collapsed && <span>Uitloggen</span>}
+        </button>
       </SidebarFooter>
     </Sidebar>
   );
