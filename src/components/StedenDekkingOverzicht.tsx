@@ -8,14 +8,15 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
   const totalMembers = members.length;
+  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD members per city
+  // Count BCD locations per city
   const cityCount: Record<string, number> = {};
   members.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + 1;
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
-  const marketPct = Math.round((totalMembers / totalNL) * 100);
+  const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
   // Top cities by total coffeeshops with BCD share
   const highlights = Object.entries(perStad)
