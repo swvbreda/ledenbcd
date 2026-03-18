@@ -15,6 +15,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const sorted = [...members].sort((a, b) => {
     const av = a[sortKey] ?? 0;
