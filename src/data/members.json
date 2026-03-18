@@ -4619,5 +4619,187 @@
     "factuurPostcode": "3023 EJ",
     "factuurPlaats": "Rotterdam",
     "factuurEmail": "info@outoftime.nl"
+  },
+  {
+    "id": 125,
+    "naam": "Baba Souvernir",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Danny Stone",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Baba Souvernir",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Baba Souvernir",
+        "plaats": "Amsterdam",
+        "adres": "Warmoesstraat 47",
+        "postcode": "1012 HW",
+        "stadsdeel": "Centrum"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Danny Stone",
+        "functie": "",
+        "telefoon": "",
+        "email": ""
+      }
+    ],
+    "factuurAdres": "Warmoesstraat 47",
+    "factuurPlaats": "Amsterdam",
+    "factuurPostcode": "1012 HW",
+    "factuurBedrijfsnaam": "Baba Souvernir",
+    "factuurEmail": ""
+  },
+  {
+    "id": 126,
+    "naam": "The Lounge",
+    "plaats": "Haarlem",
+    "stadsdeel": null,
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Martin van der Eng",
+    "functie": "Eigenaar",
+    "telefoon": "06 15 31 55 39",
+    "email": "Info@justbudha.com",
+    "bedrijfsnaam": "Samamado B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "The Lounge",
+        "plaats": "Haarlem",
+        "adres": "Doelstraat 29",
+        "postcode": "2011 XB"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Martin van der Eng",
+        "functie": "Eigenaar",
+        "telefoon": "06 15 31 55 39",
+        "email": "Info@justbudha.com"
+      }
+    ],
+    "factuurAdres": "Doelstraat 29",
+    "factuurPlaats": "Haarlem",
+    "factuurPostcode": "2011 XB",
+    "factuurBedrijfsnaam": "Samamado B.V.",
+    "factuurEmail": "Info@justbudha.com"
+  },
+  {
+    "id": 127,
+    "naam": "Coffeeshop Rif Rotterdam",
+    "plaats": "Rotterdam",
+    "stadsdeel": null,
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Sandra Mamouh",
+    "functie": "",
+    "telefoon": "06 52 21 48 83",
+    "email": "sandramoumouh@icloud.com",
+    "bedrijfsnaam": "Coffeeshop Rif Rotterdam",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Rif Rotterdam",
+        "plaats": "Rotterdam",
+        "adres": "Tamboerstraat 12 B",
+        "postcode": "3034 PV"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Sandra Mamouh",
+        "functie": "",
+        "telefoon": "06 52 21 48 83",
+        "email": "sandramoumouh@icloud.com"
+      },
+      {
+        "naam": "Said Bouazzata",
+        "functie": "",
+        "telefoon": "06 21 99 19 39",
+        "email": "info@topadmini.nl"
+      }
+    ],
+    "factuurAdres": "Tamboerstraat 12 B",
+    "factuurPlaats": "Rotterdam",
+    "factuurPostcode": "3034 PV",
+    "factuurBedrijfsnaam": "Coffeeshop Rif Rotterdam",
+    "factuurEmail": "sandramoumouh@icloud.com"
+  },
+  {
+    "id": 128,
+    "naam": "Coffeeshop Eastwood",
+    "plaats": "Amsterdam",
+    "stadsdeel": null,
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Directie",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Coffeeshop Eastwood",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Eastwood",
+        "plaats": "Amsterdam",
+        "adres": "Pieter Vlamingsstraat 286",
+        "postcode": "1093 AK"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Directie",
+        "functie": "",
+        "telefoon": "",
+        "email": ""
+      }
+    ],
+    "factuurAdres": "Pieter Vlamingsstraat 286",
+    "factuurPlaats": "Amsterdam",
+    "factuurPostcode": "1093 AK",
+    "factuurBedrijfsnaam": "Coffeeshop Eastwood",
+    "factuurEmail": ""
+  },
+  {
+    "id": 129,
+    "naam": "El Marssa",
+    "plaats": "Amsterdam",
+    "stadsdeel": null,
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "A. Ouarghi",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "El Marssa",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "El Marssa",
+        "plaats": "Amsterdam",
+        "adres": "Witte de Withstraat 106",
+        "postcode": "1057 ZG"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "A. Ouarghi",
+        "functie": "",
+        "telefoon": "",
+        "email": ""
+      }
+    ],
+    "factuurAdres": "Witte de Withstraat 106",
+    "factuurPlaats": "Amsterdam",
+    "factuurPostcode": "1057 ZG",
+    "factuurBedrijfsnaam": "El Marssa",
+    "factuurEmail": ""
   }
 ]
