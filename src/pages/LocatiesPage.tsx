@@ -8,11 +8,17 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
 
+interface StadsdeelData {
+  naam: string;
+  aantalLocaties: number;
+}
+
 interface CityData {
   naam: string;
   aantalLeden: number;
   aantalLocaties: number;
   leden: { id: number; naam: string; aantalLocaties: number }[];
+  stadsdelen: StadsdeelData[];
   totaalNL: number;
   marktPct: number;
 }
@@ -83,12 +89,21 @@ const LocatiesPage = () => {
             aantalLeden: 0,
             aantalLocaties: 0,
             leden: [],
+            stadsdelen: [],
             totaalNL: totaal,
             marktPct: 0,
           });
         }
         const city = map.get(plaats)!;
         city.aantalLocaties++;
+
+        // Track stadsdeel
+        const sd = l.stadsdeel || m.stadsdeel || "";
+        if (sd) {
+          const existing = city.stadsdelen.find((s) => s.naam === sd);
+          if (existing) existing.aantalLocaties++;
+          else city.stadsdelen.push({ naam: sd, aantalLocaties: 1 });
+        }
 
         if (!city.leden.some((x) => x.id === m.id)) {
           city.aantalLeden++;
@@ -232,23 +247,28 @@ const LocatiesPage = () => {
                       )}
                     </td>
                   </tr>
-                  {expandedCity === city.naam && city.leden
-                    .sort((a, b) => a.naam.localeCompare(b.naam))
-                    .map((lid) => (
-                      <tr
-                        key={`${city.naam}-${lid.id}`}
-                        className="border-b border-border bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/leden/${lid.id}`)}
-                      >
-                        <td className="pl-8 pr-3 py-1.5">
-                          <span className="font-medium font-display text-xs">{lid.naam}</span>
-                          {lid.aantalLocaties > 1 && (
-                            <span className="text-[10px] text-muted-foreground ml-1">({lid.aantalLocaties})</span>
-                          )}
-                        </td>
-                        <td colSpan={3} />
-                      </tr>
-                    ))}
+                  {expandedCity === city.naam && city.stadsdelen.length > 0 &&
+                    city.stadsdelen
+                      .sort((a, b) => b.aantalLocaties - a.aantalLocaties)
+                      .map((sd) => (
+                        <tr
+                          key={`${city.naam}-${sd.naam}`}
+                          className="border-b border-border bg-muted/10"
+                        >
+                          <td className="pl-8 pr-3 py-1.5">
+                            <span className="text-xs text-muted-foreground">{sd.naam}</span>
+                          </td>
+                          <td className="px-3 py-1.5 text-right tabular-nums text-xs">{sd.aantalLocaties}</td>
+                          <td colSpan={2} />
+                        </tr>
+                      ))}
+                  {expandedCity === city.naam && city.stadsdelen.length === 0 && (
+                    <tr className="border-b border-border bg-muted/10">
+                      <td className="pl-8 pr-3 py-1.5 text-xs text-muted-foreground" colSpan={4}>
+                        Geen stadsdeel-data beschikbaar
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               ))}
             </tbody>
