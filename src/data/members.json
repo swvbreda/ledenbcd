@@ -1795,7 +1795,10 @@
     "factuurBedrijfsnaam": "De Rode Leeuw",
     "factuurKvk": "70187738",
     "factuurPostcode": "8011TC",
-    "factuurEmail": "timdewilde87@gmail.com"
+    "factuurEmail": "timdewilde87@gmail.com",
+    "aanverwant": [
+      38
+    ]
   },
   {
     "id": 38,
@@ -1834,7 +1837,10 @@
     "factuurAdres": "Textielweg 11",
     "factuurPostcode": "3812 RV",
     "factuurPlaats": "Amersfoort",
-    "factuurEmail": "info@033horecabv.nl"
+    "factuurEmail": "info@033horecabv.nl",
+    "aanverwant": [
+      37
+    ]
   },
   {
     "id": 39,

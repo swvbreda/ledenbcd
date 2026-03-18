@@ -49,4 +49,5 @@ export interface Member {
   googleMaps?: string;
   bestuursfunctie?: string;
   oprichter?: boolean;
+  aanverwant?: number[];
 }
