@@ -52,7 +52,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="ml-60">
+      <main className="lg:ml-60">
         <header className="sticky top-0 z-40 bg-card border-b border-border px-6 py-3 flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
