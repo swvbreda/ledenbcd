@@ -293,7 +293,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1985,
     "contactpersoon": "Joachim Helms",
     "functie": "Eigenaar",
     "telefoon": "31655867690",
@@ -371,7 +371,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://greenhousecoffeeshops.com",
+    "instagram": "greenhousecoffeeshops"
   },
   {
     "id": 6,
@@ -727,7 +729,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1992,
     "contactpersoon": "Erol",
     "functie": "Eigenaar",
     "telefoon": "31653131296",
@@ -787,7 +789,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://abraxas.amsterdam",
+    "instagram": "abraxasamsterdam"
   },
   {
     "id": 12,
@@ -1233,7 +1237,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 16,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1985,
     "contactpersoon": "Oussama al' Mobaress",
     "functie": "Eigenaar",
     "telefoon": "06 18 11 10 10",
@@ -1285,7 +1289,8 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "website": "https://easytimes.amsterdam"
   },
   {
     "id": 21,
@@ -2134,7 +2139,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1993,
     "contactpersoon": "Paul Wilhelm",
     "functie": "Eigenaar",
     "telefoon": "31652562281",
@@ -2195,7 +2200,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://www.dampkring.amsterdam"
   },
   {
     "id": 36,
@@ -3031,7 +3037,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Oost",
     "jarenLid": 20,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 2018,
     "contactpersoon": "Rob Bobeldijk",
     "functie": "Eigenaar",
     "telefoon": "",
@@ -3087,7 +3093,9 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "website": "https://theplugcoffeeshops.com",
+    "instagram": "theplugcoffeeshops"
   },
   {
     "id": 52,
@@ -3268,7 +3276,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "West",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1996,
     "contactpersoon": "Henny van Breevoort",
     "functie": "Eigenaar",
     "telefoon": "06 10 75 62 98",
@@ -3329,7 +3337,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://www.kashmirlounge.com",
+    "instagram": "kashmirlounge"
   },
   {
     "id": 56,
@@ -3396,7 +3406,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1986,
     "contactpersoon": "Hans Oi",
     "functie": "Eigenaar",
     "telefoon": "06 54 77 51 31",
@@ -3470,7 +3480,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://kadinsky.nl",
+    "instagram": "kadinskycoffeeshop"
   },
   {
     "id": 60,
@@ -4130,7 +4142,8 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "website": "https://www.coffeeshopclubmedia.nl"
   },
   {
     "id": 66,
@@ -4698,7 +4711,9 @@
       2024,
       2025,
       2026
-    ]
+    ],
+    "website": "https://paradoxcoffeeshop.com",
+    "instagram": "paradoxcoffeeshop"
   },
   {
     "id": 76,
@@ -4928,7 +4943,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 18,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1993,
     "contactpersoon": "Jason den Enting",
     "functie": "",
     "telefoon": "",
@@ -4982,7 +4997,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2008
+    "lidSinds": 2008,
+    "website": "https://www.dampkring.amsterdam"
   },
   {
     "id": 81,
@@ -5495,7 +5511,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1994,
     "contactpersoon": "John Foster",
     "functie": "",
     "telefoon": "",
@@ -5551,7 +5567,8 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "instagram": "greyarea_amsterdam"
   },
   {
     "id": 91,
@@ -6337,7 +6354,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 1985,
     "contactpersoon": "Brenda Wilkens",
     "functie": "",
     "telefoon": "",
@@ -6393,7 +6410,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://sensiseeds.com",
+    "instagram": "sensiseeds"
   },
   {
     "id": 107,
@@ -6770,7 +6789,7 @@
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": 21,
-    "oprichtingJaar": null,
+    "oprichtingJaar": 2018,
     "contactpersoon": "Jimmy Lin",
     "functie": "Eigenaar",
     "telefoon": "31620878787",
@@ -6854,7 +6873,9 @@
       2025,
       2026
     ],
-    "lidSinds": 2005
+    "lidSinds": 2005,
+    "website": "https://theplugcoffeeshops.com",
+    "instagram": "theplugcoffeeshops"
   },
   {
     "id": 114,
@@ -7101,6 +7122,7 @@
       2025,
       2026
     ],
-    "lidSinds": 2009
+    "lidSinds": 2009,
+    "website": "https://www.voyagersamsterdam.com"
   }
 ]
