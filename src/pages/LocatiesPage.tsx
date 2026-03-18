@@ -101,6 +101,11 @@ const LocatiesPage = () => {
         </div>
       </div>
 
+      <CityMap
+        cities={filtered}
+        onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)}
+      />
+
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body">
