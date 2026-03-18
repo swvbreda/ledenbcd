@@ -72,46 +72,100 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-sm font-semibold font-display mb-1">Gemeenten & Marktaandeel</h3>
-          <p className="text-xs text-muted-foreground">
-            BCD-coffeeshops t.o.v. totaal per gemeente · bron WODC 2024
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/marktaandeel")}
-          className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium shrink-0"
-        >
-          Volledig overzicht <ArrowRight size={12} />
-        </button>
-      </div>
-
-      {/* Landelijk overview */}
-      <div className="flex items-center gap-4 mb-5 p-3 bg-muted/30 rounded-lg">
-        <MiniDonut pct={marketPct} size={56} strokeWidth={5} />
-        <div>
-          <p className="text-sm font-semibold font-display">Landelijk: {marketPct}%</p>
-          <p className="text-xs text-muted-foreground">{totalLocaties} van {totalNL} coffeeshops</p>
-        </div>
-      </div>
-
-      {/* Donut grid for top cities */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {topCities.map(({ city, total, bcd, pct }) => (
-          <div key={city} className="flex flex-col items-center text-center gap-1.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
-            <div className="relative">
-              <MiniDonut pct={pct} size={52} strokeWidth={5} />
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-display">
-                {pct}%
-              </span>
-            </div>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        {/* Left: Landelijk + Donuts */}
+        <div className="xl:col-span-2 space-y-4">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium leading-tight">{city}</p>
-              <p className="text-[10px] text-muted-foreground tabular-nums">{bcd}/{total}</p>
+              <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel per gemeente</h3>
+              <p className="text-xs text-muted-foreground">
+                BCD-coffeeshops t.o.v. totaal per gemeente · bron WODC 2024
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/marktaandeel")}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium shrink-0"
+            >
+              Volledig overzicht <ArrowRight size={12} />
+            </button>
+          </div>
+
+          {/* Landelijk overview */}
+          <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+            <MiniDonut pct={marketPct} size={56} strokeWidth={5} />
+            <div>
+              <p className="text-sm font-semibold font-display">Landelijk: {marketPct}%</p>
+              <p className="text-xs text-muted-foreground">{totalLocaties} van {totalNL} coffeeshops</p>
             </div>
           </div>
-        ))}
+
+          {/* Donut grid for top cities */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {topCities.map(({ city, total, bcd, pct }) => (
+              <div key={city} className="flex flex-col items-center text-center gap-1.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                <div className="relative">
+                  <MiniDonut pct={pct} size={52} strokeWidth={5} />
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-bold font-display">
+                    {pct}%
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium leading-tight">{city}</p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">{bcd}/{total}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Experiment table */}
+        <div>
+          <h3 className="text-sm font-semibold font-display mb-1">Experiment gemeenten</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            BCD-leden in de 10 experiment-gemeenten
+          </p>
+          <div className="space-y-1">
+            {EXPERIMENT_GEMEENTEN.map((gemeente) => {
+              const leden = members.filter((m) => m.plaats === gemeente);
+              const locs = leden.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+              const total = perStad[gemeente] || 0;
+              const hasBcd = leden.length > 0;
+
+              return (
+                <div
+                  key={gemeente}
+                  className={`flex items-center justify-between text-sm px-3 py-1.5 rounded ${
+                    hasBcd ? "bg-success/10" : "bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full ${hasBcd ? "bg-success" : "bg-muted-foreground/30"}`} />
+                    <span className={hasBcd ? "font-medium" : "text-muted-foreground"}>{gemeente}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hasBcd ? (
+                      <span className="text-xs tabular-nums">
+                        <span className="font-medium">{leden.length}</span>
+                        <span className="text-muted-foreground"> leden</span>
+                        {total > 0 && (
+                          <span className="text-muted-foreground ml-1">· {locs}/{total}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => m.plaats === g)).length}/10
+            </span>
+            {" "}gemeenten met BCD-leden
+          </div>
+        </div>
       </div>
     </div>
   );
