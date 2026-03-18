@@ -182,22 +182,20 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             {bl.coffeeshop && !member && (
               <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
             )}
-            <div className="flex flex-wrap items-center gap-x-3 mt-1">
-              {bl.bondEmail && (
-                <a
-                  href={`mailto:${bl.bondEmail}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
-                >
-                  <Mail size={10} /> {bl.bondEmail}
-                </a>
-              )}
-              {bl.telefoon && (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Phone size={10} /> {bl.telefoon}
-                </span>
-              )}
-            </div>
+            {bl.bondEmail && (
+              <a
+                href={`mailto:${bl.bondEmail}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[11px] text-primary hover:underline mt-1"
+              >
+                <Mail size={10} /> {bl.bondEmail}
+              </a>
+            )}
+            {bl.telefoon && (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                <Phone size={10} /> {bl.telefoon}
+              </span>
+            )}
           </div>
         </div>
       </div>
