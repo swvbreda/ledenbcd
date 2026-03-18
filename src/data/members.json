@@ -11,7 +11,7 @@
     "telefoon": "31653244418",
     "email": "hjmdevries@hotmail.com",
     "bedrijfsnaam": "Leidseplein beheer B.V.",
-    "aantalLocaties": 4,
+    "aantalLocaties": 5,
     "locaties": [
       {
         "naam": "The Bulldog The First",
@@ -40,6 +40,11 @@
         "adres": "Coenhavenweg 26",
         "postcode": "1013 BL",
         "stadsdeel": "West"
+      },
+      {
+        "naam": "The Bulldog Singel",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum"
       }
     ],
     "contacten": [
