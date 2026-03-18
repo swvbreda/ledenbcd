@@ -38,8 +38,8 @@ const bestuursleden: BestuurslidData[] = [
 
 const aspiranten: BestuurslidData[] = [
   { naam: "Tim de Wilde", functie: "Kandidaat Bestuurslid", telefoon: "06 30 01 19 65", privePlaats: "Amersfoort", coffeeshop: "Loods", coffeeshopPlaats: "Zwolle / Amersfoort" },
-  { naam: "Hannes Poppinghaus", functie: "Woordvoerder Arnhem", telefoon: "06 43 20 68 88", privePlaats: "Arnhem", coffeeshop: "Lucky Luke", coffeeshopPlaats: "Arnhem" },
-  { naam: "Tugrulhan", functie: "Woordvoerder Enschede", telefoon: "06 48 56 80 81", privePlaats: "Enschede", coffeeshop: "Cafe de Mix", coffeeshopPlaats: "Enschede" },
+  { naam: "Hannes Poppinghaus", functie: "Woordvoerder Arnhem", bondEmail: "arnhem@coffeeshopbond.nl", telefoon: "06 43 20 68 88", privePlaats: "Arnhem", coffeeshop: "Lucky Luke", coffeeshopPlaats: "Arnhem" },
+  { naam: "Tugrulhan", functie: "Woordvoerder Enschede", bondEmail: "enschede@coffeeshopbond.nl", telefoon: "06 48 56 80 81", privePlaats: "Enschede", coffeeshop: "Cafe de Mix", coffeeshopPlaats: "Enschede" },
 ];
 
 const slugify = (name: string) =>
