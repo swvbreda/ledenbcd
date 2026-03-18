@@ -11,10 +11,6 @@ import { allMembers } from "@/hooks/useMembers";
 const Index = () => {
   const navigate = useNavigate();
 
-  const recentMembers = useMemo(
-    () => allMembers.filter((m) => m.jarenLid !== null && m.jarenLid <= 10),
-    []
-  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
