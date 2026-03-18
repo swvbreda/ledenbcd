@@ -62,6 +62,7 @@ const MarktaandeelPage = () => {
         {[
           { label: "Coffeeshops NL", value: totalNL },
           { label: "BCD-leden", value: totalMembers },
+          { label: "BCD-locaties", value: totalLocaties },
           { label: "Marktaandeel", value: `${marketPct}%` },
           { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
         ].map((card) => (

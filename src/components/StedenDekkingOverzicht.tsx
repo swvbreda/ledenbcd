@@ -40,7 +40,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
         <div className="flex justify-between text-sm mb-1">
           <span className="font-medium">Landelijk</span>
           <span className="text-muted-foreground tabular-nums">
-            {totalMembers}/{totalNL} · {marketPct}%
+            {totalLocaties}/{totalNL} · {marketPct}%
           </span>
         </div>
         <div className="h-4 bg-muted rounded-full overflow-hidden">
