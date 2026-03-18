@@ -5,6 +5,7 @@ import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
+import BestuurOverzicht from "@/components/BestuurOverzicht";
 import { allMembers } from "@/hooks/useMembers";
 
 const Index = () => {
@@ -27,6 +28,8 @@ const Index = () => {
         <LidmaatschapsduurChart members={allMembers} />
         <LedenPerStadOverzicht members={allMembers} />
       </div>
+
+      <BestuurOverzicht members={allMembers} />
 
       <JubileumOverzicht members={allMembers} />
     </div>
