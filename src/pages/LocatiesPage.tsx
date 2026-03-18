@@ -150,7 +150,7 @@ const LocatiesPage = () => {
     <div className="p-4 sm:p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Gemeenten & Marktaandeel</h2>
+          <h2 className="text-xl sm:text-2xl font-bold font-display">Gemeenten</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {filtered.length} steden · {totalLocations} locaties · bron: WODC 2024
           </p>
