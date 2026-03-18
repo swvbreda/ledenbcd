@@ -87,6 +87,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors min-w-[200px]" onClick={() => handleSort("naam")}>
                 <span className="inline-flex items-center gap-1">Naam <SortIcon col="naam" /></span>
               </th>
+              {isAdmin && (
+                <>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+                </>
+              )}
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("oprichtingJaar")}>
                 <span className="inline-flex items-center gap-1">Oprichting <SortIcon col="oprichtingJaar" /></span>
               </th>
@@ -99,12 +105,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("jarenLid")}>
                 <span className="inline-flex items-center gap-1">Jaren Lid <SortIcon col="jarenLid" /></span>
               </th>
-              {isAdmin && (
-                <>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
-                </>
-              )}
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
