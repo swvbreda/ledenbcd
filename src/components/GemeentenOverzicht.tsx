@@ -63,9 +63,8 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   // Curated list: G4, provincial capitals, and key cities
   const featuredCities = [
     "Amsterdam", "Rotterdam", "Den Haag", "Utrecht", // G4
-    "Groningen", "Leeuwarden", "Zwolle", "Arnhem", "Enschede", // Oost & Noord
-    "Maastricht", "Eindhoven", "Breda", "Tilburg", // Zuid
-    "Haarlem", "Leiden", "Nijmegen", // Overig
+    "Leeuwarden", "Zwolle", "Arnhem", "Enschede", // Oost & Noord
+    "Eindhoven", "Haarlem", "Leiden", // Overig
   ];
 
   const topCities = featuredCities
