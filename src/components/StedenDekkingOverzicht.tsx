@@ -32,7 +32,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel BCD</h3>
+      <h3 className="text-sm font-semibold font-display mb-1">Vertegenwoordiging</h3>
       <p className="text-xs text-muted-foreground mb-4">
         {totalLocaties} van {totalNL} coffeeshops in NL · bron WODC 2024
       </p>
@@ -55,7 +55,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
 
       {/* Per city highlights */}
       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-        Top steden
+        Grootste gemeenten
       </h4>
       <div className="space-y-2">
         {highlights.map(({ city, total, bcd, pct }) => (
