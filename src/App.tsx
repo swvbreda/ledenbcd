@@ -16,6 +16,7 @@ import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
 import OudLedenPage from "./pages/OudLedenPage";
+import MarktaandeelPage from "./pages/MarktaandeelPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
