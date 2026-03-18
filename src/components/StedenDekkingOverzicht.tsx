@@ -55,7 +55,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
 
       {/* Per city highlights */}
       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-        Top steden
+        Grootste gemeenten
       </h4>
       <div className="space-y-2">
         {highlights.map(({ city, total, bcd, pct }) => (
