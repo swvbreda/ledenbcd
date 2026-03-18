@@ -3,6 +3,7 @@ import membersData from "@/data/members.json";
 import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
 import { getArchivedIds } from "@/hooks/useArchive";
+import { getMembershipYears } from "@/lib/membership";
 
 export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
@@ -40,12 +41,13 @@ export function useMembers() {
       if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
       if (filterJaren) {
         const [min, max] = filterJaren.split("-").map(Number);
-        if (m.jarenLid === null) return false;
-        if (m.jarenLid < min || m.jarenLid > max) return false;
+        const years = getMembershipYears(m);
+        if (years === null) return false;
+        if (years < min || years > max) return false;
       }
       return true;
     });
-  }, [filterCity, filterStadsdeel, filterJaren]);
+  }, [allIncludingLeads, filterCity, filterStadsdeel, filterJaren]);
 
   const searchedMembers = useMemo(() => {
     if (!searchQuery) return filteredMembers;
