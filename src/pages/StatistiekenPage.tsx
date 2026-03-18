@@ -4,6 +4,7 @@ import StadsdeelChart from "@/components/StadsdeelChart";
 import YearChart from "@/components/YearChart";
 import CompletenessChart from "@/components/CompletenessChart";
 import VerloopChart from "@/components/VerloopChart";
+import InstroomUitstroomChart from "@/components/InstroomUitstroomChart";
 import { allMembers } from "@/hooks/useMembers";
 
 const StatistiekenPage = () => {
@@ -17,6 +18,7 @@ const StatistiekenPage = () => {
       <StatCards members={allMembers} />
 
       <VerloopChart />
+      <InstroomUitstroomChart />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <CityChart members={allMembers} />

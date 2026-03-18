@@ -7,6 +7,7 @@ import CityChart from "@/components/CityChart";
 import StadsdeelChart from "@/components/StadsdeelChart";
 import YearChart from "@/components/YearChart";
 import VerloopChart from "@/components/VerloopChart";
+import InstroomUitstroomChart from "@/components/InstroomUitstroomChart";
 import { allMembers } from "@/hooks/useMembers";
 
 const Index = () => {
@@ -37,6 +38,8 @@ const Index = () => {
         <YearChart members={allMembers} />
         <VerloopChart />
       </div>
+
+      <InstroomUitstroomChart />
 
       <div>
         <div className="flex items-center justify-between mb-3">

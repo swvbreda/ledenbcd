@@ -1,0 +1,134 @@
+[
+  {
+    "year": 2005,
+    "totaal": 44,
+    "instroom": 44,
+    "uitstroom": 0
+  },
+  {
+    "year": 2006,
+    "totaal": 64,
+    "instroom": 24,
+    "uitstroom": 4
+  },
+  {
+    "year": 2007,
+    "totaal": 62,
+    "instroom": 14,
+    "uitstroom": 16
+  },
+  {
+    "year": 2008,
+    "totaal": 62,
+    "instroom": 10,
+    "uitstroom": 11
+  },
+  {
+    "year": 2009,
+    "totaal": 80,
+    "instroom": 33,
+    "uitstroom": 15
+  },
+  {
+    "year": 2010,
+    "totaal": 82,
+    "instroom": 10,
+    "uitstroom": 9
+  },
+  {
+    "year": 2011,
+    "totaal": 85,
+    "instroom": 4,
+    "uitstroom": 1
+  },
+  {
+    "year": 2012,
+    "totaal": 81,
+    "instroom": 14,
+    "uitstroom": 18
+  },
+  {
+    "year": 2013,
+    "totaal": 89,
+    "instroom": 14,
+    "uitstroom": 6
+  },
+  {
+    "year": 2014,
+    "totaal": 79,
+    "instroom": 3,
+    "uitstroom": 13
+  },
+  {
+    "year": 2015,
+    "totaal": 73,
+    "instroom": 6,
+    "uitstroom": 12
+  },
+  {
+    "year": 2016,
+    "totaal": 75,
+    "instroom": 25,
+    "uitstroom": 23
+  },
+  {
+    "year": 2017,
+    "totaal": 95,
+    "instroom": 27,
+    "uitstroom": 7
+  },
+  {
+    "year": 2018,
+    "totaal": 98,
+    "instroom": 11,
+    "uitstroom": 8
+  },
+  {
+    "year": 2019,
+    "totaal": 93,
+    "instroom": 14,
+    "uitstroom": 19
+  },
+  {
+    "year": 2020,
+    "totaal": 92,
+    "instroom": 7,
+    "uitstroom": 8
+  },
+  {
+    "year": 2021,
+    "totaal": 99,
+    "instroom": 16,
+    "uitstroom": 9
+  },
+  {
+    "year": 2022,
+    "totaal": 97,
+    "instroom": 8,
+    "uitstroom": 10
+  },
+  {
+    "year": 2023,
+    "totaal": 99,
+    "instroom": 4,
+    "uitstroom": 2
+  },
+  {
+    "year": 2024,
+    "totaal": 107,
+    "instroom": 12,
+    "uitstroom": 4
+  },
+  {
+    "year": 2025,
+    "totaal": 93,
+    "instroom": 7,
+    "uitstroom": 21
+  },
+  {
+    "year": 2026,
+    "totaal": 113,
+    "instroom": 42,
+    "uitstroom": 22
+  }
+]
