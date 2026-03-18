@@ -1,25 +1,58 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import StatCards from "@/components/StatCards";
 import MemberTable from "@/components/MemberTable";
+import MemberFilters from "@/components/MemberFilters";
 import CityChart from "@/components/CityChart";
 import StadsdeelChart from "@/components/StadsdeelChart";
 import membersData from "@/data/members.json";
 import type { Member } from "@/data/types";
 
-const members = membersData as Member[];
+const allMembers = membersData as Member[];
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("overzicht");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [filterStadsdeel, setFilterStadsdeel] = useState("");
+  const [filterJaren, setFilterJaren] = useState("");
+
+  const cities = useMemo(() =>
+    [...new Set(allMembers.map((m) => m.plaats).filter(Boolean))].sort(),
+    []
+  );
+  const stadsdelen = useMemo(() =>
+    [...new Set(allMembers.map((m) => m.stadsdeel).filter(Boolean))].sort(),
+    []
+  );
+
+  const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
+
+  const filteredMembers = useMemo(() => {
+    return allMembers.filter((m) => {
+      if (filterCity && m.plaats !== filterCity) return false;
+      if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
+      if (filterJaren) {
+        const [min, max] = filterJaren.split("-").map(Number);
+        if (m.jarenLid === null) return false;
+        if (m.jarenLid < min || m.jarenLid > max) return false;
+      }
+      return true;
+    });
+  }, [filterCity, filterStadsdeel, filterJaren]);
+
+  const clearFilters = () => {
+    setFilterCity("");
+    setFilterStadsdeel("");
+    setFilterJaren("");
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="ml-60">
-        {/* Top Bar */}
         <header className="sticky top-0 z-40 bg-card border-b border-border px-6 py-3 flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -31,23 +64,35 @@ const Index = () => {
               className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+          <MemberFilters
+            cities={cities}
+            stadsdelen={stadsdelen}
+            selectedCity={filterCity}
+            selectedStadsdeel={filterStadsdeel}
+            selectedJaren={filterJaren}
+            onCityChange={setFilterCity}
+            onStadsdeelChange={setFilterStadsdeel}
+            onJarenChange={setFilterJaren}
+            onClear={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+          />
         </header>
 
         <div className="p-6 space-y-6">
           {(activeTab === "overzicht" || activeTab === "leden") && (
-            <StatCards members={members} />
+            <StatCards members={filteredMembers} />
           )}
 
           {activeTab === "overzicht" && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <CityChart members={members} />
-                <StadsdeelChart members={members} />
+                <CityChart members={filteredMembers} />
+                <StadsdeelChart members={filteredMembers} />
               </div>
               <div>
                 <h2 className="text-lg font-semibold font-display mb-3">Recente Leden</h2>
                 <MemberTable
-                  members={members.filter((m) => m.jarenLid !== null && m.jarenLid <= 10)}
+                  members={filteredMembers.filter((m) => m.jarenLid !== null && m.jarenLid <= 10)}
                   searchQuery={searchQuery}
                 />
               </div>
@@ -56,8 +101,15 @@ const Index = () => {
 
           {activeTab === "leden" && (
             <div>
-              <h2 className="text-lg font-semibold font-display mb-3">Alle Leden</h2>
-              <MemberTable members={members} searchQuery={searchQuery} />
+              <h2 className="text-lg font-semibold font-display mb-3">
+                Alle Leden
+                {hasActiveFilters && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({filteredMembers.length} van {allMembers.length})
+                  </span>
+                )}
+              </h2>
+              <MemberTable members={filteredMembers} searchQuery={searchQuery} />
             </div>
           )}
 
@@ -76,7 +128,7 @@ const Index = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {members
+                    {filteredMembers
                       .flatMap((m) => m.locaties.map((l) => ({ ...l, memberId: m.id })))
                       .filter((l) => {
                         const q = searchQuery.toLowerCase();
@@ -111,10 +163,10 @@ const Index = () => {
           {activeTab === "statistieken" && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold font-display mb-3">Statistieken</h2>
-              <StatCards members={members} />
+              <StatCards members={filteredMembers} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <CityChart members={members} />
-                <StadsdeelChart members={members} />
+                <CityChart members={filteredMembers} />
+                <StadsdeelChart members={filteredMembers} />
               </div>
             </div>
           )}
