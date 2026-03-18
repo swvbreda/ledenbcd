@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ import {
 const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
   { title: "Ledenlijst", url: "/leden", icon: Users },
+  { title: "Oud-leden", url: "/oud-leden", icon: UserMinus },
   { title: "Locaties", url: "/locaties", icon: MapPin },
   { title: "Statistieken", url: "/statistieken", icon: BarChart3 },
 ];

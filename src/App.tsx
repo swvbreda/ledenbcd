@@ -15,6 +15,7 @@ import StatistiekenPage from "./pages/StatistiekenPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
+import OudLedenPage from "./pages/OudLedenPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="/locaties" element={<LocatiesPage />} />
                 <Route path="/statistieken" element={<StatistiekenPage />} />
                 <Route path="/accounts" element={<AccountBeheerPage />} />
+                <Route path="/oud-leden" element={<OudLedenPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
