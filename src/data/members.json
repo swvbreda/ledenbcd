@@ -123,7 +123,7 @@
     "telefoon": "31655867690",
     "email": "joahelms@gmail.com",
     "bedrijfsnaam": "Penultimate III BV. ",
-    "aantalLocaties": 4,
+    "aantalLocaties": 3,
     "locaties": [
       {
         "naam": "Green House",
@@ -145,13 +145,6 @@
         "stadsdeel": "Zuid",
         "adres": "Oudezijds Voorburgwal 191",
         "postcode": "1012 EW"
-      },
-      {
-        "naam": "Strain Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Singel 387",
-        "postcode": "1012 WN"
       }
     ]
   },
@@ -316,7 +309,7 @@
     "telefoon": "31653131296",
     "email": "s.ardic@live.com",
     "bedrijfsnaam": "",
-    "aantalLocaties": 8,
+    "aantalLocaties": 1,
     "locaties": [
       {
         "naam": "Abraxas",
@@ -324,21 +317,23 @@
         "stadsdeel": "Centrum",
         "adres": "Jonge Roelensteeg 12 H",
         "postcode": "1012 PL"
-      },
-      {
-        "naam": "Terps Army",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Nieuwe Nieuwstraat 32HS",
-        "postcode": "1012 NH"
-      },
-      {
-        "naam": "Terps Army",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Zieseniskade 22",
-        "postcode": "1017 RT"
-      },
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "naam": "The Plug (Utopia)",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Jimmy Lin",
+    "functie": "Eigenaar",
+    "telefoon": "31620878787",
+    "email": "jimmylin1945-@hotmail.com",
+    "bedrijfsnaam": "Utopia Exploitatie BV",
+    "aantalLocaties": 5,
+    "locaties": [
       {
         "naam": "The Plug (Utopia)",
         "plaats": "Amsterdam",
@@ -467,7 +462,7 @@
   },
   {
     "id": 16,
-    "naam": "De Os ",
+    "naam": "De Os",
     "plaats": "Leeuwarden",
     "stadsdeel": "",
     "jarenLid": 41,
@@ -480,7 +475,7 @@
     "aantalLocaties": 1,
     "locaties": [
       {
-        "naam": "De Os ",
+        "naam": "De Os",
         "plaats": "Leeuwarden",
         "adres": "Korfmakersstraat 2",
         "postcode": "8911 LA"
@@ -855,7 +850,7 @@
     "telefoon": "06 38 87 44 92",
     "email": "yari@othala-bv.nl",
     "bedrijfsnaam": "Othala B.V.",
-    "aantalLocaties": 5,
+    "aantalLocaties": 1,
     "locaties": [
       {
         "naam": "Siberië",
@@ -863,33 +858,6 @@
         "stadsdeel": "Centrum",
         "adres": "Brouwersgracht 11",
         "postcode": "1015 GA"
-      },
-      {
-        "naam": "De Republiek",
-        "plaats": "Amsterdam",
-        "stadsdeel": "West",
-        "adres": "Tweede Nassaustraat 1",
-        "postcode": "1052 BJ"
-      },
-      {
-        "naam": "Coffeeshop Loft",
-        "plaats": "Amsterdam",
-        "stadsdeel": "West",
-        "adres": "Jan van Galenstraat 285HS",
-        "postcode": "1056 CA"
-      },
-      {
-        "naam": "De Supermarkt",
-        "plaats": "Amsterdam",
-        "stadsdeel": "West",
-        "adres": "Frederik Hendrikstraat 69HS",
-        "postcode": "1052 HL"
-      },
-      {
-        "naam": "Espresso",
-        "plaats": "Mijdrecht",
-        "adres": "Rondweg 1B",
-        "postcode": "3641 SC"
       }
     ]
   },
@@ -1031,7 +999,7 @@
   },
   {
     "id": 38,
-    "naam": "De Loods\n",
+    "naam": "De Loods",
     "plaats": "Amersfoort",
     "stadsdeel": "",
     "jarenLid": 2,
@@ -1044,7 +1012,7 @@
     "aantalLocaties": 1,
     "locaties": [
       {
-        "naam": "De Loods\n",
+        "naam": "De Loods",
         "plaats": "Amersfoort",
         "adres": "Textielweg 11",
         "postcode": "3812RV"
@@ -1321,7 +1289,7 @@
   },
   {
     "id": 51,
-    "naam": "The Plug East ",
+    "naam": "The Plug East",
     "plaats": "Amsterdam",
     "stadsdeel": "Oost",
     "jarenLid": null,
@@ -1334,7 +1302,7 @@
     "aantalLocaties": 1,
     "locaties": [
       {
-        "naam": "The Plug East ",
+        "naam": "The Plug East",
         "plaats": "Amsterdam",
         "stadsdeel": "Oost",
         "adres": "1e Oosterparkstraat 47",
@@ -1537,7 +1505,7 @@
     "telefoon": "",
     "email": "brouwersgracht137@hotmail.com",
     "bedrijfsnaam": "Coffeeshop 137",
-    "aantalLocaties": 64,
+    "aantalLocaties": 2,
     "locaties": [
       {
         "naam": "Coffeeshop 137 / 7th heaven",
@@ -1551,46 +1519,302 @@
         "plaats": "Leeuwarden",
         "adres": "Tuinen 38",
         "postcode": "8911 KE"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "naam": "Strain Hunters",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Strain Hunters",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Singel 387",
+        "postcode": "1012 WN"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "naam": "Terps Army",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 10,
+    "oprichtingJaar": 2016,
+    "contactpersoon": "Yousef Bouali",
+    "functie": "Eigenaar",
+    "telefoon": "3128599793",
+    "email": "info@nieuwenederlandscheschool.nl",
+    "bedrijfsnaam": "Nieuwe Nederlandse school BV",
+    "aantalLocaties": 2,
+    "locaties": [
+      {
+        "naam": "Terps Army",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Nieuwe Nieuwstraat 32HS",
+        "postcode": "1012 NH"
       },
+      {
+        "naam": "Terps Army",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Zieseniskade 22",
+        "postcode": "1017 RT"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "naam": "De Republiek",
+    "plaats": "Amsterdam",
+    "stadsdeel": "West",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Othala B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "De Republiek",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Tweede Nassaustraat 1",
+        "postcode": "1052 BJ"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "naam": "Coffeeshop Loft",
+    "plaats": "Amsterdam",
+    "stadsdeel": "West",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Othala B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Loft",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Jan van Galenstraat 285HS",
+        "postcode": "1056 CA"
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "naam": "De Supermarkt",
+    "plaats": "Amsterdam",
+    "stadsdeel": "West",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Othala B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "De Supermarkt",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Frederik Hendrikstraat 69HS",
+        "postcode": "1052 HL"
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "naam": "Espresso",
+    "plaats": "Mijdrecht",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "Othala B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Espresso",
+        "plaats": "Mijdrecht",
+        "adres": "Rondweg 1B",
+        "postcode": "3641 SC"
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "naam": "Tafne",
+    "plaats": "Beverwijk",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Danny Zijp",
+    "functie": "Eigenaar",
+    "telefoon": "06 21 66 11 77",
+    "email": "d.zijp@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Tafne",
         "plaats": "Beverwijk",
         "adres": "Kloosterstraat 23",
         "postcode": "1941 BN"
-      },
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "naam": "Regine",
+    "plaats": "Haarlem",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Regine",
         "plaats": "Haarlem",
         "adres": "Gedempte Oude Gracht 28",
         "postcode": "2011 GR "
-      },
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "naam": "Bullwacki",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Zuid",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Rachid",
+    "functie": "Eigenaar",
+    "telefoon": "06 16 91 91 81",
+    "email": "willemrabeat@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Bullwacki",
         "plaats": "Amsterdam",
         "stadsdeel": "Zuid",
         "adres": "Woestduinstraat 76",
         "postcode": "1058 KA"
-      },
+      }
+    ]
+  },
+  {
+    "id": 70,
+    "naam": "Coffeeshop Johnny",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 35,
+    "oprichtingJaar": 1991,
+    "contactpersoon": "Johnny Elbers",
+    "functie": "Eigenaar",
+    "telefoon": "06 5 37 12 36",
+    "email": "coffeeshop-johnny@xs4all.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Johnny",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Elandsgracht 3-hs",
         "postcode": "1016 TM"
-      },
+      }
+    ]
+  },
+  {
+    "id": 71,
+    "naam": "Blue Tomato",
+    "plaats": "Hoorn",
+    "stadsdeel": "",
+    "jarenLid": 13,
+    "oprichtingJaar": 2013,
+    "contactpersoon": "Michael ",
+    "functie": "Eigenaar",
+    "telefoon": "06 29 53 25 85",
+    "email": "bluetom@xs4all.nl",
+    "bedrijfsnaam": "Blue Tomato BV",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Blue Tomato",
         "plaats": "Hoorn",
         "adres": "Neutronweg 11",
         "postcode": "1627 LG"
-      },
+      }
+    ]
+  },
+  {
+    "id": 72,
+    "naam": "De Jolly Joker",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Petra Harman",
+    "functie": "Eigenaar",
+    "telefoon": "06 53 70 76 95",
+    "email": "petrarietsnijder@icloud.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "De Jolly Joker",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Nieuwmarkt 4a",
         "postcode": "1012 CR"
-      },
+      }
+    ]
+  },
+  {
+    "id": 73,
+    "naam": "Coffeeshop Mississippi",
+    "plaats": "Maastricht",
+    "stadsdeel": "",
+    "jarenLid": 18,
+    "oprichtingJaar": 2008,
+    "contactpersoon": "Stephan Korsten",
+    "functie": "Eigenaar",
+    "telefoon": "06 53 68 90 53",
+    "email": "stephan429@hotmail.com",
+    "bedrijfsnaam": "El Barco BV ",
+    "aantalLocaties": 2,
+    "locaties": [
       {
         "naam": "Coffeeshop Mississippi",
         "plaats": "Maastricht",
@@ -1602,68 +1826,228 @@
         "plaats": "Hengelo",
         "adres": "Deldenerstraat 14",
         "postcode": "7551 AE"
-      },
+      }
+    ]
+  },
+  {
+    "id": 74,
+    "naam": "Second Cheech & Chong's",
+    "plaats": "Amsterdam",
+    "stadsdeel": "West",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Hr. M. Lahmej",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "lahmejm@gmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Second Cheech & Chong's",
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "De Clercqstraat 30",
         "postcode": "1052 NE"
-      },
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "naam": "Coffeeshop Alien",
+    "plaats": "Steenwijk",
+    "stadsdeel": "",
+    "jarenLid": 27,
+    "oprichtingJaar": 1999,
+    "contactpersoon": "Alien van der Ende",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "alienende@gmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Alien",
         "plaats": "Steenwijk",
         "adres": "Korte Woldpromenade 8",
         "postcode": "8331 JK"
-      },
+      }
+    ]
+  },
+  {
+    "id": 76,
+    "naam": "Voyagers",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Henriette Zwart",
+    "functie": "Eigenaar",
+    "telefoon": "06 41 80 09 32",
+    "email": "henriettezwart@yahoo.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Voyagers",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Geldersekade 2",
         "postcode": "1012 BH"
-      },
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "naam": "Ruthless",
+    "plaats": "Amsterdam",
+    "stadsdeel": "West",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Cemil Oncirak",
+    "functie": "Eigenaar",
+    "telefoon": "06 52 46 88 09",
+    "email": "oncirak@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Ruthless",
         "plaats": "Amsterdam",
         "stadsdeel": "West",
         "adres": "Hoofdweg 174",
         "postcode": "1057 DC"
-      },
+      }
+    ]
+  },
+  {
+    "id": 78,
+    "naam": "The Happy Family",
+    "plaats": "Hoogezand",
+    "stadsdeel": "",
+    "jarenLid": 26,
+    "oprichtingJaar": 2000,
+    "contactpersoon": "Oussama al' Mobaress",
+    "functie": "Eigenaar",
+    "telefoon": "06 18 11 10 10",
+    "email": "thehappyfamilybv@gmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "The Happy Family",
         "plaats": "Hoogezand",
         "adres": "Meint Veningastraat 74",
         "postcode": "9601 KH"
-      },
+      }
+    ]
+  },
+  {
+    "id": 79,
+    "naam": "Prix d'Ami",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 45,
+    "oprichtingJaar": 1981,
+    "contactpersoon": "Lesley Bijlsma",
+    "functie": "Eigenaar",
+    "telefoon": "06 55 76 23 84",
+    "email": "lesley.bijlsma@orisflex.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Prix d'Ami",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Haringpakkerssteeg 3",
         "postcode": "1012 LR"
-      },
+      }
+    ]
+  },
+  {
+    "id": 80,
+    "naam": "The Noon",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "The Noon",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Zieseniskade 22",
         "postcode": "1017 RT"
-      },
+      }
+    ]
+  },
+  {
+    "id": 81,
+    "naam": "Het Ballonnetje",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Het Ballonnetje",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Roetersstraat 12",
         "postcode": "1018 WD"
-      },
+      }
+    ]
+  },
+  {
+    "id": 82,
+    "naam": "1e Hulp",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 42,
+    "oprichtingJaar": 1984,
+    "contactpersoon": "Dhr. M. El Mesri",
+    "functie": "",
+    "telefoon": "",
+    "email": "1ehulp@hotmail.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "1e Hulp",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Marnixstraat 194",
         "postcode": "1016 TJ"
-      },
+      }
+    ]
+  },
+  {
+    "id": 83,
+    "naam": "The Rookies",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 34,
+    "oprichtingJaar": 1992,
+    "contactpersoon": "Mark Jacobsen",
+    "functie": "",
+    "telefoon": "06 29 57 22 44",
+    "email": "mark@rookies.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 2,
+    "locaties": [
       {
         "naam": "The Rookies",
         "plaats": "Amsterdam",
@@ -1677,7 +2061,23 @@
         "stadsdeel": "Oost",
         "adres": "Molukkenstraat 581",
         "postcode": "1095 TV"
-      },
+      }
+    ]
+  },
+  {
+    "id": 84,
+    "naam": "Coffeeshop Aarden",
+    "plaats": "Goes",
+    "stadsdeel": "",
+    "jarenLid": 25,
+    "oprichtingJaar": 2001,
+    "contactpersoon": "Myrthe Aarden",
+    "functie": "Eigenaar",
+    "telefoon": "06 422 06 872",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 3,
+    "locaties": [
       {
         "naam": "Coffeeshop Aarden",
         "plaats": "Goes",
@@ -1694,77 +2094,269 @@
         "stadsdeel": "Centrum",
         "adres": "Rembrandtplein 24",
         "postcode": "1017 CV"
-      },
+      }
+    ]
+  },
+  {
+    "id": 85,
+    "naam": "Goa",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "H.S. Tse",
+    "functie": "",
+    "telefoon": "06 51 49 06 40",
+    "email": "ronnie809@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Goa",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Kloveniersburgwal 42",
         "postcode": "1012 CW"
-      },
+      }
+    ]
+  },
+  {
+    "id": 86,
+    "naam": "Funny People",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Noord",
+    "jarenLid": 30,
+    "oprichtingJaar": 1996,
+    "contactpersoon": "Dirk van den Berg",
+    "functie": "",
+    "telefoon": "06 21 48 22 17",
+    "email": "vandenberg42@outlook.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Funny People",
         "plaats": "Amsterdam",
         "stadsdeel": "Noord",
         "adres": "TT Vasumweg 4C",
         "postcode": "1033 SC"
-      },
+      }
+    ]
+  },
+  {
+    "id": 87,
+    "naam": "Pleasure",
+    "plaats": "Utrecht",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Theo en Geertje",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Pleasure",
         "plaats": "Utrecht",
         "adres": "Voorstraat 81",
         "postcode": "3512 AL"
-      },
+      }
+    ]
+  },
+  {
+    "id": 88,
+    "naam": "The Bull",
+    "plaats": "Vlaardingen",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Ron",
+    "functie": "",
+    "telefoon": "wil niet in what's app",
+    "email": "thebullvld@icloud.com",
+    "bedrijfsnaam": "The Bull BV",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "The Bull",
         "plaats": "Vlaardingen",
         "adres": "Koningin Wilhelminahaven NZ 11 B",
         "postcode": "3134KE"
-      },
+      }
+    ]
+  },
+  {
+    "id": 89,
+    "naam": "Joint Venture",
+    "plaats": "Arnhem",
+    "stadsdeel": "Noord",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Henny van Amelsfoort",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Joint Venture",
         "plaats": "Arnhem",
         "stadsdeel": "Noord",
         "adres": "Sonsbeeksingel 149",
         "postcode": "6811 XP"
-      },
+      }
+    ]
+  },
+  {
+    "id": 90,
+    "naam": "Lucky Luke",
+    "plaats": "Arnhem",
+    "stadsdeel": "Noord",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Hannes Poppinghaus",
+    "functie": "",
+    "telefoon": "06 43 20 68 88",
+    "email": "info@luckylukearnhem.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Lucky Luke",
         "plaats": "Arnhem",
         "stadsdeel": "Noord",
         "adres": "Sonsbeeksingel 91",
         "postcode": "6821 AC"
-      },
+      }
+    ]
+  },
+  {
+    "id": 91,
+    "naam": "Uncle Sam",
+    "plaats": "Arnhem",
+    "stadsdeel": "Noord",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Gerrit & Karin Riethorst",
+    "functie": "",
+    "telefoon": "06 47 93 99 62",
+    "email": "gerrit-riethorst@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Uncle Sam",
         "plaats": "Arnhem",
         "stadsdeel": "Noord",
         "adres": "Driekoningenstraat 21-A",
         "postcode": "6828 EL"
-      },
+      }
+    ]
+  },
+  {
+    "id": 92,
+    "naam": "Happy Smile",
+    "plaats": "Den Haag",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Alex Ligtvoet",
+    "functie": "",
+    "telefoon": "06 21 27 41 43",
+    "email": "hsmile@xs4all.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Happy Smile",
         "plaats": "Den Haag",
         "adres": "Verheeskade 30",
         "postcode": "2521 BN"
-      },
+      }
+    ]
+  },
+  {
+    "id": 93,
+    "naam": "Pluto",
+    "plaats": "Rotterdam",
+    "stadsdeel": "",
+    "jarenLid": 38,
+    "oprichtingJaar": 1988,
+    "contactpersoon": "Hakan Yilmaz",
+    "functie": "",
+    "telefoon": "",
+    "email": "Pluto_headshop@hotmail.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Pluto",
         "plaats": "Rotterdam",
         "adres": "Nieuwe binnenweg 54 "
-      },
+      }
+    ]
+  },
+  {
+    "id": 94,
+    "naam": "Piramide",
+    "plaats": "Bussum",
+    "stadsdeel": "",
+    "jarenLid": 34,
+    "oprichtingJaar": 1992,
+    "contactpersoon": "Willem Panders",
+    "functie": "",
+    "telefoon": "06 43 82 60 90",
+    "email": "Jwpanders@gmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Piramide",
         "plaats": "Bussum",
         "adres": "Kapelstraat 43-A",
         "postcode": "1404 HW "
-      },
+      }
+    ]
+  },
+  {
+    "id": 95,
+    "naam": "Empire",
+    "plaats": "Haarlem",
+    "stadsdeel": "",
+    "jarenLid": 44,
+    "oprichtingJaar": 1982,
+    "contactpersoon": "Hus",
+    "functie": "",
+    "telefoon": "30 69 74 66 39 29",
+    "email": "Chelseakales@gmail.com",
+    "bedrijfsnaam": "DreamTeam Haarlem B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Empire",
         "plaats": "Haarlem",
         "adres": "Krocht 8",
         "postcode": "2011 PT "
-      },
+      }
+    ]
+  },
+  {
+    "id": 96,
+    "naam": "NCC Power Flower",
+    "plaats": "Apeldoorn",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Derek Kent",
+    "functie": "",
+    "telefoon": "06 42 47 59 40",
+    "email": "Kent1@live.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 2,
+    "locaties": [
       {
         "naam": "NCC Power Flower",
         "plaats": "Apeldoorn",
@@ -1776,106 +2368,394 @@
         "plaats": "Amsterdam",
         "adres": "Admiraal de Ruijterweg 104",
         "postcode": "1056 GP "
-      },
+      }
+    ]
+  },
+  {
+    "id": 97,
+    "naam": "John & Co",
+    "plaats": "Hellevoetsluis",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Nizar",
+    "functie": "Eigenaar",
+    "telefoon": "06 18 03 16 60",
+    "email": "nizar@john-en-co.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "John & Co",
         "plaats": "Hellevoetsluis",
         "adres": "Stephensonweg 1",
         "postcode": "3225 LW "
-      },
+      }
+    ]
+  },
+  {
+    "id": 98,
+    "naam": "Spirit",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Willem van den Berg",
+    "functie": "Bedrijfsleider",
+    "telefoon": "06 46 30 00 68",
+    "email": "Spiritamsterdam@protonmail.com",
+    "bedrijfsnaam": "The Spirit v.o.f.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Spirit",
         "plaats": "Amsterdam",
         "adres": "Czaar Peterstraat 2a",
         "postcode": "1018 PR "
-      },
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "naam": "High times",
+    "plaats": "Eindhoven",
+    "stadsdeel": "",
+    "jarenLid": 41,
+    "oprichtingJaar": 1985,
+    "contactpersoon": "Kayo Ramsahai",
+    "functie": "",
+    "telefoon": "06 83 09 14 93",
+    "email": "kayo@roostbv.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "High times",
         "plaats": "Eindhoven",
         "adres": "Roostenlaan 24a",
         "postcode": "5644 PR "
-      },
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "naam": "De Jungle",
+    "plaats": "Oss",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Linda",
+    "functie": "Contactpersoon",
+    "telefoon": "06 16 24 94 84",
+    "email": "dejungle-oss@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "De Jungle",
         "plaats": "Oss",
         "adres": "Kromstraat 112",
         "postcode": "5345 AE "
-      },
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "naam": "Galaxy",
+    "plaats": "Den Haag",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Dave van der Tak",
+    "functie": "Contactpersoon",
+    "telefoon": "06 14 32 00 00",
+    "email": "coffeeshopgalaxy@gmail.com",
+    "bedrijfsnaam": "Koffieshop Galaxy B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Galaxy",
         "plaats": "Den Haag",
         "adres": "Weimarstraat 245",
         "postcode": "2562 HH "
-      },
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "naam": "De Kronkel",
+    "plaats": "Nijmegen",
+    "stadsdeel": "",
+    "jarenLid": 40,
+    "oprichtingJaar": 1986,
+    "contactpersoon": "Gilbert Esmeijer",
+    "functie": "",
+    "telefoon": "06 54 95 08 50",
+    "email": "g.esmeijer@icloud.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "De Kronkel",
         "plaats": "Nijmegen",
         "adres": "Vlaamsegas 30",
         "postcode": "6511 HR "
-      },
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "naam": "Koffie Rif Hilversum",
+    "plaats": "Hilversum",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Abdel Hakbazzhi ",
+    "functie": "Eigenaar",
+    "telefoon": "06 82 10 10 33",
+    "email": "abdelhakbazzahi@hotmail.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
-        "naam": "Koffie Rif Hilversum ",
+        "naam": "Koffie Rif Hilversum",
         "plaats": "Hilversum",
         "adres": "Van leeuwenstraat 34"
-      },
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "naam": "Coffeeshop Rif Rotterdam",
+    "plaats": "Rotterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Said Bouazzata / Sandra",
+    "functie": "Eigenaar",
+    "telefoon": "06 52 21 48 83",
+    "email": "sandramoumouh@icloud.com",
+    "bedrijfsnaam": "Koffiehuis RIF B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Rif Rotterdam",
         "plaats": "Rotterdam"
-      },
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "naam": "Club Media",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Jeroen Roeleveld",
+    "functie": "Eigenaar",
+    "telefoon": "06 41 79 01 90",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Club Media",
         "plaats": "Amsterdam",
         "adres": "Gerard Doustraat 85",
         "postcode": "1072 VN"
-      },
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "naam": "Coffeshop Paradox",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Ludo Bossaert",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeshop Paradox",
         "plaats": "Amsterdam",
         "adres": "Eerste Bloemdwarsstraat 2r",
         "postcode": "1016 KS "
-      },
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "naam": "Coffeeshop Mediterrané",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Moustapha El Mahdioui",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Mediterrané",
         "plaats": "Amsterdam",
         "adres": "Spuistraat 80",
         "postcode": "1012 TX "
-      },
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "naam": "Grey Area",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "John Foster",
+    "functie": "",
+    "telefoon": "",
+    "email": "management@greyarea.nl",
+    "bedrijfsnaam": "Grey Area BV",
+    "aantalLocaties": 1,
+    "locaties": [
       {
-        "naam": "Grey Area ",
+        "naam": "Grey Area",
         "plaats": "Amsterdam",
         "adres": "Oude Leliestraat 2",
         "postcode": "1015 AW"
-      },
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "naam": "Crashlight",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Crashlight",
         "plaats": "Amsterdam",
         "adres": "Pretoriusstraat 67",
         "postcode": "1092 GB "
-      },
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "naam": "De Steeg",
+    "plaats": "Woerden",
+    "stadsdeel": "",
+    "jarenLid": 25,
+    "oprichtingJaar": 2001,
+    "contactpersoon": "Rutger Cranssen ",
+    "functie": "Eigenaar",
+    "telefoon": "06 28 48 40 84",
+    "email": "rutger.cranssen@your.global",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "De Steeg",
         "plaats": "Woerden",
         "adres": "Rietveld 1",
         "postcode": "3443 XA "
-      },
+      }
+    ]
+  },
+  {
+    "id": 111,
+    "naam": "Coffeeshop Oost",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Oost",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "",
+    "functie": "",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Oost",
         "plaats": "Amsterdam",
         "stadsdeel": "Oost",
         "adres": "3E Oosterparkstraat 73",
         "postcode": "1091 JV "
-      },
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "naam": "Balou",
+    "plaats": "Amsterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Youri Florijn",
+    "functie": "",
+    "telefoon": "06 45 99 02 60",
+    "email": "youri.balou@hotmail.com",
+    "bedrijfsnaam": "Balou Amsterdam B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Balou",
         "plaats": "Amsterdam",
         "adres": "Halvemaansteeg 5",
         "postcode": "1017 CR "
-      },
+      }
+    ]
+  },
+  {
+    "id": 113,
+    "naam": "Koffieshop De Tulp",
+    "plaats": "Den Haag",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Tarik",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Koffieshop De Tulp",
         "plaats": "Den Haag",
         "adres": "Wenckebachstraat 78"
-      },
+      }
+    ]
+  },
+  {
+    "id": 114,
+    "naam": "Coffeeshop Haarlem",
+    "plaats": "Haarlem",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": 2023,
+    "contactpersoon": "Martin van der Eng",
+    "functie": "Eigenaar",
+    "telefoon": "06 15 31 55 39",
+    "email": "Info@justbudha.com",
+    "bedrijfsnaam": "Samamado bv",
+    "aantalLocaties": 2,
+    "locaties": [
       {
         "naam": "Coffeeshop Haarlem",
         "plaats": "Haarlem",
@@ -1887,11 +2767,43 @@
         "plaats": "Rotterdam",
         "adres": "noordsingel 201",
         "postcode": "3035ER"
-      },
+      }
+    ]
+  },
+  {
+    "id": 115,
+    "naam": "Coffee-Shop Bamboo",
+    "plaats": "Schiedam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Asma Salahi",
+    "functie": "",
+    "telefoon": "06 30 48 60 05",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffee-Shop Bamboo",
         "plaats": "Schiedam"
-      },
+      }
+    ]
+  },
+  {
+    "id": 116,
+    "naam": "Out of time",
+    "plaats": "Rotterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": 1982,
+    "contactpersoon": "Ger Dekker",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "info@outoftime.nl",
+    "bedrijfsnaam": "Sunny Time Bv ",
+    "aantalLocaties": 2,
+    "locaties": [
       {
         "naam": "Out of time",
         "plaats": "Rotterdam",
@@ -1901,29 +2813,109 @@
       {
         "naam": "Out of time",
         "plaats": "Rotterdam"
-      },
+      }
+    ]
+  },
+  {
+    "id": 117,
+    "naam": "Purple Rain",
+    "plaats": "Breda",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Naoufel",
+    "functie": "",
+    "telefoon": "06 27 21 07 48",
+    "email": "",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Purple Rain",
         "plaats": "Breda"
-      },
+      }
+    ]
+  },
+  {
+    "id": 118,
+    "naam": "Smokery",
+    "plaats": "Wormer",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Maikel",
+    "functie": "",
+    "telefoon": "06 50 90 29 63",
+    "email": "inkoop@smokery.nl",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Smokery",
         "plaats": "Wormer"
-      },
+      }
+    ]
+  },
+  {
+    "id": 119,
+    "naam": "Coffeeshop Freak",
+    "plaats": "Utrecht",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Carlo Theulen",
+    "functie": "Eigenaar",
+    "telefoon": "06 27 03 24 74",
+    "email": "c.theulen@me.com",
+    "bedrijfsnaam": "",
+    "aantalLocaties": 1,
+    "locaties": [
       {
         "naam": "Coffeeshop Freak",
         "plaats": "Utrecht",
         "adres": "Breedstraat 55",
         "postcode": "3512 TV  "
-      },
+      }
+    ]
+  },
+  {
+    "id": 120,
+    "naam": "Dr Pleasure",
+    "plaats": "Deventer",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Raymond",
+    "functie": "Eigenaar",
+    "telefoon": "06 14 80 45 07",
+    "email": "Admin@dr-pleasure.nl",
+    "bedrijfsnaam": "Riemer Consultancy B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
       {
-        "naam": "Dr Pleasure ",
+        "naam": "Dr Pleasure",
         "plaats": "Deventer",
         "adres": "Brinkgreverweg 70",
         "postcode": "7413AD"
-      },
+      }
+    ]
+  },
+  {
+    "id": 121,
+    "naam": "Toermalijn",
+    "plaats": "Tilburg",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Alex van Veen",
+    "functie": "Bedrijfsleider",
+    "telefoon": "06 55 49 12 21",
+    "email": "toerman@ziggo.nl",
+    "bedrijfsnaam": "Stichting De Cirkel",
+    "aantalLocaties": 1,
+    "locaties": [
       {
-        "naam": "Toermalijn ",
+        "naam": "Toermalijn",
         "plaats": "Tilburg"
       }
     ]
