@@ -82,7 +82,6 @@ const LocatiesPage = () => {
             naam: plaats,
             aantalLeden: 0,
             aantalLocaties: 0,
-            stadsdelen: [],
             leden: [],
             totaalNL: totaal,
             marktPct: totaal > 0 ? Math.round((bcd / totaal) * 100) : 0,
@@ -94,10 +93,6 @@ const LocatiesPage = () => {
         if (!city.leden.some((x) => x.id === m.id)) {
           city.aantalLeden++;
           city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => (loc.plaats || m.plaats) === plaats).length });
-        }
-
-        if (l.stadsdeel && !city.stadsdelen.includes(l.stadsdeel)) {
-          city.stadsdelen.push(l.stadsdeel);
         }
       }
     }
