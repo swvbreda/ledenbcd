@@ -35,6 +35,7 @@ const MemberDetail = () => {
   
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
+  const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
 
   if (!member) {
     return (
