@@ -17,13 +17,15 @@ const StatCards = ({ members }: StatCardsProps) => {
   const uniqueCities = new Set(members.map((m) => m.plaats).filter(Boolean)).size;
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
   const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
-  const totalNL = coffeeshopData.totaalNL;
-  const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
-  const marketPct = Math.round((representedLocations / totalNL) * 100);
-  const memberYears = members.map((m) => getMembershipYears(m)).filter((y): y is number => y !== null);
-  const avgYears = memberYears.length
-    ? Math.round(memberYears.reduce((sum, y) => sum + y, 0) / memberYears.length)
-    : 0;
+  const perStad = coffeeshopData.perStad as Record<string, number>;
+  const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
+  const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
+  const repCityCount: Record<string, number> = {};
+  allRepresented.forEach((m) => {
+    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+  });
+  const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
+  const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
 
   const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
     const radius = 28;
