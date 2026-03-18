@@ -7139,22 +7139,29 @@
     "stadsdeel": "",
     "jarenLid": 0,
     "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
+    "contactpersoon": "Carlo Theulen",
+    "functie": "Eigenaar",
+    "telefoon": "06 27 03 24 74",
+    "email": "c.theulen@me.com",
     "bedrijfsnaam": "Coffeeshop Freak",
     "aantalLocaties": 1,
     "locaties": [
       {
         "naam": "Coffeeshop Freak",
         "plaats": "Utrecht",
-        "adres": "",
-        "postcode": "",
+        "adres": "Breedstraat 55",
+        "postcode": "3512 TV",
         "stadsdeel": ""
       }
     ],
-    "contacten": [],
+    "contacten": [
+      {
+        "naam": "Carlo Theulen",
+        "functie": "Eigenaar",
+        "telefoon": "06 27 03 24 74",
+        "email": "c.theulen@me.com"
+      }
+    ],
     "lidSinds": 2026,
     "lidJaren": [
       2026
@@ -7167,9 +7174,9 @@
     "stadsdeel": "",
     "jarenLid": 0,
     "oprichtingJaar": null,
-    "contactpersoon": "",
+    "contactpersoon": "Naoufel",
     "functie": "",
-    "telefoon": "",
+    "telefoon": "06 27 21 07 48",
     "email": "",
     "bedrijfsnaam": "Purple Rain",
     "aantalLocaties": 1,
@@ -7182,7 +7189,20 @@
         "stadsdeel": ""
       }
     ],
-    "contacten": [],
+    "contacten": [
+      {
+        "naam": "Naoufel",
+        "functie": "",
+        "telefoon": "06 27 21 07 48",
+        "email": ""
+      },
+      {
+        "naam": "Yassir",
+        "functie": "",
+        "telefoon": "626679794",
+        "email": "yassirboutellis@hotmail.com"
+      }
+    ],
     "lidSinds": 2026,
     "lidJaren": [
       2026
@@ -7195,10 +7215,10 @@
     "stadsdeel": "",
     "jarenLid": 0,
     "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
+    "contactpersoon": "Alex van Veen",
+    "functie": "Bedrijfsleider",
+    "telefoon": "06 55 49 12 21",
+    "email": "toerman@ziggo.nl",
     "bedrijfsnaam": "Toermalijn",
     "aantalLocaties": 1,
     "locaties": [
@@ -7210,10 +7230,18 @@
         "stadsdeel": ""
       }
     ],
-    "contacten": [],
+    "contacten": [
+      {
+        "naam": "Alex van Veen",
+        "functie": "Bedrijfsleider",
+        "telefoon": "06 55 49 12 21",
+        "email": "toerman@ziggo.nl"
+      }
+    ],
     "lidSinds": 2026,
     "lidJaren": [
       2026
-    ]
+    ],
+    "factuurBedrijfsnaam": "Stichting De Cirkel"
   }
 ]
