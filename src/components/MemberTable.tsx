@@ -92,7 +92,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               const isLead = allLeads.some((l) => l.id === member.id);
               const gemeenten = getGemeenten(member);
               const eigenaar = member.contacten.find(c => c.functie === "Eigenaar")?.naam || "";
-              const contactpersoon = member.contactpersoon || member.contacten[0]?.naam || "";
+              const storedCp = (() => { try { return localStorage.getItem(`bcd-contactpersoon-${member.id}`); } catch { return null; } })();
+              const contactpersoon = storedCp || member.contactpersoon || member.contacten[0]?.naam || "";
               return (
               <tr
                 key={member.id}
