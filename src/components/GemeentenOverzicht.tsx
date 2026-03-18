@@ -82,7 +82,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
             <div>
               <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel per gemeente</h3>
               <p className="text-xs text-muted-foreground">
-                BCD-coffeeshops t.o.v. totaal per gemeente · bron WODC 2024
+                Vertegenwoordiging t.o.v. totaal per gemeente
               </p>
             </div>
             <button
