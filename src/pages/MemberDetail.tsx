@@ -108,6 +108,50 @@ const MemberDetail = () => {
         </div>
       )}
 
+      {/* Website & Social Media */}
+      {(member.website || member.instagram || member.facebook) && (
+        <div className="bg-card rounded-lg border border-border p-5">
+          <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-3">
+            <Globe size={16} className="text-primary" /> Online
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {member.website && (
+              <a
+                href={member.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              >
+                <Globe size={14} /> {member.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                <ExternalLink size={12} />
+              </a>
+            )}
+            {member.instagram && (
+              <a
+                href={`https://instagram.com/${member.instagram}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              >
+                <Instagram size={14} /> @{member.instagram}
+                <ExternalLink size={12} />
+              </a>
+            )}
+            {member.facebook && (
+              <a
+                href={`https://facebook.com/${member.facebook}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              >
+                Facebook
+                <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Contactpersonen */}
         <div className="bg-card rounded-lg border border-border p-5">
