@@ -10,10 +10,11 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled = (pct / 100) * circumference;
+  const gap = circumference - filled;
   const center = size / 2;
 
   return (
-    <svg width={size} height={size} className="block">
+    <svg width={size} height={size} className="block" style={{ transform: "rotate(-90deg)" }}>
       <circle
         cx={center}
         cy={center}
@@ -22,18 +23,18 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
         stroke="hsl(var(--muted))"
         strokeWidth={strokeWidth}
       />
-      <circle
-        cx={center}
-        cy={center}
-        r={radius}
-        fill="none"
-        stroke={pct >= 30 ? "hsl(var(--success))" : "hsl(var(--primary))"}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={`${filled} ${circumference}`}
-        strokeDashoffset={circumference * 0.25}
-        transform={`rotate(-90 ${center} ${center})`}
-      />
+      {pct > 0 && (
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={pct >= 30 ? "hsl(var(--success))" : "hsl(var(--primary))"}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${gap}`}
+        />
+      )}
     </svg>
   );
 };
