@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
@@ -125,9 +125,8 @@ const LocatiesPage = () => {
             </thead>
             <tbody>
               {filtered.map((city) => (
-                <>
+                <React.Fragment key={city.naam}>
                   <tr
-                    key={city.naam}
                     className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => setExpandedCity(expandedCity === city.naam ? null : city.naam)}
                   >
@@ -173,7 +172,7 @@ const LocatiesPage = () => {
                       </tr>
                     ))
                   }
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
