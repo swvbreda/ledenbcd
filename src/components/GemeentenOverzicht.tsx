@@ -2,6 +2,7 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { allRepresented } from "@/hooks/useMembers";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
@@ -46,12 +47,14 @@ const EXPERIMENT_GEMEENTEN = [
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  // Use allRepresented (members + leads) for market share calculations
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD locations per city
+  // Count represented locations per city (members + leads)
   const cityCount: Record<string, number> = {};
   const cityMembers: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) {
       cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
       cityMembers[m.plaats] = (cityMembers[m.plaats] || 0) + 1;
@@ -133,8 +136,8 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              // Check both hoofdvestiging AND individual locations
-              const leden = members.filter((m) =>
+              // Check represented (members + leads) in experiment municipalities
+              const leden = represented.filter((m) =>
                 m.plaats === gemeente || m.locaties?.some((l) => (l.plaats || m.plaats) === gemeente)
               );
               const locs = leden.reduce((s, m) => {
@@ -175,7 +178,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
             In{" "}
             <span className="font-medium text-foreground">
-              {EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
+              {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
             </span>
             {" "}gemeenten vertegenwoordigd binnen het experiment
           </div>

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Users, Building2, Clock, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { allRepresented } from "@/hooks/useMembers";
 
 interface StatCardsProps {
   members: Member[];
@@ -16,7 +17,9 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
   const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
-  const marketPct = Math.round((totalLocations / totalNL) * 100);
+  // Market share includes leads (represented but not yet members)
+  const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
+  const marketPct = Math.round((representedLocations / totalNL) * 100);
   const withYears = members.filter((m) => m.jarenLid);
   const avgYears = withYears.length
     ? Math.round(withYears.reduce((sum, m) => sum + (m.jarenLid || 0), 0) / withYears.length)
@@ -88,7 +91,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <div className="mt-1">
           <MiniGauge pct={marketPct} color="hsl(var(--success))" />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{totalLocations}/{totalNL} coffeeshops</p>
+          <p className="text-xs text-muted-foreground text-center">{representedLocations}/{totalNL} coffeeshops</p>
         </div>
       </div>
 

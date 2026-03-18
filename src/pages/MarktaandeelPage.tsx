@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Member } from "@/data/types";
-import { allMembers } from "@/hooks/useMembers";
+import { allMembers, allRepresented } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,23 +11,23 @@ const totalNL = coffeeshopData.totaalNL;
 const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const members = allMembers;
-  const totalMembers = members.length;
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  // Group members by city
-  const membersByCity: Record<string, Member[]> = {};
-  members.forEach((m) => {
+  // Group members + leads by city for representation
+  const representedByCity: Record<string, Member[]> = {};
+  represented.forEach((m) => {
     if (m.plaats) {
-      if (!membersByCity[m.plaats]) membersByCity[m.plaats] = [];
-      membersByCity[m.plaats].push(m);
+      if (!representedByCity[m.plaats]) representedByCity[m.plaats] = [];
+      representedByCity[m.plaats].push(m);
     }
   });
 
-  // Count BCD locations per city
+  // Count represented locations per city
   const cityCount: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
@@ -116,16 +116,17 @@ const MarktaandeelPage = () => {
             </thead>
             <tbody>
               {allCities.filter(({ city }) => city.toLowerCase().includes(search.toLowerCase())).map(({ city, total, bcd, pct }) => {
-                const cityMembers = membersByCity[city] || [];
+                const cityEntries = representedByCity[city] || [];
                 const isExpanded = expandedCity === city;
+                const isLead = (m: Member) => m.id >= 118;
                 return (
                   <>
                     <tr
                       key={city}
                       className={`border-b border-border/50 transition-colors ${
-                        cityMembers.length > 0 ? "cursor-pointer hover:bg-muted/30" : ""
+                        cityEntries.length > 0 ? "cursor-pointer hover:bg-muted/30" : ""
                       } ${isExpanded ? "bg-muted/20" : ""}`}
-                      onClick={() => cityMembers.length > 0 && toggleCity(city)}
+                      onClick={() => cityEntries.length > 0 && toggleCity(city)}
                     >
                       <td className="px-3 py-1.5 font-medium truncate">{city}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
@@ -144,16 +145,19 @@ const MarktaandeelPage = () => {
                         </div>
                       </td>
                     </tr>
-                    {isExpanded && cityMembers.map((m) => (
+                    {isExpanded && cityEntries.map((m) => (
                       <tr
                         key={`${city}-${m.id}`}
                         className="border-b border-border/30 bg-muted/10 hover:bg-muted/20 cursor-pointer transition-colors"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/leden/${m.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); if (!isLead(m)) navigate(`/leden/${m.id}`); }}
                       >
                         <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={2}>
                           <span className="inline-flex items-center gap-2">
                             <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
                             <span className="font-medium text-foreground">{m.naam}</span>
+                            {isLead(m) && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 font-medium">Lead</span>
+                            )}
                             {(m.aantalLocaties || 1) > 1 && (
                               <span className="text-xs text-muted-foreground">({m.aantalLocaties} locaties)</span>
                             )}
@@ -162,7 +166,7 @@ const MarktaandeelPage = () => {
                         <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{m.aantalLocaties || 1}</td>
                         <td className="px-3 py-1.5" />
                         <td className="px-3 py-1.5">
-                          <ExternalLink size={12} className="text-muted-foreground/40" />
+                          {!isLead(m) && <ExternalLink size={12} className="text-muted-foreground/40" />}
                         </td>
                       </tr>
                     ))}
@@ -195,9 +199,9 @@ const MarktaandeelPage = () => {
               </div>
             ))}
           </div>
-          {expandedCity && membersByCity[expandedCity] && !perStad[expandedCity] && (
+          {expandedCity && representedByCity[expandedCity] && !perStad[expandedCity] && (
             <div className="mt-3 bg-card rounded border border-border/50 divide-y divide-border/30">
-              {membersByCity[expandedCity].map((m) => (
+              {representedByCity[expandedCity].map((m) => (
                 <div
                   key={m.id}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/20 cursor-pointer transition-colors"

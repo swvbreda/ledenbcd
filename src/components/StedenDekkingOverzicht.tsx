@@ -2,17 +2,19 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { allRepresented } from "@/hooks/useMembers";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
-  const totalMembers = members.length;
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  // Use represented (members + leads) for market share
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD locations per city
+  // Count represented locations per city
   const cityCount: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
@@ -32,7 +34,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
     <div className="bg-card rounded-lg border border-border p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel BCD</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        {totalLocaties} van {totalNL} coffeeshops in NL · {totalMembers} leden · bron WODC 2024
+        {totalLocaties} van {totalNL} coffeeshops in NL · bron WODC 2024
       </p>
 
       {/* Overall market share */}

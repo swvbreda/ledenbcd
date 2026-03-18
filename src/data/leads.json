@@ -1,0 +1,240 @@
+[
+  {
+    "id": 118,
+    "naam": "Coffee-Shop Bamboo",
+    "plaats": "Schiedam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Asma Salahi",
+    "functie": "",
+    "telefoon": "06 30 48 60 05",
+    "email": "",
+    "bedrijfsnaam": "Coffee-Shop Bamboo",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffee-Shop Bamboo",
+        "plaats": "Schiedam",
+        "adres": "Parkweg 373",
+        "postcode": "3114 JH"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Asma Salahi",
+        "functie": "",
+        "telefoon": "06 30 48 60 05",
+        "email": ""
+      }
+    ]
+  },
+  {
+    "id": 119,
+    "naam": "Out of time",
+    "plaats": "Rotterdam",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": 1982,
+    "contactpersoon": "Ger Dekker",
+    "functie": "Eigenaar",
+    "telefoon": "",
+    "email": "info@outoftime.nl",
+    "bedrijfsnaam": "Sunny Time Bv",
+    "aantalLocaties": 2,
+    "locaties": [
+      {
+        "naam": "Out of Time",
+        "plaats": "Rotterdam",
+        "adres": "Nieuwe Binnenweg 363",
+        "postcode": "3023 GH"
+      },
+      {
+        "naam": "Out of Time's Puck",
+        "plaats": "Rotterdam",
+        "adres": "Sandelingplein 2",
+        "postcode": "3075 EH"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Ger Dekker",
+        "functie": "Eigenaar",
+        "telefoon": "",
+        "email": "info@outoftime.nl"
+      },
+      {
+        "naam": "Iris Dekker",
+        "functie": "",
+        "telefoon": "",
+        "email": "Iris@outoftime.nl"
+      }
+    ],
+    "oprichtingsDatum": "1982-11-30",
+    "kvk": "54085527",
+    "factuurBedrijfsnaam": "Sunny Time Bv",
+    "factuurKvk": "54085527",
+    "factuurAdres": "Nieuwe Binnenweg 363",
+    "factuurPostcode": "3023 EJ",
+    "factuurPlaats": "Rotterdam",
+    "factuurEmail": "info@outoftime.nl"
+  },
+  {
+    "id": 120,
+    "naam": "Purple Rain",
+    "plaats": "Breda",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Naoufel",
+    "functie": "",
+    "telefoon": "06 27 21 07 48",
+    "email": "",
+    "bedrijfsnaam": "Purple Rain",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Purple Rain",
+        "plaats": "Breda",
+        "adres": "Willemstraat 12",
+        "postcode": "4811 AK"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Naoufel",
+        "functie": "",
+        "telefoon": "06 27 21 07 48",
+        "email": ""
+      },
+      {
+        "naam": "Yassir",
+        "functie": "",
+        "telefoon": "",
+        "email": "yassirboutellis@hotmail.com"
+      }
+    ]
+  },
+  {
+    "id": 121,
+    "naam": "Smokery",
+    "plaats": "Zaanstad",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Maikel",
+    "functie": "",
+    "telefoon": "06 50 90 29 63",
+    "email": "inkoop@smokery.nl",
+    "bedrijfsnaam": "Smokery",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Smokery",
+        "plaats": "Wormerveer",
+        "adres": "Marktstraat 33",
+        "postcode": "1521 EA"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Maikel",
+        "functie": "",
+        "telefoon": "06 50 90 29 63",
+        "email": "inkoop@smokery.nl"
+      }
+    ]
+  },
+  {
+    "id": 122,
+    "naam": "Coffeeshop Freak",
+    "plaats": "Utrecht",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Carlo Theulen",
+    "functie": "Eigenaar",
+    "telefoon": "06 27 03 24 74",
+    "email": "c.theulen@me.com",
+    "bedrijfsnaam": "Coffeeshop Freak",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Coffeeshop Freak",
+        "plaats": "Utrecht",
+        "adres": "Breedstraat 55",
+        "postcode": "3512 TV"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Carlo Theulen",
+        "functie": "Eigenaar",
+        "telefoon": "06 27 03 24 74",
+        "email": "c.theulen@me.com"
+      }
+    ]
+  },
+  {
+    "id": 123,
+    "naam": "Dr Pleasure",
+    "plaats": "Deventer",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Raymond",
+    "functie": "Eigenaar",
+    "telefoon": "06 14 80 45 07",
+    "email": "Admin@dr-pleasure.nl",
+    "bedrijfsnaam": "Riemer Consultancy B.V.",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Dr Pleasure",
+        "plaats": "Deventer",
+        "adres": "Brinkgreverweg 70",
+        "postcode": "7413AD"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Raymond",
+        "functie": "Eigenaar",
+        "telefoon": "06 14 80 45 07",
+        "email": "Admin@dr-pleasure.nl"
+      }
+    ],
+    "factuurBedrijfsnaam": "Riemer Consultancy B.V."
+  },
+  {
+    "id": 124,
+    "naam": "Toermalijn",
+    "plaats": "Tilburg",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Alex van Veen",
+    "functie": "Bedrijfsleider",
+    "telefoon": "06 55 49 12 21",
+    "email": "toerman@ziggo.nl",
+    "bedrijfsnaam": "Stichting De Cirkel",
+    "aantalLocaties": 1,
+    "locaties": [
+      {
+        "naam": "Toermalijn",
+        "plaats": "Tilburg",
+        "adres": "Korvelplein 95",
+        "postcode": "5025 JG"
+      }
+    ],
+    "contacten": [
+      {
+        "naam": "Alex van Veen",
+        "functie": "Bedrijfsleider",
+        "telefoon": "06 55 49 12 21",
+        "email": "toerman@ziggo.nl"
+      }
+    ],
+    "factuurBedrijfsnaam": "Stichting De Cirkel"
+  }
+]
