@@ -73,13 +73,15 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </tr>
           </thead>
           <tbody>
-            {displayMembers.map((member) => (
+            {displayMembers.map((member) => {
+              const isLead = allLeads.some((l) => l.id === member.id);
+              return (
               <tr
                 key={member.id}
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
-                <td className="px-4 py-3 text-muted-foreground">{member.id}</td>
+                <td className="px-4 py-3 text-muted-foreground">{isLead ? "—" : member.id}</td>
                 <td className="px-4 py-3 font-medium font-display">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
