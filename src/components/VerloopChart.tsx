@@ -10,11 +10,11 @@ const VerloopChart = () => {
 
   const current = data[data.length - 1];
   const previous = data[data.length - 2];
-  const first = data[0];
+  const fiveYearsAgo = data.find(d => d.year === current.year - 5) || data[0];
 
   const yoyGrowth = previous ? Math.round(((current.leden - previous.leden) / previous.leden) * 100) : 0;
   const yoyAbsolute = previous ? current.leden - previous.leden : 0;
-  const totalGrowth = Math.round(((current.leden - first.leden) / first.leden) * 100);
+  const fiveYrGrowth = Math.round(((current.leden - fiveYearsAgo.leden) / fiveYearsAgo.leden) * 100);
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
