@@ -6,6 +6,7 @@ import MemberTable from "@/components/MemberTable";
 import ExportButton from "@/components/ExportButton";
 import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 
 const LedenPage = () => {
