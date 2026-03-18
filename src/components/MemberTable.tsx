@@ -110,7 +110,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           </thead>
           <tbody>
             {displayMembers.map((member) => {
-              const isLead = allLeads.some((l) => l.id === member.id);
+              const memberIsLead = isLead(member);
               const gemeenten = getGemeenten(member);
               const jarenLid = getMembershipYears(member);
               const eigenaar = member.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam || "";
