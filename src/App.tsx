@@ -15,7 +15,7 @@ import StatistiekenPage from "./pages/StatistiekenPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
-import OudLedenPage from "./pages/OudLedenPage";
+
 
 import NotFound from "./pages/NotFound";
 
