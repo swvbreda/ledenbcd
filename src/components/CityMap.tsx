@@ -18,9 +18,14 @@ const CityMap = ({ cities, onCityClick }: CityMapProps) => {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
+    const nlBounds = L.latLngBounds([50.75, 3.2], [53.55, 7.25]);
+
     const map = L.map(mapContainerRef.current, {
       center: [52.2, 5.3],
       zoom: 7,
+      minZoom: 7,
+      maxBounds: nlBounds,
+      maxBoundsViscosity: 1.0,
       scrollWheelZoom: true,
     });
 
