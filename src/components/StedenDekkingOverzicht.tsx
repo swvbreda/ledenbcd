@@ -32,7 +32,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel BCD</h3>
+      <h3 className="text-sm font-semibold font-display mb-1">Vertegenwoordiging</h3>
       <p className="text-xs text-muted-foreground mb-4">
         {totalLocaties} van {totalNL} coffeeshops in NL · bron WODC 2024
       </p>
