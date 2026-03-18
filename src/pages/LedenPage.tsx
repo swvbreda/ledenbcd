@@ -6,6 +6,7 @@ import MemberTable from "@/components/MemberTable";
 import ExportButton from "@/components/ExportButton";
 import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 
 const LedenPage = () => {
@@ -22,11 +23,14 @@ const LedenPage = () => {
     allMembers,
   } = useMembers();
 
+  const { members: mergedSearched } = useMergedMembers(searchedMembers);
+
   const archivedIds = useMemo(() => getArchivedIds(), []);
-  const archivedMembers = useMemo(
+  const archivedMembersRaw = useMemo(
     () => allMembersAndLeads.filter((m) => archivedIds.includes(m.id)),
     [archivedIds]
   );
+  const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -38,11 +42,11 @@ const LedenPage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">
             {showArchived
               ? `${archivedMembers.length} oud-leden`
-              : `${searchedMembers.length} resultaten · ${membersOnly.length} leden, ${allLeads.length} leads`}
+              : `${mergedSearched.length} resultaten · ${membersOnly.length} leden, ${allLeads.length} leads`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {!showArchived && <ExportButton members={searchedMembers} />}
+          {!showArchived && <ExportButton members={mergedSearched} />}
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"
@@ -89,7 +93,7 @@ const LedenPage = () => {
           </div>
         )
       ) : (
-        <MemberTable members={searchedMembers} />
+        <MemberTable members={mergedSearched} />
       )}
     </div>
   );
