@@ -7,6 +7,8 @@ export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
 /** Members + leads combined — use for market share / representation calculations */
 export const allRepresented = [...allMembers, ...allLeads] as Member[];
+/** Members + leads combined — use for display in ledenlijst (leads have no lidnummer) */
+export const allMembersAndLeads = [...allMembers, ...allLeads] as Member[];
 
 export function useMembers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,19 +16,21 @@ export function useMembers() {
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
   const [filterJaren, setFilterJaren] = useState("");
 
+  const allIncludingLeads = allMembersAndLeads;
+
   const cities = useMemo(
-    () => [...new Set(allMembers.map((m) => m.plaats).filter(Boolean))].sort(),
+    () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),
     []
   );
   const stadsdelen = useMemo(
-    () => [...new Set(allMembers.map((m) => m.stadsdeel).filter(Boolean))].sort(),
+    () => [...new Set(allIncludingLeads.map((m) => m.stadsdeel).filter(Boolean))].sort(),
     []
   );
 
   const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
 
   const filteredMembers = useMemo(() => {
-    return allMembers.filter((m) => {
+    return allIncludingLeads.filter((m) => {
       if (filterCity && m.plaats !== filterCity) return false;
       if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
       if (filterJaren) {

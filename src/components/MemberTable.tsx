@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, MapPin, Mail, Phone, ExternalLink, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
+import { allLeads } from "@/hooks/useMembers";
 
 interface MemberTableProps {
   members: Member[];
@@ -72,16 +73,23 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </tr>
           </thead>
           <tbody>
-            {displayMembers.map((member) => (
+            {displayMembers.map((member) => {
+              const isLead = allLeads.some((l) => l.id === member.id);
+              return (
               <tr
                 key={member.id}
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
-                <td className="px-4 py-3 text-muted-foreground">{member.id}</td>
+                <td className="px-4 py-3 text-muted-foreground">{isLead ? "—" : member.id}</td>
                 <td className="px-4 py-3 font-medium font-display">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
+                    {isLead && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
+                        Lead
+                      </span>
+                    )}
                     {member.oprichter && (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold uppercase tracking-wide">
                         ★ Oprichter
@@ -130,7 +138,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

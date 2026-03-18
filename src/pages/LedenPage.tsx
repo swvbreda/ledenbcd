@@ -2,7 +2,7 @@ import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
 import ExportButton from "@/components/ExportButton";
-import { useMembers } from "@/hooks/useMembers";
+import { useMembers, allMembers as membersOnly, allLeads } from "@/hooks/useMembers";
 
 const LedenPage = () => {
   const {
@@ -23,7 +23,7 @@ const LedenPage = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">Ledenlijst</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {searchedMembers.length} van {allMembers.length} leden
+            {searchedMembers.length} resultaten · {membersOnly.length} leden, {allLeads.length} leads
           </p>
         </div>
         <ExportButton members={searchedMembers} />
