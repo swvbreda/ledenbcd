@@ -71,8 +71,9 @@ const CityMap = ({ cities, onCityClick }: CityMapProps) => {
         weight: 1.5,
       });
 
+      const totaalLabel = city.totaalNL ? `${city.totaalNL} totaal · ` : "";
       marker.bindTooltip(
-        `<div class="text-xs"><strong>${city.naam}</strong><br/>${city.aantalLeden} leden · ${city.aantalLocaties} locaties</div>`,
+        `<div class="text-xs"><strong>${city.naam}</strong><br/>${totaalLabel}${city.aantalLocaties} aangesloten</div>`,
         { direction: "top", offset: [0, -radius] },
       );
 
