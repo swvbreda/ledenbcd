@@ -136,8 +136,8 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              // Check both hoofdvestiging AND individual locations
-              const leden = members.filter((m) =>
+              // Check represented (members + leads) in experiment municipalities
+              const leden = represented.filter((m) =>
                 m.plaats === gemeente || m.locaties?.some((l) => (l.plaats || m.plaats) === gemeente)
               );
               const locs = leden.reduce((s, m) => {
