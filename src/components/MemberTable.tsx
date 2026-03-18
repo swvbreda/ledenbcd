@@ -65,7 +65,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </th>
               ))}
-              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contact</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
@@ -103,7 +103,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-muted-foreground text-xs">{member.contactpersoon}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
+                  </span>
                 </td>
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
