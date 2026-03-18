@@ -138,7 +138,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
