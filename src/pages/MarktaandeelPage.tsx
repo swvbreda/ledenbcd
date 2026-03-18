@@ -116,8 +116,9 @@ const MarktaandeelPage = () => {
             </thead>
             <tbody>
               {allCities.filter(({ city }) => city.toLowerCase().includes(search.toLowerCase())).map(({ city, total, bcd, pct }) => {
-                const cityMembers = membersByCity[city] || [];
+                const cityEntries = representedByCity[city] || [];
                 const isExpanded = expandedCity === city;
+                const isLead = (m: Member) => m.id >= 118;
                 return (
                   <>
                     <tr
