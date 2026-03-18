@@ -2,6 +2,7 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { allRepresented } from "@/hooks/useMembers";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
