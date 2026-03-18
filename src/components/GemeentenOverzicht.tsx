@@ -93,7 +93,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
               </p>
             </div>
             <button
-              onClick={() => navigate("/marktaandeel")}
+              onClick={() => navigate("/locaties")}
               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium shrink-0"
             >
               Volledig overzicht <ArrowRight size={12} />

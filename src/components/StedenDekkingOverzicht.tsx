@@ -80,7 +80,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
       </div>
 
       <button
-        onClick={() => navigate("/marktaandeel")}
+        onClick={() => navigate("/locaties")}
         className="mt-4 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
       >
         Volledig overzicht <ArrowRight size={12} />
