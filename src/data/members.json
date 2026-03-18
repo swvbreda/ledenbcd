@@ -1384,6 +1384,13 @@
         "stadsdeel": "Zuid",
         "adres": "Oudezijds Voorburgwal 191",
         "postcode": "1012 EW"
+      },
+      {
+        "naam": "Strain Hunters",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Singel 387",
+        "postcode": "1012 WN"
       }
     ],
     "kvk": "",
@@ -1709,6 +1716,20 @@
     "bedrijfsnaam": "Fortune BV",
     "aantalLocaties": 3,
     "locaties": [
+      {
+        "naam": "Kadinsky",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Langebrugsteeg 7A",
+        "postcode": "1012 GB"
+      },
+      {
+        "naam": "Kadinsky",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Rosmarijnsteeg 9",
+        "postcode": "1012 RP"
+      },
       {
         "naam": "Kadinsky",
         "plaats": "Amsterdam",
@@ -2088,6 +2109,20 @@
         "stadsdeel": "Centrum",
         "adres": "Haringpakkerssteeg 3",
         "postcode": "1012 LR"
+      },
+      {
+        "naam": "The Noon",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Zieseniskade 22",
+        "postcode": "1017 RT"
+      },
+      {
+        "naam": "Het Ballonnetje",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Roetersstraat 12",
+        "postcode": "1018 WD"
       }
     ],
     "kvk": "",
@@ -2334,6 +2369,33 @@
         "stadsdeel": "Centrum",
         "adres": "Brouwersgracht 11",
         "postcode": "1015 GA"
+      },
+      {
+        "naam": "De Republiek",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Tweede Nassaustraat 1",
+        "postcode": "1052 BJ"
+      },
+      {
+        "naam": "Coffeeshop Loft",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Jan van Galenstraat 285HS",
+        "postcode": "1056 CA"
+      },
+      {
+        "naam": "De Supermarkt",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Frederik Hendrikstraat 69HS",
+        "postcode": "1052 HL"
+      },
+      {
+        "naam": "Espresso",
+        "plaats": "Mijdrecht",
+        "adres": "Rondweg 1B",
+        "postcode": "3641 SC"
       }
     ],
     "kvk": "",
@@ -2431,6 +2493,12 @@
         "plaats": "Beverwijk",
         "adres": "Kloosterstraat 23",
         "postcode": "1941 BN"
+      },
+      {
+        "naam": "Tafne",
+        "plaats": "Beverwijk",
+        "adres": "Markt 59",
+        "postcode": "1941 BV"
       }
     ],
     "kvk": "",
