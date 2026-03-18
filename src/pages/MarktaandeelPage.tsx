@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Member } from "@/data/types";
-import { allMembers } from "@/hooks/useMembers";
+import { allMembers, allRepresented } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,8 +11,8 @@ const totalNL = coffeeshopData.totaalNL;
 const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const members = allMembers;
-  const totalMembers = members.length;
-  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  const represented = allRepresented;
+  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
