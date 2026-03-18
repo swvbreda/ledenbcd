@@ -18,7 +18,7 @@ const VerloopChart = () => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <div className="flex flex-col xl:flex-row gap-5">
+      <div className="flex flex-col gap-4">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold font-display mb-1">Ledenverloop</h3>
           <p className="text-xs text-muted-foreground mb-4">Aantal huidige leden dat al lid was per jaar</p>
@@ -48,7 +48,7 @@ const VerloopChart = () => {
           </div>
         </div>
 
-        <div className="xl:w-52 shrink-0 flex xl:flex-col gap-4 xl:justify-center">
+        <div className="flex gap-3">
           <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Huidig</p>
             <p className="text-3xl font-bold font-display">{current.leden}</p>
