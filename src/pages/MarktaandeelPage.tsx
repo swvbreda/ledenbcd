@@ -75,28 +75,28 @@ const MarktaandeelPage = () => {
       {/* Full table */}
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium">Stad</th>
-                <th className="text-right px-4 py-3 font-medium">Coffeeshops totaal</th>
-                <th className="text-right px-4 py-3 font-medium">BCD-leden</th>
-                <th className="text-right px-4 py-3 font-medium">Dekking</th>
-                <th className="px-4 py-3 w-40"></th>
+                <th className="text-left px-3 py-2 font-medium w-[30%]">Stad</th>
+                <th className="text-right px-3 py-2 font-medium w-[15%]">Totaal</th>
+                <th className="text-right px-3 py-2 font-medium w-[15%]">BCD</th>
+                <th className="text-right px-3 py-2 font-medium w-[10%]">%</th>
+                <th className="px-3 py-2 w-[30%]"></th>
               </tr>
             </thead>
             <tbody>
               {allCities.map(({ city, total, bcd, pct }) => (
                 <tr key={city} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-2.5 font-medium">{city}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{total}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{bcd}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">
+                  <td className="px-3 py-1.5 font-medium truncate">{city}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
                     <span className={pct >= 30 ? "text-success font-medium" : pct > 0 ? "text-foreground" : "text-muted-foreground"}>
                       {pct}%
                     </span>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-1.5">
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${pct >= 30 ? "bg-success" : "bg-primary/60"}`}
