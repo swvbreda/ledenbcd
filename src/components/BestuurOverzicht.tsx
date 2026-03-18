@@ -177,7 +177,24 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
             
-            {/* Coffeeshop met locatie-icoon, op eigen regel */}
+            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+              {bl.bondEmail && (
+                <a
+                  href={`mailto:${bl.bondEmail}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                >
+                  <Mail size={10} /> {bl.bondEmail}
+                </a>
+              )}
+              {bl.telefoon && (
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Phone size={10} /> {bl.telefoon}
+                </span>
+              )}
+            </div>
+
+            {/* Coffeeshop met locatie-icoon */}
             {(member || bl.coffeeshop) && (() => {
               let locations: string[] = [];
               if (member) {
@@ -206,23 +223,6 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                 </div>
               );
             })()}
-            
-            <div className="flex flex-wrap items-center gap-x-3 mt-1.5">
-              {bl.bondEmail && (
-                <a
-                  href={`mailto:${bl.bondEmail}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
-                >
-                  <Mail size={10} /> {bl.bondEmail}
-                </a>
-              )}
-              {bl.telefoon && (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Phone size={10} /> {bl.telefoon}
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </div>
