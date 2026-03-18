@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import StatCards from "@/components/StatCards";
@@ -11,10 +10,6 @@ import { allMembers } from "@/hooks/useMembers";
 const Index = () => {
   const navigate = useNavigate();
 
-  const recentMembers = useMemo(
-    () => allMembers.filter((m) => m.jarenLid !== null && m.jarenLid <= 10),
-    []
-  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -36,15 +31,15 @@ const Index = () => {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold font-display">Recente Leden (&le; 10 jaar)</h3>
+          <h3 className="text-lg font-semibold font-display">Alle Leden</h3>
           <button
             onClick={() => navigate("/leden")}
             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
           >
-            Alle leden <ArrowRight size={14} />
+            Volledig overzicht <ArrowRight size={14} />
           </button>
         </div>
-        <MemberTable members={recentMembers} compact />
+        <MemberTable members={allMembers} compact />
       </div>
     </div>
   );
