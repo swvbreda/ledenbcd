@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronUp, MapPin, Mail, Phone, ExternalLink, Shield } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { allLeads } from "@/hooks/useMembers";
@@ -10,7 +10,16 @@ interface MemberTableProps {
   compact?: boolean;
 }
 
-type SortKey = "id" | "naam" | "plaats" | "jarenLid" | "aantalLocaties";
+type SortKey = "id" | "naam" | "oprichtingJaar" | "aantalLocaties" | "gemeenten" | "jarenLid";
+
+const getGemeenten = (member: Member): string[] => {
+  const set = new Set<string>();
+  for (const l of member.locaties) {
+    const plaats = l.plaats || member.plaats;
+    if (plaats) set.add(plaats);
+  }
+  return Array.from(set);
+};
 
 const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
@@ -19,6 +28,11 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const { isAdmin } = useAuth();
 
   const sorted = [...members].sort((a, b) => {
+    if (sortKey === "gemeenten") {
+      const av = getGemeenten(a).length;
+      const bv = getGemeenten(b).length;
+      return sortAsc ? av - bv : bv - av;
+    }
     const av = a[sortKey] ?? 0;
     const bv = b[sortKey] ?? 0;
     if (typeof av === "string" && typeof bv === "string") {
@@ -40,14 +54,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
     return sortAsc ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
 
-  const columns: { key: SortKey; label: string; className?: string }[] = [
-    { key: "id", label: "Lidnr.", className: "w-16" },
-    { key: "naam", label: "Naam" },
-    { key: "plaats", label: "Plaats" },
-    { key: "aantalLocaties", label: "Locaties", className: "w-20 text-center" },
-    { key: "jarenLid", label: "Jaren Lid", className: "w-24 text-center" },
-  ];
-
   const displayMembers = compact ? sorted.slice(0, 10) : sorted;
 
   return (
@@ -56,32 +62,42 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         <table className="w-full text-sm font-body">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors ${col.className || ""}`}
-                  onClick={() => handleSort(col.key)}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    {col.label}
-                    <SortIcon col={col.key} />
-                  </span>
-                </th>
-              ))}
-              {isAdmin && <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>}
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
+                <span className="inline-flex items-center gap-1">Naam <SortIcon col="naam" /></span>
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("oprichtingJaar")}>
+                <span className="inline-flex items-center gap-1">Oprichting <SortIcon col="oprichtingJaar" /></span>
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-20" onClick={() => handleSort("aantalLocaties")}>
+                <span className="inline-flex items-center gap-1">Locaties <SortIcon col="aantalLocaties" /></span>
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("gemeenten")}>
+                <span className="inline-flex items-center gap-1">Gemeenten <SortIcon col="gemeenten" /></span>
+              </th>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("jarenLid")}>
+                <span className="inline-flex items-center gap-1">Jaren Lid <SortIcon col="jarenLid" /></span>
+              </th>
+              {isAdmin && (
+                <>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+                </>
+              )}
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
           <tbody>
             {displayMembers.map((member) => {
               const isLead = allLeads.some((l) => l.id === member.id);
+              const gemeenten = getGemeenten(member);
+              const eigenaar = member.contacten.find(c => c.functie === "Eigenaar")?.naam || "";
+              const contactpersoon = member.contactpersoon || member.contacten[0]?.naam || "";
               return (
               <tr
                 key={member.id}
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
-                <td className="px-4 py-3 text-muted-foreground">{isLead ? "—" : member.id}</td>
                 <td className="px-4 py-3 font-medium font-display">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
@@ -103,11 +119,13 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-3">{member.plaats}</td>
-                <td className="px-4 py-3 text-center">
-                  <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <MapPin size={13} />
-                    {member.aantalLocaties}
+                <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
+                  {member.oprichtingJaar || "—"}
+                </td>
+                <td className="px-4 py-3 text-center tabular-nums">{member.aantalLocaties}</td>
+                <td className="px-4 py-3">
+                  <span className="text-muted-foreground text-xs">
+                    {gemeenten.join(", ")}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
@@ -128,11 +146,10 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   )}
                 </td>
                 {isAdmin && (
-                  <td className="px-4 py-3">
-                    <span className="text-muted-foreground text-xs">
-                      {member.contacten.find(c => c.functie === "Eigenaar")?.naam || member.contactpersoon}
-                    </span>
-                  </td>
+                  <>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{eigenaar || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{contactpersoon || "—"}</td>
+                  </>
                 )}
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
