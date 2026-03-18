@@ -176,16 +176,19 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
-            {member ? (
-              <p className="text-[11px] text-primary leading-tight mt-0.5">
-                {member.naam}{member.plaats ? ` · ${member.plaats}` : ""}
+            
+            {/* Coffeeshop met locatie-icoon, op eigen regel */}
+            {(member || bl.coffeeshop) && (
+              <p className="flex items-center gap-1 text-[11px] text-primary leading-tight mt-1.5 pt-1.5 border-t border-border/50">
+                <MapPin size={10} className="shrink-0" />
+                {member
+                  ? <>{member.naam}{member.plaats ? ` · ${member.plaats}` : ""}</>
+                  : <>{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</>
+                }
               </p>
-            ) : bl.coffeeshop ? (
-              <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
-            ) : (
-              <p className="text-[11px] leading-tight mt-0.5">&nbsp;</p>
             )}
-            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+            
+            <div className="flex flex-wrap items-center gap-x-3 mt-1.5">
               {bl.bondEmail && (
                 <a
                   href={`mailto:${bl.bondEmail}`}
