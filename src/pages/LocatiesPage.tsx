@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
+import CityMap from "@/components/CityMap";
 
 interface CityData {
   naam: string;
