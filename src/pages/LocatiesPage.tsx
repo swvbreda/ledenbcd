@@ -63,7 +63,7 @@ const LocatiesPage = () => {
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Postcode</th>
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Plaats</th>
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Stadsdeel</th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contact</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Lid</th>
               </tr>
             </thead>
             <tbody>
