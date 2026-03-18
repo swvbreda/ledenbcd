@@ -196,7 +196,7 @@
   },
   {
     "id": 5,
-    "naam": "Green House",
+    "naam": "Greenhouse",
     "plaats": "Amsterdam",
     "stadsdeel": "Centrum",
     "jarenLid": null,
@@ -209,28 +209,28 @@
     "aantalLocaties": 5,
     "locaties": [
       {
-        "naam": "Green House Centrum",
+        "naam": "Greenhouse Centrum",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 191",
         "postcode": "1012 EW"
       },
       {
-        "naam": "Green House Namaste",
+        "naam": "Greenhouse Namaste",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Waterlooplein 345",
         "postcode": "1011 PG"
       },
       {
-        "naam": "Green House Tolstraat",
+        "naam": "Greenhouse Tolstraat",
         "plaats": "Amsterdam",
         "stadsdeel": "Zuid",
         "adres": "Tolstraat 91",
         "postcode": "1074 BC"
       },
       {
-        "naam": "Green House United",
+        "naam": "Greenhouse United",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Haarlemmerstraat 64",
