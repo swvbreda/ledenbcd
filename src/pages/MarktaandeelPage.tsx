@@ -148,15 +148,12 @@ const MarktaandeelPage = () => {
                       <tr
                         key={`${city}-${m.id}`}
                         className="border-b border-border/30 bg-muted/10 hover:bg-muted/20 cursor-pointer transition-colors"
-                        onClick={(e) => { e.stopPropagation(); if (!isLead(m)) navigate(`/leden/${m.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/leden/${m.id}`); }}
                       >
                         <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={2}>
                           <span className="inline-flex items-center gap-2">
                             <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
                             <span className="font-medium text-foreground">{m.naam}</span>
-                            {isLead(m) && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 font-medium">Lead</span>
-                            )}
                             {(m.aantalLocaties || 1) > 1 && (
                               <span className="text-xs text-muted-foreground">({m.aantalLocaties} locaties)</span>
                             )}
@@ -165,7 +162,7 @@ const MarktaandeelPage = () => {
                         <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{m.aantalLocaties || 1}</td>
                         <td className="px-3 py-1.5" />
                         <td className="px-3 py-1.5">
-                          {!isLead(m) && <ExternalLink size={12} className="text-muted-foreground/40" />}
+                          <ExternalLink size={12} className="text-muted-foreground/40" />
                         </td>
                       </tr>
                     ))}

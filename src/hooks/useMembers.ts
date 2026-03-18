@@ -7,6 +7,8 @@ export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
 /** Members + leads combined — use for market share / representation calculations */
 export const allRepresented = [...allMembers, ...allLeads] as Member[];
+/** Members + leads combined — use for display in ledenlijst (leads have no lidnummer) */
+export const allMembersAndLeads = [...allMembers, ...allLeads] as Member[];
 
 export function useMembers() {
   const [searchQuery, setSearchQuery] = useState("");
