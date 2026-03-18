@@ -17,7 +17,11 @@ export function useMembers() {
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
   const [filterJaren, setFilterJaren] = useState("");
 
-  const allIncludingLeads = allMembersAndLeads;
+  const archivedIds = useMemo(() => getArchivedIds(), []);
+  const allIncludingLeads = useMemo(
+    () => allMembersAndLeads.filter((m) => !archivedIds.includes(m.id)),
+    [archivedIds]
+  );
 
   const cities = useMemo(
     () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),

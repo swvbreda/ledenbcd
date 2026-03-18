@@ -1,29 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserMinus, ArrowLeft, ArrowRight, Search, MapPin, ExternalLink } from "lucide-react";
+import { UserMinus, Search, MapPin, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import type { Member } from "@/data/types";
-import membersData from "@/data/members.json";
-import oldMembersData from "@/data/old-members.json";
+import { allMembersAndLeads } from "@/hooks/useMembers";
+import { getArchivedIds } from "@/hooks/useArchive";
 
 const OudLedenPage = () => {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const oldMembers = oldMembersData as Member[];
+
+  const archivedIds = useMemo(() => getArchivedIds(), []);
+  const oldMembers = useMemo(
+    () => allMembersAndLeads.filter((m) => archivedIds.includes(m.id)),
+    [archivedIds]
+  );
 
   const filtered = searchQuery
     ? oldMembers.filter(
