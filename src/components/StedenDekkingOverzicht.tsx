@@ -8,14 +8,15 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
   const totalMembers = members.length;
+  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD members per city
+  // Count BCD locations per city
   const cityCount: Record<string, number> = {};
   members.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + 1;
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
-  const marketPct = Math.round((totalMembers / totalNL) * 100);
+  const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
   // Top cities by total coffeeshops with BCD share
   const highlights = Object.entries(perStad)
@@ -31,7 +32,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
     <div className="bg-card rounded-lg border border-border p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel BCD</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        {totalMembers} van {totalNL} coffeeshops in NL · bron WODC 2024
+        {totalLocaties} van {totalNL} coffeeshops in NL · {totalMembers} leden · bron WODC 2024
       </p>
 
       {/* Overall market share */}
@@ -39,7 +40,7 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
         <div className="flex justify-between text-sm mb-1">
           <span className="font-medium">Landelijk</span>
           <span className="text-muted-foreground tabular-nums">
-            {totalMembers}/{totalNL} · {marketPct}%
+            {totalLocaties}/{totalNL} · {marketPct}%
           </span>
         </div>
         <div className="h-4 bg-muted rounded-full overflow-hidden">

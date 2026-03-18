@@ -11,11 +11,12 @@ const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const members = allMembers;
   const totalMembers = members.length;
+  const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
 
-  // Count BCD members per city
+  // Count BCD locations per city
   const cityCount: Record<string, number> = {};
   members.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + 1;
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
   // All cities from NL data, enriched with BCD data
@@ -33,7 +34,7 @@ const MarktaandeelPage = () => {
     .map(([city, bcd]) => ({ city, total: 0, bcd, pct: 0 }))
     .sort((a, b) => b.bcd - a.bcd);
 
-  const marketPct = Math.round((totalMembers / totalNL) * 100);
+  const marketPct = Math.round((totalLocaties / totalNL) * 100);
 
   // G4 stats
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
@@ -52,7 +53,7 @@ const MarktaandeelPage = () => {
         </button>
         <h2 className="text-xl sm:text-2xl font-bold font-display">Marktaandeel BCD</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          BCD-leden t.o.v. het totaal aantal coffeeshops per stad · bron: WODC 2024
+          BCD-locaties t.o.v. het totaal aantal coffeeshops per stad · bron: WODC 2024
         </p>
       </div>
 
@@ -61,6 +62,7 @@ const MarktaandeelPage = () => {
         {[
           { label: "Coffeeshops NL", value: totalNL },
           { label: "BCD-leden", value: totalMembers },
+          { label: "BCD-locaties", value: totalLocaties },
           { label: "Marktaandeel", value: `${marketPct}%` },
           { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
         ].map((card) => (
