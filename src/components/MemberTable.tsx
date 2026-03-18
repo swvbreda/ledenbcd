@@ -65,7 +65,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </th>
               ))}
-              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contact</th>
+              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
