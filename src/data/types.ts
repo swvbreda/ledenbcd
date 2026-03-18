@@ -4,6 +4,10 @@ export interface Location {
   stadsdeel?: string;
   adres?: string;
   postcode?: string;
+  contactpersoon?: string;
+  functie?: string;
+  telefoon?: string;
+  email?: string;
 }
 
 export interface Member {

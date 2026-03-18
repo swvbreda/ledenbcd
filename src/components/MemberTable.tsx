@@ -180,16 +180,30 @@ const MemberTable = ({ members, searchQuery }: MemberTableProps) => {
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                             Locaties ({member.aantalLocaties})
                           </h4>
-                          <div className="space-y-1.5">
+                          <div className="space-y-2.5">
                             {member.locaties.map((loc, i) => (
                               <div key={i} className="text-xs">
-                                <span className="font-medium">{loc.naam}</span>
-                                {loc.adres && <span className="text-muted-foreground"> · {loc.adres}</span>}
-                                {loc.plaats && <span className="text-muted-foreground"> · {loc.plaats}</span>}
-                                {loc.stadsdeel && (
-                                  <span className="ml-1 inline-block px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px]">
-                                    {loc.stadsdeel}
-                                  </span>
+                                <div>
+                                  <span className="font-medium">{loc.naam}</span>
+                                  {loc.adres && <span className="text-muted-foreground"> · {loc.adres}</span>}
+                                  {loc.plaats && <span className="text-muted-foreground"> · {loc.plaats}</span>}
+                                  {loc.stadsdeel && (
+                                    <span className="ml-1 inline-block px-1.5 py-0.5 bg-muted rounded text-muted-foreground text-[10px]">
+                                      {loc.stadsdeel}
+                                    </span>
+                                  )}
+                                </div>
+                                {loc.contactpersoon && (
+                                  <div className="ml-3 mt-0.5 text-muted-foreground">
+                                    <span>{loc.contactpersoon}</span>
+                                    {loc.functie && <span> · {loc.functie}</span>}
+                                    {loc.telefoon && (
+                                      <span className="ml-2"><Phone size={10} className="inline" /> {loc.telefoon}</span>
+                                    )}
+                                    {loc.email && (
+                                      <span className="ml-2 text-primary"><Mail size={10} className="inline" /> {loc.email}</span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             ))}
