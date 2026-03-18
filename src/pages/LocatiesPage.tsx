@@ -12,7 +12,6 @@ interface CityData {
   naam: string;
   aantalLeden: number;
   aantalLocaties: number;
-  stadsdelen: string[];
   leden: { id: number; naam: string; aantalLocaties: number }[];
   totaalNL: number;
   marktPct: number;
@@ -47,7 +46,7 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 const LocatiesPage = () => {
   const [search, setSearch] = useState("");
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<"naam" | "aantalLeden" | "aantalLocaties" | "marktPct">("aantalLeden");
+  const [sortKey, setSortKey] = useState<"naam" | "aantalLocaties" | "marktPct">("aantalLocaties");
   const [sortAsc, setSortAsc] = useState(false);
   const navigate = useNavigate();
 
@@ -83,7 +82,6 @@ const LocatiesPage = () => {
             naam: plaats,
             aantalLeden: 0,
             aantalLocaties: 0,
-            stadsdelen: [],
             leden: [],
             totaalNL: totaal,
             marktPct: totaal > 0 ? Math.round((bcd / totaal) * 100) : 0,
@@ -96,10 +94,6 @@ const LocatiesPage = () => {
           city.aantalLeden++;
           city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => (loc.plaats || m.plaats) === plaats).length });
         }
-
-        if (l.stadsdeel && !city.stadsdelen.includes(l.stadsdeel)) {
-          city.stadsdelen.push(l.stadsdeel);
-        }
       }
     }
 
@@ -111,7 +105,6 @@ const LocatiesPage = () => {
           naam: plaats,
           aantalLeden: 0,
           aantalLocaties: count,
-          stadsdelen: [],
           leden: [],
           totaalNL: totaal,
           marktPct: totaal > 0 ? Math.round((count / totaal) * 100) : 0,
@@ -126,7 +119,7 @@ const LocatiesPage = () => {
     let result = cities;
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((c) => c.naam.toLowerCase().includes(q) || c.stadsdelen.some((s) => s.toLowerCase().includes(q)));
+      result = result.filter((c) => c.naam.toLowerCase().includes(q));
     }
     return [...result].sort((a, b) => {
       const av = a[sortKey];
@@ -207,9 +200,6 @@ const LocatiesPage = () => {
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
                   <span className="inline-flex items-center gap-1">Stad <SortIcon col="naam" /></span>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("aantalLeden")}>
-                  <span className="inline-flex items-center gap-1">Leden <SortIcon col="aantalLeden" /></span>
-                </th>
                 <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("aantalLocaties")}>
                   <span className="inline-flex items-center gap-1">BCD <SortIcon col="aantalLocaties" /></span>
                 </th>
@@ -217,7 +207,6 @@ const LocatiesPage = () => {
                 <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("marktPct")}>
                   <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Stadsdelen</th>
               </tr>
             </thead>
             <tbody>
@@ -231,11 +220,6 @@ const LocatiesPage = () => {
                       <span className="inline-flex items-center gap-2 font-medium font-display">
                         <MapPin size={14} className="text-primary" />
                         {city.naam}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
-                        <Users size={13} /> {city.aantalLeden}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center tabular-nums">{city.aantalLocaties}</td>
@@ -257,13 +241,6 @@ const LocatiesPage = () => {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {city.stadsdelen.sort().map((sd) => (
-                          <span key={sd} className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">{sd}</span>
-                        ))}
-                      </div>
-                    </td>
                   </tr>
                   {expandedCity === city.naam && city.leden
                     .sort((a, b) => a.naam.localeCompare(b.naam))
@@ -279,10 +256,7 @@ const LocatiesPage = () => {
                             <span className="text-xs text-muted-foreground ml-1.5">({lid.aantalLocaties} loc)</span>
                           )}
                         </td>
-                        <td colSpan={4} />
-                        <td className="px-4 py-2.5">
-                          <ExternalLink size={12} className="text-muted-foreground/40" />
-                        </td>
+                        <td colSpan={3} />
                       </tr>
                     ))}
                 </React.Fragment>
