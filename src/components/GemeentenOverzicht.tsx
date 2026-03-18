@@ -178,7 +178,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
             In{" "}
             <span className="font-medium text-foreground">
-              {EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
+              {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
             </span>
             {" "}gemeenten vertegenwoordigd binnen het experiment
           </div>
