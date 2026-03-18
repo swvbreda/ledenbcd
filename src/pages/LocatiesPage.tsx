@@ -259,7 +259,20 @@ const LocatiesPage = () => {
                             <span className="text-xs text-muted-foreground">{sd.naam}</span>
                           </td>
                           <td className="px-3 py-1.5 text-right tabular-nums text-xs">{sd.aantalLocaties}</td>
-                          <td colSpan={2} />
+                          <td />
+                          <td className="px-3 py-1.5">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-primary/40"
+                                  style={{ width: `${Math.round((sd.aantalLocaties / city.aantalLocaties) * 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-xs tabular-nums w-10 text-right text-muted-foreground">
+                                {Math.round((sd.aantalLocaties / city.aantalLocaties) * 100)}%
+                              </span>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                   {expandedCity === city.naam && city.stadsdelen.length === 0 && (
