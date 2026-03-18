@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Member } from "@/data/types";
 import { allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
