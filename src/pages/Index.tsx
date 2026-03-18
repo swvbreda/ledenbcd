@@ -29,6 +29,8 @@ const Index = () => {
         <LedenPerStadOverzicht members={allMembers} />
       </div>
 
+      <BestuurOverzicht members={allMembers} />
+
       <JubileumOverzicht members={allMembers} />
     </div>
   );
