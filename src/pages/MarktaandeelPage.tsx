@@ -128,14 +128,7 @@ const MarktaandeelPage = () => {
                       } ${isExpanded ? "bg-muted/20" : ""}`}
                       onClick={() => cityMembers.length > 0 && toggleCity(city)}
                     >
-                      <td className="px-3 py-1.5 font-medium truncate">
-                        <span className="inline-flex items-center gap-1.5">
-                          {cityMembers.length > 0 && (
-                            isExpanded ? <ChevronDown size={14} className="text-muted-foreground shrink-0" /> : <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                          )}
-                          {city}
-                        </span>
-                      </td>
+                      <td className="px-3 py-1.5 font-medium truncate">{city}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{cityMembers.length || 0}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
