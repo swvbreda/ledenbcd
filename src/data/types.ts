@@ -47,4 +47,5 @@ export interface Member {
   instagram?: string;
   facebook?: string;
   googleMaps?: string;
+  bestuursfunctie?: string;
 }
