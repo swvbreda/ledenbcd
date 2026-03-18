@@ -130,6 +130,23 @@ const MemberTable = ({ members, searchQuery }: MemberTableProps) => {
                               Bedrijf: <span className="text-foreground">{member.bedrijfsnaam}</span>
                             </p>
                           )}
+                          {member.contactpersoon2 && (
+                            <div className="mt-3 pt-2 border-t border-border">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">2e Contactpersoon</p>
+                              <p className="font-medium text-xs">{member.contactpersoon2}</p>
+                              {member.functie2 && <p className="text-muted-foreground text-xs">{member.functie2}</p>}
+                              {member.email2 && (
+                                <p className="flex items-center gap-1 text-xs mt-0.5 text-primary">
+                                  <Mail size={12} /> {member.email2}
+                                </p>
+                              )}
+                              {member.telefoon2 && (
+                                <p className="flex items-center gap-1 text-xs mt-0.5 text-muted-foreground">
+                                  <Phone size={12} /> {member.telefoon2}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Factuurgegevens</h4>
