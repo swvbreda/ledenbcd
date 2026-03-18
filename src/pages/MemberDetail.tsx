@@ -171,15 +171,15 @@ const MemberDetail = () => {
           <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
             <FileText size={16} className="text-primary" /> Factuurgegevens
           </h3>
-          <div className="space-y-2">
-            {member.factuurBedrijfsnaam ? (
-              <p className="font-medium">{member.factuurBedrijfsnaam}</p>
+           <div className="space-y-2">
+            {(member.factuurBedrijfsnaam || member.bedrijfsnaam) ? (
+              <p className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam}</p>
             ) : (
               <p className="text-sm text-muted-foreground">Geen bedrijfsnaam</p>
             )}
-            {member.factuurKvk && (
+            {(member.factuurKvk || member.kvk) && (
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Hash size={13} /> KVK: <span className="font-mono">{member.factuurKvk}</span>
+                <Hash size={13} /> KVK: <span className="font-mono">{member.factuurKvk || member.kvk}</span>
               </p>
             )}
             {member.factuurAdres && (
