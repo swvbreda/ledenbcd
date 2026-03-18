@@ -89,12 +89,21 @@ const LocatiesPage = () => {
             aantalLeden: 0,
             aantalLocaties: 0,
             leden: [],
+            stadsdelen: [],
             totaalNL: totaal,
             marktPct: 0,
           });
         }
         const city = map.get(plaats)!;
         city.aantalLocaties++;
+
+        // Track stadsdeel
+        const sd = l.stadsdeel || m.stadsdeel || "";
+        if (sd) {
+          const existing = city.stadsdelen.find((s) => s.naam === sd);
+          if (existing) existing.aantalLocaties++;
+          else city.stadsdelen.push({ naam: sd, aantalLocaties: 1 });
+        }
 
         if (!city.leden.some((x) => x.id === m.id)) {
           city.aantalLeden++;
