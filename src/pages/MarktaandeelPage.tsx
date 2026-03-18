@@ -124,9 +124,9 @@ const MarktaandeelPage = () => {
                     <tr
                       key={city}
                       className={`border-b border-border/50 transition-colors ${
-                        cityMembers.length > 0 ? "cursor-pointer hover:bg-muted/30" : ""
+                        cityEntries.length > 0 ? "cursor-pointer hover:bg-muted/30" : ""
                       } ${isExpanded ? "bg-muted/20" : ""}`}
-                      onClick={() => cityMembers.length > 0 && toggleCity(city)}
+                      onClick={() => cityEntries.length > 0 && toggleCity(city)}
                     >
                       <td className="px-3 py-1.5 font-medium truncate">{city}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
