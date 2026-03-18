@@ -1406,7 +1406,7 @@
     "telefoon": "06 12 03 95 51",
     "email": "jeroen@vanhamholding.com",
     "bedrijfsnaam": "Hunters",
-    "aantalLocaties": 13,
+    "aantalLocaties": 8,
     "locaties": [
       {
         "naam": "Hunters Downtown",
@@ -1463,41 +1463,6 @@
         "stadsdeel": "",
         "adres": "Schoterweg 66",
         "postcode": "2021 HJ"
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "",
-        "postcode": ""
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "",
-        "postcode": ""
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "",
-        "postcode": ""
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "",
-        "postcode": ""
-      },
-      {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "",
-        "adres": "",
-        "postcode": ""
       }
     ],
     "kvk": "34200951",
@@ -2369,7 +2334,7 @@
     "telefoon": "31615315539",
     "email": "info@coffeeshop-regine.nl",
     "bedrijfsnaam": "Regine",
-    "aantalLocaties": 1,
+    "aantalLocaties": 2,
     "locaties": [
       {
         "naam": "Regine",
@@ -2377,6 +2342,13 @@
         "stadsdeel": "West",
         "adres": "Bilderdijkstraat 188H",
         "postcode": "1053 LE"
+      },
+      {
+        "naam": "Regine",
+        "plaats": "Haarlem",
+        "stadsdeel": "",
+        "adres": "Gedempte Oude Gracht 28",
+        "postcode": "2011 GR"
       }
     ],
     "kvk": "",
@@ -7643,43 +7615,6 @@
         "email": ""
       }
     ],
-    "kvk": null,
-    "factuurEmail": null,
-    "factuurBedrijfsnaam": null,
-    "factuurKvk": null,
-    "factuurAdres": null,
-    "factuurPostcode": null,
-    "factuurPlaats": null,
-    "factuurTelefoon": null,
-    "contactpersoon2": null,
-    "functie2": null,
-    "telefoon2": null,
-    "email2": null
-  },
-  {
-    "id": 130,
-    "naam": "Regine",
-    "plaats": "Haarlem",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "oprichtingsDatum": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Regine",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Regine",
-        "plaats": "Haarlem",
-        "stadsdeel": "",
-        "adres": "Gedempte Oude Gracht 28",
-        "postcode": "2011 GR"
-      }
-    ],
-    "contacten": [],
     "kvk": null,
     "factuurEmail": null,
     "factuurBedrijfsnaam": null,
