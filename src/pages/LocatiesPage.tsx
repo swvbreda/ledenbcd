@@ -194,17 +194,17 @@ const LocatiesPage = () => {
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm font-body table-fixed">
+          <table className="w-full text-sm font-body">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="px-3 py-2 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
-                  <span className="inline-flex items-center gap-1">Stad <SortIcon col="naam" /></span>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[40%]" onClick={() => handleSort("naam")}>
+                  <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="naam" /></span>
                 </th>
-                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-16" onClick={() => handleSort("aantalLocaties")}>
-                  <span className="inline-flex items-center gap-1">BCD <SortIcon col="aantalLocaties" /></span>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[15%]" onClick={() => handleSort("aantalLocaties")}>
+                  <span className="inline-flex items-center gap-1">Aangesloten <SortIcon col="aantalLocaties" /></span>
                 </th>
-                <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-16">Totaal</th>
-                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("marktPct")}>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-[15%]">Totaal</th>
+                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[30%]" onClick={() => handleSort("marktPct")}>
                   <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
                 </th>
               </tr>
@@ -226,14 +226,14 @@ const LocatiesPage = () => {
                     <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{city.totaalNL || "—"}</td>
                     <td className="px-3 py-2">
                       {city.totaalNL > 0 ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${city.marktPct >= 30 ? "bg-success" : "bg-primary/60"}`}
                               style={{ width: `${Math.min(city.marktPct, 100)}%` }}
                             />
                           </div>
-                          <span className={`text-xs tabular-nums w-8 text-right ${city.marktPct >= 30 ? "text-success font-medium" : ""}`}>
+                          <span className={`text-xs tabular-nums w-10 text-right ${city.marktPct >= 30 ? "text-success font-medium" : ""}`}>
                             {city.marktPct}%
                           </span>
                         </div>
