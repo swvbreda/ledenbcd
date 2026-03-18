@@ -20,7 +20,10 @@ const StatistiekenPage = () => {
         <LidmaatschapsduurChart members={allMembers} />
       </div>
 
-      <LedenPerStadOverzicht members={allMembers} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <LedenPerStadOverzicht members={allMembers} />
+        <StedenDekkingOverzicht members={allMembers} />
+      </div>
     </div>
   );
 };
