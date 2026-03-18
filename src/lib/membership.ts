@@ -1,28 +1,28 @@
 import type { Member } from "@/data/types";
 
-type MemberYearsSource = Pick<Member, "jarenLid" | "lidSinds">;
+type MemberYearsSource = Pick<Member, "lidSinds" | "lidJaren">;
 
 const BOND_START_YEAR = 1994;
 
-const clampToBondLifetime = (years: number): number | null => {
-  if (years < 0) return null;
+const getStartYearFromFactuurJaren = (lidJaren?: number[]): number | null => {
+  if (!Array.isArray(lidJaren) || lidJaren.length === 0) return null;
 
-  const currentYear = new Date().getFullYear();
-  const maxBondYears = Math.max(0, currentYear - BOND_START_YEAR);
+  const validYears = lidJaren.filter((year) => Number.isInteger(year));
+  if (validYears.length === 0) return null;
 
-  return Math.min(years, maxBondYears);
+  return Math.min(...validYears);
 };
 
 export const getMembershipYears = (member: MemberYearsSource): number | null => {
-  if (typeof member.lidSinds === "number") {
-    const currentYear = new Date().getFullYear();
-    const effectiveStartYear = Math.max(member.lidSinds, BOND_START_YEAR);
-    return clampToBondLifetime(currentYear - effectiveStartYear);
-  }
+  const startYear =
+    typeof member.lidSinds === "number"
+      ? member.lidSinds
+      : getStartYearFromFactuurJaren(member.lidJaren);
 
-  if (typeof member.jarenLid === "number") {
-    return clampToBondLifetime(member.jarenLid);
-  }
+  if (startYear === null) return null;
 
-  return null;
+  const currentYear = new Date().getFullYear();
+  if (startYear < BOND_START_YEAR || startYear > currentYear) return null;
+
+  return currentYear - startYear;
 };
