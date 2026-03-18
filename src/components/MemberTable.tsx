@@ -77,7 +77,17 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
                 <td className="px-4 py-3 text-muted-foreground">{member.id}</td>
-                <td className="px-4 py-3 font-medium font-display">{member.naam}</td>
+                <td className="px-4 py-3 font-medium font-display">
+                  <span className="inline-flex items-center gap-1.5">
+                    {member.naam}
+                    {member.bestuursfunctie && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent/15 text-accent-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
+                        <Shield size={10} />
+                        Bestuur
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td className="px-4 py-3">{member.plaats}</td>
                 <td className="px-4 py-3 text-center">
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
