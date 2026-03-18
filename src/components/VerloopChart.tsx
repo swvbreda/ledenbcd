@@ -63,9 +63,9 @@ const VerloopChart = () => {
             <p className="text-xs text-muted-foreground">+{yoyAbsolute} leden</p>
           </div>
           <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Sinds {first.year}</p>
-            <p className="text-3xl font-bold font-display text-primary">+{totalGrowth}%</p>
-            <p className="text-xs text-muted-foreground">+{current.leden - first.leden} leden</p>
+            <p className="text-xs text-muted-foreground mb-1">Laatste 5 jaar</p>
+            <p className="text-3xl font-bold font-display text-primary">+{fiveYrGrowth}%</p>
+            <p className="text-xs text-muted-foreground">+{current.leden - fiveYearsAgo.leden} leden</p>
           </div>
         </div>
       </div>
