@@ -100,14 +100,20 @@ const StatCards = ({ members }: StatCardsProps) => {
         </div>
       </div>
 
-      {/* Gem. Lidmaatschap */}
-      <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+      {/* G4 dekking */}
+      <div
+        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        onClick={() => navigate("/locaties")}
+      >
         <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gem. Lidmaatschap</p>
-          <Clock size={18} className="text-success" />
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground">G4 dekking</p>
+          <MapPin size={18} className="text-success" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{avgYears} jr</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{memberYears.length} met data</p>
+        <div className="mt-1">
+          <MiniGauge pct={g4Pct} color="hsl(var(--success))" />
+          <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
+          <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
+        </div>
       </div>
     </div>
   );
