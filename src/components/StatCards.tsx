@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Users, Building2, Clock, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { allRepresented, allLeads } from "@/hooks/useMembers";
 
 interface StatCardsProps {
   members: Member[];
