@@ -14,7 +14,7 @@ const StatCards = ({ members }: StatCardsProps) => {
     ? Math.round(withYears.reduce((sum, m) => sum + (m.jarenLid || 0), 0) / withYears.length)
     : 0;
   const incomplete = members.filter(
-    (m) => !m.contactpersoon || !m.telefoon || !m.email
+    (m) => !m.contacten?.length || !m.contacten.some(c => c.telefoon) || !m.contacten.some(c => c.email)
   ).length;
   const withContact = members.filter((m) => m.contactpersoon2).length;
 
