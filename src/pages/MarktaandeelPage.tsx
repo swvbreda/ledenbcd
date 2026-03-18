@@ -129,7 +129,6 @@ const MarktaandeelPage = () => {
                     >
                       <td className="px-3 py-1.5 font-medium truncate">{city}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
-                      <td className="px-3 py-1.5 text-right tabular-nums">{cityMembers.length || 0}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">
                         <span className={pct >= 30 ? "text-success font-medium" : pct > 0 ? "text-foreground" : "text-muted-foreground"}>
