@@ -9,7 +9,7 @@ interface DashboardSidebarProps {
 const navItems = [
   { id: "overzicht", label: "Overzicht", icon: LayoutDashboard },
   { id: "leden", label: "Ledenlijst", icon: Users },
-  { id: "locaties", label: "Locaties", icon: MapPin },
+  { id: "locaties", label: "Gemeenten", icon: MapPin },
   { id: "statistieken", label: "Statistieken", icon: BarChart3 },
 ];
 
