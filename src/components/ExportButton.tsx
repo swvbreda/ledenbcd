@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
 import type { Member } from "@/data/types";
+import { getMembershipYears } from "@/lib/membership";
 
 interface ExportButtonProps {
   members: Member[];
