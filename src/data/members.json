@@ -1,27 +1,49 @@
 [
   {
     "id": 1,
-    "naam": "The Bull",
-    "plaats": "Vlaardingen",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "Ron",
+    "naam": "The Bulldog",
+    "plaats": "Amsterdam",
+    "stadsdeel": "Centrum",
+    "jarenLid": 51,
+    "oprichtingJaar": 1975,
+    "contactpersoon": "Henk de Vries",
     "functie": "Eigenaar",
-    "telefoon": "wil niet in what's app",
-    "email": "thebullvld@icloud.com",
-    "bedrijfsnaam": "The Bull BV",
-    "aantalLocaties": 1,
+    "telefoon": "31653244418",
+    "email": "hjmdevries@hotmail.com",
+    "bedrijfsnaam": "The Bulldog",
+    "aantalLocaties": 4,
     "locaties": [
       {
-        "naam": "The Bull",
-        "plaats": "Vlaardingen",
-        "adres": "Koningin Wilhelminahaven NZ 11 B",
-        "postcode": "3134KE"
+        "naam": "The Bulldog The First",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Oudezijds Voorburgwal 90",
+        "postcode": "1012 GJ"
+      },
+      {
+        "naam": "The Bulldog Palace",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Leidseplein 17",
+        "postcode": "1017 PS"
+      },
+      {
+        "naam": "The Bulldog The Energy",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Oudezijds Voorburgwal 220",
+        "postcode": "1012 GJ"
+      },
+      {
+        "naam": "The Bulldog Port",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Coenhavenweg 26",
+        "postcode": "1013 BL"
       }
     ],
-    "kvk": "54046947",
-    "factuurEmail": "thebullvld@icloud.com"
+    "kvk": "",
+    "factuurEmail": "administratie@leidsepleinbeheer.nl"
   },
   {
     "id": 2,
@@ -2781,49 +2803,27 @@
   },
   {
     "id": 110,
-    "naam": "The Bulldog",
-    "plaats": "Amsterdam",
-    "stadsdeel": "Centrum",
-    "jarenLid": 51,
-    "oprichtingJaar": 1975,
-    "contactpersoon": "Henk de Vries",
+    "naam": "The Bull",
+    "plaats": "Vlaardingen",
+    "stadsdeel": "",
+    "jarenLid": null,
+    "oprichtingJaar": null,
+    "contactpersoon": "Ron",
     "functie": "Eigenaar",
-    "telefoon": "31653244418",
-    "email": "hjmdevries@hotmail.com",
-    "bedrijfsnaam": "The Bulldog",
-    "aantalLocaties": 4,
+    "telefoon": "wil niet in what's app",
+    "email": "thebullvld@icloud.com",
+    "bedrijfsnaam": "The Bull BV",
+    "aantalLocaties": 1,
     "locaties": [
       {
-        "naam": "The Bulldog The First",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Oudezijds Voorburgwal 90",
-        "postcode": "1012 GJ"
-      },
-      {
-        "naam": "The Bulldog Palace",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Leidseplein 17",
-        "postcode": "1017 PS"
-      },
-      {
-        "naam": "The Bulldog The Energy",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Oudezijds Voorburgwal 220",
-        "postcode": "1012 GJ"
-      },
-      {
-        "naam": "The Bulldog Port",
-        "plaats": "Amsterdam",
-        "stadsdeel": "West",
-        "adres": "Coenhavenweg 26",
-        "postcode": "1013 BL"
+        "naam": "The Bull",
+        "plaats": "Vlaardingen",
+        "adres": "Koningin Wilhelminahaven NZ 11 B",
+        "postcode": "3134KE"
       }
     ],
-    "kvk": "",
-    "factuurEmail": "administratie@leidsepleinbeheer.nl"
+    "kvk": "54046947",
+    "factuurEmail": "thebullvld@icloud.com"
   },
   {
     "id": 111,
