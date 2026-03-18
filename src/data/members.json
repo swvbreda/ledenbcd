@@ -2721,35 +2721,6 @@
     "factuurEmail": "d.zijp@hotmail.com"
   },
   {
-    "id": 68,
-    "naam": "Regine",
-    "plaats": "Haarlem",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Regine",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Regine",
-        "plaats": "Haarlem",
-        "adres": "Gedempte Oude Gracht 28",
-        "postcode": "2011 GR"
-      }
-    ],
-    "contacten": [],
-    "factuurBedrijfsnaam": "Regine",
-    "factuurTelefoon": "06 15 31 55 39",
-    "factuurAdres": "Bilderdijkstraat 188H",
-    "factuurPostcode": "1053 LE",
-    "factuurPlaats": "Amsterdam",
-    "factuurEmail": "info@coffeeshop-regine.nl"
-  },
-  {
     "id": 69,
     "naam": "Bullwacki",
     "plaats": "Amsterdam",
