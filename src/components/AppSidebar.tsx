@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, PieChart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ const navItems = [
   { title: "Oud-leden", url: "/oud-leden", icon: UserMinus },
   { title: "Locaties", url: "/locaties", icon: MapPin },
   { title: "Statistieken", url: "/statistieken", icon: BarChart3 },
+  { title: "Marktaandeel", url: "/marktaandeel", icon: PieChart },
 ];
 
 export function AppSidebar() {
