@@ -20,4 +20,6 @@ export interface Member {
   bedrijfsnaam: string;
   aantalLocaties: number;
   locaties: Location[];
+  kvk?: string;
+  factuurEmail?: string;
 }

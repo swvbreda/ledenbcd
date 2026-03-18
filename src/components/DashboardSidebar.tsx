@@ -68,7 +68,7 @@ const DashboardSidebar = ({ activeTab, onTabChange }: DashboardSidebarProps) => 
           })}
         </nav>
         <div className="px-5 py-4 border-t border-sidebar-border text-xs text-sidebar-muted">
-          121 leden · feb 2026
+          113 leden · feb 2026
         </div>
       </aside>
     </>
