@@ -30,7 +30,6 @@ import {
 const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
   { title: "Ledenlijst", url: "/leden", icon: Users },
-  { title: "Oud-leden", url: "/oud-leden", icon: UserMinus },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Statistieken", url: "/statistieken", icon: BarChart3 },
 ];
