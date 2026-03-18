@@ -40,10 +40,13 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-        <Shield size={16} className="text-primary" />
-        Bestuur BCD
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold font-display flex items-center gap-2">
+          <Shield size={16} className="text-primary" />
+          Bestuur BCD
+        </h3>
+        <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {bestuursleden.map((bl) => {
           const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
