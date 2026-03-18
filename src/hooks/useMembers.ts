@@ -16,12 +16,14 @@ export function useMembers() {
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
   const [filterJaren, setFilterJaren] = useState("");
 
+  const allIncludingLeads = allMembersAndLeads;
+
   const cities = useMemo(
-    () => [...new Set(allMembers.map((m) => m.plaats).filter(Boolean))].sort(),
+    () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),
     []
   );
   const stadsdelen = useMemo(
-    () => [...new Set(allMembers.map((m) => m.stadsdeel).filter(Boolean))].sort(),
+    () => [...new Set(allIncludingLeads.map((m) => m.stadsdeel).filter(Boolean))].sort(),
     []
   );
 
