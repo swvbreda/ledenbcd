@@ -53,7 +53,11 @@ export function useMembers() {
         m.bedrijfsnaam.toLowerCase().includes(q) ||
         String(m.id).includes(q) ||
         (m.factuurBedrijfsnaam || "").toLowerCase().includes(q) ||
-        m.locaties.some((l) => l.naam.toLowerCase().includes(q))
+        m.locaties.some((l) =>
+          l.naam.toLowerCase().includes(q) ||
+          (l.plaats || "").toLowerCase().includes(q) ||
+          (l.adres || "").toLowerCase().includes(q)
+        )
     );
   }, [filteredMembers, searchQuery]);
 
