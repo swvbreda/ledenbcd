@@ -33,7 +33,10 @@ const Index = () => {
         <StadsdeelChart members={allMembers} />
       </div>
 
-      <YearChart members={allMembers} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <YearChart members={allMembers} />
+        <VerloopChart />
+      </div>
 
       <div>
         <div className="flex items-center justify-between mb-3">
