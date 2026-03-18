@@ -61,15 +61,6 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                     <Mail size={11} /> {bl.bondEmail}
                   </a>
                 )}
-                {contact.email && contact.email !== bl.bondEmail && (
-                  <a
-                    href={`mailto:${contact.email}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Mail size={11} /> {contact.email}
-                  </a>
-                )}
                 {contact.telefoon && (
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Phone size={11} /> {contact.telefoon}
