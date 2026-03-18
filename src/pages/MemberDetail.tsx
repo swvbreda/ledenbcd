@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const member = allMembers.find((m) => String(m.id) === id);
 
   if (!member) {
