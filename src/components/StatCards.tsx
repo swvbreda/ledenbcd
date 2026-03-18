@@ -1,4 +1,4 @@
-import { Users, MapPin, Building2, Clock } from "lucide-react";
+import { Users, MapPin, Building2, Clock, AlertTriangle, UserCheck } from "lucide-react";
 import type { Member } from "@/data/types";
 
 interface StatCardsProps {
@@ -9,29 +9,34 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalMembers = members.length;
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const uniqueCities = new Set(members.map((m) => m.plaats).filter(Boolean)).size;
-  const avgYears = Math.round(
-    members.filter((m) => m.jarenLid).reduce((sum, m) => sum + (m.jarenLid || 0), 0) /
-      members.filter((m) => m.jarenLid).length
-  );
+  const withYears = members.filter((m) => m.jarenLid);
+  const avgYears = withYears.length
+    ? Math.round(withYears.reduce((sum, m) => sum + (m.jarenLid || 0), 0) / withYears.length)
+    : 0;
+  const incomplete = members.filter(
+    (m) => !m.contactpersoon || !m.telefoon || !m.email
+  ).length;
+  const withContact = members.filter((m) => m.contactpersoon2).length;
 
   const stats = [
-    { label: "Totaal Leden", value: totalMembers, icon: Users, color: "text-primary" },
-    { label: "Locaties", value: totalLocations, icon: MapPin, color: "text-success" },
-    { label: "Steden", value: uniqueCities, icon: Building2, color: "text-primary" },
-    { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-muted-foreground" },
+    { label: "Totaal Leden", value: totalMembers, icon: Users, color: "text-primary", desc: `${totalLocations} locaties` },
+    { label: "Steden", value: uniqueCities, icon: Building2, color: "text-primary", desc: "verspreid over NL" },
+    { label: "Gem. Lidmaatschap", value: `${avgYears} jr`, icon: Clock, color: "text-success", desc: `${withYears.length} met data` },
+    { label: "Compleetheid", value: `${Math.round(((totalMembers - incomplete) / totalMembers) * 100)}%`, icon: incomplete > 0 ? AlertTriangle : UserCheck, color: incomplete > 0 ? "text-destructive" : "text-success", desc: incomplete > 0 ? `${incomplete} onvolledig` : "Alle compleet" },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
-          <div key={stat.label} className="bg-card rounded-lg border border-border p-5">
+          <div key={stat.label} className="bg-card rounded-lg border border-border p-4 sm:p-5">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">{stat.label}</p>
               <Icon size={18} className={stat.color} />
             </div>
-            <p className="text-2xl font-bold font-display mt-2">{stat.value}</p>
+            <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{stat.value}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{stat.desc}</p>
           </div>
         );
       })}
