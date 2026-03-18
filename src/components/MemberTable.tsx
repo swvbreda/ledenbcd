@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink, Shield } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { allLeads } from "@/hooks/useMembers";
@@ -106,17 +107,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                         Lead
                       </span>
                     )}
-                    {member.oprichter && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold uppercase tracking-wide">
-                        ★ Oprichter
-                      </span>
-                    )}
-                    {member.bestuursfunctie && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent/15 text-accent-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
-                        <Shield size={10} />
-                        Bestuur
-                      </span>
-                    )}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
@@ -147,7 +137,35 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 </td>
                 {isAdmin && (
                   <>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{eigenaar || "—"}</td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        {eigenaar || "—"}
+                        {member.oprichter && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help text-amber-500">★</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Oprichter van de bond</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {member.bestuursfunctie && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{member.bestuursfunctie}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{contactpersoon || "—"}</td>
                   </>
                 )}
