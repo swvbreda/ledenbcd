@@ -79,7 +79,7 @@ const LocatiesPage = () => {
                       <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">{loc.stadsdeel}</span>
                     ) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{loc.contactpersoon || "—"}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{loc.memberNaam}</td>
                 </tr>
               ))}
             </tbody>
