@@ -70,21 +70,21 @@ const LocatiesPage = () => {
   const cities = useMemo(() => {
     const map = new Map<string, CityData>();
 
-    for (const m of allMembers) {
+    // Count all represented (members + leads) per city for accurate market share
+    for (const m of allRepresented) {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
         if (!plaats) continue;
 
         if (!map.has(plaats)) {
           const totaal = perStad[plaats] || 0;
-          const bcd = repCityCount[plaats] || 0;
           map.set(plaats, {
             naam: plaats,
             aantalLeden: 0,
             aantalLocaties: 0,
             leden: [],
             totaalNL: totaal,
-            marktPct: totaal > 0 ? Math.round((bcd / totaal) * 100) : 0,
+            marktPct: 0,
           });
         }
         const city = map.get(plaats)!;
@@ -97,19 +97,9 @@ const LocatiesPage = () => {
       }
     }
 
-    // Add cities that only have leads (not in allMembers)
-    for (const [plaats, count] of Object.entries(repCityCount)) {
-      if (!map.has(plaats)) {
-        const totaal = perStad[plaats] || 0;
-        map.set(plaats, {
-          naam: plaats,
-          aantalLeden: 0,
-          aantalLocaties: count,
-          leden: [],
-          totaalNL: totaal,
-          marktPct: totaal > 0 ? Math.round((count / totaal) * 100) : 0,
-        });
-      }
+    // Recalculate marktPct consistently from aantalLocaties
+    for (const city of map.values()) {
+      city.marktPct = city.totaalNL > 0 ? Math.round((city.aantalLocaties / city.totaalNL) * 100) : 0;
     }
 
     return Array.from(map.values());
