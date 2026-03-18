@@ -235,6 +235,9 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <h3 className="text-sm font-semibold font-display flex items-center gap-2">
           <Shield size={16} className="text-primary" />
           Bestuur BCD
+          <a href="mailto:bestuur@coffeeshopbond.nl" className="text-[11px] font-normal text-primary hover:underline flex items-center gap-1">
+            <Mail size={10} /> bestuur@coffeeshopbond.nl
+          </a>
         </h3>
         <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
       </div>
