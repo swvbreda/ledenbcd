@@ -16,35 +16,37 @@
       {
         "naam": "The Bulldog The First",
         "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
         "adres": "Oudezijds Voorburgwal 90",
-        "postcode": "1012 GJ",
-        "stadsdeel": "Centrum"
+        "postcode": "1012 GG"
       },
       {
-        "naam": "The Bulldog Palace",
+        "naam": "The Bulldog Energy",
         "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Oudezijds Voorburgwal 218",
+        "postcode": "1012 GJ"
+      },
+      {
+        "naam": "The Bulldog Rockshop",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
+        "adres": "Singel 12",
+        "postcode": "1012 MK"
+      },
+      {
+        "naam": "The Bulldog Ex-Police Station",
+        "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
         "adres": "Leidseplein 17",
-        "postcode": "1017 PS",
-        "stadsdeel": "Centrum"
-      },
-      {
-        "naam": "The Bulldog The Energy",
-        "plaats": "Amsterdam",
-        "adres": "Oudezijds Voorburgwal 220",
-        "postcode": "1012 GJ",
-        "stadsdeel": "Centrum"
+        "postcode": "1017 PS"
       },
       {
         "naam": "The Bulldog Port",
         "plaats": "Amsterdam",
+        "stadsdeel": "Centrum",
         "adres": "Coenhavenweg 26",
-        "postcode": "1013 BL",
-        "stadsdeel": "West"
-      },
-      {
-        "naam": "The Bulldog Singel",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum"
+        "postcode": "1013 BL"
       }
     ],
     "contacten": [
