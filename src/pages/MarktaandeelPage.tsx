@@ -16,18 +16,18 @@ const MarktaandeelPage = () => {
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  // Group members by city
-  const membersByCity: Record<string, Member[]> = {};
-  members.forEach((m) => {
+  // Group members + leads by city for representation
+  const representedByCity: Record<string, Member[]> = {};
+  represented.forEach((m) => {
     if (m.plaats) {
-      if (!membersByCity[m.plaats]) membersByCity[m.plaats] = [];
-      membersByCity[m.plaats].push(m);
+      if (!representedByCity[m.plaats]) representedByCity[m.plaats] = [];
+      representedByCity[m.plaats].push(m);
     }
   });
 
-  // Count BCD locations per city
+  // Count represented locations per city
   const cityCount: Record<string, number> = {};
-  members.forEach((m) => {
+  represented.forEach((m) => {
     if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
   });
 
