@@ -4525,13 +4525,19 @@
     "telefoon": "06 57 34 67 06",
     "email": "nultien_rotterdam@hotmail.com",
     "bedrijfsnaam": "Coffeeshop 010 B.V.",
-    "aantalLocaties": 1,
+    "aantalLocaties": 2,
     "locaties": [
       {
         "naam": "Coffeeshop 010 B.V.",
         "plaats": "Rotterdam",
         "adres": "noordsingel 201",
         "postcode": "3035ER"
+      },
+      {
+        "naam": "Coffee-Shop Bamboo",
+        "plaats": "Schiedam",
+        "adres": "Parkweg 373",
+        "postcode": "3114 JH"
       }
     ],
     "contacten": [
@@ -4540,6 +4546,12 @@
         "functie": "Eigenaar",
         "telefoon": "06 57 34 67 06",
         "email": "nultien_rotterdam@hotmail.com"
+      },
+      {
+        "naam": "Asma Salahi",
+        "functie": "",
+        "telefoon": "06 30 48 60 05",
+        "email": ""
       }
     ],
     "oprichtingsDatum": "2019-10-31",
