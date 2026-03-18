@@ -247,23 +247,28 @@ const LocatiesPage = () => {
                       )}
                     </td>
                   </tr>
-                  {expandedCity === city.naam && city.leden
-                    .sort((a, b) => a.naam.localeCompare(b.naam))
-                    .map((lid) => (
-                      <tr
-                        key={`${city.naam}-${lid.id}`}
-                        className="border-b border-border bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/leden/${lid.id}`)}
-                      >
-                        <td className="pl-8 pr-3 py-1.5">
-                          <span className="font-medium font-display text-xs">{lid.naam}</span>
-                          {lid.aantalLocaties > 1 && (
-                            <span className="text-[10px] text-muted-foreground ml-1">({lid.aantalLocaties})</span>
-                          )}
-                        </td>
-                        <td colSpan={3} />
-                      </tr>
-                    ))}
+                  {expandedCity === city.naam && city.stadsdelen.length > 0 &&
+                    city.stadsdelen
+                      .sort((a, b) => b.aantalLocaties - a.aantalLocaties)
+                      .map((sd) => (
+                        <tr
+                          key={`${city.naam}-${sd.naam}`}
+                          className="border-b border-border bg-muted/10"
+                        >
+                          <td className="pl-8 pr-3 py-1.5">
+                            <span className="text-xs text-muted-foreground">{sd.naam}</span>
+                          </td>
+                          <td className="px-3 py-1.5 text-right tabular-nums text-xs">{sd.aantalLocaties}</td>
+                          <td colSpan={2} />
+                        </tr>
+                      ))}
+                  {expandedCity === city.naam && city.stadsdelen.length === 0 && (
+                    <tr className="border-b border-border bg-muted/10">
+                      <td className="pl-8 pr-3 py-1.5 text-xs text-muted-foreground" colSpan={4}>
+                        Geen stadsdeel-data beschikbaar
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               ))}
             </tbody>
