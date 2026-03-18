@@ -377,6 +377,15 @@
         "telefoon": "31625262730",
         "email": "info@coffeeshop-relax.nl"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -459,6 +468,11 @@
         "telefoon": "",
         "email": "Sander-boerebij@hotmail.com"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021
     ]
   },
   {
@@ -499,6 +513,15 @@
         "telefoon": "31621294893",
         "email": "Dennis@Happyfeelingsamsterdam.nl"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -626,6 +649,15 @@
         "telefoon": "31654794485",
         "email": "h.kallan@live.nl"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -708,6 +740,10 @@
         "telefoon": "06 30 61 73 70",
         "email": "koffiehuissharon@gmail.com"
       }
+    ],
+    "lidSinds": 2025,
+    "lidJaren": [
+      2025
     ]
   },
   {
@@ -874,6 +910,15 @@
         "telefoon": "",
         "email": "ousmoba@gmail.com"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -1237,6 +1282,14 @@
         "telefoon": "31639772553",
         "email": "h.beheer.bv12@kpnplanet.nl"
       }
+    ],
+    "lidSinds": 2021,
+    "lidJaren": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -1470,6 +1523,14 @@
         "telefoon": "31622987223",
         "email": "facturen@familyfirstamsterdam.com"
       }
+    ],
+    "lidSinds": 2021,
+    "lidJaren": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -1513,6 +1574,14 @@
         "telefoon": "",
         "email": "info@coffeeshopbluebird.nl"
       }
+    ],
+    "lidSinds": 2021,
+    "lidJaren": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -1635,6 +1704,11 @@
         "telefoon": "3163001965",
         "email": "timdewilde87@gmail.com"
       }
+    ],
+    "lidSinds": 2024,
+    "lidJaren": [
+      2024,
+      2025
     ]
   },
   {
@@ -1926,6 +2000,15 @@
         "telefoon": "31622411705",
         "email": "dpeerboom@icloud.com"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -2091,6 +2174,15 @@
         "telefoon": "06 55 17 75 52",
         "email": "waldgraaf@live.nl"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -2170,6 +2262,15 @@
         "telefoon": "06 87 18 28 77",
         "email": "newtimes-amsterdam@outlook.com"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -2210,6 +2311,10 @@
         "telefoon": "",
         "email": "oost@theplugcoffeeshops.nl"
       }
+    ],
+    "lidSinds": 2025,
+    "lidJaren": [
+      2025
     ]
   },
   {
@@ -2293,6 +2398,15 @@
         "telefoon": "06 22 93 62 68",
         "email": "anton@indendoofpot.nl"
       }
+    ],
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
     ]
   },
   {
@@ -3056,7 +3170,16 @@
         "email": "info@coffeeshopclubmedia.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 66,
@@ -3138,7 +3261,16 @@
     "factuurPlaats": "Goes",
     "factuurTelefoon": "",
     "contacten": [],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 68,
@@ -3217,7 +3349,16 @@
         "email": "1ehulp@hotmail.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 70,
@@ -3256,7 +3397,12 @@
         "email": ""
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2024,
+    "lidJaren": [
+      2024,
+      2025
+    ]
   },
   {
     "id": 71,
@@ -3296,7 +3442,16 @@
         "email": "coffeeshop-johnny@xs4all.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 72,
@@ -3335,7 +3490,14 @@
         "email": ""
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2022,
+    "lidJaren": [
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 73,
@@ -3420,7 +3582,12 @@
         "email": "info@coffeeshopoost.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2024,
+    "lidJaren": [
+      2024,
+      2025
+    ]
   },
   {
     "id": 75,
@@ -3459,7 +3626,16 @@
         "email": "info@paradoxcoffeeshop.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 76,
@@ -3538,7 +3714,16 @@
         "email": "rokadecrew@gmail.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 78,
@@ -3699,7 +3884,16 @@
         "email": "petrarietsnijder@icloud.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 82,
@@ -3819,7 +4013,12 @@
         "email": "info@coffeeshopdesteeg.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2024,
+    "lidJaren": [
+      2024,
+      2025
+    ]
   },
   {
     "id": 85,
@@ -3858,7 +4057,16 @@
         "email": ""
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 86,
@@ -4139,7 +4347,16 @@
         "email": "kayo@roostbv.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 93,
@@ -4634,7 +4851,16 @@
         "email": "oncirak@hotmail.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 105,
@@ -4674,7 +4900,16 @@
         "email": "lahmejm@gmail.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 106,
@@ -4800,7 +5035,16 @@
         "email": "d.zijp@hotmail.com"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2020,
+    "lidJaren": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 109,
@@ -4847,7 +5091,13 @@
         "email": "info@nieuwenederlandscheschool.nl"
       }
     ],
-    "oprichtingsDatum": ""
+    "oprichtingsDatum": "",
+    "lidSinds": 2023,
+    "lidJaren": [
+      2023,
+      2024,
+      2025
+    ]
   },
   {
     "id": 110,
