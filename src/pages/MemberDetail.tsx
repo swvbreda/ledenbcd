@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
+import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -98,17 +99,20 @@ const MemberDetail = () => {
             {member.stadsdeel && (
               <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
             )}
-            {member.jarenLid !== null && (
-              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                member.jarenLid >= 30
-                  ? "bg-success/10 text-success"
-                  : member.jarenLid >= 10
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}>
-                {member.jarenLid} jaar lid
-              </span>
-            )}
+            {(() => {
+              const jarenLid = getMembershipYears(member);
+              return jarenLid !== null ? (
+                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                  jarenLid >= 30
+                    ? "bg-success/10 text-success"
+                    : jarenLid >= 10
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {jarenLid} jaar lid
+                </span>
+              ) : null;
+            })()}
             {archived && (
               <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded text-xs font-medium">
                 Gearchiveerd
