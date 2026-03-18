@@ -200,9 +200,6 @@ const LocatiesPage = () => {
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort("naam")}>
                   <span className="inline-flex items-center gap-1">Stad <SortIcon col="naam" /></span>
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("aantalLeden")}>
-                  <span className="inline-flex items-center gap-1">Leden <SortIcon col="aantalLeden" /></span>
-                </th>
                 <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("aantalLocaties")}>
                   <span className="inline-flex items-center gap-1">BCD <SortIcon col="aantalLocaties" /></span>
                 </th>
@@ -210,7 +207,6 @@ const LocatiesPage = () => {
                 <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-28" onClick={() => handleSort("marktPct")}>
                   <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Stadsdelen</th>
               </tr>
             </thead>
             <tbody>
@@ -224,11 +220,6 @@ const LocatiesPage = () => {
                       <span className="inline-flex items-center gap-2 font-medium font-display">
                         <MapPin size={14} className="text-primary" />
                         {city.naam}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
-                        <Users size={13} /> {city.aantalLeden}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center tabular-nums">{city.aantalLocaties}</td>
@@ -249,13 +240,6 @@ const LocatiesPage = () => {
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {city.stadsdelen.sort().map((sd) => (
-                          <span key={sd} className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">{sd}</span>
-                        ))}
-                      </div>
                     </td>
                   </tr>
                   {expandedCity === city.naam && city.leden
