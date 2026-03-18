@@ -38,6 +38,11 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
   );
 };
 
+const EXPERIMENT_GEMEENTEN = [
+  "Arnhem", "Breda", "Groningen", "Heerlen", "Hellevoetsluis",
+  "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
+];
+
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
