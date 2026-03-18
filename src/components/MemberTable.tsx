@@ -82,6 +82,11 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <td className="px-4 py-3 font-medium font-display">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
+                    {member.oprichter && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded text-[10px] font-semibold uppercase tracking-wide">
+                        ★ Oprichter
+                      </span>
+                    )}
                     {member.bestuursfunctie && (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent/15 text-accent-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         <Shield size={10} />
