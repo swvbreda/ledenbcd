@@ -40,7 +40,7 @@ const MemberDetail = () => {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground font-mono">#{member.id}</span>
+            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
             <h2 className="text-xl sm:text-2xl font-bold font-display">{member.naam}</h2>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">

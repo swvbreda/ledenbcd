@@ -38,7 +38,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   };
 
   const columns: { key: SortKey; label: string; className?: string }[] = [
-    { key: "id", label: "#", className: "w-12" },
+    { key: "id", label: "Lidnr.", className: "w-16" },
     { key: "naam", label: "Naam" },
     { key: "plaats", label: "Plaats" },
     { key: "aantalLocaties", label: "Locaties", className: "w-20 text-center" },
