@@ -42,7 +42,7 @@ const LedenPage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">
             {showArchived
               ? `${archivedMembers.length} oud-leden`
-              : `${searchedMembers.length} resultaten · ${membersOnly.length} leden, ${allLeads.length} leads`}
+              : `${mergedSearched.length} resultaten · ${membersOnly.length} leden, ${allLeads.length} leads`}
           </p>
         </div>
         <div className="flex items-center gap-2">
