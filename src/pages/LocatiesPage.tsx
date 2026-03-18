@@ -155,28 +155,24 @@ const LocatiesPage = () => {
                       </div>
                     </td>
                   </tr>
-                  {expandedCity === city.naam && (
-                    <tr key={`${city.naam}-detail`} className="border-b border-border bg-muted/10">
-                      <td colSpan={4} className="px-4 py-3">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {city.leden
-                            .sort((a, b) => a.naam.localeCompare(b.naam))
-                            .map((lid) => (
-                              <button
-                                key={lid.id}
-                                onClick={(e) => { e.stopPropagation(); navigate(`/leden/${lid.id}`); }}
-                                className="text-left px-3 py-2 rounded border border-border bg-card hover:bg-muted/30 transition-colors text-sm"
-                              >
-                                <span className="font-medium font-display">{lid.naam}</span>
-                                {lid.aantalLocaties > 1 && (
-                                  <span className="text-xs text-muted-foreground ml-1">({lid.aantalLocaties} loc)</span>
-                                )}
-                              </button>
-                            ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                  {expandedCity === city.naam && city.leden
+                    .sort((a, b) => a.naam.localeCompare(b.naam))
+                    .map((lid) => (
+                      <tr
+                        key={`${city.naam}-${lid.id}`}
+                        className="border-b border-border bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/leden/${lid.id}`)}
+                      >
+                        <td className="pl-10 pr-4 py-2.5">
+                          <span className="font-medium font-display text-sm">{lid.naam}</span>
+                          {lid.aantalLocaties > 1 && (
+                            <span className="text-xs text-muted-foreground ml-1.5">({lid.aantalLocaties} loc)</span>
+                          )}
+                        </td>
+                        <td colSpan={3} />
+                      </tr>
+                    ))
+                  }
                 </>
               ))}
             </tbody>
