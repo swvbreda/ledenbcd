@@ -1,7 +1,8 @@
+import { useState } from "react";
 import type { Member } from "@/data/types";
 import { allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
@@ -12,6 +13,16 @@ const MarktaandeelPage = () => {
   const members = allMembers;
   const totalMembers = members.length;
   const totalLocaties = members.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  const [expandedCity, setExpandedCity] = useState<string | null>(null);
+
+  // Group members by city
+  const membersByCity: Record<string, Member[]> = {};
+  members.forEach((m) => {
+    if (m.plaats) {
+      if (!membersByCity[m.plaats]) membersByCity[m.plaats] = [];
+      membersByCity[m.plaats].push(m);
+    }
+  });
 
   // Count BCD locations per city
   const cityCount: Record<string, number> = {};
@@ -41,6 +52,10 @@ const MarktaandeelPage = () => {
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
   const g4Bcd = g4Cities.reduce((s, c) => s + (cityCount[c] || 0), 0);
   const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
+
+  const toggleCity = (city: string) => {
+    setExpandedCity(expandedCity === city ? null : city);
+  };
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -87,26 +102,67 @@ const MarktaandeelPage = () => {
               </tr>
             </thead>
             <tbody>
-              {allCities.map(({ city, total, bcd, pct }) => (
-                <tr key={city} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                  <td className="px-3 py-1.5 font-medium truncate">{city}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">
-                    <span className={pct >= 30 ? "text-success font-medium" : pct > 0 ? "text-foreground" : "text-muted-foreground"}>
-                      {pct}%
-                    </span>
-                  </td>
-                  <td className="px-3 py-1.5">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${pct >= 30 ? "bg-success" : "bg-primary/60"}`}
-                        style={{ width: `${Math.min(pct, 100)}%` }}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {allCities.map(({ city, total, bcd, pct }) => {
+                const cityMembers = membersByCity[city] || [];
+                const isExpanded = expandedCity === city;
+                return (
+                  <>
+                    <tr
+                      key={city}
+                      className={`border-b border-border/50 transition-colors ${
+                        cityMembers.length > 0 ? "cursor-pointer hover:bg-muted/30" : ""
+                      } ${isExpanded ? "bg-muted/20" : ""}`}
+                      onClick={() => cityMembers.length > 0 && toggleCity(city)}
+                    >
+                      <td className="px-3 py-1.5 font-medium truncate">
+                        <span className="inline-flex items-center gap-1.5">
+                          {cityMembers.length > 0 && (
+                            isExpanded ? <ChevronDown size={14} className="text-muted-foreground shrink-0" /> : <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                          )}
+                          {city}
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums">
+                        <span className={pct >= 30 ? "text-success font-medium" : pct > 0 ? "text-foreground" : "text-muted-foreground"}>
+                          {pct}%
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${pct >= 30 ? "bg-success" : "bg-primary/60"}`}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && cityMembers.map((m) => (
+                      <tr
+                        key={`${city}-${m.id}`}
+                        className="border-b border-border/30 bg-muted/10 hover:bg-muted/20 cursor-pointer transition-colors"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/leden/${m.id}`); }}
+                      >
+                        <td className="px-3 py-1.5 pl-9 text-muted-foreground" colSpan={2}>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
+                            <span className="font-medium text-foreground">{m.naam}</span>
+                            {(m.aantalLocaties || 1) > 1 && (
+                              <span className="text-xs text-muted-foreground">({m.aantalLocaties} locaties)</span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{m.aantalLocaties || 1}</td>
+                        <td className="px-3 py-1.5" />
+                        <td className="px-3 py-1.5">
+                          <ExternalLink size={12} className="text-muted-foreground/40" />
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -123,12 +179,34 @@ const MarktaandeelPage = () => {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {extraCities.map(({ city, bcd }) => (
-              <div key={city} className="flex items-center justify-between text-sm px-3 py-1.5 bg-muted/50 rounded">
+              <div
+                key={city}
+                className="flex items-center justify-between text-sm px-3 py-1.5 bg-muted/50 rounded cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => toggleCity(expandedCity === city ? "" : city)}
+              >
                 <span className="text-muted-foreground">{city}</span>
                 <span className="font-medium tabular-nums">{bcd}</span>
               </div>
             ))}
           </div>
+          {expandedCity && membersByCity[expandedCity] && !perStad[expandedCity] && (
+            <div className="mt-3 bg-card rounded border border-border/50 divide-y divide-border/30">
+              {membersByCity[expandedCity].map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/20 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/leden/${m.id}`)}
+                >
+                  <span className="text-xs tabular-nums text-muted-foreground/60">#{m.id}</span>
+                  <span className="font-medium">{m.naam}</span>
+                  {(m.aantalLocaties || 1) > 1 && (
+                    <span className="text-xs text-muted-foreground">({m.aantalLocaties} locaties)</span>
+                  )}
+                  <ExternalLink size={12} className="ml-auto text-muted-foreground/40" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
