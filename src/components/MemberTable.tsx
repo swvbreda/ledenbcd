@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronUp, MapPin, Mail, Phone, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, Mail, Phone, ExternalLink, Shield } from "lucide-react";
 import type { Member } from "@/data/types";
 
 interface MemberTableProps {
