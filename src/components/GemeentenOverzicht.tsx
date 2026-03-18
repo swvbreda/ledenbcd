@@ -126,8 +126,14 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              const leden = members.filter((m) => m.plaats === gemeente);
-              const locs = leden.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+              // Check both hoofdvestiging AND individual locations
+              const leden = members.filter((m) =>
+                m.plaats === gemeente || m.locaties?.some((l) => (l.plaats || m.plaats) === gemeente)
+              );
+              const locs = leden.reduce((s, m) => {
+                if (m.plaats === gemeente) return s + (m.aantalLocaties || 1);
+                return s + (m.locaties?.filter((l) => l.plaats === gemeente).length || 0);
+              }, 0);
               const total = perStad[gemeente] || 0;
               const hasBcd = leden.length > 0;
 
