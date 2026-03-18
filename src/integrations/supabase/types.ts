@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_edits: {
+        Row: {
+          data: Json
+          id: string
+          member_id: number
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          data?: Json
+          id?: string
+          member_id: number
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          member_id?: number
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
