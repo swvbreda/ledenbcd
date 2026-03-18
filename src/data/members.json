@@ -2696,13 +2696,19 @@
     "telefoon": "06 21 66 11 77",
     "email": "d.zijp@hotmail.com",
     "bedrijfsnaam": "Tafne",
-    "aantalLocaties": 1,
+    "aantalLocaties": 2,
     "locaties": [
       {
         "naam": "Tafne",
         "plaats": "Beverwijk",
         "adres": "Kloosterstraat 23",
         "postcode": "1941 BN"
+      },
+      {
+        "naam": "Regine",
+        "plaats": "Haarlem",
+        "adres": "Gedempte Oude Gracht 28",
+        "postcode": "2011 GR"
       }
     ],
     "contacten": [
@@ -4772,34 +4778,5 @@
     "factuurPostcode": "1057 ZG",
     "factuurBedrijfsnaam": "El Marssa",
     "factuurEmail": ""
-  },
-  {
-    "id": 68,
-    "naam": "Regine",
-    "plaats": "Haarlem",
-    "stadsdeel": "",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "",
-    "email": "",
-    "bedrijfsnaam": "Regine",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Regine",
-        "plaats": "Haarlem",
-        "adres": "Gedempte Oude Gracht 28",
-        "postcode": "2011 GR"
-      }
-    ],
-    "contacten": [],
-    "factuurBedrijfsnaam": "Regine",
-    "factuurTelefoon": "06 15 31 55 39",
-    "factuurAdres": "Bilderdijkstraat 188H",
-    "factuurPostcode": "1053 LE",
-    "factuurPlaats": "Amsterdam",
-    "factuurEmail": "info@coffeeshop-regine.nl"
   }
 ]
