@@ -3,17 +3,38 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import cityCoords from "@/data/cityCoords";
 
+interface CityData {
+  naam: string;
+  aantalLocaties: number;
+  totaalNL: number;
+  marktPct: number;
+}
+
 interface CityMapProps {
-  cities: { naam: string; aantalLeden: number; aantalLocaties: number; totaalNL?: number }[];
+  cities: CityData[];
+  allCoffeeshopCities?: Record<string, number>;
   onCityClick?: (city: string) => void;
 }
 
-const CityMap = ({ cities, onCityClick }: CityMapProps) => {
+const getColor = (pct: number) => {
+  if (pct >= 50) return "hsl(142, 71%, 40%)";  // strong green
+  if (pct >= 25) return "hsl(142, 60%, 50%)";  // medium green
+  if (pct > 0) return "hsl(142, 50%, 60%)";    // light green
+  return "hsl(45, 90%, 55%)";                   // yellow
+};
+
+const CityMap = ({ cities, allCoffeeshopCities, onCityClick }: CityMapProps) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
 
-  const maxLeden = useMemo(() => Math.max(...cities.map((c) => c.aantalLeden), 1), [cities]);
+  const maxLocaties = useMemo(() => Math.max(...cities.map((c) => c.totaalNL || c.aantalLocaties), 1), [cities]);
+
+  const cityMap = useMemo(() => {
+    const m = new Map<string, CityData>();
+    for (const c of cities) m.set(c.naam, c);
+    return m;
+  }, [cities]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -53,43 +74,51 @@ const CityMap = ({ cities, onCityClick }: CityMapProps) => {
 
     markerLayer.clearLayers();
 
-    const bounds: L.LatLngExpression[] = [];
+    // Collect all city names to render
+    const allCities = new Set<string>();
+    for (const c of cities) allCities.add(c.naam);
+    if (allCoffeeshopCities) {
+      for (const naam of Object.keys(allCoffeeshopCities)) allCities.add(naam);
+    }
 
-    for (const city of cities) {
-      const coords = cityCoords[city.naam];
+    for (const naam of allCities) {
+      const coords = cityCoords[naam];
       if (!coords) continue;
 
-      bounds.push(coords);
-      const radius = 8 + (city.aantalLeden / maxLeden) * 28;
+      const bcdCity = cityMap.get(naam);
+      const totaalNL = bcdCity?.totaalNL || allCoffeeshopCities?.[naam] || 0;
+      const aangesloten = bcdCity?.aantalLocaties || 0;
+      const pct = bcdCity?.marktPct || 0;
+      const hasBcd = aangesloten > 0;
+
+      const radius = hasBcd
+        ? 6 + (totaalNL / maxLocaties) * 26
+        : 5;
+
+      const color = hasBcd ? getColor(pct) : "hsl(45, 90%, 55%)";
 
       const marker = L.circleMarker(coords, {
         radius,
-        fillColor: "hsl(var(--primary))",
-        fillOpacity: 0.55,
-        color: "hsl(var(--primary))",
+        fillColor: color,
+        fillOpacity: hasBcd ? 0.6 : 0.45,
+        color: color,
         opacity: 0.9,
-        weight: 1.5,
+        weight: hasBcd ? 1.5 : 1,
       });
 
-      const totaalLabel = city.totaalNL ? `${city.totaalNL} totaal · ` : "";
-      marker.bindTooltip(
-        `<div class="text-xs"><strong>${city.naam}</strong><br/>${totaalLabel}${city.aantalLocaties} aangesloten</div>`,
-        { direction: "top", offset: [0, -radius] },
-      );
+      const tooltip = hasBcd
+        ? `<div class="text-xs"><strong>${naam}</strong><br/>${totaalNL} totaal · ${aangesloten} aangesloten (${pct}%)</div>`
+        : `<div class="text-xs"><strong>${naam}</strong><br/>${totaalNL} coffeeshops · geen leden</div>`;
 
-      if (onCityClick) {
-        marker.on("click", () => onCityClick(city.naam));
+      marker.bindTooltip(tooltip, { direction: "top", offset: [0, -radius] });
+
+      if (onCityClick && hasBcd) {
+        marker.on("click", () => onCityClick(naam));
       }
 
       marker.addTo(markerLayer);
     }
-
-    if (bounds.length > 1) {
-      map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40] });
-    } else if (bounds.length === 1) {
-      map.setView(bounds[0], 10);
-    }
-  }, [cities, maxLeden, onCityClick]);
+  }, [cities, cityMap, maxLocaties, allCoffeeshopCities, onCityClick]);
 
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ height: 420 }}>
