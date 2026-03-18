@@ -6725,7 +6725,7 @@
     "telefoon": "06 15 31 55 39",
     "email": "Info@justbudha.com",
     "bedrijfsnaam": "Samamado B.V.",
-    "aantalLocaties": 2,
+    "aantalLocaties": 3,
     "locaties": [
       {
         "naam": "Coffeeshop Haarlem",
@@ -6738,6 +6738,13 @@
         "plaats": "Rotterdam",
         "adres": "noordsingel 201",
         "postcode": "3035ER"
+      },
+      {
+        "naam": "Coffee-Shop Bamboo",
+        "plaats": "Schiedam",
+        "adres": "Parkweg 379",
+        "postcode": "",
+        "stadsdeel": ""
       }
     ],
     "kvk": "",
@@ -7124,34 +7131,6 @@
     ],
     "lidSinds": 2009,
     "website": "https://www.voyagersamsterdam.com"
-  },
-  {
-    "id": 118,
-    "naam": "Coffee-Shop Bamboo",
-    "plaats": "Schiedam",
-    "stadsdeel": "",
-    "jarenLid": 0,
-    "oprichtingJaar": null,
-    "contactpersoon": "",
-    "functie": "",
-    "telefoon": "+31 10 503 6507",
-    "email": "",
-    "bedrijfsnaam": "Coffee-Shop Bamboo",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Coffee-Shop Bamboo",
-        "plaats": "Schiedam",
-        "adres": "Parkweg 379",
-        "postcode": "",
-        "stadsdeel": ""
-      }
-    ],
-    "contacten": [],
-    "lidSinds": 2026,
-    "lidJaren": [
-      2026
-    ]
   },
   {
     "id": 119,
