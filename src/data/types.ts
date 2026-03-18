@@ -1,0 +1,23 @@
+export interface Location {
+  naam: string;
+  plaats?: string;
+  stadsdeel?: string;
+  adres?: string;
+  postcode?: string;
+}
+
+export interface Member {
+  id: number;
+  naam: string;
+  plaats: string;
+  stadsdeel: string;
+  jarenLid: number | null;
+  oprichtingJaar: number | null;
+  contactpersoon: string;
+  functie: string;
+  telefoon: string;
+  email: string;
+  bedrijfsnaam: string;
+  aantalLocaties: number;
+  locaties: Location[];
+}
