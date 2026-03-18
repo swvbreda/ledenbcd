@@ -98,11 +98,9 @@ const MemberDetail = () => {
               <Calendar size={16} className="text-success" />
               <span className="text-muted-foreground">Lid sinds:</span>
               <span className="font-medium">{member.lidSinds}</span>
-              {member.lidJaren && (
-                <span className="text-xs text-muted-foreground">
-                  (gefactureerd: {member.lidJaren.join(", ")})
-                </span>
-              )}
+              <span className="text-xs text-muted-foreground">
+                ({new Date().getFullYear() - member.lidSinds} jaar)
+              </span>
             </div>
           )}
         </div>
