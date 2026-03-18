@@ -30,7 +30,7 @@ export function useMembers() {
   const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
 
   const filteredMembers = useMemo(() => {
-    return allMembers.filter((m) => {
+    return allIncludingLeads.filter((m) => {
       if (filterCity && m.plaats !== filterCity) return false;
       if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
       if (filterJaren) {
