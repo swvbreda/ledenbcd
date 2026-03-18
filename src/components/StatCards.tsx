@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Users, Building2, Clock, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { allRepresented, allLeads } from "@/hooks/useMembers";
 
 interface StatCardsProps {
   members: Member[];
@@ -56,11 +56,11 @@ const StatCards = ({ members }: StatCardsProps) => {
       {/* Aangesloten Coffeeshops */}
       <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
         <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Aangesloten Coffeeshops</p>
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordigde Coffeeshops</p>
           <Users size={18} className="text-primary" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{totalLocations}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers} leden</p>
+        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers} leden · {allLeads.length} leads</p>
       </div>
 
       {/* Gemeenten gauge */}
