@@ -4,10 +4,13 @@ export interface Location {
   stadsdeel?: string;
   adres?: string;
   postcode?: string;
-  contactpersoon?: string;
-  functie?: string;
-  telefoon?: string;
-  email?: string;
+}
+
+export interface Contact {
+  naam: string;
+  functie: string;
+  telefoon: string;
+  email: string;
 }
 
 export interface Member {
@@ -17,6 +20,7 @@ export interface Member {
   stadsdeel: string;
   jarenLid: number | null;
   oprichtingJaar: number | null;
+  oprichtingsDatum?: string;
   contactpersoon: string;
   functie: string;
   telefoon: string;
@@ -24,6 +28,7 @@ export interface Member {
   bedrijfsnaam: string;
   aantalLocaties: number;
   locaties: Location[];
+  contacten: Contact[];
   kvk?: string;
   factuurEmail?: string;
   factuurBedrijfsnaam?: string;
