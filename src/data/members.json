@@ -65,7 +65,8 @@
     "oprichtingsDatum": "1975-12-15",
     "factuurEmail": "administratie@leidsepleinbeheer.nl",
     "factuurBedrijfsnaam": "Leidseplein beheer B.V.",
-    "factuurTelefoon": "(065) 3244418"
+    "factuurTelefoon": "(065) 3244418",
+    "oprichter": true
   },
   {
     "id": 2,
