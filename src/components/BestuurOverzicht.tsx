@@ -132,77 +132,73 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return (
       <div
         key={bl.naam}
-        className={`group flex items-center gap-4 rounded-lg border p-3 transition-colors ${
+        className={`border rounded-md p-2.5 transition-colors ${
           isAspirant ? "border-dashed border-border" : "border-border"
         } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => member && navigate(`/leden/${member.id}`)}
       >
-        {/* Photo */}
-        <div className="relative shrink-0">
-          {photo ? (
-            <img src={photo} alt={bl.naam} className="w-12 h-12 rounded-full object-cover ring-2 ring-border" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center ring-2 ring-border">
-              <User size={20} className="text-muted-foreground/60" />
+        <div className="flex items-center gap-2.5 flex-row-reverse">
+          <div className="relative shrink-0">
+            {photo ? (
+              <img src={photo} alt={bl.naam} className="w-11 h-11 rounded-full object-cover" />
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center">
+                <User size={18} className="text-muted-foreground/60" />
+              </div>
+            )}
+            {showUpload && (
+              <>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpload(bl.naam, file);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRefs.current[bl.naam]?.click();
+                  }}
+                  disabled={uploading === bl.naam}
+                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
+                  title="Foto uploaden"
+                >
+                  <Camera size={10} />
+                </button>
+              </>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-sm leading-tight">{bl.naam}</p>
+            <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
+            {member && (
+              <p className="text-[11px] text-primary leading-tight mt-0.5">{member.naam}</p>
+            )}
+            {bl.coffeeshop && !member && (
+              <p className="text-[11px] text-primary leading-tight mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+              {bl.bondEmail && (
+                <a
+                  href={`mailto:${bl.bondEmail}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                >
+                  <Mail size={10} /> {bl.bondEmail}
+                </a>
+              )}
+              {bl.telefoon && (
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Phone size={10} /> {bl.telefoon}
+                </span>
+              )}
             </div>
-          )}
-          {showUpload && (
-            <>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleUpload(bl.naam, file);
-                  e.target.value = "";
-                }}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRefs.current[bl.naam]?.click();
-                }}
-                disabled={uploading === bl.naam}
-                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
-                title="Foto uploaden"
-              >
-                <Camera size={10} />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-sm leading-tight">{bl.naam}</p>
-          <p className="text-xs text-muted-foreground">{bl.functie}</p>
-          {member && (
-            <p className="text-xs text-primary mt-0.5">{member.naam}</p>
-          )}
-          {bl.coffeeshop && !member && (
-            <p className="text-xs text-primary mt-0.5">{bl.coffeeshop}{bl.coffeeshopPlaats ? ` · ${bl.coffeeshopPlaats}` : ""}</p>
-          )}
-        </div>
-
-        {/* Contact — right side */}
-        <div className="shrink-0 text-right space-y-0.5">
-          {bl.bondEmail && (
-            <a
-              href={`mailto:${bl.bondEmail}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center justify-end gap-1.5 text-xs text-primary hover:underline transition-colors"
-            >
-              <span className="hidden lg:inline">{bl.bondEmail}</span>
-              <Mail size={12} className="lg:hidden" />
-            </a>
-          )}
-          {bl.telefoon && (
-            <p className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-              {bl.telefoon}
-            </p>
-          )}
+          </div>
         </div>
       </div>
     );
@@ -210,7 +206,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold font-display flex items-center gap-2">
           <Shield size={16} className="text-primary" />
           Bestuur BCD
@@ -218,18 +214,18 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {bestuursleden.map((bl) => renderCard(bl))}
       </div>
 
       {aspiranten.length > 0 && (
         <>
-          <div className="flex items-center gap-2 mt-5 mb-3">
-            <Users size={13} className="text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
+          <div className="flex items-center gap-2 mt-4 mb-2">
+            <Users size={12} className="text-muted-foreground" />
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
             <div className="flex-1 h-px bg-border" />
           </div>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {aspiranten.map((bl) => renderCard(bl, true))}
           </div>
         </>
