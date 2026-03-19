@@ -107,6 +107,13 @@ export function useMembers() {
         m.bedrijfsnaam.toLowerCase().includes(q) ||
         String(m.id).includes(q) ||
         (m.factuurBedrijfsnaam || "").toLowerCase().includes(q) ||
+        (m.email || "").toLowerCase().includes(q) ||
+        (m.telefoon || "").toLowerCase().includes(q) ||
+        m.contacten?.some((c) =>
+          c.naam.toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q) ||
+          (c.telefoon || "").toLowerCase().includes(q)
+        ) ||
         m.locaties.some((l) =>
           l.naam.toLowerCase().includes(q) ||
           (l.plaats || "").toLowerCase().includes(q) ||
