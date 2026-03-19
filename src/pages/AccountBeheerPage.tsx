@@ -67,14 +67,22 @@ const AccountBeheerPage = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("manage-users", {
-      body: { action: "list" },
-    });
-    if (error) {
-      toast.error("Fout bij ophalen accounts: " + error.message);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-users", {
+        body: { action: "list" },
+      });
+      if (error) {
+        toast.error("Fout bij ophalen accounts: " + error.message);
+        setUsers([]);
+      } else if (data?.error) {
+        toast.error("Fout bij ophalen accounts: " + data.error);
+        setUsers([]);
+      } else {
+        setUsers(data?.users || []);
+      }
+    } catch (e: any) {
+      toast.error("Fout bij ophalen accounts: " + (e?.message || "Onbekende fout"));
       setUsers([]);
-    } else {
-      setUsers(data?.users || []);
     }
     setLoading(false);
   };
