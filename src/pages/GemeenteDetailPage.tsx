@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Building2, Users, Notebook, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Users, Notebook, Search, X } from "lucide-react";
 import { allRepresented, allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente } from "@/data/gemeenteMapping";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 
@@ -11,7 +15,8 @@ const GemeenteDetailPage = () => {
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
-  const [expandedSd, setExpandedSd] = useState<Set<string>>(new Set());
+  const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
