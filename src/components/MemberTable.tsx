@@ -41,18 +41,22 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId } = useAuth();
-  const [boardMemberIds, setBoardMemberIds] = useState<Set<number>>(new Set());
+  const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, string[]>>(new Map());
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
-      const { data } = await supabase.from("board_members").select("lid_id, lid_ids");
+      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids");
       if (data) {
-        const ids = new Set<number>();
+        const map = new Map<number, string[]>();
         for (const row of data) {
-          if (row.lid_id) ids.add(row.lid_id);
-          if (row.lid_ids) for (const id of row.lid_ids) ids.add(id);
+          const ids = [...(row.lid_ids || []), ...(row.lid_id ? [row.lid_id] : [])];
+          for (const id of ids) {
+            const existing = map.get(id) || [];
+            existing.push(row.naam.toLowerCase());
+            map.set(id, existing);
+          }
         }
-        setBoardMemberIds(ids);
+        setBoardMembersByLid(map);
       }
     };
     fetchBoardMembers();
