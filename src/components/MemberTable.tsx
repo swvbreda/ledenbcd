@@ -224,19 +224,23 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  {jarenLid !== null ? (
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        jarenLid >= 30
-                          ? "bg-success/10 text-success"
-                          : jarenLid >= 10
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {jarenLid} jr
-                    </span>
-                  ) : (
+                  {jarenLid !== null ? (() => {
+                    const tier = getJubileumTier(jarenLid);
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>
+                              {jarenLid} jr
+                            </span>
+                          </TooltipTrigger>
+                          {tier.label && (
+                            <TooltipContent><p>{tier.label}</p></TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })() : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
