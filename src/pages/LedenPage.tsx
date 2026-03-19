@@ -108,8 +108,14 @@ const LedenPage = () => {
             <TabsList>
               <TabsTrigger value="leden" className="gap-1.5">
                 <Users size={14} />
-                Leden ({ledenCount})
+                Leden ({ledenOnly.length})
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="leads" className="gap-1.5">
+                  <UserPlus size={14} />
+                  Leads ({leadsOnly.length})
+                </TabsTrigger>
+              )}
               <TabsTrigger value="coffeeshops" className="gap-1.5">
                 <Store size={14} />
                 Coffeeshops ({totalLocations})
