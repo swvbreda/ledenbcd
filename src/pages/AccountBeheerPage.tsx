@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { allMembersAndLeads } from "@/hooks/useMembers";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus, Loader2, Search, X } from "lucide-react";
+import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
