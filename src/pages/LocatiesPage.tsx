@@ -65,7 +65,8 @@ const LocatiesPage = () => {
   // Count represented locations per city
   const repCityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    const gemeente = getGemeente(m.plaats);
+    if (gemeente) repCityCount[gemeente] = (repCityCount[gemeente] || 0) + (m.aantalLocaties || 1);
   });
 
   // G4 stats
