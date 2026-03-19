@@ -284,6 +284,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       {displayMembers.length === 0 && (
         <div className="p-8 text-center text-muted-foreground">Geen leden gevonden</div>
       )}
+      {isAdmin && (
+        <div className="hidden md:flex items-center gap-4 px-4 py-2 border-t border-border text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
+          <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
+        </div>
+      )}
     </div>
   );
 };
