@@ -81,7 +81,7 @@ const AccountBeheerPage = () => {
       const displayName = name || "";
       return (
         (u.email || "").toLowerCase().includes(q) ||
-        name.toLowerCase().includes(q) ||
+        displayName.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q)
       );
     });
