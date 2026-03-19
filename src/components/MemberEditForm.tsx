@@ -152,11 +152,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     <div className="space-y-6">
       {/* Actions bar */}
       <div className="flex items-center gap-2 justify-end">
+        {!isAdmin && (
+          <p className="text-xs text-muted-foreground mr-auto flex items-center gap-1">
+            <Clock size={12} /> Wijzigingen worden beoordeeld door het bestuur
+          </p>
+        )}
         <Button variant="outline" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
           <X size={14} /> Annuleren
         </Button>
-        <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending} className="gap-1.5">
-          <Save size={14} /> {saveMutation.isPending ? "Opslaan..." : "Opslaan"}
+        <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-1.5">
+          <Save size={14} /> {isPending ? savingLabel : saveLabel}
         </Button>
       </div>
 
