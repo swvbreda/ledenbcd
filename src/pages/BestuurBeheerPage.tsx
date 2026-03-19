@@ -54,6 +54,7 @@ interface BoardMember {
   functie: string;
   type: "bestuurslid" | "aspirant";
   lid_id: number | null;
+  lid_ids: number[];
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
