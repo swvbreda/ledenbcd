@@ -112,7 +112,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <PieChart size={18} className="text-primary" />
         </div>
         <div className="mt-1">
-          <MiniGauge pct={marketPct} color="hsl(var(--success))" />
+          <MiniGauge pct={marketPct} />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
           <p className="text-xs text-muted-foreground text-center">{representedLocations}/{totalNL} coffeeshops</p>
         </div>
