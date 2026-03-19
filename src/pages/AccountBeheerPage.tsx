@@ -285,7 +285,7 @@ const AccountBeheerPage = () => {
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
                           <button
-                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); }}
+                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); setLinkSearch(""); }}
                             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors w-fit"
                           >
                             <Link size={10} /> Lid koppelen
