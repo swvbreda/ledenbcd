@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      member_notes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          member_id: number
+          note: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          member_id: number
+          note: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          member_id?: number
+          note?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
