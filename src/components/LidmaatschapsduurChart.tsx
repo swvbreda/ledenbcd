@@ -82,6 +82,13 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
       detail: longest?.member.naam || "",
       color: "text-success",
     },
+    {
+      icon: UserCheck,
+      label: "Nieuwste lid",
+      value: newest ? `${newest.years} jr` : "—",
+      detail: newest?.member.naam || "",
+      color: "text-primary",
+    },
   ];
 
   return (
