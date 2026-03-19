@@ -4,7 +4,7 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { allRepresented } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
-import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
@@ -18,12 +18,16 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const represented = allRepresented;
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    const gemeente = getGemeente(m.plaats);
+    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + (m.aantalLocaties || 1);
   });
   const citiesOver50 = Object.entries(perStad).filter(([city, total]) => {
     const bcd = cityCount[city] || 0;
     return total > 0 && (bcd / total) >= 0.5;
-  }).length;
+  });
+  const citiesOver50Pct = Object.keys(perStad).length > 0
+    ? Math.round((citiesOver50.length / Object.keys(perStad).length) * 100)
+    : 0;
 
   // New members this year
   const currentYear = new Date().getFullYear();
@@ -58,8 +62,8 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     {
       icon: Building2,
       label: "Gemeenten >50% vertegenwoordigd",
-      value: `${citiesOver50}`,
-      detail: `van ${Object.keys(perStad).length} gemeenten`,
+      value: `${citiesOver50Pct}%`,
+      detail: `${citiesOver50.length} van ${Object.keys(perStad).length} gemeenten`,
       color: "text-success",
     },
     {
