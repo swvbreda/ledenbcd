@@ -223,7 +223,7 @@ const MemberDetail = () => {
       )}
 
       {/* Edit mode */}
-      {editing && isAdmin ? (
+      {editing ? (
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
       ) : (
         <>
