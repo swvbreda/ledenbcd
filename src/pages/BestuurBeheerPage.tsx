@@ -150,7 +150,7 @@ export default function BestuurBeheerPage() {
     if (error) {
       toast.error("Fout bij laden: " + error.message);
     } else {
-      setMembers((data as BoardMember[]) || []);
+      setMembers((data || []).map((d: any) => ({ ...d, lid_ids: d.lid_ids || [] })) as BoardMember[]);
     }
     setLoading(false);
   };
