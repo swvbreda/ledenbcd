@@ -323,7 +323,7 @@ const MemberDetail = () => {
                   <span className="text-muted-foreground">E-mail</span>
                   <span>
                     {member.factuurEmail ? (
-                      <a href={`mailto:${member.factuurEmail}`} className="text-primary hover:underline">
+                      <a href={`mailto:${member.factuurEmail}`} className="text-muted-foreground hover:underline">
                         {member.factuurEmail}
                       </a>
                     ) : "—"}
