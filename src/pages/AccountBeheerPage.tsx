@@ -77,7 +77,8 @@ const AccountBeheerPage = () => {
     if (!searchQuery) return users;
     const q = searchQuery.toLowerCase();
     return users.filter((u) => {
-      const name = getMemberName(u.member_id) || "";
+      const { name } = getDisplayName(u);
+      const displayName = name || "";
       return (
         (u.email || "").toLowerCase().includes(q) ||
         name.toLowerCase().includes(q) ||
