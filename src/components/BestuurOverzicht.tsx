@@ -204,6 +204,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
               )}
             </div>
           )}
+        </div>
         <div className="relative shrink-0 self-start">
           {photo ? (
             <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
