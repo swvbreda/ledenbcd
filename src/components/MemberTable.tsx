@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink, Shield } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { allLeads } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MemberTableProps {
   members: Member[];
@@ -28,6 +29,22 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId } = useAuth();
+  const [boardMemberIds, setBoardMemberIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const fetchBoardMembers = async () => {
+      const { data } = await supabase.from("board_members").select("lid_id, lid_ids");
+      if (data) {
+        const ids = new Set<number>();
+        for (const row of data) {
+          if (row.lid_id) ids.add(row.lid_id);
+          if (row.lid_ids) for (const id of row.lid_ids) ids.add(id);
+        }
+        setBoardMemberIds(ids);
+      }
+    };
+    fetchBoardMembers();
+  }, []);
 
   const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
   const getKey = (m: Member) => (isLead(m) ? `lead-${m.id}` : `member-${m.id}`);
@@ -168,6 +185,26 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
+                    {member.oprichter && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help text-amber-500">★</span>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Oprichter van de bond</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {boardMemberIds.has(member.id) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Bestuurslid</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     {memberIsLead && isAdmin && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         Lead
@@ -246,6 +283,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       </div>
       {displayMembers.length === 0 && (
         <div className="p-8 text-center text-muted-foreground">Geen leden gevonden</div>
+      )}
+      {isAdmin && (
+        <div className="hidden md:flex items-center gap-4 px-4 py-2 border-t border-border text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
+          <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
+        </div>
       )}
     </div>
   );
