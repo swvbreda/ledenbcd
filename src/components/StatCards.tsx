@@ -17,8 +17,8 @@ const StatCards = ({ members }: StatCardsProps) => {
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const totalNLCities = Object.keys(perStad).length;
-  const matchedCities = [...allCities].filter((c) => c in perStad).length;
-  const uniqueCities = allCities.size;
+  const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
+  const matchedCities = representedGemeenten.size;
   const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
