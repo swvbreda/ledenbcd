@@ -260,7 +260,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                                 <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{member.bestuursfunctie}</p>
+                                <p>{member.bestuursfunctie || "Bestuurslid"}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
