@@ -27,7 +27,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, linkedMemberId } = useAuth();
 
   const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
   const getKey = (m: Member) => (isLead(m) ? `lead-${m.id}` : `member-${m.id}`);
@@ -89,7 +89,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <span className="font-medium font-display text-sm">{m.naam}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-              {!memberIsLead && isAdmin && <span className="font-mono">#{m.id}</span>}
+              {!memberIsLead && (isAdmin || m.id === linkedMemberId) && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
             </div>
           </div>
@@ -163,7 +163,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                  {isAdmin ? (memberIsLead ? "—" : member.id) : ""}
+                  {(isAdmin || member.id === linkedMemberId) ? (memberIsLead ? "—" : member.id) : ""}
                 </td>
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
