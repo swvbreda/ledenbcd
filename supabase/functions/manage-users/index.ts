@@ -212,6 +212,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "update_user") {
+      const user_id = payload.user_id as string | undefined;
+      const email = payload.email as string | undefined;
+      const role = payload.role as string | undefined;
+
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id is verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Update email if provided
+      if (email) {
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, { email });
+        if (updateError) throw updateError;
+      }
+
+      // Update role if provided
+      if (role) {
+        // Delete existing roles and insert new one
+        await adminClient.from("user_roles").delete().eq("user_id", user_id);
+        if (role !== "user") {
+          await adminClient.from("user_roles").insert({ user_id, role });
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Onbekende actie" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
