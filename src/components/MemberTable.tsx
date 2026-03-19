@@ -27,7 +27,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, linkedMemberId } = useAuth();
 
   const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
   const getKey = (m: Member) => (isLead(m) ? `lead-${m.id}` : `member-${m.id}`);
