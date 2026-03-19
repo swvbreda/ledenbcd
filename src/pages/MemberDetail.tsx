@@ -49,6 +49,20 @@ const MemberDetail = () => {
   const [newNote, setNewNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
+  // Build a lookup: contact name (lowercased) -> list of other members that share this contact
+  const sharedContactMap = useMemo(() => {
+    const map = new Map<string, { id: number; naam: string }[]>();
+    allMembersAndLeads.forEach((m) => {
+      m.contacten?.forEach((c) => {
+        if (!c.naam) return;
+        const key = c.naam.trim().toLowerCase();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push({ id: m.id, naam: m.naam });
+      });
+    });
+    return map;
+  }, []);
+
   useEffect(() => {
     if (!memberId || !isAdmin) return;
     supabase
