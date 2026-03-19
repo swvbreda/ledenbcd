@@ -115,7 +115,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       {/* Mobile card list */}
       <div className="md:hidden">
         {displayMembers.map((member) => (
-          <MobileCard key={member.id} member={member} />
+          <MobileCard key={getKey(member)} member={member} />
         ))}
       </div>
 
