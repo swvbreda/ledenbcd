@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
-import { allMembers, allMembersAndLeads } from "@/hooks/useMembers";
+import { allMembers, allMembersAndLeads, rawLeads } from "@/hooks/useMembers";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
+import ConvertLeadDialog from "@/components/ConvertLeadDialog";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
