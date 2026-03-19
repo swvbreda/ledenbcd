@@ -40,18 +40,6 @@ const AccountBeheerPage = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Board members data for @coffeeshopbond.nl matching
-  const boardMembers = useMemo(() => [
-    { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl" },
-    { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", bondEmail: "joachim@coffeeshopbond.nl" },
-    { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", bondEmail: "bernard@coffeeshopbond.nl" },
-    { naam: "Huub van den Brink", functie: "Bestuurder", bondEmail: "huub@coffeeshopbond.nl" },
-    { naam: "Dorine Buchener", functie: "Bestuurder", bondEmail: "dorine@coffeeshopbond.nl" },
-    { naam: "Stef Couwenberg", functie: "Bestuurder", bondEmail: "stef@coffeeshopbond.nl" },
-    { naam: "Hannes Poppinghaus", functie: "Woordvoerder Arnhem", bondEmail: "arnhem@coffeeshopbond.nl" },
-    { naam: "Tugrulhan", functie: "Woordvoerder Enschede", bondEmail: "enschede@coffeeshopbond.nl" },
-  ], []);
-
   // Build member name lookup
   const memberNameMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -59,26 +47,26 @@ const AccountBeheerPage = () => {
     return map;
   }, []);
 
-  const getDisplayName = (u: UserAccount): { name: string | null; isBoardMember: boolean; functie?: string } => {
-    // Check board member first (by email)
-    if (u.email) {
-      const board = boardMembers.find(b => b.bondEmail.toLowerCase() === u.email.toLowerCase());
-      if (board) return { name: board.naam, isBoardMember: true, functie: board.functie };
+  const isBoardEmail = (email: string | undefined) =>
+    !!email && email.toLowerCase().endsWith("@coffeeshopbond.nl");
+
+  const getDisplayInfo = (u: UserAccount): { label: string; isBoard: boolean; memberId: number | null } => {
+    if (isBoardEmail(u.email)) {
+      return { label: "Bestuur", isBoard: true, memberId: null };
     }
-    // Fall back to member lookup
     if (u.member_id) {
       const name = memberNameMap.get(u.member_id) || null;
-      return { name, isBoardMember: false };
+      return { label: name || "Onbekend lid", isBoard: false, memberId: u.member_id };
     }
-    return { name: null, isBoardMember: false };
+    return { label: "", isBoard: false, memberId: null };
   };
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery) return users;
     const q = searchQuery.toLowerCase();
     return users.filter((u) => {
-      const { name } = getDisplayName(u);
-      const displayName = name || "";
+      const { label } = getDisplayInfo(u);
+      const displayName = label || "";
       return (
         (u.email || "").toLowerCase().includes(q) ||
         displayName.toLowerCase().includes(q) ||
@@ -197,27 +185,24 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { name: displayName, isBoardMember, functie } = getDisplayName(u);
+                  const { label, isBoard, memberId } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
                         <span className="inline-flex items-center gap-1.5">
-                          {displayName ? (
-                            isBoardMember ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Shield size={12} className="text-primary" />
-                                {displayName}
-                                {functie && <span className="text-[10px] text-muted-foreground">({functie})</span>}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => navigate(`/leden/${u.member_id}`)}
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
-                              >
-                                {displayName}
-                                <ExternalLink size={12} className="opacity-50" />
-                              </button>
-                            )
+                          {isBoard ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Shield size={12} className="text-primary" />
+                              {label}
+                            </span>
+                          ) : memberId ? (
+                            <button
+                              onClick={() => navigate(`/leden/${memberId}`)}
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              {label}
+                              <ExternalLink size={12} className="opacity-50" />
+                            </button>
                           ) : (
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
