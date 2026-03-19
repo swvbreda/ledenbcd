@@ -39,6 +39,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, isAdmin, signOut } = useAuth();
+  const { data: pendingRequests } = useEditRequests("pending");
+  const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
   const [pwOpen, setPwOpen] = useState(false);
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
