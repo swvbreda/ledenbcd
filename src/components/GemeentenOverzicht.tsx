@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented } from "@/hooks/useMembers";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { pctColor } from "@/lib/pctColor";
 
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 const totalNL = coffeeshopData.totaalNL;
