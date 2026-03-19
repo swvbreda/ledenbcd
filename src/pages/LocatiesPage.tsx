@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from "lucide-react";
 import { allRepresented } from "@/hooks/useMembers";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
@@ -61,6 +61,19 @@ const LocatiesPage = () => {
   const { members: represented } = useMergedMembers(allRepresented);
   const representedLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
+
+  // Track when data updates to show a brief notification
+  const [showUpdated, setShowUpdated] = useState(false);
+  const prevHash = useRef<string>("");
+  useEffect(() => {
+    const hash = JSON.stringify(represented.map((m) => [m.id, m.aantalLocaties, m.locaties?.length]));
+    if (prevHash.current && prevHash.current !== hash) {
+      setShowUpdated(true);
+      const t = setTimeout(() => setShowUpdated(false), 3000);
+      return () => clearTimeout(t);
+    }
+    prevHash.current = hash;
+  }, [represented]);
 
   // Count represented locations per city
   const repCityCount: Record<string, number> = {};
@@ -177,6 +190,14 @@ const LocatiesPage = () => {
           )}
         </div>
       </div>
+
+      {/* Update notification */}
+      {showUpdated && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm text-primary animate-in fade-in slide-in-from-top-2 duration-300">
+          <RefreshCw size={14} className="shrink-0" />
+          <span>Gegevens bijgewerkt</span>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
