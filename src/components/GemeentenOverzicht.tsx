@@ -132,7 +132,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
         <div>
           <h3 className="text-sm font-semibold font-display mb-1">Experiment gemeenten</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            BCD-leden in de 10 experiment-gemeenten
+            Aangesloten leden in de 10 experiment-gemeenten
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
