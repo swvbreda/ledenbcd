@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus } from "lucide-react";
+import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,14 +68,9 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border px-4 py-5">
+        <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
           {!collapsed ? (
-            <>
-              <h1 className="text-lg font-bold font-display tracking-tight text-sidebar-foreground">
-                Ledenbestand
-              </h1>
-              <p className="text-xs text-sidebar-foreground/60 mt-0.5">Ledenbestand Dashboard</p>
-            </>
+            <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-10 w-auto" />
           ) : (
             <span className="text-lg font-bold text-sidebar-foreground">B</span>
           )}
