@@ -8,8 +8,10 @@ import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } f
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const LedenPage = () => {
+  const { isAdmin } = useAuth();
   const [showArchived, setShowArchived] = useState(false);
   const {
     searchQuery, setSearchQuery,
@@ -46,7 +48,7 @@ const LedenPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {!showArchived && <ExportButton members={mergedSearched} />}
+          {!showArchived && isAdmin && <ExportButton members={mergedSearched} />}
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"
