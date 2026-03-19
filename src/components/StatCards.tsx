@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented } from "@/hooks/useMembers";
