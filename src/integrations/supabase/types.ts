@@ -77,6 +77,51 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_conversions: {
+        Row: {
+          created_at: string
+          created_by: string
+          factuur_adres: string | null
+          factuur_bedrijfsnaam: string | null
+          factuur_email: string | null
+          factuur_kvk: string | null
+          factuur_plaats: string | null
+          factuur_postcode: string | null
+          id: string
+          lead_id: number
+          lid_sinds: number | null
+          lidnummer: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          factuur_adres?: string | null
+          factuur_bedrijfsnaam?: string | null
+          factuur_email?: string | null
+          factuur_kvk?: string | null
+          factuur_plaats?: string | null
+          factuur_postcode?: string | null
+          id?: string
+          lead_id: number
+          lid_sinds?: number | null
+          lidnummer: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          factuur_adres?: string | null
+          factuur_bedrijfsnaam?: string | null
+          factuur_email?: string | null
+          factuur_kvk?: string | null
+          factuur_plaats?: string | null
+          factuur_postcode?: string | null
+          id?: string
+          lead_id?: number
+          lid_sinds?: number | null
+          lidnummer?: number
+        }
+        Relationships: []
+      }
       member_allowed_emails: {
         Row: {
           email: string
