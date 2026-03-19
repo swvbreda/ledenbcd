@@ -17,6 +17,7 @@ import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
 import GoedkeuringenPage from "./pages/GoedkeuringenPage";
+import BestuurBeheerPage from "./pages/BestuurBeheerPage";
 
 import NotFound from "./pages/NotFound";
 
