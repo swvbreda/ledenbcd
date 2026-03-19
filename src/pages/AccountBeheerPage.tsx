@@ -228,7 +228,7 @@ const AccountBeheerPage = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {isBoard ? personName : "—"}
+                        {personName || "—"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                       <td className="px-4 py-3">
