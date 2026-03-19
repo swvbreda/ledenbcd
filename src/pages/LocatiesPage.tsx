@@ -191,6 +191,14 @@ const LocatiesPage = () => {
         </div>
       </div>
 
+      {/* Update notification */}
+      {showUpdated && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm text-primary animate-in fade-in slide-in-from-top-2 duration-300">
+          <RefreshCw size={14} className="shrink-0" />
+          <span>Gegevens bijgewerkt</span>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
