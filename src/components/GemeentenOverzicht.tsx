@@ -8,22 +8,26 @@ import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 const totalNL = coffeeshopData.totaalNL;
 
-/** Returns an HSL color interpolating from red (0%) → orange (50%) → dark green (100%) */
+/** Returns an HSL color interpolating from red (0%) → orange (25%) → yellow (50%) → dark green (100%) */
 const pctColor = (pct: number): string => {
-  // 0%: hsl(0,84%,50%)  red
-  // 50%: hsl(32,95%,50%) orange
-  // 100%: hsl(145,63%,32%) dark green
-  if (pct <= 50) {
-    const t = pct / 50;
+  if (pct <= 25) {
+    const t = pct / 25;
     const h = 0 + t * 32;
     const s = 84 + t * (95 - 84);
     const l = 50;
     return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
   }
+  if (pct <= 50) {
+    const t = (pct - 25) / 25;
+    const h = 32 + t * (60 - 32);
+    const s = 95 + t * (90 - 95);
+    const l = 50 + t * (45 - 50);
+    return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+  }
   const t = (pct - 50) / 50;
-  const h = 32 + t * (145 - 32);
-  const s = 95 + t * (63 - 95);
-  const l = 50 + t * (32 - 50);
+  const h = 60 + t * (145 - 60);
+  const s = 90 + t * (63 - 90);
+  const l = 45 + t * (32 - 45);
   return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
 };
 
