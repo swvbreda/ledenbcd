@@ -336,6 +336,11 @@ const MemberDetail = () => {
                                 <Phone size={13} /> {c.telefoon}
                               </p>
                             )}
+                            {c.verjaardag && (
+                              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                                <Calendar size={13} /> {new Date(c.verjaardag).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );

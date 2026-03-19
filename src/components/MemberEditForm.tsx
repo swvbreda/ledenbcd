@@ -220,6 +220,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
               </div>
               <EditableField label="E-mail" value={c.email} onChange={(v) => updateContact(i, "email", v)} />
               <EditableField label="Telefoon" value={c.telefoon} onChange={(v) => updateContact(i, "telefoon", v)} />
+              <EditableField label="Verjaardag" value={c.verjaardag || ""} onChange={(v) => updateContact(i, "verjaardag", v)} type="date" />
             </div>
           </div>
         ))}
