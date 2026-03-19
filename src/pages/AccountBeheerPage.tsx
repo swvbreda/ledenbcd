@@ -357,6 +357,35 @@ const AccountBeheerPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Link member dialog */}
+      <Dialog open={!!linkDialogUser} onOpenChange={(open) => { if (!open) setLinkDialogUser(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Lid koppelen</DialogTitle>
+            <DialogDescription>
+              Koppel een lidmaatschapsnummer aan {linkDialogUser?.email}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Input
+              type="number"
+              placeholder="Lidnummer (bijv. 5)"
+              value={linkMemberId}
+              onChange={(e) => setLinkMemberId(e.target.value)}
+            />
+            {linkMemberId && memberMap.get(parseInt(linkMemberId)) && (
+              <p className="text-sm text-muted-foreground">
+                → {memberMap.get(parseInt(linkMemberId))?.naam}
+              </p>
+            )}
+            <Button onClick={handleLink} disabled={saving || !linkMemberId} className="w-full gap-1.5">
+              <Link size={14} />
+              {saving ? "Koppelen..." : "Koppelen"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
