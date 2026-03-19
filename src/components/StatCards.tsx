@@ -70,7 +70,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <p className="text-xs text-muted-foreground mt-0.5">{totalMembers} leden · {allLeads.length} leads</p>
       </div>
 
-      {/* Gemeenten gauge */}
+      {/* Gemeenten */}
       <div
         className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
         onClick={() => navigate("/locaties")}
@@ -79,11 +79,8 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
           <Building2 size={18} className="text-primary" />
         </div>
-        <div className="mt-1">
-          <MiniGauge pct={cityPct} color="hsl(var(--primary))" />
-          <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{cityPct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{uniqueCitiesInWODC}/{totalNLCities} gemeenten</p>
-        </div>
+        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{uniqueCitiesInWODC}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} coffeeshopgemeenten</p>
       </div>
 
       {/* Marktaandeel gauge */}
