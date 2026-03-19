@@ -246,7 +246,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="cursor-help text-amber-500">★</span>
+                                <span className="cursor-default text-amber-500">★</span>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Oprichter van de bond</p>
@@ -258,7 +258,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                                <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>{member.bestuursfunctie || "Bestuurslid"}</p>
