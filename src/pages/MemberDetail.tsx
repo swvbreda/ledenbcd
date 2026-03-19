@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMergedMember } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
+import MailingPreferences from "@/components/MailingPreferences";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
