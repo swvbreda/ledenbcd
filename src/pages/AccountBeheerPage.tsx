@@ -174,6 +174,20 @@ const AccountBeheerPage = () => {
     fetchUsers();
   };
 
+  const handleEdit = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    const body: Record<string, unknown> = { action: "update_user", user_id: editUser.id };
+    if (editEmail && editEmail !== editUser.email) body.email = editEmail;
+    if (editRole !== editUser.role) body.role = editRole;
+    const { error } = await supabase.functions.invoke("manage-users", { body });
+    setSaving(false);
+    if (error) { toast.error("Fout bij opslaan: " + error.message); return; }
+    toast.success("Account bijgewerkt");
+    setEditUser(null);
+    fetchUsers();
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleDateString("nl-NL", {
