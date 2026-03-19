@@ -165,20 +165,20 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </div>
           </div>
 
-          {(member || bl.coffeeshop) && (() => {
+          {(firstMember || bl.coffeeshop) && (() => {
             let locations: string[] = [];
-            if (member) {
-              const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
-              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
+            if (firstMember) {
+              const uniqueCities = [...new Set(firstMember.locaties?.map(l => l.plaats).filter(Boolean) || [])];
+              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (firstMember.plaats ? [firstMember.plaats] : []);
             } else if (bl.coffeeshop_plaats) {
               locations = bl.coffeeshop_plaats.split("/").map(s => s.trim());
             }
             return (
               <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
-                {member && (
-                  <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
+                {firstMember && (
+                  <p className="text-[11px] font-medium leading-tight">{firstMember.naam}</p>
                 )}
-                {!member && bl.coffeeshop && (
+                {!firstMember && bl.coffeeshop && (
                   <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
                 )}
                 {locations.length > 0 && (
