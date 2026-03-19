@@ -4,6 +4,7 @@ import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { getMembershipYears } from "@/lib/membership";
+import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
 
 export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
@@ -28,17 +29,14 @@ export function useMembers() {
     () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),
     []
   );
-  const stadsdelen = useMemo(
-    () => [...new Set(allIncludingLeads.map((m) => m.stadsdeel).filter(Boolean))].sort(),
-    []
-  );
+  const stadsdelen = useMemo(() => [...stadsdeelCategorieen], []);
 
   const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
 
   const filteredMembers = useMemo(() => {
     return allIncludingLeads.filter((m) => {
       if (filterCity && m.plaats !== filterCity) return false;
-      if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
+      if (filterStadsdeel && (!m.stadsdeel || getStadsdeelCategorie(m.stadsdeel) !== filterStadsdeel)) return false;
       if (filterJaren) {
         const [min, max] = filterJaren.split("-").map(Number);
         const years = getMembershipYears(m);
