@@ -178,6 +178,13 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (!ALLOWED_ROLES.includes(role)) {
+        return new Response(JSON.stringify({ error: "Ongeldige rol" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       await adminClient.from("user_roles").upsert(
         { user_id, role },
         { onConflict: "user_id,role" }
