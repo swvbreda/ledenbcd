@@ -39,7 +39,7 @@ const MemberDetail = () => {
   const isOwnProfile = linkedMemberId !== null && linkedMemberId === Number(id);
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
-  const { member, isLoading } = useMergedMember(memberId);
+  const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
