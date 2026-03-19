@@ -195,37 +195,28 @@ export default function BestuurBeheerPage() {
   const bestuursleden = members.filter((m) => m.type === "bestuurslid");
   const aspiranten = members.filter((m) => m.type === "aspirant");
 
-  const renderRow = (member: BoardMember) => (
-    <div
-      key={member.id}
-      className="flex items-center gap-3 py-2.5 px-3 rounded-md border border-border hover:bg-muted/30 transition-colors"
-    >
-      <GripVertical size={14} className="text-muted-foreground/40 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{member.naam}</p>
-        <p className="text-xs text-primary">{member.functie}</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-          {member.bond_email && (
-            <span className="text-[11px] text-muted-foreground">{member.bond_email}</span>
-          )}
-          {member.telefoon && (
-            <span className="text-[11px] text-muted-foreground">{member.telefoon}</span>
-          )}
-          {member.coffeeshop && (
-            <span className="text-[11px] text-muted-foreground">{member.coffeeshop}</span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(member)}>
-          <Pencil size={13} />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(member.id)}>
-          <Trash2 size={13} />
-        </Button>
-      </div>
-    </div>
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = members.findIndex((m) => m.id === active.id);
+    const newIndex = members.findIndex((m) => m.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(members, oldIndex, newIndex);
+    setMembers(reordered);
+
+    // Persist new sort_order values
+    const updates = reordered.map((m, i) => ({ id: m.id, sort_order: i }));
+    for (const u of updates) {
+      await supabase.from("board_members").update({ sort_order: u.sort_order }).eq("id", u.id);
+    }
+  };
 
   if (loading) {
     return <div className="p-6 text-sm text-muted-foreground">Laden...</div>;
@@ -243,21 +234,33 @@ export default function BestuurBeheerPage() {
         </Button>
       </div>
 
-      {bestuursleden.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Bestuursleden</h2>
-          <div className="space-y-1.5">
-            {bestuursleden.map(renderRow)}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {bestuursleden.length > 0 && (
+          <div className="mb-4">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Bestuursleden</h2>
+            <SortableContext items={bestuursleden.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-1.5">
+                {bestuursleden.map((member) => (
+                  <SortableRow key={member.id} member={member} onEdit={openEdit} onDelete={setDeleteId} />
+                ))}
+              </div>
+            </SortableContext>
           </div>
-        </div>
-      )}
+        )}
 
-      {aspiranten.length > 0 && (
-        <div>
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Aspiranten</h2>
-          <div className="space-y-1.5">
-            {aspiranten.map(renderRow)}
+        {aspiranten.length > 0 && (
+          <div>
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Aspiranten</h2>
+            <SortableContext items={aspiranten.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-1.5">
+                {aspiranten.map((member) => (
+                  <SortableRow key={member.id} member={member} onEdit={openEdit} onDelete={setDeleteId} />
+                ))}
+              </div>
+            </SortableContext>
           </div>
+        )}
+      </DndContext>
         </div>
       )}
 
