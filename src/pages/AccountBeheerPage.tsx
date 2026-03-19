@@ -146,6 +146,31 @@ const AccountBeheerPage = () => {
     setDeleteId(null);
   };
 
+  const handleLink = async () => {
+    if (!linkDialogUser || !linkMemberId) return;
+    const mid = parseInt(linkMemberId);
+    if (isNaN(mid)) { toast.error("Voer een geldig lidnummer in"); return; }
+    setSaving(true);
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "link_member", user_id: linkDialogUser.id, member_id: mid },
+    });
+    setSaving(false);
+    if (error) { toast.error("Fout bij koppelen: " + error.message); return; }
+    toast.success(`Lid #${mid} gekoppeld`);
+    setLinkDialogUser(null);
+    setLinkMemberId("");
+    fetchUsers();
+  };
+
+  const handleUnlink = async (userId: string, memberId: number) => {
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "unlink_member", user_id: userId, member_id: memberId },
+    });
+    if (error) { toast.error("Fout bij ontkoppelen: " + error.message); return; }
+    toast.success(`Lid #${memberId} ontkoppeld`);
+    fetchUsers();
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleDateString("nl-NL", {
