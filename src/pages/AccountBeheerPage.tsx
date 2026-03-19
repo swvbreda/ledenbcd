@@ -66,7 +66,16 @@ const AccountBeheerPage = () => {
 
     setLoading(false);
   };
-...
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate("/");
+      return;
+    }
+
+    fetchUsers();
+  }, [isAdmin, navigate]);
+
   const handleCreate = async () => {
     if (!newEmail || !newPassword) {
       toast.error("Vul e-mail en wachtwoord in");
