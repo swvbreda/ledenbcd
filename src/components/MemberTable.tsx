@@ -87,9 +87,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
-              {memberIsLead && (
-                <span className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">Lead</span>
-              )}
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
