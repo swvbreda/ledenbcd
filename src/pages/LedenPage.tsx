@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type ViewTab = "leden" | "coffeeshops";
+type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
