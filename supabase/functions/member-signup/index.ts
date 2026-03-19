@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       }
       console.error("Signup error:", signupError);
       return new Response(
-        JSON.stringify({ error: "Registratie mislukt: " + signupError.message }),
+        JSON.stringify({ error: "Registratie mislukt. Probeer het opnieuw of neem contact op met het bestuur." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
