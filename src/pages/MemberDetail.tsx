@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,7 +39,7 @@ const MemberDetail = () => {
   const isOwnProfile = linkedMemberId !== null && linkedMemberId === Number(id);
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
-  const { member, isLoading } = useMergedMember(memberId);
+  const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
@@ -119,6 +119,14 @@ const MemberDetail = () => {
       >
         <ArrowLeft size={18} />
       </button>
+
+      {/* Pending edit banner */}
+      {hasPendingEdit && !editing && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <Clock size={16} className="shrink-0" />
+          <span>Je hebt wijzigingen ingediend die wachten op goedkeuring door het bestuur. De getoonde gegevens bevatten je voorgestelde wijzigingen.</span>
+        </div>
+      )}
 
       {/* Edit mode */}
       {editing ? (
