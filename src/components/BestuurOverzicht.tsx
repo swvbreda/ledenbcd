@@ -132,100 +132,100 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return (
       <div
         key={bl.naam}
-        className={`border rounded-md p-2.5 transition-colors min-h-[120px] flex flex-col justify-between ${
+        className={`border rounded-md p-2.5 transition-colors flex gap-2.5 ${
           isAspirant ? "border-dashed border-border" : "border-border"
         } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => member && navigate(`/leden/${member.id}`)}
       >
-        <div className="min-w-0">
-          <p className="font-medium text-sm leading-tight">{bl.naam}</p>
-          <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
-          
-          <div className="flex flex-wrap items-center gap-x-3 mt-1">
-            {bl.bondEmail && (
-              <a
-                href={`mailto:${bl.bondEmail}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 text-[11px] text-primary hover:underline"
-              >
-                <Mail size={10} /> {bl.bondEmail}
-              </a>
-            )}
-            {bl.telefoon && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Phone size={10} /> {bl.telefoon}
-              </span>
-            )}
+        {/* Left content */}
+        <div className="min-w-0 flex-1 flex flex-col justify-between">
+          <div>
+            <p className="font-medium text-sm leading-tight">{bl.naam}</p>
+            <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
+            
+            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+              {bl.bondEmail && (
+                <a
+                  href={`mailto:${bl.bondEmail}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                >
+                  <Mail size={10} /> {bl.bondEmail}
+                </a>
+              )}
+              {bl.telefoon && (
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Phone size={10} /> {bl.telefoon}
+                </span>
+              )}
+            </div>
           </div>
+
+          {(member || bl.coffeeshop) && (() => {
+            let locations: string[] = [];
+            if (member) {
+              const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
+              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
+            } else if (bl.coffeeshopPlaats) {
+              locations = bl.coffeeshopPlaats.split("/").map(s => s.trim());
+            }
+            return (
+              <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
+                {member && (
+                  <p className="text-[11px] text-primary font-medium leading-tight">{member.naam}</p>
+                )}
+                {!member && bl.coffeeshop && (
+                  <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
+                )}
+                {locations.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    {locations.map((city, i) => (
+                      <span key={i} className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                        <MapPin size={8} className="shrink-0 text-primary/60" />{city}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
-        <div className="flex items-end justify-between mt-1.5 pt-1.5 border-t border-border/50">
-          <div className="min-w-0 flex-1 space-y-0.5">
-            {(member || bl.coffeeshop) && (() => {
-              let locations: string[] = [];
-              if (member) {
-                const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
-                locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
-              } else if (bl.coffeeshopPlaats) {
-                locations = bl.coffeeshopPlaats.split("/").map(s => s.trim());
-              }
-              return (
-                <>
-                  {member && (
-                    <p className="text-[11px] text-primary font-medium leading-tight">{member.naam}</p>
-                  )}
-                  {!member && bl.coffeeshop && (
-                    <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
-                  )}
-                  {locations.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                      {locations.map((city, i) => (
-                        <span key={i} className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                          <MapPin size={8} className="shrink-0 text-primary/60" />{city}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-
-          <div className="relative shrink-0 ml-2">
-            {photo ? (
-              <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <User size={22} className="text-muted-foreground/60" />
-              </div>
-            )}
-            {showUpload && (
-              <>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpload(bl.naam, file);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRefs.current[bl.naam]?.click();
-                  }}
-                  disabled={uploading === bl.naam}
-                  className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
-                  title="Foto uploaden"
-                >
-                  <Camera size={10} />
-                </button>
-              </>
-            )}
-          </div>
+        {/* Right photo */}
+        <div className="relative shrink-0 self-start">
+          {photo ? (
+            <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+              <User size={22} className="text-muted-foreground/60" />
+            </div>
+          )}
+          {showUpload && (
+            <>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={(el) => { fileInputRefs.current[bl.naam] = el; }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpload(bl.naam, file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRefs.current[bl.naam]?.click();
+                }}
+                disabled={uploading === bl.naam}
+                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
+                title="Foto uploaden"
+              >
+                <Camera size={10} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
