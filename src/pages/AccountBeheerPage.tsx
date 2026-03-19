@@ -42,6 +42,7 @@ const AccountBeheerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
   const [linkMemberId, setLinkMemberId] = useState("");
+  const [linkSearch, setLinkSearch] = useState("");
   const [editUser, setEditUser] = useState<UserAccount | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("user");
