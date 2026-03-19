@@ -3,13 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Building2, Users, Notebook, Search, X } from "lucide-react";
 import { allRepresented, allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const perStad = coffeeshopData.perStad as Record<string, number>;
+const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 
 const GemeenteDetailPage = () => {
   const { gemeente } = useParams<{ gemeente: string }>();

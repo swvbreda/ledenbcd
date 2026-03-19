@@ -4,8 +4,9 @@ import { allMembers, allRepresented } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
-const perStad = coffeeshopData.perStad as Record<string, number>;
+const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 const totalNL = coffeeshopData.totaalNL;
 
 const MarktaandeelPage = () => {
