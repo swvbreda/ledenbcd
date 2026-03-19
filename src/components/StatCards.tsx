@@ -81,7 +81,7 @@ const StatCards = ({ members }: StatCardsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Aangesloten Coffeeshops */}
       <div
         className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
@@ -137,6 +137,33 @@ const StatCards = ({ members }: StatCardsProps) => {
           <MiniGauge pct={g4Pct} />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
           <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
+        </div>
+      </div>
+
+      {/* Benchmark */}
+      <div className="bg-card rounded-lg border border-border p-4 sm:p-5 col-span-2 lg:col-span-1">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
+          <BarChart3 size={18} className="text-primary" />
+        </div>
+        <div className="space-y-1.5">
+          {[
+            { name: "BCD", pct: marketPct },
+            { name: "KHN", pct: 21 },
+            { name: "CVAH", pct: 17 },
+            { name: "MKB-NL", pct: 7 },
+          ].map((b) => (
+            <div key={b.name} className="flex items-center gap-2">
+              <span className="text-xs font-medium w-14 shrink-0">{b.name}</span>
+              <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${b.pct}%`, backgroundColor: pctColor(b.pct) }}
+                />
+              </div>
+              <span className="text-xs font-bold w-8 text-right">{b.pct}%</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
