@@ -137,5 +137,9 @@ export function useMembers() {
     searchedMembers,
     clearFilters,
     allMembers,
+    activeLeadIds,
+    effectiveMembers,
+    effectiveLeads,
+    conversions,
   };
 }
