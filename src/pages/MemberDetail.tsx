@@ -112,30 +112,30 @@ const MemberDetail = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         <button
           onClick={() => navigate(-1)}
-          className="mt-1 p-2 rounded-md hover:bg-muted transition-colors"
+          className="mt-1 p-1.5 sm:p-2 rounded-md hover:bg-muted transition-colors shrink-0"
         >
           <ArrowLeft size={18} />
         </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
-            <h2 className="text-xl sm:text-2xl font-bold font-display">{member.naam}</h2>
+            <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
             {member.oprichter && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-xs font-semibold">
-                ★ Oprichter BCD
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-[11px] sm:text-xs font-semibold">
+                ★ Oprichter
               </span>
             )}
             {member.bestuursfunctie && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent/15 text-accent-foreground rounded-md text-xs font-semibold">
-                <Shield size={13} />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/15 text-accent-foreground rounded-md text-[11px] sm:text-xs font-semibold">
+                <Shield size={12} />
                 {member.bestuursfunctie}
               </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <MapPin size={14} /> {member.plaats}
             </span>
@@ -163,59 +163,61 @@ const MemberDetail = () => {
             )}
           </div>
         </div>
-        {isAdmin && (
-          <div className="flex items-center gap-2">
-            {!editing && (
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
-                <Pencil size={14} /> Bewerken
-              </Button>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                {archived ? (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-primary">
-                    <ArchiveRestore size={14} /> Herstellen
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
-                    <Archive size={14} /> Archiveren
-                  </Button>
-                )}
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {archived ? "Lid herstellen?" : "Lid archiveren?"}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {archived
-                      ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
-                      : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      if (archived) {
-                        restoreMember(member.id);
-                        setArchived(false);
-                        toast.success(`${member.naam} is hersteld`);
-                      } else {
-                        archiveMember(member.id);
-                        setArchived(true);
-                        toast.success(`${member.naam} is gearchiveerd`);
-                      }
-                    }}
-                  >
-                    {archived ? "Herstellen" : "Archiveren"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
       </div>
+
+      {/* Admin actions */}
+      {isAdmin && (
+        <div className="flex items-center gap-2 flex-wrap -mt-2">
+          {!editing && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
+              <Pencil size={14} /> Bewerken
+            </Button>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              {archived ? (
+                <Button variant="outline" size="sm" className="gap-1.5 text-primary">
+                  <ArchiveRestore size={14} /> Herstellen
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
+                  <Archive size={14} /> Archiveren
+                </Button>
+              )}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {archived ? "Lid herstellen?" : "Lid archiveren?"}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {archived
+                    ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
+                    : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (archived) {
+                      restoreMember(member.id);
+                      setArchived(false);
+                      toast.success(`${member.naam} is hersteld`);
+                    } else {
+                      archiveMember(member.id);
+                      setArchived(true);
+                      toast.success(`${member.naam} is gearchiveerd`);
+                    }
+                  }}
+                >
+                  {archived ? "Herstellen" : "Archiveren"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
 
       {/* Edit mode */}
       {editing && isAdmin ? (
