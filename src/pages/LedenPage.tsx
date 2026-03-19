@@ -70,11 +70,9 @@ const LedenPage = () => {
 
   const subtitle = showArchived
     ? `${archivedMembers.length} oud-leden`
-    : activeTab === "leden"
-    ? `${ledenOnly.length} leden`
-    : activeTab === "leads"
-    ? `${leadsOnly.length} leads`
-    : `${totalLocations} coffeeshops`;
+    : activeTab === "coffeeshops"
+    ? `${totalLocations} coffeeshops`
+    : `${mergedSearched.length} leden + leads`;
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
