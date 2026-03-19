@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
