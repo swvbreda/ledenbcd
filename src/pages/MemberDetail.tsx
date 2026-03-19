@@ -373,6 +373,27 @@ const MemberDetail = () => {
                                 <Calendar size={13} /> {new Date(c.verjaardag).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                               </p>
                             )}
+                            {(() => {
+                              const key = c.naam?.trim().toLowerCase();
+                              if (!key) return null;
+                              const others = (sharedContactMap.get(key) || []).filter((o) => o.id !== member.id);
+                              if (others.length === 0) return null;
+                              return (
+                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                  <Link2 size={12} className="text-muted-foreground shrink-0" />
+                                  <span className="text-[11px] text-muted-foreground">Ook bij:</span>
+                                  {others.map((o) => (
+                                    <button
+                                      key={o.id}
+                                      onClick={() => navigate(`/leden/${o.id}`)}
+                                      className="text-[11px] text-primary hover:underline"
+                                    >
+                                      {o.naam}
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
