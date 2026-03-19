@@ -8,6 +8,7 @@ import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } f
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const LedenPage = () => {
   const [showArchived, setShowArchived] = useState(false);
