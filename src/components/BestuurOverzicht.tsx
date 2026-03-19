@@ -178,13 +178,10 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                   <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
                 )}
                 {locations.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                    {locations.map((city, i) => (
-                      <span key={i} className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                        <MapPin size={8} className="shrink-0 text-primary/60" />{city}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
+                    {locations.join(" · ")}
+                  </p>
                 )}
               </div>
             );
