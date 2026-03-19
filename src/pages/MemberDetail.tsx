@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2 } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button";
 import { archiveMember, restoreMember, isArchived } from "@/hooks/useArchive";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -40,6 +42,45 @@ const MemberDetail = () => {
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
   const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
   const [editing, setEditing] = useState(false);
+  const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+
+  useEffect(() => {
+    if (!memberId || !isAdmin) return;
+    supabase
+      .from("member_notes")
+      .select("id, note, created_at")
+      .eq("member_id", memberId)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setNotes(data);
+      });
+  }, [memberId, isAdmin]);
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    setSavingNote(true);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    if (!userId) { setSavingNote(false); return; }
+    const { data, error } = await supabase
+      .from("member_notes")
+      .insert({ member_id: memberId, note: newNote.trim(), created_by: userId })
+      .select("id, note, created_at")
+      .single();
+    setSavingNote(false);
+    if (error) { toast.error("Opmerking opslaan mislukt"); return; }
+    if (data) setNotes((prev) => [data, ...prev]);
+    setNewNote("");
+    toast.success("Opmerking toegevoegd");
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    const { error } = await supabase.from("member_notes").delete().eq("id", noteId);
+    if (error) { toast.error("Verwijderen mislukt"); return; }
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+  };
 
   if (isLoading) {
     return <div className="p-6 text-center text-muted-foreground">Laden...</div>;
@@ -398,6 +439,53 @@ const MemberDetail = () => {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Opmerkingen */}
+          {isAdmin && (
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+                <MessageSquare size={16} className="text-primary" /> Opmerkingen
+              </h3>
+              <div className="flex gap-2 mb-4">
+                <Textarea
+                  placeholder="Bijv. naam gewijzigd van 'The Lounge' naar 'Coffeeshop Haarlem'..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="min-h-[60px] text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleAddNote}
+                  disabled={savingNote || !newNote.trim()}
+                  className="shrink-0 self-end"
+                >
+                  <Send size={14} />
+                </Button>
+              </div>
+              {notes.length > 0 ? (
+                <div className="space-y-2">
+                  {notes.map((n) => (
+                    <div key={n.id} className="flex items-start justify-between gap-2 p-3 bg-muted/30 rounded-md">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm whitespace-pre-wrap">{n.note}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {new Date(n.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteNote(n.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0 mt-0.5"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Nog geen opmerkingen</p>
+              )}
             </div>
           )}
         </>
