@@ -32,6 +32,7 @@ const getJubileumTier = (jaren: number): { bg: string; text: string; label: stri
   if (jaren >= 15) return { bg: "bg-indigo-100", text: "text-indigo-600", label: "Kristallen jubileum" };
   if (jaren >= 10) return { bg: "bg-orange-100", text: "text-orange-700", label: "Koperen jubileum" };
   if (jaren >= 5) return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Houten jubileum" };
+  if (jaren >= 1) return { bg: "bg-lime-100", text: "text-lime-700", label: "Katoenen jubileum" };
   return { bg: "bg-muted", text: "text-muted-foreground", label: "" };
 };
 
@@ -296,6 +297,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
           <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
           <span className="text-border">|</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-lime-100 border border-lime-300" /> 1+ jr Katoen</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-300" /> 5+ jr Hout</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-orange-100 border border-orange-300" /> 10+ jr Koper</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-indigo-100 border border-indigo-300" /> 15+ jr Kristal</span>
