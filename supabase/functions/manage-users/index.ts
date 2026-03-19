@@ -98,13 +98,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ALLOWED_ROLES = ["admin", "user"];
+
     if (action === "create") {
       const email = payload.email as string | undefined;
       const password = payload.password as string | undefined;
       const role = payload.role as string | undefined;
 
-      if (!email || !password) {
-        return new Response(JSON.stringify({ error: "E-mail en wachtwoord zijn verplicht" }), {
+      if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+        return new Response(JSON.stringify({ error: "Ongeldig e-mailadres" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!password || password.length < 8) {
+        return new Response(JSON.stringify({ error: "Wachtwoord moet minimaal 8 tekens zijn" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (role && !ALLOWED_ROLES.includes(role)) {
+        return new Response(JSON.stringify({ error: "Ongeldige rol" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -157,6 +173,13 @@ Deno.serve(async (req) => {
 
       if (!user_id || !role) {
         return new Response(JSON.stringify({ error: "user_id en role zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!ALLOWED_ROLES.includes(role)) {
+        return new Response(JSON.stringify({ error: "Ongeldige rol" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -249,7 +272,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("manage-users error:", error);
+    return new Response(JSON.stringify({ error: "Er is een interne fout opgetreden" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
