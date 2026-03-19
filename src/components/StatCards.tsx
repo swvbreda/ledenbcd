@@ -15,7 +15,11 @@ interface StatCardsProps {
 const StatCards = ({ members }: StatCardsProps) => {
   const navigate = useNavigate();
 
-  const totalMembers = members.length;
+  const { conversions } = useLeadConversions();
+  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
+  const activeLeadsCount = rawLeads.filter((l) => !convertedLeadIds.has(l.id)).length;
+  const totalMembers = members.length + conversions.length; // original members + converted leads
+
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
