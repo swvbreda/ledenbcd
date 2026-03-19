@@ -15,6 +15,7 @@ interface StatCardsProps {
 
 const StatCards = ({ members }: StatCardsProps) => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const { conversions } = useLeadConversions();
   const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
