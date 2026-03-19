@@ -64,7 +64,7 @@ const VerloopChart = () => {
           </div>
           <div className="bg-muted/50 rounded-lg p-2.5 sm:p-4 text-center">
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">5 jaar</p>
-            <p className="text-xl sm:text-3xl font-bold font-display text-primary">+{fiveYrGrowth}%</p>
+            <p className="text-xl sm:text-3xl font-bold font-display text-success">+{fiveYrGrowth}%</p>
             <p className="text-[10px] sm:text-xs text-muted-foreground">+{current.leden - fiveYearsAgo.leden} leden</p>
           </div>
         </div>
