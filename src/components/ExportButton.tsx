@@ -11,14 +11,14 @@ const ExportButton = ({ members, filename = "bcd-leden" }: ExportButtonProps) =>
   const handleExport = () => {
     const headers = [
       "Lidnr", "Naam", "Plaats", "Stadsdeel", "Jaren Lid", "Oprichting",
-      "Contactpersoon", "Functie", "Telefoon", "Email", "Bedrijfsnaam",
+      "Contactpersoon", "Functie", "Telefoon", "Email",
       "Aantal Locaties", "Factuur Bedrijfsnaam", "Factuur KVK",
       "Factuur Adres", "Factuur Postcode", "Factuur Plaats", "Factuur Email",
     ];
 
     const rows = members.map((m) => [
       m.id, m.naam, m.plaats, m.stadsdeel, getMembershipYears(m) ?? "", m.oprichtingJaar ?? "",
-      m.contactpersoon, m.functie, m.telefoon, m.email, m.bedrijfsnaam,
+      m.contactpersoon, m.functie, m.telefoon, m.email,
       m.aantalLocaties, m.factuurBedrijfsnaam ?? "", m.factuurKvk ?? "",
       m.factuurAdres ?? "", m.factuurPostcode ?? "", m.factuurPlaats ?? "",
       m.factuurEmail ?? "",
