@@ -24,6 +24,17 @@ const getGemeenten = (member: Member): string[] => {
   return Array.from(set);
 };
 
+/** Jubilee tier based on traditional Dutch jubilee colors */
+const getJubileumTier = (jaren: number): { bg: string; text: string; label: string } => {
+  if (jaren >= 30) return { bg: "bg-amber-100", text: "text-amber-700", label: "Pareljubileum" };
+  if (jaren >= 25) return { bg: "bg-slate-200", text: "text-slate-600", label: "Zilveren jubileum" };
+  if (jaren >= 20) return { bg: "bg-sky-100", text: "text-sky-700", label: "Porseleinen jubileum" };
+  if (jaren >= 15) return { bg: "bg-indigo-100", text: "text-indigo-600", label: "Kristallen jubileum" };
+  if (jaren >= 10) return { bg: "bg-orange-100", text: "text-orange-700", label: "Koperen jubileum" };
+  if (jaren >= 5) return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Houten jubileum" };
+  return { bg: "bg-muted", text: "text-muted-foreground", label: "" };
+};
+
 const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
