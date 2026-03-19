@@ -32,6 +32,42 @@ export type Database = {
         }
         Relationships: []
       }
+      member_edit_requests: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          member_id: number
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["edit_request_status"]
+          submitted_by: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          member_id: number
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["edit_request_status"]
+          submitted_by: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          member_id?: number
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["edit_request_status"]
+          submitted_by?: string
+        }
+        Relationships: []
+      }
       member_edits: {
         Row: {
           data: Json
@@ -135,6 +171,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      edit_request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -263,6 +300,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      edit_request_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
