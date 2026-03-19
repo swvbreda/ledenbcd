@@ -89,7 +89,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <span className="font-medium font-display text-sm">{m.naam}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-              {!memberIsLead && (isAdmin || m.id === linkedMemberId) && <span className="font-mono">#{m.id}</span>}
+              {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
             </div>
           </div>
@@ -163,7 +163,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
-                  {(isAdmin || member.id === linkedMemberId) ? (memberIsLead ? "—" : member.id) : ""}
+                  {memberIsLead ? (isAdmin ? "—" : "") : member.id}
                 </td>
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
