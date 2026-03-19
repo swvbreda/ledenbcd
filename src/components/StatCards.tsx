@@ -3,7 +3,7 @@ import { Users, Building2, MapPin, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
-import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 interface StatCardsProps {
   members: Member[];
@@ -17,8 +17,8 @@ const StatCards = ({ members }: StatCardsProps) => {
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const totalNLCities = Object.keys(perStad).length;
-  const matchedCities = [...allCities].filter((c) => c in perStad).length;
-  const uniqueCities = allCities.size;
+  const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
+  const matchedCities = representedGemeenten.size;
   const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
@@ -80,7 +80,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Building2 size={18} className="text-primary" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{matchedCities}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} coffeeshopgemeenten</p>
+        <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} gemeenten vertegenwoordigd</p>
       </div>
 
       {/* Marktaandeel gauge */}
