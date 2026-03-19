@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
@@ -227,32 +227,8 @@ const MemberDetail = () => {
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
       ) : (
         <>
-          {/* Oprichting & KVK */}
-          {(member.oprichtingsDatum || member.oprichtingJaar || member.lidSinds) && (
-            <div className="bg-card rounded-lg border border-border p-5 flex flex-wrap gap-6">
-              {(member.oprichtingsDatum || member.oprichtingJaar) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={16} className="text-primary" />
-                  <span className="text-muted-foreground">Opgericht:</span>
-                  <span className="font-medium">
-                    {member.oprichtingsDatum
-                      ? formatDate(member.oprichtingsDatum)
-                      : member.oprichtingJaar}
-                  </span>
-                </div>
-              )}
-              {member.lidSinds && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={16} className="text-success" />
-                  <span className="text-muted-foreground">Lid sinds:</span>
-                  <span className="font-medium">{member.lidSinds}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({new Date().getFullYear() - member.lidSinds} jaar)
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {/* Website & Social Media */}
           {(member.website || member.instagram || member.facebook) && (
@@ -281,6 +257,46 @@ const MemberDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Coffeeshop gegevens */}
+          <div className="bg-card rounded-lg border border-border p-5">
+            <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-3">
+              <Store size={16} className="text-primary" /> Coffeeshop gegevens
+            </h3>
+            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              <span className="text-muted-foreground">Bedrijfsnaam</span>
+              <span className="font-medium">{member.bedrijfsnaam || "—"}</span>
+
+              <span className="text-muted-foreground">KVK</span>
+              <span className="font-mono">{member.kvk || "—"}</span>
+
+              <span className="text-muted-foreground">Aantal locaties</span>
+              <span className="font-medium">{member.aantalLocaties}</span>
+
+              {(member.oprichtingsDatum || member.oprichtingJaar) && (
+                <>
+                  <span className="text-muted-foreground">Opgericht</span>
+                  <span className="font-medium">
+                    {member.oprichtingsDatum
+                      ? formatDate(member.oprichtingsDatum)
+                      : member.oprichtingJaar}
+                  </span>
+                </>
+              )}
+
+              {member.lidSinds && (
+                <>
+                  <span className="text-muted-foreground">Lid sinds</span>
+                  <span className="font-medium">
+                    {member.lidSinds}
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({new Date().getFullYear() - member.lidSinds} jaar)
+                    </span>
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
 
           {canSeeDetails ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
