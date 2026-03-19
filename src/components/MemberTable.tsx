@@ -78,11 +78,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         <table className="w-full text-sm font-body">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th
-                className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24"
-                onClick={() => handleSort("id")}
-              >
-                <span className="inline-flex items-center gap-1">Lidnr. <SortIcon col="id" /></span>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground w-24">
+                Lidnr.
               </th>
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors min-w-[200px]" onClick={() => handleSort("naam")}>
                 <span className="inline-flex items-center gap-1">Naam <SortIcon col="naam" /></span>
