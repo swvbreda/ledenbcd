@@ -149,9 +149,13 @@ const MemberDetail = () => {
                   <span className="inline-flex items-center gap-1">
                     <MapPin size={14} /> {member.plaats}
                   </span>
-                  {member.stadsdeel && (
-                    <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
-                  )}
+                  {(() => {
+                    // Derive stadsdeel from locaties (first one), fallback to member.stadsdeel
+                    const displayStadsdeel = member.locaties?.[0]?.stadsdeel || member.stadsdeel;
+                    return displayStadsdeel ? (
+                      <span className="px-2 py-0.5 bg-muted rounded text-xs">{displayStadsdeel}</span>
+                    ) : null;
+                  })()}
                   {(() => {
                     const jarenLid = getMembershipYears(member);
                     return jarenLid !== null ? (
