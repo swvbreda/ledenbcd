@@ -229,7 +229,7 @@ export default function BestuurBeheerPage() {
     fetchMembers();
   };
 
-  const updateField = (field: string, value: string | number | null) => {
+  const updateField = (field: string, value: string | number | number[] | null) => {
     if (!editingMember) return;
     setEditingMember({ ...editingMember, [field]: value });
   };
