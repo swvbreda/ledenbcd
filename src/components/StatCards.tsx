@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented } from "@/hooks/useMembers";
@@ -14,6 +15,7 @@ interface StatCardsProps {
 
 const StatCards = ({ members }: StatCardsProps) => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const { conversions } = useLeadConversions();
   const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
@@ -78,7 +80,9 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Users size={18} className="text-primary" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers + activeLeadsCount} leden & leads</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
+        </p>
       </div>
 
       {/* Gemeenten */}
