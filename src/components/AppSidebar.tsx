@@ -68,14 +68,9 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border px-4 py-5">
+        <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
           {!collapsed ? (
-            <>
-              <h1 className="text-lg font-bold font-display tracking-tight text-sidebar-foreground">
-                Ledenbestand
-              </h1>
-              <p className="text-xs text-sidebar-foreground/60 mt-0.5">Ledenbestand Dashboard</p>
-            </>
+            <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-10 w-auto" />
           ) : (
             <span className="text-lg font-bold text-sidebar-foreground">B</span>
           )}
