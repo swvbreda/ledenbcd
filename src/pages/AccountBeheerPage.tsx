@@ -1,34 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { allMembersAndLeads } from "@/hooks/useMembers";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus, Users, Loader2 } from "lucide-react";
+import { Shield, Trash2, UserPlus, Loader2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 interface UserAccount {
@@ -37,6 +24,7 @@ interface UserAccount {
   created_at: string;
   last_sign_in_at: string | null;
   role: string;
+  member_id: number | null;
 }
 
 const AccountBeheerPage = () => {
@@ -50,85 +38,81 @@ const AccountBeheerPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("user");
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Build member name lookup
+  const memberNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    allMembersAndLeads.forEach((m) => map.set(m.id, m.naam));
+    return map;
+  }, []);
+
+  const getMemberName = (memberId: number | null) => {
+    if (!memberId) return null;
+    return memberNameMap.get(memberId) || null;
+  };
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users;
+    const q = searchQuery.toLowerCase();
+    return users.filter((u) => {
+      const name = getMemberName(u.member_id) || "";
+      return (
+        (u.email || "").toLowerCase().includes(q) ||
+        name.toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q)
+      );
+    });
+  }, [users, searchQuery, memberNameMap]);
 
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("manage-users", {
       body: { action: "list" },
     });
-
     if (error) {
       toast.error("Fout bij ophalen accounts: " + error.message);
       setUsers([]);
     } else {
       setUsers(data?.users || []);
     }
-
     setLoading(false);
   };
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate("/");
-      return;
-    }
-
+    if (!isAdmin) { navigate("/"); return; }
     fetchUsers();
   }, [isAdmin, navigate]);
 
   const handleCreate = async () => {
-    if (!newEmail || !newPassword) {
-      toast.error("Vul e-mail en wachtwoord in");
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error("Wachtwoord moet minimaal 8 tekens zijn");
-      return;
-    }
-
+    if (!newEmail || !newPassword) { toast.error("Vul e-mail en wachtwoord in"); return; }
+    if (newPassword.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
     setSaving(true);
     const { error } = await supabase.functions.invoke("manage-users", {
       body: { action: "create", email: newEmail, password: newPassword, role: newRole },
     });
     setSaving(false);
-
-    if (error) {
-      toast.error("Fout bij aanmaken: " + error.message);
-    } else {
-      toast.success("Account aangemaakt");
-      setCreateOpen(false);
-      setNewEmail("");
-      setNewPassword("");
-      setNewRole("user");
-      fetchUsers();
-    }
+    if (error) { toast.error("Fout bij aanmaken: " + error.message); return; }
+    toast.success("Account aangemaakt");
+    setCreateOpen(false);
+    setNewEmail(""); setNewPassword(""); setNewRole("user");
+    fetchUsers();
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
-
     const { error } = await supabase.functions.invoke("manage-users", {
       body: { action: "delete", user_id: deleteId },
     });
-
-    if (error) {
-      toast.error("Fout bij verwijderen: " + error.message);
-    } else {
-      toast.success("Account verwijderd");
-      fetchUsers();
-    }
-
+    if (error) { toast.error("Fout bij verwijderen: " + error.message); }
+    else { toast.success("Account verwijderd"); fetchUsers(); }
     setDeleteId(null);
   };
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleDateString("nl-NL", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
     });
   };
 
@@ -136,14 +120,32 @@ const AccountBeheerPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">Accountbeheer</h2>
-          <p className="text-sm text-muted-foreground mt-1">Beheer gebruikersaccounts en rollen</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {filteredUsers.length}{searchQuery ? ` van ${users.length}` : ""} accounts
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5">
-          <UserPlus size={15} /> Nieuw account
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Zoek op naam of e-mail..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-8 h-9 w-56 text-sm"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5">
+            <UserPlus size={15} /> Nieuw account
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -156,53 +158,58 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">E-mail</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Rol</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Aangemaakt</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Laatste login</th>
                   <th className="px-4 py-3 w-16" />
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium">
-                      <span className="inline-flex items-center gap-1.5">
-                        {u.email}
-                        {u.id === user?.id && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
+                {filteredUsers.map((u) => {
+                  const memberName = getMemberName(u.member_id);
+                  return (
+                    <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-medium">
+                        <span className="inline-flex items-center gap-1.5">
+                          {memberName || <span className="text-muted-foreground italic">Geen lid gekoppeld</span>}
+                          {u.id === user?.id && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                          u.role === "admin"
+                            ? "bg-accent/15 text-accent-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {u.role === "admin" && <Shield size={11} />}
+                          {u.role === "admin" ? "Admin" : "Gebruiker"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
+                      <td className="px-4 py-3">
+                        {u.id !== user?.id && (
+                          <button
+                            onClick={() => setDeleteId(u.id)}
+                            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                        u.role === "admin"
-                          ? "bg-accent/15 text-accent-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {u.role === "admin" && <Shield size={11} />}
-                        {u.role === "admin" ? "Admin" : "Gebruiker"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(u.created_at)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
-                    <td className="px-4 py-3">
-                      {u.id !== user?.id && (
-                        <button
-                          onClick={() => setDeleteId(u.id)}
-                          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-          {users.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">Geen accounts gevonden</div>
+          {filteredUsers.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground">
+              {searchQuery ? "Geen accounts gevonden voor deze zoekopdracht" : "Geen accounts gevonden"}
+            </div>
           )}
         </div>
       )}
@@ -215,22 +222,10 @@ const AccountBeheerPage = () => {
             <DialogDescription>Maak een nieuw gebruikersaccount aan.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
-            <Input
-              type="email"
-              placeholder="E-mailadres"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-            <Input
-              type="password"
-              placeholder="Wachtwoord (min. 8 tekens)"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
+            <Input type="email" placeholder="E-mailadres" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+            <Input type="password" placeholder="Wachtwoord (min. 8 tekens)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             <Select value={newRole} onValueChange={setNewRole}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="user">Gebruiker</SelectItem>
                 <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
