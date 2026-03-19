@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -14,17 +14,20 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type ViewTab = "leden" | "coffeeshops";
+type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
-  const [activeTab, setActiveTab] = useState<ViewTab>(tabParam === "coffeeshops" ? "coffeeshops" : "leden");
+  const [activeTab, setActiveTab] = useState<ViewTab>(
+    tabParam === "coffeeshops" ? "coffeeshops" : tabParam === "leads" ? "leads" : "leden"
+  );
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
+    else if (tabParam === "leads") setActiveTab("leads");
     else if (tabParam === "leden") setActiveTab("leden");
   }, [tabParam]);
   const {
@@ -55,19 +58,21 @@ const LedenPage = () => {
     [mergedSearched]
   );
 
-  const ledenCount = useMemo(
-    () => mergedSearched.filter((m) => !leadIdSet.has(m.id)).length,
+  const ledenOnly = useMemo(
+    () => mergedSearched.filter((m) => !leadIdSet.has(m.id)),
     [mergedSearched, leadIdSet]
   );
-  const leadsCount = useMemo(
-    () => mergedSearched.filter((m) => leadIdSet.has(m.id)).length,
+  const leadsOnly = useMemo(
+    () => mergedSearched.filter((m) => leadIdSet.has(m.id)),
     [mergedSearched, leadIdSet]
   );
 
   const subtitle = showArchived
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "leden"
-    ? `${ledenCount} leden${leadsCount > 0 ? ` · ${leadsCount} leads` : ""}`
+    ? `${ledenOnly.length} leden`
+    : activeTab === "leads"
+    ? `${leadsOnly.length} leads`
     : `${totalLocations} coffeeshops`;
 
   return (
@@ -75,7 +80,7 @@ const LedenPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">
-            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : "Coffeeshopbestand"}
+            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
@@ -103,8 +108,14 @@ const LedenPage = () => {
             <TabsList>
               <TabsTrigger value="leden" className="gap-1.5">
                 <Users size={14} />
-                Leden ({ledenCount})
+                Leden ({ledenOnly.length})
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="leads" className="gap-1.5">
+                  <UserPlus size={14} />
+                  Leads ({leadsOnly.length})
+                </TabsTrigger>
+              )}
               <TabsTrigger value="coffeeshops" className="gap-1.5">
                 <Store size={14} />
                 Coffeeshops ({totalLocations})
@@ -143,7 +154,9 @@ const LedenPage = () => {
           </div>
         )
       ) : activeTab === "leden" ? (
-        <MemberTable members={mergedSearched} />
+        <MemberTable members={ledenOnly} />
+      ) : activeTab === "leads" ? (
+        <MemberTable members={leadsOnly} />
       ) : (
         <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       )}
