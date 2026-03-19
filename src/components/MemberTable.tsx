@@ -132,6 +132,23 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     )}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-center">
+                  {jarenLid !== null ? (
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                        jarenLid >= 30
+                          ? "bg-success/10 text-success"
+                          : jarenLid >= 10
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {jarenLid} jr
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
                 {isAdmin && (
                   <>
                     <td className="px-4 py-3 text-xs">
@@ -174,23 +191,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   <span className="text-muted-foreground text-xs">
                     {gemeenten.join(", ")}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {jarenLid !== null ? (
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        jarenLid >= 30
-                          ? "bg-success/10 text-success"
-                          : jarenLid >= 10
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {jarenLid} jr
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
                 </td>
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
