@@ -34,7 +34,9 @@ const EditableField = ({
 );
 
 export default function MemberEditForm({ member, editing, setEditing }: Props) {
+  const { isAdmin } = useAuth();
   const saveMutation = useSaveMemberEdit();
+  const submitMutation = useSubmitEditRequest();
 
   // Editable state
   const [naam, setNaam] = useState(member.naam);
