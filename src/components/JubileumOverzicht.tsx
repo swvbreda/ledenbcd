@@ -69,15 +69,16 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {jubilea.map((j, i) => {
-          const colors = JUBILEE_COLORS[j.jaren] || { bg: "bg-primary/10", text: "text-primary" };
+          const colors = JUBILEE_COLORS[j.jaren] || { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary", label: "" };
           const oprichtingText = formatOprichting(j.member);
           return (
             <button
               key={`${j.member.id}-${i}`}
               onClick={() => navigate(`/leden/${j.member.id}`)}
               className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+              title={colors.label ? `${colors.label} jubileum` : undefined}
             >
-              <div className={`shrink-0 w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
+              <div className={`shrink-0 w-12 h-12 rounded-full ${colors.bg} border-2 ${colors.border} flex items-center justify-center`}>
                 <span className={`text-sm font-bold ${colors.text}`}>{j.jaren}</span>
               </div>
               <div className="min-w-0">
