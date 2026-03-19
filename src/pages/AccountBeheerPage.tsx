@@ -53,12 +53,17 @@ const AccountBeheerPage = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("manage-users?action=list");
+    const { data, error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "list" },
+    });
+
     if (error) {
-      toast.error("Fout bij ophalen accounts");
+      toast.error("Fout bij ophalen accounts: " + error.message);
+      setUsers([]);
     } else {
-      setUsers(data.users || []);
+      setUsers(data?.users || []);
     }
+
     setLoading(false);
   };
 
@@ -67,8 +72,9 @@ const AccountBeheerPage = () => {
       navigate("/");
       return;
     }
+
     fetchUsers();
-  }, [isAdmin]);
+  }, [isAdmin, navigate]);
 
   const handleCreate = async () => {
     if (!newEmail || !newPassword) {
@@ -79,11 +85,13 @@ const AccountBeheerPage = () => {
       toast.error("Wachtwoord moet minimaal 8 tekens zijn");
       return;
     }
+
     setSaving(true);
-    const { error } = await supabase.functions.invoke("manage-users?action=create", {
-      body: { email: newEmail, password: newPassword, role: newRole },
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "create", email: newEmail, password: newPassword, role: newRole },
     });
     setSaving(false);
+
     if (error) {
       toast.error("Fout bij aanmaken: " + error.message);
     } else {
@@ -98,15 +106,18 @@ const AccountBeheerPage = () => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.functions.invoke("manage-users?action=delete", {
-      body: { user_id: deleteId },
+
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "delete", user_id: deleteId },
     });
+
     if (error) {
-      toast.error("Fout bij verwijderen");
+      toast.error("Fout bij verwijderen: " + error.message);
     } else {
       toast.success("Account verwijderd");
       fetchUsers();
     }
+
     setDeleteId(null);
   };
 

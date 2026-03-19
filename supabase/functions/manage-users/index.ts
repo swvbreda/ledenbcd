@@ -17,10 +17,18 @@ Deno.serve(async (req) => {
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify the caller is an admin
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Niet ingelogd" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+
     const { data: { user: caller } } = await callerClient.auth.getUser();
     if (!caller) {
       return new Response(JSON.stringify({ error: "Niet ingelogd" }), {
@@ -44,13 +52,22 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "list";
+    let payload: Record<string, unknown> = {};
+
+    if (req.method !== "GET") {
+      try {
+        payload = await req.json();
+      } catch {
+        payload = {};
+      }
+    }
+
+    const action = (url.searchParams.get("action") || (payload.action as string) || "list").toLowerCase();
 
     if (action === "list") {
       const { data: { users }, error } = await adminClient.auth.admin.listUsers();
       if (error) throw error;
 
-      // Get all roles
       const { data: roles } = await adminClient.from("user_roles").select("*");
       const roleMap = new Map<string, string>();
       roles?.forEach((r) => roleMap.set(r.user_id, r.role));
@@ -69,7 +86,17 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { email, password, role } = await req.json();
+      const email = payload.email as string | undefined;
+      const password = payload.password as string | undefined;
+      const role = payload.role as string | undefined;
+
+      if (!email || !password) {
+        return new Response(JSON.stringify({ error: "E-mail en wachtwoord zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
         email,
         password,
@@ -87,13 +114,22 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      const { user_id } = await req.json();
+      const user_id = payload.user_id as string | undefined;
+
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id ontbreekt" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (user_id === caller.id) {
         return new Response(JSON.stringify({ error: "Je kunt je eigen account niet verwijderen" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) throw error;
 
@@ -103,11 +139,21 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_role") {
-      const { user_id, role } = await req.json();
+      const user_id = payload.user_id as string | undefined;
+      const role = payload.role as string | undefined;
+
+      if (!user_id || !role) {
+        return new Response(JSON.stringify({ error: "user_id en role zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       await adminClient.from("user_roles").upsert(
         { user_id, role },
         { onConflict: "user_id,role" }
       );
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
