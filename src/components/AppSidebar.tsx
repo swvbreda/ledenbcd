@@ -4,6 +4,7 @@ import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
+import { useEditRequests } from "@/hooks/useMemberEdits";
 import { toast } from "sonner";
 import {
   Dialog,
