@@ -40,6 +40,8 @@ const AccountBeheerPage = () => {
   const [newRole, setNewRole] = useState("user");
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
+  const [linkMemberId, setLinkMemberId] = useState("");
 
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
