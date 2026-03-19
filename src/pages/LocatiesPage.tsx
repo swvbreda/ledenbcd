@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
-import { allMembers, allRepresented } from "@/hooks/useMembers";
+import { allRepresented } from "@/hooks/useMembers";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente } from "@/data/gemeenteMapping";
@@ -57,8 +58,7 @@ const LocatiesPage = () => {
   const [sortAsc, setSortAsc] = useState(false);
   const navigate = useNavigate();
 
-  // Use allRepresented for market share counting
-  const represented = allRepresented;
+  const { members: represented } = useMergedMembers(allRepresented);
   const representedLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
 
@@ -79,7 +79,7 @@ const LocatiesPage = () => {
     const map = new Map<string, CityData>();
 
     // Count all represented (members + leads) per city for accurate market share
-    for (const m of allRepresented) {
+    for (const m of represented) {
       for (const l of m.locaties) {
         const plaats = getGemeente(l.plaats || m.plaats);
         if (!plaats) continue;
@@ -120,8 +120,7 @@ const LocatiesPage = () => {
     }
 
     return Array.from(map.values());
-  }, []);
-
+  }, [represented]);
   const filtered = useMemo(() => {
     let result = cities;
     if (search) {
