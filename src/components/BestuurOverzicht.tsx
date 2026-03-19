@@ -141,14 +141,14 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="min-w-0 flex-1 flex flex-col justify-between">
           <div>
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
-            <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
+            <p className="text-[11px] text-primary font-medium leading-tight">{bl.functie}</p>
             
             <div className="flex flex-wrap items-center gap-x-3 mt-1">
               {bl.bondEmail && (
                 <a
                   href={`mailto:${bl.bondEmail}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                  className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
                 >
                   <Mail size={10} /> {bl.bondEmail}
                 </a>
@@ -172,10 +172,10 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             return (
               <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
                 {member && (
-                  <p className="text-[11px] text-primary font-medium leading-tight">{member.naam}</p>
+                  <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
                 )}
                 {!member && bl.coffeeshop && (
-                  <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
+                  <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
                 )}
                 {locations.length > 0 && (
                   <p className="text-[10px] text-muted-foreground leading-tight">
