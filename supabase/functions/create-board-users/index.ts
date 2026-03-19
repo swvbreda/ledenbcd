@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -12,16 +12,55 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Authenticate the caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const callerId = claimsData.claims.sub;
+
+    // Verify caller is admin
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const { data: roleData } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Process request
     const { users } = await req.json();
-
     const results = [];
 
     for (const user of users) {
-      // Create user
-      const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+      const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
         email: user.email,
         password: user.password,
         email_confirm: true,
@@ -32,9 +71,8 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Assign admin role
       if (userData?.user && user.role) {
-        const { error: roleError } = await supabase
+        const { error: roleError } = await adminClient
           .from("user_roles")
           .insert({ user_id: userData.user.id, role: user.role });
 
@@ -44,16 +82,6 @@ Deno.serve(async (req) => {
           results.push({ email: user.email, created: true, role: user.role });
         }
       }
-    }
-
-    // Also assign admin role to existing simone account
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const simone = existingUsers?.users?.find((u) => u.email === "simone@coffeeshopbond.nl");
-    if (simone) {
-      const { error } = await supabase
-        .from("user_roles")
-        .upsert({ user_id: simone.id, role: "admin" }, { onConflict: "user_id,role" });
-      results.push({ email: "simone@coffeeshopbond.nl", existing: true, adminRole: !error });
     }
 
     return new Response(JSON.stringify({ results }), {
