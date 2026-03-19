@@ -123,12 +123,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
             {(() => {
               const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
-              if (!eigenaar && !m.oprichter && !boardMemberIds.has(m.id)) return null;
+              const boardNames = boardMembersByLid.get(m.id) || [];
+              const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
+              if (!eigenaar && !m.oprichter && !eigenaarIsBoard) return null;
               return (
                 <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
                   {eigenaar && <span>{eigenaar}</span>}
                   {m.oprichter && <span className="text-amber-500">★</span>}
-                  {boardMemberIds.has(m.id) && <Shield size={11} className="text-primary" />}
+                  {eigenaarIsBoard && <Shield size={11} className="text-primary" />}
                 </div>
               );
             })()}
