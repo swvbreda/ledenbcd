@@ -216,6 +216,16 @@ const MemberDetail = () => {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
                     <Pencil size={14} /> Bewerken
                   </Button>
+                  {isAdmin && isLead && member && (
+                    <ConvertLeadDialog
+                      lead={member}
+                      conversions={conversions}
+                      onConverted={() => {
+                        refreshConversions();
+                        navigate("/leden?tab=leden");
+                      }}
+                    />
+                  )}
                   {isAdmin && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
