@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_members: {
+        Row: {
+          bond_email: string | null
+          coffeeshop: string | null
+          coffeeshop_plaats: string | null
+          created_at: string
+          email: string | null
+          functie: string
+          geboortedatum: string | null
+          id: string
+          lid_id: number | null
+          naam: string
+          prive_adres: string | null
+          prive_plaats: string | null
+          prive_postcode: string | null
+          sort_order: number
+          telefoon: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          bond_email?: string | null
+          coffeeshop?: string | null
+          coffeeshop_plaats?: string | null
+          created_at?: string
+          email?: string | null
+          functie: string
+          geboortedatum?: string | null
+          id?: string
+          lid_id?: number | null
+          naam: string
+          prive_adres?: string | null
+          prive_plaats?: string | null
+          prive_postcode?: string | null
+          sort_order?: number
+          telefoon?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          bond_email?: string | null
+          coffeeshop?: string | null
+          coffeeshop_plaats?: string | null
+          created_at?: string
+          email?: string | null
+          functie?: string
+          geboortedatum?: string | null
+          id?: string
+          lid_id?: number | null
+          naam?: string
+          prive_adres?: string | null
+          prive_plaats?: string | null
+          prive_postcode?: string | null
+          sort_order?: number
+          telefoon?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_allowed_emails: {
         Row: {
           email: string
