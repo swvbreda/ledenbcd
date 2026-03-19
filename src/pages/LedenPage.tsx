@@ -52,7 +52,7 @@ const LedenPage = () => {
   );
   const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
 
-  const leadIdSet = useMemo(() => new Set(allLeads.map((l) => l.id)), []);
+  const leadIdSet = useMemo(() => activeLeadIds, [activeLeadIds]);
 
   const totalLocations = useMemo(
     () => mergedSearched.reduce((sum, m) => sum + m.aantalLocaties, 0),
