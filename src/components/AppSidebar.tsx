@@ -141,6 +141,26 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Community</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a
+                      href="https://chat.whatsapp.com/I9wCzDQE07KJZZjycFT3cU"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:bg-sidebar-accent/50"
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      {!collapsed && <span>WhatsApp Community</span>}
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border px-4 py-3 space-y-2">
           {!collapsed && user && (
