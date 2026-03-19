@@ -152,8 +152,9 @@ export function useSubmitEditRequest() {
         });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["edit-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["own-pending-edit", variables.member_id] });
     },
   });
 }
