@@ -98,13 +98,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ALLOWED_ROLES = ["admin", "user"];
+
     if (action === "create") {
       const email = payload.email as string | undefined;
       const password = payload.password as string | undefined;
       const role = payload.role as string | undefined;
 
-      if (!email || !password) {
-        return new Response(JSON.stringify({ error: "E-mail en wachtwoord zijn verplicht" }), {
+      if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+        return new Response(JSON.stringify({ error: "Ongeldig e-mailadres" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!password || password.length < 8) {
+        return new Response(JSON.stringify({ error: "Wachtwoord moet minimaal 8 tekens zijn" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (role && !ALLOWED_ROLES.includes(role)) {
+        return new Response(JSON.stringify({ error: "Ongeldige rol" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
