@@ -40,6 +40,12 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     null
   );
 
+  // Newest member (lowest years, most recent)
+  const newest = withYears.reduce<{ member: Member; years: number } | null>(
+    (min, x) => (!min || x.years < min.years ? x : min),
+    null
+  );
+
   const facts = [
     {
       icon: Clock,
