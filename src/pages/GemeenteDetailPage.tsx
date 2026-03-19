@@ -174,64 +174,85 @@ const GemeenteDetailPage = () => {
         </p>
       </div>
 
-      {/* Coffeeshops per stadsdeel */}
+      {/* Coffeeshops */}
       <div className="bg-card rounded-lg border border-border p-5">
         <h3 className="text-sm font-semibold font-display mb-3 flex items-center gap-2">
           <Users size={16} className="text-primary" />
           Aangesloten coffeeshops
         </h3>
-        <div className="space-y-1">
-          {data.sortedKeys.map((sdNaam) => {
-            const isOpen = expandedSd.has(sdNaam);
-            const locs = data.perStadsdeel[sdNaam];
-            const toggleSd = () => {
-              setExpandedSd((prev) => {
-                const next = new Set(prev);
-                if (next.has(sdNaam)) next.delete(sdNaam);
-                else next.add(sdNaam);
-                return next;
-              });
-            };
 
-            return (
-              <div key={sdNaam}>
-                <button
-                  onClick={toggleSd}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/30 transition-colors text-left"
-                >
-                  {isOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {sdNaam}
-                  </span>
-                  <span className="text-xs text-muted-foreground">· {locs.length}</span>
-                </button>
-                {isOpen && (
-                  <div className="ml-5 space-y-0.5">
-                    {locs
-                      .sort((a, b) => a.naam.localeCompare(b.naam))
-                      .map((loc, i) => (
-                        <Link
-                          key={`${loc.memberId}-${i}`}
-                          to={`/leden/${loc.memberId}`}
-                          className="flex items-start gap-3 px-3 py-1.5 rounded-md hover:bg-muted/30 transition-colors group"
-                        >
-                          <MapPin size={14} className="text-primary shrink-0 mt-0.5" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium font-display group-hover:text-primary transition-colors">
-                              {loc.naam}
-                            </p>
-                            {loc.adres && (
-                              <p className="text-xs text-muted-foreground truncate">{loc.adres}</p>
-                            )}
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Zoek coffeeshop..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-8 h-9 text-sm"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {data.sortedKeys.length > 1 && (
+            <Select value={filterStadsdeel} onValueChange={setFilterStadsdeel}>
+              <SelectTrigger className="h-9 w-full sm:w-44 text-sm">
+                <SelectValue placeholder="Stadsdeel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle stadsdelen</SelectItem>
+                {data.sortedKeys.map((sd) => (
+                  <SelectItem key={sd} value={sd}>
+                    {sd} ({data.perStadsdeel[sd].length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
+
+        {/* List */}
+        {(() => {
+          const q = searchQuery.toLowerCase();
+          const filtered = data.locaties
+            .filter((loc) => filterStadsdeel === "alle" || (loc.stadsdeel || "Overig") === filterStadsdeel)
+            .filter((loc) => !q || loc.naam.toLowerCase().includes(q) || loc.adres.toLowerCase().includes(q) || loc.memberNaam.toLowerCase().includes(q))
+            .sort((a, b) => a.naam.localeCompare(b.naam));
+
+          if (filtered.length === 0) {
+            return <p className="text-sm text-muted-foreground text-center py-4">Geen coffeeshops gevonden</p>;
+          }
+
+          return (
+            <div className="space-y-0.5">
+              {filtered.map((loc, i) => (
+                <Link
+                  key={`${loc.memberId}-${i}`}
+                  to={`/leden/${loc.memberId}`}
+                  className="flex items-start gap-3 px-3 py-2 rounded-md hover:bg-muted/30 transition-colors group"
+                >
+                  <MapPin size={14} className="text-primary shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium font-display group-hover:text-primary transition-colors">
+                      {loc.naam}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {loc.adres && <span className="truncate">{loc.adres}</span>}
+                      {loc.stadsdeel && (
+                        <span className="shrink-0 px-1.5 py-0.5 bg-muted rounded text-[10px] font-medium uppercase tracking-wider">
+                          {loc.stadsdeel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
