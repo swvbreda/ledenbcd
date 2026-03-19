@@ -32,6 +32,7 @@ const getJubileumTier = (jaren: number): { bg: string; text: string; label: stri
   if (jaren >= 15) return { bg: "bg-indigo-100", text: "text-indigo-600", label: "Kristallen jubileum" };
   if (jaren >= 10) return { bg: "bg-orange-100", text: "text-orange-700", label: "Koperen jubileum" };
   if (jaren >= 5) return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Houten jubileum" };
+  if (jaren >= 1) return { bg: "bg-lime-100", text: "text-lime-700", label: "Katoenen jubileum" };
   return { bg: "bg-muted", text: "text-muted-foreground", label: "" };
 };
 
