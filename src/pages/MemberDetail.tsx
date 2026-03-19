@@ -42,6 +42,45 @@ const MemberDetail = () => {
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
   const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
   const [editing, setEditing] = useState(false);
+  const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+
+  useEffect(() => {
+    if (!memberId || !isAdmin) return;
+    supabase
+      .from("member_notes")
+      .select("id, note, created_at")
+      .eq("member_id", memberId)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setNotes(data);
+      });
+  }, [memberId, isAdmin]);
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    setSavingNote(true);
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    if (!userId) { setSavingNote(false); return; }
+    const { data, error } = await supabase
+      .from("member_notes")
+      .insert({ member_id: memberId, note: newNote.trim(), created_by: userId })
+      .select("id, note, created_at")
+      .single();
+    setSavingNote(false);
+    if (error) { toast.error("Opmerking opslaan mislukt"); return; }
+    if (data) setNotes((prev) => [data, ...prev]);
+    setNewNote("");
+    toast.success("Opmerking toegevoegd");
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    const { error } = await supabase.from("member_notes").delete().eq("id", noteId);
+    if (error) { toast.error("Verwijderen mislukt"); return; }
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+  };
 
   if (isLoading) {
     return <div className="p-6 text-center text-muted-foreground">Laden...</div>;
