@@ -41,18 +41,22 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId } = useAuth();
-  const [boardMemberIds, setBoardMemberIds] = useState<Set<number>>(new Set());
+  const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, string[]>>(new Map());
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
-      const { data } = await supabase.from("board_members").select("lid_id, lid_ids");
+      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids");
       if (data) {
-        const ids = new Set<number>();
+        const map = new Map<number, string[]>();
         for (const row of data) {
-          if (row.lid_id) ids.add(row.lid_id);
-          if (row.lid_ids) for (const id of row.lid_ids) ids.add(id);
+          const ids = [...(row.lid_ids || []), ...(row.lid_id ? [row.lid_id] : [])];
+          for (const id of ids) {
+            const existing = map.get(id) || [];
+            existing.push(row.naam.toLowerCase());
+            map.set(id, existing);
+          }
         }
-        setBoardMemberIds(ids);
+        setBoardMembersByLid(map);
       }
     };
     fetchBoardMembers();
@@ -119,12 +123,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
             {(() => {
               const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
-              if (!eigenaar && !m.oprichter && !boardMemberIds.has(m.id)) return null;
+              const boardNames = boardMembersByLid.get(m.id) || [];
+              const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
+              if (!eigenaar && !m.oprichter && !eigenaarIsBoard) return null;
               return (
                 <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
                   {eigenaar && <span>{eigenaar}</span>}
                   {m.oprichter && <span className="text-amber-500">★</span>}
-                  {boardMemberIds.has(m.id) && <Shield size={11} className="text-primary" />}
+                  {eigenaarIsBoard && <Shield size={11} className="text-primary" />}
                 </div>
               );
             })()}
@@ -254,7 +260,11 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        {(member.bestuursfunctie || boardMemberIds.has(member.id)) && (
+                        {(() => {
+                          const boardNames = boardMembersByLid.get(member.id) || [];
+                          const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
+                          return (member.bestuursfunctie || eigenaarIsBoard);
+                        })() && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
