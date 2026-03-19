@@ -122,11 +122,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {jarenLid !== null && (
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                jarenLid >= 30 ? "bg-success/10 text-success" : jarenLid >= 10 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-              }`}>{jarenLid} jr</span>
-            )}
+            {jarenLid !== null && (() => {
+              const tier = getJubileumTier(jarenLid);
+              return (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>{jarenLid} jr</span>
+              );
+            })()}
             <span className="text-xs tabular-nums text-muted-foreground">{m.aantalLocaties} loc.</span>
             <ExternalLink size={14} className="text-muted-foreground" />
           </div>
