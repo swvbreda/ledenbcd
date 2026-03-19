@@ -17,9 +17,26 @@ const GemeenteDetailPage = () => {
 
     const totaalNL = perStad[decodedGemeente] || 0;
 
-    // Collect all represented locations in this city
-    const locaties: { naam: string; adres: string; stadsdeel: string; memberNaam: string; memberId: number }[] = [];
-    const stadsdeelCount: Record<string, number> = {};
+    // Collect all represented locations in this city (dedupe on same physical address)
+    const normalizeLocationValue = (value: string) =>
+      value.trim().toLowerCase().replace(/\s+/g, " ");
+
+    const getLocationKey = (plaats: string, naam: string, adres?: string) => {
+      const normalizedPlaats = normalizeLocationValue(plaats);
+      const normalizedAdres = normalizeLocationValue(adres || "");
+
+      if (normalizedAdres) return `${normalizedPlaats}::adres::${normalizedAdres}`;
+
+      const normalizedNaam = normalizeLocationValue(naam).replace(/^coffeeshop\s+/, "");
+      return `${normalizedPlaats}::naam::${normalizedNaam}`;
+    };
+
+    const getNamePriority = (name: string) => {
+      const normalized = normalizeLocationValue(name);
+      return (normalized.startsWith("coffeeshop") ? 1000 : 0) + normalized.length;
+    };
+
+    const locatiesMap = new Map<string, { naam: string; adres: string; stadsdeel: string; memberNaam: string; memberId: number }>();
 
     for (const m of allRepresented) {
       for (const l of m.locaties) {
@@ -27,17 +44,38 @@ const GemeenteDetailPage = () => {
         if (plaats !== decodedGemeente) continue;
 
         const sd = l.stadsdeel || m.stadsdeel || "";
-        locaties.push({
-          naam: l.naam,
-          adres: l.adres || "",
-          stadsdeel: sd,
-          memberNaam: m.naam,
-          memberId: m.id,
-        });
+        const locatieNaam = l.naam || m.naam;
+        const key = getLocationKey(plaats, locatieNaam, l.adres);
+        const existing = locatiesMap.get(key);
 
-        if (sd) {
-          stadsdeelCount[sd] = (stadsdeelCount[sd] || 0) + 1;
+        if (!existing) {
+          locatiesMap.set(key, {
+            naam: locatieNaam,
+            adres: l.adres || "",
+            stadsdeel: sd,
+            memberNaam: m.naam,
+            memberId: m.id,
+          });
+          continue;
         }
+
+        if (getNamePriority(locatieNaam) > getNamePriority(existing.naam)) {
+          existing.naam = locatieNaam;
+          existing.memberNaam = m.naam;
+          existing.memberId = m.id;
+        }
+
+        if (!existing.adres && l.adres) existing.adres = l.adres;
+        if (!existing.stadsdeel && sd) existing.stadsdeel = sd;
+      }
+    }
+
+    const locaties = Array.from(locatiesMap.values());
+    const stadsdeelCount: Record<string, number> = {};
+
+    for (const loc of locaties) {
+      if (loc.stadsdeel) {
+        stadsdeelCount[loc.stadsdeel] = (stadsdeelCount[loc.stadsdeel] || 0) + 1;
       }
     }
 
