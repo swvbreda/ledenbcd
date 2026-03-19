@@ -80,7 +80,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Building2 size={18} className="text-primary" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{matchedCities}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} coffeeshopgemeenten</p>
+        <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} gemeenten vertegenwoordigd</p>
       </div>
 
       {/* Marktaandeel gauge */}
