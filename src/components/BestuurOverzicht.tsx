@@ -21,10 +21,6 @@ interface BoardMemberRow {
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
-  prive_adres: string | null;
-  prive_postcode: string | null;
-  prive_plaats: string | null;
-  geboortedatum: string | null;
   coffeeshop: string | null;
   coffeeshop_plaats: string | null;
   sort_order: number;
