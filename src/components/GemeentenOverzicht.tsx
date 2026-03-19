@@ -45,6 +45,29 @@ const EXPERIMENT_GEMEENTEN = [
   "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
 ];
 
+/** Maps plaats names to their parent gemeente when they differ */
+const plaatsToGemeente: Record<string, string> = {
+  "Wormerveer": "Zaanstad",
+  "Zaandam": "Zaanstad",
+  "Wormer": "Zaanstad",
+  "Krommenie": "Zaanstad",
+  "Assendelft": "Zaanstad",
+  "Hellevoetsluis": "Voorne aan Zee",
+  "Brielle": "Voorne aan Zee",
+  "Westvoorne": "Voorne aan Zee",
+  "Hoogezand": "Midden-Groningen",
+  "Bussum": "Gooise Meren",
+};
+
+/** Get the gemeente for a given plaats */
+const getGemeente = (plaats: string): string => plaatsToGemeente[plaats] || plaats;
+
+/** Check if a member/location belongs to a gemeente */
+const isInGemeente = (m: Member, gemeente: string): boolean => {
+  if (getGemeente(m.plaats) === gemeente) return true;
+  return m.locaties?.some((l) => getGemeente(l.plaats || m.plaats) === gemeente) || false;
+};
+
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   // Use allRepresented (members + leads) for market share calculations
@@ -136,13 +159,11 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              // Check represented (members + leads) in experiment municipalities
-              const leden = represented.filter((m) =>
-                m.plaats === gemeente || m.locaties?.some((l) => (l.plaats || m.plaats) === gemeente)
-              );
+              const leden = represented.filter((m) => isInGemeente(m, gemeente));
               const locs = leden.reduce((s, m) => {
-                if (m.plaats === gemeente) return s + (m.aantalLocaties || 1);
-                return s + (m.locaties?.filter((l) => l.plaats === gemeente).length || 0);
+                const mainMatch = getGemeente(m.plaats) === gemeente;
+                if (mainMatch && (!m.locaties || m.locaties.length === 0)) return s + (m.aantalLocaties || 1);
+                return s + (m.locaties?.filter((l) => getGemeente(l.plaats || m.plaats) === gemeente).length || 0);
               }, 0);
               const total = perStad[gemeente] || 0;
               const hasBcd = leden.length > 0;
@@ -178,7 +199,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
             In{" "}
             <span className="font-medium text-foreground">
-              {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => m.plaats === g || m.locaties?.some((l) => l.plaats === g))).length}/10
+              {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => isInGemeente(m, g))).length}/10
             </span>
             {" "}gemeenten vertegenwoordigd binnen het experiment
           </div>
