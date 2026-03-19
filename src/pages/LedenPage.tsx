@@ -1,18 +1,23 @@
 import { useState, useMemo } from "react";
-import { Users, UserMinus } from "lucide-react";
+import { Users, UserMinus, Store } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
+import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ViewTab = "leden" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
   const [showArchived, setShowArchived] = useState(false);
+  const [activeTab, setActiveTab] = useState<ViewTab>("leden");
   const {
     searchQuery, setSearchQuery,
     filterCity, setFilterCity,
@@ -34,18 +39,27 @@ const LedenPage = () => {
   );
   const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
 
+  const leadIdSet = useMemo(() => new Set(allLeads.map((l) => l.id)), []);
+
+  const totalLocations = useMemo(
+    () => mergedSearched.reduce((sum, m) => sum + m.aantalLocaties, 0),
+    [mergedSearched]
+  );
+
+  const subtitle = showArchived
+    ? `${archivedMembers.length} oud-leden`
+    : activeTab === "leden"
+    ? `${mergedSearched.length} leden`
+    : `${totalLocations} coffeeshops`;
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">
-            {showArchived ? "Oud-leden" : "Ledenbestand"}
+            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : "Coffeeshopbestand"}
           </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {showArchived
-              ? `${archivedMembers.length} oud-leden`
-              : `${mergedSearched.length} resultaten`}
-          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           {!showArchived && isAdmin && <ExportButton members={mergedSearched} />}
@@ -65,21 +79,36 @@ const LedenPage = () => {
       </div>
 
       {!showArchived && (
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          <MemberFilters
-            cities={cities}
-            stadsdelen={stadsdelen}
-            selectedCity={filterCity}
-            selectedStadsdeel={filterStadsdeel}
-            selectedJaren={filterJaren}
-            onCityChange={setFilterCity}
-            onStadsdeelChange={setFilterStadsdeel}
-            onJarenChange={setFilterJaren}
-            onClear={clearFilters}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </div>
+        <>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ViewTab)}>
+            <TabsList>
+              <TabsTrigger value="leden" className="gap-1.5">
+                <Users size={14} />
+                Leden ({mergedSearched.length})
+              </TabsTrigger>
+              <TabsTrigger value="coffeeshops" className="gap-1.5">
+                <Store size={14} />
+                Coffeeshops ({totalLocations})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <MemberFilters
+              cities={cities}
+              stadsdelen={stadsdelen}
+              selectedCity={filterCity}
+              selectedStadsdeel={filterStadsdeel}
+              selectedJaren={filterJaren}
+              onCityChange={setFilterCity}
+              onStadsdeelChange={setFilterStadsdeel}
+              onJarenChange={setFilterJaren}
+              onClear={clearFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+        </>
       )}
 
       {showArchived ? (
@@ -94,8 +123,10 @@ const LedenPage = () => {
             </p>
           </div>
         )
-      ) : (
+      ) : activeTab === "leden" ? (
         <MemberTable members={mergedSearched} />
+      ) : (
+        <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       )}
     </div>
   );
