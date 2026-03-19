@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_allowed_emails: {
+        Row: {
+          email: string
+          id: string
+          member_id: number
+        }
+        Insert: {
+          email: string
+          id?: string
+          member_id: number
+        }
+        Update: {
+          email?: string
+          id?: string
+          member_id?: number
+        }
+        Relationships: []
+      }
       member_edits: {
         Row: {
           data: Json
@@ -62,6 +80,27 @@ export type Database = {
         }
         Relationships: []
       }
+      member_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -85,6 +124,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_member_id_for_email: { Args: { _email: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

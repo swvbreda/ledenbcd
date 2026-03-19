@@ -34,7 +34,9 @@ const setStoredContactpersoon = (memberId: number, naam: string | null) => {
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, linkedMemberId } = useAuth();
+  const isOwnProfile = linkedMemberId !== null && linkedMemberId === Number(id);
+  const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading } = useMergedMember(memberId);
 
@@ -275,7 +277,7 @@ const MemberDetail = () => {
             </div>
           )}
 
-          {isAdmin ? (
+          {canSeeDetails ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Contactpersonen */}
               <div className="bg-card rounded-lg border border-border p-5">
@@ -288,25 +290,27 @@ const MemberDetail = () => {
                       const isSelected = contactpersoon === c.naam;
                       return (
                         <div key={i} className={`${i > 0 ? "pt-3 border-t border-border" : ""} flex items-start gap-3`}>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="mt-0.5">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={(checked) => {
-                                      const newVal = checked ? c.naam : "";
-                                      setContactpersoon(newVal);
-                                      setStoredContactpersoon(member.id, newVal || null);
-                                    }}
-                                  />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{isSelected ? "Contactpersoon deselecteren" : "Markeer als contactpersoon"}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          {isAdmin && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="mt-0.5">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked) => {
+                                        const newVal = checked ? c.naam : "";
+                                        setContactpersoon(newVal);
+                                        setStoredContactpersoon(member.id, newVal || null);
+                                      }}
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{isSelected ? "Contactpersoon deselecteren" : "Markeer als contactpersoon"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           <div className="flex-1">
                             <p className="font-medium inline-flex items-center gap-1.5">
                               {c.naam}
@@ -378,7 +382,7 @@ const MemberDetail = () => {
           ) : (
             <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-3 text-muted-foreground">
               <Lock size={16} />
-              <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor bestuursleden.</p>
+              <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor het eigen profiel en bestuursleden.</p>
             </div>
           )}
 
