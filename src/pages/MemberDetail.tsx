@@ -456,7 +456,7 @@ const MemberDetail = () => {
               </h3>
               <div className="flex gap-2 mb-4">
                 <Textarea
-                  placeholder="Bijv. naam gewijzigd van 'The Lounge' naar 'Coffeeshop Haarlem'..."
+                  placeholder="Schrijf een opmerking..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   className="min-h-[60px] text-sm"
