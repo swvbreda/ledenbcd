@@ -113,6 +113,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
                 <span className="inline-flex items-center gap-1">Stadsdeel <SortIcon col="stadsdeel" /></span>
               </th>
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Adres</th>
+              <th className="px-4 py-3 text-center font-semibold text-muted-foreground w-20">Lidnr.</th>
               <th
                 className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
                 onClick={() => handleSort("lidNaam")}
@@ -140,6 +141,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
                 <td className="px-4 py-3 text-muted-foreground">{row.plaats}</td>
                 <td className="px-4 py-3 text-muted-foreground">{row.stadsdeel || "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{row.adres || "—"}</td>
+                <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">{row.isLead ? "—" : row.lidId}</td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{row.lidNaam}</td>
                 <td className="px-4 py-3">
                   <ExternalLink size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
