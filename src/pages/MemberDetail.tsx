@@ -249,9 +249,6 @@ const MemberDetail = () => {
                   <span className="text-muted-foreground">Lid sinds</span>
                   <span className="font-medium">
                     {member.lidSinds}
-                    <span className="text-xs text-muted-foreground ml-1">
-                      ({new Date().getFullYear() - member.lidSinds} jaar)
-                    </span>
                   </span>
                 </>
               )}
