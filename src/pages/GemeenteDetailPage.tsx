@@ -10,6 +10,7 @@ const GemeenteDetailPage = () => {
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
+  const [expandedSd, setExpandedSd] = useState<Set<string>>(new Set());
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
