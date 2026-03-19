@@ -11,36 +11,23 @@ interface BestuurOverzichtProps {
   members: Member[];
 }
 
-interface BestuurslidData {
+interface BoardMemberRow {
+  id: string;
   naam: string;
   functie: string;
-  lidId?: number;
-  email?: string;
-  bondEmail?: string;
-  telefoon?: string;
-  defaultFoto?: string;
-  priveAdres?: string;
-  privePostcode?: string;
-  privePlaats?: string;
-  geboortedatum?: string;
-  coffeeshop?: string;
-  coffeeshopPlaats?: string;
+  type: string;
+  lid_id: number | null;
+  email: string | null;
+  bond_email: string | null;
+  telefoon: string | null;
+  prive_adres: string | null;
+  prive_postcode: string | null;
+  prive_plaats: string | null;
+  geboortedatum: string | null;
+  coffeeshop: string | null;
+  coffeeshop_plaats: string | null;
+  sort_order: number;
 }
-
-const bestuursleden: BestuurslidData[] = [
-  { naam: "Simone van Breda", functie: "Voorzitter", bondEmail: "simone@coffeeshopbond.nl", telefoon: "06 46 44 26 67", defaultFoto: simonePhoto, priveAdres: "De Weterungsbrugmolen 3", privePostcode: "1188 GV", privePlaats: "Amstelveen" },
-  { naam: "Joachim Helms", functie: "Bestuurder / Woordvoerder", lidId: 5, bondEmail: "joachim@coffeeshopbond.nl", email: "joahelms@gmail.com", telefoon: "06 55 86 76 90", priveAdres: "Haarlemmerstraat 64", privePostcode: "1013 ET", privePlaats: "Amsterdam", coffeeshop: "Greenhouse", coffeeshopPlaats: "Amsterdam" },
-  { naam: "Bernard van Nierop", functie: "Bestuurder / Penningmeester", lidId: 8, bondEmail: "bernard@coffeeshopbond.nl", email: "info@coffeeshop-relax.nl", telefoon: "06 25 26 27 30", priveAdres: "Graafwillemlaan 48", privePostcode: "1181 EH", privePlaats: "Amstelveen", geboortedatum: "25-02-1973", coffeeshop: "Relax", coffeeshopPlaats: "Amsterdam" },
-  { naam: "Huub van den Brink", functie: "Bestuurder", lidId: 4, bondEmail: "huub@coffeeshopbond.nl", email: "huub@splif.nl", telefoon: "06 53 22 91 20", priveAdres: "Westwijk 11", privePlaats: "Middenbeemster", coffeeshop: "Splif", coffeeshopPlaats: "Noord-Beemster" },
-  { naam: "Dorine Buchener", functie: "Bestuurder", lidId: 21, bondEmail: "dorine@coffeeshopbond.nl", email: "dorine@vanhamholding.com", telefoon: "06 57 59 65 34", priveAdres: "Julianastraat 48", privePostcode: "1165 GW", privePlaats: "Halfweg", coffeeshop: "Hunters", coffeeshopPlaats: "Amsterdam" },
-  { naam: "Stef Couwenberg", functie: "Bestuurder", lidId: 14, bondEmail: "stef@coffeeshopbond.nl", telefoon: "06 11 39 69 86", priveAdres: "Welle 2", privePostcode: "5507NX", privePlaats: "Veldhoven", geboortedatum: "21-05-1980", coffeeshop: "The Pink", coffeeshopPlaats: "Eindhoven" },
-];
-
-const aspiranten: BestuurslidData[] = [
-  { naam: "Tim de Wilde", functie: "Kandidaat Bestuurslid", telefoon: "06 30 01 19 65", privePlaats: "Amersfoort", coffeeshop: "Loods", coffeeshopPlaats: "Zwolle / Amersfoort" },
-  { naam: "Hannes Poppinghaus", functie: "Woordvoerder Arnhem", bondEmail: "arnhem@coffeeshopbond.nl", telefoon: "06 43 20 68 88", privePlaats: "Arnhem", coffeeshop: "Lucky Luke", coffeeshopPlaats: "Arnhem" },
-  { naam: "Tugrulhan", functie: "Woordvoerder Enschede", bondEmail: "enschede@coffeeshopbond.nl", telefoon: "06 48 56 80 81", privePlaats: "Enschede", coffeeshop: "Cafe de Mix", coffeeshopPlaats: "Enschede" },
-];
 
 const slugify = (name: string) =>
   name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -51,13 +38,28 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [boardMembers, setBoardMembers] = useState<BoardMemberRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allBestuursleden = [...bestuursleden, ...aspiranten];
+  useEffect(() => {
+    const fetchBoard = async () => {
+      const { data } = await supabase
+        .from("board_members")
+        .select("*")
+        .order("sort_order");
+      if (data) setBoardMembers(data as BoardMemberRow[]);
+      setLoading(false);
+    };
+    fetchBoard();
+  }, []);
+
+  const bestuursleden = boardMembers.filter((b) => b.type === "bestuurslid");
+  const aspiranten = boardMembers.filter((b) => b.type === "aspirant");
 
   const currentUserBoardMember = user?.email
-    ? allBestuursleden.find(
+    ? boardMembers.find(
         (bl) =>
-          bl.bondEmail?.toLowerCase() === user.email?.toLowerCase() ||
+          bl.bond_email?.toLowerCase() === user.email?.toLowerCase() ||
           bl.email?.toLowerCase() === user.email?.toLowerCase()
       )
     : null;
@@ -111,46 +113,46 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     setUploading(null);
   };
 
-  const getPhoto = (bl: BestuurslidData) => {
+  const getPhoto = (bl: BoardMemberRow) => {
     const slug = slugify(bl.naam);
     if (photos[slug]) return photos[slug];
-    if (bl.defaultFoto) return bl.defaultFoto;
+    // Fallback for Simone's hardcoded photo
+    if (bl.naam === "Simone van Breda") return simonePhoto;
     return null;
   };
 
-  const canUpload = (bl: BestuurslidData) => {
+  const canUpload = (bl: BoardMemberRow) => {
     if (!user) return false;
     if (currentUserBoardMember?.naam === bl.naam) return true;
     return false;
   };
 
-  const renderCard = (bl: BestuurslidData, isAspirant = false) => {
-    const member = bl.lidId ? members.find((m) => m.id === bl.lidId) : undefined;
+  const renderCard = (bl: BoardMemberRow, isAspirant = false) => {
+    const member = bl.lid_id ? members.find((m) => m.id === bl.lid_id) : undefined;
     const photo = getPhoto(bl);
     const showUpload = canUpload(bl);
 
     return (
       <div
-        key={bl.naam}
+        key={bl.id}
         className={`border rounded-md p-2.5 transition-colors flex gap-2.5 ${
           isAspirant ? "border-dashed border-border" : "border-border"
         } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => member && navigate(`/leden/${member.id}`)}
       >
-        {/* Left content */}
         <div className="min-w-0 flex-1 flex flex-col justify-between">
           <div>
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-primary font-medium leading-tight">{bl.functie}</p>
             
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-              {bl.bondEmail && (
+              {bl.bond_email && (
                 <a
-                  href={`mailto:${bl.bondEmail}`}
+                  href={`mailto:${bl.bond_email}`}
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline truncate max-w-[180px] sm:max-w-none"
                 >
-                  <Mail size={10} className="shrink-0" /> <span className="truncate">{bl.bondEmail}</span>
+                  <Mail size={10} className="shrink-0" /> <span className="truncate">{bl.bond_email}</span>
                 </a>
               )}
               {bl.telefoon && (
@@ -166,8 +168,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             if (member) {
               const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
               locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
-            } else if (bl.coffeeshopPlaats) {
-              locations = bl.coffeeshopPlaats.split("/").map(s => s.trim());
+            } else if (bl.coffeeshop_plaats) {
+              locations = bl.coffeeshop_plaats.split("/").map(s => s.trim());
             }
             return (
               <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
@@ -188,7 +190,6 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           })()}
         </div>
 
-        {/* Right photo */}
         <div className="relative shrink-0 self-start">
           {photo ? (
             <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
@@ -227,6 +228,14 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-5">
+        <p className="text-sm text-muted-foreground">Bestuur laden...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
