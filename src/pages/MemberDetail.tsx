@@ -42,6 +42,8 @@ const MemberDetail = () => {
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
+  const { conversions, refresh: refreshConversions } = useLeadConversions();
+  const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
