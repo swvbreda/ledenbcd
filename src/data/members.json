@@ -1013,7 +1013,7 @@
     "telefoon": "",
     "email": "jeroen@vanhamholding.com",
     "bedrijfsnaam": "Hunters",
-    "aantalLocaties": 13,
+    "aantalLocaties": 12,
     "locaties": [
       {
         "naam": "Hunters",
@@ -1088,12 +1088,6 @@
         "stadsdeel": "Oost",
         "adres": "Eerste van Swindenstraat 389",
         "postcode": "1093 GB"
-      },
-      {
-        "naam": "Hunters Coffeeshop Almere",
-        "plaats": "Almere",
-        "adres": "Stationsplein 152",
-        "postcode": "1315 KV"
       },
       {
         "naam": "Hunters Headlines Zaandam",
