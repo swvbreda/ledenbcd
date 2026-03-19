@@ -5,6 +5,7 @@ import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
+import MailingExportButton from "@/components/MailingExportButton";
 import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
@@ -63,6 +64,7 @@ const LedenPage = () => {
         </div>
         <div className="flex items-center gap-2">
           {!showArchived && isAdmin && <ExportButton members={mergedSearched} />}
+          {!showArchived && isAdmin && <MailingExportButton members={mergedSearched} />}
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"
