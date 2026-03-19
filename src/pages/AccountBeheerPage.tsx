@@ -42,6 +42,7 @@ const AccountBeheerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
   const [linkMemberId, setLinkMemberId] = useState("");
+  const [linkSearch, setLinkSearch] = useState("");
   const [editUser, setEditUser] = useState<UserAccount | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("user");
@@ -284,7 +285,7 @@ const AccountBeheerPage = () => {
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
                           <button
-                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); }}
+                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); setLinkSearch(""); }}
                             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors w-fit"
                           >
                             <Link size={10} /> Lid koppelen
@@ -395,16 +396,57 @@ const AccountBeheerPage = () => {
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <Input
-              type="number"
-              placeholder="Lidnummer (bijv. 5)"
-              value={linkMemberId}
-              onChange={(e) => setLinkMemberId(e.target.value)}
+              placeholder="Zoek op naam of lidnummer..."
+              value={linkSearch}
+              onChange={(e) => {
+                setLinkSearch(e.target.value);
+                // If pure number, also set as member id
+                const num = parseInt(e.target.value);
+                if (!isNaN(num) && String(num) === e.target.value.trim()) {
+                  setLinkMemberId(e.target.value);
+                } else {
+                  setLinkMemberId("");
+                }
+              }}
             />
-            {linkMemberId && memberMap.get(parseInt(linkMemberId)) && (
-              <p className="text-sm text-muted-foreground">
-                → {memberMap.get(parseInt(linkMemberId))?.naam}
-              </p>
-            )}
+            {(() => {
+              if (!linkSearch.trim()) return null;
+              const q = linkSearch.toLowerCase();
+              const matches = allMembersAndLeads
+                .filter((m) =>
+                  m.naam.toLowerCase().includes(q) ||
+                  m.contactpersoon.toLowerCase().includes(q) ||
+                  m.bedrijfsnaam.toLowerCase().includes(q) ||
+                  String(m.id).includes(q)
+                )
+                .slice(0, 8);
+              if (matches.length === 0) return (
+                <p className="text-sm text-muted-foreground">Geen resultaten</p>
+              );
+              return (
+                <div className="border border-border rounded-md max-h-48 overflow-y-auto">
+                  {matches.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        setLinkMemberId(String(m.id));
+                        setLinkSearch(`#${m.id} ${m.naam}`);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between ${
+                        linkMemberId === String(m.id) ? "bg-primary/5" : ""
+                      }`}
+                    >
+                      <span>
+                        <span className="text-muted-foreground font-mono text-xs">#{m.id}</span>{" "}
+                        <span className="font-medium">{m.naam}</span>
+                        <span className="text-muted-foreground ml-1.5">— {m.contactpersoon}</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">{m.plaats}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
             <Button onClick={handleLink} disabled={saving || !linkMemberId} className="w-full gap-1.5">
               <Link size={14} />
               {saving ? "Koppelen..." : "Koppelen"}
