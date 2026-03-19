@@ -120,6 +120,14 @@ const MemberDetail = () => {
         <ArrowLeft size={18} />
       </button>
 
+      {/* Pending edit banner */}
+      {hasPendingEdit && !editing && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <Clock size={16} className="shrink-0" />
+          <span>Je hebt wijzigingen ingediend die wachten op goedkeuring door het bestuur. De getoonde gegevens bevatten je voorgestelde wijzigingen.</span>
+        </div>
+      )}
+
       {/* Edit mode */}
       {editing ? (
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
