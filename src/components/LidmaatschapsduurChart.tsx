@@ -1,4 +1,4 @@
-import { TrendingUp, Building2, Clock, UserPlus, Award } from "lucide-react";
+import { TrendingUp, Building2, Clock, UserPlus, Award, UserCheck } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
@@ -40,6 +40,12 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     null
   );
 
+  // Newest member (lowest years, most recent)
+  const newest = withYears.reduce<{ member: Member; years: number } | null>(
+    (min, x) => (!min || x.years < min.years ? x : min),
+    null
+  );
+
   const facts = [
     {
       icon: Clock,
@@ -75,6 +81,13 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
       value: `${longest?.years || 0} jr`,
       detail: longest?.member.naam || "",
       color: "text-success",
+    },
+    {
+      icon: UserCheck,
+      label: "Nieuwste lid",
+      value: newest ? `${newest.years} jr` : "—",
+      detail: newest?.member.naam || "",
+      color: "text-primary",
     },
   ];
 
