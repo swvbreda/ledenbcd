@@ -4,6 +4,7 @@ import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { getMembershipYears } from "@/lib/membership";
+import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
 
 export const allMembers = membersData as Member[];
 export const allLeads = leadsData as Member[];
