@@ -15,3 +15,13 @@ export const plaatsToGemeente: Record<string, string> = {
 /** Get the gemeente for a given plaats */
 export const getGemeente = (plaats: string): string =>
   plaatsToGemeente[plaats] || plaats;
+
+/** Aggregate a per-plaats record into per-gemeente totals */
+export function aggregateByGemeente(perPlaats: Record<string, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [plaats, count] of Object.entries(perPlaats)) {
+    const gemeente = getGemeente(plaats);
+    result[gemeente] = (result[gemeente] || 0) + count;
+  }
+  return result;
+}

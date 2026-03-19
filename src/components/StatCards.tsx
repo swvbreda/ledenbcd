@@ -3,7 +3,7 @@ import { Users, Building2, MapPin, PieChart } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
-// getMembershipYears no longer needed for stat cards
+import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 interface StatCardsProps {
   members: Member[];
@@ -15,12 +15,12 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalMembers = members.length;
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
-  const totalNLCities = Object.keys(coffeeshopData.perStad).length;
-  const matchedCities = [...allCities].filter((c) => c in (coffeeshopData.perStad as Record<string, number>)).length;
+  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
+  const totalNLCities = Object.keys(perStad).length;
+  const matchedCities = [...allCities].filter((c) => c in perStad).length;
   const uniqueCities = allCities.size;
   const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
-  const perStad = coffeeshopData.perStad as Record<string, number>;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const marketPct = Math.round((representedLocations / totalNL) * 100);
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];

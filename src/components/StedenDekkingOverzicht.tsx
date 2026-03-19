@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented } from "@/hooks/useMembers";
+import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const totalNL = coffeeshopData.totaalNL;
-  const perStad = coffeeshopData.perStad as Record<string, number>;
+  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   // Use represented (members + leads) for market share
   const represented = allRepresented;
   const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);

@@ -4,6 +4,7 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { allRepresented } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
+import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
@@ -13,7 +14,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const longPct = members?.length ? Math.round((longMembers.length / members.length) * 100) : 0;
 
   // Cities with >50% representation
-  const perStad = coffeeshopData.perStad as Record<string, number>;
+  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const represented = allRepresented;
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
