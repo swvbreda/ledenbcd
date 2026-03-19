@@ -112,7 +112,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
       <div className="w-full max-w-sm">
         <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
           <div className="text-center mb-6">
