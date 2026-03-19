@@ -165,20 +165,18 @@ const GemeenteDetailPage = () => {
           </h3>
           <div className="space-y-2">
             {data.stadsdelen.map((sd) => {
-              const pctOfTotal = data.totaalNL > 0
-                ? Math.round((sd.aantal / data.totaalNL) * 100)
-                : 0;
+              const pct = Math.round((sd.aantal / data.aangesloten) * 100);
               return (
                 <div key={sd.naam} className="flex items-center gap-3">
                   <span className="text-sm w-24 sm:w-40 truncate">{sd.naam}</span>
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-primary/60"
-                      style={{ width: `${data.totaalNL > 0 ? Math.max((sd.aantal / data.totaalNL) * 100, 3) : 0}%` }}
+                      style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-xs tabular-nums text-muted-foreground w-24 text-right">
-                    {sd.aantal} van {data.totaalNL || "?"} ({pctOfTotal}%)
+                  <span className="text-xs tabular-nums text-muted-foreground w-16 text-right">
+                    {sd.aantal} ({pct}%)
                   </span>
                 </div>
               );
