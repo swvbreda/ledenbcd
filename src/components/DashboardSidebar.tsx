@@ -44,8 +44,8 @@ const DashboardSidebar = ({ activeTab, onTabChange }: DashboardSidebarProps) => 
         } lg:translate-x-0`}
       >
         <div className="px-5 py-6 border-b border-sidebar-border">
-          <h1 className="text-lg font-bold font-display tracking-tight">BCD Leden</h1>
-          <p className="text-xs text-sidebar-muted mt-0.5">Ledenbestand Dashboard</p>
+          <h1 className="text-lg font-bold font-display tracking-tight">Ledenbestand</h1>
+          <p className="text-xs text-sidebar-muted mt-0.5">Dashboard</p>
         </div>
         <nav className="flex-1 py-4 px-3 space-y-1">
           {navItems.map((item) => {

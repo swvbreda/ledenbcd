@@ -71,7 +71,7 @@ export function AppSidebar() {
           {!collapsed ? (
             <>
               <h1 className="text-lg font-bold font-display tracking-tight text-sidebar-foreground">
-                BCD Leden
+                Ledenbestand
               </h1>
               <p className="text-xs text-sidebar-foreground/60 mt-0.5">Ledenbestand Dashboard</p>
             </>

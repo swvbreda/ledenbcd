@@ -12,7 +12,7 @@ const Index = () => {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display">Overzicht</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Welkom bij het BCD Ledenbestand Dashboard
+          Welkom bij het Ledenbestand Dashboard
         </p>
       </div>
 
