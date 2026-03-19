@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Users, Building2, MapPin, PieChart } from "lucide-react";
+import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
