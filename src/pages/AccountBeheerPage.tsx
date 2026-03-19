@@ -25,6 +25,7 @@ interface UserAccount {
   last_sign_in_at: string | null;
   role: string;
   member_id: number | null;
+  member_ids: number[];
 }
 
 const AccountBeheerPage = () => {
