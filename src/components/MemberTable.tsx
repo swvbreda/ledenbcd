@@ -24,6 +24,17 @@ const getGemeenten = (member: Member): string[] => {
   return Array.from(set);
 };
 
+/** Jubilee tier based on traditional Dutch jubilee colors */
+const getJubileumTier = (jaren: number): { bg: string; text: string; label: string } => {
+  if (jaren >= 30) return { bg: "bg-amber-100", text: "text-amber-700", label: "Pareljubileum" };
+  if (jaren >= 25) return { bg: "bg-slate-200", text: "text-slate-600", label: "Zilveren jubileum" };
+  if (jaren >= 20) return { bg: "bg-sky-100", text: "text-sky-700", label: "Porseleinen jubileum" };
+  if (jaren >= 15) return { bg: "bg-indigo-100", text: "text-indigo-600", label: "Kristallen jubileum" };
+  if (jaren >= 10) return { bg: "bg-orange-100", text: "text-orange-700", label: "Koperen jubileum" };
+  if (jaren >= 5) return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Houten jubileum" };
+  return { bg: "bg-muted", text: "text-muted-foreground", label: "" };
+};
+
 const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
@@ -111,11 +122,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {jarenLid !== null && (
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                jarenLid >= 30 ? "bg-success/10 text-success" : jarenLid >= 10 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-              }`}>{jarenLid} jr</span>
-            )}
+            {jarenLid !== null && (() => {
+              const tier = getJubileumTier(jarenLid);
+              return (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>{jarenLid} jr</span>
+              );
+            })()}
             <span className="text-xs tabular-nums text-muted-foreground">{m.aantalLocaties} loc.</span>
             <ExternalLink size={14} className="text-muted-foreground" />
           </div>
@@ -213,19 +225,23 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  {jarenLid !== null ? (
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        jarenLid >= 30
-                          ? "bg-success/10 text-success"
-                          : jarenLid >= 10
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {jarenLid} jr
-                    </span>
-                  ) : (
+                  {jarenLid !== null ? (() => {
+                    const tier = getJubileumTier(jarenLid);
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>
+                              {jarenLid} jr
+                            </span>
+                          </TooltipTrigger>
+                          {tier.label && (
+                            <TooltipContent><p>{tier.label}</p></TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })() : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
@@ -285,9 +301,16 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         <div className="p-8 text-center text-muted-foreground">Geen leden gevonden</div>
       )}
       {isAdmin && (
-        <div className="hidden md:flex items-center gap-4 px-4 py-2 border-t border-border text-[11px] text-muted-foreground">
+        <div className="hidden md:flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-t border-border text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
           <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
+          <span className="text-border">|</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-300" /> 5+ jr Hout</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-orange-100 border border-orange-300" /> 10+ jr Koper</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-indigo-100 border border-indigo-300" /> 15+ jr Kristal</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-sky-100 border border-sky-300" /> 20+ jr Porselein</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-slate-200 border border-slate-400" /> 25+ jr Zilver</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-amber-100 border border-amber-300" /> 30+ jr Parel</span>
         </div>
       )}
     </div>
