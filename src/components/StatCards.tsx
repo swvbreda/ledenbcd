@@ -14,9 +14,11 @@ const StatCards = ({ members }: StatCardsProps) => {
 
   const totalMembers = members.length;
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
-  const uniqueCities = new Set(members.map((m) => m.plaats).filter(Boolean)).size;
+  const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
-  const cityPct = Math.round((uniqueCities / totalNLCities) * 100);
+  const uniqueCitiesInWODC = [...allCities].filter((c) => c in (coffeeshopData.perStad as Record<string, number>)).length;
+  const uniqueCities = allCities.size;
+  const cityPct = Math.round((uniqueCitiesInWODC / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
