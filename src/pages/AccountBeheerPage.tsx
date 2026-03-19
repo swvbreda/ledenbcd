@@ -50,15 +50,31 @@ const AccountBeheerPage = () => {
   const isBoardEmail = (email: string | undefined) =>
     !!email && email.toLowerCase().endsWith("@coffeeshopbond.nl");
 
-  const getDisplayInfo = (u: UserAccount): { label: string; isBoard: boolean; memberId: number | null } => {
+  const boardNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    map.set("simone@coffeeshopbond.nl", "Simone van Breda");
+    map.set("joachim@coffeeshopbond.nl", "Joachim Helms");
+    map.set("bernard@coffeeshopbond.nl", "Bernard van Nierop");
+    map.set("huub@coffeeshopbond.nl", "Huub van den Brink");
+    map.set("dorine@coffeeshopbond.nl", "Dorine Buchener");
+    map.set("stef@coffeeshopbond.nl", "Stef Couwenberg");
+    map.set("arnhem@coffeeshopbond.nl", "Hannes Poppinghaus");
+    map.set("enschede@coffeeshopbond.nl", "Tugrulhan");
+    map.set("info@coffeeshopbond.nl", "Secretariaat");
+    map.set("bestuur@coffeeshopbond.nl", "Bestuur");
+    return map;
+  }, []);
+
+  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberId: number | null } => {
     if (isBoardEmail(u.email)) {
-      return { label: "Bestuur", isBoard: true, memberId: null };
+      const name = boardNameMap.get(u.email.toLowerCase()) || u.email.split("@")[0];
+      return { label: "Bestuur", personName: name, isBoard: true, memberId: null };
     }
     if (u.member_id) {
-      const name = memberNameMap.get(u.member_id) || null;
-      return { label: name || "Onbekend lid", isBoard: false, memberId: u.member_id };
+      const name = memberNameMap.get(u.member_id) || "Onbekend lid";
+      return { label: name, personName: "", isBoard: false, memberId: u.member_id };
     }
-    return { label: "", isBoard: false, memberId: null };
+    return { label: "", personName: "", isBoard: false, memberId: null };
   };
 
   const filteredUsers = useMemo(() => {
@@ -176,6 +192,7 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">E-mail</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Rol</th>
@@ -185,7 +202,7 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { label, isBoard, memberId } = getDisplayInfo(u);
+                  const { label, personName, isBoard, memberId } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
@@ -210,6 +227,9 @@ const AccountBeheerPage = () => {
                             <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
                           )}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {isBoard ? personName : "—"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                       <td className="px-4 py-3">
