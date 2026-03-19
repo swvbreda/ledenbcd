@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented, allLeads } from "@/hooks/useMembers";
+import { allRepresented } from "@/hooks/useMembers";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
+import { rawLeads } from "@/hooks/useMembers";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
@@ -13,7 +15,11 @@ interface StatCardsProps {
 const StatCards = ({ members }: StatCardsProps) => {
   const navigate = useNavigate();
 
-  const totalMembers = members.length;
+  const { conversions } = useLeadConversions();
+  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
+  const activeLeadsCount = rawLeads.filter((l) => !convertedLeadIds.has(l.id)).length;
+  const totalMembers = members.length + conversions.length; // original members + converted leads
+
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
@@ -72,7 +78,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Users size={18} className="text-primary" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers} leden · {allLeads.length} leads</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers} leden · {activeLeadsCount} leads</p>
       </div>
 
       {/* Gemeenten */}
