@@ -22,7 +22,9 @@ export const getMembershipYears = (member: MemberYearsSource): number | null => 
   if (startYear === null) return null;
 
   const currentYear = new Date().getFullYear();
-  if (startYear < BOND_START_YEAR || startYear > currentYear) return null;
+  if (startYear > currentYear) return null;
 
-  return currentYear - startYear;
+  // Cap at bond founding year — nobody can be a member longer than the bond exists
+  const effectiveStart = Math.max(startYear, BOND_START_YEAR);
+  return currentYear - effectiveStart;
 };
