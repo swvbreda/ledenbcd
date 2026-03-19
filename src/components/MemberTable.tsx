@@ -123,14 +123,18 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
             {(() => {
               const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
-              const boardNames = boardMembersByLid.get(m.id) || [];
-              const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
-              if (!eigenaar && !m.oprichter && !eigenaarIsBoard) return null;
+              const boardEntries = boardMembersByLid.get(m.id) || [];
+              const boardMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+              if (!eigenaar && !m.oprichter && !boardMatch) return null;
               return (
                 <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
                   {eigenaar && <span>{eigenaar}</span>}
                   {m.oprichter && <span className="text-amber-500">★</span>}
-                  {eigenaarIsBoard && <Shield size={11} className="text-primary" />}
+                  {boardMatch && (
+                    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                      <span><Shield size={11} className="text-primary" /></span>
+                    </TooltipTrigger><TooltipContent><p>{boardMatch.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                  )}
                 </div>
               );
             })()}
