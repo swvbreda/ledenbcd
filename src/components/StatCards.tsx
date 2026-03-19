@@ -128,7 +128,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <MapPin size={18} className="text-success" />
         </div>
         <div className="mt-1">
-          <MiniGauge pct={g4Pct} color="hsl(var(--success))" />
+          <MiniGauge pct={g4Pct} />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
           <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
         </div>
