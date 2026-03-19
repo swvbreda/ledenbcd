@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented, allLeads } from "@/hooks/useMembers";
+import { allRepresented } from "@/hooks/useMembers";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
+import { rawLeads } from "@/hooks/useMembers";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
