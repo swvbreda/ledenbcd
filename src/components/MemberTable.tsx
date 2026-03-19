@@ -161,7 +161,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               const contactpersoon = storedCp || member.contactpersoon || member.contacten[0]?.naam || "";
               return (
               <tr
-                key={member.id}
+                key={getKey(member)}
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
