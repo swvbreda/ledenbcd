@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Building2, Users, Notebook, ChevronDown, ChevronRight } from "lucide-react";
 import { allRepresented, allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { getGemeente } from "@/data/gemeenteMapping";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 
