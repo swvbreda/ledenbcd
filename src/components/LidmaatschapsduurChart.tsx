@@ -1,4 +1,4 @@
-import { TrendingUp, Building2, Clock, UserPlus, Award } from "lucide-react";
+import { TrendingUp, Building2, Clock, UserPlus, Award, UserCheck } from "lucide-react";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
