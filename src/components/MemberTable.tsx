@@ -185,6 +185,26 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
+                    {member.oprichter && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help text-amber-500">★</span>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Oprichter van de bond</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {boardMemberIds.has(member.id) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Bestuurslid</p></TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     {memberIsLead && isAdmin && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         Lead
