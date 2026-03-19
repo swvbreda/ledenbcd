@@ -21,10 +21,13 @@ const LedenPage = () => {
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
-  const [activeTab, setActiveTab] = useState<ViewTab>(tabParam === "coffeeshops" ? "coffeeshops" : "leden");
+  const [activeTab, setActiveTab] = useState<ViewTab>(
+    tabParam === "coffeeshops" ? "coffeeshops" : tabParam === "leads" ? "leads" : "leden"
+  );
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
+    else if (tabParam === "leads") setActiveTab("leads");
     else if (tabParam === "leden") setActiveTab("leden");
   }, [tabParam]);
   const {
