@@ -7,7 +7,7 @@ import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
-import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembers, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
