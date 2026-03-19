@@ -4,6 +4,7 @@ import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLi
 import { allMembers, allRepresented } from "@/hooks/useMembers";
 import CityMap from "@/components/CityMap";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { getGemeente } from "@/data/gemeenteMapping";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;

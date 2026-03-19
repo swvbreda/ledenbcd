@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented } from "@/hooks/useMembers";
+import { getGemeente } from "@/data/gemeenteMapping";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
@@ -44,23 +45,6 @@ const EXPERIMENT_GEMEENTEN = [
   "Arnhem", "Breda", "Groningen", "Heerlen", "Voorne aan Zee",
   "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
 ];
-
-/** Maps plaats names to their parent gemeente when they differ */
-const plaatsToGemeente: Record<string, string> = {
-  "Wormerveer": "Zaanstad",
-  "Zaandam": "Zaanstad",
-  "Wormer": "Zaanstad",
-  "Krommenie": "Zaanstad",
-  "Assendelft": "Zaanstad",
-  "Hellevoetsluis": "Voorne aan Zee",
-  "Brielle": "Voorne aan Zee",
-  "Westvoorne": "Voorne aan Zee",
-  "Hoogezand": "Midden-Groningen",
-  "Bussum": "Gooise Meren",
-};
-
-/** Get the gemeente for a given plaats */
-const getGemeente = (plaats: string): string => plaatsToGemeente[plaats] || plaats;
 
 /** Check if a member/location belongs to a gemeente */
 const isInGemeente = (m: Member, gemeente: string): boolean => {
