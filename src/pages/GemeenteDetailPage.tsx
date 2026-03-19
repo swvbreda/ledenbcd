@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Building2, Users, Notebook } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Users, Notebook, ChevronDown, ChevronRight } from "lucide-react";
 import { allRepresented, allMembers } from "@/hooks/useMembers";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 
@@ -10,6 +10,7 @@ const GemeenteDetailPage = () => {
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
+  const [expandedSd, setExpandedSd] = useState<Set<string>>(new Set());
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
@@ -160,37 +161,57 @@ const GemeenteDetailPage = () => {
           <Users size={16} className="text-primary" />
           Aangesloten coffeeshops
         </h3>
-        <div className="space-y-4">
-          {data.sortedKeys.map((sdNaam) => (
-            <div key={sdNaam}>
-              {data.sortedKeys.length > 1 && (
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  {sdNaam} · {data.perStadsdeel[sdNaam].length}
-                </p>
-              )}
-              <div className="space-y-1">
-                {data.perStadsdeel[sdNaam]
-                  .sort((a, b) => a.naam.localeCompare(b.naam))
-                  .map((loc, i) => (
-                    <Link
-                      key={`${loc.memberId}-${i}`}
-                      to={`/leden/${loc.memberId}`}
-                      className="flex items-start gap-3 px-3 py-2 rounded-md hover:bg-muted/30 transition-colors group"
-                    >
-                      <MapPin size={14} className="text-primary shrink-0 mt-0.5" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium font-display group-hover:text-primary transition-colors">
-                          {loc.naam}
-                        </p>
-                        {loc.adres && (
-                          <p className="text-xs text-muted-foreground truncate">{loc.adres}</p>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
+        <div className="space-y-1">
+          {data.sortedKeys.map((sdNaam) => {
+            const isOpen = expandedSd.has(sdNaam);
+            const locs = data.perStadsdeel[sdNaam];
+            const toggleSd = () => {
+              setExpandedSd((prev) => {
+                const next = new Set(prev);
+                if (next.has(sdNaam)) next.delete(sdNaam);
+                else next.add(sdNaam);
+                return next;
+              });
+            };
+
+            return (
+              <div key={sdNaam}>
+                <button
+                  onClick={toggleSd}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/30 transition-colors text-left"
+                >
+                  {isOpen ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {sdNaam}
+                  </span>
+                  <span className="text-xs text-muted-foreground">· {locs.length}</span>
+                </button>
+                {isOpen && (
+                  <div className="ml-5 space-y-0.5">
+                    {locs
+                      .sort((a, b) => a.naam.localeCompare(b.naam))
+                      .map((loc, i) => (
+                        <Link
+                          key={`${loc.memberId}-${i}`}
+                          to={`/leden/${loc.memberId}`}
+                          className="flex items-start gap-3 px-3 py-1.5 rounded-md hover:bg-muted/30 transition-colors group"
+                        >
+                          <MapPin size={14} className="text-primary shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium font-display group-hover:text-primary transition-colors">
+                              {loc.naam}
+                            </p>
+                            {loc.adres && (
+                              <p className="text-xs text-muted-foreground truncate">{loc.adres}</p>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
