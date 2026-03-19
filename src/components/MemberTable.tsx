@@ -89,7 +89,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <span className="font-medium font-display text-sm">{m.naam}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-              {!memberIsLead && <span className="font-mono">#{m.id}</span>}
+              {!memberIsLead && isAdmin && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
             </div>
           </div>
