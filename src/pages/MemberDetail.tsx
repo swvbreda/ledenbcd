@@ -420,12 +420,16 @@ const MemberDetail = () => {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1.5 text-sm text-muted-foreground">
+                  <div className="mt-1.5 text-sm text-muted-foreground space-y-0.5">
                     {loc.adres && <p>{loc.adres}</p>}
                     <p>
                       {loc.postcode && <>{loc.postcode} </>}
                       {loc.plaats}
                     </p>
+                    {loc.kvk && <p className="font-mono text-xs">KVK {loc.kvk}</p>}
+                    {loc.oprichtingsDatum && (
+                      <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
+                    )}
                   </div>
                 </div>
               ))}

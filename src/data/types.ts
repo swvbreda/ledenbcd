@@ -4,6 +4,8 @@ export interface Location {
   stadsdeel?: string;
   adres?: string;
   postcode?: string;
+  oprichtingsDatum?: string;
+  kvk?: string;
 }
 
 export interface Contact {
