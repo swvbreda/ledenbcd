@@ -28,7 +28,7 @@ const stadsdeelMapping: Record<string, string> = {
   "Zuid": "Zuid",
 };
 
-export const stadsdeelCategorieen = ["Centrum", "Noord", "Oost", "West", "Zuid", "Overig"] as const;
+export const stadsdeelCategorieen = ["Centrum", "Noord", "Oost", "West", "Zuid"] as const;
 
 export function getStadsdeelCategorie(stadsdeel: string): string {
   return stadsdeelMapping[stadsdeel] || "Overig";
