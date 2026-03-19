@@ -81,7 +81,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground w-24">
                 Lidnr.
               </th>
-              </th>
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors min-w-[200px]" onClick={() => handleSort("naam")}>
                 <span className="inline-flex items-center gap-1">Naam <SortIcon col="naam" /></span>
               </th>
