@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Member, Contact, Location } from "@/data/types";
 import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits";
 import { useAuth } from "@/hooks/useAuth";
+import { stadsdeelPerPlaats, alleStadsdelen } from "@/data/stadsdeelPerPlaats";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
