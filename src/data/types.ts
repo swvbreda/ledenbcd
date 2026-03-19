@@ -11,6 +11,7 @@ export interface Contact {
   functie: string;
   telefoon: string;
   email: string;
+  verjaardag?: string;
 }
 
 export interface Member {
