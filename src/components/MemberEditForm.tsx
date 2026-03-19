@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { Member, Contact, Location } from "@/data/types";
 import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits";
 import { useAuth } from "@/hooks/useAuth";
+import { stadsdeelPerPlaats, alleStadsdelen } from "@/data/stadsdeelPerPlaats";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
@@ -261,7 +262,22 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
               <EditableField label="Plaats" value={loc.plaats || ""} onChange={(v) => updateLocation(i, "plaats", v)} />
               <EditableField label="Adres" value={loc.adres || ""} onChange={(v) => updateLocation(i, "adres", v)} />
               <EditableField label="Postcode" value={loc.postcode || ""} onChange={(v) => updateLocation(i, "postcode", v)} />
-              <EditableField label="Stadsdeel" value={loc.stadsdeel || ""} onChange={(v) => updateLocation(i, "stadsdeel", v)} />
+              <div>
+                <label className="text-xs text-muted-foreground block mb-0.5">Stadsdeel</label>
+                <Select
+                  value={loc.stadsdeel || ""}
+                  onValueChange={(v) => updateLocation(i, "stadsdeel", v)}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Selecteer stadsdeel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(stadsdeelPerPlaats[loc.plaats || ""] || alleStadsdelen).map((sd) => (
+                      <SelectItem key={sd} value={sd}>{sd}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         ))}
