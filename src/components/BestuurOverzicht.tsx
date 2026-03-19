@@ -17,6 +17,7 @@ interface BoardMemberRow {
   functie: string;
   type: string;
   lid_id: number | null;
+  lid_ids: number[] | null;
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
@@ -128,7 +129,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   };
 
   const renderCard = (bl: BoardMemberRow, isAspirant = false) => {
-    const member = bl.lid_id ? members.find((m) => m.id === bl.lid_id) : undefined;
+    const lidIds = bl.lid_ids?.length ? bl.lid_ids : (bl.lid_id ? [bl.lid_id] : []);
+    const firstMember = lidIds.length > 0 ? members.find((m) => m.id === lidIds[0]) : undefined;
     const photo = getPhoto(bl);
     const showUpload = canUpload(bl);
 
@@ -137,8 +139,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         key={bl.id}
         className={`border rounded-md p-2.5 transition-colors flex gap-2.5 ${
           isAspirant ? "border-dashed border-border" : "border-border"
-        } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
-        onClick={() => member && navigate(`/leden/${member.id}`)}
+        } ${firstMember ? "hover:bg-muted/40 cursor-pointer" : ""}`}
+        onClick={() => firstMember && navigate(`/leden/${firstMember.id}`)}
       >
         <div className="min-w-0 flex-1 flex flex-col justify-between">
           <div>
@@ -163,20 +165,20 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </div>
           </div>
 
-          {(member || bl.coffeeshop) && (() => {
+          {(firstMember || bl.coffeeshop) && (() => {
             let locations: string[] = [];
-            if (member) {
-              const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
-              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
+            if (firstMember) {
+              const uniqueCities = [...new Set(firstMember.locaties?.map(l => l.plaats).filter(Boolean) || [])];
+              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (firstMember.plaats ? [firstMember.plaats] : []);
             } else if (bl.coffeeshop_plaats) {
               locations = bl.coffeeshop_plaats.split("/").map(s => s.trim());
             }
             return (
               <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
-                {member && (
-                  <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
+                {firstMember && (
+                  <p className="text-[11px] font-medium leading-tight">{firstMember.naam}</p>
                 )}
-                {!member && bl.coffeeshop && (
+                {!firstMember && bl.coffeeshop && (
                   <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
                 )}
                 {locations.length > 0 && (

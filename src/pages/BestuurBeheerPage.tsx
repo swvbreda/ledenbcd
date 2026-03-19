@@ -54,6 +54,7 @@ interface BoardMember {
   functie: string;
   type: "bestuurslid" | "aspirant";
   lid_id: number | null;
+  lid_ids: number[];
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
@@ -71,6 +72,7 @@ const emptyMember: Omit<BoardMember, "id"> = {
   functie: "",
   type: "bestuurslid",
   lid_id: null,
+  lid_ids: [],
   email: null,
   bond_email: null,
   telefoon: null,
@@ -148,7 +150,7 @@ export default function BestuurBeheerPage() {
     if (error) {
       toast.error("Fout bij laden: " + error.message);
     } else {
-      setMembers((data as BoardMember[]) || []);
+      setMembers((data || []).map((d: any) => ({ ...d, lid_ids: d.lid_ids || [] })) as BoardMember[]);
     }
     setLoading(false);
   };
@@ -176,7 +178,8 @@ export default function BestuurBeheerPage() {
       naam: editingMember.naam.trim(),
       functie: editingMember.functie.trim(),
       type: editingMember.type,
-      lid_id: editingMember.lid_id || null,
+      lid_id: editingMember.lid_ids?.[0] || editingMember.lid_id || null,
+      lid_ids: editingMember.lid_ids || [],
       email: editingMember.email?.trim() || null,
       bond_email: editingMember.bond_email?.trim() || null,
       telefoon: editingMember.telefoon?.trim() || null,
@@ -226,7 +229,7 @@ export default function BestuurBeheerPage() {
     fetchMembers();
   };
 
-  const updateField = (field: string, value: string | number | null) => {
+  const updateField = (field: string, value: string | number | number[] | null) => {
     if (!editingMember) return;
     setEditingMember({ ...editingMember, [field]: value });
   };
@@ -339,12 +342,44 @@ export default function BestuurBeheerPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Lid ID (nummer)</Label>
-                  <Input
-                    type="number"
-                    value={editingMember.lid_id ?? ""}
-                    onChange={(e) => updateField("lid_id", e.target.value ? parseInt(e.target.value) : null)}
-                  />
+                  <Label className="text-xs">Lid ID's (nummers)</Label>
+                  <div className="space-y-1.5">
+                    {(editingMember.lid_ids || []).map((lid, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          value={lid}
+                          onChange={(e) => {
+                            const newIds = [...(editingMember.lid_ids || [])];
+                            newIds[idx] = parseInt(e.target.value) || 0;
+                            updateField("lid_ids", newIds);
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                          onClick={() => {
+                            const newIds = (editingMember.lid_ids || []).filter((_, i) => i !== idx);
+                            updateField("lid_ids", newIds);
+                          }}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 w-full"
+                      onClick={() => updateField("lid_ids", [...(editingMember.lid_ids || []), 0])}
+                    >
+                      <Plus size={12} /> Lidnummer toevoegen
+                    </Button>
+                  </div>
                 </div>
               </div>
 
