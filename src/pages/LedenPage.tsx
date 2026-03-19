@@ -5,6 +5,7 @@ import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
+import MailingExportButton from "@/components/MailingExportButton";
 import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
