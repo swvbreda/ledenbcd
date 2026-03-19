@@ -148,7 +148,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                 <a
                   href={`mailto:${bl.bondEmail}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                  className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
                 >
                   <Mail size={10} /> {bl.bondEmail}
                 </a>
