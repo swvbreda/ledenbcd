@@ -1,1 +1,10 @@
 project_id = "txbfdrriwaynfeurqkea"
+
+[functions.manage-users]
+verify_jwt = false
+
+[functions.create-board-users]
+verify_jwt = false
+
+[functions.member-signup]
+verify_jwt = false
