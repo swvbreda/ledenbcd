@@ -248,12 +248,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   )}
                 </td>
                 {isAdmin && (
-                  <>
-                    <td className="px-4 py-3 text-xs">
-                      {(() => {
-                        const boardNames = boardMembersByLid.get(member.id) || [];
-                        const isBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
-                        return (
+                  (() => {
+                    const boardEntries = boardMembersByLid.get(member.id) || [];
+                    const eigenaarMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+                    const cpMatch = contactpersoon && boardEntries.find(bn => contactpersoon.toLowerCase().includes(bn.naam) || bn.naam.includes(contactpersoon.toLowerCase()));
+                    const showCpIcon = cpMatch && !(eigenaar && contactpersoon && eigenaar.toLowerCase() === contactpersoon.toLowerCase() && eigenaarMatch);
+                    return (
+                      <>
+                        <td className="px-4 py-3 text-xs">
                           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                             {eigenaar || "—"}
                             {member.oprichter && (
@@ -261,32 +263,26 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                                 <span className="cursor-default text-amber-500">★</span>
                               </TooltipTrigger><TooltipContent><p>Oprichter van de bond</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
-                            {(member.bestuursfunctie || isBoard) && (
+                            {(member.bestuursfunctie || eigenaarMatch) && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger><TooltipContent><p>{member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                              </TooltipTrigger><TooltipContent><p>{eigenaarMatch?.functie || member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      {(() => {
-                        const boardNames = boardMembersByLid.get(member.id) || [];
-                        const cpIsBoard = contactpersoon && boardNames.some(bn => contactpersoon.toLowerCase().includes(bn) || bn.includes(contactpersoon.toLowerCase()));
-                        return (
+                        </td>
+                        <td className="px-4 py-3 text-xs">
                           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                             {contactpersoon || "—"}
-                            {cpIsBoard && (
+                            {showCpIcon && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger><TooltipContent><p>Bestuurslid</p></TooltipContent></Tooltip></TooltipProvider>
+                              </TooltipTrigger><TooltipContent><p>{cpMatch?.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>
-                        );
-                      })()}
-                    </td>
-                  </>
+                        </td>
+                      </>
+                    );
+                  })()
                 )}
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
                   {member.oprichtingJaar || "—"}
