@@ -8,7 +8,7 @@ interface SearchBarProps {
 
 const SearchBar = ({ value, onChange, placeholder = "Zoek op naam, stad, contact of lidnummer..." }: SearchBarProps) => {
   return (
-    <div className="relative flex-1 max-w-lg">
+    <div className="relative w-full sm:w-auto sm:min-w-[260px] sm:max-w-xs">
       <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
       <input
         type="text"

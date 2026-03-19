@@ -93,7 +93,7 @@ const LedenPage = () => {
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
             <MemberFilters
               cities={cities}
