@@ -352,7 +352,10 @@ const MemberDetail = () => {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium font-display">{loc.naam}</span>
                     {loc.stadsdeel && (
-                      <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
+                      <span
+                        className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                        onClick={() => navigate(`/locaties/${encodeURIComponent(loc.plaats || member.plaats)}`)}
+                      >
                         {loc.stadsdeel}
                       </span>
                     )}
