@@ -69,7 +69,7 @@ const MarktaandeelPage = () => {
         </button>
         <h2 className="text-xl sm:text-2xl font-bold font-display">Marktaandeel BCD</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          BCD-locaties t.o.v. het totaal aantal coffeeshops per stad · bron: WODC 2024
+          BCD-locaties t.o.v. het totaal aantal coffeeshops per stad
         </p>
       </div>
 
