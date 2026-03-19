@@ -31,8 +31,9 @@ const ExportButton = ({ members, filename = "bcd-leden" }: ExportButtonProps) =>
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    const today = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `${filename}.csv`;
+    a.download = `${filename}-${today}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
