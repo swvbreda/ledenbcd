@@ -4,6 +4,7 @@ import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLi
 import { allMembers, allRepresented } from "@/hooks/useMembers";
 import CityMap from "@/components/CityMap";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { getGemeente } from "@/data/gemeenteMapping";
 
 const perStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
@@ -64,7 +65,8 @@ const LocatiesPage = () => {
   // Count represented locations per city
   const repCityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    const gemeente = getGemeente(m.plaats);
+    if (gemeente) repCityCount[gemeente] = (repCityCount[gemeente] || 0) + (m.aantalLocaties || 1);
   });
 
   // G4 stats
@@ -79,7 +81,7 @@ const LocatiesPage = () => {
     // Count all represented (members + leads) per city for accurate market share
     for (const m of allRepresented) {
       for (const l of m.locaties) {
-        const plaats = l.plaats || m.plaats;
+        const plaats = getGemeente(l.plaats || m.plaats);
         if (!plaats) continue;
 
         if (!map.has(plaats)) {
@@ -107,7 +109,7 @@ const LocatiesPage = () => {
 
         if (!city.leden.some((x) => x.id === m.id)) {
           city.aantalLeden++;
-          city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => (loc.plaats || m.plaats) === plaats).length });
+          city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => getGemeente(loc.plaats || m.plaats) === plaats).length });
         }
       }
     }
