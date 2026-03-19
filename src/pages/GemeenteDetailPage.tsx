@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Building2, Users, Notebook } from "lucide-react";
 import { allRepresented, allMembers } from "@/hooks/useMembers";
