@@ -451,6 +451,11 @@ const MemberDetail = () => {
             </div>
           )}
 
+          {/* Mailingvoorkeuren */}
+          {(isAdmin || isOwnProfile) && (
+            <MailingPreferences member={member} canEdit={isAdmin || isOwnProfile} />
+          )}
+
           {/* Opmerkingen */}
           {isAdmin && (
             <div className="bg-card rounded-lg border border-border p-5">
