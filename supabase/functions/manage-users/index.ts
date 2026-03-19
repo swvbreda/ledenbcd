@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (user_id === caller.id) {
+      if (user_id === callerId) {
         return new Response(JSON.stringify({ error: "Je kunt je eigen account niet verwijderen" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
