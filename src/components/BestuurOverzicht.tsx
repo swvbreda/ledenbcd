@@ -17,6 +17,7 @@ interface BoardMemberRow {
   functie: string;
   type: string;
   lid_id: number | null;
+  lid_ids: number[] | null;
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
