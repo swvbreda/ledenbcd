@@ -37,9 +37,19 @@ const fieldLabels: Record<string, string> = {
 };
 
 function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Member }) {
-  const entries = Object.entries(data).filter(
-    ([key]) => key !== "aantalLocaties"
-  );
+  const entries = Object.entries(data).filter(([key, newVal]) => {
+    if (key === "aantalLocaties") return false;
+    if (!member) return true;
+    const oldVal = (member as any)[key];
+    if (Array.isArray(newVal) || Array.isArray(oldVal)) {
+      return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+    }
+    return String(newVal ?? "") !== String(oldVal ?? "");
+  });
+
+  if (entries.length === 0) {
+    return <p className="text-sm text-muted-foreground italic">Geen wijzigingen gevonden.</p>;
+  }
 
   return (
     <div className="space-y-2 text-sm">
@@ -48,30 +58,40 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
         const oldVal = member ? (member as any)[key] : undefined;
 
         if (key === "locaties" && Array.isArray(newVal)) {
+          const oldLocs = (member?.locaties || []) as any[];
           return (
             <div key={key}>
               <span className="font-medium text-muted-foreground">{label}:</span>
               <div className="ml-3 mt-1 space-y-1">
-                {(newVal as any[]).map((loc, i) => (
-                  <div key={i} className="text-xs bg-muted/50 rounded px-2 py-1">
-                    {loc.naam} — {loc.plaats || "?"}, {loc.adres || ""}
-                  </div>
-                ))}
+                {(newVal as any[]).map((loc, i) => {
+                  const isNew = i >= oldLocs.length;
+                  return (
+                    <div key={i} className={`text-xs rounded px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
+                      {isNew && <span className="font-medium mr-1">Nieuw:</span>}
+                      {loc.naam} — {loc.plaats || "?"}, {loc.adres || ""}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
         }
 
         if (key === "contacten" && Array.isArray(newVal)) {
+          const oldContacts = (member?.contacten || []) as any[];
           return (
             <div key={key}>
               <span className="font-medium text-muted-foreground">{label}:</span>
               <div className="ml-3 mt-1 space-y-1">
-                {(newVal as any[]).map((c, i) => (
-                  <div key={i} className="text-xs bg-muted/50 rounded px-2 py-1">
-                    {c.naam} ({c.functie}) — {c.email}
-                  </div>
-                ))}
+                {(newVal as any[]).map((c, i) => {
+                  const isNew = i >= oldContacts.length;
+                  return (
+                    <div key={i} className={`text-xs rounded px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
+                      {isNew && <span className="font-medium mr-1">Nieuw:</span>}
+                      {c.naam} ({c.functie}) — {c.email}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -79,12 +99,11 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
 
         const oldStr = oldVal != null ? String(oldVal) : "—";
         const newStr = newVal != null ? String(newVal) : "—";
-        const changed = oldStr !== newStr;
 
         return (
           <div key={key} className="flex items-baseline gap-2">
             <span className="font-medium text-muted-foreground">{label}:</span>
-            {changed && member ? (
+            {member ? (
               <>
                 <span className="line-through text-muted-foreground/60">{oldStr}</span>
                 <span className="text-foreground">→ {newStr}</span>
