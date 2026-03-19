@@ -220,7 +220,7 @@ const MemberDetail = () => {
                   </a>
                 )}
                 {member.instagram && (
-                  <a href={`https://instagram.com/${member.instagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={`https://instagram.com/${member.instagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     <Instagram size={14} /> @{member.instagram}
                     <ExternalLink size={12} />
                   </a>
