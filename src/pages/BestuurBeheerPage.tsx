@@ -83,6 +83,45 @@ const emptyMember: Omit<BoardMember, "id"> = {
   sort_order: 0,
 };
 
+function SortableRow({ member, onEdit, onDelete }: { member: BoardMember; onEdit: (m: BoardMember) => void; onDelete: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: member.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 py-2.5 px-3 rounded-md border border-border hover:bg-muted/30 transition-colors bg-card"
+    >
+      <button {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing shrink-0 p-0.5">
+        <GripVertical size={14} className="text-muted-foreground/40" />
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{member.naam}</p>
+        <p className="text-xs text-primary">{member.functie}</p>
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+          {member.bond_email && <span className="text-[11px] text-muted-foreground">{member.bond_email}</span>}
+          {member.telefoon && <span className="text-[11px] text-muted-foreground">{member.telefoon}</span>}
+          {member.coffeeshop && <span className="text-[11px] text-muted-foreground">{member.coffeeshop}</span>}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(member)}>
+          <Pencil size={13} />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(member.id)}>
+          <Trash2 size={13} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function BestuurBeheerPage() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
