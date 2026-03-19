@@ -268,11 +268,12 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
 
       {/* Bottom save */}
       <div className="flex items-center gap-2 justify-end">
+      <div className="flex items-center gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
           <X size={14} /> Annuleren
         </Button>
-        <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending} className="gap-1.5">
-          <Save size={14} /> {saveMutation.isPending ? "Opslaan..." : "Opslaan"}
+        <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-1.5">
+          <Save size={14} /> {isPending ? savingLabel : saveLabel}
         </Button>
       </div>
     </div>
