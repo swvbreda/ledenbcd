@@ -42,7 +42,7 @@ const cityCoords: Record<string, [number, number]> = {
   "Vlaardingen": [51.9128, 4.3418],
   "Schiedam": [51.9196, 4.3889],
   "Zwijndrecht": [51.8166, 4.6333],
-  // Additional cities from WODC data
+  // Additional cities from national coffeeshop data
   "'s-Hertogenbosch": [51.6978, 5.3037],
   "Almelo": [52.3567, 6.6625],
   "Alphen aan den Rijn": [52.1293, 4.6554],

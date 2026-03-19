@@ -79,7 +79,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
           <Building2 size={18} className="text-primary" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{uniqueCitiesInWODC}</p>
+        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{matchedCities}</p>
         <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} coffeeshopgemeenten</p>
       </div>
 

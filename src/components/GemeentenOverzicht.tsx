@@ -78,7 +78,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   ];
 
   const topCities = featuredCities
-    .filter((city) => perStad[city]) // only cities in WODC data
+    .filter((city) => perStad[city]) // only cities in national data
     .map((city) => {
       const total = perStad[city] || 0;
       const bcd = cityCount[city] || 0;
