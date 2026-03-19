@@ -178,10 +178,10 @@ const MarktaandeelPage = () => {
       {extraCities.length > 0 && (
         <div className="bg-card rounded-lg border border-border p-5">
           <h3 className="text-sm font-semibold font-display mb-1">
-            Steden met aangesloten leden (niet in WODC-data)
+            Steden met aangesloten leden (niet in landelijke data)
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Deze steden staan niet in de WODC-monitor maar hebben wel aangesloten leden
+            Deze steden staan niet in de landelijke adressenlijst maar hebben wel aangesloten leden
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {extraCities.map(({ city, bcd }) => (

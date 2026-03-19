@@ -16,9 +16,9 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalLocations = members.reduce((sum, m) => sum + m.aantalLocaties, 0);
   const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
   const totalNLCities = Object.keys(coffeeshopData.perStad).length;
-  const uniqueCitiesInWODC = [...allCities].filter((c) => c in (coffeeshopData.perStad as Record<string, number>)).length;
+  const matchedCities = [...allCities].filter((c) => c in (coffeeshopData.perStad as Record<string, number>)).length;
   const uniqueCities = allCities.size;
-  const cityPct = Math.round((uniqueCitiesInWODC / totalNLCities) * 100);
+  const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
   const perStad = coffeeshopData.perStad as Record<string, number>;
   const representedLocations = allRepresented.reduce((sum, m) => sum + m.aantalLocaties, 0);
@@ -79,7 +79,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
           <Building2 size={18} className="text-primary" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{uniqueCitiesInWODC}</p>
+        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{matchedCities}</p>
         <p className="text-xs text-muted-foreground mt-0.5">van {totalNLCities} coffeeshopgemeenten</p>
       </div>
 
