@@ -173,49 +173,51 @@ const MemberDetail = () => {
               <Pencil size={14} /> Bewerken
             </Button>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              {archived ? (
-                <Button variant="outline" size="sm" className="gap-1.5 text-primary">
-                  <ArchiveRestore size={14} /> Herstellen
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
-                  <Archive size={14} /> Archiveren
-                </Button>
-              )}
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {archived ? "Lid herstellen?" : "Lid archiveren?"}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {archived
-                    ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
-                    : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    if (archived) {
-                      restoreMember(member.id);
-                      setArchived(false);
-                      toast.success(`${member.naam} is hersteld`);
-                    } else {
-                      archiveMember(member.id);
-                      setArchived(true);
-                      toast.success(`${member.naam} is gearchiveerd`);
-                    }
-                  }}
-                >
-                  {archived ? "Herstellen" : "Archiveren"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {isAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                {archived ? (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-primary">
+                    <ArchiveRestore size={14} /> Herstellen
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
+                    <Archive size={14} /> Archiveren
+                  </Button>
+                )}
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {archived ? "Lid herstellen?" : "Lid archiveren?"}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {archived
+                      ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
+                      : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (archived) {
+                        restoreMember(member.id);
+                        setArchived(false);
+                        toast.success(`${member.naam} is hersteld`);
+                      } else {
+                        archiveMember(member.id);
+                        setArchived(true);
+                        toast.success(`${member.naam} is gearchiveerd`);
+                      }
+                    }}
+                  >
+                    {archived ? "Herstellen" : "Archiveren"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       )}
 
