@@ -32,19 +32,25 @@ const StatCards = ({ members }: StatCardsProps) => {
   const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
   const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
 
-  /** Returns an HSL color interpolating from red (0%) → orange (50%) → dark green (100%) */
   const pctColor = (pct: number): string => {
-    if (pct <= 50) {
-      const t = pct / 50;
+    if (pct <= 25) {
+      const t = pct / 25;
       const h = 0 + t * 32;
       const s = 84 + t * (95 - 84);
       const l = 50;
       return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
     }
+    if (pct <= 50) {
+      const t = (pct - 25) / 25;
+      const h = 32 + t * (60 - 32);
+      const s = 95 + t * (90 - 95);
+      const l = 50 + t * (45 - 50);
+      return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+    }
     const t = (pct - 50) / 50;
-    const h = 32 + t * (145 - 32);
-    const s = 95 + t * (63 - 95);
-    const l = 50 + t * (32 - 50);
+    const h = 60 + t * (145 - 60);
+    const s = 90 + t * (63 - 90);
+    const l = 45 + t * (32 - 45);
     return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
   };
 
