@@ -30,6 +30,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const { isAdmin } = useAuth();
 
   const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
+  const getKey = (m: Member) => (isLead(m) ? `lead-${m.id}` : `member-${m.id}`);
 
   const sorted = [...members].sort((a, b) => {
     // Leads always at the bottom
@@ -114,7 +115,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       {/* Mobile card list */}
       <div className="md:hidden">
         {displayMembers.map((member) => (
-          <MobileCard key={member.id} member={member} />
+          <MobileCard key={getKey(member)} member={member} />
         ))}
       </div>
 
@@ -160,7 +161,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               const contactpersoon = storedCp || member.contactpersoon || member.contacten[0]?.naam || "";
               return (
               <tr
-                key={member.id}
+                key={getKey(member)}
                 className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/leden/${member.id}`)}
               >
