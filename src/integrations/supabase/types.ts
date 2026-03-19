@@ -286,59 +286,28 @@ export type Database = {
       }
     }
     Views: {
-      board_members_public: {
-        Row: {
-          bond_email: string | null
-          coffeeshop: string | null
-          coffeeshop_plaats: string | null
-          created_at: string | null
-          email: string | null
-          functie: string | null
-          id: string | null
-          lid_id: number | null
-          lid_ids: number[] | null
-          naam: string | null
-          sort_order: number | null
-          telefoon: string | null
-          type: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          bond_email?: string | null
-          coffeeshop?: string | null
-          coffeeshop_plaats?: string | null
-          created_at?: string | null
-          email?: string | null
-          functie?: string | null
-          id?: string | null
-          lid_id?: number | null
-          lid_ids?: number[] | null
-          naam?: string | null
-          sort_order?: number | null
-          telefoon?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          bond_email?: string | null
-          coffeeshop?: string | null
-          coffeeshop_plaats?: string | null
-          created_at?: string | null
-          email?: string | null
-          functie?: string | null
-          id?: string | null
-          lid_id?: number | null
-          lid_ids?: number[] | null
-          naam?: string | null
-          sort_order?: number | null
-          telefoon?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_board_members_public: {
+        Args: never
+        Returns: {
+          bond_email: string
+          coffeeshop: string
+          coffeeshop_plaats: string
+          created_at: string
+          email: string
+          functie: string
+          id: string
+          lid_id: number
+          lid_ids: number[]
+          naam: string
+          sort_order: number
+          telefoon: string
+          type: string
+          updated_at: string
+        }[]
+      }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
       has_role: {
         Args: {
