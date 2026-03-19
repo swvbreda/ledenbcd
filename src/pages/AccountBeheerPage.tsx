@@ -197,21 +197,29 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const memberName = getMemberName(u.member_id);
+                  const { name: displayName, isBoardMember, functie } = getDisplayName(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
                         <span className="inline-flex items-center gap-1.5">
-                          {memberName ? (
-                            <button
-                              onClick={() => navigate(`/leden/${u.member_id}`)}
-                              className="inline-flex items-center gap-1 text-primary hover:underline"
-                            >
-                              {memberName}
-                              <ExternalLink size={12} className="opacity-50" />
-                            </button>
+                          {displayName ? (
+                            isBoardMember ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Shield size={12} className="text-primary" />
+                                {displayName}
+                                {functie && <span className="text-[10px] text-muted-foreground">({functie})</span>}
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => navigate(`/leden/${u.member_id}`)}
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                {displayName}
+                                <ExternalLink size={12} className="opacity-50" />
+                              </button>
+                            )
                           ) : (
-                            <span className="text-muted-foreground italic">Geen lid gekoppeld</span>
+                            <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
                           {u.id === user?.id && (
                             <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
