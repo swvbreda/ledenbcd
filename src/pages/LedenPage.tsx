@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Users, UserMinus, Store } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
@@ -17,8 +18,15 @@ type ViewTab = "leden" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
-  const [activeTab, setActiveTab] = useState<ViewTab>("leden");
+  const [activeTab, setActiveTab] = useState<ViewTab>(tabParam === "coffeeshops" ? "coffeeshops" : "leden");
+
+  useEffect(() => {
+    if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
+    else if (tabParam === "leden") setActiveTab("leden");
+  }, [tabParam]);
   const {
     searchQuery, setSearchQuery,
     filterCity, setFilterCity,
