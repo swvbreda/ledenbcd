@@ -25,6 +25,7 @@ export type Database = {
           geboortedatum: string | null
           id: string
           lid_id: number | null
+          lid_ids: number[] | null
           naam: string
           prive_adres: string | null
           prive_plaats: string | null
@@ -44,6 +45,7 @@ export type Database = {
           geboortedatum?: string | null
           id?: string
           lid_id?: number | null
+          lid_ids?: number[] | null
           naam: string
           prive_adres?: string | null
           prive_plaats?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           geboortedatum?: string | null
           id?: string
           lid_id?: number | null
+          lid_ids?: number[] | null
           naam?: string
           prive_adres?: string | null
           prive_plaats?: string | null
