@@ -114,12 +114,6 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
               </th>
               <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Adres</th>
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground w-20">Lidnr.</th>
-              <th
-                className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
-                onClick={() => handleSort("lidNaam")}
-              >
-                <span className="inline-flex items-center gap-1">Lid <SortIcon col="lidNaam" /></span>
-              </th>
               <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
