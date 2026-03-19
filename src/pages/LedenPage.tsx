@@ -58,19 +58,21 @@ const LedenPage = () => {
     [mergedSearched]
   );
 
-  const ledenCount = useMemo(
-    () => mergedSearched.filter((m) => !leadIdSet.has(m.id)).length,
+  const ledenOnly = useMemo(
+    () => mergedSearched.filter((m) => !leadIdSet.has(m.id)),
     [mergedSearched, leadIdSet]
   );
-  const leadsCount = useMemo(
-    () => mergedSearched.filter((m) => leadIdSet.has(m.id)).length,
+  const leadsOnly = useMemo(
+    () => mergedSearched.filter((m) => leadIdSet.has(m.id)),
     [mergedSearched, leadIdSet]
   );
 
   const subtitle = showArchived
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "leden"
-    ? `${ledenCount} leden${leadsCount > 0 ? ` · ${leadsCount} leads` : ""}`
+    ? `${ledenOnly.length} leden`
+    : activeTab === "leads"
+    ? `${leadsOnly.length} leads`
     : `${totalLocations} coffeeshops`;
 
   return (
