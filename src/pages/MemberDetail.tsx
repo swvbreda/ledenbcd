@@ -214,19 +214,19 @@ const MemberDetail = () => {
               </h3>
               <div className="flex flex-wrap gap-3">
                 {member.website && (
-                  <a href={member.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={member.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     <Globe size={14} /> {member.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     <ExternalLink size={12} />
                   </a>
                 )}
                 {member.instagram && (
-                  <a href={`https://instagram.com/${member.instagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={`https://instagram.com/${member.instagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     <Instagram size={14} /> @{member.instagram}
                     <ExternalLink size={12} />
                   </a>
                 )}
                 {member.facebook && (
-                  <a href={`https://facebook.com/${member.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={`https://facebook.com/${member.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     Facebook <ExternalLink size={12} />
                   </a>
                 )}
@@ -277,7 +277,7 @@ const MemberDetail = () => {
                             </p>
                             {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
                             {c.email && (
-                              <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                              <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:underline mt-1">
                                 <Mail size={13} /> {c.email}
                               </a>
                             )}
@@ -323,7 +323,7 @@ const MemberDetail = () => {
                   <span className="text-muted-foreground">E-mail</span>
                   <span>
                     {member.factuurEmail ? (
-                      <a href={`mailto:${member.factuurEmail}`} className="text-primary hover:underline">
+                      <a href={`mailto:${member.factuurEmail}`} className="text-muted-foreground hover:underline">
                         {member.factuurEmail}
                       </a>
                     ) : "—"}
