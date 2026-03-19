@@ -103,7 +103,7 @@ const LedenPage = () => {
             <TabsList>
               <TabsTrigger value="leden" className="gap-1.5">
                 <Users size={14} />
-                Leden ({mergedSearched.length})
+                Leden ({ledenCount})
               </TabsTrigger>
               <TabsTrigger value="coffeeshops" className="gap-1.5">
                 <Store size={14} />
