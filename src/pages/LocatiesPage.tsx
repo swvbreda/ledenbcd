@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from "lucide-react";
 import { allRepresented } from "@/hooks/useMembers";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
