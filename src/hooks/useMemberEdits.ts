@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { allMembersAndLeads } from "@/hooks/useMembers";
+import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 
 interface MemberEdit {
@@ -26,21 +27,58 @@ export function useMemberEdits() {
   });
 }
 
+/** Fetch the latest pending edit request for a specific member submitted by the current user */
+function useOwnPendingEdit(memberId: number) {
+  const { user, isAdmin } = useAuth();
+  return useQuery({
+    queryKey: ["own-pending-edit", memberId],
+    enabled: !!user && !isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_edit_requests")
+        .select("data")
+        .eq("member_id", memberId)
+        .eq("submitted_by", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.data as Partial<Member> | null;
+    },
+  });
+}
+
 export function useMergedMember(memberId: number): { member: Member | undefined; isLoading: boolean } {
-  const { data: editsMap, isLoading } = useMemberEdits();
+  const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
+  const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
   const baseMember = allMembersAndLeads.find((m) => m.id === memberId);
+
+  const isLoading = editsLoading || pendingLoading;
 
   if (!baseMember) return { member: undefined, isLoading };
 
+  // Start with base, apply approved edits, then overlay pending edit for own profile
   const edits = editsMap?.get(memberId);
-  if (!edits) return { member: baseMember, isLoading };
+  let merged: Member = baseMember;
 
-  const merged: Member = {
-    ...baseMember,
-    ...edits,
-    locaties: edits.locaties || baseMember.locaties,
-    contacten: edits.contacten || baseMember.contacten,
-  };
+  if (edits) {
+    merged = {
+      ...merged,
+      ...edits,
+      locaties: edits.locaties || merged.locaties,
+      contacten: edits.contacten || merged.contacten,
+    };
+  }
+
+  if (pendingEdit) {
+    merged = {
+      ...merged,
+      ...pendingEdit,
+      locaties: pendingEdit.locaties || merged.locaties,
+      contacten: pendingEdit.contacten || merged.contacten,
+    };
+  }
 
   return { member: merged, isLoading };
 }
@@ -114,8 +152,9 @@ export function useSubmitEditRequest() {
         });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["edit-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["own-pending-edit", variables.member_id] });
     },
   });
 }
