@@ -5,8 +5,11 @@ import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
 import { allMembers } from "@/hooks/useMembers";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 
 const Index = () => {
+  const { members } = useMergedMembers(allMembers);
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div>
@@ -16,18 +19,18 @@ const Index = () => {
         </p>
       </div>
 
-      <BestuurOverzicht members={allMembers} />
+      <BestuurOverzicht members={members} />
 
-      <StatCards members={allMembers} />
+      <StatCards members={members} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
         <VerloopChart />
-        <LidmaatschapsduurChart members={allMembers} />
+        <LidmaatschapsduurChart members={members} />
       </div>
 
-      <GemeentenOverzicht members={allMembers} />
+      <GemeentenOverzicht members={members} />
 
-      <JubileumOverzicht members={allMembers} />
+      <JubileumOverzicht members={members} />
     </div>
   );
 };
