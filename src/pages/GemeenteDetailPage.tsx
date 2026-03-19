@@ -164,20 +164,25 @@ const GemeenteDetailPage = () => {
             Verdeling per stadsdeel
           </h3>
           <div className="space-y-2">
-            {data.stadsdelen.map((sd) => (
-              <div key={sd.naam} className="flex items-center gap-3">
-                <span className="text-sm w-24 sm:w-40 truncate">{sd.naam}</span>
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary/60"
-                    style={{ width: `${Math.round((sd.aantal / data.aangesloten) * 100)}%` }}
-                  />
+            {data.stadsdelen.map((sd) => {
+              const pctOfTotal = data.totaalNL > 0
+                ? Math.round((sd.aantal / data.totaalNL) * 100)
+                : 0;
+              return (
+                <div key={sd.naam} className="flex items-center gap-3">
+                  <span className="text-sm w-24 sm:w-40 truncate">{sd.naam}</span>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary/60"
+                      style={{ width: `${data.totaalNL > 0 ? Math.max((sd.aantal / data.totaalNL) * 100, 3) : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-xs tabular-nums text-muted-foreground w-24 text-right">
+                    {sd.aantal} van {data.totaalNL || "?"} ({pctOfTotal}%)
+                  </span>
                 </div>
-                <span className="text-xs tabular-nums text-muted-foreground w-16 text-right">
-                  {sd.aantal} ({Math.round((sd.aantal / data.aangesloten) * 100)}%)
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
