@@ -70,8 +70,8 @@ const AccountBeheerPage = () => {
       return { label: "Bestuur", personName: name, isBoard: true, memberId: null };
     }
     if (u.member_id) {
-      const name = memberNameMap.get(u.member_id) || "Onbekend lid";
-      return { label: name, personName: "", isBoard: false, memberId: u.member_id };
+      const m = memberMap.get(u.member_id);
+      return { label: m?.naam || "Onbekend lid", personName: m?.contactpersoon || "", isBoard: false, memberId: u.member_id };
     }
     return { label: "", personName: "", isBoard: false, memberId: null };
   };
