@@ -108,7 +108,19 @@ export function AppSidebar() {
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
                         >
                           <ClipboardCheck className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>Goedkeuringen</span>}
+                          {!collapsed && (
+                            <span className="flex items-center gap-2">
+                              Goedkeuringen
+                              {pendingCount > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
+                                  {pendingCount}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {collapsed && pendingCount > 0 && (
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-destructive" />
+                          )}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
