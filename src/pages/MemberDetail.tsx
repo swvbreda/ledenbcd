@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
-import { allMembers } from "@/hooks/useMembers";
+import { allMembers, allMembersAndLeads } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,6 +48,20 @@ const MemberDetail = () => {
   const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
   const [newNote, setNewNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+
+  // Build a lookup: contact name (lowercased) -> list of other members that share this contact
+  const sharedContactMap = useMemo(() => {
+    const map = new Map<string, { id: number; naam: string }[]>();
+    allMembersAndLeads.forEach((m) => {
+      m.contacten?.forEach((c) => {
+        if (!c.naam) return;
+        const key = c.naam.trim().toLowerCase();
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push({ id: m.id, naam: m.naam });
+      });
+    });
+    return map;
+  }, []);
 
   useEffect(() => {
     if (!memberId || !isAdmin) return;
@@ -359,6 +373,27 @@ const MemberDetail = () => {
                                 <Calendar size={13} /> {new Date(c.verjaardag).toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
                               </p>
                             )}
+                            {(() => {
+                              const key = c.naam?.trim().toLowerCase();
+                              if (!key) return null;
+                              const others = (sharedContactMap.get(key) || []).filter((o) => o.id !== member.id);
+                              if (others.length === 0) return null;
+                              return (
+                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                  <Link2 size={12} className="text-muted-foreground shrink-0" />
+                                  <span className="text-[11px] text-muted-foreground">Ook bij:</span>
+                                  {others.map((o) => (
+                                    <button
+                                      key={o.id}
+                                      onClick={() => navigate(`/leden/${o.id}`)}
+                                      className="text-[11px] text-primary hover:underline"
+                                    >
+                                      {o.naam}
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
