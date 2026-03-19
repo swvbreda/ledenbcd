@@ -380,7 +380,7 @@ const MemberDetail = () => {
           ) : (
             <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-3 text-muted-foreground">
               <Lock size={16} />
-              <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor bestuursleden.</p>
+              <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor het eigen profiel en bestuursleden.</p>
             </div>
           )}
 
