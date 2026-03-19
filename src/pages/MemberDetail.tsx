@@ -264,12 +264,6 @@ const MemberDetail = () => {
               <Store size={16} className="text-primary" /> Coffeeshop gegevens
             </h3>
             <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              <span className="text-muted-foreground">Bedrijfsnaam</span>
-              <span className="font-medium">{member.bedrijfsnaam || "—"}</span>
-
-              <span className="text-muted-foreground">KVK</span>
-              <span className="font-mono">{member.kvk || "—"}</span>
-
               <span className="text-muted-foreground">Aantal locaties</span>
               <span className="font-medium">{member.aantalLocaties}</span>
 
