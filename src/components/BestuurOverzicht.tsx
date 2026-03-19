@@ -172,10 +172,10 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             return (
               <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
                 {member && (
-                  <p className="text-[11px] text-primary font-medium leading-tight">{member.naam}</p>
+                  <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
                 )}
                 {!member && bl.coffeeshop && (
-                  <p className="text-[11px] text-primary font-medium leading-tight">{bl.coffeeshop}</p>
+                  <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
                 )}
                 {locations.length > 0 && (
                   <p className="text-[10px] text-muted-foreground leading-tight">
