@@ -80,7 +80,7 @@ const LedenPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">
-            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : "Coffeeshopbestand"}
+            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
