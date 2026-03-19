@@ -4,6 +4,7 @@ import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { allRepresented, allLeads } from "@/hooks/useMembers";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
+import { pctColor } from "@/lib/pctColor";
 
 interface StatCardsProps {
   members: Member[];
