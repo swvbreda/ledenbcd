@@ -205,31 +205,52 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { label, personName, isBoard, memberId } = getDisplayInfo(u);
+                  const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
-                        <span className="inline-flex items-center gap-1.5">
+                        <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
                               <Shield size={12} className="text-primary" />
                               {label}
                             </span>
-                          ) : memberId ? (
-                            <button
-                              onClick={() => navigate(`/leden/${memberId}`)}
-                              className="inline-flex items-center gap-1 text-primary hover:underline"
-                            >
-                              {label}
-                              <ExternalLink size={12} className="opacity-50" />
-                            </button>
+                          ) : memberIds.length > 0 ? (
+                            memberIds.map((mid) => {
+                              const m = memberMap.get(mid);
+                              return (
+                                <span key={mid} className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => navigate(`/leden/${mid}`)}
+                                    className="inline-flex items-center gap-1 text-primary hover:underline text-left"
+                                  >
+                                    <span className="text-muted-foreground text-[11px] font-mono">#{mid}</span>
+                                    {m?.naam || "Onbekend lid"}
+                                    <ExternalLink size={11} className="opacity-50" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUnlink(u.id, mid)}
+                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                    title="Koppeling verwijderen"
+                                  >
+                                    <Unlink size={11} />
+                                  </button>
+                                </span>
+                              );
+                            })
                           ) : (
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
+                          <button
+                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); }}
+                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                          >
+                            <Link size={10} /> Lid koppelen
+                          </button>
                           {u.id === user?.id && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold w-fit">Jij</span>
                           )}
-                        </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {personName || "—"}
