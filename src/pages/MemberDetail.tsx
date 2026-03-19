@@ -277,7 +277,7 @@ const MemberDetail = () => {
             </div>
           )}
 
-          {isAdmin ? (
+          {canSeeDetails ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Contactpersonen */}
               <div className="bg-card rounded-lg border border-border p-5">
