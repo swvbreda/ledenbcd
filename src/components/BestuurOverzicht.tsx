@@ -21,10 +21,6 @@ interface BoardMemberRow {
   email: string | null;
   bond_email: string | null;
   telefoon: string | null;
-  prive_adres: string | null;
-  prive_postcode: string | null;
-  prive_plaats: string | null;
-  geboortedatum: string | null;
   coffeeshop: string | null;
   coffeeshop_plaats: string | null;
   sort_order: number;
@@ -44,10 +40,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   useEffect(() => {
     const fetchBoard = async () => {
-      const { data } = await supabase
-        .from("board_members")
-        .select("*")
-        .order("sort_order");
+      const { data } = await supabase.rpc("get_board_members_public");
       if (data) setBoardMembers(data as BoardMemberRow[]);
       setLoading(false);
     };
