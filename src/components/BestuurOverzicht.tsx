@@ -141,7 +141,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="min-w-0 flex-1 flex flex-col justify-between">
           <div>
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
-            <p className="text-[11px] text-muted-foreground leading-tight">{bl.functie}</p>
+            <p className="text-[11px] text-primary font-medium leading-tight">{bl.functie}</p>
             
             <div className="flex flex-wrap items-center gap-x-3 mt-1">
               {bl.bondEmail && (
