@@ -8,6 +8,25 @@ import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 const totalNL = coffeeshopData.totaalNL;
 
+/** Returns an HSL color interpolating from red (0%) → orange (50%) → dark green (100%) */
+const pctColor = (pct: number): string => {
+  // 0%: hsl(0,84%,50%)  red
+  // 50%: hsl(32,95%,50%) orange
+  // 100%: hsl(145,63%,32%) dark green
+  if (pct <= 50) {
+    const t = pct / 50;
+    const h = 0 + t * 32;
+    const s = 84 + t * (95 - 84);
+    const l = 50;
+    return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+  }
+  const t = (pct - 50) / 50;
+  const h = 32 + t * (145 - 32);
+  const s = 95 + t * (63 - 95);
+  const l = 50 + t * (32 - 50);
+  return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+};
+
 const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: number; strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -31,7 +50,7 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
           cy={center}
           r={radius}
           fill="none"
-          stroke={pct >= 30 ? "hsl(var(--success))" : "hsl(var(--primary))"}
+          stroke={pctColor(pct)}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${filled} ${gap}`}
