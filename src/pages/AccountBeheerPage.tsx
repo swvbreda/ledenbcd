@@ -185,27 +185,24 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { name: displayName, isBoardMember, functie } = getDisplayName(u);
+                  const { label, isBoard, memberId } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
                         <span className="inline-flex items-center gap-1.5">
-                          {displayName ? (
-                            isBoardMember ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Shield size={12} className="text-primary" />
-                                {displayName}
-                                {functie && <span className="text-[10px] text-muted-foreground">({functie})</span>}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => navigate(`/leden/${u.member_id}`)}
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
-                              >
-                                {displayName}
-                                <ExternalLink size={12} className="opacity-50" />
-                              </button>
-                            )
+                          {isBoard ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Shield size={12} className="text-primary" />
+                              {label}
+                            </span>
+                          ) : memberId ? (
+                            <button
+                              onClick={() => navigate(`/leden/${memberId}`)}
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              {label}
+                              <ExternalLink size={12} className="opacity-50" />
+                            </button>
                           ) : (
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
