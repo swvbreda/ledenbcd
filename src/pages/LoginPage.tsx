@@ -62,7 +62,7 @@ const LoginPage = () => {
       <div className="w-full max-w-sm">
         <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold font-display">BCD Ledenportaal</h1>
+            <h1 className="text-2xl font-bold font-display">Ledenportaal</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {resetMode ? "Voer je e-mailadres in om je wachtwoord te herstellen" : "Log in om verder te gaan"}
             </p>
