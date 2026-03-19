@@ -55,10 +55,19 @@ const LedenPage = () => {
     [mergedSearched]
   );
 
+  const ledenCount = useMemo(
+    () => mergedSearched.filter((m) => !leadIdSet.has(m.id)).length,
+    [mergedSearched, leadIdSet]
+  );
+  const leadsCount = useMemo(
+    () => mergedSearched.filter((m) => leadIdSet.has(m.id)).length,
+    [mergedSearched, leadIdSet]
+  );
+
   const subtitle = showArchived
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "leden"
-    ? `${mergedSearched.length} leden`
+    ? `${ledenCount} leden${leadsCount > 0 ? ` · ${leadsCount} leads` : ""}`
     : `${totalLocations} coffeeshops`;
 
   return (
@@ -94,7 +103,7 @@ const LedenPage = () => {
             <TabsList>
               <TabsTrigger value="leden" className="gap-1.5">
                 <Users size={14} />
-                Leden ({mergedSearched.length})
+                Leden ({ledenCount})
               </TabsTrigger>
               <TabsTrigger value="coffeeshops" className="gap-1.5">
                 <Store size={14} />
