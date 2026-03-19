@@ -143,18 +143,18 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             <p className="font-medium text-sm leading-tight">{bl.naam}</p>
             <p className="text-[11px] text-primary font-medium leading-tight">{bl.functie}</p>
             
-            <div className="flex flex-wrap items-center gap-x-3 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
               {bl.bondEmail && (
                 <a
                   href={`mailto:${bl.bondEmail}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline"
+                  className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline truncate max-w-[180px] sm:max-w-none"
                 >
-                  <Mail size={10} /> {bl.bondEmail}
+                  <Mail size={10} className="shrink-0" /> <span className="truncate">{bl.bondEmail}</span>
                 </a>
               )}
               {bl.telefoon && (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
                   <Phone size={10} /> {bl.telefoon}
                 </span>
               )}

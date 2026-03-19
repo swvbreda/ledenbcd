@@ -166,7 +166,7 @@ const GemeenteDetailPage = () => {
           <div className="space-y-2">
             {data.stadsdelen.map((sd) => (
               <div key={sd.naam} className="flex items-center gap-3">
-                <span className="text-sm w-40 truncate">{sd.naam}</span>
+                <span className="text-sm w-24 sm:w-40 truncate">{sd.naam}</span>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary/60"
