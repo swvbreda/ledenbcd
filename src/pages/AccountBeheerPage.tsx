@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { allMembersAndLeads } from "@/hooks/useMembers";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink } from "lucide-react";
+import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,6 +25,7 @@ interface UserAccount {
   last_sign_in_at: string | null;
   role: string;
   member_id: number | null;
+  member_ids: number[];
 }
 
 const AccountBeheerPage = () => {
@@ -39,6 +40,8 @@ const AccountBeheerPage = () => {
   const [newRole, setNewRole] = useState("user");
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
+  const [linkMemberId, setLinkMemberId] = useState("");
 
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
@@ -64,16 +67,17 @@ const AccountBeheerPage = () => {
     return map;
   }, []);
 
-  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberId: number | null } => {
+  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[] } => {
+    const ids = u.member_ids || (u.member_id ? [u.member_id] : []);
     if (isBoardEmail(u.email)) {
       const name = boardNameMap.get(u.email.toLowerCase()) || u.email.split("@")[0];
-      return { label: "Bestuur", personName: name, isBoard: true, memberId: null };
+      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids };
     }
-    if (u.member_id) {
-      const m = memberMap.get(u.member_id);
-      return { label: m?.naam || "Onbekend lid", personName: m?.contactpersoon || "", isBoard: false, memberId: u.member_id };
+    if (ids.length > 0) {
+      const firstMember = memberMap.get(ids[0]);
+      return { label: firstMember?.naam || "Onbekend lid", personName: firstMember?.contactpersoon || "", isBoard: false, memberIds: ids };
     }
-    return { label: "", personName: "", isBoard: false, memberId: null };
+    return { label: "", personName: "", isBoard: false, memberIds: [] };
   };
 
   const filteredUsers = useMemo(() => {
@@ -142,6 +146,31 @@ const AccountBeheerPage = () => {
     setDeleteId(null);
   };
 
+  const handleLink = async () => {
+    if (!linkDialogUser || !linkMemberId) return;
+    const mid = parseInt(linkMemberId);
+    if (isNaN(mid)) { toast.error("Voer een geldig lidnummer in"); return; }
+    setSaving(true);
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "link_member", user_id: linkDialogUser.id, member_id: mid },
+    });
+    setSaving(false);
+    if (error) { toast.error("Fout bij koppelen: " + error.message); return; }
+    toast.success(`Lid #${mid} gekoppeld`);
+    setLinkDialogUser(null);
+    setLinkMemberId("");
+    fetchUsers();
+  };
+
+  const handleUnlink = async (userId: string, memberId: number) => {
+    const { error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "unlink_member", user_id: userId, member_id: memberId },
+    });
+    if (error) { toast.error("Fout bij ontkoppelen: " + error.message); return; }
+    toast.success(`Lid #${memberId} ontkoppeld`);
+    fetchUsers();
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleDateString("nl-NL", {
@@ -201,31 +230,52 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { label, personName, isBoard, memberId } = getDisplayInfo(u);
+                  const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
-                        <span className="inline-flex items-center gap-1.5">
+                        <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
                               <Shield size={12} className="text-primary" />
                               {label}
                             </span>
-                          ) : memberId ? (
-                            <button
-                              onClick={() => navigate(`/leden/${memberId}`)}
-                              className="inline-flex items-center gap-1 text-primary hover:underline"
-                            >
-                              {label}
-                              <ExternalLink size={12} className="opacity-50" />
-                            </button>
+                          ) : memberIds.length > 0 ? (
+                            memberIds.map((mid) => {
+                              const m = memberMap.get(mid);
+                              return (
+                                <span key={mid} className="inline-flex items-center gap-1">
+                                  <button
+                                    onClick={() => navigate(`/leden/${mid}`)}
+                                    className="inline-flex items-center gap-1 text-primary hover:underline text-left"
+                                  >
+                                    <span className="text-muted-foreground text-[11px] font-mono">#{mid}</span>
+                                    {m?.naam || "Onbekend lid"}
+                                    <ExternalLink size={11} className="opacity-50" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUnlink(u.id, mid)}
+                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                    title="Koppeling verwijderen"
+                                  >
+                                    <Unlink size={11} />
+                                  </button>
+                                </span>
+                              );
+                            })
                           ) : (
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
+                          <button
+                            onClick={() => { setLinkDialogUser(u); setLinkMemberId(""); }}
+                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors w-fit"
+                          >
+                            <Link size={10} /> Lid koppelen
+                          </button>
                           {u.id === user?.id && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold">Jij</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold w-fit">Jij</span>
                           )}
-                        </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {personName || "—"}
@@ -307,6 +357,35 @@ const AccountBeheerPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Link member dialog */}
+      <Dialog open={!!linkDialogUser} onOpenChange={(open) => { if (!open) setLinkDialogUser(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Lid koppelen</DialogTitle>
+            <DialogDescription>
+              Koppel een lidmaatschapsnummer aan {linkDialogUser?.email}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Input
+              type="number"
+              placeholder="Lidnummer (bijv. 5)"
+              value={linkMemberId}
+              onChange={(e) => setLinkMemberId(e.target.value)}
+            />
+            {linkMemberId && memberMap.get(parseInt(linkMemberId)) && (
+              <p className="text-sm text-muted-foreground">
+                → {memberMap.get(parseInt(linkMemberId))?.naam}
+              </p>
+            )}
+            <Button onClick={handleLink} disabled={saving || !linkMemberId} className="w-full gap-1.5">
+              <Link size={14} />
+              {saving ? "Koppelen..." : "Koppelen"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

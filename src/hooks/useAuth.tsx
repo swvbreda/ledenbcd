@@ -7,8 +7,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
-  /** The member_id linked to the current user (null for admins without link) */
+  /** The first member_id linked to the current user (null if none) */
   linkedMemberId: number | null;
+  /** All member_ids linked to the current user */
+  linkedMemberIds: number[];
   signOut: () => Promise<void>;
 }
 
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   linkedMemberId: null,
+  linkedMemberIds: [],
   signOut: async () => {},
 });
 
@@ -28,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [linkedMemberId, setLinkedMemberId] = useState<number | null>(null);
+  const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
 
   const checkRoleAndProfile = async (userId: string) => {
     // Check admin role
@@ -40,13 +43,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
     setIsAdmin(!!roleData);
 
-    // Check member profile link
+    // Check member profile links (multiple)
     const { data: profileData } = await supabase
       .from("member_profiles")
       .select("member_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setLinkedMemberId(profileData?.member_id ?? null);
+      .eq("user_id", userId);
+    setLinkedMemberIds(profileData?.map((p) => p.member_id) ?? []);
   };
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         setIsAdmin(false);
-        setLinkedMemberId(null);
+        setLinkedMemberIds([]);
         setLoading(false);
       }
     });
@@ -87,8 +89,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const linkedMemberId = linkedMemberIds[0] ?? null;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, linkedMemberId, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, linkedMemberId, linkedMemberIds, signOut }}>
       {children}
     </AuthContext.Provider>
   );

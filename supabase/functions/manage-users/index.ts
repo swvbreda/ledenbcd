@@ -76,8 +76,12 @@ Deno.serve(async (req) => {
       roles?.forEach((r) => roleMap.set(r.user_id, r.role));
 
       const { data: profiles } = await adminClient.from("member_profiles").select("user_id, member_id");
-      const profileMap = new Map<string, number>();
-      profiles?.forEach((p) => profileMap.set(p.user_id, p.member_id));
+      const profileMap = new Map<string, number[]>();
+      profiles?.forEach((p) => {
+        const arr = profileMap.get(p.user_id) || [];
+        arr.push(p.member_id);
+        profileMap.set(p.user_id, arr);
+      });
 
       const result = users.map((u) => ({
         id: u.id,
@@ -85,7 +89,8 @@ Deno.serve(async (req) => {
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
         role: roleMap.get(u.id) || "user",
-        member_id: profileMap.get(u.id) || null,
+        member_ids: profileMap.get(u.id) || [],
+        member_id: (profileMap.get(u.id) || [])[0] || null,
       }));
 
       return new Response(JSON.stringify({ users: result }), {
@@ -161,6 +166,46 @@ Deno.serve(async (req) => {
         { user_id, role },
         { onConflict: "user_id,role" }
       );
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "link_member") {
+      const user_id = payload.user_id as string | undefined;
+      const member_id = payload.member_id as number | undefined;
+
+      if (!user_id || !member_id) {
+        return new Response(JSON.stringify({ error: "user_id en member_id zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await adminClient.from("member_profiles").insert({ user_id, member_id });
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "unlink_member") {
+      const user_id = payload.user_id as string | undefined;
+      const member_id = payload.member_id as number | undefined;
+
+      if (!user_id || !member_id) {
+        return new Response(JSON.stringify({ error: "user_id en member_id zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await adminClient.from("member_profiles").delete()
+        .eq("user_id", user_id)
+        .eq("member_id", member_id);
+      if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
