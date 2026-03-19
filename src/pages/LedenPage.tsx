@@ -64,6 +64,7 @@ const LedenPage = () => {
         </div>
         <div className="flex items-center gap-2">
           {!showArchived && isAdmin && <ExportButton members={mergedSearched} />}
+          {!showArchived && isAdmin && <MailingExportButton members={mergedSearched} />}
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"
