@@ -42,6 +42,9 @@ const AccountBeheerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
   const [linkMemberId, setLinkMemberId] = useState("");
+  const [editUser, setEditUser] = useState<UserAccount | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("user");
 
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
