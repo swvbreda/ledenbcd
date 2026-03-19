@@ -30,6 +30,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const { isAdmin } = useAuth();
 
   const isLead = (m: Member) => allLeads.some((l) => l.id === m.id);
+  const getKey = (m: Member) => (isLead(m) ? `lead-${m.id}` : `member-${m.id}`);
 
   const sorted = [...members].sort((a, b) => {
     // Leads always at the bottom
