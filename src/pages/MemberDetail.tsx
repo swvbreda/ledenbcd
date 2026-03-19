@@ -120,62 +120,6 @@ const MemberDetail = () => {
         <ArrowLeft size={18} />
       </button>
 
-      {/* Actions */}
-      {(isAdmin || isOwnProfile) && (
-        <div className="flex items-center gap-2 flex-wrap -mt-2">
-          {!editing && (
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
-              <Pencil size={14} /> Bewerken
-            </Button>
-          )}
-          {isAdmin && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                {archived ? (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-primary">
-                    <ArchiveRestore size={14} /> Herstellen
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
-                    <Archive size={14} /> Archiveren
-                  </Button>
-                )}
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {archived ? "Lid herstellen?" : "Lid archiveren?"}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {archived
-                      ? `${member.naam} wordt teruggeplaatst in de actieve ledenlijst.`
-                      : `${member.naam} wordt verplaatst naar oud-leden. Je kunt dit later ongedaan maken.`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      if (archived) {
-                        restoreMember(member.id);
-                        setArchived(false);
-                        toast.success(`${member.naam} is hersteld`);
-                      } else {
-                        archiveMember(member.id);
-                        setArchived(true);
-                        toast.success(`${member.naam} is gearchiveerd`);
-                      }
-                    }}
-                  >
-                    {archived ? "Herstellen" : "Archiveren"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-      )}
-
       {/* Edit mode */}
       {editing ? (
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
@@ -183,9 +127,10 @@ const MemberDetail = () => {
         <>
           {/* Coffeeshop gegevens — alles in één blok */}
           <div className="bg-card rounded-lg border border-border p-5 space-y-4">
-            {/* Naam & badges */}
-            <div>
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* Naam & badges + acties */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
                 <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
                 {member.oprichter && (
