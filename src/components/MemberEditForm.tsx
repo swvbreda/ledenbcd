@@ -278,6 +278,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
                   </SelectContent>
                 </Select>
               </div>
+              <EditableField label="KVK" value={loc.kvk || ""} onChange={(v) => updateLocation(i, "kvk", v)} />
+              <EditableField label="Oprichtingsdatum" value={loc.oprichtingsDatum || ""} onChange={(v) => updateLocation(i, "oprichtingsDatum", v)} type="date" />
             </div>
           </div>
         ))}
