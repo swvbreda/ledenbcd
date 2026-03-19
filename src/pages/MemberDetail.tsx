@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2 } from "lucide-react";
 import { allMembers } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
