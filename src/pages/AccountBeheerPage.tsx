@@ -88,7 +88,7 @@ const AccountBeheerPage = () => {
         u.role.toLowerCase().includes(q)
       );
     });
-  }, [users, searchQuery, memberNameMap]);
+  }, [users, searchQuery, memberMap]);
 
   const fetchUsers = async () => {
     setLoading(true);
