@@ -246,39 +246,42 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 {isAdmin && (
                   <>
                     <td className="px-4 py-3 text-xs">
-                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                        {eigenaar || "—"}
-                        {member.oprichter && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                      {(() => {
+                        const boardNames = boardMembersByLid.get(member.id) || [];
+                        const isBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
+                        return (
+                          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                            {eigenaar || "—"}
+                            {member.oprichter && (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default text-amber-500">★</span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Oprichter van de bond</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {(() => {
-                          const boardNames = boardMembersByLid.get(member.id) || [];
-                          const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
-                          return (member.bestuursfunctie || eigenaarIsBoard);
-                        })() && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                              </TooltipTrigger><TooltipContent><p>Oprichter van de bond</p></TooltipContent></Tooltip></TooltipProvider>
+                            )}
+                            {(member.bestuursfunctie || isBoard) && (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{member.bestuursfunctie || "Bestuurslid"}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </span>
+                              </TooltipTrigger><TooltipContent><p>{member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                            )}
+                          </span>
+                        );
+                      })()}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{contactpersoon || "—"}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {(() => {
+                        const boardNames = boardMembersByLid.get(member.id) || [];
+                        const cpIsBoard = contactpersoon && boardNames.some(bn => contactpersoon.toLowerCase().includes(bn) || bn.includes(contactpersoon.toLowerCase()));
+                        return (
+                          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                            {contactpersoon || "—"}
+                            {cpIsBoard && (
+                              <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                                <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
+                              </TooltipTrigger><TooltipContent><p>Bestuurslid</p></TooltipContent></Tooltip></TooltipProvider>
+                            )}
+                          </span>
+                        );
+                      })()}
+                    </td>
                   </>
                 )}
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
