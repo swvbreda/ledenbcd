@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
-import { allMembers, allMembersAndLeads } from "@/hooks/useMembers";
+import { allMembers, allMembersAndLeads, rawLeads } from "@/hooks/useMembers";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
+import ConvertLeadDialog from "@/components/ConvertLeadDialog";
 import { getMembershipYears } from "@/lib/membership";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,6 +42,8 @@ const MemberDetail = () => {
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
+  const { conversions, refresh: refreshConversions } = useLeadConversions();
+  const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
@@ -212,6 +216,16 @@ const MemberDetail = () => {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
                     <Pencil size={14} /> Bewerken
                   </Button>
+                  {isAdmin && isLead && member && (
+                    <ConvertLeadDialog
+                      lead={member}
+                      conversions={conversions}
+                      onConverted={() => {
+                        refreshConversions();
+                        navigate("/leden?tab=leden");
+                      }}
+                    />
+                  )}
                   {isAdmin && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

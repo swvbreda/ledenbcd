@@ -7,7 +7,7 @@ import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
-import { useMembers, allMembers as membersOnly, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembers, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ const LedenPage = () => {
     searchedMembers,
     clearFilters,
     allMembers,
+    activeLeadIds,
   } = useMembers();
 
   const { members: mergedSearched } = useMergedMembers(searchedMembers);
@@ -51,7 +52,7 @@ const LedenPage = () => {
   );
   const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
 
-  const leadIdSet = useMemo(() => new Set(allLeads.map((l) => l.id)), []);
+  const leadIdSet = useMemo(() => activeLeadIds, [activeLeadIds]);
 
   const totalLocations = useMemo(
     () => mergedSearched.reduce((sum, m) => sum + m.aantalLocaties, 0),
