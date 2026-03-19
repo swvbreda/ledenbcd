@@ -4,7 +4,7 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { allRepresented } from "@/hooks/useMembers";
 import { getMembershipYears } from "@/lib/membership";
-import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
