@@ -179,9 +179,9 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                       className="cursor-pointer hover:text-primary transition-colors"
                       onClick={(e) => { e.stopPropagation(); navigate(`/leden/${member.id}`); }}
                     >
-                      <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
+                      <p className="text-[11px] font-medium leading-tight whitespace-nowrap">{member.naam}</p>
                       {locations.length > 0 && (
-                        <p className="text-[10px] text-muted-foreground leading-tight">
+                        <p className="text-[10px] text-muted-foreground leading-tight whitespace-nowrap">
                           <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
                           {locations.join(" · ")}
                         </p>
