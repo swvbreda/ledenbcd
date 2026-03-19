@@ -62,8 +62,8 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     {
       icon: Building2,
       label: "Gemeenten >50% vertegenwoordigd",
-      value: `${citiesOver50}`,
-      detail: `van ${Object.keys(perStad).length} gemeenten`,
+      value: `${citiesOver50Pct}%`,
+      detail: `${citiesOver50.length} van ${Object.keys(perStad).length} gemeenten`,
       color: "text-success",
     },
     {
