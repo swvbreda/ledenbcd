@@ -72,6 +72,7 @@ const emptyMember: Omit<BoardMember, "id"> = {
   functie: "",
   type: "bestuurslid",
   lid_id: null,
+  lid_ids: [],
   email: null,
   bond_email: null,
   telefoon: null,
