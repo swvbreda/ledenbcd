@@ -130,7 +130,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   const renderCard = (bl: BoardMemberRow, isAspirant = false) => {
     const lidIds = bl.lid_ids?.length ? bl.lid_ids : (bl.lid_id ? [bl.lid_id] : []);
-    const firstMember = lidIds.length > 0 ? members.find((m) => m.id === lidIds[0]) : undefined;
+    const linkedMembers = lidIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
+    const firstMember = linkedMembers[0];
     const photo = getPhoto(bl);
     const showUpload = canUpload(bl);
 
@@ -165,33 +166,44 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </div>
           </div>
 
-          {(firstMember || bl.coffeeshop) && (() => {
-            let locations: string[] = [];
-            if (firstMember) {
-              const uniqueCities = [...new Set(firstMember.locaties?.map(l => l.plaats).filter(Boolean) || [])];
-              locations = uniqueCities.length > 0 ? uniqueCities as string[] : (firstMember.plaats ? [firstMember.plaats] : []);
-            } else if (bl.coffeeshop_plaats) {
-              locations = bl.coffeeshop_plaats.split("/").map(s => s.trim());
-            }
-            return (
-              <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-0.5">
-                {firstMember && (
-                  <p className="text-[11px] font-medium leading-tight">{firstMember.naam}</p>
-                )}
-                {!firstMember && bl.coffeeshop && (
-                  <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
-                )}
-                {locations.length > 0 && (
-                  <p className="text-[10px] text-muted-foreground leading-tight">
-                    <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
-                    {locations.join(" · ")}
-                  </p>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-
+          {(linkedMembers.length > 0 || bl.coffeeshop) && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-1">
+              {linkedMembers.length > 0 ? (
+                linkedMembers.map((member) => {
+                  if (!member) return null;
+                  const uniqueCities = [...new Set(member.locaties?.map(l => l.plaats).filter(Boolean) || [])];
+                  const locations = uniqueCities.length > 0 ? uniqueCities as string[] : (member.plaats ? [member.plaats] : []);
+                  return (
+                    <div
+                      key={member.id}
+                      className="cursor-pointer hover:text-primary transition-colors"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/leden/${member.id}`); }}
+                    >
+                      <p className="text-[11px] font-medium leading-tight">{member.naam}</p>
+                      {locations.length > 0 && (
+                        <p className="text-[10px] text-muted-foreground leading-tight">
+                          <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
+                          {locations.join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  {bl.coffeeshop && (
+                    <p className="text-[11px] font-medium leading-tight">{bl.coffeeshop}</p>
+                  )}
+                  {bl.coffeeshop_plaats && (
+                    <p className="text-[10px] text-muted-foreground leading-tight">
+                      <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
+                      {bl.coffeeshop_plaats}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         <div className="relative shrink-0 self-start">
           {photo ? (
             <img src={photo} alt={bl.naam} className="w-14 h-14 rounded-full object-cover" />
