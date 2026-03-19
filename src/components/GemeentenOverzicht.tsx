@@ -110,7 +110,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </div>
 
           {/* Donut grid for top cities */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
             {topCities.map(({ city, total, bcd, pct }) => (
               <div key={city} className="flex flex-col items-center text-center gap-1.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
                 <div className="relative">

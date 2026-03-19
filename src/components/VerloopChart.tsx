@@ -48,24 +48,24 @@ const VerloopChart = () => {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Huidig</p>
-            <p className="text-3xl font-bold font-display">{current.leden}</p>
-            <p className="text-xs text-muted-foreground">leden in {current.year}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="bg-muted/50 rounded-lg p-2.5 sm:p-4 text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Huidig</p>
+            <p className="text-xl sm:text-3xl font-bold font-display">{current.leden}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">leden in {current.year}</p>
           </div>
-          <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
+          <div className="bg-muted/50 rounded-lg p-2.5 sm:p-4 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <TrendingUp size={14} className="text-green-600" />
-              <p className="text-xs text-muted-foreground">t.o.v. {previous?.year}</p>
+              <TrendingUp size={12} className="text-green-600 sm:w-3.5 sm:h-3.5" />
+              <p className="text-[10px] sm:text-xs text-muted-foreground">t.o.v. {previous?.year}</p>
             </div>
-            <p className="text-3xl font-bold font-display text-green-600">+{yoyGrowth}%</p>
-            <p className="text-xs text-muted-foreground">+{yoyAbsolute} leden</p>
+            <p className="text-xl sm:text-3xl font-bold font-display text-green-600">+{yoyGrowth}%</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">+{yoyAbsolute} leden</p>
           </div>
-          <div className="flex-1 bg-muted/50 rounded-lg p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Laatste 5 jaar</p>
-            <p className="text-3xl font-bold font-display text-primary">+{fiveYrGrowth}%</p>
-            <p className="text-xs text-muted-foreground">+{current.leden - fiveYearsAgo.leden} leden</p>
+          <div className="bg-muted/50 rounded-lg p-2.5 sm:p-4 text-center">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">5 jaar</p>
+            <p className="text-xl sm:text-3xl font-bold font-display text-primary">+{fiveYrGrowth}%</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">+{current.leden - fiveYearsAgo.leden} leden</p>
           </div>
         </div>
       </div>

@@ -72,9 +72,54 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
 
   const displayMembers = compact ? sorted.slice(0, 10) : sorted;
 
+  // Mobile card view
+  const MobileCard = ({ member: m }: { member: Member }) => {
+    const memberIsLead = isLead(m);
+    const gemeenten = getGemeenten(m);
+    const jarenLid = getMembershipYears(m);
+    return (
+      <div
+        className="p-3 border-b border-border active:bg-muted/30 transition-colors cursor-pointer"
+        onClick={() => navigate(`/leden/${m.id}`)}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium font-display text-sm">{m.naam}</span>
+              {memberIsLead && (
+                <span className="px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">Lead</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+              {!memberIsLead && <span className="font-mono">#{m.id}</span>}
+              <span>{gemeenten.join(", ")}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {jarenLid !== null && (
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                jarenLid >= 30 ? "bg-success/10 text-success" : jarenLid >= 10 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              }`}>{jarenLid} jr</span>
+            )}
+            <span className="text-xs tabular-nums text-muted-foreground">{m.aantalLocaties} loc.</span>
+            <ExternalLink size={14} className="text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Mobile card list */}
+      <div className="md:hidden">
+        {displayMembers.map((member) => (
+          <MobileCard key={member.id} member={member} />
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm font-body">
           <thead>
             <tr className="border-b border-border bg-muted/50">
