@@ -166,8 +166,8 @@ const MemberDetail = () => {
         </div>
       </div>
 
-      {/* Admin actions */}
-      {isAdmin && (
+      {/* Actions */}
+      {(isAdmin || isOwnProfile) && (
         <div className="flex items-center gap-2 flex-wrap -mt-2">
           {!editing && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
