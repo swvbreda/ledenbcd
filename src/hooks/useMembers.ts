@@ -5,13 +5,46 @@ import type { Member } from "@/data/types";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { getMembershipYears } from "@/lib/membership";
 import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
+import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 
-export const allMembers = membersData as Member[];
-export const allLeads = leadsData as Member[];
-/** Members + leads combined — use for market share / representation calculations */
-export const allRepresented = [...allMembers, ...allLeads] as Member[];
-/** Members + leads combined — use for display in ledenlijst (leads have no lidnummer) */
-export const allMembersAndLeads = [...allMembers, ...allLeads] as Member[];
+const rawMembers = membersData as Member[];
+const rawLeads = leadsData as Member[];
+
+/** Apply conversions: converted leads become members with new id/fields */
+function applyConversions(members: Member[], leads: Member[], conversions: LeadConversion[]) {
+  const conversionMap = new Map(conversions.map((c) => [c.lead_id, c]));
+  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
+
+  const convertedMembers = leads
+    .filter((l) => convertedLeadIds.has(l.id))
+    .map((l) => {
+      const conv = conversionMap.get(l.id)!;
+      return {
+        ...l,
+        id: conv.lidnummer,
+        lidSinds: conv.lid_sinds,
+        factuurBedrijfsnaam: conv.factuur_bedrijfsnaam || l.factuurBedrijfsnaam,
+        factuurKvk: conv.factuur_kvk || undefined,
+        factuurEmail: conv.factuur_email || l.factuurEmail,
+        factuurAdres: conv.factuur_adres || l.factuurAdres,
+        factuurPostcode: conv.factuur_postcode || l.factuurPostcode,
+        factuurPlaats: conv.factuur_plaats || l.factuurPlaats,
+      } as Member;
+    });
+
+  const activeLeads = leads.filter((l) => !convertedLeadIds.has(l.id));
+  const allMembersCombined = [...members, ...convertedMembers];
+
+  return { members: allMembersCombined, leads: activeLeads };
+}
+
+export { rawMembers, rawLeads };
+
+// These are now functions that require conversions context - keep static exports for backwards compat
+export const allMembers = rawMembers;
+export const allLeads = rawLeads;
+export const allRepresented = [...rawMembers, ...rawLeads] as Member[];
+export const allMembersAndLeads = [...rawMembers, ...rawLeads] as Member[];
 
 export function useMembers() {
   const [searchQuery, setSearchQuery] = useState("");
