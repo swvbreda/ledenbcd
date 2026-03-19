@@ -226,7 +226,7 @@ const MemberDetail = () => {
                   </a>
                 )}
                 {member.facebook && (
-                  <a href={`https://facebook.com/${member.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={`https://facebook.com/${member.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     Facebook <ExternalLink size={12} />
                   </a>
                 )}
