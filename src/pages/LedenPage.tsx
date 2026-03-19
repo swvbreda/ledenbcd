@@ -39,12 +39,12 @@ const LedenPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">
-            {showArchived ? "Oud-leden" : "Ledenlijst"}
+            {showArchived ? "Oud-leden" : "Ledenbestand"}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {showArchived
               ? `${archivedMembers.length} oud-leden`
-              : `${mergedSearched.length} resultaten · ${membersOnly.length} leden, ${allLeads.length} leads`}
+              : `${mergedSearched.length} resultaten`}
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -31,7 +31,7 @@ import {
 
 const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
-  { title: "Ledenlijst", url: "/leden", icon: Users },
+  { title: "Ledenbestand", url: "/leden", icon: Users },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
 ];
 
