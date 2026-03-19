@@ -277,7 +277,7 @@ const MemberDetail = () => {
                             </p>
                             {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
                             {c.email && (
-                              <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                              <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:underline mt-1">
                                 <Mail size={13} /> {c.email}
                               </a>
                             )}
