@@ -59,18 +59,23 @@ const LoginPage = () => {
     }
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("member-signup", {
-        body: { email: email.trim(), password },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/member-signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ email: email.trim(), password }),
+        }
+      );
 
-      if (fnError) {
-        setError("Registratie mislukt. Probeer het opnieuw.");
-        setLoading(false);
-        return;
-      }
+      const data = await response.json();
 
-      if (data?.error) {
-        setError(data.error);
+      if (!response.ok || data?.error) {
+        setError(data?.error || "Registratie mislukt. Probeer het opnieuw.");
         setLoading(false);
         return;
       }
