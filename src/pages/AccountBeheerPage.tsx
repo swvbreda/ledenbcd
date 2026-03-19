@@ -412,6 +412,46 @@ const AccountBeheerPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit user dialog */}
+      <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Account bewerken</DialogTitle>
+            <DialogDescription>
+              Wijzig de gegevens van dit account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">E-mailadres</label>
+              <Input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Rol</label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Gebruiker</SelectItem>
+                  <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editUser && getDisplayInfo(editUser).memberIds.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                De weergavenaam komt van het gekoppelde lid. Bewerk het lidprofiel om de naam te wijzigen.
+              </p>
+            )}
+            <Button onClick={handleEdit} disabled={saving} className="w-full">
+              {saving ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
