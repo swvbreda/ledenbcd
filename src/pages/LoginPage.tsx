@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, LogIn } from "lucide-react";
+import bcdLogo from "@/assets/bcd-logo.png";
 
 const LoginPage = () => {
   const { user, loading: authLoading } = useAuth();
