@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMergedMember } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
+import MailingPreferences from "@/components/MailingPreferences";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
@@ -165,8 +166,8 @@ const MemberDetail = () => {
         </div>
       </div>
 
-      {/* Admin actions */}
-      {isAdmin && (
+      {/* Actions */}
+      {(isAdmin || isOwnProfile) && (
         <div className="flex items-center gap-2 flex-wrap -mt-2">
           {!editing && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
@@ -222,7 +223,7 @@ const MemberDetail = () => {
       )}
 
       {/* Edit mode */}
-      {editing && isAdmin ? (
+      {editing ? (
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
       ) : (
         <>
@@ -448,6 +449,11 @@ const MemberDetail = () => {
                 })}
               </div>
             </div>
+          )}
+
+          {/* Mailingvoorkeuren */}
+          {(isAdmin || isOwnProfile) && (
+            <MailingPreferences member={member} canEdit={isAdmin || isOwnProfile} />
           )}
 
           {/* Opmerkingen */}
