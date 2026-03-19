@@ -202,7 +202,7 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { label, isBoard, memberId } = getDisplayInfo(u);
+                  const { label, personName, isBoard, memberId } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium">
