@@ -35,8 +35,8 @@ const setStoredContactpersoon = (memberId: number, naam: string | null) => {
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, linkedMemberId } = useAuth();
-  const isOwnProfile = linkedMemberId !== null && linkedMemberId === Number(id);
+  const { isAdmin, linkedMemberIds } = useAuth();
+  const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
