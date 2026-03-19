@@ -44,6 +44,7 @@ const App = () => (
                 <Route path="/leden" element={<LedenPage />} />
                 <Route path="/leden/:id" element={<MemberDetail />} />
                 <Route path="/locaties" element={<LocatiesPage />} />
+                <Route path="/locaties/:gemeente" element={<GemeenteDetailPage />} />
                 <Route path="/statistieken" element={<StatistiekenPage />} />
                 <Route path="/accounts" element={<AccountBeheerPage />} />
                 <Route path="/oud-leden" element={<LedenPage />} />
