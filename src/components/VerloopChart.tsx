@@ -21,7 +21,7 @@ const VerloopChart = () => {
       <div className="flex flex-col gap-4">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold font-display mb-1">Ledenverloop</h3>
-          <p className="text-xs text-muted-foreground mb-4">Aantal huidige leden dat al lid was per jaar</p>
+          <p className="text-xs text-muted-foreground mb-4">Hoeveel huidige leden er per jaar al aangesloten waren</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ left: 0, right: 16 }}>
