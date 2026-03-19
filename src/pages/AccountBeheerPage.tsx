@@ -40,10 +40,9 @@ const AccountBeheerPage = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Build member name lookup
-  const memberNameMap = useMemo(() => {
-    const map = new Map<number, string>();
-    allMembersAndLeads.forEach((m) => map.set(m.id, m.naam));
+  const memberMap = useMemo(() => {
+    const map = new Map<number, { naam: string; contactpersoon: string }>();
+    allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
     return map;
   }, []);
 
