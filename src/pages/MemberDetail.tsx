@@ -112,59 +112,13 @@ const MemberDetail = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex items-start gap-3 sm:gap-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="mt-1 p-1.5 sm:p-2 rounded-md hover:bg-muted transition-colors shrink-0"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
-            <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
-            {member.oprichter && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-[11px] sm:text-xs font-semibold">
-                ★ Oprichter
-              </span>
-            )}
-            {member.bestuursfunctie && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/15 text-accent-foreground rounded-md text-[11px] sm:text-xs font-semibold">
-                <Shield size={12} />
-                {member.bestuursfunctie}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <MapPin size={14} /> {member.plaats}
-            </span>
-            {member.stadsdeel && (
-              <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
-            )}
-            {(() => {
-              const jarenLid = getMembershipYears(member);
-              return jarenLid !== null ? (
-                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                  jarenLid >= 30
-                    ? "bg-success/10 text-success"
-                    : jarenLid >= 10
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground"
-                }`}>
-                  {jarenLid} jaar lid
-                </span>
-              ) : null;
-            })()}
-            {archived && (
-              <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded text-xs font-medium">
-                Gearchiveerd
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Terug-knop */}
+      <button
+        onClick={() => navigate(-1)}
+        className="p-1.5 sm:p-2 rounded-md hover:bg-muted transition-colors"
+      >
+        <ArrowLeft size={18} />
+      </button>
 
       {/* Actions */}
       {(isAdmin || isOwnProfile) && (
@@ -227,13 +181,60 @@ const MemberDetail = () => {
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
       ) : (
         <>
-
-
-
           {/* Coffeeshop gegevens — alles in één blok */}
           <div className="bg-card rounded-lg border border-border p-5 space-y-4">
+            {/* Naam & badges */}
+            <div>
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
+                <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
+                {member.oprichter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-[11px] sm:text-xs font-semibold">
+                    ★ Oprichter
+                  </span>
+                )}
+                {member.bestuursfunctie && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/15 text-accent-foreground rounded-md text-[11px] sm:text-xs font-semibold">
+                    <Shield size={12} />
+                    {member.bestuursfunctie}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <MapPin size={14} /> {member.plaats}
+                </span>
+                {member.stadsdeel && (
+                  <span className="px-2 py-0.5 bg-muted rounded text-xs">{member.stadsdeel}</span>
+                )}
+                {(() => {
+                  const jarenLid = getMembershipYears(member);
+                  return jarenLid !== null ? (
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      jarenLid >= 30
+                        ? "bg-success/10 text-success"
+                        : jarenLid >= 10
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {jarenLid} jaar lid
+                    </span>
+                  ) : null;
+                })()}
+                {archived && (
+                  <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded text-xs font-medium">
+                    Gearchiveerd
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-border" />
+
+            {/* Details */}
             <h3 className="text-sm font-semibold font-display flex items-center gap-2">
               <Store size={16} className="text-primary" /> Coffeeshop gegevens
+            </h3>
             </h3>
             <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
               <span className="text-muted-foreground">Aantal locaties</span>
