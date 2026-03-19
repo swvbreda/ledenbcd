@@ -297,6 +297,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
           <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
           <span className="text-border">|</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-lime-100 border border-lime-300" /> 1+ jr Katoen</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-300" /> 5+ jr Hout</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-orange-100 border border-orange-300" /> 10+ jr Koper</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-indigo-100 border border-indigo-300" /> 15+ jr Kristal</span>
