@@ -67,16 +67,17 @@ const AccountBeheerPage = () => {
     return map;
   }, []);
 
-  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberId: number | null } => {
+  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[] } => {
+    const ids = u.member_ids || (u.member_id ? [u.member_id] : []);
     if (isBoardEmail(u.email)) {
       const name = boardNameMap.get(u.email.toLowerCase()) || u.email.split("@")[0];
-      return { label: "Bestuur", personName: name, isBoard: true, memberId: null };
+      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids };
     }
-    if (u.member_id) {
-      const m = memberMap.get(u.member_id);
-      return { label: m?.naam || "Onbekend lid", personName: m?.contactpersoon || "", isBoard: false, memberId: u.member_id };
+    if (ids.length > 0) {
+      const firstMember = memberMap.get(ids[0]);
+      return { label: firstMember?.naam || "Onbekend lid", personName: firstMember?.contactpersoon || "", isBoard: false, memberIds: ids };
     }
-    return { label: "", personName: "", isBoard: false, memberId: null };
+    return { label: "", personName: "", isBoard: false, memberIds: [] };
   };
 
   const filteredUsers = useMemo(() => {
