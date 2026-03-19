@@ -80,7 +80,9 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Users size={18} className="text-primary" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{totalMembers + activeLeadsCount} leden & leads</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
+        </p>
       </div>
 
       {/* Gemeenten */}
