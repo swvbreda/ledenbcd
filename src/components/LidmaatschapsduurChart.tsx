@@ -18,12 +18,16 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const represented = allRepresented;
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    const gemeente = getGemeente(m.plaats);
+    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + (m.aantalLocaties || 1);
   });
   const citiesOver50 = Object.entries(perStad).filter(([city, total]) => {
     const bcd = cityCount[city] || 0;
     return total > 0 && (bcd / total) >= 0.5;
-  }).length;
+  });
+  const citiesOver50Pct = Object.keys(perStad).length > 0
+    ? Math.round((citiesOver50.length / Object.keys(perStad).length) * 100)
+    : 0;
 
   // New members this year
   const currentYear = new Date().getFullYear();
