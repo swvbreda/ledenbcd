@@ -219,7 +219,7 @@ const LocatiesPage = () => {
                 <React.Fragment key={city.naam}>
                   <tr
                     className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => setExpandedCity(expandedCity === city.naam ? null : city.naam)}
+                    onClick={() => navigate(`/locaties/${encodeURIComponent(city.naam)}`)}
                   >
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center gap-1.5 font-medium font-display text-sm">
