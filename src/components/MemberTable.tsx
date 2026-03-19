@@ -115,9 +115,18 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
-              {m.oprichter && <span className="text-amber-500 text-xs">★</span>}
-              {boardMemberIds.has(m.id) && <Shield size={12} className="text-primary" />}
             </div>
+            {(() => {
+              const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
+              if (!eigenaar && !m.oprichter && !boardMemberIds.has(m.id)) return null;
+              return (
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                  {eigenaar && <span>{eigenaar}</span>}
+                  {m.oprichter && <span className="text-amber-500">★</span>}
+                  {boardMemberIds.has(m.id) && <Shield size={11} className="text-primary" />}
+                </div>
+              );
+            })()}
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
