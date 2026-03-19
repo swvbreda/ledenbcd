@@ -51,11 +51,27 @@ export function useMembers() {
   const [filterCity, setFilterCity] = useState("");
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
   const [filterJaren, setFilterJaren] = useState("");
+  const { conversions } = useLeadConversions();
+
+  const { members: effectiveMembers, leads: effectiveLeads } = useMemo(
+    () => applyConversions(rawMembers, rawLeads, conversions),
+    [conversions]
+  );
 
   const archivedIds = useMemo(() => getArchivedIds(), []);
+  const effectiveAll = useMemo(
+    () => [...effectiveMembers, ...effectiveLeads],
+    [effectiveMembers, effectiveLeads]
+  );
   const allIncludingLeads = useMemo(
-    () => allMembersAndLeads.filter((m) => !archivedIds.includes(m.id)),
-    [archivedIds]
+    () => effectiveAll.filter((m) => !archivedIds.includes(m.id)),
+    [effectiveAll, archivedIds]
+  );
+
+  /** Set of lead IDs that have NOT been converted */
+  const activeLeadIds = useMemo(
+    () => new Set(effectiveLeads.map((l) => l.id)),
+    [effectiveLeads]
   );
 
   const cities = useMemo(
