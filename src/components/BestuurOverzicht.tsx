@@ -167,7 +167,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           </div>
 
           {(linkedMembers.length > 0 || bl.coffeeshop) && (
-            <div className="mt-1.5 pt-1.5 border-t border-border/50 space-y-1">
+            <div className="mt-1.5 pt-1.5 border-t border-border/50 flex flex-wrap gap-x-3 gap-y-1">
               {linkedMembers.length > 0 ? (
                 linkedMembers.map((member) => {
                   if (!member) return null;
