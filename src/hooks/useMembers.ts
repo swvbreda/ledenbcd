@@ -36,7 +36,7 @@ export function useMembers() {
   const filteredMembers = useMemo(() => {
     return allIncludingLeads.filter((m) => {
       if (filterCity && m.plaats !== filterCity) return false;
-      if (filterStadsdeel && m.stadsdeel !== filterStadsdeel) return false;
+      if (filterStadsdeel && (!m.stadsdeel || getStadsdeelCategorie(m.stadsdeel) !== filterStadsdeel)) return false;
       if (filterJaren) {
         const [min, max] = filterJaren.split("-").map(Number);
         const years = getMembershipYears(m);
