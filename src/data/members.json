@@ -1020,87 +1020,60 @@
     "telefoon": "",
     "email": "jeroen@vanhamholding.com",
     "bedrijfsnaam": "Hunters",
-    "aantalLocaties": 12,
+    "aantalLocaties": 8,
     "locaties": [
       {
-        "naam": "Hunters",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Centrum",
-        "adres": "Reguliersdwarsstraat 22",
-        "postcode": "1017 BM"
-      },
-      {
-        "naam": "Hunters Central",
+        "naam": "Hunters Amsterdam Centrum",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
         "adres": "Utrechtsestraat 14",
         "postcode": "1017 VN"
       },
       {
-        "naam": "Hunters Happiness",
+        "naam": "Hunters Smoker Friendly Bar",
         "plaats": "Amsterdam",
         "stadsdeel": "Centrum",
-        "adres": "Korte Leidsedwarsstraat 47",
-        "postcode": "1017 PW"
-      },
-      {
-        "naam": "Hunters Amsterdam West",
-        "plaats": "Amsterdam",
-        "stadsdeel": "West",
-        "adres": "Jan Evertsenstraat 55",
-        "postcode": "1057 BL"
+        "adres": "Utrechtsestraat 14",
+        "postcode": "1017 VN"
       },
       {
         "naam": "Hunters Amsterdam Noord (Papaverweg)",
         "plaats": "Amsterdam",
         "stadsdeel": "Noord",
         "adres": "Papaverweg 2",
-        "postcode": "1032 KJ"
+        "postcode": "1032 KH"
       },
       {
         "naam": "Hunters Amsterdam Noord (Waterlandplein)",
         "plaats": "Amsterdam",
         "stadsdeel": "Noord",
-        "adres": "Waterlandplein 7",
+        "adres": "Waterlandplein 13",
         "postcode": "1024 LG"
+      },
+      {
+        "naam": "Hunters Amsterdam West",
+        "plaats": "Amsterdam",
+        "stadsdeel": "West",
+        "adres": "Orteliusstraat 193",
+        "postcode": "1056 NP"
       },
       {
         "naam": "Hunters Haarlem",
         "plaats": "Haarlem",
         "adres": "Schoterweg 66",
-        "postcode": "2021 HZ"
+        "postcode": "2021 HP"
       },
       {
         "naam": "Hunters Zandvoort",
         "plaats": "Zandvoort",
         "adres": "Stationsstraat 9-11",
-        "postcode": "2042 LK"
+        "postcode": "2042 LD"
       },
       {
         "naam": "Hunters Rotterdam",
         "plaats": "Rotterdam",
         "adres": "Henegouwerlaan 73",
-        "postcode": "3021 CK"
-      },
-      {
-        "naam": "Hunters Coffeeshop Amsterdam Zuid-Oost",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Zuidoost",
-        "adres": "Bijlmerdreef 620",
-        "postcode": "1102 AA"
-      },
-      {
-        "naam": "Hunters Coffeeshop Amsterdam Oost",
-        "plaats": "Amsterdam",
-        "stadsdeel": "Oost",
-        "adres": "Eerste van Swindenstraat 389",
-        "postcode": "1093 GB"
-      },
-      {
-        "naam": "Hunters Headlines Zaandam",
-        "plaats": "Zaandam",
-        "adres": "Westzijde 102",
-        "postcode": "1506 GK"
+        "postcode": "3021 CT"
       }
     ],
     "contacten": [
