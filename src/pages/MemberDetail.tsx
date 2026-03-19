@@ -214,7 +214,7 @@ const MemberDetail = () => {
               </h3>
               <div className="flex flex-wrap gap-3">
                 {member.website && (
-                  <a href={member.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <a href={member.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline">
                     <Globe size={14} /> {member.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     <ExternalLink size={12} />
                   </a>
