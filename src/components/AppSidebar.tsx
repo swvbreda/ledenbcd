@@ -68,11 +68,11 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
+        <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-white">
           {!collapsed ? (
-            <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-10 w-auto" />
+            <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-14 w-auto object-contain" />
           ) : (
-            <span className="text-lg font-bold text-sidebar-foreground">B</span>
+            <img src={bcdLogo} alt="BCD" className="h-8 w-8 object-contain" />
           )}
         </SidebarHeader>
         <SidebarContent>
