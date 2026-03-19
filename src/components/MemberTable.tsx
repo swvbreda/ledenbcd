@@ -115,9 +115,18 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
-              {m.oprichter && <span className="text-amber-500 text-xs">★</span>}
-              {boardMemberIds.has(m.id) && <Shield size={12} className="text-primary" />}
             </div>
+            {(() => {
+              const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
+              if (!eigenaar && !m.oprichter && !boardMemberIds.has(m.id)) return null;
+              return (
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                  {eigenaar && <span>{eigenaar}</span>}
+                  {m.oprichter && <span className="text-amber-500">★</span>}
+                  {boardMemberIds.has(m.id) && <Shield size={11} className="text-primary" />}
+                </div>
+              );
+            })()}
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
@@ -199,26 +208,6 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   <span className="inline-flex items-center gap-1.5">
                     {member.naam}
-                    {member.oprichter && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help text-amber-500">★</span>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Oprichter van de bond</p></TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                    {boardMemberIds.has(member.id) && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Bestuurslid</p></TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
                     {memberIsLead && isAdmin && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
                         Lead
@@ -264,14 +253,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        {member.bestuursfunctie && (
+                        {(member.bestuursfunctie || boardMemberIds.has(member.id)) && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className="cursor-help"><Shield size={12} className="text-primary" /></span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{member.bestuursfunctie}</p>
+                                <p>{member.bestuursfunctie || "Bestuurslid"}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
