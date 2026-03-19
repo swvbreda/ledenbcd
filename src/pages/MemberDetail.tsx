@@ -150,11 +150,19 @@ const MemberDetail = () => {
                     <MapPin size={14} /> {member.plaats}
                   </span>
                   {(() => {
-                    // Derive stadsdeel from locaties (first one), fallback to member.stadsdeel
-                    const displayStadsdeel = member.locaties?.[0]?.stadsdeel || member.stadsdeel;
-                    return displayStadsdeel ? (
-                      <span className="px-2 py-0.5 bg-muted rounded text-xs">{displayStadsdeel}</span>
-                    ) : null;
+                    const stadsdelen = [
+                      ...new Set(
+                        member.locaties
+                          ?.map((l) => l.stadsdeel)
+                          .filter(Boolean) || []
+                      ),
+                    ];
+                    if (stadsdelen.length === 0 && member.stadsdeel) {
+                      stadsdelen.push(member.stadsdeel);
+                    }
+                    return stadsdelen.map((sd) => (
+                      <span key={sd} className="px-2 py-0.5 bg-muted rounded text-xs">{sd}</span>
+                    ));
                   })()}
                   {(() => {
                     const jarenLid = getMembershipYears(member);
