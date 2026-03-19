@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
 import LocatiesPage from "./pages/LocatiesPage";
+import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 import StatistiekenPage from "./pages/StatistiekenPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
