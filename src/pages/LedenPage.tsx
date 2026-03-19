@@ -72,7 +72,9 @@ const LedenPage = () => {
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "coffeeshops"
     ? `${totalLocations} coffeeshops`
-    : `${mergedSearched.length} leden + leads`;
+    : isAdmin
+    ? `${mergedSearched.length} leden + leads`
+    : `${ledenOnly.length} leden`;
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
