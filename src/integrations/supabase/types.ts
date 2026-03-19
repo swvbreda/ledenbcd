@@ -286,7 +286,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      board_members_public: {
+        Row: {
+          bond_email: string | null
+          coffeeshop: string | null
+          coffeeshop_plaats: string | null
+          created_at: string | null
+          email: string | null
+          functie: string | null
+          id: string | null
+          lid_id: number | null
+          lid_ids: number[] | null
+          naam: string | null
+          sort_order: number | null
+          telefoon: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bond_email?: string | null
+          coffeeshop?: string | null
+          coffeeshop_plaats?: string | null
+          created_at?: string | null
+          email?: string | null
+          functie?: string | null
+          id?: string | null
+          lid_id?: number | null
+          lid_ids?: number[] | null
+          naam?: string | null
+          sort_order?: number | null
+          telefoon?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bond_email?: string | null
+          coffeeshop?: string | null
+          coffeeshop_plaats?: string | null
+          created_at?: string | null
+          email?: string | null
+          functie?: string | null
+          id?: string | null
+          lid_id?: number | null
+          lid_ids?: number[] | null
+          naam?: string | null
+          sort_order?: number | null
+          telefoon?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
