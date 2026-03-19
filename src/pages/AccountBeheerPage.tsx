@@ -192,6 +192,7 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">E-mail</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Rol</th>
