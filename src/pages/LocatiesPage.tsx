@@ -7,8 +7,15 @@ import CityMap from "@/components/CityMap";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente } from "@/data/gemeenteMapping";
 
-const perStad = coffeeshopData.perStad as Record<string, number>;
+const rawPerStad = coffeeshopData.perStad as Record<string, number>;
 const totalNL = coffeeshopData.totaalNL;
+
+// Aggregate coffeeshop counts by gemeente (e.g. Wormerveer + Zaandam → Zaanstad)
+const perStad: Record<string, number> = {};
+for (const [plaats, count] of Object.entries(rawPerStad)) {
+  const gemeente = getGemeente(plaats);
+  perStad[gemeente] = (perStad[gemeente] || 0) + count;
+}
 
 interface StadsdeelData {
   naam: string;
