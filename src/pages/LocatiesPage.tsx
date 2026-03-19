@@ -171,7 +171,7 @@ const LocatiesPage = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display">Gemeenten</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {filtered.length} steden · {totalLocations} locaties · bron: WODC 2024
+            {filtered.length} steden · {totalLocations} locaties
           </p>
         </div>
         <div className="relative max-w-sm w-full">
