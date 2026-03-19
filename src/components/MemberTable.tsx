@@ -260,7 +260,11 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        {(member.bestuursfunctie || boardMemberIds.has(member.id)) && (
+                        {(() => {
+                          const boardNames = boardMembersByLid.get(member.id) || [];
+                          const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
+                          return (member.bestuursfunctie || eigenaarIsBoard);
+                        })() && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
