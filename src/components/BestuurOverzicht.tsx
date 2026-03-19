@@ -44,10 +44,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   useEffect(() => {
     const fetchBoard = async () => {
-      const { data } = await supabase
-        .from("board_members")
-        .select("*")
-        .order("sort_order");
+      const { data } = await supabase.rpc("get_board_members_public");
       if (data) setBoardMembers(data as BoardMemberRow[]);
       setLoading(false);
     };

@@ -45,7 +45,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
-      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids, functie");
+      const { data } = await supabase.rpc("get_board_members_public");
       if (data) {
         const map = new Map<number, { naam: string; functie: string }[]>();
         for (const row of data) {
