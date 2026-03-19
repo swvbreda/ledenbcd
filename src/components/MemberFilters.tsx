@@ -36,7 +36,7 @@ const MemberFilters = ({
       <select
         value={selectedCity}
         onChange={(e) => onCityChange(e.target.value)}
-        className="px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring min-w-0"
       >
         <option value="">Alle steden</option>
         {cities.map((c) => (
