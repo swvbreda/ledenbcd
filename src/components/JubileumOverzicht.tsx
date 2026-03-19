@@ -5,18 +5,18 @@ import type { Member } from "@/data/types";
 const JUBILEA = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const CURRENT_YEAR = new Date().getFullYear();
 
-// Official jubilee colors
-const JUBILEE_COLORS: Record<number, { bg: string; text: string }> = {
-  5:  { bg: "bg-slate-100",   text: "text-slate-600" },
-  10: { bg: "bg-amber-100",   text: "text-amber-700" },
-  15: { bg: "bg-sky-100",     text: "text-sky-700" },
-  20: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  25: { bg: "bg-yellow-200",  text: "text-yellow-800" },   // zilver
-  30: { bg: "bg-orange-100",  text: "text-orange-700" },    // parels
-  35: { bg: "bg-red-100",     text: "text-red-700" },       // koraal
-  40: { bg: "bg-rose-100",    text: "text-rose-700" },      // robijn
-  45: { bg: "bg-violet-100",  text: "text-violet-700" },    // saffier
-  50: { bg: "bg-amber-200",   text: "text-amber-800" },     // goud
+// Official Dutch jubilee colors
+const JUBILEE_COLORS: Record<number, { bg: string; border: string; text: string; label: string }> = {
+  5:  { bg: "bg-emerald-100", border: "border-emerald-300", text: "text-emerald-700", label: "Houten" },
+  10: { bg: "bg-orange-100",  border: "border-orange-300",  text: "text-orange-700",  label: "Koperen" },
+  15: { bg: "bg-indigo-100",  border: "border-indigo-300",  text: "text-indigo-600",  label: "Kristallen" },
+  20: { bg: "bg-sky-100",     border: "border-sky-300",     text: "text-sky-700",     label: "Porseleinen" },
+  25: { bg: "bg-slate-200",   border: "border-slate-400",   text: "text-slate-600",   label: "Zilveren" },
+  30: { bg: "bg-amber-100",   border: "border-amber-300",   text: "text-amber-700",   label: "Parelen" },
+  35: { bg: "bg-red-100",     border: "border-red-300",     text: "text-red-700",     label: "Koralen" },
+  40: { bg: "bg-rose-100",    border: "border-rose-300",    text: "text-rose-700",    label: "Robijnen" },
+  45: { bg: "bg-violet-100",  border: "border-violet-300",  text: "text-violet-700",  label: "Saffieren" },
+  50: { bg: "bg-yellow-100",  border: "border-yellow-400",  text: "text-yellow-700",  label: "Gouden" },
 };
 
 interface JubileumEntry {
