@@ -82,7 +82,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <div className="mt-1">
           <MiniGauge pct={cityPct} color="hsl(var(--primary))" />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{cityPct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{uniqueCities}/{totalNLCities} gemeenten</p>
+          <p className="text-xs text-muted-foreground text-center">{uniqueCitiesInWODC}/{totalNLCities} gemeenten</p>
         </div>
       </div>
 
