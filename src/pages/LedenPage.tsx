@@ -40,6 +40,7 @@ const LedenPage = () => {
     searchedMembers,
     clearFilters,
     allMembers,
+    activeLeadIds,
   } = useMembers();
 
   const { members: mergedSearched } = useMergedMembers(searchedMembers);
