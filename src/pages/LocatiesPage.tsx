@@ -62,6 +62,19 @@ const LocatiesPage = () => {
   const representedLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
 
+  // Track when data updates to show a brief notification
+  const [showUpdated, setShowUpdated] = useState(false);
+  const prevHash = useRef<string>("");
+  useEffect(() => {
+    const hash = JSON.stringify(represented.map((m) => [m.id, m.aantalLocaties, m.locaties?.length]));
+    if (prevHash.current && prevHash.current !== hash) {
+      setShowUpdated(true);
+      const t = setTimeout(() => setShowUpdated(false), 3000);
+      return () => clearTimeout(t);
+    }
+    prevHash.current = hash;
+  }, [represented]);
+
   // Count represented locations per city
   const repCityCount: Record<string, number> = {};
   represented.forEach((m) => {
