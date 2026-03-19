@@ -40,10 +40,9 @@ const AccountBeheerPage = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Build member name lookup
-  const memberNameMap = useMemo(() => {
-    const map = new Map<number, string>();
-    allMembersAndLeads.forEach((m) => map.set(m.id, m.naam));
+  const memberMap = useMemo(() => {
+    const map = new Map<number, { naam: string; contactpersoon: string }>();
+    allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
     return map;
   }, []);
 
@@ -71,8 +70,8 @@ const AccountBeheerPage = () => {
       return { label: "Bestuur", personName: name, isBoard: true, memberId: null };
     }
     if (u.member_id) {
-      const name = memberNameMap.get(u.member_id) || "Onbekend lid";
-      return { label: name, personName: "", isBoard: false, memberId: u.member_id };
+      const m = memberMap.get(u.member_id);
+      return { label: m?.naam || "Onbekend lid", personName: m?.contactpersoon || "", isBoard: false, memberId: u.member_id };
     }
     return { label: "", personName: "", isBoard: false, memberId: null };
   };
@@ -89,7 +88,7 @@ const AccountBeheerPage = () => {
         u.role.toLowerCase().includes(q)
       );
     });
-  }, [users, searchQuery, memberNameMap]);
+  }, [users, searchQuery, memberMap]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -229,7 +228,7 @@ const AccountBeheerPage = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {isBoard ? personName : "—"}
+                        {personName || "—"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                       <td className="px-4 py-3">
