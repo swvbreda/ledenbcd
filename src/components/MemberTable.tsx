@@ -45,14 +45,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
-      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids");
+      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids, functie");
       if (data) {
-        const map = new Map<number, string[]>();
+        const map = new Map<number, { naam: string; functie: string }[]>();
         for (const row of data) {
           const ids = [...(row.lid_ids || []), ...(row.lid_id ? [row.lid_id] : [])];
           for (const id of ids) {
             const existing = map.get(id) || [];
-            existing.push(row.naam.toLowerCase());
+            existing.push({ naam: row.naam.toLowerCase(), functie: row.functie });
             map.set(id, existing);
           }
         }
