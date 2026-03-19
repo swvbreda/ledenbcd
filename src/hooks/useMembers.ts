@@ -29,10 +29,7 @@ export function useMembers() {
     () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),
     []
   );
-  const stadsdelen = useMemo(
-    () => [...new Set(allIncludingLeads.map((m) => m.stadsdeel).filter(Boolean))].sort(),
-    []
-  );
+  const stadsdelen = useMemo(() => [...stadsdeelCategorieen], []);
 
   const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
 
