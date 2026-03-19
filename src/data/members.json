@@ -610,7 +610,7 @@
     "telefoon": "06 20 87 87 87",
     "email": "jimmylin1945-@hotmail.com",
     "bedrijfsnaam": "Utopia Exploitatie BV",
-    "aantalLocaties": 5,
+    "aantalLocaties": 6,
     "locaties": [
       {
         "naam": "The Plug (Utopia)",
@@ -645,6 +645,13 @@
         "plaats": "Amersfoort",
         "adres": "Langestraat 59",
         "postcode": "3811 AJ"
+      },
+      {
+        "naam": "Smokery",
+        "plaats": "Wormerveer",
+        "adres": "Marktstraat 33",
+        "postcode": "1521 EA",
+        "stadsdeel": "Wormerveer-Noord"
       }
     ],
     "contacten": [

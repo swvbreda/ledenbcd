@@ -37,37 +37,6 @@
     ]
   },
   {
-    "id": 121,
-    "naam": "Smokery",
-    "plaats": "Zaanstad",
-    "stadsdeel": "Wormerveer-Noord",
-    "jarenLid": null,
-    "oprichtingJaar": null,
-    "contactpersoon": "Maikel",
-    "functie": "",
-    "telefoon": "06 50 90 29 63",
-    "email": "inkoop@smokery.nl",
-    "bedrijfsnaam": "Smokery",
-    "aantalLocaties": 1,
-    "locaties": [
-      {
-        "naam": "Smokery",
-        "plaats": "Wormerveer",
-        "adres": "Marktstraat 33",
-        "postcode": "1521 EA",
-        "stadsdeel": "Wormerveer-Noord"
-      }
-    ],
-    "contacten": [
-      {
-        "naam": "Maikel",
-        "functie": "",
-        "telefoon": "06 50 90 29 63",
-        "email": "inkoop@smokery.nl"
-      }
-    ]
-  },
-  {
     "id": 122,
     "naam": "Coffeeshop Freak",
     "plaats": "Utrecht",
