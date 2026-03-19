@@ -16,7 +16,7 @@ import StatistiekenPage from "./pages/StatistiekenPage";
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
-
+import GoedkeuringenPage from "./pages/GoedkeuringenPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +47,7 @@ const App = () => (
                 <Route path="/locaties/:gemeente" element={<GemeenteDetailPage />} />
                 <Route path="/statistieken" element={<StatistiekenPage />} />
                 <Route path="/accounts" element={<AccountBeheerPage />} />
+                <Route path="/goedkeuringen" element={<GoedkeuringenPage />} />
                 <Route path="/oud-leden" element={<LedenPage />} />
                 <Route path="/marktaandeel" element={<LocatiesPage />} />
               </Route>

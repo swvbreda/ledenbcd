@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -96,18 +96,32 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))}
                 {isAdmin && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to="/accounts"
-                        className="hover:bg-sidebar-accent/50"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                      >
-                        <Shield className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>Accounts</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to="/goedkeuringen"
+                          className="hover:bg-sidebar-accent/50"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                        >
+                          <ClipboardCheck className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Goedkeuringen</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to="/accounts"
+                          className="hover:bg-sidebar-accent/50"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Accounts</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
                 )}
               </SidebarMenu>
             </SidebarGroupContent>

@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Pencil, Save, X, Plus, Trash2 } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Member, Contact, Location } from "@/data/types";
-import { useSaveMemberEdit } from "@/hooks/useMemberEdits";
+import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits";
+import { useAuth } from "@/hooks/useAuth";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
@@ -33,7 +34,9 @@ const EditableField = ({
 );
 
 export default function MemberEditForm({ member, editing, setEditing }: Props) {
+  const { isAdmin } = useAuth();
   const saveMutation = useSaveMemberEdit();
+  const submitMutation = useSubmitEditRequest();
 
   // Editable state
   const [naam, setNaam] = useState(member.naam);
@@ -108,19 +111,40 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       aantalLocaties: locaties.length,
     };
 
-    saveMutation.mutate(
-      { member_id: member.id, data },
-      {
-        onSuccess: () => {
-          toast.success("Wijzigingen opgeslagen");
-          setEditing(false);
-        },
-        onError: (err) => {
-          toast.error("Opslaan mislukt: " + (err as Error).message);
-        },
-      }
-    );
+    if (isAdmin) {
+      // Admins: save directly
+      saveMutation.mutate(
+        { member_id: member.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Wijzigingen opgeslagen");
+            setEditing(false);
+          },
+          onError: (err) => {
+            toast.error("Opslaan mislukt: " + (err as Error).message);
+          },
+        }
+      );
+    } else {
+      // Members: submit for approval
+      submitMutation.mutate(
+        { member_id: member.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Wijzigingen ingediend ter goedkeuring door het bestuur");
+            setEditing(false);
+          },
+          onError: (err) => {
+            toast.error("Indienen mislukt: " + (err as Error).message);
+          },
+        }
+      );
+    }
   };
+
+  const isPending = saveMutation.isPending || submitMutation.isPending;
+  const saveLabel = isAdmin ? "Opslaan" : "Indienen";
+  const savingLabel = isAdmin ? "Opslaan..." : "Indienen...";
 
   if (!editing) return null;
 
@@ -128,11 +152,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     <div className="space-y-6">
       {/* Actions bar */}
       <div className="flex items-center gap-2 justify-end">
+        {!isAdmin && (
+          <p className="text-xs text-muted-foreground mr-auto flex items-center gap-1">
+            <Clock size={12} /> Wijzigingen worden beoordeeld door het bestuur
+          </p>
+        )}
         <Button variant="outline" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
           <X size={14} /> Annuleren
         </Button>
-        <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending} className="gap-1.5">
-          <Save size={14} /> {saveMutation.isPending ? "Opslaan..." : "Opslaan"}
+        <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-1.5">
+          <Save size={14} /> {isPending ? savingLabel : saveLabel}
         </Button>
       </div>
 
@@ -242,8 +271,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         <Button variant="outline" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
           <X size={14} /> Annuleren
         </Button>
-        <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending} className="gap-1.5">
-          <Save size={14} /> {saveMutation.isPending ? "Opslaan..." : "Opslaan"}
+        <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-1.5">
+          <Save size={14} /> {isPending ? savingLabel : saveLabel}
         </Button>
       </div>
     </div>
