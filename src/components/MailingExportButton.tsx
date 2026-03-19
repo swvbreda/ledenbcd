@@ -42,6 +42,23 @@ export default function MailingExportButton({ members }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  const handleMailto = async () => {
+    setLoading(true);
+    const data = await fetchMailingData();
+    if (!data) { setLoading(false); return; }
+
+    if (data.length === 0) {
+      toast.info("Geen mailingvoorkeuren gevonden");
+      setLoading(false);
+      return;
+    }
+
+    const emails = [...new Set(data.map((r) => r.email))];
+    const mailto = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
+    window.location.href = mailto;
+    setLoading(false);
+  };
+
   const handleSimpleExport = async () => {
     setLoading(true);
     const data = await fetchMailingData();
@@ -81,22 +98,16 @@ export default function MailingExportButton({ members }: Props) {
     }
 
     const memberMap = new Map(members.map((m) => [m.id, m]));
-
-    // Outlook CSV uses comma separator and specific column names
     const headers = ["First Name", "Last Name", "E-mail Address", "Company", "Job Title", "Business Phone", "Business City"];
     const rows = data.map((r) => {
       const m = memberMap.get(r.member_id);
-      // Try to find the contact name for this email
       const contact = m?.contacten?.find((c) => c.email === r.email);
       const nameParts = (contact?.naam || m?.contactpersoon || "").split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
 
       return [
-        firstName,
-        lastName,
-        r.email,
-        m?.naam ?? "",
+        firstName, lastName, r.email, m?.naam ?? "",
         contact?.functie || m?.functie || "",
         contact?.telefoon || m?.telefoon || "",
         m?.plaats ?? "",
@@ -122,6 +133,9 @@ export default function MailingExportButton({ members }: Props) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleMailto}>
+          Open in mailprogramma
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSimpleExport}>
           Exporteer mailinglijst (CSV)
         </DropdownMenuItem>
