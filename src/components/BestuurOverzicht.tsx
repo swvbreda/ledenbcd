@@ -129,7 +129,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   };
 
   const renderCard = (bl: BoardMemberRow, isAspirant = false) => {
-    const member = bl.lid_id ? members.find((m) => m.id === bl.lid_id) : undefined;
+    const lidIds = bl.lid_ids?.length ? bl.lid_ids : (bl.lid_id ? [bl.lid_id] : []);
+    const firstMember = lidIds.length > 0 ? members.find((m) => m.id === lidIds[0]) : undefined;
     const photo = getPhoto(bl);
     const showUpload = canUpload(bl);
 
@@ -138,8 +139,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         key={bl.id}
         className={`border rounded-md p-2.5 transition-colors flex gap-2.5 ${
           isAspirant ? "border-dashed border-border" : "border-border"
-        } ${member ? "hover:bg-muted/40 cursor-pointer" : ""}`}
-        onClick={() => member && navigate(`/leden/${member.id}`)}
+        } ${firstMember ? "hover:bg-muted/40 cursor-pointer" : ""}`}
+        onClick={() => firstMember && navigate(`/leden/${firstMember.id}`)}
       >
         <div className="min-w-0 flex-1 flex flex-col justify-between">
           <div>

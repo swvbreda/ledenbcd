@@ -340,12 +340,44 @@ export default function BestuurBeheerPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Lid ID (nummer)</Label>
-                  <Input
-                    type="number"
-                    value={editingMember.lid_id ?? ""}
-                    onChange={(e) => updateField("lid_id", e.target.value ? parseInt(e.target.value) : null)}
-                  />
+                  <Label className="text-xs">Lid ID's (nummers)</Label>
+                  <div className="space-y-1.5">
+                    {(editingMember.lid_ids || []).map((lid, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          value={lid}
+                          onChange={(e) => {
+                            const newIds = [...(editingMember.lid_ids || [])];
+                            newIds[idx] = parseInt(e.target.value) || 0;
+                            updateField("lid_ids", newIds);
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                          onClick={() => {
+                            const newIds = (editingMember.lid_ids || []).filter((_, i) => i !== idx);
+                            updateField("lid_ids", newIds);
+                          }}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 w-full"
+                      onClick={() => updateField("lid_ids", [...(editingMember.lid_ids || []), 0])}
+                    >
+                      <Plus size={12} /> Lidnummer toevoegen
+                    </Button>
+                  </div>
                 </div>
               </div>
 
