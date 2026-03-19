@@ -254,25 +254,23 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-3">
         <h3 className="text-sm font-semibold font-display flex items-center gap-2">
           <Shield size={16} className="text-primary" />
           Bestuur
-          <a href="mailto:bestuur@coffeeshopbond.nl" className="text-[11px] font-normal text-primary hover:underline flex items-center gap-1">
-            <Mail size={10} /> bestuur@coffeeshopbond.nl
-          </a>
         </h3>
-        <span className="text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-3 ml-[26px] text-[11px] text-muted-foreground">
-        <span className="font-medium text-foreground/70">Secretariaat</span>
-        <a href="mailto:info@coffeeshopbond.nl" className="flex items-center gap-1 hover:underline">
+        <a href="mailto:bestuur@coffeeshopbond.nl" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+          <Mail size={10} /> bestuur@coffeeshopbond.nl
+        </a>
+        <span className="text-[11px] text-muted-foreground">·</span>
+        <span className="text-[11px] font-medium text-foreground/70">Secretariaat</span>
+        <a href="mailto:info@coffeeshopbond.nl" className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline">
           <Mail size={10} className="shrink-0" /> info@coffeeshopbond.nl
         </a>
-        <a href="tel:+31686875231" className="flex items-center gap-1 hover:underline">
+        <a href="tel:+31686875231" className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline">
           <Phone size={10} className="shrink-0" /> 06 86 87 52 31
         </a>
+        <span className="ml-auto text-xs text-muted-foreground">Opgericht 12 januari 1994</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
