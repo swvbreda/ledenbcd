@@ -65,8 +65,8 @@ const AccountBeheerPage = () => {
     if (!searchQuery) return users;
     const q = searchQuery.toLowerCase();
     return users.filter((u) => {
-      const { name } = getDisplayName(u);
-      const displayName = name || "";
+      const { label } = getDisplayInfo(u);
+      const displayName = label || "";
       return (
         (u.email || "").toLowerCase().includes(q) ||
         displayName.toLowerCase().includes(q) ||
