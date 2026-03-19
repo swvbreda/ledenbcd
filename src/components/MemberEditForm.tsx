@@ -111,19 +111,40 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       aantalLocaties: locaties.length,
     };
 
-    saveMutation.mutate(
-      { member_id: member.id, data },
-      {
-        onSuccess: () => {
-          toast.success("Wijzigingen opgeslagen");
-          setEditing(false);
-        },
-        onError: (err) => {
-          toast.error("Opslaan mislukt: " + (err as Error).message);
-        },
-      }
-    );
+    if (isAdmin) {
+      // Admins: save directly
+      saveMutation.mutate(
+        { member_id: member.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Wijzigingen opgeslagen");
+            setEditing(false);
+          },
+          onError: (err) => {
+            toast.error("Opslaan mislukt: " + (err as Error).message);
+          },
+        }
+      );
+    } else {
+      // Members: submit for approval
+      submitMutation.mutate(
+        { member_id: member.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Wijzigingen ingediend ter goedkeuring door het bestuur");
+            setEditing(false);
+          },
+          onError: (err) => {
+            toast.error("Indienen mislukt: " + (err as Error).message);
+          },
+        }
+      );
+    }
   };
+
+  const isPending = saveMutation.isPending || submitMutation.isPending;
+  const saveLabel = isAdmin ? "Opslaan" : "Indienen";
+  const savingLabel = isAdmin ? "Opslaan..." : "Indienen...";
 
   if (!editing) return null;
 
