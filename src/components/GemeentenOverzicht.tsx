@@ -159,13 +159,11 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              // Check represented (members + leads) in experiment municipalities
-              const leden = represented.filter((m) =>
-                m.plaats === gemeente || m.locaties?.some((l) => (l.plaats || m.plaats) === gemeente)
-              );
+              const leden = represented.filter((m) => isInGemeente(m, gemeente));
               const locs = leden.reduce((s, m) => {
-                if (m.plaats === gemeente) return s + (m.aantalLocaties || 1);
-                return s + (m.locaties?.filter((l) => l.plaats === gemeente).length || 0);
+                const mainMatch = getGemeente(m.plaats) === gemeente;
+                if (mainMatch && (!m.locaties || m.locaties.length === 0)) return s + (m.aantalLocaties || 1);
+                return s + (m.locaties?.filter((l) => getGemeente(l.plaats || m.plaats) === gemeente).length || 0);
               }, 0);
               const total = perStad[gemeente] || 0;
               const hasBcd = leden.length > 0;
