@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  /** The member_id linked to the current user (null for admins without link) */
+  linkedMemberId: number | null;
   signOut: () => Promise<void>;
 }
 
@@ -15,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  linkedMemberId: null,
   signOut: async () => {},
 });
 
@@ -25,15 +28,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [linkedMemberId, setLinkedMemberId] = useState<number | null>(null);
 
-  const checkAdmin = async (userId: string) => {
-    const { data } = await supabase
+  const checkRoleAndProfile = async (userId: string) => {
+    // Check admin role
+    const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
-    setIsAdmin(!!data);
+    setIsAdmin(!!roleData);
+
+    // Check member profile link
+    const { data: profileData } = await supabase
+      .from("member_profiles")
+      .select("member_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setLinkedMemberId(profileData?.member_id ?? null);
   };
 
   useEffect(() => {
@@ -41,9 +54,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => checkAdmin(session.user.id), 0);
+        setTimeout(() => checkRoleAndProfile(session.user.id), 0);
       } else {
         setIsAdmin(false);
+        setLinkedMemberId(null);
       }
       setLoading(false);
     });
@@ -52,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkAdmin(session.user.id);
+        checkRoleAndProfile(session.user.id);
       }
       setLoading(false);
     });
@@ -65,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, linkedMemberId, signOut }}>
       {children}
     </AuthContext.Provider>
   );
