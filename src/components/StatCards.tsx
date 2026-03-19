@@ -32,7 +32,23 @@ const StatCards = ({ members }: StatCardsProps) => {
   const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
   const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
 
-  const MiniGauge = ({ pct, color }: { pct: number; color: string }) => {
+  /** Returns an HSL color interpolating from red (0%) → orange (50%) → dark green (100%) */
+  const pctColor = (pct: number): string => {
+    if (pct <= 50) {
+      const t = pct / 50;
+      const h = 0 + t * 32;
+      const s = 84 + t * (95 - 84);
+      const l = 50;
+      return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+    }
+    const t = (pct - 50) / 50;
+    const h = 32 + t * (145 - 32);
+    const s = 95 + t * (63 - 95);
+    const l = 50 + t * (32 - 50);
+    return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+  };
+
+  const MiniGauge = ({ pct }: { pct: number }) => {
     const radius = 28;
     const stroke = 5;
     const circumference = Math.PI * radius;
@@ -49,7 +65,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <path
           d="M 7 38 A 28 28 0 0 1 63 38"
           fill="none"
-          stroke={color}
+          stroke={pctColor(pct)}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${filled} ${circumference}`}
@@ -96,7 +112,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <PieChart size={18} className="text-primary" />
         </div>
         <div className="mt-1">
-          <MiniGauge pct={marketPct} color="hsl(var(--success))" />
+          <MiniGauge pct={marketPct} />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
           <p className="text-xs text-muted-foreground text-center">{representedLocations}/{totalNL} coffeeshops</p>
         </div>
@@ -112,7 +128,7 @@ const StatCards = ({ members }: StatCardsProps) => {
           <MapPin size={18} className="text-success" />
         </div>
         <div className="mt-1">
-          <MiniGauge pct={g4Pct} color="hsl(var(--success))" />
+          <MiniGauge pct={g4Pct} />
           <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
           <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
         </div>
