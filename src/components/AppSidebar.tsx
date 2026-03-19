@@ -4,6 +4,7 @@ import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
+import { useEditRequests } from "@/hooks/useMemberEdits";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -38,6 +39,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, isAdmin, signOut } = useAuth();
+  const { data: pendingRequests } = useEditRequests("pending");
+  const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
   const [pwOpen, setPwOpen] = useState(false);
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -105,7 +108,19 @@ export function AppSidebar() {
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
                         >
                           <ClipboardCheck className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>Goedkeuringen</span>}
+                          {!collapsed && (
+                            <span className="flex items-center gap-2">
+                              Goedkeuringen
+                              {pendingCount > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none">
+                                  {pendingCount}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {collapsed && pendingCount > 0 && (
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-destructive" />
+                          )}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
