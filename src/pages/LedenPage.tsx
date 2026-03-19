@@ -154,7 +154,9 @@ const LedenPage = () => {
           </div>
         )
       ) : activeTab === "leden" ? (
-        <MemberTable members={mergedSearched} />
+        <MemberTable members={ledenOnly} />
+      ) : activeTab === "leads" ? (
+        <MemberTable members={leadsOnly} />
       ) : (
         <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       )}
