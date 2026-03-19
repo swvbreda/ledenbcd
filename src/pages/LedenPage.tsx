@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 const LedenPage = () => {
+  const { isAdmin } = useAuth();
   const [showArchived, setShowArchived] = useState(false);
   const {
     searchQuery, setSearchQuery,
