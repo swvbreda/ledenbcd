@@ -227,32 +227,8 @@ const MemberDetail = () => {
         <MemberEditForm member={member} editing={editing} setEditing={setEditing} />
       ) : (
         <>
-          {/* Oprichting & KVK */}
-          {(member.oprichtingsDatum || member.oprichtingJaar || member.lidSinds) && (
-            <div className="bg-card rounded-lg border border-border p-5 flex flex-wrap gap-6">
-              {(member.oprichtingsDatum || member.oprichtingJaar) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={16} className="text-primary" />
-                  <span className="text-muted-foreground">Opgericht:</span>
-                  <span className="font-medium">
-                    {member.oprichtingsDatum
-                      ? formatDate(member.oprichtingsDatum)
-                      : member.oprichtingJaar}
-                  </span>
-                </div>
-              )}
-              {member.lidSinds && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={16} className="text-success" />
-                  <span className="text-muted-foreground">Lid sinds:</span>
-                  <span className="font-medium">{member.lidSinds}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({new Date().getFullYear() - member.lidSinds} jaar)
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {/* Website & Social Media */}
           {(member.website || member.instagram || member.facebook) && (
