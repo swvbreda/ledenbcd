@@ -41,18 +41,18 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId } = useAuth();
-  const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, string[]>>(new Map());
+  const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, { naam: string; functie: string }[]>>(new Map());
 
   useEffect(() => {
     const fetchBoardMembers = async () => {
-      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids");
+      const { data } = await supabase.from("board_members").select("naam, lid_id, lid_ids, functie");
       if (data) {
-        const map = new Map<number, string[]>();
+        const map = new Map<number, { naam: string; functie: string }[]>();
         for (const row of data) {
           const ids = [...(row.lid_ids || []), ...(row.lid_id ? [row.lid_id] : [])];
           for (const id of ids) {
             const existing = map.get(id) || [];
-            existing.push(row.naam.toLowerCase());
+            existing.push({ naam: row.naam.toLowerCase(), functie: row.functie });
             map.set(id, existing);
           }
         }
@@ -123,14 +123,18 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             </div>
             {(() => {
               const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
-              const boardNames = boardMembersByLid.get(m.id) || [];
-              const eigenaarIsBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
-              if (!eigenaar && !m.oprichter && !eigenaarIsBoard) return null;
+              const boardEntries = boardMembersByLid.get(m.id) || [];
+              const boardMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+              if (!eigenaar && !m.oprichter && !boardMatch) return null;
               return (
                 <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
                   {eigenaar && <span>{eigenaar}</span>}
                   {m.oprichter && <span className="text-amber-500">★</span>}
-                  {eigenaarIsBoard && <Shield size={11} className="text-primary" />}
+                  {boardMatch && (
+                    <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                      <span><Shield size={11} className="text-primary" /></span>
+                    </TooltipTrigger><TooltipContent><p>{boardMatch.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                  )}
                 </div>
               );
             })()}
@@ -244,12 +248,14 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   )}
                 </td>
                 {isAdmin && (
-                  <>
-                    <td className="px-4 py-3 text-xs">
-                      {(() => {
-                        const boardNames = boardMembersByLid.get(member.id) || [];
-                        const isBoard = eigenaar && boardNames.some(bn => eigenaar.toLowerCase().includes(bn) || bn.includes(eigenaar.toLowerCase()));
-                        return (
+                  (() => {
+                    const boardEntries = boardMembersByLid.get(member.id) || [];
+                    const eigenaarMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+                    const cpMatch = contactpersoon && boardEntries.find(bn => contactpersoon.toLowerCase().includes(bn.naam) || bn.naam.includes(contactpersoon.toLowerCase()));
+                    const showCpIcon = cpMatch && !(eigenaar && contactpersoon && eigenaar.toLowerCase() === contactpersoon.toLowerCase() && eigenaarMatch);
+                    return (
+                      <>
+                        <td className="px-4 py-3 text-xs">
                           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                             {eigenaar || "—"}
                             {member.oprichter && (
@@ -257,32 +263,26 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                                 <span className="cursor-default text-amber-500">★</span>
                               </TooltipTrigger><TooltipContent><p>Oprichter van de bond</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
-                            {(member.bestuursfunctie || isBoard) && (
+                            {(member.bestuursfunctie || eigenaarMatch) && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger><TooltipContent><p>{member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                              </TooltipTrigger><TooltipContent><p>{eigenaarMatch?.functie || member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      {(() => {
-                        const boardNames = boardMembersByLid.get(member.id) || [];
-                        const cpIsBoard = contactpersoon && boardNames.some(bn => contactpersoon.toLowerCase().includes(bn) || bn.includes(contactpersoon.toLowerCase()));
-                        return (
+                        </td>
+                        <td className="px-4 py-3 text-xs">
                           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                             {contactpersoon || "—"}
-                            {cpIsBoard && (
+                            {showCpIcon && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
                                 <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
-                              </TooltipTrigger><TooltipContent><p>Bestuurslid</p></TooltipContent></Tooltip></TooltipProvider>
+                              </TooltipTrigger><TooltipContent><p>{cpMatch?.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>
-                        );
-                      })()}
-                    </td>
-                  </>
+                        </td>
+                      </>
+                    );
+                  })()
                 )}
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">
                   {member.oprichtingJaar || "—"}
