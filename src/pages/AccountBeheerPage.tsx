@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { allMembersAndLeads } from "@/hooks/useMembers";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink } from "lucide-react";
+import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,6 +42,9 @@ const AccountBeheerPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
   const [linkMemberId, setLinkMemberId] = useState("");
+  const [editUser, setEditUser] = useState<UserAccount | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("user");
 
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
@@ -171,6 +174,20 @@ const AccountBeheerPage = () => {
     fetchUsers();
   };
 
+  const handleEdit = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    const body: Record<string, unknown> = { action: "update_user", user_id: editUser.id };
+    if (editEmail && editEmail !== editUser.email) body.email = editEmail;
+    if (editRole !== editUser.role) body.role = editRole;
+    const { error } = await supabase.functions.invoke("manage-users", { body });
+    setSaving(false);
+    if (error) { toast.error("Fout bij opslaan: " + error.message); return; }
+    toast.success("Account bijgewerkt");
+    setEditUser(null);
+    fetchUsers();
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleDateString("nl-NL", {
@@ -293,14 +310,23 @@ const AccountBeheerPage = () => {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
                       <td className="px-4 py-3">
-                        {u.id !== user?.id && (
+                        <div className="flex items-center gap-1">
                           <button
-                            onClick={() => setDeleteId(u.id)}
-                            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
+                            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title="Bewerken"
                           >
-                            <Trash2 size={14} />
+                            <Pencil size={14} />
                           </button>
-                        )}
+                          {u.id !== user?.id && (
+                            <button
+                              onClick={() => setDeleteId(u.id)}
+                              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -382,6 +408,46 @@ const AccountBeheerPage = () => {
             <Button onClick={handleLink} disabled={saving || !linkMemberId} className="w-full gap-1.5">
               <Link size={14} />
               {saving ? "Koppelen..." : "Koppelen"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit user dialog */}
+      <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Account bewerken</DialogTitle>
+            <DialogDescription>
+              Wijzig de gegevens van dit account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">E-mailadres</label>
+              <Input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Rol</label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Gebruiker</SelectItem>
+                  <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editUser && getDisplayInfo(editUser).memberIds.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                De weergavenaam komt van het gekoppelde lid. Bewerk het lidprofiel om de naam te wijzigen.
+              </p>
+            )}
+            <Button onClick={handleEdit} disabled={saving} className="w-full">
+              {saving ? "Opslaan..." : "Opslaan"}
             </Button>
           </div>
         </DialogContent>
