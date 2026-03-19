@@ -72,12 +72,17 @@ Deno.serve(async (req) => {
       const roleMap = new Map<string, string>();
       roles?.forEach((r) => roleMap.set(r.user_id, r.role));
 
+      const { data: profiles } = await adminClient.from("member_profiles").select("user_id, member_id");
+      const profileMap = new Map<string, number>();
+      profiles?.forEach((p) => profileMap.set(p.user_id, p.member_id));
+
       const result = users.map((u) => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
         role: roleMap.get(u.id) || "user",
+        member_id: profileMap.get(u.id) || null,
       }));
 
       return new Response(JSON.stringify({ users: result }), {
