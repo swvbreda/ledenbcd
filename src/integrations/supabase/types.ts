@@ -92,6 +92,27 @@ export type Database = {
         }
         Relationships: []
       }
+      member_mailing_preferences: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          member_id: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          member_id: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          member_id?: number
+        }
+        Relationships: []
+      }
       member_notes: {
         Row: {
           created_at: string
