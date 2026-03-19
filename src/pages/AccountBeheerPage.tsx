@@ -103,7 +103,7 @@ const AccountBeheerPage = () => {
       fetchUsers();
     }
   };
-...
+
   const handleDelete = async () => {
     if (!deleteId) return;
 
