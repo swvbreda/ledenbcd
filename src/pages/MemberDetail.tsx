@@ -290,25 +290,27 @@ const MemberDetail = () => {
                       const isSelected = contactpersoon === c.naam;
                       return (
                         <div key={i} className={`${i > 0 ? "pt-3 border-t border-border" : ""} flex items-start gap-3`}>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="mt-0.5">
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={(checked) => {
-                                      const newVal = checked ? c.naam : "";
-                                      setContactpersoon(newVal);
-                                      setStoredContactpersoon(member.id, newVal || null);
-                                    }}
-                                  />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{isSelected ? "Contactpersoon deselecteren" : "Markeer als contactpersoon"}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          {isAdmin && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="mt-0.5">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked) => {
+                                        const newVal = checked ? c.naam : "";
+                                        setContactpersoon(newVal);
+                                        setStoredContactpersoon(member.id, newVal || null);
+                                      }}
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{isSelected ? "Contactpersoon deselecteren" : "Markeer als contactpersoon"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           <div className="flex-1">
                             <p className="font-medium inline-flex items-center gap-1.5">
                               {c.naam}
