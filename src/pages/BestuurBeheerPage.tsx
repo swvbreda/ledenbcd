@@ -300,8 +300,7 @@ export default function BestuurBeheerPage() {
           </div>
         )}
       </DndContext>
-        </div>
-      )}
+
 
       {members.length === 0 && (
         <p className="text-sm text-muted-foreground">Nog geen bestuursleden toegevoegd.</p>
