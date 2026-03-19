@@ -42,7 +42,7 @@ const GemeenteDetailPage = () => {
     for (const m of allRepresented) {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
-        if (plaats !== decodedGemeente) continue;
+        if (getGemeente(plaats) !== decodedGemeente) continue;
 
         const sd = l.stadsdeel || m.stadsdeel || "";
         const locatieNaam = l.naam || m.naam;
