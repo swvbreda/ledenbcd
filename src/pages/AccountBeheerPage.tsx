@@ -273,10 +273,10 @@ const AccountBeheerPage = () => {
                                   </button>
                                   <button
                                     onClick={() => handleUnlink(u.id, mid)}
-                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors hidden sm:inline-flex"
                                     title="Koppeling verwijderen"
                                   >
-                                    <Unlink size={11} />
+                                    <Unlink size={10} />
                                   </button>
                                 </span>
                               );
