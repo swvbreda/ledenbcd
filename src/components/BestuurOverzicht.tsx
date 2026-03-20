@@ -33,6 +33,8 @@ const slugify = (name: string) =>
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const [expanded, setExpanded] = useState(false);
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
