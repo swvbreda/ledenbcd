@@ -238,12 +238,12 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden sm:table-cell">E-mail</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden md:table-cell">Rol</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden lg:table-cell">Laatste login</th>
-                  <th className="px-3 sm:px-4 py-3 w-16" />
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground text-xs sm:text-sm">Koppeling</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground text-xs sm:text-sm">Naam</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden sm:table-cell">E-mail</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden md:table-cell">Rol</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden lg:table-cell">Laatste login</th>
+                  <th className="px-1 sm:px-4 py-2.5 sm:py-3 w-12 sm:w-16" />
                 </tr>
               </thead>
               <tbody>
