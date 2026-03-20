@@ -46,6 +46,9 @@ const AccountBeheerPage = () => {
   const [editUser, setEditUser] = useState<UserAccount | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("user");
+  const [resetPwUser, setResetPwUser] = useState<UserAccount | null>(null);
+  const [resetPw, setResetPw] = useState("");
+  const [resetPwConfirm, setResetPwConfirm] = useState("");
 
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
