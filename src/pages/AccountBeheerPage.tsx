@@ -295,10 +295,10 @@ const AccountBeheerPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 sm:px-4 py-3 text-muted-foreground">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm">
                         {personName || "—"}
                       </td>
-                      <td className="px-3 sm:px-4 py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
                       <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
