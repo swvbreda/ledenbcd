@@ -353,6 +353,14 @@ const MemberDetail = () => {
                                         const newVal = checked ? c.naam : "";
                                         setContactpersoon(newVal);
                                         setStoredContactpersoon(member.id, newVal || null);
+                                        // Persist to database
+                                        saveContactpersoonMutation.mutate(
+                                          { member_id: member.id, data: { contactpersoon: newVal || member.contactpersoon } },
+                                          {
+                                            onSuccess: () => toast.success("Contactpersoon opgeslagen"),
+                                            onError: () => toast.error("Contactpersoon opslaan mislukt"),
+                                          }
+                                        );
                                       }}
                                     />
                                   </div>
