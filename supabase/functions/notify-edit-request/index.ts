@@ -1,0 +1,64 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+/**
+ * This function is called via database webhook when a new member_edit_request is inserted.
+ * It triggers a push notification to all admin users.
+ */
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const { type, record } = await req.json();
+
+    // Only handle INSERT events
+    if (type !== "INSERT") {
+      return new Response(JSON.stringify({ skipped: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Call the send-push function to notify admins
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const memberId = record?.member_id;
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        title: "Nieuw wijzigingsverzoek",
+        body: `Lid #${memberId} heeft een wijzigingsverzoek ingediend.`,
+        target_role: "admin",
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Push result:", result);
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("notify-edit-request error:", error);
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
