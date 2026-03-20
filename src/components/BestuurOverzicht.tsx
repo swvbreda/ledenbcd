@@ -286,26 +286,32 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         </div>
       </div>
 
-      {(!isMobile || expanded) && (
-        <div className={isMobile ? "mt-3" : ""}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {bestuursleden.map((bl) => renderCard(bl))}
-          </div>
-
-          {aspiranten.length > 0 && (
-            <>
-              <div className="flex items-center gap-2 mt-4 mb-2">
-                <Users size={12} className="text-muted-foreground" />
-                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {aspiranten.map((bl) => renderCard(bl, true))}
-              </div>
-            </>
-          )}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isMobile
+            ? expanded
+              ? "max-h-[2000px] opacity-100 mt-3"
+              : "max-h-0 opacity-0"
+            : "max-h-none opacity-100"
+        }`}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {bestuursleden.map((bl) => renderCard(bl))}
         </div>
-      )}
+
+        {aspiranten.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 mt-4 mb-2">
+              <Users size={12} className="text-muted-foreground" />
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {aspiranten.map((bl) => renderCard(bl, true))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
