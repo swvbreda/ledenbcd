@@ -477,11 +477,53 @@ const AccountBeheerPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            {editUser && getDisplayInfo(editUser).memberIds.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                De weergavenaam komt van het gekoppelde lid. Bewerk het lidprofiel om de naam te wijzigen.
-              </p>
-            )}
+            {editUser && (() => {
+              const { memberIds } = getDisplayInfo(editUser);
+              return (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Koppeling</label>
+                  {memberIds.length > 0 ? (
+                    <div className="space-y-1">
+                      {memberIds.map((mid) => {
+                        const m = memberMap.get(mid);
+                        return (
+                          <div key={mid} className="flex items-center justify-between text-sm">
+                            <button
+                              onClick={() => navigate(`/leden/${mid}`)}
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <span className="text-muted-foreground text-[11px] font-mono">#{mid}</span>
+                              {m?.naam || "Onbekend lid"}
+                              <ExternalLink size={10} className="opacity-50" />
+                            </button>
+                            <button
+                              onClick={() => handleUnlink(editUser.id, mid)}
+                              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Ontkoppelen"
+                            >
+                              <Unlink size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      <p className="text-xs text-muted-foreground">
+                        De weergavenaam komt van het gekoppelde lid.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">Geen koppeling</p>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 w-full"
+                    onClick={() => { setEditUser(null); setLinkDialogUser(editUser); setLinkMemberId(""); setLinkSearch(""); }}
+                  >
+                    <Link size={12} /> Lid koppelen
+                  </Button>
+                </div>
+              );
+            })()}
             <Button onClick={handleEdit} disabled={saving} className="w-full">
               {saving ? "Opslaan..." : "Opslaan"}
             </Button>
