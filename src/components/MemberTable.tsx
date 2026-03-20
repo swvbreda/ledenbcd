@@ -143,15 +143,15 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <span>{gemeenten.join(", ")}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {jarenLid !== null && (() => {
               const tier = getJubileumTier(jarenLid);
               return (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>{jarenLid} jr</span>
+                <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${tier.bg} ${tier.text}`}>{jarenLid}jr</span>
               );
             })()}
-            <span className="text-xs tabular-nums text-muted-foreground">{m.aantalLocaties} loc.</span>
-            <ExternalLink size={14} className="text-muted-foreground" />
+            <span className="text-[11px] tabular-nums text-muted-foreground whitespace-nowrap">{m.aantalLocaties} loc.</span>
+            <ExternalLink size={12} className="text-muted-foreground" />
           </div>
         </div>
       </div>
