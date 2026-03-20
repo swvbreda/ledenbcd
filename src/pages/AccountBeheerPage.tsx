@@ -251,7 +251,7 @@ const AccountBeheerPage = () => {
                   const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-3 sm:px-4 py-3 font-medium">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-xs sm:text-sm">
                         <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
