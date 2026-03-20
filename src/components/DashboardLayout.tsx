@@ -23,7 +23,7 @@ const DashboardLayout = () => {
     <div className="min-h-screen flex w-full">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-40 h-12 flex items-center border-b border-border bg-card px-4">
+        <header className="sticky top-0 z-40 flex items-center border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] h-[calc(3rem+env(safe-area-inset-top))]">
           <SidebarTrigger className="mr-3" />
           <h1 className="text-sm font-semibold font-display text-muted-foreground">Ledenbestand</h1>
         </header>
