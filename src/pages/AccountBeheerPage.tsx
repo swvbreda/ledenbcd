@@ -527,8 +527,60 @@ const AccountBeheerPage = () => {
                 </div>
               );
             })()}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 w-full"
+              onClick={() => { setResetPwUser(editUser); setResetPw(""); setResetPwConfirm(""); }}
+            >
+              <KeyRound size={12} /> Wachtwoord resetten
+            </Button>
             <Button onClick={handleEdit} disabled={saving} className="w-full">
               {saving ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset password dialog */}
+      <Dialog open={!!resetPwUser} onOpenChange={(open) => { if (!open) setResetPwUser(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Wachtwoord resetten</DialogTitle>
+            <DialogDescription>
+              Stel een nieuw wachtwoord in voor {resetPwUser?.email}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <Input
+              type="password"
+              placeholder="Nieuw wachtwoord (min. 8 tekens)"
+              value={resetPw}
+              onChange={(e) => setResetPw(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Bevestig wachtwoord"
+              value={resetPwConfirm}
+              onChange={(e) => setResetPwConfirm(e.target.value)}
+            />
+            <Button
+              className="w-full"
+              disabled={saving || resetPw.length < 8 || resetPw !== resetPwConfirm}
+              onClick={async () => {
+                if (resetPw.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
+                if (resetPw !== resetPwConfirm) { toast.error("Wachtwoorden komen niet overeen"); return; }
+                setSaving(true);
+                const { error } = await supabase.functions.invoke("manage-users", {
+                  body: { action: "reset_password", user_id: resetPwUser!.id, password: resetPw },
+                });
+                setSaving(false);
+                if (error) { toast.error("Fout bij resetten: " + error.message); return; }
+                toast.success("Wachtwoord succesvol gewijzigd");
+                setResetPwUser(null);
+              }}
+            >
+              {saving ? "Opslaan..." : "Wachtwoord opslaan"}
             </Button>
           </div>
         </DialogContent>
