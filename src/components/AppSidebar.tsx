@@ -108,6 +108,7 @@ export function AppSidebar() {
                           to="/goedkeuringen"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <ClipboardCheck className="mr-2 h-4 w-4" />
                           {!collapsed && (
