@@ -53,6 +53,7 @@ const App = () => (
                 <Route path="/accounts" element={<AccountBeheerPage />} />
                 <Route path="/goedkeuringen" element={<GoedkeuringenPage />} />
                 <Route path="/bestuur-beheer" element={<BestuurBeheerPage />} />
+                <Route path="/mijn-account" element={<MijnAccountPage />} />
                 <Route path="/oud-leden" element={<LedenPage />} />
                 <Route path="/marktaandeel" element={<LocatiesPage />} />
               </Route>

@@ -159,6 +159,26 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
           <SidebarGroup>
+            <SidebarGroupLabel>Account</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/mijn-account"
+                      className="hover:bg-sidebar-accent/50"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                      onClick={closeMobile}
+                    >
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      {!collapsed && <span>Mijn Account</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
             <SidebarGroupLabel>Community</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
