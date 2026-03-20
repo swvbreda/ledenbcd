@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useMergedMember } from "@/hooks/useMemberEdits";
+import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 
@@ -42,6 +42,7 @@ const MemberDetail = () => {
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
+  const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
@@ -352,6 +353,14 @@ const MemberDetail = () => {
                                         const newVal = checked ? c.naam : "";
                                         setContactpersoon(newVal);
                                         setStoredContactpersoon(member.id, newVal || null);
+                                        // Persist to database
+                                        saveContactpersoonMutation.mutate(
+                                          { member_id: member.id, data: { contactpersoon: newVal || member.contactpersoon } },
+                                          {
+                                            onSuccess: () => toast.success("Contactpersoon opgeslagen"),
+                                            onError: () => toast.error("Contactpersoon opslaan mislukt"),
+                                          }
+                                        );
                                       }}
                                     />
                                   </div>
