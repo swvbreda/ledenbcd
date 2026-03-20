@@ -295,11 +295,11 @@ const AccountBeheerPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground">
                         {personName || "—"}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground break-all">{u.email}</td>
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
@@ -309,7 +309,7 @@ const AccountBeheerPage = () => {
                           {u.role === "admin" ? "Admin" : "Gebruiker"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button
