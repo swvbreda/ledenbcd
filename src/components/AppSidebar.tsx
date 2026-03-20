@@ -133,6 +133,7 @@ export function AppSidebar() {
                           to="/accounts"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <Shield className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Accounts</span>}
