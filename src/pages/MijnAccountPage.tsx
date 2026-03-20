@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { KeyRound, Bell, Mail, User, Shield } from "lucide-react";
+import { KeyRound, Bell, Mail, User, Shield, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useMembers } from "@/hooks/useMembers";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { allMembersAndLeads } from "@/hooks/useMembers";
 import MailingPreferences from "@/components/MailingPreferences";
+import MemberEditForm from "@/components/MemberEditForm";
 import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
 
@@ -95,7 +94,6 @@ function NotificationSection() {
     }
 
     if (pushEnabled) {
-      // Remove tokens to disable
       const { error } = await supabase
         .from("push_device_tokens")
         .delete()
@@ -107,7 +105,6 @@ function NotificationSection() {
       setPushEnabled(false);
       toast.success("Push-notificaties uitgeschakeld");
     } else {
-      // Re-register
       try {
         const { PushNotifications } = await import("@capacitor/push-notifications");
         const perm = await PushNotifications.requestPermissions();
@@ -156,6 +153,7 @@ function NotificationSection() {
 export default function MijnAccountPage() {
   const { user, isAdmin, linkedMemberId } = useAuth();
   const { members: allMembers } = useMergedMembers(allMembersAndLeads);
+  const [editing, setEditing] = useState(false);
 
   const linkedMember: Member | undefined = linkedMemberId
     ? allMembers.find((m) => m.id === linkedMemberId)
@@ -163,50 +161,85 @@ export default function MijnAccountPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Mijn Account</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Beheer je accountinstellingen
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold font-display">Mijn Account</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Beheer je accountinstellingen
+          </p>
+        </div>
+        {linkedMember && !editing && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start shrink-0 gap-1.5"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil size={14} /> Gegevens bewerken
+          </Button>
+        )}
       </div>
 
-      {/* Profile info */}
-      <Card className="p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <User size={16} className="text-muted-foreground" />
-          <h3 className="text-sm font-semibold font-display">Profiel</h3>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground w-24 shrink-0">E-mail:</span>
-            <span className="font-medium break-all">{user?.email}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground w-24 shrink-0">Rol:</span>
-            <span className="font-medium flex items-center gap-1.5">
-              {isAdmin && <Shield size={12} className="text-primary" />}
-              {isAdmin ? "Beheerder" : "Lid"}
-            </span>
-          </div>
-          {linkedMember && (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-24 shrink-0">Gekoppeld lid:</span>
-              <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Mailing preferences - only for linked members */}
-      {linkedMember && (
-        <MailingPreferences member={linkedMember} canEdit={true} />
+      {/* Edit form for linked member */}
+      {linkedMember && editing && (
+        <MemberEditForm member={linkedMember} editing={editing} setEditing={setEditing} />
       )}
 
-      {/* Notification settings */}
-      <NotificationSection />
+      {/* Profile info - hide when editing */}
+      {!editing && (
+        <>
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <User size={16} className="text-muted-foreground" />
+              <h3 className="text-sm font-semibold font-display">Profiel</h3>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-24 shrink-0">E-mail:</span>
+                <span className="font-medium break-all">{user?.email}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-24 shrink-0">Rol:</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  {isAdmin && <Shield size={12} className="text-primary" />}
+                  {isAdmin ? "Beheerder" : "Lid"}
+                </span>
+              </div>
+              {linkedMember && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground w-24 shrink-0">Gekoppeld lid:</span>
+                    <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
+                  </div>
+                  {linkedMember.contactpersoon && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground w-24 shrink-0">Contactpersoon:</span>
+                      <span className="font-medium">{linkedMember.contactpersoon}</span>
+                    </div>
+                  )}
+                  {linkedMember.telefoon && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground w-24 shrink-0">Telefoon:</span>
+                      <span className="font-medium">{linkedMember.telefoon}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </Card>
 
-      {/* Password */}
-      <PasswordSection />
+          {/* Mailing preferences - only for linked members */}
+          {linkedMember && (
+            <MailingPreferences member={linkedMember} canEdit={true} />
+          )}
+
+          {/* Notification settings */}
+          <NotificationSection />
+
+          {/* Password */}
+          <PasswordSection />
+        </>
+      )}
     </div>
   );
 }
