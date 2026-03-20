@@ -36,8 +36,9 @@ const navItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const closeMobile = () => setOpenMobile(false);
   const { user, isAdmin, signOut } = useAuth();
   const { data: pendingRequests } = useEditRequests("pending");
   const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
@@ -91,6 +92,7 @@ export function AppSidebar() {
                         end={item.url === "/"}
                         className="hover:bg-sidebar-accent/50"
                         activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                        onClick={closeMobile}
                       >
                         <item.icon className="mr-2 h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
@@ -106,6 +108,7 @@ export function AppSidebar() {
                           to="/goedkeuringen"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <ClipboardCheck className="mr-2 h-4 w-4" />
                           {!collapsed && (
@@ -130,6 +133,7 @@ export function AppSidebar() {
                           to="/accounts"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <Shield className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Accounts</span>}
@@ -142,6 +146,7 @@ export function AppSidebar() {
                           to="/bestuur-beheer"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <UserCog className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Bestuur</span>}
