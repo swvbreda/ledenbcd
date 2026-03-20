@@ -239,8 +239,8 @@ export default function GoedkeuringenPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold font-display">Goedkeuringen</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {pendingCount > 0
@@ -251,6 +251,7 @@ export default function GoedkeuringenPage() {
         <Button
           variant="outline"
           size="sm"
+          className="self-start shrink-0"
           onClick={() => setShowAll(!showAll)}
         >
           {showAll ? "Alleen openstaand" : "Toon alles"}
