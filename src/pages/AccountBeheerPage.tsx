@@ -310,7 +310,7 @@ const AccountBeheerPage = () => {
                         </span>
                       </td>
                       <td className="px-3 sm:px-4 py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
