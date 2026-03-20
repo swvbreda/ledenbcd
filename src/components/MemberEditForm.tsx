@@ -90,6 +90,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
   };
 
   const handleSave = () => {
+    const primaryContact = contacten[0];
     const data: Partial<Member> = {
       naam,
       plaats,
@@ -107,6 +108,10 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       factuurPlaats: factuurPlaats || undefined,
       factuurEmail: factuurEmail || undefined,
       factuurTelefoon: factuurTelefoon || undefined,
+      contactpersoon: primaryContact?.naam || member.contactpersoon,
+      functie: primaryContact?.functie || member.functie,
+      telefoon: primaryContact?.telefoon || member.telefoon,
+      email: primaryContact?.email || member.email,
       contacten,
       locaties,
       aantalLocaties: locaties.length,
