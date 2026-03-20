@@ -72,7 +72,7 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-white">
+        <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-white pt-[max(0.75rem,env(safe-area-inset-top))]">
           {!collapsed ? (
             <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-14 w-auto object-contain" />
           ) : (
