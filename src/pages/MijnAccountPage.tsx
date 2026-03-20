@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyRound, Bell, Mail, User, Shield, Pencil } from "lucide-react";
+import { KeyRound, Bell, Mail, User, Shield, Pencil, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,6 @@ function NotificationSection() {
   const { user } = useAuth();
   const isNative = Capacitor.isNativePlatform();
 
-  // Check if user has a device token registered
   useState(() => {
     if (!user) { setLoading(false); return; }
     supabase
@@ -150,6 +149,74 @@ function NotificationSection() {
   );
 }
 
+/** Profile card with member details when linked */
+function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
+  const { user, isAdmin } = useAuth();
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <User size={16} className="text-muted-foreground" />
+        <h3 className="text-sm font-semibold font-display">Profiel</h3>
+      </div>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-start gap-2">
+          <span className="text-muted-foreground w-28 shrink-0">E-mail:</span>
+          <span className="font-medium break-all">{user?.email}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground w-28 shrink-0">Rol:</span>
+          <span className="font-medium flex items-center gap-1.5">
+            {isAdmin && <Shield size={12} className="text-primary" />}
+            {isAdmin ? "Beheerder" : "Lid"}
+          </span>
+        </div>
+        {linkedMember && (
+          <>
+            <div className="flex items-start gap-2">
+              <span className="text-muted-foreground w-28 shrink-0">Gekoppeld lid:</span>
+              <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
+            </div>
+            {linkedMember.contactpersoon && (
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">Contactpersoon:</span>
+                <span className="font-medium">{linkedMember.contactpersoon}</span>
+              </div>
+            )}
+            {linkedMember.telefoon && (
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">Telefoon:</span>
+                <span className="font-medium">{linkedMember.telefoon}</span>
+              </div>
+            )}
+            {linkedMember.plaats && (
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">Plaats:</span>
+                <span className="font-medium">{linkedMember.plaats}</span>
+              </div>
+            )}
+            {linkedMember.website && (
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">Website:</span>
+                <a href={linkedMember.website.startsWith("http") ? linkedMember.website : `https://${linkedMember.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline break-all">
+                  {linkedMember.website}
+                </a>
+              </div>
+            )}
+          </>
+        )}
+        {!linkedMember && (
+          <div className="mt-3 p-3 bg-muted/50 rounded-md">
+            <p className="text-xs text-muted-foreground">
+              Je account is niet gekoppeld aan een lidprofiel. Neem contact op met het bestuur om je account te koppelen.
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export default function MijnAccountPage() {
   const { user, isAdmin, linkedMemberId } = useAuth();
   const { members: allMembers } = useMergedMembers(allMembersAndLeads);
@@ -182,51 +249,23 @@ export default function MijnAccountPage() {
 
       {/* Edit form for linked member */}
       {linkedMember && editing && (
-        <MemberEditForm member={linkedMember} editing={editing} setEditing={setEditing} />
+        <>
+          {!isAdmin && (
+          <div className="flex items-center gap-2 p-3 bg-muted border border-border rounded-lg">
+              <Clock size={14} className="text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Wijzigingen worden beoordeeld door het bestuur voordat ze worden doorgevoerd.
+              </p>
+            </div>
+          )}
+          <MemberEditForm member={linkedMember} editing={editing} setEditing={setEditing} />
+        </>
       )}
 
-      {/* Profile info - hide when editing */}
+      {/* Profile & settings - hide when editing */}
       {!editing && (
         <>
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <User size={16} className="text-muted-foreground" />
-              <h3 className="text-sm font-semibold font-display">Profiel</h3>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-24 shrink-0">E-mail:</span>
-                <span className="font-medium break-all">{user?.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-24 shrink-0">Rol:</span>
-                <span className="font-medium flex items-center gap-1.5">
-                  {isAdmin && <Shield size={12} className="text-primary" />}
-                  {isAdmin ? "Beheerder" : "Lid"}
-                </span>
-              </div>
-              {linkedMember && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground w-24 shrink-0">Gekoppeld lid:</span>
-                    <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
-                  </div>
-                  {linkedMember.contactpersoon && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground w-24 shrink-0">Contactpersoon:</span>
-                      <span className="font-medium">{linkedMember.contactpersoon}</span>
-                    </div>
-                  )}
-                  {linkedMember.telefoon && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground w-24 shrink-0">Telefoon:</span>
-                      <span className="font-medium">{linkedMember.telefoon}</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </Card>
+          <ProfileCard linkedMember={linkedMember} />
 
           {/* Mailing preferences - only for linked members */}
           {linkedMember && (
