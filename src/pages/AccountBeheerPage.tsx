@@ -207,14 +207,14 @@ const AccountBeheerPage = () => {
             {filteredUsers.length}{searchQuery ? ` van ${users.length}` : ""} accounts
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative flex-1 sm:flex-none">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Zoek op naam of e-mail..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-8 h-9 w-56 text-sm"
+              className="pl-8 pr-8 h-9 w-full sm:w-56 text-sm"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -222,7 +222,7 @@ const AccountBeheerPage = () => {
               </button>
             )}
           </div>
-          <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5">
+          <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
             <UserPlus size={15} /> Nieuw account
           </Button>
         </div>
@@ -238,12 +238,12 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">E-mail</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Rol</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Laatste login</th>
-                  <th className="px-4 py-3 w-16" />
+                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
+                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
+                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden sm:table-cell">E-mail</th>
+                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden md:table-cell">Rol</th>
+                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden lg:table-cell">Laatste login</th>
+                  <th className="px-3 sm:px-4 py-3 w-16" />
                 </tr>
               </thead>
               <tbody>
@@ -251,7 +251,7 @@ const AccountBeheerPage = () => {
                   const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-medium">
+                      <td className="px-3 sm:px-4 py-3 font-medium">
                         <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
@@ -295,11 +295,11 @@ const AccountBeheerPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground">
                         {personName || "—"}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
@@ -309,8 +309,8 @@ const AccountBeheerPage = () => {
                           {u.role === "admin" ? "Admin" : "Gebruiker"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
+                      <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
