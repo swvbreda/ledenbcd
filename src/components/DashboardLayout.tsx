@@ -5,12 +5,19 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 const DashboardLayout = () => {
   const mainRef = useRef<HTMLElement>(null);
-  const { pathname } = useLocation();
+  const { pathname, search, hash, key } = useLocation();
 
   useEffect(() => {
-    mainRef.current?.scrollTo(0, 0);
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const resetScroll = () => {
+      mainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+  }, [pathname, search, hash, key]);
 
   return (
     <div className="min-h-screen flex w-full">
