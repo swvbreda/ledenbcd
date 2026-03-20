@@ -78,29 +78,33 @@ const LedenPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">
-            {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {!showArchived && isAdmin && <ExportButton members={mergedSearched} />}
-          {!showArchived && isAdmin && <MailingExportButton members={mergedSearched} />}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold font-display">
+              {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          </div>
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"
-            className="gap-1.5"
+            className="gap-1.5 shrink-0"
             onClick={() => setShowArchived(!showArchived)}
           >
             {showArchived ? (
-              <><Users size={14} /> Actieve leden</>
+              <><Users size={14} /> <span className="hidden sm:inline">Actieve leden</span><span className="sm:hidden">Actief</span></>
             ) : (
               <><UserMinus size={14} /> Oud-leden ({archivedMembers.length})</>
             )}
           </Button>
         </div>
+        {!showArchived && isAdmin && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <ExportButton members={mergedSearched} />
+            <MailingExportButton members={mergedSearched} />
+          </div>
+        )}
       </div>
 
       {!showArchived && (
