@@ -77,7 +77,7 @@ const LedenPage = () => {
     : `${ledenOnly.length} leden`;
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div>

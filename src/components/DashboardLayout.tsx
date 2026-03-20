@@ -19,7 +19,7 @@ const DashboardLayout = () => {
           <SidebarTrigger className="mr-3" />
           <h1 className="text-sm font-semibold font-display text-muted-foreground">Ledenbestand</h1>
         </header>
-        <main ref={mainRef} className="flex-1 overflow-auto">
+        <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
       </div>
