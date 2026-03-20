@@ -276,8 +276,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
           {isMobile && (
-            <span className="text-muted-foreground">
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            <span className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
+              <ChevronDown size={16} />
             </span>
           )}
           {isMobile && !expanded && (
