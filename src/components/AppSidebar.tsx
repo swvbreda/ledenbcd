@@ -146,6 +146,7 @@ export function AppSidebar() {
                           to="/bestuur-beheer"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
                         >
                           <UserCog className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Bestuur</span>}
