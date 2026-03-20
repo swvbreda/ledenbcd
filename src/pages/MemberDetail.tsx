@@ -42,6 +42,7 @@ const MemberDetail = () => {
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
+  const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
