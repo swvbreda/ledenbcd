@@ -310,21 +310,21 @@ const AccountBeheerPage = () => {
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="flex items-center gap-1">
+                      <td className="px-1 sm:px-4 py-2 sm:py-3">
+                        <div className="flex items-center gap-0.5 sm:gap-1">
                           <button
                             onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
-                            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            className="p-1 sm:p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             title="Bewerken"
                           >
-                            <Pencil size={14} />
+                            <Pencil size={12} className="sm:hidden" /><Pencil size={14} className="hidden sm:block" />
                           </button>
                           {u.id !== user?.id && (
                             <button
                               onClick={() => setDeleteId(u.id)}
-                              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              className="p-1 sm:p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={12} className="sm:hidden" /><Trash2 size={14} className="hidden sm:block" />
                             </button>
                           )}
                         </div>
