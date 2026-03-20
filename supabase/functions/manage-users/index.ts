@@ -235,6 +235,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "reset_password") {
+      const user_id = payload.user_id as string | undefined;
+      const password = payload.password as string | undefined;
+
+      if (!user_id || !password || password.length < 8) {
+        return new Response(JSON.stringify({ error: "user_id en wachtwoord (min. 8 tekens) zijn verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, { password });
+      if (updateError) throw updateError;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "update_user") {
       const user_id = payload.user_id as string | undefined;
       const email = payload.email as string | undefined;
