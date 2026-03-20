@@ -238,12 +238,12 @@ const AccountBeheerPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Koppeling</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground">Naam</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden sm:table-cell">E-mail</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden md:table-cell">Rol</th>
-                  <th className="px-3 sm:px-4 py-3 text-left font-semibold text-muted-foreground hidden lg:table-cell">Laatste login</th>
-                  <th className="px-3 sm:px-4 py-3 w-16" />
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground text-xs sm:text-sm">Koppeling</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground text-xs sm:text-sm">Naam</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden sm:table-cell">E-mail</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden md:table-cell">Rol</th>
+                  <th className="px-2 sm:px-4 py-2.5 sm:py-3 text-left font-semibold text-muted-foreground hidden lg:table-cell">Laatste login</th>
+                  <th className="px-1 sm:px-4 py-2.5 sm:py-3 w-12 sm:w-16" />
                 </tr>
               </thead>
               <tbody>
@@ -251,11 +251,11 @@ const AccountBeheerPage = () => {
                   const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-3 sm:px-4 py-3 font-medium">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-xs sm:text-sm">
                         <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
-                              <Shield size={12} className="text-primary" />
+                              <Shield size={10} className="text-primary sm:hidden" /><Shield size={12} className="text-primary hidden sm:inline" />
                               {label}
                             </span>
                           ) : memberIds.length > 0 ? (
@@ -267,16 +267,16 @@ const AccountBeheerPage = () => {
                                     onClick={() => navigate(`/leden/${mid}`)}
                                     className="inline-flex items-center gap-1 text-primary hover:underline text-left"
                                   >
-                                    <span className="text-muted-foreground text-[11px] font-mono">#{mid}</span>
-                                    {m?.naam || "Onbekend lid"}
-                                    <ExternalLink size={11} className="opacity-50" />
+                                    <span className="text-muted-foreground text-[10px] font-mono">#{mid}</span>
+                                    <span className="line-clamp-1">{m?.naam || "Onbekend lid"}</span>
+                                    <ExternalLink size={10} className="opacity-50 hidden sm:inline shrink-0" />
                                   </button>
                                   <button
                                     onClick={() => handleUnlink(u.id, mid)}
-                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors"
+                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors hidden sm:inline-flex"
                                     title="Koppeling verwijderen"
                                   >
-                                    <Unlink size={11} />
+                                    <Unlink size={10} />
                                   </button>
                                 </span>
                               );
@@ -295,11 +295,11 @@ const AccountBeheerPage = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 sm:px-4 py-3 text-muted-foreground">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm">
                         {personName || "—"}
                       </td>
-                      <td className="px-3 sm:px-4 py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
-                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
@@ -309,22 +309,22 @@ const AccountBeheerPage = () => {
                           {u.role === "admin" ? "Admin" : "Gebruiker"}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-4 py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="flex items-center gap-1">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
+                      <td className="px-1 sm:px-4 py-2 sm:py-3">
+                        <div className="flex items-center gap-0.5 sm:gap-1">
                           <button
                             onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
-                            className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            className="p-1 sm:p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             title="Bewerken"
                           >
-                            <Pencil size={14} />
+                            <Pencil size={12} className="sm:hidden" /><Pencil size={14} className="hidden sm:block" />
                           </button>
                           {u.id !== user?.id && (
                             <button
                               onClick={() => setDeleteId(u.id)}
-                              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              className="p-1 sm:p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={12} className="sm:hidden" /><Trash2 size={14} className="hidden sm:block" />
                             </button>
                           )}
                         </div>
