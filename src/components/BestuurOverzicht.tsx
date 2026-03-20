@@ -1,10 +1,11 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import simonePhoto from "@/assets/bestuur/simone-van-breda.jpg";
 
 interface BestuurOverzichtProps {
@@ -32,6 +33,8 @@ const slugify = (name: string) =>
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const [expanded, setExpanded] = useState(false);
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -246,43 +249,62 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   }
 
   return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+      <div
+        className={`flex items-center justify-between ${isMobile ? "cursor-pointer active:bg-muted/30 -m-4 p-4 rounded-lg transition-colors" : "mb-3"}`}
+        onClick={() => isMobile && setExpanded(!expanded)}
+      >
         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap">
           <h3 className="text-sm font-semibold font-display flex items-center gap-2">
             <Shield size={16} className="text-primary" />
             Bestuur
           </h3>
-          <a href="mailto:bestuur@coffeeshopbond.nl" className="text-[11px] text-primary hover:underline flex items-center gap-1">
-            <Mail size={10} /> bestuur@coffeeshopbond.nl
-          </a>
-          <span className="text-[11px] text-muted-foreground">·</span>
-          <span className="text-[11px] font-medium text-foreground/70">Secretariaat</span>
-          <a href="mailto:info@coffeeshopbond.nl" className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline">
+          <span className="hidden sm:inline-flex">
+            <a href="mailto:bestuur@coffeeshopbond.nl" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+              <Mail size={10} /> bestuur@coffeeshopbond.nl
+            </a>
+          </span>
+          <span className="text-[11px] text-muted-foreground hidden sm:inline">·</span>
+          <span className="text-[11px] font-medium text-foreground/70 hidden sm:inline">Secretariaat</span>
+          <a href="mailto:info@coffeeshopbond.nl" className="items-center gap-1 text-[11px] text-muted-foreground hover:underline hidden sm:flex">
             <Mail size={10} className="shrink-0" /> info@coffeeshopbond.nl
           </a>
-          <a href="tel:+31686875231" className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline">
+          <a href="tel:+31686875231" className="items-center gap-1 text-[11px] text-muted-foreground hover:underline hidden sm:flex">
             <Phone size={10} className="shrink-0" /> 06 86 87 52 31
           </a>
         </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">Opgericht 12 januari 1994</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
+          {isMobile && (
+            <span className="text-muted-foreground">
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </span>
+          )}
+          {isMobile && !expanded && (
+            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} leden</span>
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {bestuursleden.map((bl) => renderCard(bl))}
-      </div>
-
-      {aspiranten.length > 0 && (
-        <>
-          <div className="flex items-center gap-2 mt-4 mb-2">
-            <Users size={12} className="text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
+      {(!isMobile || expanded) && (
+        <div className={isMobile ? "mt-3" : ""}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {aspiranten.map((bl) => renderCard(bl, true))}
+            {bestuursleden.map((bl) => renderCard(bl))}
           </div>
-        </>
+
+          {aspiranten.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mt-4 mb-2">
+                <Users size={12} className="text-muted-foreground" />
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {aspiranten.map((bl) => renderCard(bl, true))}
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
