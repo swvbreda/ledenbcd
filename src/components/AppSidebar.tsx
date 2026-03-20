@@ -36,8 +36,9 @@ const navItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const closeMobile = () => setOpenMobile(false);
   const { user, isAdmin, signOut } = useAuth();
   const { data: pendingRequests } = useEditRequests("pending");
   const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
