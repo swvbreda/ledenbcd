@@ -267,9 +267,9 @@ const AccountBeheerPage = () => {
                                     onClick={() => navigate(`/leden/${mid}`)}
                                     className="inline-flex items-center gap-1 text-primary hover:underline text-left"
                                   >
-                                    <span className="text-muted-foreground text-[11px] font-mono">#{mid}</span>
-                                    {m?.naam || "Onbekend lid"}
-                                    <ExternalLink size={11} className="opacity-50" />
+                                    <span className="text-muted-foreground text-[10px] font-mono">#{mid}</span>
+                                    <span className="line-clamp-1">{m?.naam || "Onbekend lid"}</span>
+                                    <ExternalLink size={10} className="opacity-50 hidden sm:inline shrink-0" />
                                   </button>
                                   <button
                                     onClick={() => handleUnlink(u.id, mid)}
