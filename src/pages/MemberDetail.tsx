@@ -329,7 +329,7 @@ const MemberDetail = () => {
           </div>
 
           {canSeeDetails ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Contactpersonen */}
               <div className="bg-card rounded-lg border border-border p-5">
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
