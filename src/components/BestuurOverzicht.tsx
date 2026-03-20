@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
