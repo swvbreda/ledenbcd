@@ -238,7 +238,7 @@ export default function GoedkeuringenPage() {
   const pendingCount = requests?.filter((r) => r.status === "pending").length ?? 0;
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold font-display">Goedkeuringen</h2>
