@@ -1,10 +1,11 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import simonePhoto from "@/assets/bestuur/simone-van-breda.jpg";
 
 interface BestuurOverzichtProps {
