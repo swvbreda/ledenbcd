@@ -154,7 +154,7 @@ const MemberDetail = () => {
           {/* Coffeeshop gegevens — alles in één blok */}
           <div className="bg-card rounded-lg border border-border p-5 space-y-4">
             {/* Naam & badges + acties */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
