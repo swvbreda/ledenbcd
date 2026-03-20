@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.member-signup]
 verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.notify-edit-request]
+verify_jwt = false
