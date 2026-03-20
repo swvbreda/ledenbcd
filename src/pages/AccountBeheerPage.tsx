@@ -255,7 +255,7 @@ const AccountBeheerPage = () => {
                         <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
-                              <Shield size={12} className="text-primary" />
+                              <Shield size={10} className="text-primary sm:hidden" /><Shield size={12} className="text-primary hidden sm:inline" />
                               {label}
                             </span>
                           ) : memberIds.length > 0 ? (
