@@ -251,9 +251,9 @@ export default function MijnAccountPage() {
       {linkedMember && editing && (
         <>
           {!isAdmin && (
-            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <Clock size={14} className="text-amber-600 shrink-0" />
-              <p className="text-xs text-amber-800">
+          <div className="flex items-center gap-2 p-3 bg-muted border border-border rounded-lg">
+              <Clock size={14} className="text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
                 Wijzigingen worden beoordeeld door het bestuur voordat ze worden doorgevoerd.
               </p>
             </div>
