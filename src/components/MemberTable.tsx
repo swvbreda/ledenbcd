@@ -120,24 +120,19 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
+              {m.oprichter && <span className="text-amber-500">★</span>}
+              {(() => {
+                const boardEntries = boardMembersByLid.get(m.id) || [];
+                const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
+                const boardMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+                if (!boardMatch) return null;
+                return (
+                  <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                    <span><Shield size={11} className="text-primary" /></span>
+                  </TooltipTrigger><TooltipContent><p>{boardMatch.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
+                );
+              })()}
             </div>
-            {(() => {
-              const eigenaar = m.contacten.find(c => c.functie?.toLowerCase() === "eigenaar")?.naam;
-              const boardEntries = boardMembersByLid.get(m.id) || [];
-              const boardMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
-              if (!eigenaar && !m.oprichter && !boardMatch) return null;
-              return (
-                <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-                  {eigenaar && <span>{eigenaar}</span>}
-                  {m.oprichter && <span className="text-amber-500">★</span>}
-                  {boardMatch && (
-                    <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                      <span><Shield size={11} className="text-primary" /></span>
-                    </TooltipTrigger><TooltipContent><p>{boardMatch.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
-                  )}
-                </div>
-              );
-            })()}
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
