@@ -386,6 +386,8 @@ export type Database = {
           answer: Json
           id: string
           question_id: string
+          respondent_email: string | null
+          status: string
           submitted_at: string
           survey_id: string
         }
@@ -393,6 +395,8 @@ export type Database = {
           answer?: Json
           id?: string
           question_id: string
+          respondent_email?: string | null
+          status?: string
           submitted_at?: string
           survey_id: string
         }
@@ -400,6 +404,8 @@ export type Database = {
           answer?: Json
           id?: string
           question_id?: string
+          respondent_email?: string | null
+          status?: string
           submitted_at?: string
           survey_id?: string
         }

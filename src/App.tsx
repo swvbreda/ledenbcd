@@ -25,6 +25,7 @@ import EnquetesPage from "./pages/EnquetesPage";
 import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
 import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
+import EnqueteReviewPage from "./pages/EnqueteReviewPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -67,6 +68,14 @@ const App = () => (
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
+                <Route
+                  path="/enquetes/:id/review"
+                  element={
+                    <ProtectedRoute>
+                      <EnqueteReviewPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SidebarProvider>

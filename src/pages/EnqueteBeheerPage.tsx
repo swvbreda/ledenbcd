@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, GripVertical, Link2, Copy } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Link2, Copy, Shield } from "lucide-react";
 
 interface Question {
   id: string;
@@ -25,6 +25,8 @@ interface ResponseRow {
   question_id: string;
   answer: { value: any };
   submitted_at: string;
+  status: string;
+  respondent_email: string | null;
 }
 
 export default function EnqueteBeheerPage() {
@@ -103,7 +105,8 @@ export default function EnqueteBeheerPage() {
 
   // Aggregate results per question
   const getResults = (questionId: string, question: Question) => {
-    const qResponses = responses.filter((r) => r.question_id === questionId);
+    // Only count approved responses in results
+    const qResponses = responses.filter((r) => r.question_id === questionId && r.status === "approved");
     if (qResponses.length === 0) return null;
 
     if (question.question_type === "scale") {
@@ -142,7 +145,15 @@ export default function EnqueteBeheerPage() {
         <div>
           <h1 className="text-xl font-bold">{survey.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {completionCount} {completionCount === 1 ? "reactie" : "reacties"} ontvangen
+            {completionCount} intern{completionCount === 1 ? "e reactie" : "e reacties"}
+            {(() => {
+              const approvedExt = new Set(responses.filter(r => r.status === "approved" && r.respondent_email).map(r => r.respondent_email)).size;
+              const pendingExt = new Set(responses.filter(r => r.status === "pending" && r.respondent_email).map(r => r.respondent_email)).size;
+              const parts = [];
+              if (approvedExt > 0) parts.push(`${approvedExt} extern goedgekeurd`);
+              if (pendingExt > 0) parts.push(`${pendingExt} extern in afwachting`);
+              return parts.length > 0 ? ` · ${parts.join(", ")}` : "";
+            })()}
           </p>
         </div>
         <Badge variant={survey.active ? "default" : "secondary"}>
@@ -175,6 +186,33 @@ export default function EnqueteBeheerPage() {
                   <Copy size={14} />
                 </Button>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Review link */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-2">
+            <Shield size={16} className="mt-0.5 text-muted-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Externe responses beoordelen</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Externe inzendingen moeten eerst worden goedgekeurd voordat ze meetellen in de resultaten.
+                {(() => {
+                  const pendingCount = responses.filter(r => r.status === "pending" && r.respondent_email).length;
+                  const uniquePending = new Set(responses.filter(r => r.status === "pending" && r.respondent_email).map(r => r.respondent_email)).size;
+                  return uniquePending > 0 ? ` (${uniquePending} in afwachting)` : "";
+                })()}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/enquetes/${id}/review`)}
+              >
+                Bekijk externe responses
+              </Button>
             </div>
           </div>
         </CardContent>

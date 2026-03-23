@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+
+const PCN_EMAIL = "info@platformcannabis.nl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield } from "lucide-react";
 
 interface Survey {
   id: string;
@@ -142,6 +144,15 @@ export default function EnquetesPage() {
                     )}
                     {completed && (
                       <p className="text-xs text-muted-foreground">Je hebt deze enquête al ingevuld.</p>
+                    )}
+                    {user?.email?.toLowerCase() === PCN_EMAIL && s.active && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/enquetes/${s.id}/review`)}
+                      >
+                        <Shield size={14} className="mr-1" /> Responses beoordelen
+                      </Button>
                     )}
                     {isAdmin && (
                       <>

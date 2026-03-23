@@ -37,8 +37,7 @@ export default function EnqueteExternPage() {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [shopName, setShopName] = useState("");
-  const [shopCity, setShopCity] = useState("");
+  const [respondentEmail, setRespondentEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -88,12 +87,9 @@ export default function EnqueteExternPage() {
   const handleSubmit = async () => {
     if (!survey) return;
 
-    if (!shopName.trim()) {
-      toast.error("Vul de naam van je coffeeshop in.");
-      return;
-    }
-    if (!shopCity.trim()) {
-      toast.error("Vul de plaats van je coffeeshop in.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!respondentEmail.trim() || !emailRegex.test(respondentEmail.trim())) {
+      toast.error("Vul een geldig e-mailadres in.");
       return;
     }
 
@@ -109,16 +105,15 @@ export default function EnqueteExternPage() {
 
     setSubmitting(true);
 
-    const locationLabel = `${shopName.trim()} (${shopCity.trim()})`;
-
     const rows = questions.map((q) => ({
       survey_id: survey.id,
       question_id: q.id,
       answer: {
         value: answers[q.id] ?? null,
-        location: locationLabel,
         source: "extern-pcn",
       },
+      status: "pending",
+      respondent_email: respondentEmail.trim().toLowerCase(),
     }));
 
     const { error } = await supabase.from("survey_responses").insert(rows);
@@ -179,10 +174,10 @@ export default function EnqueteExternPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-sm w-full">
           <CardContent className="py-12 text-center space-y-3">
-            <CheckCircle className="mx-auto text-emerald-600" size={48} />
+            <CheckCircle className="mx-auto text-primary" size={48} />
             <p className="text-lg font-medium">Bedankt!</p>
             <p className="text-sm text-muted-foreground">
-              Je antwoorden zijn anoniem opgeslagen. Je kunt dit venster sluiten.
+              Je antwoorden zijn opgeslagen en worden door PCN gecontroleerd voordat ze worden meegeteld. Je kunt dit venster sluiten.
             </p>
           </CardContent>
         </Card>
@@ -203,25 +198,20 @@ export default function EnqueteExternPage() {
           </CardHeader>
         </Card>
 
-        {/* Shop identification */}
         <Card>
           <CardContent className="pt-6 space-y-3">
             <Label className="text-sm font-medium">
-              Naam coffeeshop <span className="text-destructive">*</span>
+              E-mailadres <span className="text-destructive">*</span>
             </Label>
             <Input
-              placeholder="Naam van je coffeeshop"
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
+              type="email"
+              placeholder="naam@voorbeeld.nl"
+              value={respondentEmail}
+              onChange={(e) => setRespondentEmail(e.target.value)}
             />
-            <Label className="text-sm font-medium">
-              Plaats <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              placeholder="Vestigingsplaats"
-              value={shopCity}
-              onChange={(e) => setShopCity(e.target.value)}
-            />
+            <p className="text-xs text-muted-foreground">
+              Jouw e-mailadres wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
+            </p>
           </CardContent>
         </Card>
 
