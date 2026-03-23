@@ -2,7 +2,7 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
