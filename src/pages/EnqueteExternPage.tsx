@@ -198,25 +198,20 @@ export default function EnqueteExternPage() {
           </CardHeader>
         </Card>
 
-        {/* Shop identification */}
         <Card>
           <CardContent className="pt-6 space-y-3">
             <Label className="text-sm font-medium">
-              Naam coffeeshop <span className="text-destructive">*</span>
+              E-mailadres <span className="text-destructive">*</span>
             </Label>
             <Input
-              placeholder="Naam van je coffeeshop"
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
+              type="email"
+              placeholder="naam@voorbeeld.nl"
+              value={respondentEmail}
+              onChange={(e) => setRespondentEmail(e.target.value)}
             />
-            <Label className="text-sm font-medium">
-              Plaats <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              placeholder="Vestigingsplaats"
-              value={shopCity}
-              onChange={(e) => setShopCity(e.target.value)}
-            />
+            <p className="text-xs text-muted-foreground">
+              Jouw e-mailadres wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
+            </p>
           </CardContent>
         </Card>
 
