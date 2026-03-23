@@ -37,8 +37,7 @@ export default function EnqueteExternPage() {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [shopName, setShopName] = useState("");
-  const [shopCity, setShopCity] = useState("");
+  const [respondentEmail, setRespondentEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
