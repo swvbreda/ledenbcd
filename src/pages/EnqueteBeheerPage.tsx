@@ -150,6 +150,36 @@ export default function EnqueteBeheerPage() {
         </Badge>
       </div>
 
+      {/* Externe link info */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-2">
+            <Link2 size={16} className="mt-0.5 text-muted-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Externe link (PCN)</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Deel deze link met Platform Cannabis Nederland. Toegangscode: <code className="bg-muted px-1 rounded">pcn2026</code>
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="text-xs bg-muted px-2 py-1 rounded truncate block flex-1">
+                  {window.location.origin}/enquete-extern/{id}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/enquete-extern/${id}`);
+                    toast.success("Link gekopieerd!");
+                  }}
+                >
+                  <Copy size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="questions">
         <TabsList>
           <TabsTrigger value="questions">Vragen ({questions.length})</TabsTrigger>
