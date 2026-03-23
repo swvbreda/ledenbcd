@@ -145,7 +145,15 @@ export default function EnqueteBeheerPage() {
         <div>
           <h1 className="text-xl font-bold">{survey.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {completionCount} {completionCount === 1 ? "reactie" : "reacties"} ontvangen
+            {completionCount} intern{completionCount === 1 ? "e reactie" : "e reacties"}
+            {(() => {
+              const approvedExt = new Set(responses.filter(r => r.status === "approved" && r.respondent_email).map(r => r.respondent_email)).size;
+              const pendingExt = new Set(responses.filter(r => r.status === "pending" && r.respondent_email).map(r => r.respondent_email)).size;
+              const parts = [];
+              if (approvedExt > 0) parts.push(`${approvedExt} extern goedgekeurd`);
+              if (pendingExt > 0) parts.push(`${pendingExt} extern in afwachting`);
+              return parts.length > 0 ? ` · ${parts.join(", ")}` : "";
+            })()}
           </p>
         </div>
         <Badge variant={survey.active ? "default" : "secondary"}>
