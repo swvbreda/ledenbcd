@@ -14,6 +14,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ViewTab = "leden" | "leads" | "coffeeshops";
 
