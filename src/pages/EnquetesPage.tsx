@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield } from "lucide-react";
 
 interface Survey {
   id: string;
