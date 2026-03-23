@@ -20,7 +20,7 @@ type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
-  const { allMembersAndLeads } = useMembersData();
+  const { allMembersAndLeads, isLoading: dataLoading } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
