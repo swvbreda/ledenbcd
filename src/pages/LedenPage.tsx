@@ -79,6 +79,14 @@ const LedenPage = () => {
     ? `${mergedSearched.length} leden + leads`
     : `${ledenOnly.length} leden`;
 
+  if (dataLoading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <LoadingSpinner message="Ledenbestand laden..." />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <div className="flex flex-col gap-3">
