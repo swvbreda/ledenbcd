@@ -25,6 +25,8 @@ interface ResponseRow {
   question_id: string;
   answer: { value: any };
   submitted_at: string;
+  status: string;
+  respondent_email: string | null;
 }
 
 export default function EnqueteBeheerPage() {
