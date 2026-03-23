@@ -3,9 +3,8 @@ import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
-import { rawLeads } from "@/hooks/useMembers";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
