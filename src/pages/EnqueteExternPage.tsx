@@ -105,16 +105,15 @@ export default function EnqueteExternPage() {
 
     setSubmitting(true);
 
-    const locationLabel = `${shopName.trim()} (${shopCity.trim()})`;
-
     const rows = questions.map((q) => ({
       survey_id: survey.id,
       question_id: q.id,
       answer: {
         value: answers[q.id] ?? null,
-        location: locationLabel,
         source: "extern-pcn",
       },
+      status: "pending",
+      respondent_email: respondentEmail.trim().toLowerCase(),
     }));
 
     const { error } = await supabase.from("survey_responses").insert(rows);
