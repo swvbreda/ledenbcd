@@ -68,6 +68,7 @@ const App = () => (
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
+                <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />
                 <Route
                   path="/enquetes/:id/review"
                   element={

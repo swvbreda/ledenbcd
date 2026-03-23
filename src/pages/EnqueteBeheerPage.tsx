@@ -173,13 +173,13 @@ export default function EnqueteBeheerPage() {
               </p>
               <div className="flex items-center gap-2">
                 <code className="text-xs bg-muted px-2 py-1 rounded truncate block flex-1">
-                  {window.location.origin}/enquete-extern/{id}
+                  {window.location.origin}/enquetes/pcnleden
                 </code>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/enquete-extern/${id}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/enquetes/pcnleden`);
                     toast.success("Link gekopieerd!");
                   }}
                 >
