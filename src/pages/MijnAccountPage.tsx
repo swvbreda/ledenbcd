@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import MailingPreferences from "@/components/MailingPreferences";
 import MemberEditForm from "@/components/MemberEditForm";
 import type { Member } from "@/data/types";
