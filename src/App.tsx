@@ -20,6 +20,9 @@ import AccountBeheerPage from "./pages/AccountBeheerPage";
 import GoedkeuringenPage from "./pages/GoedkeuringenPage";
 import BestuurBeheerPage from "./pages/BestuurBeheerPage";
 import MijnAccountPage from "./pages/MijnAccountPage";
+import EnquetesPage from "./pages/EnquetesPage";
+import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
+import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +57,9 @@ const App = () => (
                 <Route path="/goedkeuringen" element={<GoedkeuringenPage />} />
                 <Route path="/bestuur-beheer" element={<BestuurBeheerPage />} />
                 <Route path="/mijn-account" element={<MijnAccountPage />} />
+                <Route path="/enquetes" element={<EnquetesPage />} />
+                <Route path="/enquetes/:id" element={<EnqueteInvullenPage />} />
+                <Route path="/enquetes/:id/beheer" element={<EnqueteBeheerPage />} />
                 <Route path="/oud-leden" element={<LedenPage />} />
                 <Route path="/marktaandeel" element={<LocatiesPage />} />
               </Route>
