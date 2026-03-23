@@ -170,7 +170,7 @@ const LoginPage = () => {
 
               {!resetMode && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">Wachtwoord</label>
+                  <label className="text-sm font-medium text-muted-foreground mb-1 block">{registerMode ? "Kies een wachtwoord" : "Wachtwoord"}</label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
