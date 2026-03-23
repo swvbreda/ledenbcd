@@ -179,7 +179,7 @@ export default function EnqueteBeheerPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/enquete-extern/${id}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/enquetes/pcnleden`);
                     toast.success("Link gekopieerd!");
                   }}
                 >
