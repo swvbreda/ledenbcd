@@ -177,7 +177,7 @@ const LoginPage = () => {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={registerMode ? "Kies minimaal 8 tekens" : "••••••••"}
                       required
                       minLength={8}
                       className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
