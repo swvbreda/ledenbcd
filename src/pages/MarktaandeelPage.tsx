@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Member } from "@/data/types";
-import { allMembers, allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
