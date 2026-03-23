@@ -28,7 +28,6 @@ async function createApnsJwt(
   const payloadB64 = encode(payload);
   const signingInput = `${headerB64}.${payloadB64}`;
 
-  // Import the PEM private key
   const pemBody = privateKeyPem
     .replace(/-----BEGIN PRIVATE KEY-----/, "")
     .replace(/-----END PRIVATE KEY-----/, "")
@@ -49,13 +48,11 @@ async function createApnsJwt(
     new TextEncoder().encode(signingInput)
   );
 
-  // Convert DER signature to raw r||s (64 bytes)
   const sigBytes = new Uint8Array(signature);
   let raw: Uint8Array;
   if (sigBytes.length === 64) {
     raw = sigBytes;
   } else {
-    // DER decode
     const rLen = sigBytes[3];
     const rStart = 4;
     const r = sigBytes.slice(rStart, rStart + rLen);
@@ -128,12 +125,30 @@ Deno.serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
 
-    // Verify caller is admin
-    const authHeader = req.headers.get("authorization");
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    if (authHeader) {
+    // Check for internal function-to-function calls first
+    const authHeader = req.headers.get("authorization");
+    const internalSecret = req.headers.get("x-internal-secret");
+
+    let isAuthorized = false;
+
+    // Path 1: Internal webhook call (function-to-function)
+    if (internalSecret && INTERNAL_WEBHOOK_SECRET && internalSecret === INTERNAL_WEBHOOK_SECRET) {
+      isAuthorized = true;
+    }
+
+    // Path 2: User JWT auth (must be admin)
+    if (!isAuthorized) {
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabase.auth.getUser(token);
       if (!user) {
@@ -143,7 +158,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check admin role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -168,9 +182,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get all device tokens (optionally filter by admin role)
     let query = supabase.from("push_device_tokens").select("device_token, user_id");
-
     const { data: tokens, error: tokensError } = await query;
     if (tokensError) throw tokensError;
 
@@ -181,7 +193,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If target_role is specified, filter tokens by role
     let filteredTokens = tokens;
     if (target_role === "admin") {
       const { data: adminUsers } = await supabase
