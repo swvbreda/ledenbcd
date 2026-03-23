@@ -22,7 +22,6 @@ interface Question {
 }
 
 const ANDERS_OPTION = "Anders, namelijk: …";
-}
 
 interface Survey {
   id: string;
