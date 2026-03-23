@@ -24,6 +24,7 @@ import MijnAccountPage from "./pages/MijnAccountPage";
 import EnquetesPage from "./pages/EnquetesPage";
 import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
 import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
+import EnqueteExternPage from "./pages/EnqueteExternPage";
 
 import NotFound from "./pages/NotFound";
 
