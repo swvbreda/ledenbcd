@@ -112,7 +112,7 @@ const LoginPage = () => {
 
   const getSubtitle = () => {
     if (resetMode) return "Voer je e-mailadres in om je wachtwoord te herstellen";
-    if (registerMode) return "Registreer met het e-mailadres dat bij ons geregistreerd staat";
+    if (registerMode) return "Gebruik het e-mailadres waarop je de updates van de bond ontvangt en kies zelf een wachtwoord";
     return "Log in om verder te gaan";
   };
 
