@@ -209,6 +209,8 @@ export default function EnqueteBeheerPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Tabs defaultValue="questions">
         <TabsList>
           <TabsTrigger value="questions">Vragen ({questions.length})</TabsTrigger>
           <TabsTrigger value="results">Resultaten</TabsTrigger>
