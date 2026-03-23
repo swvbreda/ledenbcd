@@ -19,18 +19,19 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
+
+    if (!INTERNAL_WEBHOOK_SECRET) {
+      throw new Error("INTERNAL_WEBHOOK_SECRET not configured");
+    }
 
     const { type, record } = await req.json();
 
-    // Only handle INSERT events
     if (type !== "INSERT") {
       return new Response(JSON.stringify({ skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Call the send-push function to notify admins
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const memberId = record?.member_id;
 
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        "x-internal-secret": INTERNAL_WEBHOOK_SECRET,
       },
       body: JSON.stringify({
         title: "Nieuw wijzigingsverzoek",
