@@ -120,6 +120,7 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
 
 function RequestCard({ request }: { request: EditRequest }) {
   const [expanded, setExpanded] = useState(true);
+  const { allMembersAndLeads } = useMembersData();
   const member = allMembersAndLeads.find((m) => m.id === request.member_id);
   const approveMutation = useApproveEditRequest();
   const rejectMutation = useRejectEditRequest();

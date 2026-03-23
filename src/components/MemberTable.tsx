@@ -41,6 +41,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId } = useAuth();
+  const { rawLeads: allLeads } = useMembersData();
   const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, { naam: string; functie: string }[]>>(new Map());
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { allRepresented } = useMembersData();
   const totalNL = coffeeshopData.totaalNL;
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   // Use represented (members + leads) for market share

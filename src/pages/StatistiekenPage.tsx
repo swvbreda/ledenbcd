@@ -3,9 +3,10 @@ import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import LedenPerStadOverzicht from "@/components/LedenPerStadOverzicht";
 import StedenDekkingOverzicht from "@/components/StedenDekkingOverzicht";
-import { allMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 
 const StatistiekenPage = () => {
+  const { rawMembers: allMembers } = useMembersData();
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div>

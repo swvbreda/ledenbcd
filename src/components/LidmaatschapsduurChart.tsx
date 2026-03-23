@@ -7,6 +7,7 @@ import { getMembershipYears } from "@/lib/membership";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
+  const { allRepresented } = useMembersData();
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
   const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
 

@@ -11,7 +11,8 @@ const totalNL = coffeeshopData.totaalNL;
 
 const MarktaandeelPage = () => {
   const navigate = useNavigate();
-  const members = allMembers;
+  const { rawMembers, allRepresented } = useMembersData();
+  const members = rawMembers;
   const represented = allRepresented;
   const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);

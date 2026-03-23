@@ -56,6 +56,7 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { allRepresented } = useMembersData();
   // Use allRepresented (members + leads) for market share calculations
   const represented = allRepresented;
   const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);

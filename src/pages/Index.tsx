@@ -4,11 +4,12 @@ import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
-import { allMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 
 const Index = () => {
-  const { members } = useMergedMembers(allMembers);
+  const { rawMembers } = useMembersData();
+  const { members } = useMergedMembers(rawMembers);
 
   return (
     <div className="p-4 sm:p-6 space-y-6">

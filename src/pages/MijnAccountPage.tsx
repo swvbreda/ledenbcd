@@ -300,6 +300,7 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
 // ── Main Page ──
 export default function MijnAccountPage() {
   const { user, isAdmin, linkedMemberId } = useAuth();
+  const { allMembersAndLeads } = useMembersData();
   const { members: allMembers } = useMergedMembers(allMembersAndLeads);
   const [editingMember, setEditingMember] = useState(false);
   const [boardMember, setBoardMember] = useState<BoardMemberData | null>(null);

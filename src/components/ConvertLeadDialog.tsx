@@ -19,6 +19,7 @@ interface Props {
 }
 
 const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
+  const { rawMembers } = useMembersData();
   const maxExistingId = rawMembers.reduce((max, m) => Math.max(max, m.id), 0);
   const suggestedLidnummer = getNextLidnummer(maxExistingId, conversions);
 

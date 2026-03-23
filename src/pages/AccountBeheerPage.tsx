@@ -50,11 +50,12 @@ const AccountBeheerPage = () => {
   const [resetPw, setResetPw] = useState("");
   const [resetPwConfirm, setResetPwConfirm] = useState("");
 
+  const { allMembersAndLeads } = useMembersData();
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
     allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
     return map;
-  }, []);
+  }, [allMembersAndLeads]);
 
   const isBoardEmail = (email: string | undefined) =>
     !!email && email.toLowerCase().endsWith("@coffeeshopbond.nl");

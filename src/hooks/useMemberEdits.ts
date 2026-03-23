@@ -52,6 +52,7 @@ function useOwnPendingEdit(memberId: number) {
 export function useMergedMember(memberId: number): { member: Member | undefined; isLoading: boolean; hasPendingEdit: boolean } {
   const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
   const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
+  const { allMembersAndLeads } = useMembersData();
   const baseMember = allMembersAndLeads.find((m) => m.id === memberId);
 
   const isLoading = editsLoading || pendingLoading;

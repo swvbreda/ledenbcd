@@ -38,6 +38,7 @@ const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, linkedMemberIds } = useAuth();
+  const { rawMembers: allMembers, allMembersAndLeads, rawLeads } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);

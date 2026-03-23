@@ -12,6 +12,7 @@ import {
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 
 const GemeenteDetailPage = () => {
+  const { allRepresented } = useMembersData();
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";

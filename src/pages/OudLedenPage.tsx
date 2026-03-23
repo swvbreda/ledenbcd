@@ -8,6 +8,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { getArchivedIds } from "@/hooks/useArchive";
 
 const OudLedenPage = () => {
+  const { allMembersAndLeads } = useMembersData();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
