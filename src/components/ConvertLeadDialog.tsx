@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { convertLead, getNextLidnummer, type LeadConversion } from "@/hooks/useLeadConversions";
 import type { Member } from "@/data/types";
-import { rawMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { toast } from "sonner";
 
 interface Props {
