@@ -2,7 +2,7 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
