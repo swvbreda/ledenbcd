@@ -1,11 +1,16 @@
 import { useRef, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useAuth } from "@/hooks/useAuth";
+
+const PCN_EMAIL = "info@platformcannabis.nl";
+const PCN_SURVEY_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
 const DashboardLayout = () => {
   const mainRef = useRef<HTMLElement>(null);
   const { pathname, search, hash, key } = useLocation();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     const resetScroll = () => {
@@ -18,6 +23,12 @@ const DashboardLayout = () => {
     resetScroll();
     requestAnimationFrame(resetScroll);
   }, [pathname, search, hash, key]);
+
+  // PCN user may only access the review page — redirect away from dashboard
+  const isPCN = user?.email?.toLowerCase() === PCN_EMAIL && !isAdmin;
+  if (isPCN) {
+    return <Navigate to={`/enquetes/${PCN_SURVEY_ID}/review`} replace />;
+  }
 
   return (
     <div className="min-h-screen flex w-full overflow-x-hidden max-w-[100vw]">
