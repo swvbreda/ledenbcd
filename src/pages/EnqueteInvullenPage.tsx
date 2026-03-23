@@ -21,6 +21,9 @@ interface Question {
   sort_order: number;
 }
 
+const ANDERS_OPTION = "Anders, namelijk: …";
+}
+
 interface Survey {
   id: string;
   title: string;
@@ -203,31 +206,87 @@ export default function EnqueteInvullenPage() {
                 )}
 
                 {q.question_type === "radio" && (
-                  <RadioGroup
-                    value={answers[q.id] ?? ""}
-                    onValueChange={(v) => setAnswer(q.id, v)}
-                  >
-                    {q.options.map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2">
-                        <RadioGroupItem value={opt} id={`${q.id}-${opt}`} />
-                        <Label htmlFor={`${q.id}-${opt}`} className="font-normal">{opt}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <div className="space-y-2">
+                    <RadioGroup
+                      value={(answers[q.id]?.startsWith?.("Anders: ") ? ANDERS_OPTION : answers[q.id]) ?? ""}
+                      onValueChange={(v) => {
+                        if (v === ANDERS_OPTION) {
+                          setAnswer(q.id, "Anders: ");
+                        } else {
+                          setAnswer(q.id, v);
+                        }
+                      }}
+                    >
+                      {q.options.map((opt) => (
+                        <div key={opt} className="flex items-center space-x-2">
+                          <RadioGroupItem value={opt} id={`${q.id}-${opt}`} />
+                          <Label htmlFor={`${q.id}-${opt}`} className="font-normal">{opt}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    {typeof answers[q.id] === "string" && answers[q.id]?.startsWith?.("Anders: ") && (
+                      <Input
+                        placeholder="Vul in..."
+                        value={answers[q.id].replace("Anders: ", "")}
+                        onChange={(e) => setAnswer(q.id, "Anders: " + e.target.value)}
+                        className="ml-6 max-w-xs"
+                      />
+                    )}
+                  </div>
                 )}
 
                 {q.question_type === "checkbox" && (
                   <div className="space-y-2">
-                    {q.options.map((opt) => (
-                      <div key={opt} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`${q.id}-${opt}`}
-                          checked={(answers[q.id] ?? []).includes(opt)}
-                          onCheckedChange={(checked) => handleCheckbox(q.id, opt, !!checked)}
-                        />
-                        <Label htmlFor={`${q.id}-${opt}`} className="font-normal">{opt}</Label>
-                      </div>
-                    ))}
+                    {q.options.map((opt) => {
+                      const currentArr: string[] = answers[q.id] ?? [];
+                      const isAnders = opt === ANDERS_OPTION;
+                      const andersValue = currentArr.find((v: string) => v.startsWith("Anders: "));
+                      const isChecked = isAnders ? !!andersValue : currentArr.includes(opt);
+                      return (
+                        <div key={opt}>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${q.id}-${opt}`}
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                if (isAnders) {
+                                  if (checked) {
+                                    setAnswers((prev) => ({
+                                      ...prev,
+                                      [q.id]: [...(prev[q.id] ?? []).filter((v: string) => !v.startsWith("Anders: ")), "Anders: "],
+                                    }));
+                                  } else {
+                                    setAnswers((prev) => ({
+                                      ...prev,
+                                      [q.id]: (prev[q.id] ?? []).filter((v: string) => !v.startsWith("Anders: ")),
+                                    }));
+                                  }
+                                } else {
+                                  handleCheckbox(q.id, opt, !!checked);
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`${q.id}-${opt}`} className="font-normal">{opt}</Label>
+                          </div>
+                          {isAnders && andersValue !== undefined && (
+                            <Input
+                              placeholder="Vul in..."
+                              value={andersValue.replace("Anders: ", "")}
+                              onChange={(e) => {
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  [q.id]: [
+                                    ...(prev[q.id] ?? []).filter((v: string) => !v.startsWith("Anders: ")),
+                                    "Anders: " + e.target.value,
+                                  ],
+                                }));
+                              }}
+                              className="ml-6 mt-1 max-w-xs"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
