@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
-import { allMembers, allMembersAndLeads, rawLeads } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import ConvertLeadDialog from "@/components/ConvertLeadDialog";
 import { getMembershipYears } from "@/lib/membership";
@@ -38,6 +38,7 @@ const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, linkedMemberIds } = useAuth();
+  const { rawMembers: allMembers, allMembersAndLeads, rawLeads } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);

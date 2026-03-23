@@ -2,11 +2,12 @@ import { TrendingUp, Building2, Clock, UserPlus, Award, UserCheck } from "lucide
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { getMembershipYears } from "@/lib/membership";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
+  const { allRepresented } = useMembersData();
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
   const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
 

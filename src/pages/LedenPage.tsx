@@ -7,7 +7,8 @@ import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
-import { useMembers, allLeads, allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
+  const { allMembersAndLeads } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);

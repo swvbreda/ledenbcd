@@ -1,14 +1,10 @@
 import { useState, useMemo } from "react";
-import membersData from "@/data/members.json";
-import leadsData from "@/data/leads.json";
 import type { Member } from "@/data/types";
 import { getArchivedIds } from "@/hooks/useArchive";
 import { getMembershipYears } from "@/lib/membership";
 import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
-
-const rawMembers = membersData as Member[];
-const rawLeads = leadsData as Member[];
+import { useMembersData } from "@/contexts/MembersDataContext";
 
 /** Apply conversions: converted leads become members with new id/fields */
 function applyConversions(members: Member[], leads: Member[], conversions: LeadConversion[]) {
@@ -38,15 +34,8 @@ function applyConversions(members: Member[], leads: Member[], conversions: LeadC
   return { members: allMembersCombined, leads: activeLeads };
 }
 
-export { rawMembers, rawLeads };
-
-// These are now functions that require conversions context - keep static exports for backwards compat
-export const allMembers = rawMembers;
-export const allLeads = rawLeads;
-export const allRepresented = [...rawMembers, ...rawLeads] as Member[];
-export const allMembersAndLeads = [...rawMembers, ...rawLeads] as Member[];
-
 export function useMembers() {
+  const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
@@ -55,7 +44,7 @@ export function useMembers() {
 
   const { members: effectiveMembers, leads: effectiveLeads } = useMemo(
     () => applyConversions(rawMembers, rawLeads, conversions),
-    [conversions]
+    [rawMembers, rawLeads, conversions]
   );
 
   const archivedIds = useMemo(() => getArchivedIds(), []);
@@ -76,7 +65,7 @@ export function useMembers() {
 
   const cities = useMemo(
     () => [...new Set(allIncludingLeads.map((m) => m.plaats).filter(Boolean))].sort(),
-    []
+    [allIncludingLeads]
   );
   const stadsdelen = useMemo(() => [...stadsdeelCategorieen], []);
 
@@ -143,10 +132,11 @@ export function useMembers() {
     filteredMembers,
     searchedMembers,
     clearFilters,
-    allMembers,
+    allMembers: rawMembers,
     activeLeadIds,
     effectiveMembers,
     effectiveLeads,
     conversions,
+    dataLoading,
   };
 }

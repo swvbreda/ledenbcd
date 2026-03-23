@@ -4,10 +4,11 @@ import { UserMinus, Search, MapPin, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import type { Member } from "@/data/types";
-import { allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { getArchivedIds } from "@/hooks/useArchive";
 
 const OudLedenPage = () => {
+  const { allMembersAndLeads } = useMembersData();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");

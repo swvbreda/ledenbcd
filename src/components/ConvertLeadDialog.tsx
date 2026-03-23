@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { convertLead, getNextLidnummer, type LeadConversion } from "@/hooks/useLeadConversions";
 import type { Member } from "@/data/types";
-import { rawMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { toast } from "sonner";
 
 interface Props {
@@ -19,6 +19,7 @@ interface Props {
 }
 
 const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
+  const { rawMembers } = useMembersData();
   const maxExistingId = rawMembers.reduce((max, m) => Math.max(max, m.id), 0);
   const suggestedLidnummer = getNextLidnummer(maxExistingId, conversions);
 

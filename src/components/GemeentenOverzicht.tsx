@@ -2,7 +2,7 @@ import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { allRepresented } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
@@ -56,6 +56,7 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { allRepresented } = useMembersData();
   // Use allRepresented (members + leads) for market share calculations
   const represented = allRepresented;
   const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { toast } from "sonner";
 import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,11 +50,12 @@ const AccountBeheerPage = () => {
   const [resetPw, setResetPw] = useState("");
   const [resetPwConfirm, setResetPwConfirm] = useState("");
 
+  const { allMembersAndLeads } = useMembersData();
   const memberMap = useMemo(() => {
     const map = new Map<number, { naam: string; contactpersoon: string }>();
     allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
     return map;
-  }, []);
+  }, [allMembersAndLeads]);
 
   const isBoardEmail = (email: string | undefined) =>
     !!email && email.toLowerCase().endsWith("@coffeeshopbond.nl");

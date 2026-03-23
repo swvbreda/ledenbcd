@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Building2, Users, Notebook, Search, X } from "lucide-react";
-import { allRepresented, allMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 
 const GemeenteDetailPage = () => {
+  const { allRepresented } = useMembersData();
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
