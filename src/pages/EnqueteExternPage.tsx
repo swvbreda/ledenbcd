@@ -87,12 +87,9 @@ export default function EnqueteExternPage() {
   const handleSubmit = async () => {
     if (!survey) return;
 
-    if (!shopName.trim()) {
-      toast.error("Vul de naam van je coffeeshop in.");
-      return;
-    }
-    if (!shopCity.trim()) {
-      toast.error("Vul de plaats van je coffeeshop in.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!respondentEmail.trim() || !emailRegex.test(respondentEmail.trim())) {
+      toast.error("Vul een geldig e-mailadres in.");
       return;
     }
 
