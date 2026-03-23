@@ -33,6 +33,7 @@ const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
   { title: "Ledenbestand", url: "/leden", icon: Users },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
+  { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
 ];
 
 export function AppSidebar() {

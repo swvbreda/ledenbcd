@@ -57,6 +57,9 @@ const App = () => (
                 <Route path="/goedkeuringen" element={<GoedkeuringenPage />} />
                 <Route path="/bestuur-beheer" element={<BestuurBeheerPage />} />
                 <Route path="/mijn-account" element={<MijnAccountPage />} />
+                <Route path="/enquetes" element={<EnquetesPage />} />
+                <Route path="/enquetes/:id" element={<EnqueteInvullenPage />} />
+                <Route path="/enquetes/:id/beheer" element={<EnqueteBeheerPage />} />
                 <Route path="/oud-leden" element={<LedenPage />} />
                 <Route path="/marktaandeel" element={<LocatiesPage />} />
               </Route>
