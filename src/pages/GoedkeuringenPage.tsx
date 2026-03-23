@@ -11,7 +11,7 @@ import {
   useRejectEditRequest,
   type EditRequest,
 } from "@/hooks/useMemberEdits";
-import { allMembersAndLeads } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import type { Member } from "@/data/types";
 
 const fieldLabels: Record<string, string> = {
