@@ -12,12 +12,6 @@ const DashboardLayout = () => {
   const { pathname, search, hash, key } = useLocation();
   const { user, isAdmin } = useAuth();
 
-  // PCN user may only access the review page — redirect away from dashboard
-  const isPCN = user?.email?.toLowerCase() === PCN_EMAIL && !isAdmin;
-  if (isPCN) {
-    return <Navigate to={`/enquetes/${PCN_SURVEY_ID}/review`} replace />;
-  }
-
   useEffect(() => {
     const resetScroll = () => {
       mainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -29,6 +23,12 @@ const DashboardLayout = () => {
     resetScroll();
     requestAnimationFrame(resetScroll);
   }, [pathname, search, hash, key]);
+
+  // PCN user may only access the review page — redirect away from dashboard
+  const isPCN = user?.email?.toLowerCase() === PCN_EMAIL && !isAdmin;
+  if (isPCN) {
+    return <Navigate to={`/enquetes/${PCN_SURVEY_ID}/review`} replace />;
+  }
 
   return (
     <div className="min-h-screen flex w-full overflow-x-hidden max-w-[100vw]">
