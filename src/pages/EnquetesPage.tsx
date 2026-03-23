@@ -145,6 +145,15 @@ export default function EnquetesPage() {
                     {completed && (
                       <p className="text-xs text-muted-foreground">Je hebt deze enquête al ingevuld.</p>
                     )}
+                    {user?.email?.toLowerCase() === PCN_EMAIL && s.active && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/enquetes/${s.id}/review`)}
+                      >
+                        <Shield size={14} className="mr-1" /> Responses beoordelen
+                      </Button>
+                    )}
                     {isAdmin && (
                       <>
                         <Button
