@@ -68,6 +68,14 @@ const App = () => (
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
+                <Route
+                  path="/enquetes/:id/review"
+                  element={
+                    <ProtectedRoute>
+                      <EnqueteReviewPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SidebarProvider>
