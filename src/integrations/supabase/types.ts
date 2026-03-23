@@ -266,6 +266,24 @@ export type Database = {
         }
         Relationships: []
       }
+      members_data: {
+        Row: {
+          data: Json
+          id: number
+          member_type: string
+        }
+        Insert: {
+          data?: Json
+          id: number
+          member_type?: string
+        }
+        Update: {
+          data?: Json
+          id?: number
+          member_type?: string
+        }
+        Relationships: []
+      }
       push_device_tokens: {
         Row: {
           created_at: string
