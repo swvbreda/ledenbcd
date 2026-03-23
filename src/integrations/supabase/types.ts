@@ -315,18 +315,21 @@ export type Database = {
         Row: {
           completed_at: string
           id: string
+          location_name: string | null
           survey_id: string
           user_id: string
         }
         Insert: {
           completed_at?: string
           id?: string
+          location_name?: string | null
           survey_id: string
           user_id: string
         }
         Update: {
           completed_at?: string
           id?: string
+          location_name?: string | null
           survey_id?: string
           user_id?: string
         }

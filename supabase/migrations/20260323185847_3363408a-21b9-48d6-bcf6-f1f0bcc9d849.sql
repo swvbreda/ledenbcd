@@ -1,0 +1,1 @@
+ALTER TABLE public.survey_completions ADD COLUMN IF NOT EXISTS location_name text DEFAULT null;
