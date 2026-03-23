@@ -20,6 +20,9 @@ import AccountBeheerPage from "./pages/AccountBeheerPage";
 import GoedkeuringenPage from "./pages/GoedkeuringenPage";
 import BestuurBeheerPage from "./pages/BestuurBeheerPage";
 import MijnAccountPage from "./pages/MijnAccountPage";
+import EnquetesPage from "./pages/EnquetesPage";
+import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
+import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 
 import NotFound from "./pages/NotFound";
 
