@@ -58,7 +58,7 @@ export default function EnqueteBeheerPage() {
         options: Array.isArray(row.options) ? row.options : [],
       }))
     );
-    setResponses((r as ResponseRow[]) ?? []);
+    setResponses(((r ?? []) as unknown as ResponseRow[]));
     setCompletionCount((c ?? []).length);
     setLoading(false);
   };
