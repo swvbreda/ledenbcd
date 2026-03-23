@@ -166,7 +166,7 @@ export default function EnqueteInvullenPage() {
           <CardTitle>{survey.title}</CardTitle>
           {survey.description && <CardDescription>{survey.description}</CardDescription>}
           <p className="text-xs text-muted-foreground mt-2">
-            🔒 Je antwoorden worden volledig anoniem opgeslagen.
+            Je antwoorden worden volledig anoniem opgeslagen.
           </p>
         </CardHeader>
       </Card>
