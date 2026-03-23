@@ -105,7 +105,8 @@ export default function EnqueteBeheerPage() {
 
   // Aggregate results per question
   const getResults = (questionId: string, question: Question) => {
-    const qResponses = responses.filter((r) => r.question_id === questionId);
+    // Only count approved responses in results
+    const qResponses = responses.filter((r) => r.question_id === questionId && r.status === "approved");
     if (qResponses.length === 0) return null;
 
     if (question.question_type === "scale") {
