@@ -14,12 +14,13 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
   const { isAdmin } = useAuth();
-  const { allMembersAndLeads } = useMembersData();
+  const { allMembersAndLeads, isLoading: dataLoading } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
@@ -77,6 +78,14 @@ const LedenPage = () => {
     : isAdmin
     ? `${mergedSearched.length} leden + leads`
     : `${ledenOnly.length} leden`;
+
+  if (dataLoading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <LoadingSpinner message="Ledenbestand laden..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">

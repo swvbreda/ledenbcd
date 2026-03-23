@@ -4,12 +4,21 @@ import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 
 const Index = () => {
-  const { rawMembers } = useMembersData();
+  const { rawMembers, isLoading } = useMembersData();
   const { members } = useMergedMembers(rawMembers);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <LoadingSpinner message="Dashboard laden..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
