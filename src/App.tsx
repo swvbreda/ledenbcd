@@ -66,6 +66,7 @@ const App = () => (
                   <Route path="/oud-leden" element={<LedenPage />} />
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                 </Route>
+                <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </SidebarProvider>
