@@ -183,7 +183,32 @@ export default function EnqueteBeheerPage() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="questions">
+      {/* Review link */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-2">
+            <Shield size={16} className="mt-0.5 text-muted-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Externe responses beoordelen</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Externe inzendingen moeten eerst worden goedgekeurd voordat ze meetellen in de resultaten.
+                {(() => {
+                  const pendingCount = responses.filter(r => r.status === "pending" && r.respondent_email).length;
+                  const uniquePending = new Set(responses.filter(r => r.status === "pending" && r.respondent_email).map(r => r.respondent_email)).size;
+                  return uniquePending > 0 ? ` (${uniquePending} in afwachting)` : "";
+                })()}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/enquetes/${id}/review`)}
+              >
+                Bekijk externe responses
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
         <TabsList>
           <TabsTrigger value="questions">Vragen ({questions.length})</TabsTrigger>
           <TabsTrigger value="results">Resultaten</TabsTrigger>
