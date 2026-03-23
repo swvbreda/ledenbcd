@@ -112,7 +112,7 @@ const LoginPage = () => {
 
   const getSubtitle = () => {
     if (resetMode) return "Voer je e-mailadres in om je wachtwoord te herstellen";
-    if (registerMode) return "Registreer met het e-mailadres dat bij ons geregistreerd staat";
+    if (registerMode) return "Gebruik het e-mailadres waarop je de updates van de bond ontvangt en kies zelf een wachtwoord";
     return "Log in om verder te gaan";
   };
 
@@ -170,14 +170,14 @@ const LoginPage = () => {
 
               {!resetMode && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-1 block">Wachtwoord</label>
+                  <label className="text-sm font-medium text-muted-foreground mb-1 block">{registerMode ? "Kies een wachtwoord" : "Wachtwoord"}</label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={registerMode ? "Kies minimaal 8 tekens" : "••••••••"}
                       required
                       minLength={8}
                       className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
