@@ -133,6 +133,36 @@ export default function EnqueteBeheerPage() {
     return { type: "text", texts };
   };
 
+  const exportCSV = (qs: Question[], resps: ResponseRow[]) => {
+    const approved = resps.filter((r) => r.status === "approved");
+    // Group by respondent (location or email)
+    const respondentMap = new Map<string, Map<string, string>>();
+    for (const r of approved) {
+      const key = r.answer?.location || r.respondent_email || "Anoniem";
+      if (!respondentMap.has(key)) respondentMap.set(key, new Map());
+      const val = r.answer?.value;
+      const display = Array.isArray(val) ? val.join("; ") : String(val ?? "");
+      respondentMap.get(key)!.set(r.question_id, display);
+    }
+
+    const headers = ["Respondent", ...qs.map((q, i) => `${i + 1}. ${q.question_text}`)];
+    const rows = Array.from(respondentMap.entries()).map(([name, answers]) => {
+      return [name, ...qs.map((q) => answers.get(q.id) ?? "")];
+    });
+
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [headers.map(escape).join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const d = new Date().toISOString().slice(0, 10);
+    a.download = `enquete-resultaten-${d}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV gedownload!");
+  };
+
   if (loading) return <div className="p-6 text-muted-foreground">Laden...</div>;
   if (!survey) return <div className="p-6 text-destructive">Enquête niet gevonden.</div>;
 
