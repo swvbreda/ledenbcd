@@ -67,7 +67,8 @@ Deno.serve(async (req) => {
       });
 
       if (createError) {
-        results.push({ email: user.email, error: createError.message });
+        console.error("create-board-users: user creation failed", createError);
+        results.push({ email: user.email, error: "User creation failed" });
         continue;
       }
 
@@ -77,7 +78,8 @@ Deno.serve(async (req) => {
           .insert({ user_id: userData.user.id, role: user.role });
 
         if (roleError) {
-          results.push({ email: user.email, created: true, roleError: roleError.message });
+          console.error("create-board-users: role assignment failed", roleError);
+          results.push({ email: user.email, created: true, roleError: "Role assignment failed" });
         } else {
           results.push({ email: user.email, created: true, role: user.role });
         }
@@ -88,7 +90,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("create-board-users error:", error);
+    return new Response(JSON.stringify({ error: "Er is een interne fout opgetreden" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

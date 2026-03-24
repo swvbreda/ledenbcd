@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_board_members_public() FROM anon;
