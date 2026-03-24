@@ -78,7 +78,8 @@ Deno.serve(async (req) => {
           .insert({ user_id: userData.user.id, role: user.role });
 
         if (roleError) {
-          results.push({ email: user.email, created: true, roleError: roleError.message });
+          console.error("create-board-users: role assignment failed", roleError);
+          results.push({ email: user.email, created: true, roleError: "Role assignment failed" });
         } else {
           results.push({ email: user.email, created: true, role: user.role });
         }
