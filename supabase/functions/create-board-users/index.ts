@@ -67,7 +67,8 @@ Deno.serve(async (req) => {
       });
 
       if (createError) {
-        results.push({ email: user.email, error: createError.message });
+        console.error("create-board-users: user creation failed", createError);
+        results.push({ email: user.email, error: "User creation failed" });
         continue;
       }
 
