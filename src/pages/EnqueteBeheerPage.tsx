@@ -135,10 +135,10 @@ export default function EnqueteBeheerPage() {
 
   const exportCSV = (qs: Question[], resps: ResponseRow[]) => {
     const approved = resps.filter((r) => r.status === "approved");
-    // Group by respondent (location or email)
+    // Group by respondent key (anonymous numbering)
     const respondentMap = new Map<string, Map<string, string>>();
     for (const r of approved) {
-      const key = r.answer?.location || r.respondent_email || "Anoniem";
+      const key = r.answer?.location || r.respondent_email || `anon-${respondentMap.size}`;
       if (!respondentMap.has(key)) respondentMap.set(key, new Map());
       const val = r.answer?.value;
       const display = Array.isArray(val) ? val.join("; ") : String(val ?? "");
@@ -146,8 +146,10 @@ export default function EnqueteBeheerPage() {
     }
 
     const headers = ["Respondent", ...qs.map((q, i) => `${i + 1}. ${q.question_text}`)];
-    const rows = Array.from(respondentMap.entries()).map(([name, answers]) => {
-      return [name, ...qs.map((q) => answers.get(q.id) ?? "")];
+    let idx = 0;
+    const rows = Array.from(respondentMap.values()).map((answers) => {
+      idx++;
+      return [`Respondent ${idx}`, ...qs.map((q) => answers.get(q.id) ?? "")];
     });
 
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
@@ -411,18 +413,17 @@ export default function EnqueteBeheerPage() {
                               <table className="w-full text-xs">
                                 <thead className="bg-muted/50">
                                   <tr>
-                                    <th className="text-left px-3 py-1.5 font-medium">Respondent</th>
+                                    <th className="text-left px-3 py-1.5 font-medium">#</th>
                                     <th className="text-left px-3 py-1.5 font-medium">Antwoord</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {qResponses.map((r, i) => {
-                                    const label = r.answer?.location || (r.respondent_email ? `Extern: ${r.respondent_email}` : "Anoniem");
                                     const val = r.answer?.value;
                                     const display = Array.isArray(val) ? val.join(", ") : String(val ?? "-");
                                     return (
                                       <tr key={i} className="border-t border-muted/50">
-                                        <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{label}</td>
+                                        <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{i + 1}</td>
                                         <td className="px-3 py-1.5">{display}</td>
                                       </tr>
                                     );
