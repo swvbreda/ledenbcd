@@ -52,8 +52,8 @@ const AccountBeheerPage = () => {
 
   const { allMembersAndLeads } = useMembersData();
   const memberMap = useMemo(() => {
-    const map = new Map<number, { naam: string; contactpersoon: string }>();
-    allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
+    const map = new Map<number, typeof allMembersAndLeads[0]>();
+    allMembersAndLeads.forEach((m) => map.set(m.id, m));
     return map;
   }, [allMembersAndLeads]);
 
@@ -83,7 +83,29 @@ const AccountBeheerPage = () => {
     }
     if (ids.length > 0) {
       const firstMember = memberMap.get(ids[0]);
-      return { label: firstMember?.naam || "Onbekend lid", personName: firstMember?.contactpersoon || "", isBoard: false, memberIds: ids };
+      if (!firstMember) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids };
+
+      // Match account email to the correct contact person within the member
+      const emailLower = u.email?.toLowerCase() ?? "";
+      let matchedName = "";
+
+      // Check primary contact
+      if (firstMember.email?.toLowerCase() === emailLower) {
+        matchedName = firstMember.contactpersoon;
+      }
+      // Check secondary contact
+      if (!matchedName && firstMember.email2?.toLowerCase() === emailLower) {
+        matchedName = firstMember.contactpersoon2 || "";
+      }
+      // Check contacts array
+      if (!matchedName && firstMember.contacten?.length) {
+        const match = firstMember.contacten.find((c) => c.email?.toLowerCase() === emailLower);
+        if (match) matchedName = match.naam;
+      }
+      // Fallback to primary contactpersoon
+      if (!matchedName) matchedName = firstMember.contactpersoon || "";
+
+      return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids };
     }
     return { label: "", personName: "", isBoard: false, memberIds: [] };
   };
