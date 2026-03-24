@@ -202,7 +202,7 @@ export default function EnqueteBeheerPage() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">Externe link (PCN)</p>
               <p className="text-xs text-muted-foreground mb-2">
-                Deel deze link met Platform Cannabis Nederland. Toegangscode: <code className="bg-muted px-1 rounded">pcn2026</code>
+                Deel deze link met Platform Cannabis Nederland. De toegangscode is opgeslagen als server-side secret.
               </p>
               <div className="flex items-center gap-2">
                 <code className="text-xs bg-muted px-2 py-1 rounded truncate block flex-1">
