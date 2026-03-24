@@ -160,8 +160,8 @@ export default function EnqueteExternPage() {
               onChange={(e) => setAccessCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAccessCode()}
             />
-            <Button onClick={handleAccessCode} className="w-full">
-              Doorgaan
+            <Button onClick={handleAccessCode} className="w-full" disabled={validating}>
+              {validating ? "Controleren..." : "Doorgaan"}
             </Button>
           </CardContent>
         </Card>
