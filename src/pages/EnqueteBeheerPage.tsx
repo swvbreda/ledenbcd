@@ -24,7 +24,7 @@ interface Question {
 
 interface ResponseRow {
   question_id: string;
-  answer: { value: any };
+  answer: { value: any; location?: string; source?: string };
   submitted_at: string;
   status: string;
   respondent_email: string | null;
