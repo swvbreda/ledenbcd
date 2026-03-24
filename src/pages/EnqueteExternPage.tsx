@@ -27,7 +27,6 @@ interface Survey {
   active: boolean;
 }
 
-const ACCESS_CODE = "pcn2026";
 const ANDERS_OPTION = "Anders, namelijk: …";
 
 const PCN_SURVEY_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
