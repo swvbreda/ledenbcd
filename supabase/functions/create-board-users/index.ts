@@ -90,7 +90,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("create-board-users error:", error);
+    return new Response(JSON.stringify({ error: "Er is een interne fout opgetreden" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
