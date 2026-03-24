@@ -417,12 +417,11 @@ export default function EnqueteBeheerPage() {
                                 </thead>
                                 <tbody>
                                   {qResponses.map((r, i) => {
-                                    const label = r.answer?.location || (r.respondent_email ? `Extern: ${r.respondent_email}` : "Anoniem");
                                     const val = r.answer?.value;
                                     const display = Array.isArray(val) ? val.join(", ") : String(val ?? "-");
                                     return (
                                       <tr key={i} className="border-t border-muted/50">
-                                        <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{label}</td>
+                                        <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{i + 1}</td>
                                         <td className="px-3 py-1.5">{display}</td>
                                       </tr>
                                     );
