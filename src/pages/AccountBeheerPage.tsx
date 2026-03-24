@@ -52,8 +52,8 @@ const AccountBeheerPage = () => {
 
   const { allMembersAndLeads } = useMembersData();
   const memberMap = useMemo(() => {
-    const map = new Map<number, { naam: string; contactpersoon: string }>();
-    allMembersAndLeads.forEach((m) => map.set(m.id, { naam: m.naam, contactpersoon: m.contactpersoon }));
+    const map = new Map<number, typeof allMembersAndLeads[0]>();
+    allMembersAndLeads.forEach((m) => map.set(m.id, m));
     return map;
   }, [allMembersAndLeads]);
 
