@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS on_new_edit_request ON public.member_edit_requests;
