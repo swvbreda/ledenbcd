@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, GripVertical, Link2, Copy, Shield } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Link2, Copy, Shield, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Question {
   id: string;
@@ -23,7 +24,7 @@ interface Question {
 
 interface ResponseRow {
   question_id: string;
-  answer: { value: any };
+  answer: { value: any; location?: string; source?: string };
   submitted_at: string;
   status: string;
   respondent_email: string | null;
@@ -130,6 +131,36 @@ export default function EnqueteBeheerPage() {
     // Text
     const texts = qResponses.map((r) => r.answer?.value).filter(Boolean);
     return { type: "text", texts };
+  };
+
+  const exportCSV = (qs: Question[], resps: ResponseRow[]) => {
+    const approved = resps.filter((r) => r.status === "approved");
+    // Group by respondent (location or email)
+    const respondentMap = new Map<string, Map<string, string>>();
+    for (const r of approved) {
+      const key = r.answer?.location || r.respondent_email || "Anoniem";
+      if (!respondentMap.has(key)) respondentMap.set(key, new Map());
+      const val = r.answer?.value;
+      const display = Array.isArray(val) ? val.join("; ") : String(val ?? "");
+      respondentMap.get(key)!.set(r.question_id, display);
+    }
+
+    const headers = ["Respondent", ...qs.map((q, i) => `${i + 1}. ${q.question_text}`)];
+    const rows = Array.from(respondentMap.entries()).map(([name, answers]) => {
+      return [name, ...qs.map((q) => answers.get(q.id) ?? "")];
+    });
+
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [headers.map(escape).join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const d = new Date().toISOString().slice(0, 10);
+    a.download = `enquete-resultaten-${d}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV gedownload!");
   };
 
   if (loading) return <div className="p-6 text-muted-foreground">Laden...</div>;
@@ -305,63 +336,108 @@ export default function EnqueteBeheerPage() {
         </TabsContent>
 
         <TabsContent value="results" className="space-y-4 mt-4">
-          {completionCount === 0 ? (
+          {completionCount === 0 && responses.filter(r => r.status === "approved").length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 Nog geen reacties ontvangen.
               </CardContent>
             </Card>
           ) : (
-            questions.map((q, idx) => {
-              const result = getResults(q.id, q);
-              return (
-                <Card key={q.id}>
-                  <CardContent className="pt-4 space-y-2">
-                    <p className="text-sm font-medium">
-                      {idx + 1}. {q.question_text}
-                    </p>
-                    {!result && (
-                      <p className="text-xs text-muted-foreground">Geen antwoorden</p>
-                    )}
-                    {result?.type === "scale" && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl font-bold text-primary">{result.avg}</span>
-                        <span className="text-xs text-muted-foreground">gemiddelde ({result.count} antwoorden)</span>
-                      </div>
-                    )}
-                    {result?.type === "choice" && (
-                      <div className="space-y-1">
-                        {Object.entries(result.counts).sort(([, a], [, b]) => (b as number) - (a as number)).map(([option, count]) => (
-                          <div key={option} className="flex items-center gap-2">
-                            <div className="flex-1">
-                              <div className="flex justify-between text-xs mb-0.5">
-                                <span>{option}</span>
-                                <span className="text-muted-foreground">
-                                  {count} ({Math.round(((count as number) / (result.total as number)) * 100)}%)
-                                </span>
-                              </div>
-                              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-primary rounded-full transition-all"
-                                  style={{ width: `${((count as number) / (result.total as number)) * 100}%` }}
-                                />
+            <>
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => exportCSV(questions, responses)}>
+                  <Download size={14} className="mr-1" /> Export CSV
+                </Button>
+              </div>
+              {questions.map((q, idx) => {
+                const result = getResults(q.id, q);
+                const qResponses = responses.filter((r) => r.question_id === q.id && r.status === "approved");
+                return (
+                  <Card key={q.id}>
+                    <CardContent className="pt-4 space-y-2">
+                      <p className="text-sm font-medium">
+                        {idx + 1}. {q.question_text}
+                      </p>
+                      {!result && (
+                        <p className="text-xs text-muted-foreground">Geen antwoorden</p>
+                      )}
+                      {result?.type === "scale" && (
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-bold text-primary">{result.avg}</span>
+                          <span className="text-xs text-muted-foreground">gemiddelde ({result.count} antwoorden)</span>
+                        </div>
+                      )}
+                      {result?.type === "choice" && (
+                        <div className="space-y-1">
+                          {Object.entries(result.counts).sort(([, a], [, b]) => (b as number) - (a as number)).map(([option, count]) => (
+                            <div key={option} className="flex items-center gap-2">
+                              <div className="flex-1">
+                                <div className="flex justify-between text-xs mb-0.5">
+                                  <span>{option}</span>
+                                  <span className="text-muted-foreground">
+                                    {count} ({Math.round(((count as number) / (result.total as number)) * 100)}%)
+                                  </span>
+                                </div>
+                                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-primary rounded-full transition-all"
+                                    style={{ width: `${((count as number) / (result.total as number)) * 100}%` }}
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {result?.type === "text" && (
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {(result.texts as string[]).map((t, i) => (
-                          <p key={i} className="text-xs bg-muted/50 rounded px-2 py-1">{t}</p>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })
+                          ))}
+                        </div>
+                      )}
+                      {result?.type === "text" && (
+                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                          {(result.texts as string[]).map((t, i) => (
+                            <p key={i} className="text-xs bg-muted/50 rounded px-2 py-1">{t}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Individuele antwoorden */}
+                      {qResponses.length > 0 && (
+                        <Collapsible>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground w-full justify-start gap-1 mt-1 px-0">
+                              <ChevronDown size={12} className="collapsible-chevron transition-transform data-[state=open]:rotate-180" />
+                              Bekijk individuele antwoorden ({qResponses.length})
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="mt-2 border rounded-md overflow-hidden">
+                              <table className="w-full text-xs">
+                                <thead className="bg-muted/50">
+                                  <tr>
+                                    <th className="text-left px-3 py-1.5 font-medium">Respondent</th>
+                                    <th className="text-left px-3 py-1.5 font-medium">Antwoord</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {qResponses.map((r, i) => {
+                                    const label = r.answer?.location || (r.respondent_email ? `Extern: ${r.respondent_email}` : "Anoniem");
+                                    const val = r.answer?.value;
+                                    const display = Array.isArray(val) ? val.join(", ") : String(val ?? "-");
+                                    return (
+                                      <tr key={i} className="border-t border-muted/50">
+                                        <td className="px-3 py-1.5 text-muted-foreground whitespace-nowrap">{label}</td>
+                                        <td className="px-3 py-1.5">{display}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </>
           )}
         </TabsContent>
       </Tabs>
