@@ -20,41 +20,88 @@ const JUBILEE_COLORS: Record<number, { bg: string; border: string; text: string;
 };
 
 interface JubileumEntry {
-  member: Member;
+  memberId: number;
+  memberNaam: string;
+  memberPlaats: string;
+  locatieNaam?: string;
   jaren: number;
+  oprichtingsDatum?: string;
+  oprichtingJaar: number;
 }
 
 const JubileumOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
 
   const jubilea: JubileumEntry[] = [];
+  const seen = new Set<string>(); // prevent duplicates
 
   members.forEach((m) => {
-    // Use oprichtingJaar primarily; fall back to lidSinds
-    const referenceYear = m.oprichtingJaar || m.lidSinds;
-    if (referenceYear) {
-      const jaren = CURRENT_YEAR - referenceYear;
+    // Check member-level oprichtingJaar / lidSinds
+    const memberYear = m.oprichtingJaar || m.lidSinds;
+    if (memberYear) {
+      const jaren = CURRENT_YEAR - memberYear;
       if (JUBILEA.includes(jaren)) {
-        jubilea.push({ member: m, jaren });
+        const key = `member-${m.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          jubilea.push({
+            memberId: m.id,
+            memberNaam: m.naam,
+            memberPlaats: m.plaats,
+            jaren,
+            oprichtingsDatum: m.oprichtingsDatum,
+            oprichtingJaar: memberYear,
+          });
+        }
       }
     }
+
+    // Check each location's oprichtingsDatum
+    m.locaties?.forEach((loc) => {
+      if (!loc.oprichtingsDatum) return;
+      const locYear = new Date(loc.oprichtingsDatum).getFullYear();
+      if (isNaN(locYear)) return;
+      const jaren = CURRENT_YEAR - locYear;
+      if (!JUBILEA.includes(jaren)) return;
+
+      // Skip if same year as member-level jubilee (avoid duplicate)
+      if (memberYear && CURRENT_YEAR - memberYear === jaren && !loc.naam) return;
+
+      const key = `loc-${m.id}-${loc.naam}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      // Only add if this location jubilee is different from the member-level one,
+      // or if there was no member-level jubilee
+      const memberJaren = memberYear ? CURRENT_YEAR - memberYear : null;
+      if (memberJaren === jaren && m.locaties.length === 1) return; // single location = same as member
+
+      jubilea.push({
+        memberId: m.id,
+        memberNaam: m.naam,
+        memberPlaats: loc.plaats || m.plaats,
+        locatieNaam: loc.naam,
+        jaren,
+        oprichtingsDatum: loc.oprichtingsDatum,
+        oprichtingJaar: locYear,
+      });
+    });
   });
 
   jubilea.sort((a, b) => b.jaren - a.jaren);
 
   if (!jubilea.length) return null;
 
-  const formatOprichting = (m: Member) => {
-    if (m.oprichtingsDatum) {
+  const formatOprichting = (entry: JubileumEntry) => {
+    if (entry.oprichtingsDatum) {
       try {
-        const d = new Date(m.oprichtingsDatum);
+        const d = new Date(entry.oprichtingsDatum);
         return `Opgericht ${d.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}`;
       } catch {
-        return `Opgericht ${m.oprichtingsDatum}`;
+        return `Opgericht ${entry.oprichtingsDatum}`;
       }
     }
-    if (m.oprichtingJaar) return `Opgericht in ${m.oprichtingJaar}`;
-    return null;
+    return `Opgericht in ${entry.oprichtingJaar}`;
   };
 
   return (
@@ -70,11 +117,12 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {jubilea.map((j, i) => {
           const colors = JUBILEE_COLORS[j.jaren] || { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary", label: "" };
-          const oprichtingText = formatOprichting(j.member);
+          const oprichtingText = formatOprichting(j);
+          const displayName = j.locatieNaam || j.memberNaam;
           return (
             <button
-              key={`${j.member.id}-${i}`}
-              onClick={() => navigate(`/leden/${j.member.id}`)}
+              key={`${j.memberId}-${j.locatieNaam || "member"}-${i}`}
+              onClick={() => navigate(`/leden/${j.memberId}`)}
               className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
               title={colors.label ? `${colors.label} jubileum` : undefined}
             >
@@ -82,10 +130,15 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
                 <span className={`text-sm font-bold ${colors.text}`}>{j.jaren}</span>
               </div>
               <div className="min-w-0">
-                <p className="font-medium text-sm truncate">{j.member.naam}</p>
+                <p className="font-medium text-sm truncate">{displayName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {oprichtingText && <>{oprichtingText} · </>}{j.member.plaats}
+                  {oprichtingText} · {j.memberPlaats}
                 </p>
+                {j.locatieNaam && (
+                  <p className="text-[10px] text-muted-foreground/70 truncate">
+                    {j.memberNaam}
+                  </p>
+                )}
               </div>
             </button>
           );
