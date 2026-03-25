@@ -219,7 +219,6 @@ export function useEditRequests(statusFilter: "pending" | "all" = "pending") {
 /** Admin: approve an edit request (merge into member_edits) */
 export function useApproveEditRequest() {
   const queryClient = useQueryClient();
-  const saveMutation = useSaveMemberEdit();
 
   return useMutation({
     mutationFn: async ({ request }: { request: EditRequest }) => {
@@ -227,7 +226,7 @@ export function useApproveEditRequest() {
       const userId = session?.session?.user?.id;
       if (!userId) throw new Error("Niet ingelogd");
 
-      // First get existing edits for this member to merge
+      // Fetch the latest existing edits directly (bypass cache to prevent race conditions)
       const { data: existingEdits } = await supabase
         .from("member_edits")
         .select("data")
@@ -238,16 +237,24 @@ export function useApproveEditRequest() {
       const mergedData = {
         ...existingData,
         ...request.data,
-        // Arrays: use request data if provided
+        // Arrays: use request data if provided (it represents the full desired state)
         locaties: request.data.locaties || existingData.locaties,
         contacten: request.data.contacten || existingData.contacten,
       };
 
-      // Save merged edits
-      await saveMutation.mutateAsync({
-        member_id: request.member_id,
-        data: mergedData,
-      });
+      // Save merged edits directly (skip the extra merge in useSaveMemberEdit since we already merged)
+      const { error: upsertError } = await supabase
+        .from("member_edits")
+        .upsert(
+          {
+            member_id: request.member_id,
+            data: mergedData as any,
+            updated_by: userId,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "member_id" }
+        );
+      if (upsertError) throw upsertError;
 
       // Mark request as approved
       const { error } = await supabase

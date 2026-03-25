@@ -215,8 +215,8 @@ const MemberDetail = () => {
               </div>
               {(isAdmin || isOwnProfile) && !editing && (
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
-                    <Pencil size={14} /> Bewerken
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
+                    <Pencil size={14} /> {isLoading ? "Laden..." : "Bewerken"}
                   </Button>
                   {isAdmin && isLead && member && (
                     <ConvertLeadDialog
