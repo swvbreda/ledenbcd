@@ -66,7 +66,7 @@ export default function EnqueteReviewPage() {
       const key = row.respondent_email + "|" + row.submitted_at?.slice(0, 16);
       if (!grouped[key]) {
         grouped[key] = {
-          respondent_email: row.respondent_email,
+          coffeeshop_name: row.respondent_email,
           submitted_at: row.submitted_at,
           responses: [],
         };
