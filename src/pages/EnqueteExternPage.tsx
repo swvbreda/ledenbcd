@@ -207,7 +207,7 @@ export default function EnqueteExternPage() {
             <CardTitle>{survey.title}</CardTitle>
             {survey.description && <CardDescription>{survey.description}</CardDescription>}
             <p className="text-xs text-muted-foreground mt-2">
-              Je antwoorden worden volledig anoniem opgeslagen.
+              Je antwoorden worden anoniem opgeslagen. De coffeeshopnaam wordt alleen gebruikt ter verificatie door PCN.
             </p>
           </CardHeader>
         </Card>
@@ -215,16 +215,16 @@ export default function EnqueteExternPage() {
         <Card>
           <CardContent className="pt-6 space-y-3">
             <Label className="text-sm font-medium">
-              E-mailadres <span className="text-destructive">*</span>
+              Coffeeshopnaam <span className="text-destructive">*</span>
             </Label>
             <Input
-              type="email"
-              placeholder="naam@voorbeeld.nl"
-              value={respondentEmail}
-              onChange={(e) => setRespondentEmail(e.target.value)}
+              type="text"
+              placeholder="Naam van je coffeeshop"
+              value={respondentName}
+              onChange={(e) => setRespondentName(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Jouw e-mailadres wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
+              De coffeeshopnaam wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
             </p>
           </CardContent>
         </Card>
