@@ -129,8 +129,39 @@ export default function EnqueteReviewPage() {
     return String(value);
   };
 
-  const pendingGroups = groups.filter((g) => g.responses[0]?.status === "pending");
-  const reviewedGroups = groups.filter((g) => g.responses[0]?.status !== "pending");
+  const getResults = (questionId: string, question: Question) => {
+    const qResponses = allResponses.filter((r) => r.question_id === questionId);
+    if (qResponses.length === 0) return null;
+
+    if (question.question_type === "scale") {
+      const values = qResponses.map((r) => r.answer?.value).filter((v: any) => typeof v === "number");
+      const avg = values.length ? (values.reduce((a: number, b: number) => a + b, 0) / values.length).toFixed(1) : "-";
+      return { type: "scale", avg, count: values.length };
+    }
+
+    if (question.question_type === "radio" || question.question_type === "checkbox") {
+      const counts: Record<string, number> = {};
+      for (const r of qResponses) {
+        const val = r.answer?.value;
+        const items = Array.isArray(val) ? val : [val];
+        for (const item of items) {
+          if (item) counts[item] = (counts[item] || 0) + 1;
+        }
+      }
+      return { type: "choice", counts, total: qResponses.length };
+    }
+
+    const texts = qResponses.map((r: any) => r.answer?.value).filter(Boolean);
+    return { type: "text", texts };
+  };
+
+  const approvedCount = new Set(
+    allResponses.filter(r => !r.respondent_email).map(r => r.submitted_at)
+  ).size;
+
+  const approvedExtCount = new Set(
+    allResponses.filter(r => r.respondent_email).map(r => r.respondent_email)
+  ).size;
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
