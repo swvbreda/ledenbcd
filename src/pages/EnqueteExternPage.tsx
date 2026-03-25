@@ -127,8 +127,7 @@ export default function EnqueteExternPage() {
         value: answers[q.id] ?? null,
         source: "extern-pcn",
       },
-      status: "pending",
-      respondent_email: respondentEmail.trim().toLowerCase(),
+      respondent_email: respondentName.trim(),
     }));
 
     const { error } = await supabase.from("survey_responses").insert(rows);
