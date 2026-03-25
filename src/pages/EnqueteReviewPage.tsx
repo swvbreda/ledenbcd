@@ -209,8 +209,8 @@ export default function EnqueteReviewPage() {
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-muted-foreground" />
-                    <span className="text-sm">{group.respondent_email}</span>
+                    <Store size={14} className="text-muted-foreground" />
+                    <span className="text-sm">{group.coffeeshop_name}</span>
                   </div>
                   <Badge
                     variant={group.responses[0]?.status === "approved" ? "default" : "destructive"}
