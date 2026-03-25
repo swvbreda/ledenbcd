@@ -47,7 +47,7 @@ const GemeenteDetailPage = () => {
 
     const locatiesMap = new Map<string, { naam: string; adres: string; stadsdeel: string; memberNaam: string; memberId: number }>();
 
-    for (const m of allRepresented) {
+    for (const m of mergedRepresented) {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
         if (getGemeente(plaats) !== decodedGemeente) continue;
