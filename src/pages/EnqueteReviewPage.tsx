@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, Store, Clock } from "lucide-react";
 
 interface ResponseGroup {
-  respondent_email: string;
+  coffeeshop_name: string;
   submitted_at: string;
   responses: Array<{
     id: string;
