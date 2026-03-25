@@ -200,8 +200,8 @@ export default function EnqueteExternPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="max-w-2xl mx-auto space-y-4">
+    <div className="min-h-screen bg-background flex justify-center p-4 md:p-6">
+      <div className="w-full max-w-2xl space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>{survey.title}</CardTitle>
