@@ -111,17 +111,39 @@ export function useSaveMemberEdit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ member_id, data }: MemberEdit) => {
+    mutationFn: async ({ member_id, data, skipMerge }: MemberEdit & { skipMerge?: boolean }) => {
       const { data: session } = await supabase.auth.getSession();
       const userId = session?.session?.user?.id;
       if (!userId) throw new Error("Niet ingelogd");
+
+      let finalData = data;
+
+      // Merge with existing edits to prevent data loss
+      if (!skipMerge) {
+        const { data: existing } = await supabase
+          .from("member_edits")
+          .select("data")
+          .eq("member_id", member_id)
+          .maybeSingle();
+
+        if (existing?.data) {
+          const existingData = existing.data as Partial<Member>;
+          finalData = {
+            ...existingData,
+            ...data,
+            // Arrays from the new data take precedence when provided
+            locaties: data.locaties || existingData.locaties,
+            contacten: data.contacten || existingData.contacten,
+          };
+        }
+      }
 
       const { error } = await supabase
         .from("member_edits")
         .upsert(
           {
             member_id,
-            data: data as any,
+            data: finalData as any,
             updated_by: userId,
             updated_at: new Date().toISOString(),
           },
