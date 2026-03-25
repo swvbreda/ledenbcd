@@ -88,6 +88,7 @@ export default function EnqueteReviewPage() {
       });
     }
     setGroups(Object.values(grouped).sort((a, b) => b.submitted_at.localeCompare(a.submitted_at)));
+    setAllResponses((allR ?? []) as any[]);
     setLoading(false);
   };
 
