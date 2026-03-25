@@ -35,11 +35,12 @@ export default function EnqueteExternPage() {
   const { id: paramId } = useParams<{ id: string }>();
   const id = paramId || PCN_SURVEY_ID;
   const [accessCode, setAccessCode] = useState("");
+  const [respondentName, setRespondentName] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [respondentEmail, setRespondentEmail] = useState("");
+  
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,9 +103,8 @@ export default function EnqueteExternPage() {
   const handleSubmit = async () => {
     if (!survey) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!respondentEmail.trim() || !emailRegex.test(respondentEmail.trim())) {
-      toast.error("Vul een geldig e-mailadres in.");
+    if (!respondentName.trim()) {
+      toast.error("Vul de coffeeshopnaam in.");
       return;
     }
 
@@ -127,8 +127,7 @@ export default function EnqueteExternPage() {
         value: answers[q.id] ?? null,
         source: "extern-pcn",
       },
-      status: "pending",
-      respondent_email: respondentEmail.trim().toLowerCase(),
+      respondent_email: respondentName.trim(),
     }));
 
     const { error } = await supabase.from("survey_responses").insert(rows);
@@ -208,7 +207,7 @@ export default function EnqueteExternPage() {
             <CardTitle>{survey.title}</CardTitle>
             {survey.description && <CardDescription>{survey.description}</CardDescription>}
             <p className="text-xs text-muted-foreground mt-2">
-              Je antwoorden worden volledig anoniem opgeslagen.
+              Je antwoorden worden anoniem opgeslagen. De coffeeshopnaam wordt alleen gebruikt ter verificatie door PCN.
             </p>
           </CardHeader>
         </Card>
@@ -216,16 +215,16 @@ export default function EnqueteExternPage() {
         <Card>
           <CardContent className="pt-6 space-y-3">
             <Label className="text-sm font-medium">
-              E-mailadres <span className="text-destructive">*</span>
+              Coffeeshopnaam <span className="text-destructive">*</span>
             </Label>
             <Input
-              type="email"
-              placeholder="naam@voorbeeld.nl"
-              value={respondentEmail}
-              onChange={(e) => setRespondentEmail(e.target.value)}
+              type="text"
+              placeholder="Naam van je coffeeshop"
+              value={respondentName}
+              onChange={(e) => setRespondentName(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Jouw e-mailadres wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
+              De coffeeshopnaam wordt alleen gebruikt ter verificatie door PCN. Antwoorden blijven anoniem in de resultaten.
             </p>
           </CardContent>
         </Card>

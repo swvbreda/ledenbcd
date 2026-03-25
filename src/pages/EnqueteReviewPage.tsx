@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle, XCircle, Mail, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Store, Clock } from "lucide-react";
 
 interface ResponseGroup {
-  respondent_email: string;
+  coffeeshop_name: string;
   submitted_at: string;
   responses: Array<{
     id: string;
@@ -66,7 +66,7 @@ export default function EnqueteReviewPage() {
       const key = row.respondent_email + "|" + row.submitted_at?.slice(0, 16);
       if (!grouped[key]) {
         grouped[key] = {
-          respondent_email: row.respondent_email,
+          coffeeshop_name: row.respondent_email,
           submitted_at: row.submitted_at,
           responses: [],
         };
@@ -153,8 +153,8 @@ export default function EnqueteReviewPage() {
               <CardContent className="pt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-muted-foreground" />
-                    <span className="text-sm font-medium">{group.respondent_email}</span>
+                    <Store size={14} className="text-muted-foreground" />
+                    <span className="text-sm font-medium">{group.coffeeshop_name}</span>
                   </div>
                   <Badge variant="outline" className="text-xs">
                     {new Date(group.submitted_at).toLocaleDateString("nl-NL")}
@@ -209,8 +209,8 @@ export default function EnqueteReviewPage() {
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-muted-foreground" />
-                    <span className="text-sm">{group.respondent_email}</span>
+                    <Store size={14} className="text-muted-foreground" />
+                    <span className="text-sm">{group.coffeeshop_name}</span>
                   </div>
                   <Badge
                     variant={group.responses[0]?.status === "approved" ? "default" : "destructive"}
