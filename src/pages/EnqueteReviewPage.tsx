@@ -38,6 +38,7 @@ export default function EnqueteReviewPage() {
   const [survey, setSurvey] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [groups, setGroups] = useState<ResponseGroup[]>([]);
+  const [allResponses, setAllResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isPCN = user?.email?.toLowerCase() === PCN_EMAIL;
