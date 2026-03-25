@@ -153,8 +153,8 @@ export default function EnqueteReviewPage() {
               <CardContent className="pt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-muted-foreground" />
-                    <span className="text-sm font-medium">{group.respondent_email}</span>
+                    <Store size={14} className="text-muted-foreground" />
+                    <span className="text-sm font-medium">{group.coffeeshop_name}</span>
                   </div>
                   <Badge variant="outline" className="text-xs">
                     {new Date(group.submitted_at).toLocaleDateString("nl-NL")}
