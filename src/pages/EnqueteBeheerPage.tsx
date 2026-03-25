@@ -48,11 +48,10 @@ export default function EnqueteBeheerPage() {
 
   const fetchData = async () => {
     if (!id) return;
-    const [{ data: s }, { data: q }, { data: r }, { data: c }] = await Promise.all([
+    const [{ data: s }, { data: q }, { data: r }] = await Promise.all([
       supabase.from("surveys").select("*").eq("id", id).single(),
       supabase.from("survey_questions").select("*").eq("survey_id", id).order("sort_order"),
       supabase.from("survey_responses").select("*").eq("survey_id", id),
-      supabase.from("survey_completions").select("id").eq("survey_id", id),
     ]);
     setSurvey(s);
     setQuestions(
@@ -61,8 +60,13 @@ export default function EnqueteBeheerPage() {
         options: Array.isArray(row.options) ? row.options : [],
       }))
     );
-    setResponses(((r ?? []) as unknown as ResponseRow[]));
-    setCompletionCount((c ?? []).length);
+    const allResponses = ((r ?? []) as unknown as ResponseRow[]);
+    setResponses(allResponses);
+    // Count unique internal submissions by distinct submitted_at (each submission batch shares the same timestamp)
+    const internalSubmissions = new Set(
+      allResponses.filter(resp => !resp.respondent_email).map(resp => resp.submitted_at)
+    ).size;
+    setCompletionCount(internalSubmissions);
     setLoading(false);
   };
 
