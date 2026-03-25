@@ -3,11 +3,13 @@ import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getMembershipYears } from "@/lib/membership";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
-  const { allRepresented } = useMembersData();
+  const { rawLeads } = useMembersData();
+  const { members: mergedLeads } = useMergedMembers(rawLeads);
   const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
   const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
 
@@ -16,11 +18,11 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
 
   // Cities with >50% representation
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-  const represented = allRepresented;
+  const represented = [...(members || []), ...mergedLeads];
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
     const gemeente = getGemeente(m.plaats);
-    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + (m.aantalLocaties || 1);
+    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + (m.locaties?.length || m.aantalLocaties || 1);
   });
   const citiesOver50 = Object.entries(perStad).filter(([city, total]) => {
     const bcd = cityCount[city] || 0;

@@ -56,10 +56,11 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
-  const { allRepresented } = useMembersData();
-  // Use allRepresented (members + leads) for market share calculations
-  const represented = allRepresented;
-  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  const { rawLeads } = useMembersData();
+  const { members: mergedLeads } = useMergedMembers(rawLeads);
+  // Use merged members + merged leads for market share calculations
+  const represented = [...members, ...mergedLeads];
+  const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
 
   // Count represented locations per city (members + leads)
   const cityCount: Record<string, number> = {};
