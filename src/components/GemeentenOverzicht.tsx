@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
