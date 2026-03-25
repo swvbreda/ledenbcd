@@ -2,11 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { Award } from "lucide-react";
 import type { Member } from "@/data/types";
 
-const JUBILEA = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const JUBILEA = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const CURRENT_YEAR = new Date().getFullYear();
 
 // Official Dutch jubilee colors
 const JUBILEE_COLORS: Record<number, { bg: string; border: string; text: string; label: string }> = {
+  1:  { bg: "bg-stone-100",   border: "border-stone-300",   text: "text-stone-700",   label: "Katoenen" },
   5:  { bg: "bg-emerald-100", border: "border-emerald-300", text: "text-emerald-700", label: "Houten" },
   10: { bg: "bg-orange-100",  border: "border-orange-300",  text: "text-orange-700",  label: "Koperen" },
   15: { bg: "bg-indigo-100",  border: "border-indigo-300",  text: "text-indigo-600",  label: "Kristallen" },
