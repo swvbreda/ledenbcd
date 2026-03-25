@@ -156,6 +156,20 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
 
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">
+      {isAdmin && (
+        <div className="hidden md:flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-b border-border text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
+          <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
+          <span className="text-border">|</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-lime-100 border border-lime-300" /> 1+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-300" /> 5+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-orange-100 border border-orange-300" /> 10+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-indigo-100 border border-indigo-300" /> 15+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-sky-100 border border-sky-300" /> 20+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-slate-200 border border-slate-400" /> 25+ jr</span>
+          <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-amber-100 border border-amber-300" /> 30+ jr</span>
+        </div>
+      )}
       {/* Mobile card list */}
       <div className="md:hidden">
         {displayMembers.map((member) => (
