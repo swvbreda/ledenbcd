@@ -35,6 +35,7 @@ export default function EnqueteExternPage() {
   const { id: paramId } = useParams<{ id: string }>();
   const id = paramId || PCN_SURVEY_ID;
   const [accessCode, setAccessCode] = useState("");
+  const [respondentName, setRespondentName] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
