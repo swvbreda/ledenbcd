@@ -94,11 +94,13 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
     return members.map((m) => {
       const edits = editsMap.get(m.id);
       if (!edits) return m;
+      const mergedLocaties = edits.locaties || m.locaties;
       return {
         ...m,
         ...edits,
-        locaties: edits.locaties || m.locaties,
+        locaties: mergedLocaties,
         contacten: edits.contacten || m.contacten,
+        aantalLocaties: mergedLocaties.length,
       };
     });
   }, [members, editsMap]);
