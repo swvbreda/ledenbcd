@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Award } from "lucide-react";
 import type { Member } from "@/data/types";
 
-const JUBILEA = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const JUBILEA = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const CURRENT_YEAR = new Date().getFullYear();
 
 // Official Dutch jubilee colors
