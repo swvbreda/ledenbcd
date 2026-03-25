@@ -103,9 +103,8 @@ export default function EnqueteExternPage() {
   const handleSubmit = async () => {
     if (!survey) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!respondentEmail.trim() || !emailRegex.test(respondentEmail.trim())) {
-      toast.error("Vul een geldig e-mailadres in.");
+    if (!respondentName.trim()) {
+      toast.error("Vul de coffeeshopnaam in.");
       return;
     }
 
