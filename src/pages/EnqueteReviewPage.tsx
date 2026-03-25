@@ -168,9 +168,27 @@ export default function EnqueteReviewPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-        <ArrowLeft size={16} className="mr-1" /> Terug
-      </Button>
+      <div className="flex items-center justify-between">
+        {isAdmin ? (
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} className="mr-1" /> Terug
+          </Button>
+        ) : (
+          <div />
+        )}
+        {isPCN && !isAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate("/login");
+            }}
+          >
+            <LogOut size={14} className="mr-1" /> Uitloggen
+          </Button>
+        )}
+      </div>
 
       <div>
         <h1 className="text-xl font-bold">{survey.title}</h1>
