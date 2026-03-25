@@ -65,20 +65,24 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   let merged: Member = baseMember;
 
   if (edits) {
+    const mergedLocaties = edits.locaties || merged.locaties;
     merged = {
       ...merged,
       ...edits,
-      locaties: edits.locaties || merged.locaties,
+      locaties: mergedLocaties,
       contacten: edits.contacten || merged.contacten,
+      aantalLocaties: mergedLocaties.length,
     };
   }
 
   if (pendingEdit) {
+    const mergedLocaties = pendingEdit.locaties || merged.locaties;
     merged = {
       ...merged,
       ...pendingEdit,
-      locaties: pendingEdit.locaties || merged.locaties,
+      locaties: mergedLocaties,
       contacten: pendingEdit.contacten || merged.contacten,
+      aantalLocaties: mergedLocaties.length,
     };
   }
 
@@ -94,11 +98,13 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
     return members.map((m) => {
       const edits = editsMap.get(m.id);
       if (!edits) return m;
+      const mergedLocaties = edits.locaties || m.locaties;
       return {
         ...m,
         ...edits,
-        locaties: edits.locaties || m.locaties,
+        locaties: mergedLocaties,
         contacten: edits.contacten || m.contacten,
+        aantalLocaties: mergedLocaties.length,
       };
     });
   }, [members, editsMap]);

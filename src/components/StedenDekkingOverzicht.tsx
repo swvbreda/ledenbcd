@@ -3,21 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { aggregateByGemeente } from "@/data/gemeenteMapping";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
-  const { allRepresented } = useMembersData();
+  const { rawLeads } = useMembersData();
+  const { members: mergedLeads } = useMergedMembers(rawLeads);
   const totalNL = coffeeshopData.totaalNL;
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-  // Use represented (members + leads) for market share
-  const represented = allRepresented;
-  const totalLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  // Use merged members + merged leads for market share
+  const represented = [...members, ...mergedLeads];
+  const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
 
   // Count represented locations per city
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.locaties?.length || m.aantalLocaties || 1);
   });
 
   const marketPct = Math.round((totalLocaties / totalNL) * 100);

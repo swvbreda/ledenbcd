@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Building2, Users, Notebook, Search, X } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, num
 
 const GemeenteDetailPage = () => {
   const { allRepresented } = useMembersData();
+  const { members: mergedRepresented } = useMergedMembers(allRepresented);
   const { gemeente } = useParams<{ gemeente: string }>();
   const navigate = useNavigate();
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
@@ -45,7 +47,7 @@ const GemeenteDetailPage = () => {
 
     const locatiesMap = new Map<string, { naam: string; adres: string; stadsdeel: string; memberNaam: string; memberId: number }>();
 
-    for (const m of allRepresented) {
+    for (const m of mergedRepresented) {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
         if (getGemeente(plaats) !== decodedGemeente) continue;
