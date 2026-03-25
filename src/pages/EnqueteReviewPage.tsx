@@ -46,7 +46,7 @@ export default function EnqueteReviewPage() {
 
   const fetchData = async () => {
     if (!id) return;
-    const [{ data: s }, { data: q }, { data: r }] = await Promise.all([
+    const [{ data: s }, { data: q }, { data: r }, { data: allR }] = await Promise.all([
       supabase.from("surveys").select("*").eq("id", id).single(),
       supabase.from("survey_questions").select("*").eq("survey_id", id).order("sort_order"),
       supabase
@@ -54,6 +54,11 @@ export default function EnqueteReviewPage() {
         .select("*")
         .eq("survey_id", id)
         .not("respondent_email", "is", null),
+      supabase
+        .from("survey_responses")
+        .select("*")
+        .eq("survey_id", id)
+        .eq("status", "approved"),
     ]);
 
     setSurvey(s);
