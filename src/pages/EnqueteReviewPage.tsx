@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle, XCircle, Mail, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Store, Clock } from "lucide-react";
 
 interface ResponseGroup {
   respondent_email: string;
