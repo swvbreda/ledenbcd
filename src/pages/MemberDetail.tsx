@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle, Euro } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import ConvertLeadDialog from "@/components/ConvertLeadDialog";
@@ -20,7 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import { useMemberContributions } from "@/hooks/useContributions";
+import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
@@ -48,6 +48,7 @@ const MemberDetail = () => {
   const { conversions, refresh: refreshConversions } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
   const { data: memberContributions } = useMemberContributions(memberId);
+  const { data: memberInvoices } = useMemberInvoices(memberId);
   const currentYearContrib = useMemo(() => {
     const cy = new Date().getFullYear();
     return (memberContributions ?? []).find((c) => c.year === cy);
@@ -486,6 +487,58 @@ const MemberDetail = () => {
             <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-3 text-muted-foreground">
               <Lock size={16} />
               <p className="text-sm">Contactgegevens en factuurgegevens zijn alleen zichtbaar voor het eigen profiel en bestuursleden.</p>
+            </div>
+          )}
+
+          {/* Contributie & Facturen */}
+          {canSeeDetails && (memberContributions ?? []).length > 0 && (
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+                <Euro size={16} className="text-primary" /> Contributie
+              </h3>
+              <div className="space-y-3">
+                {(memberContributions ?? []).map((contrib) => {
+                  const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === contrib.year);
+                  return (
+                    <div key={contrib.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 border-b border-border last:border-0">
+                      <span className="font-medium text-sm w-12">{contrib.year}</span>
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md ${
+                        contrib.paid
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                          : "bg-destructive/15 text-destructive"
+                      }`}>
+                        {contrib.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                        {contrib.paid ? "Betaald" : "Openstaand"}
+                      </span>
+                      <span className="text-sm text-muted-foreground">€ {Number(contrib.amount).toLocaleString("nl-NL")}</span>
+                      {contrib.paid_date && (
+                        <span className="text-xs text-muted-foreground">{contrib.paid_date}</span>
+                      )}
+                      {yearInvoices.length > 0 && (
+                        <div className="flex items-center gap-2 ml-auto">
+                          {yearInvoices.map((inv) => (
+                            <button
+                              key={inv.id}
+                              onClick={async () => {
+                                if (!inv.invoice_file_path) return;
+                                const { data } = await supabase.storage
+                                  .from("contribution-invoices")
+                                  .createSignedUrl(inv.invoice_file_path, 60);
+                                if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                              }}
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                              title={`Factuur ${inv.invoice_number ?? ""} openen`}
+                            >
+                              <FileText size={14} />
+                              <span className="font-mono">{inv.invoice_number ?? "PDF"}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
