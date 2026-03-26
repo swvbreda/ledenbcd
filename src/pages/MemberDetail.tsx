@@ -515,81 +515,64 @@ const MemberDetail = () => {
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
 
                     return (
-                      <div key={year} className="rounded-md border border-border bg-muted/20 px-4 py-3">
-                        <div className="grid grid-cols-[60px_90px_100px_80px_auto_auto] items-center gap-x-4 gap-y-2">
-                          <span className="text-sm font-semibold">{year}</span>
+                      <div key={year} className="flex items-center gap-6 rounded-md border border-border bg-muted/20 px-4 py-3">
+                          <span className="text-sm font-semibold w-12 shrink-0">{year}</span>
 
-                          <span className="text-xs text-muted-foreground tabular-nums">
+                          <span className="text-xs text-muted-foreground tabular-nums w-20 shrink-0">
                             {yearInvoices.length > 0
                               ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
                               : "—"}
                           </span>
 
-                          <span className="text-sm font-mono text-muted-foreground">
+                          <span className="text-sm font-mono shrink-0">
                             {yearInvoices.length > 0
-                              ? yearInvoices.map((inv) => inv.invoice_number ?? "—").join(", ")
-                              : "—"}
+                              ? yearInvoices.map((inv) => {
+                                  const handleOpen = async (e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    if (!inv.invoice_file_path) return;
+                                    const { data, error } = await supabase.storage
+                                      .from("contribution-invoices")
+                                      .createSignedUrl(inv.invoice_file_path, 300);
+                                    if (error || !data?.signedUrl) {
+                                      toast.error("Factuur kon niet worden geopend");
+                                      return;
+                                    }
+                                    const signedUrl = data.signedUrl.startsWith("http")
+                                      ? data.signedUrl
+                                      : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
+                                    window.open(signedUrl, "_blank", "noopener,noreferrer");
+                                  };
+                                  return inv.invoice_file_path ? (
+                                    <button
+                                      key={inv.id}
+                                      onClick={handleOpen}
+                                      className="text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
+                                      title="Factuur openen"
+                                    >
+                                      <FileText size={13} />
+                                      {inv.invoice_number ?? "—"}
+                                    </button>
+                                  ) : (
+                                    <span key={inv.id} className="text-muted-foreground">{inv.invoice_number ?? "—"}</span>
+                                  );
+                                })
+                              : <span className="text-muted-foreground">—</span>}
                           </span>
 
-                          <span className="text-sm tabular-nums text-right">
+                          <span className="text-sm tabular-nums shrink-0">
                             € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
                           </span>
 
-                          <div className="flex items-center gap-2">
-                            {yearInvoices.length === 0 ? (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            ) : (
-                              yearInvoices.map((inv, index) => {
-                                const handleOpen = async (e: React.MouseEvent) => {
-                                  e.preventDefault();
-                                  if (!inv.invoice_file_path) return;
-
-                                  const { data, error } = await supabase.storage
-                                    .from("contribution-invoices")
-                                    .createSignedUrl(inv.invoice_file_path, 300);
-
-                                  if (error || !data?.signedUrl) {
-                                    toast.error("Factuur kon niet worden geopend");
-                                    return;
-                                  }
-
-                                  const signedUrl = data.signedUrl.startsWith("http")
-                                    ? data.signedUrl
-                                    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
-
-                                  const a = document.createElement("a");
-                                  a.href = signedUrl;
-                                  a.target = "_blank";
-                                  a.rel = "noopener noreferrer";
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
-                                };
-
-                                return (
-                                  <button
-                                    key={inv.id}
-                                    onClick={handleOpen}
-                                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-primary hover:bg-muted transition-colors cursor-pointer"
-                                    title={`Factuur ${inv.invoice_number ?? ""} openen`}
-                                  >
-                                    <FileText size={14} />
-                                    <span>{yearInvoices.length > 1 ? `PDF ${index + 1}` : "PDF"}</span>
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${
-                              contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                            }`}
-                          >
-                            {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                            {contrib?.paid ? "Betaald" : "Openstaand"}
+                          <span className="ml-auto">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                              }`}
+                            >
+                              {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                              {contrib?.paid ? "Betaald" : "Openstaand"}
+                            </span>
                           </span>
-                        </div>
                       </div>
                     );
                   })}
