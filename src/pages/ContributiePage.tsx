@@ -87,6 +87,10 @@ const ContributiePage = () => {
     }
   };
 
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   if (isLoading || invoicesLoading) {
     return (
       <div className="p-4 sm:p-6">
