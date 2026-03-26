@@ -178,6 +178,16 @@ const MemberDetail = () => {
                       {member.bestuursfunctie}
                     </span>
                   )}
+                  {canSeeDetails && currentYearContrib && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-semibold ${
+                      currentYearContrib.paid
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                        : "bg-destructive/15 text-destructive"
+                    }`}>
+                      {currentYearContrib.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                      {currentYearContrib.paid ? "Contributie betaald" : "Contributie openstaand"}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
