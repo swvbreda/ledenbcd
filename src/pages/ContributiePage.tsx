@@ -174,6 +174,7 @@ const ContributiePage = () => {
                   <TableHead className="w-16">Nr</TableHead>
                   <TableHead>Naam</TableHead>
                   <TableHead className="hidden sm:table-cell">Plaats</TableHead>
+                  <TableHead className="hidden lg:table-cell w-28">Factuur</TableHead>
                   <TableHead className="w-20 text-center">Locaties</TableHead>
                   <TableHead className="w-28 text-right">Bedrag</TableHead>
                   <TableHead className="w-24 text-center">Betaald</TableHead>
@@ -193,6 +194,9 @@ const ContributiePage = () => {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {m.plaats}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
+                        {c?.invoice_number ?? "—"}
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
@@ -215,7 +219,7 @@ const ContributiePage = () => {
                 })}
                 {filteredMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Geen leden gevonden
                     </TableCell>
                   </TableRow>

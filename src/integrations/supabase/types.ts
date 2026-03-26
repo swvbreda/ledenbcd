@@ -146,6 +146,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          invoice_number: string | null
           member_id: number
           notes: string | null
           paid: boolean
@@ -158,6 +159,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          invoice_number?: string | null
           member_id: number
           notes?: string | null
           paid?: boolean
@@ -170,6 +172,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          invoice_number?: string | null
           member_id?: number
           notes?: string | null
           paid?: boolean
