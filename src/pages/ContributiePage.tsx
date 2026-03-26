@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, type Contribution } from "@/hooks/useContributions";
+import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search, MapPin } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
@@ -197,7 +198,23 @@ const ContributiePage = () => {
                         {m.plaats}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
-                        {c?.invoice_number ?? "—"}
+                        <div className="flex items-center gap-1.5">
+                          <span>{c?.invoice_number ?? "—"}</span>
+                          {c?.invoice_file_path && (
+                            <button
+                              onClick={async () => {
+                                const { data } = await supabase.storage
+                                  .from("contribution-invoices")
+                                  .createSignedUrl(c.invoice_file_path!, 60);
+                                if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                              }}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                              title="Factuur PDF openen"
+                            >
+                              <FileText size={14} />
+                            </button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
