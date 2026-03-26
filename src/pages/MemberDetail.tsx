@@ -515,16 +515,16 @@ const MemberDetail = () => {
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
 
                     return (
-                      <div key={year} className="flex items-center gap-6 rounded-md border border-border bg-muted/20 px-4 py-3">
-                          <span className="text-sm font-semibold w-12 shrink-0">{year}</span>
+                      <div key={year} className="grid grid-cols-5 items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
+                          <span className="font-semibold">{year}</span>
 
-                          <span className="text-sm text-muted-foreground tabular-nums w-20 shrink-0">
+                          <span className="text-muted-foreground tabular-nums">
                             {yearInvoices.length > 0
                               ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
                               : "—"}
                           </span>
 
-                          <span className="text-sm font-mono shrink-0">
+                          <span className="font-mono">
                             {yearInvoices.length > 0
                               ? yearInvoices.map((inv) => {
                                   const handleOpen = async (e: React.MouseEvent) => {
@@ -549,7 +549,7 @@ const MemberDetail = () => {
                                       className="text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
                                       title="Factuur openen"
                                     >
-                                      <FileText size={13} />
+                                      <FileText size={14} />
                                       {inv.invoice_number ?? "—"}
                                     </button>
                                   ) : (
@@ -559,11 +559,11 @@ const MemberDetail = () => {
                               : <span className="text-muted-foreground">—</span>}
                           </span>
 
-                          <span className="text-sm tabular-nums shrink-0">
+                          <span className="tabular-nums">
                             € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
                           </span>
 
-                          <span className="ml-auto">
+                          <span className="text-right">
                             <span
                               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
                                 contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
