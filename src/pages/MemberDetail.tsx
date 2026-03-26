@@ -565,7 +565,7 @@ const MemberDetail = () => {
 
                           <span className="ml-auto">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
                                 contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
                               }`}
                             >
