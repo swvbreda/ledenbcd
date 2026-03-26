@@ -16,6 +16,7 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 const FIXED_AMOUNT = 3000;
 
 const ContributiePage = () => {
+  const { isAdmin } = useAuth();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
   const { effectiveMembers } = useMembers();
