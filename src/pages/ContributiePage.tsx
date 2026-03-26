@@ -20,6 +20,7 @@ const FIXED_AMOUNT = 3000;
 
 const ContributiePage = () => {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
