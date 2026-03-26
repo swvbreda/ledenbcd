@@ -253,8 +253,21 @@ const ContributiePage = () => {
                                     onClick={async () => {
                                       const { data } = await supabase.storage
                                         .from("contribution-invoices")
-                                        .createSignedUrl(inv.invoice_file_path!, 60);
-                                      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                                        .createSignedUrl(inv.invoice_file_path!, 300);
+                                      if (!data?.signedUrl) {
+                                        toast.error("Factuur kon niet worden geopend");
+                                        return;
+                                      }
+                                      const url = data.signedUrl.startsWith("http")
+                                        ? data.signedUrl
+                                        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.target = "_blank";
+                                      a.rel = "noopener noreferrer";
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
                                     }}
                                     className="text-primary hover:text-primary/80 transition-colors"
                                     title="Factuur PDF openen"
