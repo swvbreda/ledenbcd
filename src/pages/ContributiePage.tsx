@@ -28,9 +28,10 @@ const ContributiePage = () => {
   }, [contributions]);
 
   const filteredMembers = useMemo(() => {
-    if (!search) return effectiveMembers;
+    const sorted = [...effectiveMembers].sort((a, b) => a.id - b.id);
+    if (!search) return sorted;
     const q = search.toLowerCase();
-    return effectiveMembers.filter(
+    return sorted.filter(
       (m) =>
         m.naam.toLowerCase().includes(q) ||
         m.bedrijfsnaam.toLowerCase().includes(q) ||
