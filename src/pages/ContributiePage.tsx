@@ -195,6 +195,9 @@ const ContributiePage = () => {
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {m.plaats}
                       </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
+                        {c?.invoice_number ?? "—"}
+                      </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
                       </TableCell>
