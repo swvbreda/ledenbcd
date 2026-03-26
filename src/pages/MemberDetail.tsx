@@ -515,11 +515,15 @@ const MemberDetail = () => {
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
 
                     return (
-                      <div key={year} className="rounded-md border border-border bg-muted/20 p-3">
-                        <div className="grid grid-cols-1 gap-2 md:grid-cols-[72px_110px_1fr_120px_auto_140px] md:items-center">
+                      <div key={year} className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                        <div className="grid grid-cols-[60px_90px_100px_80px_auto_auto] items-center gap-x-4 gap-y-2">
                           <span className="text-sm font-semibold">{year}</span>
 
-                          <span className="text-xs text-muted-foreground">{contrib?.paid_date ?? "—"}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {yearInvoices.length > 0
+                              ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                              : "—"}
+                          </span>
 
                           <span className="text-sm font-mono text-muted-foreground">
                             {yearInvoices.length > 0
@@ -527,11 +531,11 @@ const MemberDetail = () => {
                               : "—"}
                           </span>
 
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm tabular-nums text-right">
                             € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
                           </span>
 
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex items-center gap-2">
                             {yearInvoices.length === 0 ? (
                               <span className="text-xs text-muted-foreground">—</span>
                             ) : (
