@@ -516,29 +516,26 @@ const MemberDetail = () => {
 
                     return (
                       <div key={year} className="rounded-md border border-border bg-muted/20 p-3">
-                        <div className="grid grid-cols-1 gap-2 md:grid-cols-[72px_120px_120px_140px_1fr] md:items-center">
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-[72px_110px_1fr_120px_auto_140px] md:items-center">
                           <span className="text-sm font-semibold">{year}</span>
 
-                          <span
-                            className={`inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
-                              contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                            }`}
-                          >
-                            {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                            {contrib?.paid ? "Betaald" : "Openstaand"}
+                          <span className="text-xs text-muted-foreground">{contrib?.paid_date ?? "—"}</span>
+
+                          <span className="text-sm font-mono text-muted-foreground">
+                            {yearInvoices.length > 0
+                              ? yearInvoices.map((inv) => inv.invoice_number ?? "—").join(", ")
+                              : "—"}
                           </span>
 
                           <span className="text-sm text-muted-foreground">
                             € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
                           </span>
 
-                          <span className="text-xs text-muted-foreground">{contrib?.paid_date ?? "—"}</span>
-
                           <div className="flex flex-wrap items-center gap-2">
                             {yearInvoices.length === 0 ? (
-                              <span className="text-xs text-muted-foreground">Nog geen factuur</span>
+                              <span className="text-xs text-muted-foreground">—</span>
                             ) : (
-                              yearInvoices.map((inv) => {
+                              yearInvoices.map((inv, index) => {
                                 const handleOpen = async (e: React.MouseEvent) => {
                                   e.preventDefault();
                                   if (!inv.invoice_file_path) return;
@@ -556,7 +553,6 @@ const MemberDetail = () => {
                                     ? data.signedUrl
                                     : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
 
-                                  // Use an anchor click to avoid popup blockers
                                   const a = document.createElement("a");
                                   a.href = signedUrl;
                                   a.target = "_blank";
@@ -574,12 +570,21 @@ const MemberDetail = () => {
                                     title={`Factuur ${inv.invoice_number ?? ""} openen`}
                                   >
                                     <FileText size={14} />
-                                    <span className="font-mono">{inv.invoice_number ?? "PDF"}</span>
+                                    <span>{yearInvoices.length > 1 ? `PDF ${index + 1}` : "PDF"}</span>
                                   </button>
                                 );
                               })
                             )}
                           </div>
+
+                          <span
+                            className={`inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
+                              contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                            }`}
+                          >
+                            {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            {contrib?.paid ? "Betaald" : "Openstaand"}
+                          </span>
                         </div>
                       </div>
                     );
