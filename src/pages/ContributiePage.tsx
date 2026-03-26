@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search, MapPin } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
