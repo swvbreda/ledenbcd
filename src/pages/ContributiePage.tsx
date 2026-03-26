@@ -116,9 +116,10 @@ const ContributiePage = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Euro size={14} />
-              Verwacht
+              Gefactureerd
             </div>
-            <p className="text-lg font-bold mt-1">€ {stats.totalAmount.toLocaleString("nl-NL")}</p>
+            <p className="text-lg font-bold mt-1">€ {stats.expectedAmount.toLocaleString("nl-NL")}</p>
+            <p className="text-xs text-muted-foreground">{stats.invoiced} / {stats.total} leden</p>
           </CardContent>
         </Card>
         <Card>
@@ -143,9 +144,9 @@ const ContributiePage = () => {
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">Betaald</div>
             <p className="text-lg font-bold mt-1">
-              {stats.paid} / {stats.total}
+              {stats.paid} / {stats.invoiced}
               <span className="text-sm font-normal text-muted-foreground ml-1">
-                ({stats.total > 0 ? Math.round((stats.paid / stats.total) * 100) : 0}%)
+                ({stats.invoiced > 0 ? Math.round((stats.paid / stats.invoiced) * 100) : 0}%)
               </span>
             </p>
           </CardContent>
