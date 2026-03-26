@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
@@ -97,6 +98,35 @@ const ContributiePage = () => {
     } catch (e: any) {
       toast.error("Fout bij opslaan: " + e.message);
     }
+  };
+
+  const handleExportCSV = () => {
+    const today = new Date().toISOString().split("T")[0];
+    const header = ["Lidnr", "Naam", "Plaats", "Locaties", "Factuurnummer", "Bedrag", "Betaald", "Datum"];
+    const rows = filteredMembers.map((m) => {
+      const c = contribMap.get(m.id);
+      const invs = invoicesMap.get(m.id) ?? [];
+      const invoiceNrs = invs.map((i) => i.invoice_number ?? "").join("; ");
+      return [
+        m.id,
+        `"${m.naam}"`,
+        `"${m.plaats}"`,
+        m.locaties?.length || m.aantalLocaties || 1,
+        `"${invoiceNrs}"`,
+        FIXED_AMOUNT,
+        c?.paid ? "Ja" : "Nee",
+        c?.paid_date ?? "",
+      ].join(",");
+    });
+    const csv = [header.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contributie_${selectedYear}_${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filteredMembers.length} rijen geëxporteerd`);
   };
 
   if (!isAdmin) {
@@ -206,6 +236,9 @@ const ContributiePage = () => {
             className="pl-9"
           />
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleExportCSV}>
+          <Download size={14} /> CSV
+        </Button>
       </div>
 
       {/* Table */}
