@@ -26,6 +26,7 @@ import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
 import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
 import EnqueteReviewPage from "./pages/EnqueteReviewPage";
+import ContributiePage from "./pages/ContributiePage";
 
 import NotFound from "./pages/NotFound";
 
