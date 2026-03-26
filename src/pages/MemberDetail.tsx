@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import ConvertLeadDialog from "@/components/ConvertLeadDialog";
@@ -20,6 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
+import { useMemberContributions } from "@/hooks/useContributions";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
@@ -46,6 +47,11 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+  const { data: memberContributions } = useMemberContributions(memberId);
+  const currentYearContrib = useMemo(() => {
+    const cy = new Date().getFullYear();
+    return (memberContributions ?? []).find((c) => c.year === cy);
+  }, [memberContributions]);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
@@ -170,6 +176,16 @@ const MemberDetail = () => {
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/15 text-accent-foreground rounded-md text-[11px] sm:text-xs font-semibold">
                       <Shield size={12} />
                       {member.bestuursfunctie}
+                    </span>
+                  )}
+                  {canSeeDetails && currentYearContrib && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-semibold ${
+                      currentYearContrib.paid
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                        : "bg-destructive/15 text-destructive"
+                    }`}>
+                      {currentYearContrib.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                      {currentYearContrib.paid ? "Contributie betaald" : "Contributie openstaand"}
                     </span>
                   )}
                 </div>

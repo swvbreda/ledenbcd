@@ -26,6 +26,7 @@ import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
 import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
 import EnqueteReviewPage from "./pages/EnqueteReviewPage";
+import ContributiePage from "./pages/ContributiePage";
 
 import NotFound from "./pages/NotFound";
 
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/enquetes/:id/beheer" element={<EnqueteBeheerPage />} />
                   <Route path="/oud-leden" element={<LedenPage />} />
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
+                  <Route path="/contributie" element={<ContributiePage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />

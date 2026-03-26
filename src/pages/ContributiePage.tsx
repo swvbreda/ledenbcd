@@ -1,0 +1,260 @@
+import { useState, useMemo } from "react";
+import { useContributions, useUpsertContribution, type Contribution } from "@/hooks/useContributions";
+import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMembers } from "@/hooks/useMembers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Euro, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+
+const ContributiePage = () => {
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [search, setSearch] = useState("");
+  const [defaultAmount, setDefaultAmount] = useState("750");
+  const { effectiveMembers } = useMembers();
+  const { data: contributions, isLoading } = useContributions(selectedYear);
+  const upsert = useUpsertContribution();
+
+  const contribMap = useMemo(() => {
+    const map = new Map<number, Contribution>();
+    (contributions ?? []).forEach((c) => map.set(c.member_id, c));
+    return map;
+  }, [contributions]);
+
+  const filteredMembers = useMemo(() => {
+    if (!search) return effectiveMembers;
+    const q = search.toLowerCase();
+    return effectiveMembers.filter(
+      (m) =>
+        m.naam.toLowerCase().includes(q) ||
+        m.bedrijfsnaam.toLowerCase().includes(q) ||
+        String(m.id).includes(q) ||
+        m.plaats.toLowerCase().includes(q)
+    );
+  }, [effectiveMembers, search]);
+
+  const stats = useMemo(() => {
+    const total = effectiveMembers.length;
+    let paid = 0;
+    let totalAmount = 0;
+    let paidAmount = 0;
+    effectiveMembers.forEach((m) => {
+      const c = contribMap.get(m.id);
+      const amt = c?.amount ?? (parseFloat(defaultAmount) || 0);
+      totalAmount += amt;
+      if (c?.paid) {
+        paid++;
+        paidAmount += amt;
+      }
+    });
+    return { total, paid, open: total - paid, totalAmount, paidAmount, openAmount: totalAmount - paidAmount };
+  }, [effectiveMembers, contribMap, defaultAmount]);
+
+  const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
+    const existing = contribMap.get(memberId);
+    const amount = existing?.amount ?? (parseFloat(defaultAmount) || 0);
+    try {
+      await upsert.mutateAsync({
+        member_id: memberId,
+        year: selectedYear,
+        amount,
+        paid: !currentlyPaid,
+        paid_date: !currentlyPaid ? new Date().toISOString().split("T")[0] : null,
+        notes: existing?.notes ?? null,
+      });
+    } catch (e: any) {
+      toast.error("Fout bij opslaan: " + e.message);
+    }
+  };
+
+  const handleAmountChange = async (memberId: number, amount: string) => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return;
+    const existing = contribMap.get(memberId);
+    try {
+      await upsert.mutateAsync({
+        member_id: memberId,
+        year: selectedYear,
+        amount: numAmount,
+        paid: existing?.paid ?? false,
+        paid_date: existing?.paid_date ?? null,
+        notes: existing?.notes ?? null,
+      });
+    } catch (e: any) {
+      toast.error("Fout bij opslaan: " + e.message);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <LoadingSpinner message="Contributie laden..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold font-display">Contributie</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Contributie-administratie per lid per jaar</p>
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Euro size={14} />
+              Verwacht
+            </div>
+            <p className="text-lg font-bold mt-1">€ {stats.totalAmount.toLocaleString("nl-NL")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 size={14} className="text-emerald-500" />
+              Ontvangen
+            </div>
+            <p className="text-lg font-bold mt-1 text-emerald-600">€ {stats.paidAmount.toLocaleString("nl-NL")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <AlertCircle size={14} className="text-amber-500" />
+              Openstaand
+            </div>
+            <p className="text-lg font-bold mt-1 text-amber-600">€ {stats.openAmount.toLocaleString("nl-NL")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">Betaald</div>
+            <p className="text-lg font-bold mt-1">
+              {stats.paid} / {stats.total}
+              <span className="text-sm font-normal text-muted-foreground ml-1">
+                ({stats.total > 0 ? Math.round((stats.paid / stats.total) * 100) : 0}%)
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((y) => (
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="relative flex-1 max-w-sm">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Zoek op naam, bedrijf, lidnummer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">Standaard bedrag:</span>
+          <Input
+            type="number"
+            value={defaultAmount}
+            onChange={(e) => setDefaultAmount(e.target.value)}
+            className="w-24"
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Nr</TableHead>
+                  <TableHead>Naam</TableHead>
+                  <TableHead className="hidden sm:table-cell">Plaats</TableHead>
+                  <TableHead className="w-28 text-right">Bedrag</TableHead>
+                  <TableHead className="w-24 text-center">Betaald</TableHead>
+                  <TableHead className="hidden md:table-cell w-32">Datum</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMembers.map((m) => {
+                  const c = contribMap.get(m.id);
+                  const isPaid = c?.paid ?? false;
+                  const amount = c?.amount ?? (parseFloat(defaultAmount) || 0);
+                  return (
+                    <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{m.naam}</div>
+                        <div className="text-xs text-muted-foreground sm:hidden">{m.plaats}</div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                        {m.plaats}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          defaultValue={amount}
+                          onBlur={(e) => {
+                            const newVal = e.target.value;
+                            if (parseFloat(newVal) !== amount) {
+                              handleAmountChange(m.id, newVal);
+                            }
+                          }}
+                          className="w-24 text-right ml-auto h-8 text-sm"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={isPaid}
+                          onCheckedChange={() => handleTogglePaid(m.id, isPaid)}
+                          className="mx-auto"
+                        />
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {c?.paid_date ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {filteredMembers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Geen leden gevonden
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ContributiePage;

@@ -140,6 +140,45 @@ export type Database = {
         }
         Relationships: []
       }
+      member_contributions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          id: string
+          member_id: number
+          notes: string | null
+          paid: boolean
+          paid_date: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by: string
+          id?: string
+          member_id: number
+          notes?: string | null
+          paid?: boolean
+          paid_date?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          member_id?: number
+          notes?: string | null
+          paid?: boolean
+          paid_date?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       member_edit_requests: {
         Row: {
           created_at: string
