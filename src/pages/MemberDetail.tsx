@@ -582,7 +582,7 @@ const MemberDetail = () => {
                           </div>
 
                           <span
-                            className={`inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${
                               contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
                             }`}
                           >
