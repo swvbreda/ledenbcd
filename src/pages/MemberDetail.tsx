@@ -503,6 +503,15 @@ const MemberDetail = () => {
               </div>
 
               <div className="space-y-2">
+                <div className="hidden md:grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md px-4 text-xs font-medium text-muted-foreground">
+                  <span className="text-center">Jaar</span>
+                  <span className="text-center">Factuurdatum</span>
+                  <span className="text-center">Factuurnummer</span>
+                  <span className="text-center">Bedrag</span>
+                  <span className="text-center">Status</span>
+                  <span className="text-center">Betaald op</span>
+                </div>
+
                 {Array.from(
                   new Set([
                     ...(memberContributions ?? []).map((c) => c.year),
@@ -515,70 +524,84 @@ const MemberDetail = () => {
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
 
                     return (
-                      <div key={year} className="grid grid-cols-6 items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
-                          <span className="font-semibold">{year}</span>
+                      <div
+                        key={year}
+                        className="grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm"
+                      >
+                        <span className="text-center font-semibold tabular-nums">{year}</span>
 
-                          <span className="text-muted-foreground tabular-nums">
-                            {yearInvoices.length > 0
-                              ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
-                              : "—"}
-                          </span>
+                        <span className="text-center text-muted-foreground tabular-nums">
+                          {yearInvoices.length > 0
+                            ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </span>
 
-                          <span>
-                            {yearInvoices.length > 0
-                              ? yearInvoices.map((inv) => {
-                                  const handleOpen = async (e: React.MouseEvent) => {
-                                    e.preventDefault();
-                                    if (!inv.invoice_file_path) return;
-                                    const { data, error } = await supabase.storage
-                                      .from("contribution-invoices")
-                                      .createSignedUrl(inv.invoice_file_path, 300);
-                                    if (error || !data?.signedUrl) {
-                                      toast.error("Factuur kon niet worden geopend");
-                                      return;
-                                    }
-                                    const signedUrl = data.signedUrl.startsWith("http")
-                                      ? data.signedUrl
-                                      : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
-                                    window.open(signedUrl, "_blank", "noopener,noreferrer");
-                                  };
-                                  return inv.invoice_file_path ? (
-                                    <button
-                                      key={inv.id}
-                                      onClick={handleOpen}
-                                      className="text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
-                                      title="Factuur openen"
-                                    >
-                                      <FileText size={14} />
-                                      {inv.invoice_number ?? "—"}
-                                    </button>
-                                  ) : (
-                                    <span key={inv.id} className="text-muted-foreground">{inv.invoice_number ?? "—"}</span>
-                                  );
-                                })
-                              : <span className="text-muted-foreground">—</span>}
-                          </span>
+                        <div className="flex flex-col items-center gap-1">
+                          {yearInvoices.length > 0
+                            ? yearInvoices.map((inv) => {
+                                const handleOpen = async (e: React.MouseEvent) => {
+                                  e.preventDefault();
+                                  if (!inv.invoice_file_path) return;
+                                  const { data, error } = await supabase.storage
+                                    .from("contribution-invoices")
+                                    .createSignedUrl(inv.invoice_file_path, 300);
+                                  if (error || !data?.signedUrl) {
+                                    toast.error("Factuur kon niet worden geopend");
+                                    return;
+                                  }
+                                  const signedUrl = data.signedUrl.startsWith("http")
+                                    ? data.signedUrl
+                                    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
+                                  window.open(signedUrl, "_blank", "noopener,noreferrer");
+                                };
 
-                          <span className="tabular-nums">
-                            € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
-                          </span>
+                                return inv.invoice_file_path ? (
+                                  <button
+                                    key={inv.id}
+                                    onClick={handleOpen}
+                                    className="text-primary hover:underline cursor-pointer inline-flex items-center justify-center gap-1 text-sm"
+                                    title="Factuur openen"
+                                  >
+                                    <FileText size={14} />
+                                    {inv.invoice_number ?? "—"}
+                                  </button>
+                                ) : (
+                                  <span key={inv.id} className="text-muted-foreground text-sm">
+                                    {inv.invoice_number ?? "—"}
+                                  </span>
+                                );
+                              })
+                            : <span className="text-muted-foreground text-sm">—</span>}
+                        </div>
 
-                          <span>
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
-                                contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                              }`}
-                            >
-                              {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                              {contrib?.paid ? "Betaald" : "Openstaand"}
-                            </span>
-                          </span>
+                        <span className="text-center tabular-nums">
+                          € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
+                        </span>
 
-                          <span className="text-muted-foreground tabular-nums text-right">
-                            {contrib?.paid_date
-                              ? new Date(contrib.paid_date).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
-                              : "—"}
+                        <div className="flex justify-center">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
+                              contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                            }`}
+                          >
+                            {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            {contrib?.paid ? "Betaald" : "Openstaand"}
                           </span>
+                        </div>
+
+                        <span className="text-center text-muted-foreground tabular-nums">
+                          {contrib?.paid_date
+                            ? new Date(contrib.paid_date).toLocaleDateString("nl-NL", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </span>
                       </div>
                     );
                   })}
