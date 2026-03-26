@@ -146,6 +146,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          invoice_file_path: string | null
           invoice_number: string | null
           member_id: number
           notes: string | null
@@ -159,6 +160,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          invoice_file_path?: string | null
           invoice_number?: string | null
           member_id: number
           notes?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          invoice_file_path?: string | null
           invoice_number?: string | null
           member_id?: number
           notes?: string | null
