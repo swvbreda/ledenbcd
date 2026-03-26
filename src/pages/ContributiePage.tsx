@@ -76,23 +76,7 @@ const ContributiePage = () => {
     }
   };
 
-  const handleAmountChange = async (memberId: number, amount: string) => {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return;
-    const existing = contribMap.get(memberId);
-    try {
-      await upsert.mutateAsync({
-        member_id: memberId,
-        year: selectedYear,
-        amount: numAmount,
-        paid: existing?.paid ?? false,
-        paid_date: existing?.paid_date ?? null,
-        notes: existing?.notes ?? null,
-      });
-    } catch (e: any) {
-      toast.error("Fout bij opslaan: " + e.message);
-    }
-  };
+  const fixedAmount = parseFloat(defaultAmount) || 3000;
 
   if (isLoading) {
     return (
