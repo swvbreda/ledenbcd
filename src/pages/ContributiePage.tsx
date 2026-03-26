@@ -84,7 +84,7 @@ const ContributiePage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || invoicesLoading) {
     return (
       <div className="p-4 sm:p-6">
         <LoadingSpinner message="Contributie laden..." />
