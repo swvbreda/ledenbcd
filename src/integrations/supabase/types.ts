@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      contribution_invoices: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_file_path: string | null
+          invoice_number: string | null
+          member_id: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_file_path?: string | null
+          invoice_number?: string | null
+          member_id: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_file_path?: string | null
+          invoice_number?: string | null
+          member_id?: number
+          year?: number
+        }
+        Relationships: []
+      }
       lead_conversions: {
         Row: {
           created_at: string
