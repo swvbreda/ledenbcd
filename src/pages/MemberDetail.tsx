@@ -518,7 +518,7 @@ const MemberDetail = () => {
                       <div key={year} className="flex items-center gap-6 rounded-md border border-border bg-muted/20 px-4 py-3">
                           <span className="text-sm font-semibold w-12 shrink-0">{year}</span>
 
-                          <span className="text-xs text-muted-foreground tabular-nums w-20 shrink-0">
+                          <span className="text-sm text-muted-foreground tabular-nums w-20 shrink-0">
                             {yearInvoices.length > 0
                               ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
                               : "—"}
