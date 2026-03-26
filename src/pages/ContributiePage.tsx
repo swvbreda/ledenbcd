@@ -69,11 +69,6 @@ const ContributiePage = () => {
     return list;
   }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
 
-  const totalLocaties = useMemo(
-    () => allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
-    [allRepresented]
-  );
-
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
     // Only count members who have at least one invoice for this year
@@ -192,15 +187,6 @@ const ContributiePage = () => {
                 ({stats.invoiced > 0 ? Math.round((stats.paid / stats.invoiced) * 100) : 0}%)
               </span>
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin size={14} />
-              Locaties
-            </div>
-            <p className="text-lg font-bold mt-1">{totalLocaties}</p>
           </CardContent>
         </Card>
       </div>
