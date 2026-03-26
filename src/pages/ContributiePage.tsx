@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
-import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +25,6 @@ const ContributiePage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const { effectiveMembers } = useMembers();
-  const { allRepresented } = useMembersData();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
   const upsert = useUpsertContribution();
@@ -68,11 +66,6 @@ const ContributiePage = () => {
     }
     return list;
   }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
-
-  const totalLocaties = useMemo(
-    () => allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
-    [allRepresented]
-  );
 
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
@@ -192,15 +185,6 @@ const ContributiePage = () => {
                 ({stats.invoiced > 0 ? Math.round((stats.paid / stats.invoiced) * 100) : 0}%)
               </span>
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin size={14} />
-              Locaties
-            </div>
-            <p className="text-lg font-bold mt-1">{totalLocaties}</p>
           </CardContent>
         </Card>
       </div>
