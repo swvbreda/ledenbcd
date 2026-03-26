@@ -198,7 +198,23 @@ const ContributiePage = () => {
                         {m.plaats}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
-                        {c?.invoice_number ?? "—"}
+                        <div className="flex items-center gap-1.5">
+                          <span>{c?.invoice_number ?? "—"}</span>
+                          {c?.invoice_file_path && (
+                            <button
+                              onClick={async () => {
+                                const { data } = await supabase.storage
+                                  .from("contribution-invoices")
+                                  .createSignedUrl(c.invoice_file_path!, 60);
+                                if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                              }}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                              title="Factuur PDF openen"
+                            >
+                              <FileText size={14} />
+                            </button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
