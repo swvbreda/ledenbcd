@@ -62,14 +62,16 @@ const ContributiePage = () => {
 
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
+    // Only count members who have at least one invoice for this year
+    const invoiced = effectiveMembers.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0).length;
     let paid = 0;
     effectiveMembers.forEach((m) => {
       if (contribMap.get(m.id)?.paid) paid++;
     });
-    const totalAmount = total * FIXED_AMOUNT;
+    const expectedAmount = invoiced * FIXED_AMOUNT;
     const paidAmount = paid * FIXED_AMOUNT;
-    return { total, paid, open: total - paid, totalAmount, paidAmount, openAmount: totalAmount - paidAmount };
-  }, [effectiveMembers, contribMap]);
+    return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
+  }, [effectiveMembers, contribMap, invoicesMap]);
 
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
