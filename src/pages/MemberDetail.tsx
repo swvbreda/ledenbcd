@@ -515,7 +515,7 @@ const MemberDetail = () => {
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
 
                     return (
-                      <div key={year} className="grid grid-cols-5 items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
+                      <div key={year} className="grid grid-cols-6 items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
                           <span className="font-semibold">{year}</span>
 
                           <span className="text-muted-foreground tabular-nums">
@@ -563,7 +563,7 @@ const MemberDetail = () => {
                             € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
                           </span>
 
-                          <span className="text-right">
+                          <span>
                             <span
                               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
                                 contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
@@ -572,6 +572,12 @@ const MemberDetail = () => {
                               {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
                               {contrib?.paid ? "Betaald" : "Openstaand"}
                             </span>
+                          </span>
+
+                          <span className="text-muted-foreground tabular-nums text-right">
+                            {contrib?.paid_date
+                              ? new Date(contrib.paid_date).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                              : "—"}
                           </span>
                       </div>
                     );
