@@ -204,7 +204,7 @@ const ContributiePage = () => {
                 {filteredMembers.map((m) => {
                   const c = contribMap.get(m.id);
                   const isPaid = c?.paid ?? false;
-                  const amount = c?.amount ?? parseFloat(defaultAmount) || 0;
+                  const amount = c?.amount ?? (parseFloat(defaultAmount) || 0);
                   return (
                     <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
