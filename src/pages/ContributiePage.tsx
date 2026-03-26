@@ -186,6 +186,17 @@ const ContributiePage = () => {
             ))}
           </SelectContent>
         </Select>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle leden</SelectItem>
+            <SelectItem value="paid">Betaald</SelectItem>
+            <SelectItem value="unpaid">Niet betaald</SelectItem>
+            <SelectItem value="no_invoice">Geen factuur</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
