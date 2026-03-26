@@ -19,7 +19,7 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 const ContributiePage = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
-  const [defaultAmount, setDefaultAmount] = useState("750");
+  const [defaultAmount, setDefaultAmount] = useState("3000");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const upsert = useUpsertContribution();
