@@ -47,6 +47,11 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+  const { data: memberContributions } = useMemberContributions(memberId);
+  const currentYearContrib = useMemo(() => {
+    const cy = new Date().getFullYear();
+    return (memberContributions ?? []).find((c) => c.year === cy);
+  }, [memberContributions]);
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
