@@ -503,7 +503,7 @@ const MemberDetail = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="hidden md:grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md px-4 text-xs font-medium text-muted-foreground">
+                <div className="hidden md:grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md px-4 pb-1 text-xs font-medium text-muted-foreground sticky top-0 bg-card z-10">
                   <span className="text-center">Jaar</span>
                   <span className="text-center">Factuurdatum</span>
                   <span className="text-center">Factuurnummer</span>
