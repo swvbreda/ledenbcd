@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useContributions, useUpsertContribution, type Contribution } from "@/hooks/useContributions";
+import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ const ContributiePage = () => {
   const [search, setSearch] = useState("");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
+  const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
   const upsert = useUpsertContribution();
 
   const contribMap = useMemo(() => {
@@ -27,6 +28,16 @@ const ContributiePage = () => {
     (contributions ?? []).forEach((c) => map.set(c.member_id, c));
     return map;
   }, [contributions]);
+
+  const invoicesMap = useMemo(() => {
+    const map = new Map<number, ContributionInvoice[]>();
+    (invoicesData ?? []).forEach((inv) => {
+      const list = map.get(inv.member_id) ?? [];
+      list.push(inv);
+      map.set(inv.member_id, list);
+    });
+    return map;
+  }, [invoicesData]);
 
   const filteredMembers = useMemo(() => {
     const sorted = [...effectiveMembers].sort((a, b) => a.id - b.id);
@@ -73,7 +84,7 @@ const ContributiePage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || invoicesLoading) {
     return (
       <div className="p-4 sm:p-6">
         <LoadingSpinner message="Contributie laden..." />
@@ -187,6 +198,7 @@ const ContributiePage = () => {
                 {filteredMembers.map((m) => {
                   const c = contribMap.get(m.id);
                   const isPaid = c?.paid ?? false;
+                  const memberInvoices = invoicesMap.get(m.id) ?? [];
                   return (
                     <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
@@ -198,23 +210,31 @@ const ContributiePage = () => {
                         {m.plaats}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <span>{c?.invoice_number ?? "—"}</span>
-                          {c?.invoice_file_path && (
-                            <button
-                              onClick={async () => {
-                                const { data } = await supabase.storage
-                                  .from("contribution-invoices")
-                                  .createSignedUrl(c.invoice_file_path!, 60);
-                                if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-                              }}
-                              className="text-primary hover:text-primary/80 transition-colors"
-                              title="Factuur PDF openen"
-                            >
-                              <FileText size={14} />
-                            </button>
-                          )}
-                        </div>
+                        {memberInvoices.length === 0 ? (
+                          <span>—</span>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {memberInvoices.map((inv) => (
+                              <div key={inv.id} className="flex items-center gap-1.5">
+                                <span>{inv.invoice_number ?? "—"}</span>
+                                {inv.invoice_file_path && (
+                                  <button
+                                    onClick={async () => {
+                                      const { data } = await supabase.storage
+                                        .from("contribution-invoices")
+                                        .createSignedUrl(inv.invoice_file_path!, 60);
+                                      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                                    }}
+                                    className="text-primary hover:text-primary/80 transition-colors"
+                                    title="Factuur PDF openen"
+                                  >
+                                    <FileText size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
