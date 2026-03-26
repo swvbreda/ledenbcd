@@ -195,7 +195,7 @@ const ContributiePage = () => {
                         {m.plaats}
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        {m.aantalLocaties || 1}
+                        {m.locaties?.length || m.aantalLocaties || 1}
                       </TableCell>
                       <TableCell className="text-right text-sm font-medium">
                         € {FIXED_AMOUNT.toLocaleString("nl-NL")}
