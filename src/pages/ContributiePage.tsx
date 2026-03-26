@@ -21,6 +21,7 @@ const ContributiePage = () => {
   const { isAdmin } = useAuth();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
