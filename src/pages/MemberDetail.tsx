@@ -538,40 +538,46 @@ const MemberDetail = () => {
                             {yearInvoices.length === 0 ? (
                               <span className="text-xs text-muted-foreground">Nog geen factuur</span>
                             ) : (
-                              yearInvoices.map((inv) => (
-                                <button
-                                  key={inv.id}
-                                  onClick={async () => {
-                                    if (!inv.invoice_file_path) return;
+                              yearInvoices.map((inv) => {
+                                const handleOpen = async (e: React.MouseEvent) => {
+                                  e.preventDefault();
+                                  if (!inv.invoice_file_path) return;
 
-                                    const popup = window.open("", "_blank");
-                                    const { data, error } = await supabase.storage
-                                      .from("contribution-invoices")
-                                      .createSignedUrl(inv.invoice_file_path, 60);
+                                  const { data, error } = await supabase.storage
+                                    .from("contribution-invoices")
+                                    .createSignedUrl(inv.invoice_file_path, 300);
 
-                                    if (error || !data?.signedUrl) {
-                                      popup?.close();
-                                      toast.error("Factuur kon niet worden geopend");
-                                      return;
-                                    }
+                                  if (error || !data?.signedUrl) {
+                                    toast.error("Factuur kon niet worden geopend");
+                                    return;
+                                  }
 
-                                    const signedUrl = data.signedUrl.startsWith("http")
-                                      ? data.signedUrl
-                                      : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
+                                  const signedUrl = data.signedUrl.startsWith("http")
+                                    ? data.signedUrl
+                                    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
 
-                                    if (popup) {
-                                      popup.location.href = signedUrl;
-                                    } else {
-                                      window.location.href = signedUrl;
-                                    }
-                                  }}
-                                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-primary hover:bg-muted transition-colors"
-                                  title={`Factuur ${inv.invoice_number ?? ""} openen`}
-                                >
-                                  <FileText size={14} />
-                                  <span className="font-mono">{inv.invoice_number ?? "PDF"}</span>
-                                </button>
-                              ))
+                                  // Use an anchor click to avoid popup blockers
+                                  const a = document.createElement("a");
+                                  a.href = signedUrl;
+                                  a.target = "_blank";
+                                  a.rel = "noopener noreferrer";
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                };
+
+                                return (
+                                  <button
+                                    key={inv.id}
+                                    onClick={handleOpen}
+                                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-primary hover:bg-muted transition-colors cursor-pointer"
+                                    title={`Factuur ${inv.invoice_number ?? ""} openen`}
+                                  >
+                                    <FileText size={14} />
+                                    <span className="font-mono">{inv.invoice_number ?? "PDF"}</span>
+                                  </button>
+                                );
+                              })
                             )}
                           </div>
                         </div>
