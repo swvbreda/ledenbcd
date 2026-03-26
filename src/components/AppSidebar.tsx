@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
