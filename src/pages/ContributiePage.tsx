@@ -20,6 +20,7 @@ const ContributiePage = () => {
   const [search, setSearch] = useState("");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
+  const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
   const upsert = useUpsertContribution();
 
   const contribMap = useMemo(() => {
@@ -27,6 +28,16 @@ const ContributiePage = () => {
     (contributions ?? []).forEach((c) => map.set(c.member_id, c));
     return map;
   }, [contributions]);
+
+  const invoicesMap = useMemo(() => {
+    const map = new Map<number, ContributionInvoice[]>();
+    (invoicesData ?? []).forEach((inv) => {
+      const list = map.get(inv.member_id) ?? [];
+      list.push(inv);
+      map.set(inv.member_id, list);
+    });
+    return map;
+  }, [invoicesData]);
 
   const filteredMembers = useMemo(() => {
     const sorted = [...effectiveMembers].sort((a, b) => a.id - b.id);
