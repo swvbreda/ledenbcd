@@ -2,6 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+export interface ContributionInvoice {
+  id: string;
+  member_id: number;
+  year: number;
+  invoice_number: string | null;
+  invoice_file_path: string | null;
+  created_at: string;
+}
+
 export interface Contribution {
   id: string;
   member_id: number;
