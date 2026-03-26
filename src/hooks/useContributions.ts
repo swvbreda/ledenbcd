@@ -99,3 +99,37 @@ export function useUpsertContribution() {
     },
   });
 }
+
+export function useContributionInvoices(year?: number) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["contribution-invoices", year, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      let q = supabase.from("contribution_invoices").select("*");
+      if (year) q = q.eq("year", year);
+      const { data, error } = await q.order("member_id");
+      if (error) throw error;
+      return (data ?? []) as ContributionInvoice[];
+    },
+  });
+}
+
+export function useMemberInvoices(memberId: number) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["contribution-invoices", "member", memberId, user?.id],
+    enabled: !!user && !!memberId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contribution_invoices")
+        .select("*")
+        .eq("member_id", memberId)
+        .order("year", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ContributionInvoice[];
+    },
+  });
+}
