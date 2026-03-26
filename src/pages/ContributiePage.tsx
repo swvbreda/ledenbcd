@@ -61,7 +61,7 @@ const ContributiePage = () => {
 
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
-    const amount = existing?.amount ?? parseFloat(defaultAmount) || 0;
+    const amount = existing?.amount ?? (parseFloat(defaultAmount) || 0);
     try {
       await upsert.mutateAsync({
         member_id: memberId,
