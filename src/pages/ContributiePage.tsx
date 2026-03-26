@@ -100,6 +100,35 @@ const ContributiePage = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    const today = new Date().toISOString().split("T")[0];
+    const header = ["Lidnr", "Naam", "Plaats", "Locaties", "Factuurnummer", "Bedrag", "Betaald", "Datum"];
+    const rows = filteredMembers.map((m) => {
+      const c = contribMap.get(m.id);
+      const invs = invoicesMap.get(m.id) ?? [];
+      const invoiceNrs = invs.map((i) => i.invoice_number ?? "").join("; ");
+      return [
+        m.id,
+        `"${m.naam}"`,
+        `"${m.plaats}"`,
+        m.locaties?.length || m.aantalLocaties || 1,
+        `"${invoiceNrs}"`,
+        FIXED_AMOUNT,
+        c?.paid ? "Ja" : "Nee",
+        c?.paid_date ?? "",
+      ].join(",");
+    });
+    const csv = [header.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contributie_${selectedYear}_${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filteredMembers.length} rijen geëxporteerd`);
+  };
+
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
