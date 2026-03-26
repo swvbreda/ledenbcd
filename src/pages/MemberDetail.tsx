@@ -524,7 +524,7 @@ const MemberDetail = () => {
                               : "—"}
                           </span>
 
-                          <span className="font-mono">
+                          <span>
                             {yearInvoices.length > 0
                               ? yearInvoices.map((inv) => {
                                   const handleOpen = async (e: React.MouseEvent) => {
