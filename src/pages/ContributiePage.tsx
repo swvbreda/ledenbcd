@@ -3,7 +3,7 @@ import { useContributions, useUpsertContribution, useContributionInvoices, type 
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,6 +20,7 @@ const FIXED_AMOUNT = 3000;
 
 const ContributiePage = () => {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
@@ -264,16 +265,16 @@ const ContributiePage = () => {
                   const isPaid = c?.paid ?? false;
                   const memberInvoices = invoicesMap.get(m.id) ?? [];
                   return (
-                    <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
+                    <TableRow key={m.id} className={`${isPaid ? "bg-emerald-50/50" : ""} cursor-pointer hover:bg-muted/70`} onClick={() => navigate(`/leden/${m.id}`)}>
+                      <TableCell className="text-sm text-muted-foreground">{m.id}</TableCell>
                       <TableCell>
                         <div className="font-medium text-sm">{m.naam}</div>
-                        <div className="text-xs text-muted-foreground sm:hidden">{m.plaats}</div>
+                        <div className="text-sm text-muted-foreground sm:hidden">{m.plaats}</div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {m.plaats}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                         {memberInvoices.length === 0 ? (
                           <span>—</span>
                         ) : (
@@ -283,7 +284,8 @@ const ContributiePage = () => {
                                 <span>{inv.invoice_number ?? "—"}</span>
                                 {inv.invoice_file_path && (
                                   <button
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
                                       const { data } = await supabase.storage
                                         .from("contribution-invoices")
                                         .createSignedUrl(inv.invoice_file_path!, 300);
@@ -294,13 +296,7 @@ const ContributiePage = () => {
                                       const url = data.signedUrl.startsWith("http")
                                         ? data.signedUrl
                                         : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
-                                      const a = document.createElement("a");
-                                      a.href = url;
-                                      a.target = "_blank";
-                                      a.rel = "noopener noreferrer";
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      document.body.removeChild(a);
+                                      window.open(url, "_blank", "noopener,noreferrer");
                                     }}
                                     className="text-primary hover:text-primary/80 transition-colors"
                                     title="Factuur PDF openen"
@@ -316,10 +312,10 @@ const ContributiePage = () => {
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
                       </TableCell>
-                      <TableCell className="text-right text-sm font-medium">
+                      <TableCell className="text-right text-sm">
                         € {FIXED_AMOUNT.toLocaleString("nl-NL")}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isPaid}
                           onCheckedChange={() => handleTogglePaid(m.id, isPaid)}
