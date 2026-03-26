@@ -1,25 +1,22 @@
 import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, type Contribution } from "@/hooks/useContributions";
-import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMembers } from "@/hooks/useMembers";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, MapPin } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+const FIXED_AMOUNT = 3000;
 
 const ContributiePage = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
-  const [defaultAmount, setDefaultAmount] = useState("3000");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const upsert = useUpsertContribution();
@@ -42,51 +39,31 @@ const ContributiePage = () => {
     );
   }, [effectiveMembers, search]);
 
+  const totalLocaties = useMemo(
+    () => effectiveMembers.reduce((sum, m) => sum + (m.aantalLocaties || 1), 0),
+    [effectiveMembers]
+  );
+
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
     let paid = 0;
-    let totalAmount = 0;
-    let paidAmount = 0;
     effectiveMembers.forEach((m) => {
-      const c = contribMap.get(m.id);
-      const amt = c?.amount ?? (parseFloat(defaultAmount) || 0);
-      totalAmount += amt;
-      if (c?.paid) {
-        paid++;
-        paidAmount += amt;
-      }
+      if (contribMap.get(m.id)?.paid) paid++;
     });
+    const totalAmount = total * FIXED_AMOUNT;
+    const paidAmount = paid * FIXED_AMOUNT;
     return { total, paid, open: total - paid, totalAmount, paidAmount, openAmount: totalAmount - paidAmount };
-  }, [effectiveMembers, contribMap, defaultAmount]);
+  }, [effectiveMembers, contribMap]);
 
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
-    const amount = existing?.amount ?? (parseFloat(defaultAmount) || 0);
     try {
       await upsert.mutateAsync({
         member_id: memberId,
         year: selectedYear,
-        amount,
+        amount: FIXED_AMOUNT,
         paid: !currentlyPaid,
         paid_date: !currentlyPaid ? new Date().toISOString().split("T")[0] : null,
-        notes: existing?.notes ?? null,
-      });
-    } catch (e: any) {
-      toast.error("Fout bij opslaan: " + e.message);
-    }
-  };
-
-  const handleAmountChange = async (memberId: number, amount: string) => {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return;
-    const existing = contribMap.get(memberId);
-    try {
-      await upsert.mutateAsync({
-        member_id: memberId,
-        year: selectedYear,
-        amount: numAmount,
-        paid: existing?.paid ?? false,
-        paid_date: existing?.paid_date ?? null,
         notes: existing?.notes ?? null,
       });
     } catch (e: any) {
@@ -106,11 +83,13 @@ const ContributiePage = () => {
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display">Contributie</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Contributie-administratie per lid per jaar</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Contributie-administratie per lid per jaar — € {FIXED_AMOUNT.toLocaleString("nl-NL")} per lid
+        </p>
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -149,6 +128,15 @@ const ContributiePage = () => {
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin size={14} />
+              Locaties
+            </div>
+            <p className="text-lg font-bold mt-1">{totalLocaties}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Controls */}
@@ -174,15 +162,6 @@ const ContributiePage = () => {
             className="pl-9"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Standaard bedrag:</span>
-          <Input
-            type="number"
-            value={defaultAmount}
-            onChange={(e) => setDefaultAmount(e.target.value)}
-            className="w-24"
-          />
-        </div>
       </div>
 
       {/* Table */}
@@ -195,6 +174,7 @@ const ContributiePage = () => {
                   <TableHead className="w-16">Nr</TableHead>
                   <TableHead>Naam</TableHead>
                   <TableHead className="hidden sm:table-cell">Plaats</TableHead>
+                  <TableHead className="w-20 text-center">Locaties</TableHead>
                   <TableHead className="w-28 text-right">Bedrag</TableHead>
                   <TableHead className="w-24 text-center">Betaald</TableHead>
                   <TableHead className="hidden md:table-cell w-32">Datum</TableHead>
@@ -204,7 +184,6 @@ const ContributiePage = () => {
                 {filteredMembers.map((m) => {
                   const c = contribMap.get(m.id);
                   const isPaid = c?.paid ?? false;
-                  const amount = c?.amount ?? (parseFloat(defaultAmount) || 0);
                   return (
                     <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
@@ -215,18 +194,11 @@ const ContributiePage = () => {
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {m.plaats}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Input
-                          type="number"
-                          defaultValue={amount}
-                          onBlur={(e) => {
-                            const newVal = e.target.value;
-                            if (parseFloat(newVal) !== amount) {
-                              handleAmountChange(m.id, newVal);
-                            }
-                          }}
-                          className="w-24 text-right ml-auto h-8 text-sm"
-                        />
+                      <TableCell className="text-center text-sm">
+                        {m.aantalLocaties || 1}
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium">
+                        € {FIXED_AMOUNT.toLocaleString("nl-NL")}
                       </TableCell>
                       <TableCell className="text-center">
                         <Checkbox
@@ -243,7 +215,7 @@ const ContributiePage = () => {
                 })}
                 {filteredMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Geen leden gevonden
                     </TableCell>
                   </TableRow>
