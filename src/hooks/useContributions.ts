@@ -10,6 +10,7 @@ export interface Contribution {
   paid: boolean;
   paid_date: string | null;
   notes: string | null;
+  invoice_number: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

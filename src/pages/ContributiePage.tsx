@@ -174,6 +174,7 @@ const ContributiePage = () => {
                   <TableHead className="w-16">Nr</TableHead>
                   <TableHead>Naam</TableHead>
                   <TableHead className="hidden sm:table-cell">Plaats</TableHead>
+                  <TableHead className="hidden lg:table-cell w-28">Factuur</TableHead>
                   <TableHead className="w-20 text-center">Locaties</TableHead>
                   <TableHead className="w-28 text-right">Bedrag</TableHead>
                   <TableHead className="w-24 text-center">Betaald</TableHead>
