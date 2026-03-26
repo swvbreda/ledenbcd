@@ -198,6 +198,7 @@ const ContributiePage = () => {
                 {filteredMembers.map((m) => {
                   const c = contribMap.get(m.id);
                   const isPaid = c?.paid ?? false;
+                  const memberInvoices = invoicesMap.get(m.id) ?? [];
                   return (
                     <TableRow key={m.id} className={isPaid ? "bg-emerald-50/50" : ""}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
@@ -209,23 +210,31 @@ const ContributiePage = () => {
                         {m.plaats}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm font-mono text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <span>{c?.invoice_number ?? "—"}</span>
-                          {c?.invoice_file_path && (
-                            <button
-                              onClick={async () => {
-                                const { data } = await supabase.storage
-                                  .from("contribution-invoices")
-                                  .createSignedUrl(c.invoice_file_path!, 60);
-                                if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-                              }}
-                              className="text-primary hover:text-primary/80 transition-colors"
-                              title="Factuur PDF openen"
-                            >
-                              <FileText size={14} />
-                            </button>
-                          )}
-                        </div>
+                        {memberInvoices.length === 0 ? (
+                          <span>—</span>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {memberInvoices.map((inv) => (
+                              <div key={inv.id} className="flex items-center gap-1.5">
+                                <span>{inv.invoice_number ?? "—"}</span>
+                                {inv.invoice_file_path && (
+                                  <button
+                                    onClick={async () => {
+                                      const { data } = await supabase.storage
+                                        .from("contribution-invoices")
+                                        .createSignedUrl(inv.invoice_file_path!, 60);
+                                      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                                    }}
+                                    className="text-primary hover:text-primary/80 transition-colors"
+                                    title="Factuur PDF openen"
+                                  >
+                                    <FileText size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-center text-sm">
                         {m.locaties?.length || m.aantalLocaties || 1}
