@@ -573,8 +573,6 @@ const MemberDetail = () => {
                               {contrib?.paid ? "Betaald" : "Openstaand"}
                             </span>
                           </span>
-                          </span>
-                        </div>
                       </div>
                     );
                   })}
