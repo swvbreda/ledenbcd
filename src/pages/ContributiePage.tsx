@@ -21,6 +21,7 @@ const ContributiePage = () => {
   const { isAdmin } = useAuth();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
@@ -43,17 +44,26 @@ const ContributiePage = () => {
   }, [invoicesData]);
 
   const filteredMembers = useMemo(() => {
-    const sorted = [...effectiveMembers].sort((a, b) => a.id - b.id);
-    if (!search) return sorted;
-    const q = search.toLowerCase();
-    return sorted.filter(
-      (m) =>
-        m.naam.toLowerCase().includes(q) ||
-        m.bedrijfsnaam.toLowerCase().includes(q) ||
-        String(m.id).includes(q) ||
-        m.plaats.toLowerCase().includes(q)
-    );
-  }, [effectiveMembers, search]);
+    let list = [...effectiveMembers].sort((a, b) => a.id - b.id);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.naam.toLowerCase().includes(q) ||
+          m.bedrijfsnaam.toLowerCase().includes(q) ||
+          String(m.id).includes(q) ||
+          m.plaats.toLowerCase().includes(q)
+      );
+    }
+    if (statusFilter === "paid") {
+      list = list.filter((m) => contribMap.get(m.id)?.paid);
+    } else if (statusFilter === "unpaid") {
+      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0 && !contribMap.get(m.id)?.paid);
+    } else if (statusFilter === "no_invoice") {
+      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length === 0);
+    }
+    return list;
+  }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
 
   const totalLocaties = useMemo(
     () => effectiveMembers.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
@@ -174,6 +184,17 @@ const ContributiePage = () => {
                 {y}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle leden</SelectItem>
+            <SelectItem value="paid">Betaald</SelectItem>
+            <SelectItem value="unpaid">Niet betaald</SelectItem>
+            <SelectItem value="no_invoice">Geen factuur</SelectItem>
           </SelectContent>
         </Select>
         <div className="relative flex-1 max-w-sm">
