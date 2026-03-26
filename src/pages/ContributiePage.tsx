@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useContributions, useUpsertContribution, type Contribution } from "@/hooks/useContributions";
+import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
 import { Card, CardContent } from "@/components/ui/card";
