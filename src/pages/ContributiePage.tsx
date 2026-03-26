@@ -40,7 +40,7 @@ const ContributiePage = () => {
   }, [effectiveMembers, search]);
 
   const totalLocaties = useMemo(
-    () => effectiveMembers.reduce((sum, m) => sum + (m.aantalLocaties || 1), 0),
+    () => effectiveMembers.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
     [effectiveMembers]
   );
 
