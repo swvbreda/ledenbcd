@@ -236,6 +236,9 @@ const ContributiePage = () => {
             className="pl-9"
           />
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleExportCSV}>
+          <Download size={14} /> CSV
+        </Button>
       </div>
 
       {/* Table */}
