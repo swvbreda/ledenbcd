@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +26,7 @@ const ContributiePage = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const { effectiveMembers } = useMembers();
+  const { allRepresented } = useMembersData();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
   const upsert = useUpsertContribution();
@@ -68,8 +70,8 @@ const ContributiePage = () => {
   }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
 
   const totalLocaties = useMemo(
-    () => effectiveMembers.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
-    [effectiveMembers]
+    () => allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties || 1), 0),
+    [allRepresented]
   );
 
   const stats = useMemo(() => {
