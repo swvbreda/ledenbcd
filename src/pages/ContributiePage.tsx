@@ -49,7 +49,7 @@ const ContributiePage = () => {
     let paidAmount = 0;
     effectiveMembers.forEach((m) => {
       const c = contribMap.get(m.id);
-      const amt = c?.amount ?? parseFloat(defaultAmount) || 0;
+      const amt = c?.amount ?? (parseFloat(defaultAmount) || 0);
       totalAmount += amt;
       if (c?.paid) {
         paid++;
