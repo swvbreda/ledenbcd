@@ -20,6 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
+import { useMemberContributions } from "@/hooks/useContributions";
 
 const getStoredContactpersoon = (memberId: number): string | null => {
   try {
