@@ -37,14 +37,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
 
   const checkRoleAndProfile = async (userId: string) => {
-    // Check admin role
+    // Check roles
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    setIsAdmin(!!roleData);
+      .eq("user_id", userId);
+    
+    const roles = roleData?.map(r => r.role) ?? [];
+    setIsAdmin(roles.includes("admin"));
+    setIsExtern(roles.includes("extern"));
 
     // Check member profile links (multiple)
     const { data: profileData } = await supabase
