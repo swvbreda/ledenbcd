@@ -20,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  isExtern: false,
   linkedMemberId: null,
   linkedMemberIds: [],
   signOut: async () => {},
