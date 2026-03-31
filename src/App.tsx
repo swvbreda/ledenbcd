@@ -27,6 +27,8 @@ import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
 import EnqueteReviewPage from "./pages/EnqueteReviewPage";
 import ContributiePage from "./pages/ContributiePage";
+import ExternLoginPage from "./pages/ExternLoginPage";
+import ExternDashboardPage from "./pages/ExternDashboardPage";
 
 import NotFound from "./pages/NotFound";
 
