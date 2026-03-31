@@ -27,6 +27,9 @@ import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
 import EnqueteReviewPage from "./pages/EnqueteReviewPage";
 import ContributiePage from "./pages/ContributiePage";
+import ExternLoginPage from "./pages/ExternLoginPage";
+import ExternDashboardPage from "./pages/ExternDashboardPage";
+import ExternePartijenPage from "./pages/ExternePartijenPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +47,8 @@ const App = () => (
             <SidebarProvider>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/extern-login" element={<ExternLoginPage />} />
+                <Route path="/extern" element={<ExternDashboardPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route
                   element={
@@ -68,6 +73,7 @@ const App = () => (
                   <Route path="/oud-leden" element={<LedenPage />} />
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                   <Route path="/contributie" element={<ContributiePage />} />
+                  <Route path="/externe-partijen" element={<ExternePartijenPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />

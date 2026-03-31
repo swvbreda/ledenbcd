@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.notify-edit-request]
 verify_jwt = false
+
+[functions.extern-signup]
+verify_jwt = false

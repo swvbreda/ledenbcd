@@ -240,6 +240,12 @@ const LoginPage = () => {
                 >
                   {resetMode ? "Terug naar inloggen" : "Wachtwoord vergeten?"}
                 </button>
+                <a
+                  href="/extern-login"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors block w-full"
+                >
+                  Inloggen als externe partij →
+                </a>
               </div>
             </form>
           )}

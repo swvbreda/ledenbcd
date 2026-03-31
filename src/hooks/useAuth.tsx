@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  isExtern: boolean;
   /** The first member_id linked to the current user (null if none) */
   linkedMemberId: number | null;
   /** All member_ids linked to the current user */
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  isExtern: false,
   linkedMemberId: null,
   linkedMemberIds: [],
   signOut: async () => {},
@@ -31,17 +33,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isExtern, setIsExtern] = useState(false);
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
 
   const checkRoleAndProfile = async (userId: string) => {
-    // Check admin role
+    // Check roles
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    setIsAdmin(!!roleData);
+      .eq("user_id", userId);
+    
+    const roles = roleData?.map(r => r.role) ?? [];
+    setIsAdmin(roles.includes("admin"));
+    setIsExtern(roles.includes("extern"));
 
     // Check member profile links (multiple)
     const { data: profileData } = await supabase
@@ -64,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         setIsAdmin(false);
+        setIsExtern(false);
         setLinkedMemberIds([]);
         setLoading(false);
       }
@@ -92,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const linkedMemberId = linkedMemberIds[0] ?? null;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, linkedMemberId, linkedMemberIds, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, signOut }}>
       {children}
     </AuthContext.Provider>
   );

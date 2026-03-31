@@ -104,6 +104,74 @@ export type Database = {
         }
         Relationships: []
       }
+      external_org_users: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_org_users_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "external_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_organizations: {
+        Row: {
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          type: string
+        }
+        Insert: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          type?: string
+        }
+        Update: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       lead_conversions: {
         Row: {
           created_at: string
@@ -211,6 +279,41 @@ export type Database = {
           year?: number
         }
         Relationships: []
+      }
+      member_data_consents: {
+        Row: {
+          granted_at: string
+          granted_by: string
+          id: string
+          member_id: number
+          org_id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          granted_at?: string
+          granted_by: string
+          id?: string
+          member_id: number
+          org_id: string
+          revoked_at?: string | null
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string
+          id?: string
+          member_id?: number
+          org_id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_data_consents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "external_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       member_edit_requests: {
         Row: {
@@ -578,7 +681,7 @@ export type Database = {
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "extern"
       edit_request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -707,7 +810,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "extern"],
       edit_request_status: ["pending", "approved", "rejected"],
     },
   },

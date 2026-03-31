@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro, Building2 } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -164,6 +164,19 @@ export function AppSidebar() {
                         >
                           <Euro className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Contributie</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to="/externe-partijen"
+                          className="hover:bg-sidebar-accent/50"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
+                        >
+                          <Building2 className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Externe partijen</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
