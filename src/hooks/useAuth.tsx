@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  isExtern: boolean;
   /** The first member_id linked to the current user (null if none) */
   linkedMemberId: number | null;
   /** All member_ids linked to the current user */
