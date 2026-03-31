@@ -12,6 +12,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import MailingPreferences from "@/components/MailingPreferences";
 import MemberEditForm from "@/components/MemberEditForm";
+import ExternToestemmingBeheer from "@/components/ExternToestemmingBeheer";
 import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
 
