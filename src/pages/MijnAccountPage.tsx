@@ -366,6 +366,13 @@ export default function MijnAccountPage() {
           {/* Mailing preferences */}
           {linkedMember && <MailingPreferences member={linkedMember} canEdit={true} />}
 
+          {/* Extern data sharing consent */}
+          {linkedMember && (
+            <Card className="p-5">
+              <ExternToestemmingBeheer />
+            </Card>
+          )}
+
           <NotificationSection />
           <PasswordSection />
         </>

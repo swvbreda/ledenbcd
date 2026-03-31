@@ -46,6 +46,8 @@ const App = () => (
             <SidebarProvider>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/extern-login" element={<ExternLoginPage />} />
+                <Route path="/extern" element={<ExternDashboardPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route
                   element={
