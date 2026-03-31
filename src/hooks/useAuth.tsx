@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         setIsAdmin(false);
+        setIsExtern(false);
         setLinkedMemberIds([]);
         setLoading(false);
       }
