@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const linkedMemberId = linkedMemberIds[0] ?? null;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, linkedMemberId, linkedMemberIds, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, signOut }}>
       {children}
     </AuthContext.Provider>
   );
