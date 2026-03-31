@@ -246,6 +246,7 @@ const LoginPage = () => {
                 >
                   Inloggen als externe partij →
                 </a>
+              </div>
             </form>
           )}
         </div>
