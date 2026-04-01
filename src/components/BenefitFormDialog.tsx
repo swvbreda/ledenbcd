@@ -26,6 +26,8 @@ interface Props {
 
 export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props) {
   const { upsert, remove } = useBenefitMutations();
+  const { data: existingImages = [] } = useBenefitImages(benefit?.id);
+  const { addImage, removeImage } = useBenefitImageMutations(benefit?.id);
   const [form, setForm] = useState({
     title: "",
     description: "",
