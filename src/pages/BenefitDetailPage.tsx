@@ -120,7 +120,7 @@ export default function BenefitDetailPage() {
 
       {/* Rich detail content (markdown) — specs, pricing tables etc. */}
       {benefit.detail_content && (
-        <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-table:border-border prose-th:bg-muted prose-th:px-4 prose-th:py-2 prose-td:px-4 prose-td:py-2 prose-th:text-left prose-tr:border-border">
+        <article className="prose prose-base md:prose-lg max-w-none dark:prose-invert prose-headings:text-foreground prose-headings:mt-8 prose-headings:mb-4 prose-p:text-muted-foreground prose-p:leading-7 prose-p:mb-4 prose-a:text-primary prose-strong:text-foreground prose-li:text-muted-foreground prose-li:my-1.5 prose-ul:my-4 prose-hr:my-8 prose-hr:border-border prose-table:border prose-table:border-border prose-table:rounded-lg prose-table:overflow-hidden prose-th:bg-muted prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-td:px-4 prose-td:py-3 prose-td:border-t prose-td:border-border prose-tr:border-border">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{benefit.detail_content}</ReactMarkdown>
         </article>
       )}
