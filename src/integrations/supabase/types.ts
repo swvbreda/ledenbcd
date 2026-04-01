@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      benefit_images: {
+        Row: {
+          benefit_id: string
+          caption: string | null
+          created_at: string
+          id: string
+          image_path: string
+          sort_order: number
+        }
+        Insert: {
+          benefit_id: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_path: string
+          sort_order?: number
+        }
+        Update: {
+          benefit_id?: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_path?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_images_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "member_benefits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_members: {
         Row: {
           bond_email: string | null
