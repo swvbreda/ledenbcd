@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ExternalLink, Mail, Star, Pencil, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useState } from "react";
 
 export default function BenefitDetailPage() {
@@ -120,7 +121,7 @@ export default function BenefitDetailPage() {
       {/* Rich detail content (markdown) — specs, pricing tables etc. */}
       {benefit.detail_content && (
         <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-table:border-border prose-th:bg-muted prose-th:px-4 prose-th:py-2 prose-td:px-4 prose-td:py-2 prose-th:text-left prose-tr:border-border">
-          <ReactMarkdown>{benefit.detail_content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{benefit.detail_content}</ReactMarkdown>
         </article>
       )}
 
