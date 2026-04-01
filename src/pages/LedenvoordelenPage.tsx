@@ -67,7 +67,8 @@ export default function LedenvoordelenPage() {
         )}
       </div>
 
-      {/* Category filter */}
+      {/* Search + Category filter */}
+      <SearchBar value={search} onChange={setSearch} placeholder="Zoek op product of aanbieder..." />
       {categories.length > 1 && (
         <div className="flex flex-wrap gap-2">
           <Badge
