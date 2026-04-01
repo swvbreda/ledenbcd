@@ -156,6 +156,43 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
             <Label>Afbeelding</Label>
             <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
           </div>
+          {/* Gallery images */}
+          {benefit?.id && (
+            <div>
+              <Label>Extra afbeeldingen (galerij)</Label>
+              {existingImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                  {existingImages.map((img) => {
+                    const url = getBenefitImageUrl(img.image_path);
+                    return (
+                      <div key={img.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border group">
+                        {url && <img src={url} alt="" className="w-full h-full object-cover" />}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await removeImage.mutateAsync({ id: img.id, image_path: img.image_path });
+                            toast.success("Afbeelding verwijderd");
+                          }}
+                          className="absolute inset-0 bg-destructive/70 text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setGalleryFiles(Array.from(e.target.files || []))}
+              />
+              {galleryFiles.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">{galleryFiles.length} bestand(en) geselecteerd</p>
+              )}
+            </div>
+          )}
           <div>
             <Label>Detailpagina inhoud (Markdown)</Label>
             <Textarea
