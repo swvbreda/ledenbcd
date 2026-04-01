@@ -12,6 +12,7 @@ export interface Benefit {
   image_path: string | null;
   discount_info: string | null;
   contact_email: string | null;
+  detail_content: string | null;
   featured: boolean;
   active: boolean;
   sort_order: number;

@@ -243,6 +243,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          detail_content: string | null
           discount_info: string | null
           featured: boolean
           id: string
@@ -260,6 +261,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          detail_content?: string | null
           discount_info?: string | null
           featured?: boolean
           id?: string
@@ -277,6 +279,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          detail_content?: string | null
           discount_info?: string | null
           featured?: boolean
           id?: string

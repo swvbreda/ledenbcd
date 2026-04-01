@@ -31,6 +31,7 @@ import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
 import LedenvoordelenPage from "./pages/LedenvoordelenPage";
+import BenefitDetailPage from "./pages/BenefitDetailPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -76,6 +77,7 @@ const App = () => (
                   <Route path="/contributie" element={<ContributiePage />} />
                   <Route path="/externe-partijen" element={<ExternePartijenPage />} />
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
+                  <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />

@@ -33,6 +33,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
     provider_url: "",
     discount_info: "",
     contact_email: "",
+    detail_content: "",
     featured: false,
     active: true,
     sort_order: 0,
@@ -50,12 +51,13 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
         provider_url: benefit.provider_url || "",
         discount_info: benefit.discount_info || "",
         contact_email: benefit.contact_email || "",
+        detail_content: benefit.detail_content || "",
         featured: benefit.featured,
         active: benefit.active,
         sort_order: benefit.sort_order,
       });
     } else {
-      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", featured: false, active: true, sort_order: 0 });
+      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0 });
     }
     setImageFile(null);
   }, [benefit, open]);
@@ -141,6 +143,16 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
           <div>
             <Label>Afbeelding</Label>
             <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+          </div>
+          <div>
+            <Label>Detailpagina inhoud (Markdown)</Label>
+            <Textarea
+              value={form.detail_content}
+              onChange={(e) => set("detail_content", e.target.value)}
+              rows={8}
+              placeholder={"## Producten\n\n### Product 1\nBeschrijving...\n\n**Prijs:** €100"}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Gebruik Markdown voor opmaak: ## kopjes, **vet**, - opsommingen, etc.</p>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
