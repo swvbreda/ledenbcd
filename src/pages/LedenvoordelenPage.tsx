@@ -28,8 +28,15 @@ export default function LedenvoordelenPage() {
     if (!benefits) return [];
     let list = isAdmin ? benefits : benefits.filter((b) => b.active);
     if (activeCategory) list = list.filter((b) => b.category === activeCategory);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((b) =>
+        b.title.toLowerCase().includes(q) ||
+        (b.provider_name && b.provider_name.toLowerCase().includes(q))
+      );
+    }
     return list;
-  }, [benefits, activeCategory, isAdmin]);
+  }, [benefits, activeCategory, isAdmin, search]);
 
   const handleEdit = (b: Benefit) => {
     setEditBenefit(b);
