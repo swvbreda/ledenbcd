@@ -51,12 +51,13 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
         provider_url: benefit.provider_url || "",
         discount_info: benefit.discount_info || "",
         contact_email: benefit.contact_email || "",
+        detail_content: benefit.detail_content || "",
         featured: benefit.featured,
         active: benefit.active,
         sort_order: benefit.sort_order,
       });
     } else {
-      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", featured: false, active: true, sort_order: 0 });
+      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0 });
     }
     setImageFile(null);
   }, [benefit, open]);
