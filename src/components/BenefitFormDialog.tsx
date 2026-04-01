@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Benefit } from "@/hooks/useBenefits";
-import { useBenefitMutations } from "@/hooks/useBenefits";
-import { Trash2 } from "lucide-react";
+import { useBenefitMutations, getBenefitImageUrl } from "@/hooks/useBenefits";
+import { useBenefitImages, useBenefitImageMutations } from "@/hooks/useBenefitImages";
+import { Trash2, Plus, ImagePlus, X } from "lucide-react";
 
 const CATEGORIES = [
   "Beveiliging", "Facilitair", "Financieel", "Juridisch",
