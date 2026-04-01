@@ -42,6 +42,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
     sort_order: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
