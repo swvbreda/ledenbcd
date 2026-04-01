@@ -16,6 +16,7 @@ export default function LedenvoordelenPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const categories = useMemo(() => {
     if (!benefits) return [];
