@@ -80,6 +80,13 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
         image_path = path;
       }
       await upsert.mutateAsync({ ...form, image_path, id: benefit?.id } as any);
+      // Upload gallery images if any
+      if (galleryFiles.length > 0 && benefit?.id) {
+        const startOrder = existingImages.length;
+        for (let i = 0; i < galleryFiles.length; i++) {
+          await addImage.mutateAsync({ file: galleryFiles[i], sort_order: startOrder + i });
+        }
+      }
       toast.success(benefit ? "Voordeel bijgewerkt" : "Voordeel toegevoegd");
       onOpenChange(false);
     } catch (e: any) {
