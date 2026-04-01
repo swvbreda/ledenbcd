@@ -31,6 +31,7 @@ import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
 import LedenvoordelenPage from "./pages/LedenvoordelenPage";
+import BenefitDetailPage from "./pages/BenefitDetailPage";
 
 import NotFound from "./pages/NotFound";
 
