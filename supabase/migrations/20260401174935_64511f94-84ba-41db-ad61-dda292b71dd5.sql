@@ -1,0 +1,1 @@
+ALTER TABLE public.member_benefits ADD COLUMN detail_content text;
