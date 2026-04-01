@@ -7,7 +7,8 @@ import BenefitFormDialog from "@/components/BenefitFormDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Mail, Star, Pencil } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ExternalLink, Mail, Star, Pencil, ShoppingCart, Phone } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 
@@ -37,7 +38,7 @@ export default function BenefitDetailPage() {
   const imageUrl = getBenefitImageUrl(benefit.image_path);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-8">
       {/* Back + Admin edit */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => navigate("/ledenvoordelen")} className="gap-1">
@@ -50,72 +51,78 @@ export default function BenefitDetailPage() {
         )}
       </div>
 
-      {/* Hero */}
-      {imageUrl && (
-        <div className="relative rounded-xl overflow-hidden h-56 md:h-72 bg-muted">
-          <img src={imageUrl} alt={benefit.title} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">{benefit.title}</h1>
-            {benefit.provider_name && (
-              <p className="text-white/80 text-sm mt-1">{benefit.provider_name}</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {!imageUrl && (
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{benefit.title}</h1>
-          {benefit.provider_name && (
-            <p className="text-muted-foreground mt-1">{benefit.provider_name}</p>
+      {/* Product header — webshop layout: image left, info right */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        {/* Product image */}
+        <div className="rounded-xl overflow-hidden bg-muted border border-border aspect-square flex items-center justify-center">
+          {imageUrl ? (
+            <img src={imageUrl} alt={benefit.title} className="w-full h-full object-contain p-4" />
+          ) : (
+            <div className="text-7xl font-bold text-muted-foreground/20">{benefit.title.charAt(0)}</div>
           )}
         </div>
-      )}
 
-      {/* Badges */}
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{benefit.category}</Badge>
-        {benefit.featured && (
-          <Badge className="gap-1 bg-primary"><Star className="h-3 w-3" /> Uitgelicht</Badge>
-        )}
-        {benefit.discount_info && (
-          <Badge variant="outline" className="border-primary/30 text-primary">
-            {benefit.discount_info}
-          </Badge>
-        )}
-        {!benefit.active && <Badge variant="destructive">Inactief</Badge>}
+        {/* Product info */}
+        <div className="flex flex-col justify-between gap-4">
+          <div className="space-y-3">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{benefit.category}</Badge>
+              {benefit.featured && (
+                <Badge className="gap-1 bg-primary"><Star className="h-3 w-3" /> Uitgelicht</Badge>
+              )}
+              {!benefit.active && <Badge variant="destructive">Inactief</Badge>}
+            </div>
+
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{benefit.title}</h1>
+
+            {benefit.provider_name && (
+              <p className="text-sm text-muted-foreground">Aanbieder: <span className="font-medium text-foreground">{benefit.provider_name}</span></p>
+            )}
+
+            {benefit.discount_info && (
+              <div className="inline-flex items-center gap-2 rounded-lg border-2 border-primary/20 bg-primary/5 px-4 py-2">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-primary">{benefit.discount_info}</span>
+              </div>
+            )}
+
+            {benefit.description && (
+              <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
+            )}
+          </div>
+
+          {/* CTA buttons */}
+          <Card className="border-border">
+            <CardContent className="p-4 space-y-3">
+              {benefit.provider_url && (
+                <Button asChild className="w-full gap-2" size="lg">
+                  <a href={benefit.provider_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" /> Bekijk bij aanbieder
+                  </a>
+                </Button>
+              )}
+              {benefit.contact_email && (
+                <Button asChild variant="outline" className="w-full gap-2" size="lg">
+                  <a href={`mailto:${benefit.contact_email}`}>
+                    <Mail className="h-4 w-4" /> Contact opnemen
+                  </a>
+                </Button>
+              )}
+              {!benefit.provider_url && !benefit.contact_email && (
+                <p className="text-sm text-muted-foreground text-center py-2">Neem contact op met het secretariaat voor meer informatie.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Description */}
-      {benefit.description && (
-        <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
-      )}
-
-      {/* Rich detail content (markdown) */}
+      {/* Rich detail content (markdown) — specs, pricing tables etc. */}
       {benefit.detail_content && (
-        <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground">
+        <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-table:border-border prose-th:bg-muted prose-th:px-4 prose-th:py-2 prose-td:px-4 prose-td:py-2 prose-th:text-left prose-tr:border-border">
           <ReactMarkdown>{benefit.detail_content}</ReactMarkdown>
         </article>
       )}
-
-      {/* Contact links */}
-      <div className="flex flex-wrap gap-3 pt-2">
-        {benefit.provider_url && (
-          <Button asChild variant="outline" size="sm">
-            <a href={benefit.provider_url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" /> Website bezoeken
-            </a>
-          </Button>
-        )}
-        {benefit.contact_email && (
-          <Button asChild variant="outline" size="sm">
-            <a href={`mailto:${benefit.contact_email}`}>
-              <Mail className="h-4 w-4 mr-1" /> Contact opnemen
-            </a>
-          </Button>
-        )}
-      </div>
 
       {/* Disclaimer */}
       <div className="rounded-lg border border-border bg-muted/50 p-4 text-xs text-muted-foreground">
