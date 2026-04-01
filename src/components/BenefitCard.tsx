@@ -45,6 +45,16 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
           </Badge>
         )}
         <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{benefit.category}</Badge>
+        {isAdmin && onEdit && (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="absolute bottom-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+            onClick={(e) => { e.stopPropagation(); onEdit(benefit); }}
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+        )}
       </div>
 
       {/* Product info */}
