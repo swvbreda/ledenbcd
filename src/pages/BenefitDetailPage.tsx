@@ -34,6 +34,8 @@ export default function BenefitDetailPage() {
     enabled: !!id,
   });
 
+  const { data: galleryImages = [] } = useBenefitImages(id);
+
   if (isLoading) return <LoadingSpinner />;
   if (!benefit) return <p className="p-8 text-center text-muted-foreground">Voordeel niet gevonden.</p>;
 
