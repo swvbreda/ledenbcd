@@ -3,12 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getBenefitImageUrl, type Benefit } from "@/hooks/useBenefits";
+import { useBenefitImages } from "@/hooks/useBenefitImages";
 import BenefitFormDialog from "@/components/BenefitFormDialog";
+import BenefitGallery from "@/components/BenefitGallery";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ExternalLink, Mail, Star, Pencil, ShoppingCart, Phone } from "lucide-react";
+import { ArrowLeft, ExternalLink, Mail, Star, Pencil, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 
@@ -32,10 +34,10 @@ export default function BenefitDetailPage() {
     enabled: !!id,
   });
 
+  const { data: galleryImages = [] } = useBenefitImages(id);
+
   if (isLoading) return <LoadingSpinner />;
   if (!benefit) return <p className="p-8 text-center text-muted-foreground">Voordeel niet gevonden.</p>;
-
-  const imageUrl = getBenefitImageUrl(benefit.image_path);
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-8">
@@ -53,14 +55,12 @@ export default function BenefitDetailPage() {
 
       {/* Product header — webshop layout: image left, info right */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {/* Product image */}
-        <div className="rounded-xl overflow-hidden bg-muted border border-border aspect-square flex items-center justify-center">
-          {imageUrl ? (
-            <img src={imageUrl} alt={benefit.title} className="w-full h-full object-contain p-4" />
-          ) : (
-            <div className="text-7xl font-bold text-muted-foreground/20">{benefit.title.charAt(0)}</div>
-          )}
-        </div>
+        {/* Product gallery */}
+        <BenefitGallery
+          mainImagePath={benefit.image_path}
+          galleryImages={galleryImages}
+          alt={benefit.title}
+        />
 
         {/* Product info */}
         <div className="flex flex-col justify-between gap-4">

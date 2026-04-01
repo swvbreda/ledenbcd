@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Benefit } from "@/hooks/useBenefits";
-import { useBenefitMutations } from "@/hooks/useBenefits";
-import { Trash2 } from "lucide-react";
+import { useBenefitMutations, getBenefitImageUrl } from "@/hooks/useBenefits";
+import { useBenefitImages, useBenefitImageMutations } from "@/hooks/useBenefitImages";
+import { Trash2, Plus, ImagePlus, X } from "lucide-react";
 
 const CATEGORIES = [
   "Beveiliging", "Facilitair", "Financieel", "Juridisch",
@@ -25,6 +26,8 @@ interface Props {
 
 export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props) {
   const { upsert, remove } = useBenefitMutations();
+  const { data: existingImages = [] } = useBenefitImages(benefit?.id);
+  const { addImage, removeImage } = useBenefitImageMutations(benefit?.id);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -39,6 +42,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
     sort_order: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
       setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0 });
     }
     setImageFile(null);
+    setGalleryFiles([]);
   }, [benefit, open]);
 
   const handleSave = async () => {
@@ -75,6 +80,13 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
         image_path = path;
       }
       await upsert.mutateAsync({ ...form, image_path, id: benefit?.id } as any);
+      // Upload gallery images if any
+      if (galleryFiles.length > 0 && benefit?.id) {
+        const startOrder = existingImages.length;
+        for (let i = 0; i < galleryFiles.length; i++) {
+          await addImage.mutateAsync({ file: galleryFiles[i], sort_order: startOrder + i });
+        }
+      }
       toast.success(benefit ? "Voordeel bijgewerkt" : "Voordeel toegevoegd");
       onOpenChange(false);
     } catch (e: any) {
@@ -144,6 +156,43 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
             <Label>Afbeelding</Label>
             <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
           </div>
+          {/* Gallery images */}
+          {benefit?.id && (
+            <div>
+              <Label>Extra afbeeldingen (galerij)</Label>
+              {existingImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                  {existingImages.map((img) => {
+                    const url = getBenefitImageUrl(img.image_path);
+                    return (
+                      <div key={img.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border group">
+                        {url && <img src={url} alt="" className="w-full h-full object-cover" />}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await removeImage.mutateAsync({ id: img.id, image_path: img.image_path });
+                            toast.success("Afbeelding verwijderd");
+                          }}
+                          className="absolute inset-0 bg-destructive/70 text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setGalleryFiles(Array.from(e.target.files || []))}
+              />
+              {galleryFiles.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">{galleryFiles.length} bestand(en) geselecteerd</p>
+              )}
+            </div>
+          )}
           <div>
             <Label>Detailpagina inhoud (Markdown)</Label>
             <Textarea
