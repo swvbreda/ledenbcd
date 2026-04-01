@@ -30,6 +30,7 @@ import ContributiePage from "./pages/ContributiePage";
 import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
+import LedenvoordelenPage from "./pages/LedenvoordelenPage";
 
 import NotFound from "./pages/NotFound";
 
