@@ -39,8 +39,6 @@ export default function BenefitDetailPage() {
   if (isLoading) return <LoadingSpinner />;
   if (!benefit) return <p className="p-8 text-center text-muted-foreground">Voordeel niet gevonden.</p>;
 
-  const imageUrl = getBenefitImageUrl(benefit.image_path);
-
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-8">
       {/* Back + Admin edit */}
