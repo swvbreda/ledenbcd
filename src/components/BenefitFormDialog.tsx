@@ -33,6 +33,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
     provider_url: "",
     discount_info: "",
     contact_email: "",
+    detail_content: "",
     featured: false,
     active: true,
     sort_order: 0,
