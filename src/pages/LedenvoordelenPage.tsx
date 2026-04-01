@@ -79,27 +79,55 @@ export default function LedenvoordelenPage() {
 
       {/* Search + Category filter */}
       <SearchBar value={search} onChange={setSearch} placeholder="Zoek op product of aanbieder..." />
-      {categories.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant={activeCategory === null ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setActiveCategory(null)}
-          >
-            Alles
-          </Badge>
-          {categories.map((cat) => (
+      <div className="space-y-2">
+        {/* Categorie filter */}
+        {categories.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Categorie:</span>
             <Badge
-              key={cat}
-              variant={activeCategory === cat ? "default" : "outline"}
+              variant={activeCategory === null ? "default" : "outline"}
               className="cursor-pointer"
-              onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+              onClick={() => setActiveCategory(null)}
             >
-              {cat}
+              Alles
             </Badge>
-          ))}
-        </div>
-      )}
+            {categories.map((cat) => (
+              <Badge
+                key={cat}
+                variant={activeCategory === cat ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+              >
+                {cat}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        {/* Aanbieder filter */}
+        {providers.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-muted-foreground self-center mr-1">Aanbieder:</span>
+            <Badge
+              variant={activeProvider === null ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => setActiveProvider(null)}
+            >
+              Alles
+            </Badge>
+            {providers.map((prov) => (
+              <Badge
+                key={prov}
+                variant={activeProvider === prov ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setActiveProvider(prov === activeProvider ? null : prov)}
+              >
+                {prov}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Benefits grid */}
       {filtered.length === 0 ? (
