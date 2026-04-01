@@ -235,6 +235,60 @@ export type Database = {
         }
         Relationships: []
       }
+      member_benefits: {
+        Row: {
+          active: boolean
+          category: string
+          contact_email: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          discount_info: string | null
+          featured: boolean
+          id: string
+          image_path: string | null
+          provider_name: string | null
+          provider_url: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          contact_email?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          discount_info?: string | null
+          featured?: boolean
+          id?: string
+          image_path?: string | null
+          provider_name?: string | null
+          provider_url?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          discount_info?: string | null
+          featured?: boolean
+          id?: string
+          image_path?: string | null
+          provider_name?: string | null
+          provider_url?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_contributions: {
         Row: {
           amount: number

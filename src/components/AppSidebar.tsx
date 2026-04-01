@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro, Building2 } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro, Building2, Gift } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -34,6 +34,7 @@ const navItems = [
   { title: "Ledenbestand", url: "/leden", icon: Users },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
+  { title: "Ledenvoordelen", url: "/ledenvoordelen", icon: Gift },
 ];
 
 export function AppSidebar() {
