@@ -17,18 +17,28 @@ export default function LedenvoordelenPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeProvider, setActiveProvider] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const categories = useMemo(() => {
+  const visibleBenefits = useMemo(() => {
     if (!benefits) return [];
-    const cats = [...new Set(benefits.filter((b) => b.active || isAdmin).map((b) => b.category))];
-    return cats.sort();
+    return isAdmin ? benefits : benefits.filter((b) => b.active);
   }, [benefits, isAdmin]);
 
+  const categories = useMemo(() => {
+    const cats = [...new Set(visibleBenefits.map((b) => b.category))];
+    return cats.sort();
+  }, [visibleBenefits]);
+
+  const providers = useMemo(() => {
+    const provs = [...new Set(visibleBenefits.map((b) => b.provider_name).filter(Boolean) as string[])];
+    return provs.sort();
+  }, [visibleBenefits]);
+
   const filtered = useMemo(() => {
-    if (!benefits) return [];
-    let list = isAdmin ? benefits : benefits.filter((b) => b.active);
+    let list = visibleBenefits;
     if (activeCategory) list = list.filter((b) => b.category === activeCategory);
+    if (activeProvider) list = list.filter((b) => b.provider_name === activeProvider);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((b) =>
@@ -37,7 +47,7 @@ export default function LedenvoordelenPage() {
       );
     }
     return list;
-  }, [benefits, activeCategory, isAdmin, search]);
+  }, [visibleBenefits, activeCategory, activeProvider, search]);
 
   const handleEdit = (b: Benefit) => {
     setEditBenefit(b);
