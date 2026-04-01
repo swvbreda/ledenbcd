@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Benefit } from "@/hooks/useBenefits";
 import { getBenefitImageUrl } from "@/hooks/useBenefits";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   benefit: Benefit;
@@ -16,11 +17,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
   const imageUrl = getBenefitImageUrl(benefit.image_path);
 
   const handleClick = () => {
-    if (isAdmin && onEdit) {
-      onEdit(benefit);
-    } else {
-      navigate(`/ledenvoordelen/${benefit.id}`);
-    }
+    navigate(`/ledenvoordelen/${benefit.id}`);
   };
 
   return (
