@@ -52,8 +52,30 @@ function useOwnPendingEdit(memberId: number) {
 export function useMergedMember(memberId: number): { member: Member | undefined; isLoading: boolean; hasPendingEdit: boolean } {
   const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
   const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
-  const { allMembersAndLeads } = useMembersData();
-  const baseMember = allMembersAndLeads.find((m) => m.id === memberId);
+  const { allMembersAndLeads, rawLeads } = useMembersData();
+  const { conversions } = useLeadConversions();
+
+  // First try direct lookup, then check if this memberId is a converted lead's new lidnummer
+  let baseMember = allMembersAndLeads.find((m) => m.id === memberId);
+  if (!baseMember) {
+    const conv = conversions.find((c) => c.lidnummer === memberId);
+    if (conv) {
+      const originalLead = rawLeads.find((l) => l.id === conv.lead_id);
+      if (originalLead) {
+        baseMember = {
+          ...originalLead,
+          id: conv.lidnummer,
+          lidSinds: conv.lid_sinds,
+          factuurBedrijfsnaam: conv.factuur_bedrijfsnaam || originalLead.factuurBedrijfsnaam,
+          factuurKvk: conv.factuur_kvk || undefined,
+          factuurEmail: conv.factuur_email || originalLead.factuurEmail,
+          factuurAdres: conv.factuur_adres || originalLead.factuurAdres,
+          factuurPostcode: conv.factuur_postcode || originalLead.factuurPostcode,
+          factuurPlaats: conv.factuur_plaats || originalLead.factuurPlaats,
+        } as Member;
+      }
+    }
+  }
 
   const isLoading = editsLoading || pendingLoading;
   const hasPendingEdit = !!pendingEdit;
