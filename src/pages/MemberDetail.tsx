@@ -45,8 +45,16 @@ const MemberDetail = () => {
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
   const saveContactpersoonMutation = useSaveMemberEdit();
-  const { conversions, refresh: refreshConversions } = useLeadConversions();
+  const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+
+  // Redirect converted leads to their new lidnummer
+  const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
+  useEffect(() => {
+    if (convertedTo) {
+      navigate(`/leden/${convertedTo.lidnummer}`, { replace: true });
+    }
+  }, [convertedTo, navigate]);
   const { data: memberContributions } = useMemberContributions(memberId);
   const { data: memberInvoices } = useMemberInvoices(memberId);
   const currentYearContrib = useMemo(() => {
