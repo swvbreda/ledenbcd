@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText, Download } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import CsvImportDialog from "@/components/CsvImportDialog";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
@@ -24,6 +25,7 @@ const ContributiePage = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
@@ -226,7 +228,30 @@ const ContributiePage = () => {
         <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleExportCSV}>
           <Download size={14} /> CSV
         </Button>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setCsvDialogOpen(true)}>
+          <Upload size={14} /> Importeren
+        </Button>
       </div>
+
+      <CsvImportDialog
+        open={csvDialogOpen}
+        onOpenChange={setCsvDialogOpen}
+        year={selectedYear}
+        contributions={contributions ?? []}
+        invoices={invoicesData ?? []}
+        members={effectiveMembers.map((m) => ({ id: m.id, naam: m.naam }))}
+        onImport={async (updates) => {
+          for (const u of updates) {
+            await upsert.mutateAsync({
+              member_id: u.member_id,
+              year: selectedYear,
+              amount: FIXED_AMOUNT,
+              paid: u.paid,
+              paid_date: u.paid_date,
+            });
+          }
+        }}
+      />
 
       {/* Table */}
       <Card>
