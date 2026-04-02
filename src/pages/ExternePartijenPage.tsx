@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
-import { Building2, Check, X, Clock } from "lucide-react";
+import { Building2, Check, X, Clock, Pencil, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 interface ExternalOrg {
@@ -19,10 +24,20 @@ interface ExternalOrg {
   notes: string | null;
 }
 
+const ORG_TYPES = [
+  { value: "bank", label: "Bank" },
+  { value: "overheid", label: "Overheid" },
+  { value: "leverancier", label: "Leverancier / Aanbieder" },
+  { value: "anders", label: "Anders" },
+];
+
 export default function ExternePartijenPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const [orgs, setOrgs] = useState<ExternalOrg[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editOrg, setEditOrg] = useState<ExternalOrg | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", type: "", contact_name: "", contact_email: "", notes: "" });
+  const [saving, setSaving] = useState(false);
 
   const loadOrgs = async () => {
     const { data } = await supabase
@@ -52,6 +67,7 @@ export default function ExternePartijenPage() {
   };
 
   const handleReject = async (orgId: string) => {
+    if (!confirm("Weet je zeker dat je deze organisatie wilt verwijderen?")) return;
     const { error } = await supabase
       .from("external_organizations")
       .delete()
@@ -63,6 +79,41 @@ export default function ExternePartijenPage() {
       toast.success("Aanvraag verwijderd");
       loadOrgs();
     }
+  };
+
+  const openEdit = (org: ExternalOrg) => {
+    setEditOrg(org);
+    setEditForm({
+      name: org.name,
+      type: org.type,
+      contact_name: org.contact_name || "",
+      contact_email: org.contact_email || "",
+      notes: org.notes || "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editOrg) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("external_organizations")
+      .update({
+        name: editForm.name.trim(),
+        type: editForm.type,
+        contact_name: editForm.contact_name.trim() || null,
+        contact_email: editForm.contact_email.trim() || null,
+        notes: editForm.notes.trim() || null,
+      })
+      .eq("id", editOrg.id);
+
+    if (error) {
+      toast.error("Fout bij opslaan: " + error.message);
+    } else {
+      toast.success("Organisatie bijgewerkt");
+      setEditOrg(null);
+      loadOrgs();
+    }
+    setSaving(false);
   };
 
   if (authLoading || loading) {
@@ -78,6 +129,29 @@ export default function ExternePartijenPage() {
   const pending = orgs.filter(o => !o.approved);
   const approved = orgs.filter(o => o.approved);
 
+  const typeLabel = (type: string) => ORG_TYPES.find(t => t.value === type)?.label || type;
+
+  const OrgCard = ({ org, actions }: { org: ExternalOrg; actions: React.ReactNode }) => (
+    <Card key={org.id} className="p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Building2 size={14} className="text-muted-foreground shrink-0" />
+            <span className="font-semibold text-sm">{org.name}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{typeLabel(org.type)}</span>
+          </div>
+          {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
+          {org.contact_email && <p className="text-xs text-muted-foreground">{org.contact_email}</p>}
+          {org.notes && <p className="text-xs text-muted-foreground italic">{org.notes}</p>}
+          <p className="text-xs text-muted-foreground">Aangemeld: {new Date(org.created_at).toLocaleDateString("nl-NL")}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {actions}
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
       <div>
@@ -91,28 +165,23 @@ export default function ExternePartijenPage() {
             <Clock size={14} className="text-amber-500" /> Openstaande aanvragen ({pending.length})
           </h3>
           {pending.map(org => (
-            <Card key={org.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Building2 size={14} className="text-muted-foreground" />
-                    <span className="font-semibold text-sm">{org.name}</span>
-                    <span className="text-xs text-muted-foreground capitalize bg-muted px-2 py-0.5 rounded">{org.type}</span>
-                  </div>
-                  {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
-                  {org.contact_email && <p className="text-xs text-muted-foreground">{org.contact_email}</p>}
-                  <p className="text-xs text-muted-foreground">Aangevraagd: {new Date(org.created_at).toLocaleDateString("nl-NL")}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+            <OrgCard
+              key={org.id}
+              org={org}
+              actions={
+                <>
+                  <Button size="sm" variant="ghost" className="gap-1 h-8 w-8 p-0" onClick={() => openEdit(org)}>
+                    <Pencil size={14} />
+                  </Button>
                   <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => handleReject(org.id)}>
                     <X size={14} /> Afwijzen
                   </Button>
                   <Button size="sm" className="gap-1" onClick={() => handleApprove(org.id)}>
                     <Check size={14} /> Goedkeuren
                   </Button>
-                </div>
-              </div>
-            </Card>
+                </>
+              }
+            />
           ))}
         </div>
       )}
@@ -125,25 +194,62 @@ export default function ExternePartijenPage() {
           <p className="text-sm text-muted-foreground">Nog geen goedgekeurde externe partijen.</p>
         ) : (
           approved.map(org => (
-            <Card key={org.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Building2 size={14} className="text-muted-foreground" />
-                    <span className="font-semibold text-sm">{org.name}</span>
-                    <span className="text-xs text-muted-foreground capitalize bg-muted px-2 py-0.5 rounded">{org.type}</span>
-                  </div>
-                  {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
-                  {org.contact_email && <p className="text-xs text-muted-foreground">{org.contact_email}</p>}
-                </div>
-                <Button size="sm" variant="outline" className="gap-1 text-destructive shrink-0" onClick={() => handleReject(org.id)}>
-                  <X size={14} /> Verwijderen
-                </Button>
-              </div>
-            </Card>
+            <OrgCard
+              key={org.id}
+              org={org}
+              actions={
+                <>
+                  <Button size="sm" variant="ghost" className="gap-1 h-8 w-8 p-0" onClick={() => openEdit(org)}>
+                    <Pencil size={14} />
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => handleReject(org.id)}>
+                    <X size={14} /> Verwijderen
+                  </Button>
+                </>
+              }
+            />
           ))
         )}
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editOrg} onOpenChange={(o) => { if (!o) setEditOrg(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Organisatie bewerken</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div>
+              <Label>Naam</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <Select value={editForm.type} onValueChange={(v) => setEditForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ORG_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Contactpersoon</Label>
+              <Input value={editForm.contact_name} onChange={(e) => setEditForm(f => ({ ...f, contact_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>E-mail</Label>
+              <Input type="email" value={editForm.contact_email} onChange={(e) => setEditForm(f => ({ ...f, contact_email: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Notities</Label>
+              <Textarea value={editForm.notes} onChange={(e) => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={3} />
+            </div>
+            <Button onClick={handleSaveEdit} disabled={saving || !editForm.name.trim()} className="w-full gap-1">
+              <Save size={14} /> {saving ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
