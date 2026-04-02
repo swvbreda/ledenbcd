@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedOrgName = organization_name.trim();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -85,11 +86,41 @@ Deno.serve(async (req) => {
         user_id: userId,
       });
 
-      const { error: benefitLinkError } = await supabase
+      const benefitIds = new Set<string>();
+
+      const { data: emailMatches, error: emailMatchError } = await supabase
         .from("member_benefits")
-        .update({ supplier_org_id: orgData.id })
+        .select("id")
         .is("supplier_org_id", null)
         .ilike("contact_email", normalizedEmail);
+
+      if (emailMatchError) {
+        console.error("Benefit email match error:", emailMatchError);
+      }
+      emailMatches?.forEach(({ id }) => benefitIds.add(id));
+
+      const { data: nameMatches, error: nameMatchError } = await supabase
+        .from("member_benefits")
+        .select("id")
+        .is("supplier_org_id", null)
+        .ilike("provider_name", normalizedOrgName);
+
+      if (nameMatchError) {
+        console.error("Benefit provider match error:", nameMatchError);
+      }
+      nameMatches?.forEach(({ id }) => benefitIds.add(id));
+
+      const benefitIdsList = Array.from(benefitIds);
+      let benefitLinkError = null;
+
+      if (benefitIdsList.length > 0) {
+        const { error } = await supabase
+          .from("member_benefits")
+          .update({ supplier_org_id: orgData.id })
+          .in("id", benefitIdsList);
+
+        benefitLinkError = error;
+      }
 
       if (benefitLinkError) {
         console.error("Benefit linking error:", benefitLinkError);

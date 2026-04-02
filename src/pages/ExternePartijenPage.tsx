@@ -52,6 +52,17 @@ export default function ExternePartijenPage() {
     if (isAdmin) loadOrgs();
   }, [isAdmin]);
 
+  const syncSupplierBenefits = async (orgId: string) => {
+    const { data, error } = await supabase.functions.invoke("manage-users", {
+      body: { action: "sync_supplier_benefits", org_id: orgId },
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+
+    return Number(data?.linked_count ?? 0);
+  };
+
   const handleApprove = async (orgId: string) => {
     const { error } = await supabase
       .from("external_organizations")
@@ -61,7 +72,17 @@ export default function ExternePartijenPage() {
     if (error) {
       toast.error("Fout bij goedkeuren: " + error.message);
     } else {
-      toast.success("Organisatie goedgekeurd");
+      try {
+        const linkedCount = await syncSupplierBenefits(orgId);
+        toast.success(
+          linkedCount > 0
+            ? `Organisatie goedgekeurd en ${linkedCount} product(en) gekoppeld`
+            : "Organisatie goedgekeurd"
+        );
+      } catch (syncError: any) {
+        toast.error("Organisatie goedgekeurd, maar automatische productkoppeling mislukte");
+        console.error("Supplier sync failed after approve:", syncError);
+      }
       loadOrgs();
     }
   };
@@ -109,7 +130,17 @@ export default function ExternePartijenPage() {
     if (error) {
       toast.error("Fout bij opslaan: " + error.message);
     } else {
-      toast.success("Organisatie bijgewerkt");
+      try {
+        const linkedCount = await syncSupplierBenefits(editOrg.id);
+        toast.success(
+          linkedCount > 0
+            ? `Organisatie bijgewerkt en ${linkedCount} product(en) gekoppeld`
+            : "Organisatie bijgewerkt"
+        );
+      } catch (syncError: any) {
+        toast.error("Organisatie bijgewerkt, maar automatische productkoppeling mislukte");
+        console.error("Supplier sync failed after edit:", syncError);
+      }
       setEditOrg(null);
       loadOrgs();
     }
