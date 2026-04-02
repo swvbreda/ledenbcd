@@ -54,7 +54,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
   const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
   const { allMembersAndLeads, rawLeads } = useMembersData();
-  const { conversions } = useLeadConversions();
+  const { conversions, loading: conversionsLoading } = useLeadConversions();
 
   // First try direct lookup, then check if this memberId is a converted lead's new lidnummer
   let baseMember = allMembersAndLeads.find((m) => m.id === memberId);
@@ -78,7 +78,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
     }
   }
 
-  const isLoading = editsLoading || pendingLoading;
+  const isLoading = editsLoading || pendingLoading || conversionsLoading;
   const hasPendingEdit = !!pendingEdit;
 
   if (!baseMember) return { member: undefined, isLoading, hasPendingEdit };
