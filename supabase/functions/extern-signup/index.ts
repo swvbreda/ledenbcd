@@ -28,13 +28,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedOrgName = organization_name.trim();
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Create the user account
     const { data: authData, error: signupError } = await supabase.auth.admin.createUser({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password,
       email_confirm: true,
       user_metadata: { extern: true, organization_name },
@@ -65,7 +68,7 @@ Deno.serve(async (req) => {
       .insert({
         name: organization_name.trim(),
         type: organization_type || "bank",
-        contact_email: email.toLowerCase().trim(),
+        contact_email: normalizedEmail,
         contact_name: contact_name.trim(),
       })
       .select("id")
@@ -82,6 +85,46 @@ Deno.serve(async (req) => {
         org_id: orgData.id,
         user_id: userId,
       });
+
+      const benefitIds = new Set<string>();
+
+      const { data: emailMatches, error: emailMatchError } = await supabase
+        .from("member_benefits")
+        .select("id")
+        .is("supplier_org_id", null)
+        .ilike("contact_email", normalizedEmail);
+
+      if (emailMatchError) {
+        console.error("Benefit email match error:", emailMatchError);
+      }
+      emailMatches?.forEach(({ id }) => benefitIds.add(id));
+
+      const { data: nameMatches, error: nameMatchError } = await supabase
+        .from("member_benefits")
+        .select("id")
+        .is("supplier_org_id", null)
+        .ilike("provider_name", normalizedOrgName);
+
+      if (nameMatchError) {
+        console.error("Benefit provider match error:", nameMatchError);
+      }
+      nameMatches?.forEach(({ id }) => benefitIds.add(id));
+
+      const benefitIdsList = Array.from(benefitIds);
+      let benefitLinkError = null;
+
+      if (benefitIdsList.length > 0) {
+        const { error } = await supabase
+          .from("member_benefits")
+          .update({ supplier_org_id: orgData.id })
+          .in("id", benefitIdsList);
+
+        benefitLinkError = error;
+      }
+
+      if (benefitLinkError) {
+        console.error("Benefit linking error:", benefitLinkError);
+      }
     }
 
     // Notify admins via push notification

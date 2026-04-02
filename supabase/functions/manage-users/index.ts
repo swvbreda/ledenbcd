@@ -5,6 +5,59 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function syncSupplierBenefits(adminClient: ReturnType<typeof createClient>, orgId: string) {
+  const { data: org, error: orgError } = await adminClient
+    .from("external_organizations")
+    .select("id, name, type, contact_email")
+    .eq("id", orgId)
+    .maybeSingle();
+
+  if (orgError) throw orgError;
+  if (!org || org.type !== "leverancier") {
+    return { linkedCount: 0, benefitIds: [] as string[] };
+  }
+
+  const benefitIds = new Set<string>();
+  const normalizedEmail = org.contact_email?.trim().toLowerCase();
+  const normalizedName = org.name.trim();
+
+  if (normalizedEmail) {
+    const { data: emailMatches, error: emailError } = await adminClient
+      .from("member_benefits")
+      .select("id")
+      .is("supplier_org_id", null)
+      .ilike("contact_email", normalizedEmail);
+
+    if (emailError) throw emailError;
+    emailMatches?.forEach(({ id }) => benefitIds.add(id));
+  }
+
+  if (normalizedName) {
+    const { data: nameMatches, error: nameError } = await adminClient
+      .from("member_benefits")
+      .select("id")
+      .is("supplier_org_id", null)
+      .ilike("provider_name", normalizedName);
+
+    if (nameError) throw nameError;
+    nameMatches?.forEach(({ id }) => benefitIds.add(id));
+  }
+
+  const ids = Array.from(benefitIds);
+  if (ids.length === 0) {
+    return { linkedCount: 0, benefitIds: [] as string[] };
+  }
+
+  const { error: updateError } = await adminClient
+    .from("member_benefits")
+    .update({ supplier_org_id: orgId })
+    .in("id", ids);
+
+  if (updateError) throw updateError;
+
+  return { linkedCount: ids.length, benefitIds: ids };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -282,6 +335,23 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "sync_supplier_benefits") {
+      const org_id = payload.org_id as string | undefined;
+
+      if (!org_id) {
+        return new Response(JSON.stringify({ error: "org_id is verplicht" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { linkedCount, benefitIds } = await syncSupplierBenefits(adminClient, org_id);
+
+      return new Response(JSON.stringify({ success: true, linked_count: linkedCount, benefit_ids: benefitIds }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
