@@ -10,7 +10,8 @@ const ExternLoginPage = () => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [orgType, setOrgType] = useState("bank");
   const [contactName, setContactName] = useState("");
