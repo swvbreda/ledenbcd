@@ -6,7 +6,7 @@ import { Mail, Lock, LogIn, UserPlus } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 
 const LoginPage = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isExtern } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,7 +26,7 @@ const LoginPage = () => {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={isExtern ? "/extern" : "/"} replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
