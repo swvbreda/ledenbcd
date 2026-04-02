@@ -28,13 +28,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Create the user account
     const { data: authData, error: signupError } = await supabase.auth.admin.createUser({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password,
       email_confirm: true,
       user_metadata: { extern: true, organization_name },
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
       .insert({
         name: organization_name.trim(),
         type: organization_type || "bank",
-        contact_email: email.toLowerCase().trim(),
+        contact_email: normalizedEmail,
         contact_name: contact_name.trim(),
       })
       .select("id")
@@ -82,6 +84,16 @@ Deno.serve(async (req) => {
         org_id: orgData.id,
         user_id: userId,
       });
+
+      const { error: benefitLinkError } = await supabase
+        .from("member_benefits")
+        .update({ supplier_org_id: orgData.id })
+        .is("supplier_org_id", null)
+        .ilike("contact_email", normalizedEmail);
+
+      if (benefitLinkError) {
+        console.error("Benefit linking error:", benefitLinkError);
+      }
     }
 
     // Notify admins via push notification
