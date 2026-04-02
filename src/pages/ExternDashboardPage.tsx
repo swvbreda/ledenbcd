@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, LogOut, ShieldCheck, ShieldX, Users } from "lucide-react";
+import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
+import BenefitFormDialog from "@/components/BenefitFormDialog";
+import type { Benefit } from "@/hooks/useBenefits";
+import { getBenefitImageUrl } from "@/hooks/useBenefits";
 
 interface OrgInfo {
   id: string;
@@ -19,7 +26,6 @@ interface MemberBasic {
   plaats: string;
   lid_sinds: number | null;
   has_consent: boolean;
-  // Extended fields (only when consent given)
   adres?: string;
   postcode?: string;
   kvk?: string;
@@ -31,14 +37,18 @@ const ExternDashboardPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const [org, setOrg] = useState<OrgInfo | null>(null);
   const [members, setMembers] = useState<MemberBasic[]>([]);
+  const [benefits, setBenefits] = useState<Benefit[]>([]);
   const [loading, setLoading] = useState(true);
   const [isExtern, setIsExtern] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
+
+  const isSupplier = org?.type === "leverancier";
 
   useEffect(() => {
     if (!user) return;
 
     const load = async () => {
-      // Check if user has extern role
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
@@ -53,7 +63,6 @@ const ExternDashboardPage = () => {
       }
       setIsExtern(true);
 
-      // Get org info
       const { data: orgUserData } = await supabase
         .from("external_org_users")
         .select("org_id")
@@ -75,8 +84,11 @@ const ExternDashboardPage = () => {
         setOrg(orgData);
 
         if (orgData.approved) {
-          // Fetch members with consent info
-          await loadMembers(orgData.id);
+          if (orgData.type === "leverancier") {
+            await loadSupplierBenefits(orgData.id);
+          } else {
+            await loadMembers(orgData.id);
+          }
         }
       }
       setLoading(false);
@@ -85,8 +97,21 @@ const ExternDashboardPage = () => {
     load();
   }, [user]);
 
+  const loadSupplierBenefits = async (orgId: string) => {
+    const { data, error } = await supabase
+      .from("member_benefits")
+      .select("*")
+      .eq("supplier_org_id", orgId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading benefits:", error);
+      return;
+    }
+    setBenefits((data as unknown as Benefit[]) ?? []);
+  };
+
   const loadMembers = async (orgId: string) => {
-    // Get all consents for this org
     const { data: consents } = await supabase
       .from("member_data_consents")
       .select("member_id")
@@ -95,7 +120,6 @@ const ExternDashboardPage = () => {
 
     const consentedIds = new Set(consents?.map(c => c.member_id) ?? []);
 
-    // Fetch all active members
     const { data: membersData } = await supabase
       .from("members_data")
       .select("id, data")
@@ -131,6 +155,35 @@ const ExternDashboardPage = () => {
     setMembers(mapped);
   };
 
+  const handleNewBenefit = () => {
+    setEditBenefit(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditBenefit = (b: Benefit) => {
+    setEditBenefit(b);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteBenefit = async (id: string) => {
+    if (!confirm("Weet je zeker dat je dit product wilt verwijderen?")) return;
+    const { error } = await supabase.from("member_benefits").delete().eq("id", id);
+    if (error) {
+      toast.error("Fout bij verwijderen: " + error.message);
+    } else {
+      toast.success("Product verwijderd");
+      if (org) loadSupplierBenefits(org.id);
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open && org && isSupplier) {
+      // Refresh benefits after dialog closes
+      loadSupplierBenefits(org.id);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -147,7 +200,9 @@ const ExternDashboardPage = () => {
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card px-6 h-14">
         <div className="flex items-center gap-3">
           <img src={bcdLogo} alt="BCD" className="h-8 w-auto" />
-          <h1 className="text-sm font-semibold font-display text-foreground">Extern Portaal</h1>
+          <h1 className="text-sm font-semibold font-display text-foreground">
+            {isSupplier ? "Leverancier Portaal" : "Extern Portaal"}
+          </h1>
         </div>
         <div className="flex items-center gap-3">
           {org && (
@@ -178,7 +233,83 @@ const ExternDashboardPage = () => {
               U ontvangt bericht zodra uw account is goedgekeurd.
             </p>
           </div>
+        ) : isSupplier ? (
+          /* ─── Supplier View ─── */
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Mijn Producten</h2>
+                <p className="text-sm text-muted-foreground">
+                  Beheer uw producten en diensten in de ledenvoordelenomgeving
+                </p>
+              </div>
+              <Button onClick={handleNewBenefit} size="sm" className="gap-1">
+                <Plus className="h-4 w-4" /> Nieuw product
+              </Button>
+            </div>
+
+            {benefits.length === 0 ? (
+              <div className="text-center py-16 space-y-3">
+                <Package size={48} className="mx-auto text-muted-foreground" />
+                <h3 className="font-semibold">Nog geen producten</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Voeg uw eerste product of dienst toe. Na plaatsing wordt het zichtbaar voor alle BCD-leden.
+                </p>
+                <Button onClick={handleNewBenefit} className="gap-1">
+                  <Plus className="h-4 w-4" /> Product toevoegen
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {benefits.map((b) => {
+                  const imageUrl = getBenefitImageUrl(b.image_path);
+                  return (
+                    <Card key={b.id} className={`overflow-hidden ${!b.active ? "opacity-50" : ""}`}>
+                      <div className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="text-5xl font-bold text-muted-foreground/40">{b.title.charAt(0)}</div>
+                        )}
+                        <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{b.category}</Badge>
+                        {!b.active && (
+                          <Badge variant="outline" className="absolute top-2 left-2 bg-background/80">Inactief</Badge>
+                        )}
+                      </div>
+                      <CardContent className="p-4 space-y-2">
+                        <h3 className="font-semibold text-base leading-tight line-clamp-2">{b.title}</h3>
+                        {b.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>
+                        )}
+                        {b.discount_info && (
+                          <Badge variant="outline" className="text-xs border-primary/30 text-primary font-medium">
+                            {b.discount_info}
+                          </Badge>
+                        )}
+                        <div className="flex gap-2 pt-2">
+                          <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditBenefit(b)}>
+                            <Pencil className="h-3 w-3" /> Bewerken
+                          </Button>
+                          <Button variant="outline" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteBenefit(b.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            <BenefitFormDialog
+              open={dialogOpen}
+              onOpenChange={handleDialogClose}
+              benefit={editBenefit}
+              supplierOrgId={org.id}
+            />
+          </>
         ) : (
+          /* ─── Regular External View ─── */
           <>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users size={16} />

@@ -22,9 +22,10 @@ interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   benefit?: Benefit | null;
+  supplierOrgId?: string;
 }
 
-export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props) {
+export default function BenefitFormDialog({ open, onOpenChange, benefit, supplierOrgId }: Props) {
   const { upsert, remove } = useBenefitMutations();
   const { data: existingImages = [] } = useBenefitImages(benefit?.id);
   const { addImage, removeImage } = useBenefitImageMutations(benefit?.id);
@@ -79,7 +80,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit }: Props
         if (uploadErr) throw uploadErr;
         image_path = path;
       }
-      await upsert.mutateAsync({ ...form, image_path, id: benefit?.id } as any);
+      await upsert.mutateAsync({ ...form, image_path, id: benefit?.id, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any);
       // Upload gallery images if any
       if (galleryFiles.length > 0 && benefit?.id) {
         const startOrder = existingImages.length;

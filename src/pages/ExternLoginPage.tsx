@@ -149,6 +149,7 @@ const ExternLoginPage = () => {
                     >
                       <option value="bank">Bank</option>
                       <option value="overheid">Overheid</option>
+                      <option value="leverancier">Leverancier / Aanbieder</option>
                       <option value="anders">Anders</option>
                     </select>
                   </div>

@@ -286,6 +286,7 @@ export type Database = {
           provider_name: string | null
           provider_url: string | null
           sort_order: number
+          supplier_org_id: string | null
           title: string
           updated_at: string
         }
@@ -304,6 +305,7 @@ export type Database = {
           provider_name?: string | null
           provider_url?: string | null
           sort_order?: number
+          supplier_org_id?: string | null
           title: string
           updated_at?: string
         }
@@ -322,10 +324,19 @@ export type Database = {
           provider_name?: string | null
           provider_url?: string | null
           sort_order?: number
+          supplier_org_id?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "member_benefits_supplier_org_id_fkey"
+            columns: ["supplier_org_id"]
+            isOneToOne: false
+            referencedRelation: "external_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       member_contributions: {
         Row: {
