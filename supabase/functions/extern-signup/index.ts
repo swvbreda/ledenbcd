@@ -84,6 +84,27 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Notify admins via push notification
+    try {
+      const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
+      if (INTERNAL_WEBHOOK_SECRET) {
+        await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": INTERNAL_WEBHOOK_SECRET,
+          },
+          body: JSON.stringify({
+            title: "Nieuwe externe aanvraag",
+            body: `${organization_name.trim()} heeft zich aangemeld als externe partij.`,
+            target_role: "admin",
+          }),
+        });
+      }
+    } catch (pushErr) {
+      console.error("Push notification failed:", pushErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
