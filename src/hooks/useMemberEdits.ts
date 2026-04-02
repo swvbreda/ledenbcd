@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 
 interface MemberEdit {
   member_id: number;
