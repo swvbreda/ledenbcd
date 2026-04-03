@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { toast } from "sonner";
 import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound, Building2 } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -287,32 +288,28 @@ const AccountBeheerPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Accountbeheer</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {filteredUsers.length}{searchQuery ? ` van ${users.length}` : ""} accounts
-          </p>
+      <BcdHeroBanner
+        title="Accountbeheer"
+        subtitle={`${filteredUsers.length}${searchQuery ? ` van ${users.length}` : ""} accounts`}
+      />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="relative flex-1 sm:flex-none">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Zoek op naam of e-mail..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 pr-8 h-9 w-full sm:w-56 text-sm"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X size={14} />
+            </button>
+          )}
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div className="relative flex-1 sm:flex-none">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Zoek op naam of e-mail..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-8 h-9 w-full sm:w-56 text-sm"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
-            <UserPlus size={15} /> Nieuw account
-          </Button>
-        </div>
+        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <UserPlus size={15} /> Nieuw account
+        </Button>
       </div>
 
       {loading ? (

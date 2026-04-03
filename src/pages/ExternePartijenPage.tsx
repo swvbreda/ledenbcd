@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Building2, Check, X, Clock, Pencil, Save } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -189,10 +190,7 @@ export default function ExternePartijenPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Externe Partijen</h2>
-        <p className="text-sm text-muted-foreground mt-1">Beheer toegang voor banken, overheden en leveranciers</p>
-      </div>
+      <BcdHeroBanner title="Externe Partijen" subtitle="Beheer toegang voor banken, overheden en leveranciers" />
 
       {pending.length > 0 && (
         <div className="space-y-3">

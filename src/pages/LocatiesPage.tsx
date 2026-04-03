@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
@@ -168,13 +169,8 @@ const LocatiesPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Gemeenten</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {filtered.length} steden · {totalLocations} locaties
-          </p>
-        </div>
+      <BcdHeroBanner title="Gemeenten" subtitle={`${filtered.length} steden · ${totalLocations} locaties`} />
+      <div className="flex justify-end">
         <div className="relative max-w-sm w-full">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Check, X, Clock, ChevronDown, ChevronUp, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -240,24 +241,16 @@ export default function GoedkeuringenPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Goedkeuringen</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {pendingCount > 0
-              ? `${pendingCount} wijziging${pendingCount === 1 ? "" : "en"} wacht${pendingCount === 1 ? "" : "en"} op goedkeuring`
-              : "Geen openstaande wijzigingen"}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="self-start shrink-0"
-          onClick={() => setShowAll(!showAll)}
-        >
+      <BcdHeroBanner
+        title="Goedkeuringen"
+        subtitle={pendingCount > 0
+          ? `${pendingCount} wijziging${pendingCount === 1 ? "" : "en"} wacht${pendingCount === 1 ? "" : "en"} op goedkeuring`
+          : "Geen openstaande wijzigingen"}
+      >
+        <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
           {showAll ? "Alleen openstaand" : "Toon alles"}
         </Button>
-      </div>
+      </BcdHeroBanner>
 
       {isLoading ? (
         <div className="text-center text-muted-foreground py-12">Laden...</div>

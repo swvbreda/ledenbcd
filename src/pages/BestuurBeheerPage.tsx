@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Shield, Plus, Pencil, Trash2, GripVertical, Save, X } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import {
   DndContext,
   closestCenter,
@@ -265,16 +266,12 @@ export default function BestuurBeheerPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold font-display flex items-center gap-2">
-          <Shield size={18} className="text-primary" />
-          Bestuur beheren
-        </h1>
-        <Button size="sm" onClick={openNew} className="gap-1.5">
+    <div className="p-4 md:p-6 max-w-4xl space-y-4">
+      <BcdHeroBanner title="Bestuur beheren" subtitle="Beheer bestuursleden en aspiranten">
+        <Button size="sm" variant="secondary" onClick={openNew} className="gap-1.5">
           <Plus size={14} /> Toevoegen
         </Button>
-      </div>
+      </BcdHeroBanner>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         {bestuursleden.length > 0 && (

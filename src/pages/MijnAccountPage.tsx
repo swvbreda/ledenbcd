@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, ShieldCheck, ShieldAlert, Fingerprint, ScanFace, Trash2 } from "lucide-react";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys } from "@/hooks/usePasskeys";
@@ -510,17 +511,13 @@ export default function MijnAccountPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Mijn Account</h2>
-          <p className="text-sm text-muted-foreground mt-1">Beheer je accountinstellingen</p>
-        </div>
+      <BcdHeroBanner title="Mijn Account" subtitle="Beheer je accountinstellingen">
         {linkedMember && !editingMember && (
-          <Button variant="outline" size="sm" className="self-start shrink-0 gap-1.5" onClick={() => setEditingMember(true)}>
+          <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => setEditingMember(true)}>
             <Pencil size={14} /> Lidgegevens bewerken
           </Button>
         )}
-      </div>
+      </BcdHeroBanner>
 
       {/* Member edit form */}
       {linkedMember && editingMember && (

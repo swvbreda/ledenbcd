@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserMinus, Search, MapPin, ExternalLink } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import type { Member } from "@/data/types";
@@ -30,15 +31,7 @@ const OudLedenPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display flex items-center gap-2">
-          <UserMinus size={22} className="text-muted-foreground" />
-          Oud-leden
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Voormalige leden van de BCD
-        </p>
-      </div>
+      <BcdHeroBanner title="Oud-leden" subtitle="Voormalige leden van de BCD" />
 
       {oldMembers.length > 0 && (
         <div className="max-w-sm">
