@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Shield, Plus, Pencil, Trash2, GripVertical, Save, X } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import {
   DndContext,
   closestCenter,

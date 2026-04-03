@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, ShieldCheck, ShieldAlert, Fingerprint, ScanFace, Trash2 } from "lucide-react";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys } from "@/hooks/usePasskeys";

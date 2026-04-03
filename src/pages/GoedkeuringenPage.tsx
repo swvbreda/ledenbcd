@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Check, X, Clock, ChevronDown, ChevronUp, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

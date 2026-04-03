@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserMinus, Search, MapPin, ExternalLink } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import type { Member } from "@/data/types";
