@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Phone, FileText } from "lucide-react";
+import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Store, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
 import BenefitFormDialog from "@/components/BenefitFormDialog";
 import type { Benefit } from "@/hooks/useBenefits";
 import { getBenefitImageUrl } from "@/hooks/useBenefits";
+import type { Member } from "@/data/types";
+import SupplierCoffeeshopTable from "@/components/SupplierCoffeeshopTable";
+import SupplierGemeentenOverzicht from "@/components/SupplierGemeentenOverzicht";
 
 interface OrgInfo {
   id: string;
@@ -59,6 +63,8 @@ const ExternDashboardPage = () => {
   const [orgUsers, setOrgUsers] = useState<OrgUser[]>([]);
   const [orgEditForm, setOrgEditForm] = useState({ contact_name: "", contact_email: "", notes: "" });
   const [savingOrg, setSavingOrg] = useState(false);
+  const [supplierTab, setSupplierTab] = useState<"producten" | "coffeeshops" | "gemeenten">("producten");
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
 
   const isSupplier = org?.type === "leverancier";
 
@@ -102,7 +108,10 @@ const ExternDashboardPage = () => {
 
         if (orgData.approved) {
           if (orgData.type === "leverancier") {
-            await loadSupplierBenefits(orgData.id);
+            await Promise.all([
+              loadSupplierBenefits(orgData.id),
+              loadCoffeeshopMembers(),
+            ]);
           } else {
             await loadMembers(orgData.id);
           }
@@ -113,6 +122,24 @@ const ExternDashboardPage = () => {
 
     load();
   }, [user]);
+
+  const loadCoffeeshopMembers = async () => {
+    const { data, error } = await supabase
+      .from("members_data")
+      .select("id, member_type, data")
+      .eq("member_type", "member");
+
+    if (error) {
+      console.error("Error loading members:", error);
+      return;
+    }
+
+    const parsed: Member[] = (data ?? []).map((row: any) => {
+      const payload = (row.data ?? {}) as Partial<Member>;
+      return { ...payload, id: typeof payload.id === "number" ? payload.id : row.id } as Member;
+    });
+    setAllMembers(parsed);
+  };
 
   const loadSupplierBenefits = async (orgId: string) => {
     const { data, error } = await supabase
@@ -310,69 +337,95 @@ const ExternDashboardPage = () => {
         ) : isSupplier ? (
           /* ─── Supplier View ─── */
           <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Mijn Producten</h2>
-                <p className="text-sm text-muted-foreground">
-                  Beheer uw producten en diensten in de ledenvoordelenomgeving
-                </p>
-              </div>
-              <Button onClick={handleNewBenefit} size="sm" className="gap-1">
-                <Plus className="h-4 w-4" /> Nieuw product
-              </Button>
-            </div>
+            <Tabs value={supplierTab} onValueChange={(v) => setSupplierTab(v as any)}>
+              <TabsList>
+                <TabsTrigger value="producten" className="gap-1.5">
+                  <Package size={14} /> Producten
+                </TabsTrigger>
+                <TabsTrigger value="coffeeshops" className="gap-1.5">
+                  <Store size={14} /> Coffeeshops
+                </TabsTrigger>
+                <TabsTrigger value="gemeenten" className="gap-1.5">
+                  <MapPin size={14} /> Gemeenten
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-            {benefits.length === 0 ? (
-              <div className="text-center py-16 space-y-3">
-                <Package size={48} className="mx-auto text-muted-foreground" />
-                <h3 className="font-semibold">Nog geen producten</h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Voeg uw eerste product of dienst toe. Na plaatsing wordt het zichtbaar voor alle BCD-leden.
-                </p>
-                <Button onClick={handleNewBenefit} className="gap-1">
-                  <Plus className="h-4 w-4" /> Product toevoegen
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {benefits.map((b) => {
-                  const imageUrl = getBenefitImageUrl(b.image_path);
-                  return (
-                    <Card key={b.id} className={`overflow-hidden ${!b.active ? "opacity-50" : ""}`}>
-                      <div className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
-                        ) : (
-                          <div className="text-5xl font-bold text-muted-foreground/40">{b.title.charAt(0)}</div>
-                        )}
-                        <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{b.category}</Badge>
-                        {!b.active && (
-                          <Badge variant="outline" className="absolute top-2 left-2 bg-background/80">Inactief</Badge>
-                        )}
-                      </div>
-                      <CardContent className="p-4 space-y-2">
-                        <h3 className="font-semibold text-base leading-tight line-clamp-2">{b.title}</h3>
-                        {b.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>
-                        )}
-                        {b.discount_info && (
-                          <Badge variant="outline" className="text-xs border-primary/30 text-primary font-medium">
-                            {b.discount_info}
-                          </Badge>
-                        )}
-                        <div className="flex gap-2 pt-2">
-                          <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditBenefit(b)}>
-                            <Pencil className="h-3 w-3" /> Bewerken
-                          </Button>
-                          <Button variant="outline" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteBenefit(b.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+            {supplierTab === "producten" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">Mijn Producten</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Beheer uw producten en diensten in de ledenvoordelenomgeving
+                    </p>
+                  </div>
+                  <Button onClick={handleNewBenefit} size="sm" className="gap-1">
+                    <Plus className="h-4 w-4" /> Nieuw product
+                  </Button>
+                </div>
+
+                {benefits.length === 0 ? (
+                  <div className="text-center py-16 space-y-3">
+                    <Package size={48} className="mx-auto text-muted-foreground" />
+                    <h3 className="font-semibold">Nog geen producten</h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      Voeg uw eerste product of dienst toe. Na plaatsing wordt het zichtbaar voor alle BCD-leden.
+                    </p>
+                    <Button onClick={handleNewBenefit} className="gap-1">
+                      <Plus className="h-4 w-4" /> Product toevoegen
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {benefits.map((b) => {
+                      const imageUrl = getBenefitImageUrl(b.image_path);
+                      return (
+                        <Card key={b.id} className={`overflow-hidden ${!b.active ? "opacity-50" : ""}`}>
+                          <div className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
+                            ) : (
+                              <div className="text-5xl font-bold text-muted-foreground/40">{b.title.charAt(0)}</div>
+                            )}
+                            <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{b.category}</Badge>
+                            {!b.active && (
+                              <Badge variant="outline" className="absolute top-2 left-2 bg-background/80">Inactief</Badge>
+                            )}
+                          </div>
+                          <CardContent className="p-4 space-y-2">
+                            <h3 className="font-semibold text-base leading-tight line-clamp-2">{b.title}</h3>
+                            {b.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>
+                            )}
+                            {b.discount_info && (
+                              <Badge variant="outline" className="text-xs border-primary/30 text-primary font-medium">
+                                {b.discount_info}
+                              </Badge>
+                            )}
+                            <div className="flex gap-2 pt-2">
+                              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditBenefit(b)}>
+                                <Pencil className="h-3 w-3" /> Bewerken
+                              </Button>
+                              <Button variant="outline" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteBenefit(b.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+
+            {supplierTab === "coffeeshops" && (
+              <SupplierCoffeeshopTable members={allMembers} />
+            )}
+
+            {supplierTab === "gemeenten" && (
+              <SupplierGemeentenOverzicht members={allMembers} />
             )}
 
             <BenefitFormDialog
