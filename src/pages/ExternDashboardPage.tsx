@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Store, MapPin } from "lucide-react";
