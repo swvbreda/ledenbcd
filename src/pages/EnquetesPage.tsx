@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield, Share2, Copy } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 
 interface Survey {
   id: string;
