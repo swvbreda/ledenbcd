@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { toast } from "sonner";
-import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound } from "lucide-react";
+import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,6 +28,12 @@ interface UserAccount {
   member_ids: number[];
 }
 
+interface ExternalOrgLink {
+  orgId: string;
+  name: string;
+  type: string;
+}
+
 const AccountBeheerPage = () => {
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +55,7 @@ const AccountBeheerPage = () => {
   const [resetPwUser, setResetPwUser] = useState<UserAccount | null>(null);
   const [resetPw, setResetPw] = useState("");
   const [resetPwConfirm, setResetPwConfirm] = useState("");
+  const [externalOrgLinksByUser, setExternalOrgLinksByUser] = useState<Record<string, ExternalOrgLink[]>>({});
 
   const { allMembersAndLeads } = useMembersData();
   const memberMap = useMemo(() => {
@@ -75,15 +82,62 @@ const AccountBeheerPage = () => {
     return map;
   }, []);
 
-  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[] } => {
+  const getRoleLabel = (role: string) => {
+    if (role === "admin") return "Admin";
+    if (role === "extern") return "Extern";
+    return "Gebruiker";
+  };
+
+  const fetchExternalOrgLinks = async (userIds: string[]) => {
+    if (userIds.length === 0) {
+      setExternalOrgLinksByUser({});
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("external_org_users")
+      .select("user_id, org_id, organization:external_organizations(name, type)")
+      .in("user_id", userIds);
+
+    if (error) {
+      console.error("Fout bij ophalen organisatiekoppelingen:", error);
+      setExternalOrgLinksByUser({});
+      return;
+    }
+
+    const nextLinks: Record<string, ExternalOrgLink[]> = {};
+
+    (data as Array<{
+      user_id: string;
+      org_id: string;
+      organization: { name: string; type: string } | { name: string; type: string }[] | null;
+    }> | null)?.forEach((row) => {
+      const organization = Array.isArray(row.organization) ? row.organization[0] : row.organization;
+      if (!organization) return;
+
+      nextLinks[row.user_id] = [
+        ...(nextLinks[row.user_id] ?? []),
+        {
+          orgId: row.org_id,
+          name: organization.name,
+          type: organization.type,
+        },
+      ];
+    });
+
+    setExternalOrgLinksByUser(nextLinks);
+  };
+
+  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[]; orgLinks: ExternalOrgLink[] } => {
     const ids = u.member_ids || (u.member_id ? [u.member_id] : []);
+    const orgLinks = externalOrgLinksByUser[u.id] ?? [];
     if (isBoardEmail(u.email)) {
       const name = boardNameMap.get(u.email.toLowerCase()) || u.email.split("@")[0];
-      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids };
+      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids, orgLinks };
     }
     if (ids.length > 0) {
       const firstMember = memberMap.get(ids[0]);
-      if (!firstMember) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids };
+      if (!firstMember) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids, orgLinks };
 
       // Match account email to the correct contact person within the member
       const emailLower = u.email?.toLowerCase() ?? "";
@@ -105,9 +159,12 @@ const AccountBeheerPage = () => {
       // Fallback to primary contactpersoon
       if (!matchedName) matchedName = firstMember.contactpersoon || "";
 
-      return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids };
+      return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids, orgLinks };
     }
-    return { label: "", personName: "", isBoard: false, memberIds: [] };
+    if (orgLinks.length > 0) {
+      return { label: orgLinks[0].name, personName: "", isBoard: false, memberIds: [], orgLinks };
+    }
+    return { label: "", personName: "", isBoard: false, memberIds: [], orgLinks: [] };
   };
 
   const filteredUsers = useMemo(() => {
@@ -136,12 +193,16 @@ const AccountBeheerPage = () => {
       } else if (data?.error) {
         toast.error("Fout bij ophalen accounts: " + data.error);
         setUsers([]);
+        setExternalOrgLinksByUser({});
       } else {
-        setUsers(data?.users || []);
+        const nextUsers = data?.users || [];
+        setUsers(nextUsers);
+        await fetchExternalOrgLinks(nextUsers.map((account: UserAccount) => account.id));
       }
     } catch (e: any) {
       toast.error("Fout bij ophalen accounts: " + (e?.message || "Onbekende fout"));
       setUsers([]);
+      setExternalOrgLinksByUser({});
     }
     setLoading(false);
   };
@@ -274,7 +335,7 @@ const AccountBeheerPage = () => {
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
-                  const { label, personName, isBoard, memberIds } = getDisplayInfo(u);
+                  const { label, personName, isBoard, memberIds, orgLinks } = getDisplayInfo(u);
                   return (
                     <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-xs sm:text-sm">
@@ -307,6 +368,19 @@ const AccountBeheerPage = () => {
                                 </span>
                               );
                             })
+                          ) : orgLinks.length > 0 ? (
+                            orgLinks.map((org) => (
+                              <button
+                                key={org.orgId}
+                                onClick={() => navigate(`/externe-partijen/${org.orgId}`)}
+                                className="inline-flex items-center gap-1 text-primary hover:underline text-left"
+                              >
+                                <Building2 size={12} className="shrink-0" />
+                                <span className="line-clamp-1">{org.name}</span>
+                                <span className="text-muted-foreground text-[10px] uppercase tracking-wide">{org.type}</span>
+                                <ExternalLink size={10} className="opacity-50 hidden sm:inline shrink-0" />
+                              </button>
+                            ))
                           ) : (
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
@@ -323,10 +397,13 @@ const AccountBeheerPage = () => {
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
+                            : u.role === "extern"
+                              ? "bg-primary/10 text-primary"
                             : "bg-muted text-muted-foreground"
                         }`}>
                           {u.role === "admin" && <Shield size={11} />}
-                          {u.role === "admin" ? "Admin" : "Gebruiker"}
+                          {u.role === "extern" && <Building2 size={11} />}
+                          {getRoleLabel(u.role)}
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
@@ -499,12 +576,13 @@ const AccountBeheerPage = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="user">Gebruiker</SelectItem>
+                    <SelectItem value="extern">Externe partij</SelectItem>
                   <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {editUser && (() => {
-              const { memberIds } = getDisplayInfo(editUser);
+              const { memberIds, orgLinks } = getDisplayInfo(editUser);
               return (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Koppeling</label>
@@ -536,17 +614,37 @@ const AccountBeheerPage = () => {
                         De weergavenaam komt van het gekoppelde lid.
                       </p>
                     </div>
+                  ) : orgLinks.length > 0 ? (
+                    <div className="space-y-2">
+                      {orgLinks.map((org) => (
+                        <button
+                          key={org.orgId}
+                          onClick={() => navigate(`/externe-partijen/${org.orgId}`)}
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline text-left"
+                        >
+                          <Building2 size={13} />
+                          <span>{org.name}</span>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">{org.type}</span>
+                          <ExternalLink size={10} className="opacity-50" />
+                        </button>
+                      ))}
+                      <p className="text-xs text-muted-foreground">
+                        Externe accounts zijn gekoppeld aan een organisatie, niet aan een lid.
+                      </p>
+                    </div>
                   ) : (
                     <p className="text-xs text-muted-foreground italic">Geen koppeling</p>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 w-full"
-                    onClick={() => { setEditUser(null); setLinkDialogUser(editUser); setLinkMemberId(""); setLinkSearch(""); }}
-                  >
-                    <Link size={12} /> Lid koppelen
-                  </Button>
+                  {orgLinks.length === 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 w-full"
+                      onClick={() => { setEditUser(null); setLinkDialogUser(editUser); setLinkMemberId(""); setLinkSearch(""); }}
+                    >
+                      <Link size={12} /> Lid koppelen
+                    </Button>
+                  )}
                 </div>
               );
             })()}
