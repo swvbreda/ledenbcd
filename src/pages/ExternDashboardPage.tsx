@@ -327,7 +327,10 @@ const ExternDashboardPage = () => {
                       const imageUrl = getBenefitImageUrl(b.image_path);
                       return (
                         <Card key={b.id} className={`overflow-hidden ${!b.active ? "opacity-50" : ""}`}>
-                          <div className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+                          <div
+                            className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden cursor-pointer"
+                            onClick={() => navigate(`/extern/product/${b.id}`)}
+                          >
                             {imageUrl ? (
                               <img src={imageUrl} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
                             ) : (
@@ -339,7 +342,12 @@ const ExternDashboardPage = () => {
                             )}
                           </div>
                           <CardContent className="p-4 space-y-2">
-                            <h3 className="font-semibold text-base leading-tight line-clamp-2">{b.title}</h3>
+                            <h3
+                              className="font-semibold text-base leading-tight line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => navigate(`/extern/product/${b.id}`)}
+                            >
+                              {b.title}
+                            </h3>
                             {b.description && (
                               <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>
                             )}
@@ -349,7 +357,10 @@ const ExternDashboardPage = () => {
                               </Badge>
                             )}
                             <div className="flex gap-2 pt-2">
-                              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditBenefit(b)}>
+                              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => navigate(`/extern/product/${b.id}`)}>
+                                <Eye className="h-3 w-3" /> Bekijken
+                              </Button>
+                              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleEditBenefit(b)}>
                                 <Pencil className="h-3 w-3" /> Bewerken
                               </Button>
                               <Button variant="outline" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteBenefit(b.id)}>
