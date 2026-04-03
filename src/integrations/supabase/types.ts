@@ -345,6 +345,8 @@ export type Database = {
           featured: boolean
           id: string
           image_path: string | null
+          original_price: number | null
+          price: number | null
           provider_name: string | null
           provider_url: string | null
           sort_order: number
@@ -364,6 +366,8 @@ export type Database = {
           featured?: boolean
           id?: string
           image_path?: string | null
+          original_price?: number | null
+          price?: number | null
           provider_name?: string | null
           provider_url?: string | null
           sort_order?: number
@@ -383,6 +387,8 @@ export type Database = {
           featured?: boolean
           id?: string
           image_path?: string | null
+          original_price?: number | null
+          price?: number | null
           provider_name?: string | null
           provider_url?: string | null
           sort_order?: number
