@@ -231,59 +231,6 @@ const ExternDashboardPage = () => {
     }
   };
 
-  const handleOpenOrgDialog = async () => {
-    if (!org) return;
-    setOrgEditForm({
-      contact_name: org.contact_name || "",
-      contact_email: org.contact_email || "",
-      notes: org.notes || "",
-    });
-    setOrgDialogOpen(true);
-
-    // Load org users
-    const { data: orgUserLinks } = await supabase
-      .from("external_org_users")
-      .select("user_id, created_at")
-      .eq("org_id", org.id);
-
-    if (orgUserLinks && orgUserLinks.length > 0) {
-      // We need emails from auth - use the user's own email as fallback
-      const users: OrgUser[] = orgUserLinks.map(u => ({
-        id: u.user_id,
-        email: u.user_id === user?.id ? (user?.email || "Onbekend") : "Geregistreerd gebruiker",
-        created_at: u.created_at,
-      }));
-      setOrgUsers(users);
-    } else {
-      setOrgUsers([]);
-    }
-  };
-
-  const handleSaveOrg = async () => {
-    if (!org) return;
-    setSavingOrg(true);
-    const { error } = await supabase
-      .from("external_organizations")
-      .update({
-        contact_name: orgEditForm.contact_name.trim() || null,
-        contact_email: orgEditForm.contact_email.trim() || null,
-        notes: orgEditForm.notes.trim() || null,
-      })
-      .eq("id", org.id);
-
-    if (error) {
-      toast.error("Fout bij opslaan: " + error.message);
-    } else {
-      toast.success("Organisatie bijgewerkt");
-      setOrg({
-        ...org,
-        contact_name: orgEditForm.contact_name.trim() || null,
-        contact_email: orgEditForm.contact_email.trim() || null,
-        notes: orgEditForm.notes.trim() || null,
-      });
-    }
-    setSavingOrg(false);
-  };
 
   if (authLoading || loading) {
     return (
