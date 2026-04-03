@@ -108,7 +108,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   ];
 
   return (
-    <div className="bg-card rounded-lg border border-border p-5">
+    <div className="bg-white rounded-lg border-2 border-primary/60 p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Kernfeiten</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Belangrijke cijfers over het ledenbestand
