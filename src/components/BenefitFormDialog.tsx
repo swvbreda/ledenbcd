@@ -94,7 +94,12 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         if (uploadErr) throw uploadErr;
         image_path = path;
       }
-      const payload = { ...form, image_path, id: benefit?.id, price: form.price ? Number(form.price) : null, original_price: form.original_price ? Number(form.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
+      const finalForm = { ...form };
+      if (supplierOrgId && orgData) {
+        finalForm.provider_name = orgData.name;
+        finalForm.provider_url = orgData.website || "";
+      }
+      const payload = { ...finalForm, image_path, id: benefit?.id, price: finalForm.price ? Number(finalForm.price) : null, original_price: finalForm.original_price ? Number(finalForm.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
       await upsert.mutateAsync(payload);
       // Upload gallery images if any
       if (galleryFiles.length > 0 && benefit?.id) {
