@@ -67,8 +67,8 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
           <p className="text-sm text-muted-foreground line-clamp-2">{benefit.description}</p>
         )}
         {benefit.discount_info && (
-          <div className="mt-2 rounded-lg bg-primary px-3 py-1.5">
-            <p className="text-xs font-bold text-primary-foreground leading-snug line-clamp-1">{benefit.discount_info}</p>
+          <div className="mt-2 rounded-lg bg-primary px-3 py-2">
+            <p className="text-xs font-bold text-primary-foreground leading-relaxed">{benefit.discount_info}</p>
           </div>
         )}
       </CardContent>
