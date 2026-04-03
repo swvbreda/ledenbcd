@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro, Building2, Gift } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,7 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const closeMobile = () => setOpenMobile(false);
@@ -74,7 +76,7 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-white pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-white pt-[max(0.75rem,env(safe-area-inset-top))] cursor-pointer" onClick={() => { navigate("/"); closeMobile(); }}>
           {!collapsed ? (
             <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-14 w-auto object-contain" />
           ) : (
