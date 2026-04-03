@@ -10,6 +10,7 @@ import bcdLogo from "@/assets/bcd-logo.png";
 const LoginPage = () => {
   const { user, loading: authLoading, isExtern } = useAuth();
   const biometric = useBiometricAuth();
+  const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,6 +22,11 @@ const LoginPage = () => {
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+
+  useEffect(() => {
+    isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
+  }, []);
 
   if (authLoading) {
     return (
