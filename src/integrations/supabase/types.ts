@@ -139,6 +139,44 @@ export type Database = {
         }
         Relationships: []
       }
+      external_org_contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          org_id: string
+          phone: string | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          org_id: string
+          phone?: string | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          phone?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_org_contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "external_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_org_users: {
         Row: {
           created_at: string
