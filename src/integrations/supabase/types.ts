@@ -630,6 +630,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_email_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_device_tokens: {
         Row: {
           created_at: string
@@ -822,6 +849,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       get_board_members_public: {
         Args: never
         Returns: {
