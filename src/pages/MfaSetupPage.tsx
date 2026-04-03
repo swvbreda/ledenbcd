@@ -44,7 +44,7 @@ export default function MfaSetupPage() {
 
     // First check if a factor already exists (handle name conflict)
     const { data: factors } = await supabase.auth.mfa.listFactors();
-    const existingTotp = factors?.totp?.find(f => f.status === "unverified");
+    const existingTotp = factors?.totp?.find(f => (f.status as string) === "unverified");
     if (existingTotp) {
       // Unenroll unverified factor first to avoid name conflict
       await supabase.auth.mfa.unenroll({ factorId: existingTotp.id });
