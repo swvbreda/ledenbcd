@@ -165,10 +165,13 @@ export default function ExternePartijenPage() {
   const OrgCard = ({ org, actions }: { org: ExternalOrg; actions: React.ReactNode }) => (
     <Card key={org.id} className="p-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1 min-w-0">
+        <div
+          className="space-y-1 min-w-0 cursor-pointer"
+          onClick={() => navigate(`/externe-partijen/${org.id}`)}
+        >
           <div className="flex items-center gap-2 flex-wrap">
             <Building2 size={14} className="text-muted-foreground shrink-0" />
-            <span className="font-semibold text-sm">{org.name}</span>
+            <span className="font-semibold text-sm hover:underline">{org.name}</span>
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{typeLabel(org.type)}</span>
           </div>
           {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
