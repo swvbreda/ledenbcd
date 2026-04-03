@@ -146,30 +146,15 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           </div>
           <div>
             <Label>Categorie</Label>
-            {supplierOrgId ? (
-              <Select value={form.category} onValueChange={(v) => set("category", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kies een categorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEFAULT_CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <>
-                <Input
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  list="benefit-categories"
-                  placeholder="Kies of typ een categorie"
-                />
-                <datalist id="benefit-categories">
-                  {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
-                </datalist>
-              </>
-            )}
+            <Input
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              list="benefit-categories"
+              placeholder="Kies of typ een categorie"
+            />
+            <datalist id="benefit-categories">
+              {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div>
             <Label>Beschrijving</Label>
@@ -177,11 +162,22 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           </div>
           <div>
             <Label>Aanbieder</Label>
-            <Input value={form.provider_name} onChange={(e) => set("provider_name", e.target.value)} />
+            {supplierOrgId && orgData ? (
+              <>
+                <Input value={orgData.name} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground mt-1">Gekoppeld aan je bedrijfsprofiel. Wijzig dit via je profielpagina.</p>
+              </>
+            ) : (
+              <Input value={form.provider_name} onChange={(e) => set("provider_name", e.target.value)} />
+            )}
           </div>
           <div>
             <Label>Website aanbieder</Label>
-            <Input value={form.provider_url} onChange={(e) => set("provider_url", e.target.value)} placeholder="https://" />
+            {supplierOrgId && orgData ? (
+              <Input value={orgData.website || ""} disabled className="bg-muted" />
+            ) : (
+              <Input value={form.provider_url} onChange={(e) => set("provider_url", e.target.value)} placeholder="https://" />
+            )}
           </div>
           <div>
             <Label>Ledenvoordeel / korting</Label>
