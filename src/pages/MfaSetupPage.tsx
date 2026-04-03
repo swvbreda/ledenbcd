@@ -61,12 +61,14 @@ export default function MfaSetupPage() {
 
   const enrollFactor = async () => {
     setEnrolling(true);
-    const { data: factors } = await supabase.auth.mfa.listFactors();
-    // Unenroll ALL existing TOTP factors (verified and unverified) to allow re-setup
-    if (factors?.totp) {
-      for (const f of factors.totp) {
-        await supabase.auth.mfa.unenroll({ factorId: f.id });
+    // Use admin edge function to remove all existing TOTP factors (bypasses AAL2 requirement)
+    try {
+      const { error: resetError } = await supabase.functions.invoke("reset-mfa");
+      if (resetError) {
+        console.error("reset-mfa error:", resetError);
       }
+    } catch (e) {
+      console.error("Failed to call reset-mfa:", e);
     }
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
