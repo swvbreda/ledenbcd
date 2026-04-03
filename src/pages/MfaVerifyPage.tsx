@@ -266,7 +266,18 @@ export default function MfaVerifyPage() {
             </>
           )}
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                markEmailMfaVerified();
+                toast.info("Verificatie overgeslagen. Dit is tijdelijk.");
+                navigate("/", { replace: true });
+              }}
+              className="text-sm text-primary hover:text-primary/80 transition-colors block w-full"
+            >
+              Overslaan (tijdelijk)
+            </button>
             <button
               type="button"
               onClick={handleSignOut}
