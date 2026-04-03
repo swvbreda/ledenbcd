@@ -31,7 +31,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
           <img
             src={imageUrl}
             alt={benefit.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (
