@@ -135,6 +135,9 @@ export default function EnquetesPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="gap-1">
+                        <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                      </Badge>
                       {completed && (
                         <Badge variant="secondary" className="gap-1">
                           <CheckCircle2 size={12} /> Ingevuld
