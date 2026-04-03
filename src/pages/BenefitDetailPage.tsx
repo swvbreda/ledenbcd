@@ -118,6 +118,39 @@ export default function BenefitDetailPage() {
 
   const { data: galleryImages = [] } = useBenefitImages(id);
 
+  // Fetch supplier org info if linked
+  const { data: supplierOrg } = useQuery({
+    queryKey: ["supplier-org", benefit?.supplier_org_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_organizations")
+        .select("id, name, description, city, website, logo_path")
+        .eq("id", benefit!.supplier_org_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!benefit?.supplier_org_id,
+  });
+
+  // Fetch other products from same provider
+  const { data: otherProducts = [] } = useQuery({
+    queryKey: ["other-products", benefit?.provider_name, id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_benefits" as any)
+        .select("id, title, image_path, price, original_price, category, provider_name, active")
+        .eq("active", true)
+        .neq("id", id!);
+      if (error) throw error;
+      // Filter by same provider name client-side
+      return (data as unknown as Benefit[]).filter(
+        (b) => b.provider_name === benefit!.provider_name
+      );
+    },
+    enabled: !!benefit?.provider_name && !!id,
+  });
+
   if (isLoading) return <LoadingSpinner />;
   if (!benefit) return <p className="p-8 text-center text-muted-foreground">Voordeel niet gevonden.</p>;
 
