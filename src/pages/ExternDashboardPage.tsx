@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Phone, FileText } from "lucide-react";
+import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Store, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
 import BenefitFormDialog from "@/components/BenefitFormDialog";
 import type { Benefit } from "@/hooks/useBenefits";
 import { getBenefitImageUrl } from "@/hooks/useBenefits";
+import type { Member } from "@/data/types";
+import SupplierCoffeeshopTable from "@/components/SupplierCoffeeshopTable";
+import SupplierGemeentenOverzicht from "@/components/SupplierGemeentenOverzicht";
 
 interface OrgInfo {
   id: string;
