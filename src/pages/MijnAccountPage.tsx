@@ -155,7 +155,41 @@ function NotificationSection() {
   );
 }
 
-// ── Board Member types ──
+// ── Biometric Section ──
+function BiometricSection() {
+  const biometric = useBiometricAuth();
+
+  if (!biometric.isNative || !biometric.isAvailable) return null;
+
+  const handleToggle = async () => {
+    if (biometric.hasCredentials) {
+      await biometric.deleteCredentials();
+      toast.success(`${biometric.biometryLabel} uitgeschakeld`);
+    } else {
+      toast.info("Log opnieuw in om biometrische login te activeren");
+    }
+  };
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Fingerprint size={16} className="text-muted-foreground" />
+        <h3 className="text-sm font-semibold font-display">Biometrische login</h3>
+      </div>
+      <div className="flex items-center justify-between max-w-sm">
+        <Label htmlFor="bio-toggle" className="text-sm">Inloggen met {biometric.biometryLabel}</Label>
+        <Switch id="bio-toggle" checked={biometric.hasCredentials} onCheckedChange={handleToggle} />
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {biometric.hasCredentials
+          ? `${biometric.biometryLabel} is actief. Je kunt snel inloggen met biometrie.`
+          : "Activeer bij je volgende login op het inlogscherm."}
+      </p>
+    </Card>
+  );
+}
+
+
 interface BoardMemberData {
   id: string;
   naam: string;
