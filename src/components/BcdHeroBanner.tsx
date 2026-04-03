@@ -14,19 +14,19 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
         background: "hsl(0 70% 24%)",
       }}
     >
-      {/* BCD beeldmerk – gedeeltelijk zichtbaar, KHN-stijl */}
+      {/* BCD beeldmerk – gedeeltelijk zichtbaar, lichter rood op donkerrood */}
       <img
         src={bcdLogoElement}
         alt=""
-        className="absolute pointer-events-none select-none"
+        className="absolute pointer-events-none select-none md:w-[700px] md:h-[700px]"
         style={{
-          left: "-60px",
-          top: "-100px",
-          width: "600px",
-          height: "600px",
+          left: "-80px",
+          top: "-140px",
+          width: "520px",
+          height: "520px",
           objectFit: "contain",
-          opacity: 0.18,
-          filter: "brightness(0) invert(1)",
+          filter: "brightness(0) saturate(100%) invert(22%) sepia(60%) saturate(900%) hue-rotate(340deg) brightness(130%)",
+          opacity: 0.5,
         }}
       />
 
