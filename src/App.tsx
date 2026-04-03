@@ -81,6 +81,7 @@ const App = () => (
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                   <Route path="/contributie" element={<ContributiePage />} />
                   <Route path="/externe-partijen" element={<ExternePartijenPage />} />
+                  <Route path="/externe-partijen/:id" element={<ExternePartijDetailPage />} />
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                 </Route>
