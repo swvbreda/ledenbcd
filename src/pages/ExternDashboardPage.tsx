@@ -314,12 +314,12 @@ const ExternDashboardPage = () => {
         </div>
         <div className="flex items-center gap-3">
           {org && (
-            <button
-              onClick={handleOpenOrgDialog}
-              className="text-xs text-foreground font-medium flex items-center gap-1 hover:underline"
-            >
-              <Building2 size={14} /> {org.name}
-            </button>
+             <button
+               onClick={() => navigate("/extern/profiel")}
+               className="text-xs text-foreground font-medium flex items-center gap-1 hover:underline"
+             >
+               <Building2 size={14} /> {org.name}
+             </button>
           )}
           <button
             onClick={signOut}
