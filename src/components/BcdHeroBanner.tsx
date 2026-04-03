@@ -17,11 +17,10 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       <svg
         className="absolute pointer-events-none select-none"
         style={{
-          right: "-80px",
-          bottom: "-120px",
-          width: "500px",
-          height: "500px",
-          opacity: 1,
+          right: "-60px",
+          bottom: "-100px",
+          width: "480px",
+          height: "480px",
         }}
         viewBox="0 0 200 200"
         fill="hsl(0, 50%, 38%)"
