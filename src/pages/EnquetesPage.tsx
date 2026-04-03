@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield } from "lucide-react";
+import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield, Share2, Copy } from "lucide-react";
 
 interface Survey {
   id: string;
@@ -137,50 +137,66 @@ export default function EnquetesPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {s.active && !completed && (
-                      <Button size="sm" onClick={() => navigate(`/enquetes/${s.id}`)}>
-                        Invullen
-                      </Button>
-                    )}
-                    {completed && (
-                      <p className="text-xs text-muted-foreground">Je hebt deze enquête al ingevuld.</p>
-                    )}
-                    {user?.email?.toLowerCase() === PCN_EMAIL && s.active && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate(`/enquetes/${s.id}/review`)}
-                      >
-                        <Shield size={14} className="mr-1" /> Responses beoordelen
-                      </Button>
-                    )}
-                    {isAdmin && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/enquetes/${s.id}/beheer`)}
-                        >
-                          <BarChart3 size={14} className="mr-1" /> Beheer & resultaten
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleToggleActive(s.id, s.active)}
-                        >
-                          {s.active ? "Sluiten" : "Heropenen"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => handleDelete(s.id)}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                     {s.active && !completed && (
+                       <Button size="sm" onClick={() => navigate(`/enquetes/${s.id}`)}>
+                         Invullen
+                       </Button>
+                     )}
+                     {s.active && (
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => {
+                           const url = `${window.location.origin}/enquetes/${s.id}`;
+                           navigator.clipboard.writeText(url).then(() => {
+                             toast.success("Link gekopieerd naar klembord");
+                           }).catch(() => {
+                             prompt("Kopieer deze link:", url);
+                           });
+                         }}
+                       >
+                         <Share2 size={14} className="mr-1" /> Deel link
+                       </Button>
+                     )}
+                     {completed && (
+                       <p className="text-xs text-muted-foreground">Je hebt deze enquête al ingevuld.</p>
+                     )}
+                     {user?.email?.toLowerCase() === PCN_EMAIL && s.active && (
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => navigate(`/enquetes/${s.id}/review`)}
+                       >
+                         <Shield size={14} className="mr-1" /> Responses beoordelen
+                       </Button>
+                     )}
+                     {isAdmin && (
+                       <>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => navigate(`/enquetes/${s.id}/beheer`)}
+                         >
+                           <BarChart3 size={14} className="mr-1" /> Beheer & resultaten
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="ghost"
+                           onClick={() => handleToggleActive(s.id, s.active)}
+                         >
+                           {s.active ? "Sluiten" : "Heropenen"}
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="ghost"
+                           className="text-destructive"
+                           onClick={() => handleDelete(s.id)}
+                         >
+                           <Trash2 size={14} />
+                         </Button>
+                       </>
+                     )}
+                   </div>
                 </CardContent>
               </Card>
             );
