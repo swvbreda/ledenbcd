@@ -249,8 +249,11 @@ export function usePasskeys() {
       return { success: true };
     } catch (err: any) {
       setLoading(false);
-      if (err?.name === "NotAllowedError") return { success: false };
-      return { success: false, error: "Inloggen mislukt" };
+      if (err?.name === "NotAllowedError") {
+        return { success: false, error: "Face ID / vingerafdruk geannuleerd of niet beschikbaar. Heb je al een passkey geregistreerd via Mijn Account?" };
+      }
+      console.error("Passkey auth error:", err?.name, err?.message);
+      return { success: false, error: "Inloggen mislukt. Probeer het opnieuw." };
     }
   }, []);
 
