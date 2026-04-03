@@ -11,21 +11,23 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
     <div
       className="relative overflow-hidden rounded-xl"
       style={{
-        background: "hsl(0 70% 24%)",
+        background:
+          "linear-gradient(135deg, hsl(0 60% 28%), hsl(0 65% 32%))",
       }}
     >
-      {/* BCD beeldmerk – gedeeltelijk zichtbaar aan linkerkant, KHN-stijl */}
-      <img
-        src={bcdLogoElement}
-        alt=""
-        aria-hidden="true"
-        className="absolute pointer-events-none select-none w-[520px] h-[520px] md:w-[680px] md:h-[680px]"
+      {/* BCD beeldmerk – groot, gedeeltelijk zichtbaar rechts, lichter rood */}
+      <div
+        className="absolute right-[-120px] bottom-[-100px] w-[500px] h-[500px] md:w-[650px] md:h-[650px] pointer-events-none"
         style={{
-          left: "-80px",
-          top: "-160px",
-          objectFit: "contain",
-          filter: "brightness(0) invert(1)",
-          opacity: 0.12,
+          background: "hsl(0 55% 40%)",
+          WebkitMaskImage: `url(${bcdLogoElement})`,
+          maskImage: `url(${bcdLogoElement})`,
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
         }}
       />
 
