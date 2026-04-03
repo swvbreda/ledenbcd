@@ -12,6 +12,10 @@ const decoder = new TextDecoder();
 
 type ChallengeAction = "register" | "auth";
 
+function toArrayBuffer(view: Uint8Array): ArrayBuffer {
+  return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength) as ArrayBuffer;
+}
+
 type ChallengePayload = {
   action: ChallengeAction;
   challenge: string;
