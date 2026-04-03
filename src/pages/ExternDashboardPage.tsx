@@ -124,19 +124,28 @@ const ExternDashboardPage = () => {
   }, [user]);
 
   const loadCoffeeshopMembers = async () => {
-    const { data, error } = await supabase
-      .from("members_data")
-      .select("id, member_type, data")
-      .eq("member_type", "member");
+    const [membersRes, editsRes] = await Promise.all([
+      supabase.from("members_data").select("id, member_type, data").eq("member_type", "member"),
+      supabase.from("member_edits").select("member_id, data").order("updated_at", { ascending: true }),
+    ]);
 
-    if (error) {
-      console.error("Error loading members:", error);
+    if (membersRes.error) {
+      console.error("Error loading members:", membersRes.error);
       return;
     }
 
-    const parsed: Member[] = (data ?? []).map((row: any) => {
+    // Build latest edit per member
+    const editMap = new Map<number, Record<string, unknown>>();
+    (editsRes.data ?? []).forEach((e: any) => {
+      editMap.set(e.member_id, { ...(editMap.get(e.member_id) || {}), ...(e.data as Record<string, unknown>) });
+    });
+
+    const parsed: Member[] = (membersRes.data ?? []).map((row: any) => {
       const payload = (row.data ?? {}) as Partial<Member>;
-      return { ...payload, id: typeof payload.id === "number" ? payload.id : row.id } as Member;
+      const base = { ...payload, id: typeof payload.id === "number" ? payload.id : row.id } as Member;
+      const edit = editMap.get(base.id);
+      if (edit) return { ...base, ...edit } as Member;
+      return base;
     });
     setAllMembers(parsed);
   };
