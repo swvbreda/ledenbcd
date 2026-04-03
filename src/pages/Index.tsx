@@ -1,3 +1,4 @@
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import StatCards from "@/components/StatCards";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
