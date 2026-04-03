@@ -62,9 +62,11 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         featured: benefit.featured,
         active: benefit.active,
         sort_order: benefit.sort_order,
+        price: benefit.price != null ? String(benefit.price) : "",
+        original_price: benefit.original_price != null ? String(benefit.original_price) : "",
       });
     } else {
-      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0 });
+      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0, price: "", original_price: "" });
     }
     setImageFile(null);
     setGalleryFiles([]);
