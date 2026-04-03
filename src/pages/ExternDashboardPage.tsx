@@ -93,12 +93,12 @@ const ExternDashboardPage = () => {
 
       const { data: orgData } = await supabase
         .from("external_organizations")
-        .select("id, name, type, approved")
+        .select("id, name, type, approved, contact_email, contact_name, notes")
         .eq("id", orgUserData.org_id)
         .single();
 
       if (orgData) {
-        setOrg(orgData);
+        setOrg(orgData as OrgInfo);
 
         if (orgData.approved) {
           if (orgData.type === "leverancier") {
