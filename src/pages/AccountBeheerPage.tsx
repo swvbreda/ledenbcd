@@ -97,7 +97,7 @@ const AccountBeheerPage = () => {
 
     const { data, error } = await supabase
       .from("external_org_users")
-      .select("user_id, org_id, organization:external_organizations(name, type)")
+      .select("user_id, org_id, organization:external_organizations(name, type, contact_name)")
       .in("user_id", userIds);
 
     if (error) {
@@ -111,7 +111,7 @@ const AccountBeheerPage = () => {
     (data as Array<{
       user_id: string;
       org_id: string;
-      organization: { name: string; type: string } | { name: string; type: string }[] | null;
+      organization: { name: string; type: string; contact_name: string | null } | { name: string; type: string; contact_name: string | null }[] | null;
     }> | null)?.forEach((row) => {
       const organization = Array.isArray(row.organization) ? row.organization[0] : row.organization;
       if (!organization) return;
@@ -122,6 +122,7 @@ const AccountBeheerPage = () => {
           orgId: row.org_id,
           name: organization.name,
           type: organization.type,
+          contactName: organization.contact_name || "",
         },
       ];
     });
