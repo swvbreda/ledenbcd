@@ -85,6 +85,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         image_path = path;
       }
       const payload = { ...form, image_path, id: benefit?.id, price: form.price ? Number(form.price) : null, original_price: form.original_price ? Number(form.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
+      await upsert.mutateAsync(payload);
       // Upload gallery images if any
       if (galleryFiles.length > 0 && benefit?.id) {
         const startOrder = existingImages.length;
