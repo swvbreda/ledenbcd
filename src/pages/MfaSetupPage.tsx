@@ -69,6 +69,7 @@ export default function MfaSetupPage() {
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
       friendlyName: "Authenticator App",
+      issuer: "leden.coffeeshopbond.nl",
     });
     if (error) {
       toast.error("Kon verificatie niet instellen. Probeer het opnieuw.");
