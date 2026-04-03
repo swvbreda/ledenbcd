@@ -223,20 +223,34 @@ const LoginPage = () => {
               onSubmit={resetMode ? handleResetPassword : registerMode ? handleRegister : handleLogin}
               className="space-y-4"
             >
-              {/* Biometric quick-login button */}
+              {/* Biometric quick-login button (native) */}
               {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
                 <button
                   type="button"
                   onClick={handleBiometricLogin}
                   disabled={biometric.loading}
-                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50 mb-2"
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
                 >
                   <Fingerprint size={20} />
                   {biometric.loading ? "Verifiëren..." : `Inloggen met ${biometric.biometryLabel}`}
                 </button>
               )}
 
-              {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
+              {/* Passkey login button (web) */}
+              {!resetMode && !registerMode && passkeyAvailable && !biometric.isNative && (
+                <button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  disabled={passkeys.loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+                >
+                  <ScanFace size={20} />
+                  {passkeys.loading ? "Verifiëren..." : "Inloggen met Face ID / vingerafdruk"}
+                </button>
+              )}
+
+              {/* Divider when quick login is available */}
+              {!resetMode && !registerMode && ((biometric.isAvailable && biometric.hasCredentials) || (passkeyAvailable && !biometric.isNative)) && (
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-border" />
