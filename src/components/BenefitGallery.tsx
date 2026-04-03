@@ -37,7 +37,7 @@ export default function BenefitGallery({ mainImagePath, galleryImages, alt }: Pr
 
   if (allImages.length === 0) {
     return (
-      <div className="rounded-xl overflow-hidden bg-muted border border-border aspect-square flex items-center justify-center">
+      <div className="rounded-xl overflow-hidden bg-white border-2 border-primary/60 aspect-square flex items-center justify-center">
         <div className="text-7xl font-bold text-muted-foreground/20">{alt.charAt(0)}</div>
       </div>
     );
