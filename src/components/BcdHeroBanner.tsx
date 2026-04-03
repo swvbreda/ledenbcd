@@ -12,7 +12,7 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       className="relative overflow-hidden rounded-xl"
       style={{
         background:
-          "linear-gradient(135deg, hsl(348 45% 38%), hsl(348 50% 42%))",
+          "linear-gradient(135deg, hsl(0 85% 34%), hsl(0 85% 40%))",
       }}
     >
       {/* BCD beeldmerk – echte PNG, tone-on-tone via mix-blend-mode */}
