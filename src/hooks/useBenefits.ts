@@ -20,6 +20,8 @@ export interface Benefit {
   created_at: string;
   updated_at: string;
   supplier_org_id?: string | null;
+  price: number | null;
+  original_price: number | null;
 }
 
 export type BenefitInsert = Omit<Benefit, "id" | "created_at" | "updated_at">;
