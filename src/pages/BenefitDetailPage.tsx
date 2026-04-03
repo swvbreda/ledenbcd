@@ -193,22 +193,7 @@ export default function BenefitDetailPage() {
       {benefit.detail_content && (
         <div className="mt-10 max-w-4xl">
           <div className="border-t border-border mb-8" />
-          <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert
-            prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight
-            prose-h2:text-lg prose-h2:md:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border
-            prose-h3:text-base prose-h3:mt-6 prose-h3:mb-2
-            prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-3 prose-p:text-sm
-            prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-foreground prose-strong:font-semibold
-            prose-li:text-muted-foreground prose-li:text-sm prose-li:my-0.5
-            prose-ul:my-3 prose-ol:my-3
-            prose-hr:my-6 prose-hr:border-border
-            prose-table:text-sm prose-table:border prose-table:border-border prose-table:rounded-lg prose-table:overflow-hidden
-            prose-th:bg-muted prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold prose-th:text-foreground prose-th:text-xs
-            prose-td:px-3 prose-td:py-2 prose-td:border-t prose-td:border-border prose-td:text-xs
-            prose-tr:border-border
-            prose-img:rounded-lg prose-img:border prose-img:border-border"
-          >
+          <article className="benefit-detail-prose">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{benefit.detail_content}</ReactMarkdown>
           </article>
         </div>
