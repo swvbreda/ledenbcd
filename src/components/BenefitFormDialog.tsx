@@ -41,6 +41,8 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
     featured: false,
     active: true,
     sort_order: 0,
+    price: "" as string,
+    original_price: "" as string,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
@@ -60,9 +62,11 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         featured: benefit.featured,
         active: benefit.active,
         sort_order: benefit.sort_order,
+        price: benefit.price != null ? String(benefit.price) : "",
+        original_price: benefit.original_price != null ? String(benefit.original_price) : "",
       });
     } else {
-      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0 });
+      setForm({ title: "", description: "", category: "Overig", provider_name: "", provider_url: "", discount_info: "", contact_email: "", detail_content: "", featured: false, active: true, sort_order: 0, price: "", original_price: "" });
     }
     setImageFile(null);
     setGalleryFiles([]);
@@ -80,7 +84,8 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         if (uploadErr) throw uploadErr;
         image_path = path;
       }
-      await upsert.mutateAsync({ ...form, image_path, id: benefit?.id, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any);
+      const payload = { ...form, image_path, id: benefit?.id, price: form.price ? Number(form.price) : null, original_price: form.original_price ? Number(form.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
+      await upsert.mutateAsync(payload);
       // Upload gallery images if any
       if (galleryFiles.length > 0 && benefit?.id) {
         const startOrder = existingImages.length;
@@ -148,6 +153,16 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           <div>
             <Label>Ledenvoordeel / korting</Label>
             <Input value={form.discount_info} onChange={(e) => set("discount_info", e.target.value)} placeholder="bijv. 10% korting voor BCD-leden" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Ledenprijs (€)</Label>
+              <Input type="number" step="0.01" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="bijv. 474.09" />
+            </div>
+            <div>
+              <Label>Reguliere prijs (€)</Label>
+              <Input type="number" step="0.01" value={form.original_price} onChange={(e) => set("original_price", e.target.value)} placeholder="bijv. 557.75" />
+            </div>
           </div>
           <div>
             <Label>Contact e-mail</Label>
