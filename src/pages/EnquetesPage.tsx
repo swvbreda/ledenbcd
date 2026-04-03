@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield, Share2, Copy } from "lucide-react";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 
 interface Survey {
   id: string;
@@ -92,17 +93,13 @@ export default function EnquetesPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 w-full max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Enquêtes</h1>
-          <p className="text-sm text-muted-foreground">Anonieme enquêtes voor leden</p>
-        </div>
+      <BcdHeroBanner title="Enquêtes" subtitle="Anonieme enquêtes voor leden">
         {isAdmin && (
-          <Button onClick={() => setCreateOpen(true)} size="sm">
+          <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">
             <Plus size={16} className="mr-1" /> Nieuwe enquête
           </Button>
         )}
-      </div>
+      </BcdHeroBanner>
 
       {surveys.length === 0 ? (
         <Card>
