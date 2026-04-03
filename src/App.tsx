@@ -59,6 +59,8 @@ const App = () => (
                 <Route path="/extern/profiel" element={<ExternProfielPage />} />
                 <Route path="/extern/product/:id" element={<ExternProductDetailPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/mfa-setup" element={<MfaSetupPage />} />
+                <Route path="/mfa-verify" element={<MfaVerifyPage />} />
                 <Route
                   element={
                     <ProtectedRoute>
