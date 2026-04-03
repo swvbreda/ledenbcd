@@ -1,3 +1,4 @@
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
