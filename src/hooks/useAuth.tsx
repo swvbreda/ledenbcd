@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setMfaStatus("verified"); // fallback: don't block
       return;
     }
-    const { currentLevel, nextLevel } = data as AuthenticatorAssuranceLevels;
+    const { currentLevel, nextLevel } = data;
     if (nextLevel === "aal2" && currentLevel === "aal1") {
       // Has enrolled factor but hasn't verified yet this session
       setMfaStatus("needs_verify");
