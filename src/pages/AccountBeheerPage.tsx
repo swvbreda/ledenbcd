@@ -33,6 +33,7 @@ interface ExternalOrgLink {
   orgId: string;
   name: string;
   type: string;
+  contactName: string;
 }
 
 const AccountBeheerPage = () => {
@@ -97,7 +98,7 @@ const AccountBeheerPage = () => {
 
     const { data, error } = await supabase
       .from("external_org_users")
-      .select("user_id, org_id, organization:external_organizations(name, type)")
+      .select("user_id, org_id, organization:external_organizations(name, type, contact_name)")
       .in("user_id", userIds);
 
     if (error) {
@@ -111,7 +112,7 @@ const AccountBeheerPage = () => {
     (data as Array<{
       user_id: string;
       org_id: string;
-      organization: { name: string; type: string } | { name: string; type: string }[] | null;
+      organization: { name: string; type: string; contact_name: string | null } | { name: string; type: string; contact_name: string | null }[] | null;
     }> | null)?.forEach((row) => {
       const organization = Array.isArray(row.organization) ? row.organization[0] : row.organization;
       if (!organization) return;
@@ -122,6 +123,7 @@ const AccountBeheerPage = () => {
           orgId: row.org_id,
           name: organization.name,
           type: organization.type,
+          contactName: organization.contact_name || "",
         },
       ];
     });
@@ -163,7 +165,7 @@ const AccountBeheerPage = () => {
       return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids, orgLinks };
     }
     if (orgLinks.length > 0) {
-      return { label: orgLinks[0].name, personName: "", isBoard: false, memberIds: [], orgLinks };
+      return { label: orgLinks[0].name, personName: orgLinks[0].contactName || "", isBoard: false, memberIds: [], orgLinks };
     }
     return { label: "", personName: "", isBoard: false, memberIds: [], orgLinks: [] };
   };
@@ -374,7 +376,6 @@ const AccountBeheerPage = () => {
                               >
                                 <Building2 size={12} className="shrink-0" />
                                 <span className="line-clamp-1">{org.name}</span>
-                                <span className="text-muted-foreground text-[10px] uppercase tracking-wide">{org.type}</span>
                                 <ExternalLink size={10} className="opacity-50 hidden sm:inline shrink-0" />
                               </button>
                             ))
