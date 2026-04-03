@@ -6,10 +6,32 @@ const corsHeaders = {
 };
 
 const RP_NAME = "BCD Ledenportaal";
-const RP_ID = "leden.coffeeshopbond.nl";
-const ORIGIN = "https://leden.coffeeshopbond.nl";
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
-// Simple base64url encode/decode
+type ChallengeAction = "register" | "auth";
+
+function toArrayBuffer(view: Uint8Array): ArrayBuffer {
+  return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength) as ArrayBuffer;
+}
+
+type ChallengePayload = {
+  action: ChallengeAction;
+  challenge: string;
+  expiresAt: number;
+  origin: string;
+  rpId: string;
+  userId?: string;
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 function base64urlEncode(buffer: Uint8Array): string {
   let str = "";
   for (const byte of buffer) str += String.fromCharCode(byte);
@@ -31,24 +53,64 @@ function randomChallenge(): string {
   return base64urlEncode(arr);
 }
 
-// In-memory challenge store (short-lived, edge function instance scope)
-const challenges = new Map<string, { challenge: string; timestamp: number }>();
-
-function storeChallenge(key: string, challenge: string) {
-  // Clean old challenges (>5 min)
-  const now = Date.now();
-  for (const [k, v] of challenges) {
-    if (now - v.timestamp > 300_000) challenges.delete(k);
-  }
-  challenges.set(key, { challenge, timestamp: now });
+function getChallengeSecret() {
+  return Deno.env.get("INTERNAL_WEBHOOK_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 }
 
-function getAndDeleteChallenge(key: string): string | null {
-  const entry = challenges.get(key);
-  if (!entry) return null;
-  challenges.delete(key);
-  if (Date.now() - entry.timestamp > 300_000) return null;
-  return entry.challenge;
+async function getChallengeKey() {
+  return crypto.subtle.importKey(
+    "raw",
+    encoder.encode(getChallengeSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+async function createChallengeToken(payload: ChallengePayload) {
+  const payloadBytes = encoder.encode(JSON.stringify(payload));
+  const key = await getChallengeKey();
+  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", key, payloadBytes));
+  return `${base64urlEncode(payloadBytes)}.${base64urlEncode(signature)}`;
+}
+
+async function verifyChallengeToken(token: string): Promise<ChallengePayload | null> {
+  const [payloadPart, signaturePart] = token.split(".");
+  if (!payloadPart || !signaturePart) return null;
+
+  try {
+    const payloadBytes = base64urlDecode(payloadPart);
+    const signature = base64urlDecode(signaturePart);
+    const key = await getChallengeKey();
+    const isValid = await crypto.subtle.verify("HMAC", key, toArrayBuffer(signature), toArrayBuffer(payloadBytes));
+    if (!isValid) return null;
+
+    const payload = JSON.parse(decoder.decode(payloadBytes)) as ChallengePayload;
+    if (!payload?.challenge || !payload?.origin || !payload?.rpId || !payload?.action || !payload?.expiresAt) {
+      return null;
+    }
+
+    if (Date.now() > payload.expiresAt) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function getRequestOrigin(req: Request) {
+  const originHeader = req.headers.get("origin");
+  if (originHeader) return originHeader;
+  return new URL(req.url).origin;
+}
+
+function getRequestRpId(req: Request) {
+  return new URL(getRequestOrigin(req)).hostname;
+}
+
+async function matchesRpIdHash(authData: Uint8Array, rpId: string) {
+  const expectedHash = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(rpId)));
+  const actualHash = authData.slice(0, 32);
+  return expectedHash.every((byte, index) => actualHash[index] === byte);
 }
 
 function getServiceClient() {
@@ -71,24 +133,6 @@ async function getUserFromAuth(req: Request) {
   return { id: user.id, email: user.email ?? "" };
 }
 
-// Extract public key from attestation object (for "none" attestation)
-function extractPublicKeyFromAuthData(authData: Uint8Array): Uint8Array {
-  // authData structure: rpIdHash(32) + flags(1) + counter(4) + attestedCredData
-  // attestedCredData: aaguid(16) + credIdLen(2) + credId(credIdLen) + credentialPublicKey(CBOR)
-  const flags = authData[32];
-  const hasAttestedData = (flags & 0x40) !== 0;
-  if (!hasAttestedData) throw new Error("No attested credential data");
-
-  let offset = 37; // skip rpIdHash + flags + counter
-  offset += 16; // skip aaguid
-  const credIdLen = (authData[offset] << 8) | authData[offset + 1];
-  offset += 2 + credIdLen; // skip credId
-
-  // The rest is the COSE public key — store it as-is
-  return authData.slice(offset);
-}
-
-// Minimal CBOR decoder for COSE keys and attestation objects
 function decodeCBOR(data: Uint8Array, offset = 0): { value: any; bytesRead: number } {
   const major = data[offset] >> 5;
   const additional = data[offset] & 0x1f;
@@ -106,24 +150,24 @@ function decodeCBOR(data: Uint8Array, offset = 0): { value: any; bytesRead: numb
     throw new Error("Unsupported CBOR length");
   }
 
-  if (major === 0) { // unsigned int
+  if (major === 0) {
     const { len, bytesUsed } = readLength(additional, offset);
     return { value: len, bytesRead: bytesUsed };
   }
-  if (major === 1) { // negative int
+  if (major === 1) {
     const { len, bytesUsed } = readLength(additional, offset);
     return { value: -1 - len, bytesRead: bytesUsed };
   }
-  if (major === 2) { // byte string
+  if (major === 2) {
     const { len, bytesUsed } = readLength(additional, offset);
     return { value: data.slice(offset + bytesUsed, offset + bytesUsed + len), bytesRead: bytesUsed + len };
   }
-  if (major === 3) { // text string
+  if (major === 3) {
     const { len, bytesUsed } = readLength(additional, offset);
     const textBytes = data.slice(offset + bytesUsed, offset + bytesUsed + len);
-    return { value: new TextDecoder().decode(textBytes), bytesRead: bytesUsed + len };
+    return { value: decoder.decode(textBytes), bytesRead: bytesUsed + len };
   }
-  if (major === 4) { // array
+  if (major === 4) {
     const { len, bytesUsed } = readLength(additional, offset);
     const arr: any[] = [];
     let pos = bytesUsed;
@@ -134,7 +178,7 @@ function decodeCBOR(data: Uint8Array, offset = 0): { value: any; bytesRead: numb
     }
     return { value: arr, bytesRead: pos };
   }
-  if (major === 5) { // map
+  if (major === 5) {
     const { len, bytesUsed } = readLength(additional, offset);
     const map = new Map();
     let pos = bytesUsed;
@@ -147,7 +191,7 @@ function decodeCBOR(data: Uint8Array, offset = 0): { value: any; bytesRead: numb
     }
     return { value: map, bytesRead: pos };
   }
-  if (major === 7) { // simple/float
+  if (major === 7) {
     if (additional === 20) return { value: false, bytesRead: 1 };
     if (additional === 21) return { value: true, bytesRead: 1 };
     if (additional === 22) return { value: null, bytesRead: 1 };
@@ -156,13 +200,10 @@ function decodeCBOR(data: Uint8Array, offset = 0): { value: any; bytesRead: numb
   throw new Error(`Unsupported CBOR major type: ${major}`);
 }
 
-// Import COSE ES256 public key for verification
 async function importCOSEPublicKey(coseKeyBytes: Uint8Array): Promise<CryptoKey> {
   const { value: coseMap } = decodeCBOR(coseKeyBytes);
-  // COSE key map: 1=kty, 3=alg, -1=crv, -2=x, -3=y
   const x = coseMap.get(-2) as Uint8Array;
   const y = coseMap.get(-3) as Uint8Array;
-  // Build uncompressed point: 0x04 || x || y
   const uncompressed = new Uint8Array(1 + x.length + y.length);
   uncompressed[0] = 0x04;
   uncompressed.set(x, 1);
@@ -176,34 +217,28 @@ async function importCOSEPublicKey(coseKeyBytes: Uint8Array): Promise<CryptoKey>
   );
 }
 
-// Verify ES256 signature
 async function verifySignature(publicKey: CryptoKey, signature: Uint8Array, data: Uint8Array): Promise<boolean> {
-  // WebAuthn uses DER-encoded signature, Web Crypto needs raw r||s
   const rawSig = derToRaw(signature);
   return crypto.subtle.verify(
     { name: "ECDSA", hash: "SHA-256" },
     publicKey,
-    rawSig,
-    data
+    toArrayBuffer(rawSig),
+    toArrayBuffer(data)
   );
 }
 
 function derToRaw(der: Uint8Array): Uint8Array {
-  // Parse DER SEQUENCE { INTEGER r, INTEGER s }
   if (der[0] !== 0x30) throw new Error("Invalid DER signature");
   let offset = 2;
-  // r
   if (der[offset] !== 0x02) throw new Error("Invalid DER");
   const rLen = der[offset + 1];
   offset += 2;
   let r = der.slice(offset, offset + rLen);
   offset += rLen;
-  // s
   if (der[offset] !== 0x02) throw new Error("Invalid DER");
   const sLen = der[offset + 1];
   offset += 2;
   let s = der.slice(offset, offset + sLen);
-  // Trim leading zeros / pad to 32 bytes
   if (r.length > 32) r = r.slice(r.length - 32);
   if (s.length > 32) s = s.slice(s.length - 32);
   const raw = new Uint8Array(64);
@@ -221,11 +256,12 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
-    // ── Registration: generate options ──
     if (action === "register-options") {
       const user = await getUserFromAuth(req);
-      if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!user) return jsonResponse({ error: "Unauthorized" }, 401);
 
+      const rpId = getRequestRpId(req);
+      const origin = getRequestOrigin(req);
       const db = getServiceClient();
       const { data: existing } = await db.from("passkey_credentials").select("credential_id").eq("user_id", user.id);
       const excludeCredentials = (existing || []).map((c: any) => ({
@@ -234,17 +270,25 @@ Deno.serve(async (req) => {
       }));
 
       const challenge = randomChallenge();
-      storeChallenge(`reg_${user.id}`, challenge);
-
-      const options = {
+      const challengeToken = await createChallengeToken({
+        action: "register",
         challenge,
-        rp: { name: RP_NAME, id: RP_ID },
+        expiresAt: Date.now() + CHALLENGE_TTL_MS,
+        origin,
+        rpId,
+        userId: user.id,
+      });
+
+      return jsonResponse({
+        challenge,
+        challengeToken,
+        rp: { name: RP_NAME, id: rpId },
         user: {
-          id: base64urlEncode(new TextEncoder().encode(user.id)),
+          id: base64urlEncode(encoder.encode(user.id)),
           name: user.email,
           displayName: user.email.split("@")[0],
         },
-        pubKeyCredParams: [{ alg: -7, type: "public-key" }], // ES256
+        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
         authenticatorSelection: {
           authenticatorAttachment: "platform",
           userVerification: "required",
@@ -253,49 +297,45 @@ Deno.serve(async (req) => {
         timeout: 60000,
         attestation: "none",
         excludeCredentials,
-      };
-
-      return new Response(JSON.stringify(options), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // ── Registration: verify ──
     if (action === "register-verify") {
       const user = await getUserFromAuth(req);
-      if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!user) return jsonResponse({ error: "Unauthorized" }, 401);
 
       const body = await req.json();
-      const { credential, deviceName } = body;
+      const { credential, deviceName, challengeToken } = body;
+      const challengeData = await verifyChallengeToken(challengeToken);
 
-      const expectedChallenge = getAndDeleteChallenge(`reg_${user.id}`);
-      if (!expectedChallenge) {
-        return new Response(JSON.stringify({ error: "Challenge expired" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!challengeData || challengeData.action !== "register" || challengeData.userId !== user.id) {
+        return jsonResponse({ error: "Challenge expired" }, 400);
       }
 
-      // Decode attestation response
       const clientDataJSON = base64urlDecode(credential.response.clientDataJSON);
-      const clientData = JSON.parse(new TextDecoder().decode(clientDataJSON));
+      const clientData = JSON.parse(decoder.decode(clientDataJSON));
 
-      // Verify challenge
-      if (clientData.challenge !== expectedChallenge) {
-        return new Response(JSON.stringify({ error: "Challenge mismatch" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (clientData.challenge !== challengeData.challenge) {
+        return jsonResponse({ error: "Challenge mismatch" }, 400);
       }
       if (clientData.type !== "webauthn.create") {
-        return new Response(JSON.stringify({ error: "Invalid type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Invalid type" }, 400);
+      }
+      if (clientData.origin !== challengeData.origin) {
+        return jsonResponse({ error: "Origin mismatch" }, 400);
       }
 
-      // Decode attestation object
       const attestationObject = base64urlDecode(credential.response.attestationObject);
       const { value: attObj } = decodeCBOR(attestationObject);
       const authData = attObj.get("authData") as Uint8Array;
 
-      // Extract credential ID and public key from authData
-      const flags = authData[32];
-      const counter = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | authData[36];
+      if (!(await matchesRpIdHash(authData, challengeData.rpId))) {
+        return jsonResponse({ error: "RP ID mismatch" }, 400);
+      }
 
+      const counter = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | authData[36];
       let offset = 37;
-      offset += 16; // aaguid
+      offset += 16;
       const credIdLen = (authData[offset] << 8) | authData[offset + 1];
       offset += 2;
       const credentialIdBytes = authData.slice(offset, offset + credIdLen);
@@ -305,7 +345,6 @@ Deno.serve(async (req) => {
       const credentialId = base64urlEncode(credentialIdBytes);
       const publicKey = base64urlEncode(publicKeyBytes);
 
-      // Store in database
       const db = getServiceClient();
       const { error: insertErr } = await db.from("passkey_credentials").insert({
         user_id: user.id,
@@ -317,30 +356,32 @@ Deno.serve(async (req) => {
       });
 
       if (insertErr) {
-        return new Response(JSON.stringify({ error: "Failed to store credential" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Failed to store credential" }, 500);
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: true });
     }
 
-    // ── Authentication: generate options ──
     if (action === "auth-options") {
       const body = await req.json().catch(() => ({}));
-      const email = body.email;
-
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : undefined;
+      const rpId = getRequestRpId(req);
+      const origin = getRequestOrigin(req);
       const challenge = randomChallenge();
-      const challengeKey = email ? `auth_${email}` : `auth_anon_${challenge}`;
-      storeChallenge(challengeKey, challenge);
+      const challengeToken = await createChallengeToken({
+        action: "auth",
+        challenge,
+        expiresAt: Date.now() + CHALLENGE_TTL_MS,
+        origin,
+        rpId,
+      });
 
       const db = getServiceClient();
       let allowCredentials: any[] = [];
 
       if (email) {
-        // Look up user by email to find their passkeys
         const { data: userData } = await db.auth.admin.listUsers();
-        const matchedUser = userData?.users?.find((u: any) => u.email === email);
+        const matchedUser = userData?.users?.find((u: any) => u.email?.toLowerCase() === email);
         if (matchedUser) {
           const { data: creds } = await db.from("passkey_credentials")
             .select("credential_id, transports")
@@ -355,8 +396,8 @@ Deno.serve(async (req) => {
 
       const options: any = {
         challenge,
-        challengeKey,
-        rpId: RP_ID,
+        challengeToken,
+        rpId,
         timeout: 60000,
         userVerification: "required",
       };
@@ -365,22 +406,18 @@ Deno.serve(async (req) => {
         options.allowCredentials = allowCredentials;
       }
 
-      return new Response(JSON.stringify(options), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(options);
     }
 
-    // ── Authentication: verify ──
     if (action === "auth-verify") {
       const body = await req.json();
-      const { credential, challengeKey } = body;
+      const { credential, challengeToken } = body;
+      const challengeData = await verifyChallengeToken(challengeToken);
 
-      const expectedChallenge = getAndDeleteChallenge(challengeKey);
-      if (!expectedChallenge) {
-        return new Response(JSON.stringify({ error: "Challenge expired" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!challengeData || challengeData.action !== "auth") {
+        return jsonResponse({ error: "Challenge expired" }, 400);
       }
 
-      // Look up credential
       const credentialId = credential.id;
       const db = getServiceClient();
       const { data: credData, error: credErr } = await db.from("passkey_credentials")
@@ -389,23 +426,28 @@ Deno.serve(async (req) => {
         .single();
 
       if (credErr || !credData) {
-        return new Response(JSON.stringify({ error: "Unknown credential" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Unknown credential" }, 400);
       }
 
-      // Decode and verify clientDataJSON
       const clientDataJSON = base64urlDecode(credential.response.clientDataJSON);
-      const clientData = JSON.parse(new TextDecoder().decode(clientDataJSON));
+      const clientData = JSON.parse(decoder.decode(clientDataJSON));
 
-      if (clientData.challenge !== expectedChallenge) {
-        return new Response(JSON.stringify({ error: "Challenge mismatch" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (clientData.challenge !== challengeData.challenge) {
+        return jsonResponse({ error: "Challenge mismatch" }, 400);
       }
       if (clientData.type !== "webauthn.get") {
-        return new Response(JSON.stringify({ error: "Invalid type" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Invalid type" }, 400);
+      }
+      if (clientData.origin !== challengeData.origin) {
+        return jsonResponse({ error: "Origin mismatch" }, 400);
       }
 
-      // Verify signature
       const authData = base64urlDecode(credential.response.authenticatorData);
-      const clientDataHash = new Uint8Array(await crypto.subtle.digest("SHA-256", clientDataJSON));
+      if (!(await matchesRpIdHash(authData, challengeData.rpId))) {
+        return jsonResponse({ error: "RP ID mismatch" }, 400);
+      }
+
+      const clientDataHash = new Uint8Array(await crypto.subtle.digest("SHA-256", toArrayBuffer(clientDataJSON)));
       const signedData = new Uint8Array(authData.length + clientDataHash.length);
       signedData.set(authData, 0);
       signedData.set(clientDataHash, authData.length);
@@ -413,70 +455,55 @@ Deno.serve(async (req) => {
       const publicKeyBytes = base64urlDecode(credData.public_key);
       const publicKey = await importCOSEPublicKey(publicKeyBytes);
       const signature = base64urlDecode(credential.response.signature);
-
       const valid = await verifySignature(publicKey, signature, signedData);
+
       if (!valid) {
-        return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Invalid signature" }, 400);
       }
 
-      // Update counter
       const newCounter = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | authData[36];
       if (newCounter > 0 && newCounter <= credData.counter) {
-        return new Response(JSON.stringify({ error: "Possible cloned authenticator" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Possible cloned authenticator" }, 400);
       }
       await db.from("passkey_credentials").update({ counter: newCounter }).eq("id", credData.id);
 
-      // Generate a session token for the user
-      // Use admin API to generate a magic link or custom token
       const { data: userData } = await db.auth.admin.getUserById(credData.user_id);
       if (!userData?.user?.email) {
-        return new Response(JSON.stringify({ error: "User not found" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "User not found" }, 400);
       }
 
-      // Generate a short-lived sign-in link
       const { data: linkData, error: linkErr } = await db.auth.admin.generateLink({
         type: "magiclink",
         email: userData.user.email,
-        options: { redirectTo: ORIGIN },
+        options: { redirectTo: challengeData.origin },
       });
 
       if (linkErr || !linkData) {
-        return new Response(JSON.stringify({ error: "Failed to create session" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Failed to create session" }, 500);
       }
 
-      // Extract the token from the link
       const token_hash = linkData.properties?.hashed_token;
-      
-      // Verify the OTP to get a session
       const { data: sessionData, error: sessionErr } = await db.auth.verifyOtp({
         type: "magiclink",
         token_hash: token_hash!,
       });
 
       if (sessionErr || !sessionData?.session) {
-        return new Response(JSON.stringify({ error: "Failed to create session" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Failed to create session" }, 500);
       }
 
-      return new Response(JSON.stringify({
+      return jsonResponse({
         success: true,
         session: {
           access_token: sessionData.session.access_token,
           refresh_token: sessionData.session.refresh_token,
         },
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Unknown action" }, 400);
   } catch (err) {
     console.error("WebAuthn error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
