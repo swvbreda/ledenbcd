@@ -85,7 +85,7 @@ const StatCards = ({ members }: StatCardsProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       {/* Aangesloten Coffeeshops */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/leden?tab=coffeeshops")}
       >
         <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Gemeenten */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Marktaandeel gauge */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -129,7 +129,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* G4 dekking */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       </div>
 
       {/* Benchmark */}
-      <div className="bg-card rounded-lg border border-border p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
+      <div className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
           <BarChart3 size={18} className="text-primary" />

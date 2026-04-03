@@ -9,7 +9,8 @@ import BenefitGallery from "@/components/BenefitGallery";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Mail, Pencil, ShoppingCart, CheckCircle2, Info } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, ExternalLink, Mail, Pencil, ShoppingCart, CheckCircle2, Info, Building2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useState } from "react";
@@ -117,6 +118,39 @@ export default function BenefitDetailPage() {
 
   const { data: galleryImages = [] } = useBenefitImages(id);
 
+  // Fetch supplier org info if linked
+  const { data: supplierOrg } = useQuery({
+    queryKey: ["supplier-org", benefit?.supplier_org_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_organizations")
+        .select("id, name, description, city, website, logo_path")
+        .eq("id", benefit!.supplier_org_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!benefit?.supplier_org_id,
+  });
+
+  // Fetch other products from same provider
+  const { data: otherProducts = [] } = useQuery({
+    queryKey: ["other-products", benefit?.provider_name, id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_benefits" as any)
+        .select("id, title, image_path, price, original_price, category, provider_name, active")
+        .eq("active", true)
+        .neq("id", id!);
+      if (error) throw error;
+      // Filter by same provider name client-side
+      return (data as unknown as Benefit[]).filter(
+        (b) => b.provider_name === benefit!.provider_name
+      );
+    },
+    enabled: !!benefit?.provider_name && !!id,
+  });
+
   if (isLoading) return <LoadingSpinner />;
   if (!benefit) return <p className="p-8 text-center text-muted-foreground">Voordeel niet gevonden.</p>;
 
@@ -199,8 +233,77 @@ export default function BenefitDetailPage() {
         </div>
       )}
 
+      {/* Supplier info block */}
+      {(supplierOrg || benefit.provider_name) && (
+        <div className="mt-10 rounded-lg border-2 border-primary/60 bg-white p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">
+                {supplierOrg?.name || benefit.provider_name}
+              </h3>
+              {supplierOrg?.city && (
+                <p className="text-xs text-muted-foreground">{supplierOrg.city}</p>
+              )}
+            </div>
+          </div>
+          {supplierOrg?.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{supplierOrg.description}</p>
+          )}
+          {supplierOrg?.website && (
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+              <a href={supplierOrg.website} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3 w-3" /> Website bezoeken
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Other products from same provider */}
+      {otherProducts.length > 0 && (
+        <div className="mt-8 space-y-4">
+          <h2 className="text-lg font-bold font-display">
+            Meer van {benefit.provider_name}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {otherProducts.slice(0, 3).map((p) => {
+              const imgUrl = getBenefitImageUrl(p.image_path);
+              return (
+                <Card
+                  key={p.id}
+                  className="overflow-hidden border-2 border-primary/60 hover:border-primary bg-white cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
+                  onClick={() => navigate(`/ledenvoordelen/${p.id}`)}
+                >
+                  <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={p.title} className="w-full h-full object-contain p-3" loading="lazy" />
+                    ) : (
+                      <div className="text-4xl font-bold text-muted-foreground/20">{p.title.charAt(0)}</div>
+                    )}
+                  </div>
+                  <CardContent className="p-3 space-y-1">
+                    <p className="text-xs text-muted-foreground">{p.provider_name}</p>
+                    <h4 className="font-semibold text-sm line-clamp-2">{p.title}</h4>
+                    {p.price != null && (
+                      <div className="inline-block rounded bg-primary px-2 py-0.5">
+                        <span className="text-sm font-bold text-primary-foreground">
+                          €{p.price.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Disclaimer */}
-      <div className="mt-10 rounded-lg border border-border bg-muted/30 p-4 flex gap-3">
+      <div className="mt-10 rounded-lg border-2 border-primary/60 bg-white p-4 flex gap-3">
         <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
           De vermelding van een aanbieder, product of dienst is uitsluitend bedoeld ter informatie. Het betekent niet dat de organisatie het aanbod heeft beoordeeld, goedgekeurd of aanbeveelt. Er wordt geen garantie gegeven op inhoud, kwaliteit of uitvoering. De organisatie is op geen enkele manier aansprakelijk voor gevolgen die voortvloeien uit contact met of gebruik van het aanbod.

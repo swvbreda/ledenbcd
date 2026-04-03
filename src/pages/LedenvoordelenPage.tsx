@@ -141,7 +141,7 @@ export default function LedenvoordelenPage() {
       )}
 
       {/* Disclaimer */}
-      <div className="rounded-lg border border-border bg-muted/50 p-4 flex gap-3 text-xs text-muted-foreground">
+      <div className="rounded-lg border-2 border-primary/60 bg-white p-4 flex gap-3 text-xs text-muted-foreground">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
         <p>{DISCLAIMER}</p>
       </div>
