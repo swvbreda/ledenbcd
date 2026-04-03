@@ -27,7 +27,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const longMembers = withYears.filter((x) => x.years >= 20);
   const longPct = allMembers.length ? Math.round((longMembers.length / allMembers.length) * 100) : 0;
 
-  // Cities with >50% representation
+  // Cities where BCD is present (at least 1 location)
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
   const unconvertedLeads = mergedLeads.filter((l) => !convertedLeadIds.has(l.id));
@@ -35,14 +35,11 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
     const gemeente = getGemeente(m.plaats);
-    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + (m.locaties?.length || m.aantalLocaties || 1);
+    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + 1;
   });
-  const citiesOver50 = Object.entries(perStad).filter(([city, total]) => {
-    const bcd = cityCount[city] || 0;
-    return total > 0 && (bcd / total) >= 0.5;
-  });
-  const citiesOver50Pct = Object.keys(perStad).length > 0
-    ? Math.round((citiesOver50.length / Object.keys(perStad).length) * 100)
+  const citiesPresent = Object.keys(perStad).filter((city) => (cityCount[city] || 0) > 0);
+  const citiesPresentPct = Object.keys(perStad).length > 0
+    ? Math.round((citiesPresent.length / Object.keys(perStad).length) * 100)
     : 0;
 
   // New members this year
@@ -85,9 +82,9 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     },
     {
       icon: Building2,
-      label: "Gemeenten >50% vertegenwoordigd",
-      value: `${citiesOver50Pct}%`,
-      detail: `${citiesOver50.length} van ${Object.keys(perStad).length} gemeenten`,
+      label: "Aanwezig in gemeenten",
+      value: `${citiesPresentPct}%`,
+      detail: `${citiesPresent.length} van ${Object.keys(perStad).length} gemeenten`,
       color: "text-success",
     },
     {
