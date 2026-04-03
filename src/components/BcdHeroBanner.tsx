@@ -23,7 +23,7 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
         className="absolute pointer-events-none select-none"
         style={{
           right: "-80px",
-          bottom: "-120px",
+          bottom: "-180px",
           width: "520px",
           height: "520px",
           objectFit: "contain",
