@@ -1,5 +1,3 @@
-import bcdLogoElement from "@/assets/bcd-logo-element-transparent.png";
-
 interface BcdHeroBannerProps {
   title: string;
   subtitle?: string;
@@ -15,38 +13,43 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           "linear-gradient(135deg, hsl(0 60% 28%), hsl(0 65% 32%))",
       }}
     >
-      {/* BCD beeldmerk – gedeeltelijk zichtbaar, lichter rood */}
+      {/* BCD waaier-beeldmerk – inline SVG, gedeeltelijk zichtbaar rechts */}
       <svg
         className="absolute pointer-events-none select-none"
         style={{
-          right: "-100px",
-          bottom: "-80px",
-          width: "550px",
-          height: "550px",
+          right: "-80px",
+          bottom: "-120px",
+          width: "500px",
+          height: "500px",
+          opacity: 1,
         }}
-        viewBox="0 0 100 100"
+        viewBox="0 0 200 200"
+        fill="hsl(0, 50%, 38%)"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <defs>
-          <mask id="bcd-mask">
-            <image
-              href={bcdLogoElement}
-              x="0"
-              y="0"
-              width="100"
-              height="100"
-              preserveAspectRatio="xMidYMid meet"
+        {/* 7 waaierstralen vanuit middelpunt onderaan */}
+        {[...Array(7)].map((_, i) => {
+          const centerX = 100;
+          const centerY = 175;
+          const startAngle = -110 + i * 20;
+          const endAngle = startAngle + 16;
+          const radius = 140;
+          const toRad = (deg: number) => (deg * Math.PI) / 180;
+          const x1 = centerX + radius * Math.cos(toRad(startAngle));
+          const y1 = centerY + radius * Math.sin(toRad(startAngle));
+          const x2 = centerX + radius * Math.cos(toRad(endAngle));
+          const y2 = centerY + radius * Math.sin(toRad(endAngle));
+          return (
+            <path
+              key={i}
+              d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`}
             />
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100"
-          height="100"
-          fill="hsl(0, 55%, 42%)"
-          mask="url(#bcd-mask)"
-        />
+          );
+        })}
+        {/* Balk onderaan */}
+        <rect x="30" y="178" width="140" height="8" rx="2" />
+        {/* Driehoek */}
+        <polygon points="100,185 92,196 108,196" />
       </svg>
 
       {/* Content */}
