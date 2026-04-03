@@ -33,6 +33,7 @@ interface ExternalOrgLink {
   orgId: string;
   name: string;
   type: string;
+  contactName: string;
 }
 
 const AccountBeheerPage = () => {
