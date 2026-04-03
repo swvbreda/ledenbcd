@@ -106,6 +106,7 @@ function MfaSection() {
       </div>
     </Card>
   );
+}
 
 // ── Notification Section ──
 function NotificationSection() {
