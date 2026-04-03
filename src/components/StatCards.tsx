@@ -26,8 +26,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
   // Use merged members + merged leads for all location/market calculations
   const allRepresented = [...members, ...mergedLeads];
-  const totalLocations = members.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties), 0);
-  const allCities = new Set(members.map((m) => m.plaats).filter(Boolean));
+  const allCities = new Set(allRepresented.map((m) => m.plaats).filter(Boolean));
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const totalNLCities = Object.keys(perStad).length;
   const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
