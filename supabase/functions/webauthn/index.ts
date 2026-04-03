@@ -66,10 +66,9 @@ async function getUserFromAuth(req: Request) {
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } }
   );
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await supabase.auth.getClaims(token);
-  if (error || !data?.claims) return null;
-  return { id: data.claims.sub as string, email: data.claims.email as string };
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  return { id: user.id, email: user.email ?? "" };
 }
 
 // Extract public key from attestation object (for "none" attestation)
