@@ -108,7 +108,10 @@ const ExternDashboardPage = () => {
 
         if (orgData.approved) {
           if (orgData.type === "leverancier") {
-            await loadSupplierBenefits(orgData.id);
+            await Promise.all([
+              loadSupplierBenefits(orgData.id),
+              loadCoffeeshopMembers(),
+            ]);
           } else {
             await loadMembers(orgData.id);
           }
