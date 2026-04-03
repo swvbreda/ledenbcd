@@ -288,13 +288,10 @@ const AccountBeheerPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display">Accountbeheer</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {filteredUsers.length}{searchQuery ? ` van ${users.length}` : ""} accounts
-          </p>
-        </div>
+      <BcdHeroBanner
+        title="Accountbeheer"
+        subtitle={`${filteredUsers.length}${searchQuery ? ` van ${users.length}` : ""} accounts`}
+      />
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative flex-1 sm:flex-none">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
