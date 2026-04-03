@@ -5,43 +5,53 @@ interface BcdHeroBannerProps {
 }
 
 /**
- * BCD fan logo – rays fan from bottom-left upward/rightward,
- * matching the actual logo: leftmost ray nearly vertical,
- * rightmost ray nearly horizontal-right.
+ * BCD beeldmerk – 7 rays fanning upward from a bottom-center origin,
+ * symmetrically left and right, center ray widest.
  */
-const BcdFanLogo = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 200 160"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMinYMax meet"
-  >
-    {/* Origin bottom-left; rays fan from ~-90° (up) to ~-10° (right) */}
-    {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-      const originX = 10;
-      const originY = 155;
-      const startAngle = -88; // nearly straight up
-      const totalSpread = 72; // total fan arc
-      const rayGap = totalSpread / 7;
-      const rayWidth = rayGap * 0.6;
-      const len = 175;
+const BcdFanLogo = ({ className }: { className?: string }) => {
+  const originX = 100;
+  const originY = 158;
+  const len = 140;
 
-      const a1 = startAngle + i * rayGap;
-      const a2 = a1 + rayWidth;
-      const r1 = (a1 * Math.PI) / 180;
-      const r2 = (a2 * Math.PI) / 180;
+  // Angles in degrees (0 = up). Negative = left, positive = right.
+  // 7 rays: center + 3 left + 3 right, spread ~100° total
+  const rays = [
+    { angle: -75, width: 7 },
+    { angle: -55, width: 8 },
+    { angle: -35, width: 9 },
+    { angle: 0, width: 11 },   // center ray – widest
+    { angle: 35, width: 9 },
+    { angle: 55, width: 8 },
+    { angle: 75, width: 7 },
+  ];
 
-      return (
-        <polygon
-          key={i}
-          points={`${originX},${originY} ${originX + Math.cos(r1) * len},${originY + Math.sin(r1) * len} ${originX + Math.cos(r2) * len},${originY + Math.sin(r2) * len}`}
-          fill="white"
-        />
-      );
-    })}
-  </svg>
-);
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 200 170"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMax meet"
+    >
+      {rays.map((ray, i) => {
+        const a1 = ((ray.angle - ray.width / 2 - 90) * Math.PI) / 180;
+        const a2 = ((ray.angle + ray.width / 2 - 90) * Math.PI) / 180;
+        return (
+          <polygon
+            key={i}
+            points={`${originX},${originY} ${originX + Math.cos(a1) * len},${originY + Math.sin(a1) * len} ${originX + Math.cos(a2) * len},${originY + Math.sin(a2) * len}`}
+            fill="white"
+          />
+        );
+      })}
+      {/* Small triangle at bottom */}
+      <polygon
+        points={`${originX},${originY + 2} ${originX - 8},${originY + 14} ${originX + 8},${originY + 14}`}
+        fill="white"
+      />
+    </svg>
+  );
+};
 
 const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
   return (
@@ -52,8 +62,8 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           "linear-gradient(135deg, hsl(0 85% 28%), hsl(0 85% 38%), hsl(0 70% 32%))",
       }}
     >
-      {/* Main logo – large, right side, partially cropped */}
-      <div className="absolute right-[-60px] bottom-[-40px] w-[500px] h-[400px] md:w-[650px] md:h-[520px] opacity-[0.20] pointer-events-none">
+      {/* Logo – large, right side, partially cropped */}
+      <div className="absolute right-[-40px] bottom-[-30px] w-[420px] h-[360px] md:w-[550px] md:h-[470px] opacity-[0.18] pointer-events-none">
         <BcdFanLogo className="w-full h-full" />
       </div>
 
