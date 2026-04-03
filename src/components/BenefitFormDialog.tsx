@@ -29,6 +29,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
   const { upsert, remove } = useBenefitMutations();
   const { data: existingImages = [] } = useBenefitImages(benefit?.id);
   const { addImage, removeImage } = useBenefitImageMutations(benefit?.id);
+  const [orgData, setOrgData] = useState<{ name: string; website: string | null } | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -47,6 +48,15 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Fetch org data for supplier to lock provider fields
+  useEffect(() => {
+    if (!supplierOrgId) { setOrgData(null); return; }
+    supabase.from("external_organizations").select("name, website").eq("id", supplierOrgId).single()
+      .then(({ data }) => {
+        if (data) setOrgData({ name: data.name, website: data.website });
+      });
+  }, [supplierOrgId]);
 
   useEffect(() => {
     if (benefit) {
