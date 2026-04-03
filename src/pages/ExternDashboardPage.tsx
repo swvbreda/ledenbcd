@@ -58,7 +58,6 @@ const ExternDashboardPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
   const [supplierTab, setSupplierTab] = useState<"producten" | "coffeeshops" | "gemeenten">("producten");
-  const [supplierTab, setSupplierTab] = useState<"producten" | "coffeeshops" | "gemeenten">("producten");
   const [allMembers, setAllMembers] = useState<Member[]>([]);
 
   const isSupplier = org?.type === "leverancier";
