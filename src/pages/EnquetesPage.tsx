@@ -50,13 +50,19 @@ export default function EnquetesPage() {
       setCompletions((compData ?? []).map((c: any) => c.survey_id));
     }
 
-    // Fetch response counts per survey
+    // Fetch response counts per survey (count unique submissions via distinct submitted_at)
     const { data: countData } = await supabase
-      .from("survey_completions")
-      .select("survey_id");
+      .from("survey_responses")
+      .select("survey_id, submitted_at")
+      .eq("status", "approved");
     const counts: Record<string, number> = {};
+    const seen = new Set<string>();
     (countData ?? []).forEach((r: any) => {
-      counts[r.survey_id] = (counts[r.survey_id] || 0) + 1;
+      const key = `${r.survey_id}__${r.submitted_at}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        counts[r.survey_id] = (counts[r.survey_id] || 0) + 1;
+      }
     });
     setResponseCounts(counts);
 
@@ -137,7 +143,7 @@ export default function EnquetesPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       {isAdmin && (
                         <Badge variant="outline" className="gap-1">
-                          <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                          <Users size={12} /> {responseCounts[s.id] || 0} inzending{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
                         </Badge>
                       )}
                       {completed && (
