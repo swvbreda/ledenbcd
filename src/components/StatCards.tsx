@@ -117,7 +117,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Marktaandeel</p>
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordiging</p>
           <PieChart size={18} className="text-primary" />
         </div>
         <div className="mt-1">

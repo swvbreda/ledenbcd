@@ -69,7 +69,7 @@ const MarktaandeelPage = () => {
         >
           <ArrowLeft size={14} /> Terug
         </button>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Marktaandeel BCD</h2>
+        <h2 className="text-xl sm:text-2xl font-bold font-display">Vertegenwoordiging BCD</h2>
         <p className="text-sm text-muted-foreground mt-1">
           BCD-locaties t.o.v. het totaal aantal coffeeshops per stad
         </p>
@@ -80,7 +80,7 @@ const MarktaandeelPage = () => {
         {[
           { label: "Coffeeshops NL", value: totalNL },
           { label: "Aangesloten", value: totalLocaties },
-          { label: "Marktaandeel", value: `${marketPct}%` },
+          { label: "Vertegenwoordiging", value: `${marketPct}%` },
           { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
         ].map((card) => (
           <div key={card.label} className="bg-card rounded-lg border border-border p-4 text-center">

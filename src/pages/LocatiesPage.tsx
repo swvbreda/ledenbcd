@@ -201,7 +201,7 @@ const LocatiesPage = () => {
         {[
           { label: "Coffeeshops NL", value: totalNL },
           { label: "Vertegenwoordigd", value: representedLocaties },
-          { label: "Marktaandeel", value: `${marketPctNL}%` },
+          { label: "Vertegenwoordiging", value: `${marketPctNL}%` },
           { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
         ].map((card) => (
           <div key={card.label} className="bg-card rounded-lg border border-border p-4 text-center">

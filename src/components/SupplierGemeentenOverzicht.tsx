@@ -65,7 +65,7 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Gemeenten Overzicht</h2>
-        <p className="text-sm text-muted-foreground">Marktaandeel per gemeente</p>
+        <p className="text-sm text-muted-foreground">Vertegenwoordiging per gemeente</p>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-5">

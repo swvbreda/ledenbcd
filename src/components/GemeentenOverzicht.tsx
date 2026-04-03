@@ -99,7 +99,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
         <div className="xl:col-span-2 space-y-4">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-semibold font-display mb-1">Marktaandeel per gemeente</h3>
+              <h3 className="text-sm font-semibold font-display mb-1">Vertegenwoordiging per gemeente</h3>
               <p className="text-xs text-muted-foreground">
                 Vertegenwoordiging t.o.v. totaal per gemeente
               </p>
