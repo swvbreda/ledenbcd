@@ -64,19 +64,16 @@ export default function LedenvoordelenPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Ledenvoordelen</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Relevante producten, diensten en kortingen voor coffeeshopondernemers
-          </p>
-        </div>
+      <BcdHeroBanner
+        title="Ledenvoordelen"
+        subtitle="Relevante producten, diensten en kortingen voor coffeeshopondernemers"
+      >
         {isAdmin && (
-          <Button onClick={handleNew} size="sm" className="gap-1">
+          <Button onClick={handleNew} size="sm" variant="secondary" className="gap-1">
             <Plus className="h-4 w-4" /> Toevoegen
           </Button>
         )}
-      </div>
+      </BcdHeroBanner>
 
       {/* Search + Category filter */}
       <SearchBar value={search} onChange={setSearch} placeholder="Zoek op product of aanbieder..." />
