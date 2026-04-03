@@ -3,6 +3,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const PCN_EMAIL = "info@platformcannabis.nl";
 const PCN_SURVEY_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
@@ -37,9 +38,10 @@ const DashboardLayout = () => {
         <header className="sticky top-0 z-40 flex items-center border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] h-[calc(3rem+env(safe-area-inset-top))]">
           <SidebarTrigger className="mr-3" />
         </header>
-        <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto">
+        <main ref={mainRef} id="main-scroll-area" className="flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
+        <ScrollToTop />
       </div>
     </div>
   );
