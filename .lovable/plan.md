@@ -1,23 +1,28 @@
-## Plan: Dubbele verificatie (TOTP/Authenticator App)
+## Biometrische login (Face ID / vingerafdruk) voor Capacitor
 
-### Stap 1: MFA Inschrijving
-- Nieuwe pagina `/mfa-setup` waar gebruikers een QR-code zien en scannen met hun authenticator app (Google Authenticator, Authy, etc.)
-- Na het scannen voeren ze een verificatiecode in om te bevestigen
+### Aanpak
+Na de eerste succesvolle login worden de inloggegevens veilig opgeslagen in de device Keychain (iOS) of Keystore (Android). Bij volgende app-opstart kan de gebruiker met Face ID of vingerafdruk inloggen.
 
-### Stap 2: MFA Verificatie bij inloggen
-- Na succesvol inloggen met e-mail/wachtwoord checkt het systeem of MFA is ingeschakeld
-- Als MFA actief is → doorsturen naar een verificatiepagina waar ze de 6-cijferige code invoeren
-- Als MFA nog niet is ingesteld → doorsturen naar de inschrijfpagina
+### Stappen
 
-### Stap 3: Login flow aanpassen
-- `useAuth` hook uitbreiden om MFA-status te detecteren
-- Na login checken of de gebruiker nog een TOTP-challenge moet voltooien
-- Gebruikers zonder MFA-inschrijving worden verplicht om dit eerst in te stellen
+1. **Installeer `capacitor-native-biometric` plugin**
+   - NPM package toevoegen aan het project
 
-### Stap 4: Account beheer
-- Op de "Mijn Account" pagina een sectie toevoegen om MFA te beheren (opnieuw instellen, etc.)
+2. **Maak een `useBiometricAuth` hook**
+   - Check of biometrie beschikbaar is op het device
+   - Sla credentials op na succesvolle login (e-mail + refresh token)
+   - Haal credentials op bij biometrische verificatie
+   - Verwijder credentials bij uitloggen
 
-### Technisch
-- Gebruikt de ingebouwde Supabase MFA API (`supabase.auth.mfa`)
-- Geen extra database tabellen nodig
-- QR-code wordt gegenereerd via de Supabase SDK (TOTP URI)
+3. **Pas de LoginPage aan**
+   - Toon een "Inloggen met Face ID / vingerafdruk" knop als er opgeslagen credentials zijn
+   - Na eerste login: vraag of de gebruiker biometrie wil activeren
+
+4. **Integratie met bestaande auth flow**
+   - Na succesvolle biometrische verificatie: gebruik opgeslagen refresh token om sessie te herstellen
+   - MFA-flow blijft intact (biometrie vervangt alleen het wachtwoord-invoer deel)
+
+### Veiligheid
+- Credentials worden opgeslagen in de native Keychain/Keystore (hardware-beveiligd)
+- Refresh tokens verlopen automatisch
+- Bij uitloggen worden opgeslagen credentials gewist
