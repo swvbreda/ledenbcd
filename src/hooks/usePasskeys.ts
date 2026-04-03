@@ -140,6 +140,7 @@ export function usePasskeys() {
             },
           },
           deviceName,
+          challengeToken: options.challengeToken,
         }),
       });
 
