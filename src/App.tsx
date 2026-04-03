@@ -54,6 +54,7 @@ const App = () => (
                 <Route path="/extern-login" element={<ExternLoginPage />} />
                 <Route path="/extern" element={<ExternDashboardPage />} />
                 <Route path="/extern/profiel" element={<ExternProfielPage />} />
+                <Route path="/extern/product/:id" element={<ExternProductDetailPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route
                   element={
