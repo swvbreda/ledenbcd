@@ -29,6 +29,7 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
   const { upsert, remove } = useBenefitMutations();
   const { data: existingImages = [] } = useBenefitImages(benefit?.id);
   const { addImage, removeImage } = useBenefitImageMutations(benefit?.id);
+  const [orgData, setOrgData] = useState<{ name: string; website: string | null } | null>(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -47,6 +48,15 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Fetch org data for supplier to lock provider fields
+  useEffect(() => {
+    if (!supplierOrgId) { setOrgData(null); return; }
+    supabase.from("external_organizations").select("name, website").eq("id", supplierOrgId).single()
+      .then(({ data }) => {
+        if (data) setOrgData({ name: data.name, website: data.website });
+      });
+  }, [supplierOrgId]);
 
   useEffect(() => {
     if (benefit) {
@@ -84,7 +94,12 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
         if (uploadErr) throw uploadErr;
         image_path = path;
       }
-      const payload = { ...form, image_path, id: benefit?.id, price: form.price ? Number(form.price) : null, original_price: form.original_price ? Number(form.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
+      const finalForm = { ...form };
+      if (supplierOrgId && orgData) {
+        finalForm.provider_name = orgData.name;
+        finalForm.provider_url = orgData.website || "";
+      }
+      const payload = { ...finalForm, image_path, id: benefit?.id, price: finalForm.price ? Number(finalForm.price) : null, original_price: finalForm.original_price ? Number(finalForm.original_price) : null, ...(supplierOrgId ? { supplier_org_id: supplierOrgId } : {}) } as any;
       await upsert.mutateAsync(payload);
       // Upload gallery images if any
       if (galleryFiles.length > 0 && benefit?.id) {
@@ -131,30 +146,15 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           </div>
           <div>
             <Label>Categorie</Label>
-            {supplierOrgId ? (
-              <Select value={form.category} onValueChange={(v) => set("category", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kies een categorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEFAULT_CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <>
-                <Input
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  list="benefit-categories"
-                  placeholder="Kies of typ een categorie"
-                />
-                <datalist id="benefit-categories">
-                  {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
-                </datalist>
-              </>
-            )}
+            <Input
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              list="benefit-categories"
+              placeholder="Kies of typ een categorie"
+            />
+            <datalist id="benefit-categories">
+              {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div>
             <Label>Beschrijving</Label>
@@ -162,11 +162,22 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           </div>
           <div>
             <Label>Aanbieder</Label>
-            <Input value={form.provider_name} onChange={(e) => set("provider_name", e.target.value)} />
+            {supplierOrgId && orgData ? (
+              <>
+                <Input value={orgData.name} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground mt-1">Gekoppeld aan je bedrijfsprofiel. Wijzig dit via je profielpagina.</p>
+              </>
+            ) : (
+              <Input value={form.provider_name} onChange={(e) => set("provider_name", e.target.value)} />
+            )}
           </div>
           <div>
             <Label>Website aanbieder</Label>
-            <Input value={form.provider_url} onChange={(e) => set("provider_url", e.target.value)} placeholder="https://" />
+            {supplierOrgId && orgData ? (
+              <Input value={orgData.website || ""} disabled className="bg-muted" />
+            ) : (
+              <Input value={form.provider_url} onChange={(e) => set("provider_url", e.target.value)} placeholder="https://" />
+            )}
           </div>
           <div>
             <Label>Ledenvoordeel / korting</Label>
