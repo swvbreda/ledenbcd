@@ -22,11 +22,11 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
 
   return (
     <Card
-      className={`overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group cursor-pointer border-border/50 flex flex-col ${!benefit.active ? "opacity-50" : ""}`}
+      className={`overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group cursor-pointer border-2 border-primary/20 hover:border-primary/40 bg-white flex flex-col ${!benefit.active ? "opacity-50" : ""}`}
       onClick={handleClick}
     >
       {/* Product image */}
-      <div className="relative aspect-[4/3] bg-muted flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
