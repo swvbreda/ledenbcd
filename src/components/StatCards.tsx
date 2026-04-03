@@ -85,7 +85,7 @@ const StatCards = ({ members }: StatCardsProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       {/* Aangesloten Coffeeshops */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/leden?tab=coffeeshops")}
       >
         <div className="flex items-center justify-between">
