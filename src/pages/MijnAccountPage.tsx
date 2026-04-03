@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, ShieldCheck, ShieldAlert } from "lucide-react";
+import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, ShieldCheck, ShieldAlert, Fingerprint } from "lucide-react";
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
