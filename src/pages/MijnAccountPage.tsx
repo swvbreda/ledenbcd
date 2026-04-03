@@ -215,7 +215,7 @@ function PasskeySection() {
 
     const result = await passkeys.registerPasskey(deviceName);
     if (result.success) {
-      toast.success("Passkey succesvol geregistreerd!");
+      toast.success("Passkey geregistreerd! Log uit en log opnieuw in om Face ID / vingerafdruk te testen.", { duration: 8000 });
       // Refresh list
       const { data } = await supabase.from("passkey_credentials").select("id, device_name, created_at");
       setRegisteredKeys(data || []);
