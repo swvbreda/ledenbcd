@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield, Share2, Copy } from "lucide-react";
+import { Plus, CheckCircle2, ClipboardList, BarChart3, Trash2, Shield, Share2, Copy, Users } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 
 interface Survey {
@@ -27,6 +27,7 @@ export default function EnquetesPage() {
   const navigate = useNavigate();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [completions, setCompletions] = useState<string[]>([]);
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -48,6 +49,17 @@ export default function EnquetesPage() {
         .eq("user_id", user.id);
       setCompletions((compData ?? []).map((c: any) => c.survey_id));
     }
+
+    // Fetch response counts per survey
+    const { data: countData } = await supabase
+      .from("survey_completions")
+      .select("survey_id");
+    const counts: Record<string, number> = {};
+    (countData ?? []).forEach((r: any) => {
+      counts[r.survey_id] = (counts[r.survey_id] || 0) + 1;
+    });
+    setResponseCounts(counts);
+
     setLoading(false);
   };
 
@@ -123,6 +135,9 @@ export default function EnquetesPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="gap-1">
+                        <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                      </Badge>
                       {completed && (
                         <Badge variant="secondary" className="gap-1">
                           <CheckCircle2 size={12} /> Ingevuld
