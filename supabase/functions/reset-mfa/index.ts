@@ -24,25 +24,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create anon client to get user from JWT
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(SUPABASE_URL, anonKey, {
-      global: { headers: { authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+    // Extract user ID from the JWT payload (base64 decode the payload part)
+    const token = authHeader.replace("Bearer ", "");
+    const payloadPart = token.split(".")[1];
+    if (!payloadPart) {
+      return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Use admin client to list and unenroll all TOTP factors
-    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    let userId: string;
+    try {
+      const payload = JSON.parse(atob(payloadPart));
+      userId = payload.sub;
+      if (!userId) throw new Error("No sub in token");
+    } catch {
+      return new Response(JSON.stringify({ error: "Cannot decode token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Get user's factors via admin API
-    const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(user.id);
+    // Use admin client to get user and unenroll all TOTP factors
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
+    
     if (adminError || !adminUser?.user) {
+      console.error("getUserById error:", adminError);
       return new Response(JSON.stringify({ error: "Could not fetch user" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,9 +63,8 @@ Deno.serve(async (req) => {
 
     let unenrolled = 0;
     for (const factor of totpFactors) {
-      // Use admin API to delete the factor directly
       const res = await fetch(
-        `${SUPABASE_URL}/auth/v1/admin/users/${user.id}/factors/${factor.id}`,
+        `${SUPABASE_URL}/auth/v1/admin/users/${userId}/factors/${factor.id}`,
         {
           method: "DELETE",
           headers: {
@@ -65,12 +73,14 @@ Deno.serve(async (req) => {
           },
         }
       );
-      if (res.ok) unenrolled++;
-      else console.error(`Failed to unenroll factor ${factor.id}:`, await res.text());
+      if (res.ok) {
+        unenrolled++;
+        console.log(`Unenrolled factor ${factor.id} for user ${userId}`);
+      } else {
+        console.error(`Failed to unenroll factor ${factor.id}:`, await res.text());
+      }
     }
 
-    // Also clear email MFA localStorage marker (handled client-side)
-    
     return new Response(
       JSON.stringify({ success: true, unenrolled, total: totpFactors.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
