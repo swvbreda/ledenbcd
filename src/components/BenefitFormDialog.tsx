@@ -131,12 +131,15 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
           </div>
           <div>
             <Label>Categorie</Label>
-            <Select value={form.category} onValueChange={(v) => set("category", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Input
+              value={form.category}
+              onChange={(e) => set("category", e.target.value)}
+              list="benefit-categories"
+              placeholder="Kies of typ een categorie"
+            />
+            <datalist id="benefit-categories">
+              {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c} />)}
+            </datalist>
           </div>
           <div>
             <Label>Beschrijving</Label>
