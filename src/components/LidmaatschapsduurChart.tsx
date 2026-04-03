@@ -25,7 +25,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
 
   const longMembers = withYears.filter((x) => x.years >= 20);
-  const longPct = members?.length ? Math.round((longMembers.length / members.length) * 100) : 0;
+  const longPct = allMembers.length ? Math.round((longMembers.length / allMembers.length) * 100) : 0;
 
   // Cities with >50% representation
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
