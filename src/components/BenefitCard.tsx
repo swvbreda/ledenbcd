@@ -66,7 +66,28 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
         {benefit.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">{benefit.description}</p>
         )}
-        {benefit.discount_info && (
+
+        {/* Price display – bol.com style */}
+        {benefit.price != null && (
+          <div className="mt-2 space-y-0.5">
+            <p className="text-xl font-black text-primary leading-none">
+              €{benefit.price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            {benefit.original_price != null && benefit.original_price > benefit.price && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground line-through">
+                  €{benefit.original_price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-xs font-semibold text-primary">
+                  -{Math.round((1 - benefit.price / benefit.original_price) * 100)}%
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fallback: text-based discount info when no numeric price */}
+        {benefit.price == null && benefit.discount_info && (
           <div className="mt-2 rounded-lg bg-primary px-3 py-2">
             <p className="text-xs font-bold text-primary-foreground leading-relaxed">{benefit.discount_info}</p>
           </div>
