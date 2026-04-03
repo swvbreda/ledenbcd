@@ -67,19 +67,20 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
           <p className="text-sm text-muted-foreground line-clamp-2">{benefit.description}</p>
         )}
 
-        {/* Price display – bol.com style */}
+        {/* Price display */}
         {benefit.price != null && (
           <div className="mt-3 space-y-1">
-            <p className="text-2xl font-black text-primary leading-none">
-              <span>€{Math.floor(benefit.price).toLocaleString("nl-NL")}</span>
-              <span className="text-base align-super">{String(Math.round((benefit.price % 1) * 100)).padStart(2, '0')}</span>
-            </p>
+            <div className="inline-block rounded bg-primary px-2.5 py-1">
+              <span className="text-lg font-black text-primary-foreground leading-none">
+                €{benefit.price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
             {benefit.original_price != null && benefit.original_price > benefit.price && (
               <>
                 <p className="text-xs text-muted-foreground">
-                  Meestal <span className="line-through">€{benefit.original_price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  Regulier <span className="line-through">€{benefit.original_price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </p>
-                <p className="text-xs font-bold text-primary">
+                <p className="text-xs font-bold text-foreground">
                   Je bespaart {Math.round((1 - benefit.price / benefit.original_price) * 100)}%
                 </p>
               </>
