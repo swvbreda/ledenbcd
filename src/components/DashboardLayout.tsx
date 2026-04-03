@@ -3,6 +3,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const PCN_EMAIL = "info@platformcannabis.nl";
 const PCN_SURVEY_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
