@@ -1,3 +1,4 @@
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Users, UserMinus, Store, UserPlus } from "lucide-react";
@@ -89,14 +90,13 @@ const LedenPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
+      <BcdHeroBanner
+        title={showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
+        subtitle={subtitle}
+      />
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold font-display">
-              {showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-          </div>
+          <div />
           <Button
             variant={showArchived ? "default" : "outline"}
             size="sm"

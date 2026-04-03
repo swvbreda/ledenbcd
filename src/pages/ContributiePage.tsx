@@ -1,3 +1,4 @@
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo } from "react";
 import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,12 +142,10 @@ const ContributiePage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Contributie</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Contributie-administratie per lid per jaar — € {FIXED_AMOUNT.toLocaleString("nl-NL")} per lid
-        </p>
-      </div>
+      <BcdHeroBanner
+        title="Contributie"
+        subtitle={`Contributie-administratie per lid per jaar — € ${FIXED_AMOUNT.toLocaleString("nl-NL")} per lid`}
+      />
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
