@@ -292,25 +292,24 @@ const AccountBeheerPage = () => {
         title="Accountbeheer"
         subtitle={`${filteredUsers.length}${searchQuery ? ` van ${users.length}` : ""} accounts`}
       />
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div className="relative flex-1 sm:flex-none">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Zoek op naam of e-mail..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-8 h-9 w-full sm:w-56 text-sm"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
-            <UserPlus size={15} /> Nieuw account
-          </Button>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="relative flex-1 sm:flex-none">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Zoek op naam of e-mail..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 pr-8 h-9 w-full sm:w-56 text-sm"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X size={14} />
+            </button>
+          )}
         </div>
+        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-1.5 shrink-0">
+          <UserPlus size={15} /> Nieuw account
+        </Button>
       </div>
 
       {loading ? (
