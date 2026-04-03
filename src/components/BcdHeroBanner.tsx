@@ -43,9 +43,9 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
 
       {/* Second set – smaller, top-left for depth */}
       <svg
-        className="absolute -left-24 -top-16 opacity-[0.07] pointer-events-none rotate-180"
-        width="360"
-        height="280"
+        className="absolute -left-20 -top-10 opacity-[0.14] pointer-events-none rotate-180"
+        width="440"
+        height="340"
         viewBox="0 0 520 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
