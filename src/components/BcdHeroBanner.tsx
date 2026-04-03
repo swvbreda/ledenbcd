@@ -5,6 +5,16 @@ interface BcdHeroBannerProps {
 }
 
 const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
+  // BCD waaier: 7 stralen symmetrisch rond verticaal, met balk en driehoek
+  const centerX = 100;
+  const centerY = 170;
+  const radius = 130;
+  const totalSpread = 150; // graden totale boog
+  const rayWidth = 15; // breedte van elke straal in graden
+  const gap = (totalSpread - 7 * rayWidth) / 6; // ruimte tussen stralen
+  const startOffset = -90 - totalSpread / 2; // begin links, gecentreerd rond -90°
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
   return (
     <div
       className="relative overflow-hidden rounded-xl"
@@ -13,7 +23,7 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           "linear-gradient(135deg, hsl(0 60% 28%), hsl(0 65% 32%))",
       }}
     >
-      {/* BCD waaier-beeldmerk – inline SVG, gedeeltelijk zichtbaar rechts */}
+      {/* BCD waaier-beeldmerk */}
       <svg
         className="absolute pointer-events-none select-none"
         style={{
@@ -27,29 +37,24 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
         fill="hsl(0, 50%, 38%)"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* 7 waaierstralen vanuit middelpunt onderaan */}
         {[...Array(7)].map((_, i) => {
-          const centerX = 100;
-          const centerY = 175;
-          const startAngle = -110 + i * 20;
-          const endAngle = startAngle + 16;
-          const radius = 140;
-          const toRad = (deg: number) => (deg * Math.PI) / 180;
-          const x1 = centerX + radius * Math.cos(toRad(startAngle));
-          const y1 = centerY + radius * Math.sin(toRad(startAngle));
-          const x2 = centerX + radius * Math.cos(toRad(endAngle));
-          const y2 = centerY + radius * Math.sin(toRad(endAngle));
+          const a1 = startOffset + i * (rayWidth + gap);
+          const a2 = a1 + rayWidth;
+          const x1 = centerX + radius * Math.cos(toRad(a1));
+          const y1 = centerY + radius * Math.sin(toRad(a1));
+          const x2 = centerX + radius * Math.cos(toRad(a2));
+          const y2 = centerY + radius * Math.sin(toRad(a2));
           return (
             <path
               key={i}
-              d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`}
+              d={`M ${centerX} ${centerY} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${radius} ${radius} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`}
             />
           );
         })}
-        {/* Balk onderaan */}
-        <rect x="30" y="178" width="140" height="8" rx="2" />
-        {/* Driehoek */}
-        <polygon points="100,185 92,196 108,196" />
+        {/* Horizontale balk */}
+        <rect x="28" y="173" width="144" height="7" rx="1.5" />
+        {/* Driehoek onderaan */}
+        <polygon points="100,182 91,195 109,195" />
       </svg>
 
       {/* Content */}
