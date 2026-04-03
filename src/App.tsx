@@ -37,6 +37,7 @@ import ExternProductDetailPage from "./pages/ExternProductDetailPage";
 import BenefitDetailPage from "./pages/BenefitDetailPage";
 import MfaSetupPage from "./pages/MfaSetupPage";
 import MfaVerifyPage from "./pages/MfaVerifyPage";
+import ExternProtectedRoute from "@/components/ExternProtectedRoute";
 
 import NotFound from "./pages/NotFound";
 
