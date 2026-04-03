@@ -237,9 +237,17 @@ export default function BenefitDetailPage() {
       {(supplierOrg || benefit.provider_name) && (
         <div className="mt-10 rounded-lg border-2 border-primary/60 bg-white p-5 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
+            {supplierOrg?.logo_path ? (
+              <img
+                src={supabase.storage.from("org-logos").getPublicUrl(supplierOrg.logo_path).data.publicUrl}
+                alt={supplierOrg.name}
+                className="h-10 w-10 rounded-lg object-contain shrink-0"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+            )}
             <div>
               <h3 className="font-semibold text-sm">
                 {supplierOrg?.name || benefit.provider_name}
