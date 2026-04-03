@@ -39,6 +39,7 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const closeMobile = () => setOpenMobile(false);
