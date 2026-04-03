@@ -4,13 +4,24 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { getMembershipYears } from "@/lib/membership";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
-  const memberYears = (members || []).map((m) => ({ member: m, years: getMembershipYears(m) }));
+  const { conversions } = useLeadConversions();
+
+  // Build converted leads as members
+  const convertedAsMembers = conversions.map((conv) => {
+    const originalLead = mergedLeads.find((l) => l.id === conv.lead_id);
+    if (!originalLead) return null;
+    return { ...originalLead, id: conv.lidnummer, lidSinds: conv.lid_sinds ?? originalLead.lidSinds } as Member;
+  }).filter(Boolean) as Member[];
+
+  const allMembers = [...(members || []), ...convertedAsMembers];
+  const memberYears = allMembers.map((m) => ({ member: m, years: getMembershipYears(m) }));
   const withYears = memberYears.filter((x) => x.years !== null) as { member: Member; years: number }[];
 
   const longMembers = withYears.filter((x) => x.years >= 20);
