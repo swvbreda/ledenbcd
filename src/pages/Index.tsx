@@ -22,12 +22,10 @@ const Index = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Overzicht</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Welkom bij het Ledenbestand Dashboard
-        </p>
-      </div>
+      <BcdHeroBanner
+        title="Overzicht"
+        subtitle="Welkom bij het Ledenbestand Dashboard"
+      />
 
       <BestuurOverzicht members={members} />
 

@@ -9,10 +9,10 @@ const StatistiekenPage = () => {
   const { rawMembers: allMembers } = useMembersData();
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display">Statistieken</h2>
-        <p className="text-sm text-muted-foreground mt-1">Overzicht van alle ledendata</p>
-      </div>
+      <BcdHeroBanner
+        title="Statistieken"
+        subtitle="Overzicht van alle ledendata"
+      />
 
       <StatCards members={allMembers} />
 
