@@ -190,9 +190,24 @@ export default function MfaVerifyPage() {
                   {loading ? "Verifiëren..." : "Doorgaan"}
                 </Button>
               </form>
+              <button
+                type="button"
+                onClick={async () => {
+                  // Unenroll all TOTP factors so user can re-setup
+                  const { data: factors } = await supabase.auth.mfa.listFactors();
+                  if (factors?.totp) {
+                    for (const f of factors.totp) {
+                      await supabase.auth.mfa.unenroll({ factorId: f.id });
+                    }
+                  }
+                  navigate("/mfa-setup", { replace: true });
+                }}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors block w-full text-center"
+              >
+                Code kwijt? Opnieuw instellen
+              </button>
             </>
           )}
-
           {/* Email method */}
           {method === "email" && (
             <>

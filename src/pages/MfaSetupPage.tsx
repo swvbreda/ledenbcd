@@ -62,9 +62,11 @@ export default function MfaSetupPage() {
   const enrollFactor = async () => {
     setEnrolling(true);
     const { data: factors } = await supabase.auth.mfa.listFactors();
-    const existingTotp = factors?.totp?.find(f => (f.status as string) === "unverified");
-    if (existingTotp) {
-      await supabase.auth.mfa.unenroll({ factorId: existingTotp.id });
+    // Unenroll ALL existing TOTP factors (verified and unverified) to allow re-setup
+    if (factors?.totp) {
+      for (const f of factors.totp) {
+        await supabase.auth.mfa.unenroll({ factorId: f.id });
+      }
     }
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
