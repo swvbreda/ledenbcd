@@ -434,6 +434,7 @@ export default function MijnAccountPage() {
           )}
 
           <MfaSection />
+          <BiometricSection />
           <NotificationSection />
           <PasswordSection />
         </>
