@@ -13,9 +13,9 @@ import { useBenefitMutations, getBenefitImageUrl } from "@/hooks/useBenefits";
 import { useBenefitImages, useBenefitImageMutations } from "@/hooks/useBenefitImages";
 import { Trash2, Plus, ImagePlus, X } from "lucide-react";
 
-const CATEGORIES = [
-  "Beveiliging", "Facilitair", "Financieel", "Juridisch",
-  "Marketing", "Personeel", "Technologie", "Verzekeringen", "Overig",
+const DEFAULT_CATEGORIES = [
+  "Beveiliging", "Facilitair", "Financieel", "Identificatie", "Juridisch",
+  "Marketing", "Personeel", "Technologie", "Testapparatuur", "Verzekeringen", "Overig",
 ];
 
 interface Props {
