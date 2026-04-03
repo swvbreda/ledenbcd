@@ -16,12 +16,12 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       }}
     >
       {/* BCD beeldmerk – echt logo-element */}
-      <div className="absolute right-[-40px] bottom-[-30px] w-[420px] h-[360px] md:w-[550px] md:h-[470px] opacity-[0.18] pointer-events-none">
+      <div className="absolute right-[-40px] bottom-[-30px] w-[420px] h-[360px] md:w-[550px] md:h-[470px] opacity-20 pointer-events-none">
         <img
           src={bcdLogoElement}
           alt=""
           className="w-full h-full object-contain"
-          style={{ filter: "brightness(0) invert(1)" }}
+          style={{ filter: "brightness(10)" }}
         />
       </div>
 
