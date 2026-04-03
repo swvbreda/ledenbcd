@@ -376,7 +376,6 @@ const AccountBeheerPage = () => {
                               >
                                 <Building2 size={12} className="shrink-0" />
                                 <span className="line-clamp-1">{org.name}</span>
-                                <span className="text-muted-foreground text-[10px] uppercase tracking-wide">{org.type}</span>
                                 <ExternalLink size={10} className="opacity-50 hidden sm:inline shrink-0" />
                               </button>
                             ))
