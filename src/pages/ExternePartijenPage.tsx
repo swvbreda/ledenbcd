@@ -33,6 +33,7 @@ const ORG_TYPES = [
 
 export default function ExternePartijenPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<ExternalOrg[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOrg, setEditOrg] = useState<ExternalOrg | null>(null);
