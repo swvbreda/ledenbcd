@@ -222,8 +222,8 @@ async function verifySignature(publicKey: CryptoKey, signature: Uint8Array, data
   return crypto.subtle.verify(
     { name: "ECDSA", hash: "SHA-256" },
     publicKey,
-    rawSig,
-    data
+    toArrayBuffer(rawSig),
+    toArrayBuffer(data)
   );
 }
 
