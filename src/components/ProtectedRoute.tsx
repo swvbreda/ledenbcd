@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isExtern } = useAuth();
+  const { user, loading, isExtern, mfaStatus } = useAuth();
 
   if (loading) {
     return (
@@ -18,6 +18,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (isExtern) {
     return <Navigate to="/extern" replace />;
+  }
+
+  // MFA enforcement
+  if (mfaStatus === "needs_setup") {
+    return <Navigate to="/mfa-setup" replace />;
+  }
+  if (mfaStatus === "needs_verify") {
+    return <Navigate to="/mfa-verify" replace />;
   }
 
   return <>{children}</>;

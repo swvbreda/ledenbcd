@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog } from "lucide-react";
+import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,65 @@ function PasswordSection() {
         <Button onClick={handleChangePassword} disabled={saving} size="sm">
           {saving ? "Opslaan..." : "Wachtwoord opslaan"}
         </Button>
+      </div>
+    </Card>
+  );
+}
+
+// ── MFA Section ──
+function MfaSection() {
+  const [hasTotp, setHasTotp] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      setHasTotp((data?.totp?.filter(f => f.status === "verified")?.length ?? 0) > 0);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleUnenroll = async () => {
+    if (!confirm("Weet je zeker dat je dubbele verificatie wilt uitschakelen? Je moet het daarna opnieuw instellen.")) return;
+    setResetting(true);
+    const { data } = await supabase.auth.mfa.listFactors();
+    const factors = data?.totp?.filter(f => f.status === "verified") ?? [];
+    for (const factor of factors) {
+      await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    }
+    toast.success("Dubbele verificatie uitgeschakeld. Je wordt doorgestuurd om het opnieuw in te stellen.");
+    setResetting(false);
+    window.location.href = "/mfa-setup";
+  };
+
+  if (loading) return null;
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        {hasTotp ? <ShieldCheck size={16} className="text-primary" /> : <ShieldAlert size={16} className="text-destructive" />}
+        <h3 className="text-sm font-semibold font-display">Dubbele verificatie (2FA)</h3>
+      </div>
+      <div className="space-y-3 max-w-sm">
+        {hasTotp ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Dubbele verificatie is actief via je authenticator app.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleUnenroll} disabled={resetting}>
+              {resetting ? "Bezig..." : "Opnieuw instellen"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Dubbele verificatie is niet ingesteld. Dit is verplicht.
+            </p>
+            <Button size="sm" onClick={() => window.location.href = "/mfa-setup"}>
+              Nu instellen
+            </Button>
+          </>
+        )}
       </div>
     </Card>
   );
@@ -373,6 +432,7 @@ export default function MijnAccountPage() {
             </Card>
           )}
 
+          <MfaSection />
           <NotificationSection />
           <PasswordSection />
         </>

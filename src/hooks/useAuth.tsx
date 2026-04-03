@@ -12,6 +12,8 @@ interface AuthContextType {
   linkedMemberId: number | null;
   /** All member_ids linked to the current user */
   linkedMemberIds: number[];
+  /** MFA status: whether the user needs to verify or enroll */
+  mfaStatus: "verified" | "needs_verify" | "needs_setup" | "loading";
   signOut: () => Promise<void>;
 }
 
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   isExtern: false,
   linkedMemberId: null,
   linkedMemberIds: [],
+  mfaStatus: "loading",
   signOut: async () => {},
 });
 
@@ -35,6 +38,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isExtern, setIsExtern] = useState(false);
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
+  const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
+
+  const checkMfaStatus = async () => {
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || !data) {
+      setMfaStatus("verified"); // fallback: don't block
+      return;
+    }
+    const { currentLevel, nextLevel } = data;
+    if (nextLevel === "aal2" && currentLevel === "aal1") {
+      // Has enrolled factor but hasn't verified yet this session
+      setMfaStatus("needs_verify");
+    } else if (nextLevel === "aal1" && currentLevel === "aal1") {
+      // No factor enrolled
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const hasVerifiedTotp = factors?.totp?.some(f => f.status === "verified");
+      if (hasVerifiedTotp) {
+        // Factor exists but session is aal1 → needs verify
+        setMfaStatus("needs_verify");
+      } else {
+        setMfaStatus("needs_setup");
+      }
+    } else {
+      // aal2 — fully verified
+      setMfaStatus("verified");
+    }
+  };
 
   const checkRoleAndProfile = async (userId: string) => {
     // Check roles
@@ -63,13 +93,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkRoleAndProfile(session.user.id).finally(() => {
+        Promise.all([
+          checkRoleAndProfile(session.user.id),
+          checkMfaStatus(),
+        ]).finally(() => {
           if (mounted) setLoading(false);
         });
       } else {
         setIsAdmin(false);
         setIsExtern(false);
         setLinkedMemberIds([]);
+        setMfaStatus("loading");
         setLoading(false);
       }
     });
@@ -79,7 +113,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await checkRoleAndProfile(session.user.id);
+        await Promise.all([
+          checkRoleAndProfile(session.user.id),
+          checkMfaStatus(),
+        ]);
       }
       if (mounted) setLoading(false);
     });
@@ -97,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const linkedMemberId = linkedMemberIds[0] ?? null;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, mfaStatus, signOut }}>
       {children}
     </AuthContext.Provider>
   );

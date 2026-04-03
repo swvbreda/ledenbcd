@@ -26,7 +26,9 @@ const LoginPage = () => {
   }
 
   if (user) {
-    return <Navigate to={isExtern ? "/extern" : "/"} replace />;
+    if (isExtern) return <Navigate to="/extern" replace />;
+    // MFA check handled by ProtectedRoute — just go to home
+    return <Navigate to="/" replace />;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
