@@ -82,7 +82,7 @@ async function verifyChallengeToken(token: string): Promise<ChallengePayload | n
     const payloadBytes = base64urlDecode(payloadPart);
     const signature = base64urlDecode(signaturePart);
     const key = await getChallengeKey();
-    const isValid = await crypto.subtle.verify("HMAC", key, signature, payloadBytes);
+    const isValid = await crypto.subtle.verify("HMAC", key, toArrayBuffer(signature), toArrayBuffer(payloadBytes));
     if (!isValid) return null;
 
     const payload = JSON.parse(decoder.decode(payloadBytes)) as ChallengePayload;
