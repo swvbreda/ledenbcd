@@ -3,6 +3,7 @@ import { useBenefits, type Benefit } from "@/hooks/useBenefits";
 import { useAuth } from "@/hooks/useAuth";
 import BenefitCard from "@/components/BenefitCard";
 import BenefitFormDialog from "@/components/BenefitFormDialog";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, AlertTriangle } from "lucide-react";
