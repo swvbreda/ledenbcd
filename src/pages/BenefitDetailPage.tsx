@@ -200,7 +200,7 @@ export default function BenefitDetailPage() {
       )}
 
       {/* Disclaimer */}
-      <div className="mt-10 rounded-lg border border-border bg-muted/30 p-4 flex gap-3">
+      <div className="mt-10 rounded-lg border-2 border-primary/60 bg-white p-4 flex gap-3">
         <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
           De vermelding van een aanbieder, product of dienst is uitsluitend bedoeld ter informatie. Het betekent niet dat de organisatie het aanbod heeft beoordeeld, goedgekeurd of aanbeveelt. Er wordt geen garantie gegeven op inhoud, kwaliteit of uitvoering. De organisatie is op geen enkele manier aansprakelijk voor gevolgen die voortvloeien uit contact met of gebruik van het aanbod.

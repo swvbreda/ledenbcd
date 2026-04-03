@@ -144,7 +144,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       </div>
 
       {/* Benchmark */}
-      <div className="bg-card rounded-lg border border-border p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
+      <div className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
           <BarChart3 size={18} className="text-primary" />

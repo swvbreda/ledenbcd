@@ -50,7 +50,7 @@ export default function BenefitGallery({ mainImagePath, galleryImages, alt }: Pr
   return (
     <div className="space-y-3">
       {/* Main image */}
-      <div className="relative rounded-xl overflow-hidden bg-muted border border-border aspect-square flex items-center justify-center group">
+      <div className="relative rounded-xl overflow-hidden bg-white border-2 border-primary/60 aspect-square flex items-center justify-center group">
         <img
           src={current.url}
           alt={current.caption || alt}
