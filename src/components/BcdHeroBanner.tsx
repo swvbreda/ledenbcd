@@ -15,19 +15,19 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           "linear-gradient(135deg, hsl(0 60% 28%), hsl(0 65% 32%))",
       }}
     >
-      {/* BCD beeldmerk – groot, gedeeltelijk zichtbaar rechts, lichter rood */}
-      <div
-        className="absolute right-[-120px] bottom-[-100px] w-[500px] h-[500px] md:w-[650px] md:h-[650px] pointer-events-none"
+      {/* BCD beeldmerk – gedeeltelijk zichtbaar rechts, lichter rood op donkerrood */}
+      <img
+        src={bcdLogoElement}
+        alt=""
+        aria-hidden="true"
+        className="absolute pointer-events-none select-none"
         style={{
-          background: "hsl(0 55% 40%)",
-          WebkitMaskImage: `url(${bcdLogoElement})`,
-          maskImage: `url(${bcdLogoElement})`,
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
+          right: "-100px",
+          bottom: "-80px",
+          width: "550px",
+          height: "550px",
+          objectFit: "contain",
+          opacity: 0.25,
         }}
       />
 
