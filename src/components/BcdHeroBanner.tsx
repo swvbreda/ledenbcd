@@ -1,4 +1,4 @@
-import bcdLogoElement from "@/assets/bcd-logo-element.png";
+import bcdLogoElement from "@/assets/bcd-logo-element-transparent.png";
 
 interface BcdHeroBannerProps {
   title: string;
