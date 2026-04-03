@@ -165,7 +165,7 @@ const AccountBeheerPage = () => {
       return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids, orgLinks };
     }
     if (orgLinks.length > 0) {
-      return { label: orgLinks[0].name, personName: orgLinks[0].name ? "" : "", isBoard: false, memberIds: [], orgLinks };
+      return { label: orgLinks[0].name, personName: orgLinks[0].contactName || "", isBoard: false, memberIds: [], orgLinks };
     }
     return { label: "", personName: "", isBoard: false, memberIds: [], orgLinks: [] };
   };
