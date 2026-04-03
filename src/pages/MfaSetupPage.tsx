@@ -224,6 +224,20 @@ export default function MfaSetupPage() {
                   <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary" />
                 </div>
               </button>
+
+              <div className="pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => {
+                    markEmailMfaVerified();
+                    toast.info("MFA overgeslagen. Je kunt dit later alsnog instellen via je account.");
+                    navigate("/", { replace: true });
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors block w-full text-center"
+                >
+                  Later instellen →
+                </button>
+              </div>
             </div>
           )}
 
