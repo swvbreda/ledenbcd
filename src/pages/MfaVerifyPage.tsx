@@ -193,12 +193,15 @@ export default function MfaVerifyPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  // Unenroll all TOTP factors so user can re-setup
-                  const { data: factors } = await supabase.auth.mfa.listFactors();
-                  if (factors?.totp) {
-                    for (const f of factors.totp) {
-                      await supabase.auth.mfa.unenroll({ factorId: f.id });
-                    }
+                  // Use admin edge function to unenroll all TOTP factors (bypasses AAL2)
+                  try {
+                    await supabase.functions.invoke("reset-mfa");
+                  } catch (e) {
+                    console.error("reset-mfa error:", e);
+                  }
+                  // Clear email MFA marker too
+                  if (user?.id) {
+                    try { localStorage.removeItem(`emfa_${user.id}`); } catch {}
                   }
                   navigate("/mfa-setup", { replace: true });
                 }}
