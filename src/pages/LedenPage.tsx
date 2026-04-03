@@ -1,3 +1,4 @@
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Users, UserMinus, Store, UserPlus } from "lucide-react";
