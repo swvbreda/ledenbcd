@@ -143,7 +143,7 @@ export default function EnquetesPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       {isAdmin && (
                         <Badge variant="outline" className="gap-1">
-                          <Users size={12} /> {responseCounts[s.id] || 0} inzending{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                          <Users size={12} /> {responseCounts[s.id] || 0} response{(responseCounts[s.id] || 0) !== 1 ? "s" : ""}
                         </Badge>
                       )}
                       {completed && (
