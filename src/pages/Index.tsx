@@ -26,7 +26,7 @@ const Index = () => {
     <div className="p-4 sm:p-6 space-y-6">
       <BcdHeroBanner
         title="Overzicht"
-        subtitle="Welkom bij het Ledenbestand Dashboard"
+        subtitle="Welkom bij het BCD Dashboard"
       />
 
       <MemberAlertBanner />
