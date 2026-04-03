@@ -100,7 +100,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Gemeenten */}
       <div
-        className="bg-card rounded-lg border border-border p-4 sm:p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
