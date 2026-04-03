@@ -154,7 +154,7 @@ const GemeenteDetailPage = () => {
           <p className="text-2xl font-bold font-display">{data.aangesloten}</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-4 text-center">
-          <p className="text-xs text-muted-foreground mb-1">Marktaandeel</p>
+          <p className="text-xs text-muted-foreground mb-1">Vertegenwoordiging</p>
           <p className={`text-2xl font-bold font-display ${data.marktPct >= 30 ? "text-success" : ""}`}>
             {data.totaalNL > 0 ? `${data.marktPct}%` : "—"}
           </p>

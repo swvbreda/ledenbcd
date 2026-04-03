@@ -80,7 +80,7 @@ const MarktaandeelPage = () => {
         {[
           { label: "Coffeeshops NL", value: totalNL },
           { label: "Aangesloten", value: totalLocaties },
-          { label: "Marktaandeel", value: `${marketPct}%` },
+          { label: "Vertegenwoordiging", value: `${marketPct}%` },
           { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
         ].map((card) => (
           <div key={card.label} className="bg-card rounded-lg border border-border p-4 text-center">
