@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -8,12 +8,11 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isExtern: boolean;
-  /** The first member_id linked to the current user (null if none) */
   linkedMemberId: number | null;
-  /** All member_ids linked to the current user */
   linkedMemberIds: number[];
-  /** MFA status: whether the user needs to verify or enroll */
   mfaStatus: "verified" | "needs_verify" | "needs_setup" | "loading";
+  /** Mark email-based MFA as verified for this session */
+  markEmailMfaVerified: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -26,10 +25,25 @@ const AuthContext = createContext<AuthContextType>({
   linkedMemberId: null,
   linkedMemberIds: [],
   mfaStatus: "loading",
+  markEmailMfaVerified: () => {},
   signOut: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
+
+const EMAIL_MFA_KEY_PREFIX = "emfa_";
+
+function checkEmailMfaFlag(userId: string): boolean {
+  try {
+    const stored = localStorage.getItem(`${EMAIL_MFA_KEY_PREFIX}${userId}`);
+    if (!stored) return false;
+    const timestamp = parseInt(stored, 10);
+    // Valid for 24 hours
+    return Date.now() - timestamp < 24 * 60 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,7 +54,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
 
-  const checkMfaStatus = async () => {
+  const markEmailMfaVerified = useCallback(() => {
+    if (user?.id) {
+      localStorage.setItem(`${EMAIL_MFA_KEY_PREFIX}${user.id}`, Date.now().toString());
+      setMfaStatus("verified");
+    }
+  }, [user?.id]);
+
+  const checkMfaStatus = async (userId: string) => {
+    // Check email MFA flag first
+    if (checkEmailMfaFlag(userId)) {
+      setMfaStatus("verified");
+      return;
+    }
+
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (error || !data) {
       setMfaStatus("verified"); // fallback: don't block
@@ -48,26 +75,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const { currentLevel, nextLevel } = data;
     if (nextLevel === "aal2" && currentLevel === "aal1") {
-      // Has enrolled factor but hasn't verified yet this session
       setMfaStatus("needs_verify");
     } else if (nextLevel === "aal1" && currentLevel === "aal1") {
-      // No factor enrolled
       const { data: factors } = await supabase.auth.mfa.listFactors();
       const hasVerifiedTotp = factors?.totp?.some(f => f.status === "verified");
       if (hasVerifiedTotp) {
-        // Factor exists but session is aal1 → needs verify
         setMfaStatus("needs_verify");
       } else {
         setMfaStatus("needs_setup");
       }
     } else {
-      // aal2 — fully verified
       setMfaStatus("verified");
     }
   };
 
   const checkRoleAndProfile = async (userId: string) => {
-    // Check roles
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
@@ -77,7 +99,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(roles.includes("admin"));
     setIsExtern(roles.includes("extern"));
 
-    // Check member profile links (multiple)
     const { data: profileData } = await supabase
       .from("member_profiles")
       .select("member_id")
@@ -95,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         Promise.all([
           checkRoleAndProfile(session.user.id),
-          checkMfaStatus(),
+          checkMfaStatus(session.user.id),
         ]).finally(() => {
           if (mounted) setLoading(false);
         });
@@ -115,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         await Promise.all([
           checkRoleAndProfile(session.user.id),
-          checkMfaStatus(),
+          checkMfaStatus(session.user.id),
         ]);
       }
       if (mounted) setLoading(false);
@@ -128,13 +149,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    if (user?.id) {
+      try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${user.id}`); } catch {}
+    }
     await supabase.auth.signOut();
   };
 
   const linkedMemberId = linkedMemberIds[0] ?? null;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, mfaStatus, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
       {children}
     </AuthContext.Provider>
   );
