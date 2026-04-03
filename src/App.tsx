@@ -31,6 +31,7 @@ import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
 import LedenvoordelenPage from "./pages/LedenvoordelenPage";
+import ExternProfielPage from "./pages/ExternProfielPage";
 import BenefitDetailPage from "./pages/BenefitDetailPage";
 
 import NotFound from "./pages/NotFound";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/extern-login" element={<ExternLoginPage />} />
                 <Route path="/extern" element={<ExternDashboardPage />} />
+                <Route path="/extern/profiel" element={<ExternProfielPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route
                   element={

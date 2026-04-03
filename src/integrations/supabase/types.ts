@@ -170,40 +170,64 @@ export type Database = {
       }
       external_organizations: {
         Row: {
+          address: string | null
           approved: boolean
           approved_at: string | null
           approved_by: string | null
+          city: string | null
           contact_email: string | null
           contact_name: string | null
           created_at: string
+          description: string | null
           id: string
+          kvk: string | null
+          logo_path: string | null
           name: string
           notes: string | null
+          phone: string | null
+          postcode: string | null
           type: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           approved?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          kvk?: string | null
+          logo_path?: string | null
           name: string
           notes?: string | null
+          phone?: string | null
+          postcode?: string | null
           type?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           approved?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_name?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          kvk?: string | null
+          logo_path?: string | null
           name?: string
           notes?: string | null
+          phone?: string | null
+          postcode?: string | null
           type?: string
+          website?: string | null
         }
         Relationships: []
       }

@@ -1,15 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Store, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
@@ -30,11 +27,6 @@ interface OrgInfo {
   notes: string | null;
 }
 
-interface OrgUser {
-  id: string;
-  email: string;
-  created_at: string;
-}
 
 interface MemberBasic {
   id: number;
@@ -52,6 +44,7 @@ interface MemberBasic {
 
 const ExternDashboardPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [org, setOrg] = useState<OrgInfo | null>(null);
   const [members, setMembers] = useState<MemberBasic[]>([]);
   const [benefits, setBenefits] = useState<Benefit[]>([]);
@@ -59,10 +52,6 @@ const ExternDashboardPage = () => {
   const [isExtern, setIsExtern] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
-  const [orgDialogOpen, setOrgDialogOpen] = useState(false);
-  const [orgUsers, setOrgUsers] = useState<OrgUser[]>([]);
-  const [orgEditForm, setOrgEditForm] = useState({ contact_name: "", contact_email: "", notes: "" });
-  const [savingOrg, setSavingOrg] = useState(false);
   const [supplierTab, setSupplierTab] = useState<"producten" | "coffeeshops" | "gemeenten">("producten");
   const [allMembers, setAllMembers] = useState<Member[]>([]);
 
@@ -237,59 +226,6 @@ const ExternDashboardPage = () => {
     }
   };
 
-  const handleOpenOrgDialog = async () => {
-    if (!org) return;
-    setOrgEditForm({
-      contact_name: org.contact_name || "",
-      contact_email: org.contact_email || "",
-      notes: org.notes || "",
-    });
-    setOrgDialogOpen(true);
-
-    // Load org users
-    const { data: orgUserLinks } = await supabase
-      .from("external_org_users")
-      .select("user_id, created_at")
-      .eq("org_id", org.id);
-
-    if (orgUserLinks && orgUserLinks.length > 0) {
-      // We need emails from auth - use the user's own email as fallback
-      const users: OrgUser[] = orgUserLinks.map(u => ({
-        id: u.user_id,
-        email: u.user_id === user?.id ? (user?.email || "Onbekend") : "Geregistreerd gebruiker",
-        created_at: u.created_at,
-      }));
-      setOrgUsers(users);
-    } else {
-      setOrgUsers([]);
-    }
-  };
-
-  const handleSaveOrg = async () => {
-    if (!org) return;
-    setSavingOrg(true);
-    const { error } = await supabase
-      .from("external_organizations")
-      .update({
-        contact_name: orgEditForm.contact_name.trim() || null,
-        contact_email: orgEditForm.contact_email.trim() || null,
-        notes: orgEditForm.notes.trim() || null,
-      })
-      .eq("id", org.id);
-
-    if (error) {
-      toast.error("Fout bij opslaan: " + error.message);
-    } else {
-      toast.success("Organisatie bijgewerkt");
-      setOrg({
-        ...org,
-        contact_name: orgEditForm.contact_name.trim() || null,
-        contact_email: orgEditForm.contact_email.trim() || null,
-        notes: orgEditForm.notes.trim() || null,
-      });
-    }
-    setSavingOrg(false);
-  };
 
   if (authLoading || loading) {
     return (
@@ -313,12 +249,12 @@ const ExternDashboardPage = () => {
         </div>
         <div className="flex items-center gap-3">
           {org && (
-            <button
-              onClick={handleOpenOrgDialog}
-              className="text-xs text-foreground font-medium flex items-center gap-1 hover:underline"
-            >
-              <Building2 size={14} /> {org.name}
-            </button>
+             <button
+               onClick={() => navigate("/extern/profiel")}
+               className="text-xs text-foreground font-medium flex items-center gap-1 hover:underline"
+             >
+               <Building2 size={14} /> {org.name}
+             </button>
           )}
           <button
             onClick={signOut}
@@ -506,67 +442,6 @@ const ExternDashboardPage = () => {
           </>
         )}
       </main>
-      {/* Org detail dialog */}
-      <Dialog open={orgDialogOpen} onOpenChange={setOrgDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 size={18} /> {org?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div>
-              <Label>Contactpersoon</Label>
-              <Input
-                value={orgEditForm.contact_name}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, contact_name: e.target.value }))}
-                placeholder="Naam contactpersoon"
-              />
-            </div>
-            <div>
-              <Label>E-mail</Label>
-              <Input
-                type="email"
-                value={orgEditForm.contact_email}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, contact_email: e.target.value }))}
-                placeholder="Contact e-mailadres"
-              />
-            </div>
-            <div>
-              <Label>Notities</Label>
-              <Textarea
-                value={orgEditForm.notes}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                placeholder="Eventuele opmerkingen"
-              />
-            </div>
-
-            {orgUsers.length > 0 && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1"><Users size={14} /> Geregistreerde gebruikers</Label>
-                <div className="rounded-md border border-border divide-y divide-border">
-                  {orgUsers.map(u => (
-                    <div key={u.id} className="px-3 py-2 text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <Mail size={12} className="text-muted-foreground" />
-                        {u.email}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(u.created_at).toLocaleDateString("nl-NL")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button onClick={handleSaveOrg} disabled={savingOrg} className="w-full">
-              {savingOrg ? "Opslaan..." : "Opslaan"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
