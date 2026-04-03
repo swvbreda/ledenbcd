@@ -1,5 +1,3 @@
-import bcdLogoElement from "@/assets/bcd-logo-element-transparent.png";
-
 interface BcdHeroBannerProps {
   title: string;
   subtitle?: string;
@@ -11,24 +9,47 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
     <div
       className="relative overflow-hidden rounded-xl"
       style={{
-        background: "hsl(0 70% 24%)",
+        background:
+          "linear-gradient(135deg, hsl(0 60% 28%), hsl(0 65% 32%))",
       }}
     >
-      {/* BCD beeldmerk – gedeeltelijk zichtbaar, lichter rood op donkerrood */}
-      <img
-        src={bcdLogoElement}
-        alt=""
-        className="absolute pointer-events-none select-none md:w-[700px] md:h-[700px]"
+      {/* BCD waaier-beeldmerk – inline SVG, gedeeltelijk zichtbaar rechts */}
+      <svg
+        className="absolute pointer-events-none select-none"
         style={{
-          left: "-80px",
-          top: "-140px",
-          width: "520px",
-          height: "520px",
-          objectFit: "contain",
-          filter: "brightness(0) saturate(100%) invert(22%) sepia(60%) saturate(900%) hue-rotate(340deg) brightness(130%)",
-          opacity: 0.5,
+          right: "-60px",
+          bottom: "-100px",
+          width: "480px",
+          height: "480px",
         }}
-      />
+        viewBox="0 0 200 200"
+        fill="hsl(0, 50%, 38%)"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* 7 waaierstralen vanuit middelpunt onderaan */}
+        {[...Array(7)].map((_, i) => {
+          const centerX = 100;
+          const centerY = 175;
+          const startAngle = -110 + i * 20;
+          const endAngle = startAngle + 16;
+          const radius = 140;
+          const toRad = (deg: number) => (deg * Math.PI) / 180;
+          const x1 = centerX + radius * Math.cos(toRad(startAngle));
+          const y1 = centerY + radius * Math.sin(toRad(startAngle));
+          const x2 = centerX + radius * Math.cos(toRad(endAngle));
+          const y2 = centerY + radius * Math.sin(toRad(endAngle));
+          return (
+            <path
+              key={i}
+              d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`}
+            />
+          );
+        })}
+        {/* Balk onderaan */}
+        <rect x="30" y="178" width="140" height="8" rx="2" />
+        {/* Driehoek */}
+        <polygon points="100,185 92,196 108,196" />
+      </svg>
 
       {/* Content */}
       <div className="relative z-10 px-6 py-10 md:px-10 md:py-14">
