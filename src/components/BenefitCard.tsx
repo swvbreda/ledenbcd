@@ -69,19 +69,20 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
 
         {/* Price display – bol.com style */}
         {benefit.price != null && (
-          <div className="mt-2 space-y-0.5">
-            <p className="text-xl font-black text-primary leading-none">
-              €{benefit.price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="mt-3 space-y-1">
+            <p className="text-2xl font-black text-primary leading-none">
+              <span>€{Math.floor(benefit.price).toLocaleString("nl-NL")}</span>
+              <span className="text-base align-super">{String(Math.round((benefit.price % 1) * 100)).padStart(2, '0')}</span>
             </p>
             {benefit.original_price != null && benefit.original_price > benefit.price && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground line-through">
-                  €{benefit.original_price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                <span className="text-xs font-semibold text-primary">
-                  -{Math.round((1 - benefit.price / benefit.original_price) * 100)}%
-                </span>
-              </div>
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Meestal <span className="line-through">€{benefit.original_price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </p>
+                <p className="text-xs font-bold text-primary">
+                  Je bespaart {Math.round((1 - benefit.price / benefit.original_price) * 100)}%
+                </p>
+              </>
             )}
           </div>
         )}
