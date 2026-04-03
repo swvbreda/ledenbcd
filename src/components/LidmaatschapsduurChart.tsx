@@ -48,9 +48,17 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     null
   );
 
-  // Newest member (lowest years, most recent)
+  // Newest member (highest lidSinds year = most recently joined)
   const newest = withYears.reduce<{ member: Member; years: number } | null>(
-    (min, x) => (!min || x.years < min.years ? x : min),
+    (min, x) => {
+      if (!min) return x;
+      // Compare by lidSinds (higher = more recent), fall back to years (lower = more recent)
+      const xStart = x.member.lidSinds ?? 0;
+      const minStart = min.member.lidSinds ?? 0;
+      if (xStart > minStart) return x;
+      if (xStart === minStart && x.years < min.years) return x;
+      return min;
+    },
     null
   );
 
@@ -100,7 +108,7 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   ];
 
   return (
-    <div className="bg-card rounded-lg border border-border p-5">
+    <div className="bg-white rounded-lg border-2 border-primary/60 p-5">
       <h3 className="text-sm font-semibold font-display mb-1">Kernfeiten</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Belangrijke cijfers over het ledenbestand
