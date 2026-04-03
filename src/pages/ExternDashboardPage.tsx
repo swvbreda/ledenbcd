@@ -507,67 +507,6 @@ const ExternDashboardPage = () => {
           </>
         )}
       </main>
-      {/* Org detail dialog */}
-      <Dialog open={orgDialogOpen} onOpenChange={setOrgDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 size={18} /> {org?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div>
-              <Label>Contactpersoon</Label>
-              <Input
-                value={orgEditForm.contact_name}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, contact_name: e.target.value }))}
-                placeholder="Naam contactpersoon"
-              />
-            </div>
-            <div>
-              <Label>E-mail</Label>
-              <Input
-                type="email"
-                value={orgEditForm.contact_email}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, contact_email: e.target.value }))}
-                placeholder="Contact e-mailadres"
-              />
-            </div>
-            <div>
-              <Label>Notities</Label>
-              <Textarea
-                value={orgEditForm.notes}
-                onChange={(e) => setOrgEditForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                placeholder="Eventuele opmerkingen"
-              />
-            </div>
-
-            {orgUsers.length > 0 && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1"><Users size={14} /> Geregistreerde gebruikers</Label>
-                <div className="rounded-md border border-border divide-y divide-border">
-                  {orgUsers.map(u => (
-                    <div key={u.id} className="px-3 py-2 text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <Mail size={12} className="text-muted-foreground" />
-                        {u.email}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(u.created_at).toLocaleDateString("nl-NL")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button onClick={handleSaveOrg} disabled={savingOrg} className="w-full">
-              {savingOrg ? "Opslaan..." : "Opslaan"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
