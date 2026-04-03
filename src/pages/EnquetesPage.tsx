@@ -49,6 +49,17 @@ export default function EnquetesPage() {
         .eq("user_id", user.id);
       setCompletions((compData ?? []).map((c: any) => c.survey_id));
     }
+
+    // Fetch response counts per survey
+    const { data: countData } = await supabase
+      .from("survey_completions")
+      .select("survey_id");
+    const counts: Record<string, number> = {};
+    (countData ?? []).forEach((r: any) => {
+      counts[r.survey_id] = (counts[r.survey_id] || 0) + 1;
+    });
+    setResponseCounts(counts);
+
     setLoading(false);
   };
 
