@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
-import { Mail, Lock, LogIn, UserPlus, Fingerprint } from "lucide-react";
+import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
+import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 
 const LoginPage = () => {
