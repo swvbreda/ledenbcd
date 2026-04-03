@@ -92,14 +92,14 @@
 }
 
 .benefit-detail-prose h2 {
-  @apply text-lg font-bold tracking-tight mt-8 mb-3 pb-2 border-b;
-  color: hsl(var(--foreground));
-  border-color: hsl(var(--border));
+  @apply text-lg font-bold tracking-tight mt-8 mb-3 pb-2;
+  color: hsl(var(--primary));
+  border-bottom: 2px solid hsl(var(--primary) / 0.3);
 }
 
 .benefit-detail-prose h3 {
   @apply text-base font-semibold mt-6 mb-2;
-  color: hsl(var(--foreground));
+  color: hsl(var(--primary));
 }
 
 .benefit-detail-prose p {
@@ -125,7 +125,23 @@
 }
 
 .benefit-detail-prose ul {
-  @apply list-disc;
+  list-style: none;
+  @apply pl-0;
+}
+
+.benefit-detail-prose ul li {
+  @apply my-1.5 pl-5 relative;
+}
+
+.benefit-detail-prose ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
 }
 
 .benefit-detail-prose ol {
@@ -138,32 +154,32 @@
 
 .benefit-detail-prose hr {
   @apply my-6;
-  border-color: hsl(var(--border));
+  border-color: hsl(var(--primary) / 0.2);
 }
 
 .benefit-detail-prose table {
   @apply w-full text-sm border-collapse rounded-lg overflow-hidden my-4;
-  border: 1px solid hsl(var(--border));
+  border: 2px solid hsl(var(--primary) / 0.6);
 }
 
 .benefit-detail-prose th {
   @apply px-4 py-2.5 text-left text-xs font-semibold;
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-bottom: 2px solid hsl(var(--primary));
 }
 
 .benefit-detail-prose td {
   @apply px-4 py-2.5 text-sm;
-  border-top: 1px solid hsl(var(--border));
+  border-top: 1px solid hsl(var(--primary) / 0.15);
   color: hsl(var(--muted-foreground));
 }
 
 .benefit-detail-prose tr:nth-child(even) td {
-  background: hsl(var(--muted) / 0.3);
+  background: hsl(var(--primary) / 0.04);
 }
 
 .benefit-detail-prose img {
-  @apply rounded-lg border my-4;
-  border-color: hsl(var(--border));
+  @apply rounded-lg my-4;
+  border: 2px solid hsl(var(--primary) / 0.6);
 }
