@@ -123,6 +123,24 @@ const ExternDashboardPage = () => {
     load();
   }, [user]);
 
+  const loadCoffeeshopMembers = async () => {
+    const { data, error } = await supabase
+      .from("members_data")
+      .select("id, member_type, data")
+      .eq("member_type", "member");
+
+    if (error) {
+      console.error("Error loading members:", error);
+      return;
+    }
+
+    const parsed: Member[] = (data ?? []).map((row: any) => {
+      const payload = (row.data ?? {}) as Partial<Member>;
+      return { ...payload, id: typeof payload.id === "number" ? payload.id : row.id } as Member;
+    });
+    setAllMembers(parsed);
+  };
+
   const loadSupplierBenefits = async (orgId: string) => {
     const { data, error } = await supabase
       .from("member_benefits")
