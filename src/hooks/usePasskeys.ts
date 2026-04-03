@@ -226,7 +226,7 @@ export function usePasskeys() {
               userHandle: assertionResponse.userHandle ? bufferToBase64url(assertionResponse.userHandle) : null,
             },
           },
-          challengeKey: options.challengeKey,
+          challengeToken: options.challengeToken,
         }),
       });
 
