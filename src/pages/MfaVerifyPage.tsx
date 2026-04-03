@@ -206,8 +206,8 @@ export default function MfaVerifyPage() {
               >
                 Code kwijt? Opnieuw instellen
               </button>
+            </>
           )}
-
           {/* Email method */}
           {method === "email" && (
             <>
