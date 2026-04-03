@@ -30,6 +30,7 @@ import ContributiePage from "./pages/ContributiePage";
 import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
+import ExternePartijDetailPage from "./pages/ExternePartijDetailPage";
 import LedenvoordelenPage from "./pages/LedenvoordelenPage";
 import ExternProfielPage from "./pages/ExternProfielPage";
 import ExternProductDetailPage from "./pages/ExternProductDetailPage";
@@ -80,6 +81,7 @@ const App = () => (
                   <Route path="/marktaandeel" element={<LocatiesPage />} />
                   <Route path="/contributie" element={<ContributiePage />} />
                   <Route path="/externe-partijen" element={<ExternePartijenPage />} />
+                  <Route path="/externe-partijen/:id" element={<ExternePartijDetailPage />} />
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                 </Route>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Building2, Check, X, Clock, Pencil, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +33,7 @@ const ORG_TYPES = [
 
 export default function ExternePartijenPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<ExternalOrg[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOrg, setEditOrg] = useState<ExternalOrg | null>(null);
@@ -165,10 +166,13 @@ export default function ExternePartijenPage() {
   const OrgCard = ({ org, actions }: { org: ExternalOrg; actions: React.ReactNode }) => (
     <Card key={org.id} className="p-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1 min-w-0">
+        <div
+          className="space-y-1 min-w-0 cursor-pointer"
+          onClick={() => navigate(`/externe-partijen/${org.id}`)}
+        >
           <div className="flex items-center gap-2 flex-wrap">
             <Building2 size={14} className="text-muted-foreground shrink-0" />
-            <span className="font-semibold text-sm">{org.name}</span>
+            <span className="font-semibold text-sm hover:underline">{org.name}</span>
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{typeLabel(org.type)}</span>
           </div>
           {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
