@@ -27,11 +27,6 @@ interface OrgInfo {
   notes: string | null;
 }
 
-interface OrgUser {
-  id: string;
-  email: string;
-  created_at: string;
-}
 
 interface MemberBasic {
   id: number;
