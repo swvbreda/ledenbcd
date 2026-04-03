@@ -6,6 +6,7 @@ import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import MemberAlertBanner from "@/components/MemberAlertBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 
