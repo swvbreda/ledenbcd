@@ -36,7 +36,7 @@ function PriceBlock({ benefit }: { benefit: Benefit }) {
             </span>
           )}
           {savingsPercent != null && savingsPercent > 0 && (
-            <Badge variant="secondary" className="text-xs font-semibold bg-green-50 text-green-700 border-green-200">
+            <Badge variant="secondary" className="text-xs font-semibold bg-success/10 text-success border-success/20">
               -{savingsPercent}%
             </Badge>
           )}
