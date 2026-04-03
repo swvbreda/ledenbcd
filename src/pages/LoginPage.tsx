@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
-import { Mail, Lock, LogIn, UserPlus, Fingerprint } from "lucide-react";
+import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
+import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 
 const LoginPage = () => {
   const { user, loading: authLoading, isExtern } = useAuth();
   const biometric = useBiometricAuth();
+  const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,6 +22,11 @@ const LoginPage = () => {
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+
+  useEffect(() => {
+    isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
+  }, []);
 
   if (authLoading) {
     return (
@@ -57,6 +64,14 @@ const LoginPage = () => {
   const handleBiometricLogin = async () => {
     setError("");
     const result = await biometric.loginWithBiometric();
+    if (result.error) {
+      setError(result.error);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setError("");
+    const result = await passkeys.authenticateWithPasskey();
     if (result.error) {
       setError(result.error);
     }
@@ -208,20 +223,34 @@ const LoginPage = () => {
               onSubmit={resetMode ? handleResetPassword : registerMode ? handleRegister : handleLogin}
               className="space-y-4"
             >
-              {/* Biometric quick-login button */}
+              {/* Biometric quick-login button (native) */}
               {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
                 <button
                   type="button"
                   onClick={handleBiometricLogin}
                   disabled={biometric.loading}
-                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50 mb-2"
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
                 >
                   <Fingerprint size={20} />
                   {biometric.loading ? "Verifiëren..." : `Inloggen met ${biometric.biometryLabel}`}
                 </button>
               )}
 
-              {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
+              {/* Passkey login button (web) */}
+              {!resetMode && !registerMode && passkeyAvailable && !biometric.isNative && (
+                <button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  disabled={passkeys.loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+                >
+                  <ScanFace size={20} />
+                  {passkeys.loading ? "Verifiëren..." : "Inloggen met Face ID / vingerafdruk"}
+                </button>
+              )}
+
+              {/* Divider when quick login is available */}
+              {!resetMode && !registerMode && ((biometric.isAvailable && biometric.hasCredentials) || (passkeyAvailable && !biometric.isNative)) && (
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-border" />
