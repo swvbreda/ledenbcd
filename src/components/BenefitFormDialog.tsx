@@ -41,6 +41,8 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
     featured: false,
     active: true,
     sort_order: 0,
+    price: "" as string,
+    original_price: "" as string,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
