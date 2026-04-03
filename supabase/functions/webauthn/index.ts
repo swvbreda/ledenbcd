@@ -447,7 +447,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "RP ID mismatch" }, 400);
       }
 
-      const clientDataHash = new Uint8Array(await crypto.subtle.digest("SHA-256", clientDataJSON));
+      const clientDataHash = new Uint8Array(await crypto.subtle.digest("SHA-256", toArrayBuffer(clientDataJSON)));
       const signedData = new Uint8Array(authData.length + clientDataHash.length);
       signedData.set(authData, 0);
       signedData.set(clientDataHash, authData.length);
