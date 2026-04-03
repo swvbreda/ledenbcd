@@ -35,6 +35,8 @@ import LedenvoordelenPage from "./pages/LedenvoordelenPage";
 import ExternProfielPage from "./pages/ExternProfielPage";
 import ExternProductDetailPage from "./pages/ExternProductDetailPage";
 import BenefitDetailPage from "./pages/BenefitDetailPage";
+import MfaSetupPage from "./pages/MfaSetupPage";
+import MfaVerifyPage from "./pages/MfaVerifyPage";
 
 import NotFound from "./pages/NotFound";
 
