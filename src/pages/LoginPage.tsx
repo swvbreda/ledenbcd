@@ -69,6 +69,14 @@ const LoginPage = () => {
     }
   };
 
+  const handlePasskeyLogin = async () => {
+    setError("");
+    const result = await passkeys.authenticateWithPasskey();
+    if (result.error) {
+      setError(result.error);
+    }
+  };
+
   const handleSaveBiometric = async (save: boolean) => {
     if (save && pendingCredentials) {
       await biometric.saveCredentials(pendingCredentials.email, pendingCredentials.password);
