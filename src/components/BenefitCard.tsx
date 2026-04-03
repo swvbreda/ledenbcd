@@ -88,9 +88,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
 
         {/* Fallback: text-based discount info when no numeric price */}
         {benefit.price == null && benefit.discount_info && (
-          <div className="mt-2 rounded-lg bg-primary px-3 py-2">
-            <p className="text-xs font-bold text-primary-foreground leading-relaxed">{benefit.discount_info}</p>
-          </div>
+          <p className="mt-2 text-sm font-semibold text-primary leading-snug line-clamp-2">{benefit.discount_info}</p>
         )}
       </CardContent>
     </Card>
