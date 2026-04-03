@@ -29,6 +29,8 @@ const Index = () => {
         subtitle="Welkom bij het Ledenbestand Dashboard"
       />
 
+      <MemberAlertBanner />
+
       <BestuurOverzicht members={members} />
 
       <StatCards members={members} />
