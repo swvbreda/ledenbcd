@@ -29,7 +29,9 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
 
   // Cities with >50% representation
   const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-  const represented = allMembers;
+  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
+  const unconvertedLeads = mergedLeads.filter((l) => !convertedLeadIds.has(l.id));
+  const represented = [...allMembers, ...unconvertedLeads];
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
     const gemeente = getGemeente(m.plaats);
