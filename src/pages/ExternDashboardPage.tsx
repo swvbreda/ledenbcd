@@ -21,6 +21,15 @@ interface OrgInfo {
   name: string;
   type: string;
   approved: boolean;
+  contact_email: string | null;
+  contact_name: string | null;
+  notes: string | null;
+}
+
+interface OrgUser {
+  id: string;
+  email: string;
+  created_at: string;
 }
 
 interface MemberBasic {
