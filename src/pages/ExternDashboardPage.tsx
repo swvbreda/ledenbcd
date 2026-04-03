@@ -55,6 +55,10 @@ const ExternDashboardPage = () => {
   const [isExtern, setIsExtern] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBenefit, setEditBenefit] = useState<Benefit | null>(null);
+  const [orgDialogOpen, setOrgDialogOpen] = useState(false);
+  const [orgUsers, setOrgUsers] = useState<OrgUser[]>([]);
+  const [orgEditForm, setOrgEditForm] = useState({ contact_name: "", contact_email: "", notes: "" });
+  const [savingOrg, setSavingOrg] = useState(false);
 
   const isSupplier = org?.type === "leverancier";
 
