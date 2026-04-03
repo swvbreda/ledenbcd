@@ -154,6 +154,16 @@ export default function BenefitFormDialog({ open, onOpenChange, benefit, supplie
             <Label>Ledenvoordeel / korting</Label>
             <Input value={form.discount_info} onChange={(e) => set("discount_info", e.target.value)} placeholder="bijv. 10% korting voor BCD-leden" />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Ledenprijs (€)</Label>
+              <Input type="number" step="0.01" value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="bijv. 474.09" />
+            </div>
+            <div>
+              <Label>Reguliere prijs (€)</Label>
+              <Input type="number" step="0.01" value={form.original_price} onChange={(e) => set("original_price", e.target.value)} placeholder="bijv. 557.75" />
+            </div>
+          </div>
           <div>
             <Label>Contact e-mail</Label>
             <Input type="email" value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} />
