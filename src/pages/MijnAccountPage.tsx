@@ -431,6 +431,7 @@ export default function MijnAccountPage() {
             </Card>
           )}
 
+          <MfaSection />
           <NotificationSection />
           <PasswordSection />
         </>
