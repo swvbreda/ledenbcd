@@ -191,6 +191,93 @@ function BiometricSection() {
 }
 
 
+// ── Passkey Section (Web biometric) ──
+function PasskeySection() {
+  const passkeys = usePasskeys();
+  const [registeredKeys, setRegisteredKeys] = useState<any[]>([]);
+  const [loadingKeys, setLoadingKeys] = useState(true);
+
+  useEffect(() => {
+    supabase.from("passkey_credentials").select("id, device_name, created_at")
+      .then(({ data }) => { setRegisteredKeys(data || []); setLoadingKeys(false); });
+  }, []);
+
+  const handleRegister = async () => {
+    const deviceName = navigator.userAgent.includes("iPhone") || navigator.userAgent.includes("iPad")
+      ? "iPhone/iPad"
+      : navigator.userAgent.includes("Android")
+      ? "Android"
+      : navigator.userAgent.includes("Mac")
+      ? "Mac"
+      : navigator.userAgent.includes("Windows")
+      ? "Windows"
+      : "Apparaat";
+
+    const result = await passkeys.registerPasskey(deviceName);
+    if (result.success) {
+      toast.success("Passkey succesvol geregistreerd!");
+      // Refresh list
+      const { data } = await supabase.from("passkey_credentials").select("id, device_name, created_at");
+      setRegisteredKeys(data || []);
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("passkey_credentials").delete().eq("id", id);
+    if (error) { toast.error("Kon passkey niet verwijderen"); return; }
+    setRegisteredKeys((prev) => prev.filter((k) => k.id !== id));
+    toast.success("Passkey verwijderd");
+  };
+
+  if (!passkeys.available) return null;
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <ScanFace size={16} className="text-muted-foreground" />
+        <h3 className="text-sm font-semibold font-display">Inloggen met Face ID / vingerafdruk</h3>
+      </div>
+      <div className="space-y-3 max-w-sm">
+        <p className="text-xs text-muted-foreground">
+          Registreer dit apparaat om snel in te loggen met gezichtsherkenning of vingerafdruk.
+        </p>
+
+        {/* Registered passkeys */}
+        {!loadingKeys && registeredKeys.length > 0 && (
+          <div className="space-y-2">
+            {registeredKeys.map((key) => (
+              <div key={key.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                <div>
+                  <p className="text-sm font-medium">{key.device_name || "Apparaat"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(key.created_at).toLocaleDateString("nl-NL")}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(key.id)}>
+                  <Trash2 size={14} className="text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button
+          onClick={handleRegister}
+          disabled={passkeys.loading}
+          size="sm"
+          variant={registeredKeys.length > 0 ? "outline" : "default"}
+        >
+          <ScanFace size={14} className="mr-1.5" />
+          {passkeys.loading ? "Bezig..." : registeredKeys.length > 0 ? "Nog een apparaat toevoegen" : "Activeer voor dit apparaat"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+
 interface BoardMemberData {
   id: string;
   naam: string;
