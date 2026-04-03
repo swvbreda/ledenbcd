@@ -14,7 +14,7 @@ import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
-import StatistiekenPage from "./pages/StatistiekenPage";
+
 import LoginPage from "./pages/LoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AccountBeheerPage from "./pages/AccountBeheerPage";
@@ -74,7 +74,7 @@ const App = () => (
                   <Route path="/leden/:id" element={<MemberDetail />} />
                   <Route path="/locaties" element={<LocatiesPage />} />
                   <Route path="/locaties/:gemeente" element={<GemeenteDetailPage />} />
-                  <Route path="/statistieken" element={<StatistiekenPage />} />
+                  
                   <Route path="/accounts" element={<AccountBeheerPage />} />
                   <Route path="/goedkeuringen" element={<GoedkeuringenPage />} />
                   <Route path="/bestuur-beheer" element={<BestuurBeheerPage />} />
@@ -82,8 +82,6 @@ const App = () => (
                   <Route path="/enquetes" element={<EnquetesPage />} />
                   <Route path="/enquetes/:id" element={<EnqueteInvullenPage />} />
                   <Route path="/enquetes/:id/beheer" element={<EnqueteBeheerPage />} />
-                  <Route path="/oud-leden" element={<LedenPage />} />
-                  <Route path="/marktaandeel" element={<LocatiesPage />} />
                   <Route path="/contributie" element={<ContributiePage />} />
                   <Route path="/externe-partijen" element={<ExternePartijenPage />} />
                   <Route path="/externe-partijen/:id" element={<ExternePartijDetailPage />} />
