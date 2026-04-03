@@ -27,6 +27,7 @@ export default function EnquetesPage() {
   const navigate = useNavigate();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [completions, setCompletions] = useState<string[]>([]);
+  const [responseCounts, setResponseCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
