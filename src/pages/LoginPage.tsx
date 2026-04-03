@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Lock, LogIn, UserPlus } from "lucide-react";
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import { Mail, Lock, LogIn, UserPlus, Fingerprint } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 
 const LoginPage = () => {
   const { user, loading: authLoading, isExtern } = useAuth();
+  const biometric = useBiometricAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -16,6 +18,8 @@ const LoginPage = () => {
   const [registerMode, setRegisterMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
 
   if (authLoading) {
     return (
@@ -27,7 +31,6 @@ const LoginPage = () => {
 
   if (user) {
     if (isExtern) return <Navigate to="/extern" replace />;
-    // MFA check handled by ProtectedRoute — just go to home
     return <Navigate to="/" replace />;
   }
 
@@ -40,8 +43,31 @@ const LoginPage = () => {
       setError(error.message === "Invalid login credentials"
         ? "Ongeldig e-mailadres of wachtwoord"
         : error.message);
+      setLoading(false);
+    } else {
+      // Login succeeded — offer biometric save if available and not yet stored
+      if (biometric.isAvailable && !biometric.hasCredentials) {
+        setPendingCredentials({ email, password });
+        setShowBiometricPrompt(true);
+      }
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleBiometricLogin = async () => {
+    setError("");
+    const result = await biometric.loginWithBiometric();
+    if (result.error) {
+      setError(result.error);
+    }
+  };
+
+  const handleSaveBiometric = async (save: boolean) => {
+    if (save && pendingCredentials) {
+      await biometric.saveCredentials(pendingCredentials.email, pendingCredentials.password);
+    }
+    setPendingCredentials(null);
+    setShowBiometricPrompt(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -128,7 +154,34 @@ const LoginPage = () => {
             <p className="text-sm text-muted-foreground mt-1">{getSubtitle()}</p>
           </div>
 
-          {resetSent ? (
+          {/* Biometric save prompt after successful login */}
+          {showBiometricPrompt ? (
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <Fingerprint className="h-10 w-10 mx-auto mb-3 text-primary" />
+                <p className="text-sm font-medium">
+                  Wil je voortaan inloggen met {biometric.biometryLabel}?
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Je kunt dit later uitschakelen via Mijn Account
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSaveBiometric(false)}
+                  className="flex-1 rounded-md py-2.5 text-sm font-medium border border-border hover:bg-muted transition-colors"
+                >
+                  Nee, bedankt
+                </button>
+                <button
+                  onClick={() => handleSaveBiometric(true)}
+                  className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-md py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <Fingerprint size={16} /> Ja, activeer
+                </button>
+              </div>
+            </div>
+          ) : resetSent ? (
             <div className="text-center space-y-3">
               <p className="text-sm text-muted-foreground">
                 Als er een account bestaat met dit e-mailadres, ontvang je een e-mail met een link om je wachtwoord te herstellen.
@@ -155,6 +208,30 @@ const LoginPage = () => {
               onSubmit={resetMode ? handleResetPassword : registerMode ? handleRegister : handleLogin}
               className="space-y-4"
             >
+              {/* Biometric quick-login button */}
+              {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
+                <button
+                  type="button"
+                  onClick={handleBiometricLogin}
+                  disabled={biometric.loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-medium border-2 border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50 mb-2"
+                >
+                  <Fingerprint size={20} />
+                  {biometric.loading ? "Verifiëren..." : `Inloggen met ${biometric.biometryLabel}`}
+                </button>
+              )}
+
+              {!resetMode && !registerMode && biometric.isAvailable && biometric.hasCredentials && (
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-card px-2 text-muted-foreground">of met wachtwoord</span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-medium text-muted-foreground mb-1 block">E-mail</label>
                 <div className="relative">
