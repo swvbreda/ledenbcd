@@ -58,7 +58,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
       </div>
 
       {/* Product info – provider → title → description → price */}
-      <CardContent className="p-4 space-y-1">
+      <CardContent className="p-4 space-y-1.5">
         {benefit.provider_name && (
           <p className="text-xs text-muted-foreground">{benefit.provider_name}</p>
         )}
@@ -67,8 +67,8 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
           <p className="text-sm text-muted-foreground line-clamp-2">{benefit.description}</p>
         )}
         {benefit.discount_info && (
-          <div className="mt-3 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
-            <p className="text-sm font-semibold text-primary leading-snug">{benefit.discount_info}</p>
+          <div className="mt-2 rounded-lg bg-primary px-3 py-2">
+            <p className="text-sm font-bold text-primary-foreground leading-snug">{benefit.discount_info}</p>
           </div>
         )}
       </CardContent>
