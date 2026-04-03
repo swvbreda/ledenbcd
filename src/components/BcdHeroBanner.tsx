@@ -28,7 +28,7 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           height: "520px",
           objectFit: "contain",
           mixBlendMode: "multiply",
-          opacity: 0.35,
+          opacity: 0.6,
         }}
       />
 
