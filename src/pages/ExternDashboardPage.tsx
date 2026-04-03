@@ -52,6 +52,7 @@ interface MemberBasic {
 
 const ExternDashboardPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [org, setOrg] = useState<OrgInfo | null>(null);
   const [members, setMembers] = useState<MemberBasic[]>([]);
   const [benefits, setBenefits] = useState<Benefit[]>([]);
