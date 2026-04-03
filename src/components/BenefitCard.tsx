@@ -22,7 +22,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
 
   return (
     <Card
-      className={`overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group cursor-pointer border-border/50 ${!benefit.active ? "opacity-50" : ""}`}
+      className={`overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group cursor-pointer border-border/50 flex flex-col ${!benefit.active ? "opacity-50" : ""}`}
       onClick={handleClick}
     >
       {/* Product image */}
@@ -57,15 +57,25 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
         )}
       </div>
 
-      {/* Product info – provider → title → description → price */}
-      <CardContent className="p-4 space-y-1.5">
-        {benefit.provider_name && (
-          <p className="text-xs text-muted-foreground">{benefit.provider_name}</p>
-        )}
-        <h3 className="font-bold text-base leading-snug line-clamp-2">{benefit.title}</h3>
-        {benefit.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">{benefit.description}</p>
-        )}
+      {/* Product info – flex layout to align rows across cards */}
+      <CardContent className="p-4 flex flex-col flex-1">
+        {/* Provider name – fixed height row */}
+        <p className="text-xs text-muted-foreground min-h-[1rem]">
+          {benefit.provider_name || "\u00A0"}
+        </p>
+
+        {/* Title – fixed 2-line height */}
+        <h3 className="font-bold text-base leading-snug line-clamp-2 min-h-[2.5rem] mt-1">
+          {benefit.title}
+        </h3>
+
+        {/* Description – fixed 2-line height */}
+        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem] mt-1">
+          {benefit.description || "\u00A0"}
+        </p>
+
+        {/* Spacer pushes price to bottom */}
+        <div className="flex-1" />
 
         {/* Price display */}
         {benefit.price != null && (
@@ -90,7 +100,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
 
         {/* Fallback: text-based discount info when no numeric price */}
         {benefit.price == null && benefit.discount_info && (
-          <p className="mt-2 text-sm font-semibold text-primary leading-snug line-clamp-2">{benefit.discount_info}</p>
+          <p className="mt-3 text-sm font-semibold text-primary leading-snug line-clamp-2">{benefit.discount_info}</p>
         )}
       </CardContent>
     </Card>
