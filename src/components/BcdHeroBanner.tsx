@@ -13,14 +13,13 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
     <div className="relative overflow-hidden rounded-xl" style={{ background: "linear-gradient(135deg, hsl(0 85% 28%), hsl(0 85% 38%), hsl(0 70% 32%))" }}>
       {/* SVG fan rays – large, partially transparent, offset right */}
       <svg
-        className="absolute -right-16 -bottom-20 opacity-[0.12] pointer-events-none"
-        width="520"
-        height="400"
+        className="absolute -right-10 -bottom-16 opacity-[0.22] pointer-events-none"
+        width="620"
+        height="480"
         viewBox="0 0 520 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* 7 fan rays spreading upward-left from a bottom-right origin */}
         {[0, 1, 2, 3, 4, 5, 6].map((i) => {
           const baseAngle = -110;
           const spread = 12;
@@ -29,7 +28,6 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
           const len = 380;
           const x = 460 + Math.cos(rad) * len;
           const y = 380 + Math.sin(rad) * len;
-          // slightly narrower second point for each ray
           const rad2 = ((angle + spread * 0.55) * Math.PI) / 180;
           const x2 = 460 + Math.cos(rad2) * len;
           const y2 = 380 + Math.sin(rad2) * len;
@@ -45,9 +43,9 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
 
       {/* Second set – smaller, top-left for depth */}
       <svg
-        className="absolute -left-24 -top-16 opacity-[0.07] pointer-events-none rotate-180"
-        width="360"
-        height="280"
+        className="absolute -left-20 -top-10 opacity-[0.14] pointer-events-none rotate-180"
+        width="440"
+        height="340"
         viewBox="0 0 520 400"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
