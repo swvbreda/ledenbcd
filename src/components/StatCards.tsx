@@ -82,10 +82,10 @@ const StatCards = ({ members }: StatCardsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+    <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
       {/* Aangesloten Coffeeshops */}
       <div
-        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
+        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/leden?tab=coffeeshops")}
       >
         <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Gemeenten */}
       <div
-        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
+        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Marktaandeel gauge */}
       <div
-        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
+        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -129,7 +129,7 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* G4 dekking */}
       <div
-        className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 cursor-pointer hover:border-primary transition-colors"
+        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
         <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       </div>
 
       {/* Benchmark */}
-      <div className="bg-white rounded-lg border-2 border-primary/60 p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
+      <div className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
           <BarChart3 size={18} className="text-primary" />
