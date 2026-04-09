@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import type { Member } from "@/data/types";
-import { getArchivedIds } from "@/hooks/useArchive";
 import { getMembershipYears } from "@/lib/membership";
 import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
@@ -14,15 +13,11 @@ export function useMembers() {
   const [filterJaren, setFilterJaren] = useState("");
   const { conversions } = useLeadConversions();
 
-  const archivedIds = useMemo(() => getArchivedIds(), []);
   const effectiveAll = useMemo(
     () => [...rawMembers, ...rawLeads],
     [rawMembers, rawLeads]
   );
-  const allIncludingLeads = useMemo(
-    () => effectiveAll.filter((m) => !archivedIds.includes(m.id)),
-    [effectiveAll, archivedIds]
-  );
+  const allIncludingLeads = effectiveAll;
 
   /** Set of lead IDs (leads are those in rawLeads) */
   const activeLeadIds = useMemo(
