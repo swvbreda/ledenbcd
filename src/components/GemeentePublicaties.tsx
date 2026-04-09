@@ -85,10 +85,12 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
   useEffect(() => {
     if (!gemeentenaam.trim() || gemeentenaam.trim().length < 3) return;
     if (autoSearchDone.current === gemeentenaam) return;
-    autoSearchDone.current = gemeentenaam;
-    const timer = setTimeout(() => handleSearch("coffeeshop beleid"), 400);
+    const timer = setTimeout(() => {
+      autoSearchDone.current = gemeentenaam;
+      handleSearch("coffeeshop beleid");
+    }, 400);
     return () => clearTimeout(timer);
-  }, [gemeentenaam]);
+  }, [gemeentenaam, handleSearch]);
 
   const visibleDocs = showAll ? documents : documents.slice(0, 5);
 
