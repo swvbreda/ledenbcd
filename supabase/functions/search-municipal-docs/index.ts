@@ -380,7 +380,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
     await Promise.all(collections.map(async ({ connection, type, query }) => {
       try {
         const encoded = encodeURIComponent(query);
-        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=5&sortKeys=modified,,0`;
+        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=10&sortKeys=modified,,0`;
 
         console.log(`Searching Officiële Bekendmakingen (${type}) for: ${gemeentenaam}`);
         const res = await fetchWithTimeout(url, undefined, 8000);
