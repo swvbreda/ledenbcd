@@ -132,6 +132,8 @@ export default function MfaVerifyPage() {
     const result = await passkeys.authenticateWithPasskey(user?.email);
     setLoading(false);
     if (result.success) {
+      // Passkey already proves identity — mark MFA as verified
+      markEmailMfaVerified();
       toast.success("Verificatie geslaagd!");
       navigate("/", { replace: true });
     } else if (result.error) {
