@@ -54,12 +54,18 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
       if (error) throw error;
 
       // Filter: alleen documenten van deze gemeente + alleen met URL
-      const gemeenteDocs = (data.documents || []).filter((doc: MunicipalDocument) => {
-        if (!doc.url) return false;
-        const org = (doc.organization || "").toLowerCase();
-        const naam = gemeentenaam.toLowerCase();
-        return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
-      });
+      const gemeenteDocs = (data.documents || [])
+        .filter((doc: MunicipalDocument) => {
+          if (!doc.url || !doc.date) return false;
+          const org = (doc.organization || "").toLowerCase();
+          const naam = gemeentenaam.toLowerCase();
+          return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
+        })
+        .sort((a: MunicipalDocument, b: MunicipalDocument) => {
+          const da = new Date(a.date!).getTime();
+          const db = new Date(b.date!).getTime();
+          return db - da;
+        });
 
       setDocuments(gemeenteDocs);
       setTotal(gemeenteDocs.length);
@@ -78,7 +84,7 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
     return () => clearTimeout(timer);
   }, [gemeentenaam]);
 
-  const visibleDocs = showAll ? documents : documents.slice(0, 2);
+  const visibleDocs = showAll ? documents : documents.slice(0, 5);
 
   return (
     <div className="bg-card rounded-lg border border-border">
@@ -185,18 +191,18 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
                 })}
               </div>
 
-              {!showAll && documents.length > 2 && (
+              {!showAll && documents.length > 5 && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
                   onClick={() => setShowAll(true)}
                 >
-                  Bekijk meer ({documents.length - 2} overige documenten)
+                  Bekijk meer ({documents.length - 5} overige documenten)
                 </Button>
               )}
 
-              {showAll && documents.length > 2 && (
+              {showAll && documents.length > 5 && (
                 <Button
                   variant="ghost"
                   size="sm"
