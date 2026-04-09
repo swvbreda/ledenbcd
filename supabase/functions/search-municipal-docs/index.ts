@@ -374,10 +374,9 @@ async function searchCVDR(gemeentenaam: string) {
 
 async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
-    // Search Gemeenteblad + Kamerstukken for coffeeshop-related docs
+    // Only search Gemeenteblad for policy-level documents (no individual permits, no Kamerstukken)
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop softdrugs gedoogbeleid coffeeshopbeleid damoclesbeleid cannabis hennep opiumwet ingezetenencriterium"` },
-      { type: "Kamerstuk", query: `type="Kamerstuk" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshopbeleid gedoogbeleid damoclesbeleid softdrugsbeleid cannabisbeleid coffeeshop beleid gedoogverklaring handhavingsbeleid" NOT dcterms.title any "exploitatievergunning verleend verlenging aanvraag omgevingsvergunning"` },
     ];
 
     const allResults: any[] = [];
@@ -418,8 +417,14 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
             ? `https://zoek.officielebekendmakingen.nl/${identifier}.html`
             : null;
 
-          const isKamerstuk = type === "Kamerstuk" || (identifier && identifier.startsWith("kst-"));
-          const scoreBase = isKamerstuk ? 15 : 20;
+          // Skip Kamerstukken that leak through
+          if (identifier && identifier.startsWith("kst-")) continue;
+          
+          // Skip individual permit decisions
+          const titleLower = (title || "").toLowerCase();
+          if (titleLower.includes("verleend") || titleLower.includes("exploitatievergunning") || titleLower.includes("omgevingsvergunning")) continue;
+
+          const scoreBase = 20;
           
           // Recenter documenten scoren hoger — ouder dan 5 jaar krijgt lagere score
           let dateBonus = 0;
