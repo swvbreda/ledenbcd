@@ -79,7 +79,53 @@ export async function convertLead(params: {
   const userId = session?.session?.user?.id;
   if (!userId) throw new Error("Niet ingelogd");
 
-  const { error } = await supabase.from("lead_conversions").insert({
+  // 1. Read the lead data
+  const { data: leadRows, error: readErr } = await supabase
+    .from("members_data")
+    .select("data")
+    .eq("id", params.leadId)
+    .eq("member_type", "lead");
+  if (readErr) throw readErr;
+  if (!leadRows || leadRows.length === 0) throw new Error("Lead niet gevonden");
+
+  const leadData = leadRows[0].data as Record<string, unknown>;
+
+  // 2. Build new member data with conversion overrides
+  const memberData = {
+    ...leadData,
+    id: params.lidnummer,
+    lidSinds: params.lidSinds,
+    factuurBedrijfsnaam: params.factuurBedrijfsnaam || leadData.factuurBedrijfsnaam,
+    factuurKvk: params.factuurKvk || undefined,
+    factuurEmail: params.factuurEmail || leadData.factuurEmail,
+    factuurAdres: params.factuurAdres || leadData.factuurAdres,
+    factuurPostcode: params.factuurPostcode || leadData.factuurPostcode,
+    factuurPlaats: params.factuurPlaats || leadData.factuurPlaats,
+  };
+
+  // 3. Insert new member row
+  const { error: insertErr } = await supabase
+    .from("members_data")
+    .insert([{ id: params.lidnummer, member_type: "member", data: memberData as any }]);
+  if (insertErr) throw insertErr;
+
+  // 4. Delete old lead row
+  await supabase
+    .from("members_data")
+    .delete()
+    .eq("id", params.leadId)
+    .eq("member_type", "lead");
+
+  // 5. Auto-add lead's email to allowed emails for registration
+  if (params.leadEmail) {
+    await supabase.from("member_allowed_emails").insert({
+      email: params.leadEmail.toLowerCase().trim(),
+      member_id: params.lidnummer,
+    });
+  }
+
+  // 6. Record conversion for reference (redirect old URLs etc.)
+  await supabase.from("lead_conversions").insert({
     lead_id: params.leadId,
     lidnummer: params.lidnummer,
     lid_sinds: params.lidSinds,
@@ -91,16 +137,6 @@ export async function convertLead(params: {
     factuur_plaats: params.factuurPlaats || null,
     created_by: userId,
   });
-
-  if (error) throw error;
-
-  // Auto-add lead's email to allowed emails for registration
-  if (params.leadEmail) {
-    await supabase.from("member_allowed_emails").insert({
-      email: params.leadEmail.toLowerCase().trim(),
-      member_id: params.lidnummer,
-    });
-  }
 
   const data = await fetchConversions();
   notifyListeners(data);

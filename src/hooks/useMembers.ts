@@ -6,34 +6,6 @@ import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCat
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
-/** Apply conversions: converted leads become members with new id/fields */
-function applyConversions(members: Member[], leads: Member[], conversions: LeadConversion[]) {
-  const conversionMap = new Map(conversions.map((c) => [c.lead_id, c]));
-  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
-
-  const convertedMembers = leads
-    .filter((l) => convertedLeadIds.has(l.id))
-    .map((l) => {
-      const conv = conversionMap.get(l.id)!;
-      return {
-        ...l,
-        id: conv.lidnummer,
-        lidSinds: conv.lid_sinds,
-        factuurBedrijfsnaam: conv.factuur_bedrijfsnaam || l.factuurBedrijfsnaam,
-        factuurKvk: conv.factuur_kvk || undefined,
-        factuurEmail: conv.factuur_email || l.factuurEmail,
-        factuurAdres: conv.factuur_adres || l.factuurAdres,
-        factuurPostcode: conv.factuur_postcode || l.factuurPostcode,
-        factuurPlaats: conv.factuur_plaats || l.factuurPlaats,
-      } as Member;
-    });
-
-  const activeLeads = leads.filter((l) => !convertedLeadIds.has(l.id));
-  const allMembersCombined = [...members, ...convertedMembers];
-
-  return { members: allMembersCombined, leads: activeLeads };
-}
-
 export function useMembers() {
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,25 +14,20 @@ export function useMembers() {
   const [filterJaren, setFilterJaren] = useState("");
   const { conversions } = useLeadConversions();
 
-  const { members: effectiveMembers, leads: effectiveLeads } = useMemo(
-    () => applyConversions(rawMembers, rawLeads, conversions),
-    [rawMembers, rawLeads, conversions]
-  );
-
   const archivedIds = useMemo(() => getArchivedIds(), []);
   const effectiveAll = useMemo(
-    () => [...effectiveMembers, ...effectiveLeads],
-    [effectiveMembers, effectiveLeads]
+    () => [...rawMembers, ...rawLeads],
+    [rawMembers, rawLeads]
   );
   const allIncludingLeads = useMemo(
     () => effectiveAll.filter((m) => !archivedIds.includes(m.id)),
     [effectiveAll, archivedIds]
   );
 
-  /** Set of lead IDs that have NOT been converted */
+  /** Set of lead IDs (leads are those in rawLeads) */
   const activeLeadIds = useMemo(
-    () => new Set(effectiveLeads.map((l) => l.id)),
-    [effectiveLeads]
+    () => new Set(rawLeads.map((l) => l.id)),
+    [rawLeads]
   );
 
   const cities = useMemo(
@@ -134,8 +101,8 @@ export function useMembers() {
     clearFilters,
     allMembers: rawMembers,
     activeLeadIds,
-    effectiveMembers,
-    effectiveLeads,
+    effectiveMembers: rawMembers,
+    effectiveLeads: rawLeads,
     conversions,
     dataLoading,
   };
