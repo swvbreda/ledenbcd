@@ -10,7 +10,7 @@ import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
-import { getArchivedIds } from "@/hooks/useArchive";
+
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,12 +49,8 @@ const LedenPage = () => {
 
   const { members: mergedSearched } = useMergedMembers(searchedMembers);
 
-  const archivedIds = useMemo(() => getArchivedIds(), []);
-  const archivedMembersRaw = useMemo(
-    () => allMembersAndLeads.filter((m) => archivedIds.includes(m.id)),
-    [archivedIds]
-  );
-  const { members: archivedMembers } = useMergedMembers(archivedMembersRaw);
+  const { rawOldMembers } = useMembersData();
+  const { members: archivedMembers } = useMergedMembers(rawOldMembers);
 
   const leadIdSet = useMemo(() => activeLeadIds, [activeLeadIds]);
 
