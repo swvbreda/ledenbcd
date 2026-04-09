@@ -374,9 +374,9 @@ async function searchCVDR(gemeentenaam: string) {
 
 async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
-    // Only search Gemeenteblad for policy-level documents (no individual permits, no Kamerstukken)
+    // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshopbeleid gedoogbeleid damoclesbeleid softdrugsbeleid cannabisbeleid coffeeshop beleid gedoogverklaring handhavingsbeleid" NOT dcterms.title any "exploitatievergunning verleend verlenging aanvraag omgevingsvergunning"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs softdrugsbeleid cannabisbeleid gedoogverklaring damoclesbeleid" NOT dcterms.title any "exploitatievergunning verleend verlenging aanvraag omgevingsvergunning"` },
     ];
 
     const allResults: any[] = [];
