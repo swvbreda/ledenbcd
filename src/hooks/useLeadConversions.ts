@@ -106,7 +106,7 @@ export async function convertLead(params: {
   // 3. Insert new member row
   const { error: insertErr } = await supabase
     .from("members_data")
-    .insert({ id: params.lidnummer, member_type: "member", data: memberData });
+    .insert({ id: params.lidnummer, member_type: "member", data: memberData as unknown as Record<string, unknown> });
   if (insertErr) throw insertErr;
 
   // 4. Delete old lead row
