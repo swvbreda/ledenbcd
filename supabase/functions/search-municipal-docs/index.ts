@@ -419,6 +419,12 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
           const titleLower = (title || "").toLowerCase();
           // Skip omgevingsvergunning (not coffeeshop related)
           if (titleLower.includes("omgevingsvergunning") && !titleLower.includes("coffeeshop")) continue;
+          
+          // Skip generic horeca exploitatievergunningen that don't mention coffeeshop
+          const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep"];
+          const isCoffeeshopRelated = coffeeshopTerms.some(t => titleLower.includes(t));
+          if (titleLower.includes("exploitatievergunning") && titleLower.includes("horeca") && !isCoffeeshopRelated) continue;
+          if (titleLower.includes("horecabedrijf exploitatievergunning") && !isCoffeeshopRelated) continue;
 
           const scoreBase = 20;
           
