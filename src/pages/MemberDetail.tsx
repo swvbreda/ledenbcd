@@ -280,15 +280,21 @@ const MemberDetail = () => {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Annuleren</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => {
-                              if (archived) {
-                                restoreMember(member.id);
-                                setArchived(false);
-                                toast.success(`${member.naam} is hersteld`);
-                              } else {
-                                archiveMember(member.id);
-                                setArchived(true);
-                                toast.success(`${member.naam} is gearchiveerd`);
+                            onClick={async () => {
+                              try {
+                                if (archived) {
+                                  await restoreMember(member.id);
+                                  setArchived(false);
+                                  toast.success(`${member.naam} is hersteld`);
+                                } else {
+                                  await archiveMember(member.id);
+                                  setArchived(true);
+                                  toast.success(`${member.naam} is gearchiveerd`);
+                                }
+                                refetchMembers();
+                              } catch (err) {
+                                toast.error("Fout bij archiveren/herstellen");
+                                console.error(err);
                               }
                             }}
                           >
