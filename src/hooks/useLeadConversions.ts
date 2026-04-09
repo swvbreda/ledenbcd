@@ -73,6 +73,7 @@ export async function convertLead(params: {
   factuurAdres?: string;
   factuurPostcode?: string;
   factuurPlaats?: string;
+  leadEmail?: string;
 }) {
   const { data: session } = await supabase.auth.getSession();
   const userId = session?.session?.user?.id;
