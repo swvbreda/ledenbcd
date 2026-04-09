@@ -19,6 +19,21 @@ function bufferToBase64url(buffer: ArrayBuffer): string {
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function getUserIdFromAccessToken(accessToken: string): string | null {
+  try {
+    const [, payload] = accessToken.split(".");
+    if (!payload) return null;
+
+    let normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    while (normalized.length % 4) normalized += "=";
+
+    const decoded = JSON.parse(atob(normalized));
+    return typeof decoded?.sub === "string" ? decoded.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 async function getAuthHeaders() {
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
@@ -240,10 +255,12 @@ export function usePasskeys() {
 
       // Set the session from the returned tokens
       if (result.session) {
+        const verifiedUserId = result.session.user?.id ?? getUserIdFromAccessToken(result.session.access_token);
+
         // Mark MFA as verified BEFORE setting session, so the auth state
         // change handler sees the flag immediately
-        if (result.session.user?.id) {
-          localStorage.setItem(`emfa_${result.session.user.id}`, Date.now().toString());
+        if (verifiedUserId) {
+          localStorage.setItem(`emfa_${verifiedUserId}`, Date.now().toString());
         }
 
         await supabase.auth.setSession({
