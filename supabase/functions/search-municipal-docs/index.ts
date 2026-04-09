@@ -310,9 +310,9 @@ async function searchNotubizMeetings(
 
 async function searchCVDR(gemeentenaam: string) {
   try {
-    // Filter op geldende regelgeving — vervallen beleidsregels worden uitgesloten
+    // CVDR uses dcterms.creator for the municipality name (not "gemeente" index)
     const query = encodeURIComponent(
-      `gemeente="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog drugs opium hennep" AND overheidwet.geldigheidsstatus="geldend"`
+      `dcterms.creator="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog drugs opium hennep damocles"`
     );
     const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=5&sortKeys=dcterms.modified,,0`;
 
@@ -342,10 +342,6 @@ async function searchCVDR(gemeentenaam: string) {
       const identifier = getTag('dcterms:identifier');
       const modified = getTag('dcterms:modified');
       const subject = getTag('dcterms:subject');
-      const geldigheidsstatus = getTag('overheidwet:geldigheidsstatus') || 'geldend';
-
-      // Skip vervallen regelgeving (extra veiligheid naast query-filter)
-      if (geldigheidsstatus === 'vervallen' || geldigheidsstatus === 'ingetrokken') continue;
 
       const regelingUrl = identifier
         ? `https://lokaleregelgeving.overheid.nl/${identifier}`
