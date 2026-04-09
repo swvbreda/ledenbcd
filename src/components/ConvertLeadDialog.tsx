@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
+  const queryClient = useQueryClient();
   const { rawMembers } = useMembersData();
   const maxExistingId = rawMembers.reduce((max, m) => Math.max(max, m.id), 0);
   const suggestedLidnummer = getNextLidnummer(maxExistingId, conversions);
@@ -44,6 +46,7 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
         leadEmail: lead.email,
       });
       toast.success(`${lead.naam} is omgezet naar lid #${lidnummer}`);
+      queryClient.invalidateQueries({ queryKey: ["members-data"] });
       setOpen(false);
       onConverted?.();
     } catch (err: any) {
