@@ -240,20 +240,16 @@ export function usePasskeys() {
 
       // Set the session from the returned tokens
       if (result.session) {
+        // Mark MFA as verified BEFORE setting session, so the auth state
+        // change handler sees the flag immediately
+        if (result.session.user?.id) {
+          localStorage.setItem(`emfa_${result.session.user.id}`, Date.now().toString());
+        }
+
         await supabase.auth.setSession({
           access_token: result.session.access_token,
           refresh_token: result.session.refresh_token,
         });
-
-        // Passkey login already proves identity — mark MFA as verified
-        // so the user isn't asked to verify again
-        try {
-          const userId = result.session.user?.id || result.session.access_token;
-          // Decode user id from the JWT if not directly available
-          if (result.session.user?.id) {
-            localStorage.setItem(`emfa_${result.session.user.id}`, Date.now().toString());
-          }
-        } catch {}
       }
 
       setLoading(false);
