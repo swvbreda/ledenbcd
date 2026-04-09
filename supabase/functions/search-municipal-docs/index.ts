@@ -312,9 +312,9 @@ async function searchCVDR(gemeentenaam: string) {
   try {
     // CVDR uses dcterms.creator for the municipality name (not "gemeente" index)
     const query = encodeURIComponent(
-      `dcterms.creator="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog drugs opium hennep damocles"`
+      `dcterms.creator="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog gedoogverklaring drugs opium hennep damocles"`
     );
-    const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=5&sortKeys=dcterms.modified,,0`;
+    const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=10&sortKeys=dcterms.modified,,0`;
 
     console.log(`Searching CVDR for: ${gemeentenaam}`);
     const res = await fetchWithTimeout(url, undefined, 6000);
@@ -372,15 +372,15 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
     // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid exploitatievergunning"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND title any "coffeeshop coffeeshopbeleid gedoogbeleid gedoogverklaring softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid exploitatievergunning"` },
     ];
 
     const allResults: any[] = [];
 
-    await Promise.all(collections.map(async ({ connection, type, query }) => {
+    await Promise.all(collections.map(async ({ type, query }) => {
       try {
         const encoded = encodeURIComponent(query);
-        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=10&sortKeys=modified,,0`;
+        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=15&sortKeys=modified,,0`;
 
         console.log(`Searching Officiële Bekendmakingen (${type}) for: ${gemeentenaam}`);
         const res = await fetchWithTimeout(url, undefined, 8000);
