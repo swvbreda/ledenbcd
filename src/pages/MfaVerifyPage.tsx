@@ -246,6 +246,30 @@ export default function MfaVerifyPage() {
               </button>
             </>
           )}
+          {/* Passkey method */}
+          {method === "passkey" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <Fingerprint className="h-12 w-12 mx-auto mb-3 text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  Gebruik je vingerafdruk of Face ID om je identiteit te bevestigen
+                </p>
+              </div>
+              <Button
+                onClick={handlePasskeyVerify}
+                disabled={loading}
+                className="w-full gap-2"
+              >
+                <Fingerprint className="h-4 w-4" />
+                {loading ? "Verifiëren..." : "Verifieer met vingerafdruk"}
+              </Button>
+              {!passkeys.hasPasskey && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Je hebt nog geen passkey geregistreerd. Registreer er een via Mijn Account na het inloggen.
+                </p>
+              )}
+            </div>
+          )}
           {/* Email method */}
           {method === "email" && (
             <>
