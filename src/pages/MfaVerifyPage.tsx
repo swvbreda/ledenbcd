@@ -157,20 +157,36 @@ export default function MfaVerifyPage() {
           </div>
 
           {/* Method toggle */}
-          {hasTotp && (
+          {(hasTotp || passkeyAvailable) && (
             <div className="flex rounded-lg border mb-5 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => switchMethod("totp")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
-                  method === "totp"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Smartphone className="h-3.5 w-3.5" />
-                App
-              </button>
+              {hasTotp && (
+                <button
+                  type="button"
+                  onClick={() => switchMethod("totp")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
+                    method === "totp"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  App
+                </button>
+              )}
+              {passkeyAvailable && (
+                <button
+                  type="button"
+                  onClick={() => switchMethod("passkey")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
+                    method === "passkey"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Fingerprint className="h-3.5 w-3.5" />
+                  Vingerafdruk
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => switchMethod("email")}
