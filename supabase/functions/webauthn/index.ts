@@ -290,7 +290,6 @@ Deno.serve(async (req) => {
         },
         pubKeyCredParams: [{ alg: -7, type: "public-key" }],
         authenticatorSelection: {
-          authenticatorAttachment: "platform",
           userVerification: "required",
           residentKey: "preferred",
         },
