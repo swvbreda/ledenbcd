@@ -59,7 +59,7 @@ const AccountBeheerPage = () => {
   const [resetPwConfirm, setResetPwConfirm] = useState("");
   const [externalOrgLinksByUser, setExternalOrgLinksByUser] = useState<Record<string, ExternalOrgLink[]>>({});
 
-  const { allMembersAndLeads } = useMembersData();
+  const { allMembersAndLeads, isLoading: membersLoading } = useMembersData();
   const memberMap = useMemo(() => {
     const map = new Map<number, typeof allMembersAndLeads[0]>();
     allMembersAndLeads.forEach((m) => map.set(m.id, m));
