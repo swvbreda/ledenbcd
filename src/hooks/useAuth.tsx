@@ -114,23 +114,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Check email MFA flag synchronously FIRST to avoid async deadlocks
+        // Check email MFA flag synchronously to avoid unnecessary async MFA calls
         const emailMfaOk = checkEmailMfaFlag(session.user.id);
         if (emailMfaOk) {
           setMfaStatus("verified");
         }
-        // Break out of onAuthStateChange before doing async Supabase calls
-        // to prevent deadlocks (supabase-js limitation)
-        setTimeout(() => {
-          if (!mounted) return;
-          const tasks: Promise<void>[] = [checkRoleAndProfile(session.user.id)];
-          if (!emailMfaOk) {
-            tasks.push(checkMfaStatus(session.user.id));
-          }
-          Promise.all(tasks).finally(() => {
-            if (mounted) setLoading(false);
-          });
-        }, 0);
+        Promise.all([
+          checkRoleAndProfile(session.user.id),
+          ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
+        ]).finally(() => {
+          if (mounted) setLoading(false);
+        });
       } else {
         setIsAdmin(false);
         setIsExtern(false);
