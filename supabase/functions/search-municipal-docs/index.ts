@@ -611,16 +611,22 @@ async function searchORI(gemeentenaam: string, keywords: string) {
   const hits = data.hits?.hits || [];
   const total = data.hits?.total?.value || 0;
 
-  const documents = hits.map((hit: any) => ({
-    id: hit._id,
-    score: hit._score,
-    name: hit._source?.name || "Onbekend document",
-    url: hit._source?.url || null,
-    date: hit._source?.date || null,
-    organization: hit._source?.organization?.name || gemeentenaam,
-    description: hit._source?.description || null,
-    source: "ori",
-  }));
+  const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium", "wiet"];
+  const documents = hits
+    .map((hit: any) => ({
+      id: hit._id,
+      score: hit._score,
+      name: hit._source?.name || "Onbekend document",
+      url: hit._source?.url || null,
+      date: hit._source?.date || null,
+      organization: hit._source?.organization?.name || gemeentenaam,
+      description: hit._source?.description || null,
+      source: "ori",
+    }))
+    .filter((doc: any) => {
+      const nameLower = (doc.name || "").toLowerCase();
+      return coffeeshopTerms.some(t => nameLower.includes(t));
+    });
 
   return { documents, total };
 }
