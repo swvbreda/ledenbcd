@@ -263,10 +263,11 @@ Deno.serve(async (req) => {
       const rpId = getRequestRpId(req);
       const origin = getRequestOrigin(req);
       const db = getServiceClient();
-      const { data: existing } = await db.from("passkey_credentials").select("credential_id").eq("user_id", user.id);
+      const { data: existing } = await db.from("passkey_credentials").select("credential_id, transports").eq("user_id", user.id);
       const excludeCredentials = (existing || []).map((c: any) => ({
         id: c.credential_id,
         type: "public-key",
+        transports: c.transports || [],
       }));
 
       const challenge = randomChallenge();

@@ -171,8 +171,8 @@ export function usePasskeys() {
       return { success: true };
     } catch (err: any) {
       setLoading(false);
-      if (err?.name === "NotAllowedError") {
-        return { success: false, error: "Registratie geannuleerd of niet beschikbaar op dit apparaat. Controleer of je apparaat Touch ID, Face ID of Windows Hello ondersteunt." };
+      if (err?.name === "NotAllowedError" || err?.name === "InvalidStateError") {
+        return { success: false, error: "Dit apparaat heeft al een passkey geregistreerd (mogelijk via iCloud Keychain). Verwijder eerst de bestaande passkey en probeer opnieuw." };
       }
       console.error("Passkey register error:", err?.name, err?.message);
       return { success: false, error: `Registratie mislukt: ${err?.message || "onbekende fout"}` };
