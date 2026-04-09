@@ -39,7 +39,7 @@ const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, linkedMemberIds } = useAuth();
-  const { rawMembers: allMembers, allMembersAndLeads, rawLeads } = useMembersData();
+  const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
@@ -64,7 +64,7 @@ const MemberDetail = () => {
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
-  const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
+  const [archived, setArchived] = useState(() => rawOldMembers.some((m) => m.id === memberId));
   const [editing, setEditing] = useState(false);
   const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
   const [newNote, setNewNote] = useState("");
