@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
@@ -35,6 +36,7 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 };
 
 const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
+  const navigate = useNavigate();
   const totalLocaties = members.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
 
   const cityCount: Record<string, number> = {};
@@ -81,13 +83,17 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
               {topCities.map(({ city, total, bcd, pct }) => (
-                <div key={city} className="flex flex-col items-center text-center gap-1.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                <div
+                  key={city}
+                  className="flex flex-col items-center text-center gap-1.5 p-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/extern/gemeente/${encodeURIComponent(city)}`)}
+                >
                   <div className="relative">
                     <MiniDonut pct={pct} size={52} strokeWidth={5} />
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">{pct}%</span>
                   </div>
                   <div>
-                    <p className="text-xs font-medium leading-tight">{city}</p>
+                    <p className="text-xs font-medium leading-tight text-primary hover:underline">{city}</p>
                     <p className="text-[10px] text-muted-foreground tabular-nums">{bcd}/{total}</p>
                   </div>
                 </div>
@@ -110,7 +116,9 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
                 const hasBcd = leden.length > 0;
 
                 return (
-                  <div key={gemeente} className={`flex items-center justify-between text-sm px-3 py-1.5 rounded ${hasBcd ? "bg-success/10" : "bg-muted/30"}`}>
+                  <div key={gemeente} className={`flex items-center justify-between text-sm px-3 py-1.5 rounded cursor-pointer ${hasBcd ? "bg-success/10 hover:bg-success/20" : "bg-muted/30 hover:bg-muted/50"} transition-colors`}
+                    onClick={() => navigate(`/extern/gemeente/${encodeURIComponent(gemeente)}`)}
+                  >
                     <div className="flex items-center gap-2">
                       <span className={`w-1.5 h-1.5 rounded-full ${hasBcd ? "bg-success" : "bg-muted-foreground/30"}`} />
                       <span className={hasBcd ? "font-medium" : "text-muted-foreground"}>{gemeente}</span>

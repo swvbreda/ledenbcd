@@ -35,6 +35,7 @@ import LedenvoordelenPage from "./pages/LedenvoordelenPage";
 import ExternProfielPage from "./pages/ExternProfielPage";
 import ExternProductDetailPage from "./pages/ExternProductDetailPage";
 import BenefitDetailPage from "./pages/BenefitDetailPage";
+import ExternGemeenteDetailPage from "./pages/ExternGemeenteDetailPage";
 import MfaSetupPage from "./pages/MfaSetupPage";
 import MfaVerifyPage from "./pages/MfaVerifyPage";
 import ExternProtectedRoute from "@/components/ExternProtectedRoute";
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/extern" element={<ExternProtectedRoute><ExternDashboardPage /></ExternProtectedRoute>} />
                 <Route path="/extern/profiel" element={<ExternProtectedRoute><ExternProfielPage /></ExternProtectedRoute>} />
                 <Route path="/extern/product/:id" element={<ExternProtectedRoute><ExternProductDetailPage /></ExternProtectedRoute>} />
+                <Route path="/extern/gemeente/:gemeente" element={<ExternProtectedRoute><ExternGemeenteDetailPage /></ExternProtectedRoute>} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/mfa-setup" element={<MfaSetupPage />} />
                 <Route path="/mfa-verify" element={<MfaVerifyPage />} />
