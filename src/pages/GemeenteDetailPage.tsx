@@ -167,16 +167,8 @@ const GemeenteDetailPage = () => {
       </div>
 
 
-      {/* Gemeentebeleid */}
-      <div className="bg-card rounded-lg border border-border p-5">
-        <h3 className="text-sm font-semibold font-display mb-2 flex items-center gap-2">
-          <Notebook size={16} className="text-primary" />
-          Gemeentebeleid
-        </h3>
-        <p className="text-sm text-muted-foreground italic">
-          Nog geen beleidsinformatie beschikbaar voor {decodedGemeente}.
-        </p>
-      </div>
+      {/* Gemeentebeleid & Raadsinformatie */}
+      <GemeentePublicaties gemeentenaam={decodedGemeente} />
 
       {/* Coffeeshops */}
       <div className="bg-card rounded-lg border border-border p-5">
