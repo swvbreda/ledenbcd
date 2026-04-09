@@ -374,10 +374,9 @@ async function searchCVDR(gemeentenaam: string) {
 
 async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
-    // Search Gemeenteblad + Kamerstukken for coffeeshop-related docs
+    // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop softdrugs gedoogbeleid coffeeshopbeleid damoclesbeleid cannabis hennep opiumwet ingezetenencriterium"` },
-      { type: "Kamerstuk", query: `type="Kamerstuk" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid" NOT dcterms.title any "exploitatievergunning verleend verlenging aanvraag omgevingsvergunning perceel"` },
     ];
 
     const allResults: any[] = [];
@@ -418,8 +417,14 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
             ? `https://zoek.officielebekendmakingen.nl/${identifier}.html`
             : null;
 
-          const isKamerstuk = type === "Kamerstuk" || (identifier && identifier.startsWith("kst-"));
-          const scoreBase = isKamerstuk ? 15 : 20;
+          // Skip Kamerstukken that leak through
+          if (identifier && identifier.startsWith("kst-")) continue;
+          
+          // Skip individual permit decisions
+          const titleLower = (title || "").toLowerCase();
+          if (titleLower.includes("verleend") || titleLower.includes("exploitatievergunning") || titleLower.includes("omgevingsvergunning")) continue;
+
+          const scoreBase = 20;
           
           // Recenter documenten scoren hoger — ouder dan 5 jaar krijgt lagere score
           let dateBonus = 0;
@@ -487,6 +492,16 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
       const attrs = tuple.attributes || {};
       const names = attrs["https://schema.org/name"] || [];
       const name = names[0] || "Onbekend raadsstuk";
+
+      // Skip generic/irrelevant items
+      const nameLower = name.toLowerCase();
+      const genericTitles = ["vaststelling agenda", "vaststellen agenda", "termijnagenda", "algemeen", "mededelingen", "opening procedureel"];
+      if (genericTitles.some(g => nameLower.startsWith(g))) continue;
+
+      // Only keep results that mention coffeeshop-related terms
+      const coffeeTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "damocles", "opium", "hennep", "wiet"];
+      const allText = names.join(" ").toLowerCase();
+      if (!coffeeTerms.some(t => allText.includes(t))) continue;
 
       // Get date from agenda items
       const agendas = attrs.agenda || [];

@@ -58,9 +58,10 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
       const gemeenteDocs = (data.documents || [])
         .filter((doc: MunicipalDocument) => {
           if (!doc.url) return false;
-          const org = (doc.organization || "").toLowerCase();
-          const naam = gemeentenaam.toLowerCase();
-          return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
+          const org = (doc.organization || "").toLowerCase().trim();
+          const naam = gemeentenaam.toLowerCase().trim();
+          // Strict match: org must be exactly the gemeente name or "gemeente X"
+          return org === naam || org === `gemeente ${naam}`;
         })
         .sort((a: MunicipalDocument, b: MunicipalDocument) => {
           // Docs with dates first (newest first), then docs without dates
