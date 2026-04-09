@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { archiveMember, restoreMember, isArchived } from "@/hooks/useArchive";
+import { archiveMember, restoreMember } from "@/hooks/useArchive";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +39,7 @@ const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, linkedMemberIds } = useAuth();
-  const { rawMembers: allMembers, allMembersAndLeads, rawLeads } = useMembersData();
+  const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeDetails = isAdmin || isOwnProfile;
   const memberId = Number(id);
@@ -64,7 +64,7 @@ const MemberDetail = () => {
 
   const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
   const [contactpersoon, setContactpersoon] = useState(defaultCp);
-  const [archived, setArchived] = useState(() => member ? isArchived(member.id) : false);
+  const [archived, setArchived] = useState(() => rawOldMembers.some((m) => m.id === memberId));
   const [editing, setEditing] = useState(false);
   const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
   const [newNote, setNewNote] = useState("");
@@ -280,15 +280,21 @@ const MemberDetail = () => {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Annuleren</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => {
-                              if (archived) {
-                                restoreMember(member.id);
-                                setArchived(false);
-                                toast.success(`${member.naam} is hersteld`);
-                              } else {
-                                archiveMember(member.id);
-                                setArchived(true);
-                                toast.success(`${member.naam} is gearchiveerd`);
+                            onClick={async () => {
+                              try {
+                                if (archived) {
+                                  await restoreMember(member.id);
+                                  setArchived(false);
+                                  toast.success(`${member.naam} is hersteld`);
+                                } else {
+                                  await archiveMember(member.id);
+                                  setArchived(true);
+                                  toast.success(`${member.naam} is gearchiveerd`);
+                                }
+                                refetchMembers();
+                              } catch (err) {
+                                toast.error("Fout bij archiveren/herstellen");
+                                console.error(err);
                               }
                             }}
                           >

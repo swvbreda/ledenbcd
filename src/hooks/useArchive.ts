@@ -1,27 +1,24 @@
-const STORAGE_KEY = "bcd-archived-members";
+import { supabase } from "@/integrations/supabase/client";
 
-export const getArchivedIds = (): number[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+/**
+ * Archive a member by setting member_type = 'old' in the database.
+ * This persists across sessions and devices.
+ */
+export const archiveMember = async (id: number): Promise<void> => {
+  const { error } = await supabase
+    .from("members_data")
+    .update({ member_type: "old" })
+    .eq("id", id);
+  if (error) throw error;
 };
 
-export const archiveMember = (id: number) => {
-  const ids = getArchivedIds();
-  if (!ids.includes(id)) {
-    ids.push(id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  }
-};
-
-export const restoreMember = (id: number) => {
-  const ids = getArchivedIds().filter((x) => x !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-};
-
-export const isArchived = (id: number): boolean => {
-  return getArchivedIds().includes(id);
+/**
+ * Restore an archived member by setting member_type = 'member'.
+ */
+export const restoreMember = async (id: number): Promise<void> => {
+  const { error } = await supabase
+    .from("members_data")
+    .update({ member_type: "member" })
+    .eq("id", id);
+  if (error) throw error;
 };

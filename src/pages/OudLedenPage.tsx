@@ -6,34 +6,27 @@ import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
-import { getArchivedIds } from "@/hooks/useArchive";
 
 const OudLedenPage = () => {
-  const { allMembersAndLeads } = useMembersData();
+  const { rawOldMembers } = useMembersData();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const archivedIds = useMemo(() => getArchivedIds(), []);
-  const oldMembers = useMemo(
-    () => allMembersAndLeads.filter((m) => archivedIds.includes(m.id)),
-    [archivedIds]
-  );
-
   const filtered = searchQuery
-    ? oldMembers.filter(
+    ? rawOldMembers.filter(
         (m) =>
           m.naam.toLowerCase().includes(searchQuery.toLowerCase()) ||
           m.plaats.toLowerCase().includes(searchQuery.toLowerCase()) ||
           String(m.id).includes(searchQuery)
       )
-    : oldMembers;
+    : rawOldMembers;
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <BcdHeroBanner title="Oud-leden" subtitle="Voormalige leden van de BCD" />
 
-      {oldMembers.length > 0 && (
+      {rawOldMembers.length > 0 && (
         <div className="max-w-sm">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

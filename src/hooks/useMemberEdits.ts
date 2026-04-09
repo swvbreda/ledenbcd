@@ -53,11 +53,12 @@ function useOwnPendingEdit(memberId: number) {
 export function useMergedMember(memberId: number): { member: Member | undefined; isLoading: boolean; hasPendingEdit: boolean } {
   const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
   const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
-  const { allMembersAndLeads, rawLeads } = useMembersData();
+  const { allMembersAndLeads, rawLeads, rawOldMembers } = useMembersData();
   const { conversions, loading: conversionsLoading } = useLeadConversions();
 
-  // First try direct lookup, then check if this memberId is a converted lead's new lidnummer
-  let baseMember = allMembersAndLeads.find((m) => m.id === memberId);
+  // First try direct lookup (including old members), then check if this memberId is a converted lead's new lidnummer
+  let baseMember = allMembersAndLeads.find((m) => m.id === memberId)
+    ?? rawOldMembers.find((m) => m.id === memberId);
   if (!baseMember) {
     const conv = conversions.find((c) => c.lidnummer === memberId);
     if (conv) {

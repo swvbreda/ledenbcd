@@ -1,5 +1,5 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { createContext, useContext, useMemo, useCallback, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Member } from "@/data/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,9 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface MembersDataContextType {
   rawMembers: Member[];
   rawLeads: Member[];
+  rawOldMembers: Member[];
   allRepresented: Member[];
   allMembersAndLeads: Member[];
   isLoading: boolean;
+  refetch: () => void;
 }
 
 interface MembersDataRow {
@@ -21,9 +23,11 @@ interface MembersDataRow {
 const MembersDataContext = createContext<MembersDataContextType>({
   rawMembers: [],
   rawLeads: [],
+  rawOldMembers: [],
   allRepresented: [],
   allMembersAndLeads: [],
   isLoading: true,
+  refetch: () => {},
 });
 
 const toMember = (row: MembersDataRow): Member => {
@@ -36,6 +40,7 @@ const toMember = (row: MembersDataRow): Member => {
 
 export function MembersDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["members-data", user?.id ?? null],
@@ -49,14 +54,20 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const { rawMembers, rawLeads, allRepresented, allMembersAndLeads } = useMemo(() => {
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["members-data"] });
+  }, [queryClient]);
+
+  const { rawMembers, rawLeads, rawOldMembers, allRepresented, allMembersAndLeads } = useMemo(() => {
     const rows = data ?? [];
     const members = rows.filter((r) => r.member_type === "member").map(toMember);
     const leads = rows.filter((r) => r.member_type === "lead").map(toMember);
+    const oldMembers = rows.filter((r) => r.member_type === "old").map(toMember);
 
     return {
       rawMembers: members,
       rawLeads: leads,
+      rawOldMembers: oldMembers,
       allRepresented: [...members, ...leads],
       allMembersAndLeads: [...members, ...leads],
     };
@@ -64,7 +75,7 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <MembersDataContext.Provider
-      value={{ rawMembers, rawLeads, allRepresented, allMembersAndLeads, isLoading }}
+      value={{ rawMembers, rawLeads, rawOldMembers, allRepresented, allMembersAndLeads, isLoading, refetch }}
     >
       {children}
     </MembersDataContext.Provider>
