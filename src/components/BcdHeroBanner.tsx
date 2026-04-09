@@ -9,7 +9,7 @@ interface BcdHeroBannerProps {
 const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
   return (
     <div
-      className="relative overflow-hidden rounded-xl"
+      className="relative w-full max-w-full overflow-hidden rounded-xl"
       style={{
         background:
           "linear-gradient(135deg, hsl(0 85% 34%), hsl(0 85% 40%))",
@@ -22,10 +22,10 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
         aria-hidden="true"
         className="absolute pointer-events-none select-none"
         style={{
-          right: "-80px",
-          bottom: "-180px",
-          width: "520px",
-          height: "520px",
+          right: "-52px",
+          bottom: "-148px",
+          width: "min(520px, 92vw)",
+          height: "min(520px, 92vw)",
           objectFit: "contain",
           mixBlendMode: "multiply",
           opacity: 0.6,
@@ -34,12 +34,12 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       />
 
       {/* Content */}
-      <div className="relative z-10 px-6 py-10 md:px-10 md:py-14">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-display text-white tracking-tight">
+      <div className="relative z-10 min-w-0 px-5 py-8 sm:px-6 sm:py-10 md:px-10 md:py-14">
+        <h1 className="text-2xl font-bold font-display tracking-tight text-primary-foreground sm:text-3xl lg:text-4xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-white/80 mt-2 text-sm md:text-base max-w-xl">
+          <p className="mt-2 max-w-xl text-sm text-primary-foreground/80 sm:text-base">
             {subtitle}
           </p>
         )}
