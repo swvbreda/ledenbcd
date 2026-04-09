@@ -59,7 +59,7 @@ const AccountBeheerPage = () => {
   const [resetPwConfirm, setResetPwConfirm] = useState("");
   const [externalOrgLinksByUser, setExternalOrgLinksByUser] = useState<Record<string, ExternalOrgLink[]>>({});
 
-  const { allMembersAndLeads } = useMembersData();
+  const { allMembersAndLeads, isLoading: membersLoading } = useMembersData();
   const memberMap = useMemo(() => {
     const map = new Map<number, typeof allMembersAndLeads[0]>();
     allMembersAndLeads.forEach((m) => map.set(m.id, m));
@@ -314,7 +314,7 @@ const AccountBeheerPage = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {loading || membersLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-muted-foreground" size={24} />
         </div>
