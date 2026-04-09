@@ -2,20 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
-import { Shield, LogIn, Mail, Smartphone, Fingerprint } from "lucide-react";
+import { Shield, LogIn, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
 
-type MfaMethod = "totp" | "email" | "passkey";
+type MfaMethod = "totp" | "email";
 
 export default function MfaVerifyPage() {
   const navigate = useNavigate();
-  const { user, markEmailMfaVerified } = useAuth();
-  const passkeys = usePasskeys();
+  const { user, markEmailMfaVerified, mfaStatus, loading: authLoading, isExtern } = useAuth();
   const [method, setMethod] = useState<MfaMethod>("totp");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,11 +21,12 @@ export default function MfaVerifyPage() {
   const [hasTotp, setHasTotp] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
-  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
 
   useEffect(() => {
-    isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
-  }, []);
+    if (!authLoading && user && mfaStatus === "verified") {
+      navigate(isExtern ? "/extern" : "/", { replace: true });
+    }
+  }, [authLoading, isExtern, mfaStatus, navigate, user]);
 
   useEffect(() => {
     supabase.auth.mfa.listFactors().then(({ data }) => {
@@ -127,24 +126,20 @@ export default function MfaVerifyPage() {
     navigate("/login", { replace: true });
   };
 
-  const handlePasskeyVerify = async () => {
-    setLoading(true);
-    const result = await passkeys.authenticateWithPasskey(user?.email);
-    setLoading(false);
-    if (result.success) {
-      // Passkey already proves identity — mark MFA as verified
-      markEmailMfaVerified();
-      toast.success("Verificatie geslaagd!");
-      navigate("/", { replace: true });
-    } else if (result.error) {
-      toast.error(result.error);
-    }
-  };
-
   const switchMethod = (newMethod: MfaMethod) => {
     setMethod(newMethod);
     setCode("");
   };
+
+  if (authLoading || mfaStatus === "loading") {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
+        <p className="text-sm text-muted-foreground">Laden...</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
@@ -159,7 +154,7 @@ export default function MfaVerifyPage() {
           </div>
 
           {/* Method toggle */}
-          {(hasTotp || passkeyAvailable) && (
+          {hasTotp && (
             <div className="flex rounded-lg border mb-5 overflow-hidden">
               {hasTotp && (
                 <button
@@ -173,20 +168,6 @@ export default function MfaVerifyPage() {
                 >
                   <Smartphone className="h-3.5 w-3.5" />
                   App
-                </button>
-              )}
-              {passkeyAvailable && (
-                <button
-                  type="button"
-                  onClick={() => switchMethod("passkey")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${
-                    method === "passkey"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  <Fingerprint className="h-3.5 w-3.5" />
-                  Vingerafdruk
                 </button>
               )}
               <button
@@ -247,30 +228,6 @@ export default function MfaVerifyPage() {
                 Code kwijt? Opnieuw instellen
               </button>
             </>
-          )}
-          {/* Passkey method */}
-          {method === "passkey" && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Fingerprint className="h-12 w-12 mx-auto mb-3 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  Gebruik je vingerafdruk of Face ID om je identiteit te bevestigen
-                </p>
-              </div>
-              <Button
-                onClick={handlePasskeyVerify}
-                disabled={loading}
-                className="w-full gap-2"
-              >
-                <Fingerprint className="h-4 w-4" />
-                {loading ? "Verifiëren..." : "Verifieer met vingerafdruk"}
-              </Button>
-              {!passkeys.hasPasskey && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Je hebt nog geen passkey geregistreerd. Registreer er een via Mijn Account na het inloggen.
-                </p>
-              )}
-            </div>
           )}
           {/* Email method */}
           {method === "email" && (
