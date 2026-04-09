@@ -416,9 +416,12 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
           // Skip Kamerstukken that leak through
           if (identifier && identifier.startsWith("kst-")) continue;
           
-          // Skip individual permit decisions
+          // Skip individual permit/location decisions (e.g. "Coffeeshop - Slaghekstraat 58A", "Besluit: coffeeshop V.O.F.")
           const titleLower = (title || "").toLowerCase();
           if (titleLower.includes("verleend") || titleLower.includes("exploitatievergunning") || titleLower.includes("omgevingsvergunning")) continue;
+          if (/^coffeeshop\s*-\s/.test(titleLower)) continue;
+          if (/^besluit:\s*coffeeshop\s/.test(titleLower)) continue;
+          if (titleLower.includes("verlengen beslistermijn")) continue;
 
           const scoreBase = 20;
           
@@ -463,6 +466,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
 const RAADZAAM_GEMEENTEN: Record<string, string> = {
   "amsterdam": "gemeenteamsterdam",
   "utrecht": "gemeenteutrecht",
+  "almere": "raadvanalmere",
 };
 
 async function searchRaadzaam(gemeentenaam: string, keywords: string) {
