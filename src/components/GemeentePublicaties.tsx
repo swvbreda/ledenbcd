@@ -49,7 +49,7 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
 
     try {
       const { data, error } = await supabase.functions.invoke("search-municipal-docs", {
-        body: { gemeentenaam, keywords: keywords ?? zoektermen || "coffeeshop beleid" },
+        body: { gemeentenaam, keywords: keywords ?? (zoektermen || "coffeeshop beleid") },
       });
       if (error) throw error;
 
