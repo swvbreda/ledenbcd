@@ -93,6 +93,14 @@ export async function convertLead(params: {
 
   if (error) throw error;
 
+  // Auto-add lead's email to allowed emails for registration
+  if (params.leadEmail) {
+    await supabase.from("member_allowed_emails").insert({
+      email: params.leadEmail.toLowerCase().trim(),
+      member_id: params.lidnummer,
+    });
+  }
+
   const data = await fetchConversions();
   notifyListeners(data);
 }
