@@ -21,6 +21,7 @@ interface MunicipalDocument {
 
 const SOURCE_BADGES: Record<string, { label: string; className: string }> = {
   lokaleregelgeving: { label: "Lokale Regelgeving", className: "text-green-700 border-green-300 bg-green-50" },
+  raadzaam: { label: "Raadzaam", className: "text-indigo-700 border-indigo-300 bg-indigo-50" },
   officielebekendmakingen: { label: "Officiële Bekendmaking", className: "text-blue-700 border-blue-300 bg-blue-50" },
   notubiz: { label: "Notubiz", className: "text-orange-700 border-orange-300 bg-orange-50" },
   parlaeus: { label: "Parlaeus", className: "text-teal-700 border-teal-300 bg-teal-50" },
@@ -56,15 +57,19 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
       // Filter: alleen documenten van deze gemeente + alleen met URL
       const gemeenteDocs = (data.documents || [])
         .filter((doc: MunicipalDocument) => {
-          if (!doc.url || !doc.date) return false;
+          if (!doc.url) return false;
           const org = (doc.organization || "").toLowerCase();
           const naam = gemeentenaam.toLowerCase();
           return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
         })
         .sort((a: MunicipalDocument, b: MunicipalDocument) => {
-          const da = new Date(a.date!).getTime();
-          const db = new Date(b.date!).getTime();
-          return db - da;
+          // Docs with dates first (newest first), then docs without dates
+          const da = a.date ? new Date(a.date).getTime() : 0;
+          const db = b.date ? new Date(b.date).getTime() : 0;
+          if (da && db) return db - da;
+          if (da && !db) return -1;
+          if (!da && db) return 1;
+          return 0;
         });
 
       setDocuments(gemeenteDocs);
@@ -166,9 +171,13 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
                               {doc.name}
                             </p>
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                              {doc.date && (
+                              {doc.date ? (
                                 <span className="text-xs text-muted-foreground">
                                   {new Date(doc.date).toLocaleDateString("nl-NL")}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">
+                                  Datum onbekend
                                 </span>
                               )}
                               {sourceBadge && (
