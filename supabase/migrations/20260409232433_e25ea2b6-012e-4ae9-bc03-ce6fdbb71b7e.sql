@@ -1,0 +1,1 @@
+UPDATE members_data SET member_type = 'old' WHERE id = 64;
