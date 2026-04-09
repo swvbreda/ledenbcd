@@ -372,7 +372,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
     // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND title any "coffeeshop coffeeshopbeleid gedoogbeleid gedoogverklaring softdrugs softdrugsbeleid cannabisbeleid damocles damoclesbeleid exploitatievergunning opiumwet"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND title any "coffeeshop coffeeshopbeleid gedoogbeleid gedoogverklaring softdrugs softdrugsbeleid cannabisbeleid damocles damoclesbeleid opiumwet"` },
     ];
 
     const allResults: any[] = [];
@@ -420,11 +420,12 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
           // Skip omgevingsvergunning (not coffeeshop related)
           if (titleLower.includes("omgevingsvergunning") && !titleLower.includes("coffeeshop")) continue;
           
-          // Skip generic horeca exploitatievergunningen that don't mention coffeeshop
-          const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep"];
+          // Require at least one coffeeshop-related term in the title
+          const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium"];
           const isCoffeeshopRelated = coffeeshopTerms.some(t => titleLower.includes(t));
-          if (titleLower.includes("exploitatievergunning") && titleLower.includes("horeca") && !isCoffeeshopRelated) continue;
-          if (titleLower.includes("horecabedrijf exploitatievergunning") && !isCoffeeshopRelated) continue;
+          
+          // Skip results that don't mention any coffeeshop-related term
+          if (!isCoffeeshopRelated) continue;
 
           const scoreBase = 20;
           
@@ -610,16 +611,22 @@ async function searchORI(gemeentenaam: string, keywords: string) {
   const hits = data.hits?.hits || [];
   const total = data.hits?.total?.value || 0;
 
-  const documents = hits.map((hit: any) => ({
-    id: hit._id,
-    score: hit._score,
-    name: hit._source?.name || "Onbekend document",
-    url: hit._source?.url || null,
-    date: hit._source?.date || null,
-    organization: hit._source?.organization?.name || gemeentenaam,
-    description: hit._source?.description || null,
-    source: "ori",
-  }));
+  const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium", "wiet"];
+  const documents = hits
+    .map((hit: any) => ({
+      id: hit._id,
+      score: hit._score,
+      name: hit._source?.name || "Onbekend document",
+      url: hit._source?.url || null,
+      date: hit._source?.date || null,
+      organization: hit._source?.organization?.name || gemeentenaam,
+      description: hit._source?.description || null,
+      source: "ori",
+    }))
+    .filter((doc: any) => {
+      const nameLower = (doc.name || "").toLowerCase();
+      return coffeeshopTerms.some(t => nameLower.includes(t));
+    });
 
   return { documents, total };
 }
