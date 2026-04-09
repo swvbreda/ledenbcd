@@ -32,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 const EMAIL_MFA_KEY_PREFIX = "emfa_";
+const PASSKEY_MFA_PENDING_KEY = "passkey_mfa_pending";
 
 function checkEmailMfaFlag(userId: string): boolean {
   try {
@@ -40,6 +41,29 @@ function checkEmailMfaFlag(userId: string): boolean {
     const timestamp = parseInt(stored, 10);
     // Valid for 24 hours
     return Date.now() - timestamp < 24 * 60 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
+function checkPendingPasskeyMfaFlag(): boolean {
+  try {
+    const stored = localStorage.getItem(PASSKEY_MFA_PENDING_KEY);
+    if (!stored) return false;
+    const timestamp = parseInt(stored, 10);
+    return Date.now() - timestamp < 5 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
+function promotePendingPasskeyMfaFlag(userId: string): boolean {
+  if (!checkPendingPasskeyMfaFlag()) return false;
+
+  try {
+    localStorage.setItem(`${EMAIL_MFA_KEY_PREFIX}${userId}`, Date.now().toString());
+    localStorage.removeItem(PASSKEY_MFA_PENDING_KEY);
+    return true;
   } catch {
     return false;
   }
@@ -114,6 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        promotePendingPasskeyMfaFlag(session.user.id);
         // Check email MFA flag synchronously to avoid unnecessary async MFA calls
         const emailMfaOk = checkEmailMfaFlag(session.user.id);
         if (emailMfaOk) {
@@ -139,6 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        promotePendingPasskeyMfaFlag(session.user.id);
         await Promise.all([
           checkRoleAndProfile(session.user.id),
           checkMfaStatus(session.user.id),
@@ -157,6 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user?.id) {
       try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${user.id}`); } catch {}
     }
+    try { localStorage.removeItem(PASSKEY_MFA_PENDING_KEY); } catch {}
     await supabase.auth.signOut();
   };
 

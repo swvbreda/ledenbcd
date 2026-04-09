@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const FUNC_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webauthn`;
+const PASSKEY_MFA_PENDING_KEY = "passkey_mfa_pending";
 
 function base64urlToBuffer(base64url: string): ArrayBuffer {
   let str = base64url.replace(/-/g, "+").replace(/_/g, "/");
@@ -257,10 +258,13 @@ export function usePasskeys() {
       if (result.session) {
         const verifiedUserId = result.session.user?.id ?? getUserIdFromAccessToken(result.session.access_token);
 
+        localStorage.setItem(PASSKEY_MFA_PENDING_KEY, Date.now().toString());
+
         // Mark MFA as verified BEFORE setting session, so the auth state
         // change handler sees the flag immediately
         if (verifiedUserId) {
           localStorage.setItem(`emfa_${verifiedUserId}`, Date.now().toString());
+          localStorage.removeItem(PASSKEY_MFA_PENDING_KEY);
         }
 
         await supabase.auth.setSession({
