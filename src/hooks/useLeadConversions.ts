@@ -109,14 +109,20 @@ export async function convertLead(params: {
     .insert([{ id: params.lidnummer, member_type: "member", data: memberData as any }]);
   if (insertErr) throw insertErr;
 
-  // 4. Delete old lead row
+  // 4. Move existing account links from old lead id to the new member id
+  await supabase
+    .from("member_profiles")
+    .update({ member_id: params.lidnummer })
+    .eq("member_id", params.leadId);
+
+  // 5. Delete old lead row
   await supabase
     .from("members_data")
     .delete()
     .eq("id", params.leadId)
     .eq("member_type", "lead");
 
-  // 5. Auto-add lead's email to allowed emails for registration
+  // 6. Auto-add lead's email to allowed emails for registration
   if (params.leadEmail) {
     await supabase.from("member_allowed_emails").insert({
       email: params.leadEmail.toLowerCase().trim(),
