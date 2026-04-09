@@ -32,26 +32,36 @@ interface GemeentePublicatiesProps {
 }
 
 export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatiesProps) {
-  const [zoektermen, setZoektermen] = useState("coffeeshop beleid");
+  const [zoektermen, setZoektermen] = useState("");
   const [documents, setDocuments] = useState<MunicipalDocument[]>([]);
   const [total, setTotal] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [showAll, setShowAll] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const autoSearchDone = useRef<string | null>(null);
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = useCallback(async (keywords?: string) => {
     if (!gemeentenaam.trim()) return;
     setIsSearching(true);
     setHasSearched(true);
+    setShowAll(false);
 
     try {
       const { data, error } = await supabase.functions.invoke("search-municipal-docs", {
-        body: { gemeentenaam, keywords: zoektermen },
+        body: { gemeentenaam, keywords: keywords ?? (zoektermen || "coffeeshop beleid") },
       });
       if (error) throw error;
-      setDocuments(data.documents || []);
-      setTotal(data.total || 0);
+
+      // Filter: alleen documenten van deze gemeente (niet Kamerstukken etc.)
+      const gemeenteDocs = (data.documents || []).filter((doc: MunicipalDocument) => {
+        const org = (doc.organization || "").toLowerCase();
+        const naam = gemeentenaam.toLowerCase();
+        return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
+      });
+
+      setDocuments(gemeenteDocs);
+      setTotal(gemeenteDocs.length);
     } catch (err) {
       console.error("Search error:", err);
     } finally {
@@ -63,9 +73,11 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
     if (!gemeentenaam.trim() || gemeentenaam.trim().length < 3) return;
     if (autoSearchDone.current === gemeentenaam) return;
     autoSearchDone.current = gemeentenaam;
-    const timer = setTimeout(() => handleSearch(), 400);
+    const timer = setTimeout(() => handleSearch("coffeeshop beleid"), 400);
     return () => clearTimeout(timer);
   }, [gemeentenaam]);
+
+  const visibleDocs = showAll ? documents : documents.slice(0, 2);
 
   return (
     <div className="bg-card rounded-lg border border-border">
@@ -75,13 +87,13 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
       >
         <h3 className="text-sm font-semibold font-display flex items-center gap-2">
           <Notebook size={16} className="text-primary" />
-          Zoeken in beleid- &amp; raadsdocumenten
+          Beleid- &amp; raadsdocumenten
           {isSearching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </h3>
         <span className="flex items-center gap-2">
           {documents.length > 0 && (
             <Badge variant="outline" className="text-xs font-normal">
-              {total} resultaten
+              {total} documenten
             </Badge>
           )}
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -94,12 +106,12 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
             <Input
               value={zoektermen}
               onChange={(e) => setZoektermen(e.target.value)}
-              placeholder="Zoektermen..."
+              placeholder="Zoeken..."
               className="flex-1"
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
             <Button
-              onClick={handleSearch}
+              onClick={() => handleSearch()}
               disabled={isSearching}
               size="sm"
               variant="outline"
@@ -120,19 +132,15 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>
-                Geen documenten gevonden voor "{gemeentenaam}". Niet alle gemeenten zijn beschikbaar in Open Raadsinformatie.
+                Geen documenten gevonden voor "{gemeentenaam}".
               </span>
             </div>
           )}
 
-          {documents.length > 0 && (
+          {visibleDocs.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                {total} documenten gevonden
-              </p>
-
-              <div className="space-y-1.5 max-h-[500px] overflow-y-auto">
-                {documents.map((doc) => {
+              <div className="space-y-1.5">
+                {visibleDocs.map((doc) => {
                   const sourceBadge = SOURCE_BADGES[doc.source || ""];
 
                   return (
@@ -176,6 +184,28 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
                   );
                 })}
               </div>
+
+              {!showAll && documents.length > 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAll(true)}
+                >
+                  Bekijk meer ({documents.length - 2} overige documenten)
+                </Button>
+              )}
+
+              {showAll && documents.length > 2 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground"
+                  onClick={() => setShowAll(false)}
+                >
+                  Minder tonen
+                </Button>
+              )}
             </div>
           )}
         </div>
