@@ -402,7 +402,23 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
             return matches.map(m => m[1].trim());
           };
 
-          const title = getTag('dcterms:title') || getTag('title') || `${type} coffeeshop`;
+          const rawTitle = getTag('dcterms:title') || getTag('title') || `${type} coffeeshop`;
+          // Clean up long OB titles: strip "Gemeente X, vergunning verleend, Adres Postcode Plaats, Ref,"
+          // and show the descriptive part
+          let title = rawTitle;
+          const descParts = rawTitle.split(/,\s*/);
+          if (descParts.length >= 4) {
+            // Find the first part that contains a coffeeshop-related term
+            const coffeeIdx = descParts.findIndex(p => 
+              /coffeeshop|cannabis|softdrug|gedoog|opium|damocles|hennep/i.test(p)
+            );
+            if (coffeeIdx >= 3) {
+              // Use the descriptive coffeeshop part as the main title
+              const relevantParts = descParts.slice(coffeeIdx).join(', ')
+                .replace(/,?\s*verzonden\s+\d{2}-\d{2}-\d{4}\s*$/, '');
+              title = relevantParts || rawTitle;
+            }
+          }
           const identifier = getTag('dcterms:identifier') || getTag('identifier');
           const modified = getTag('dcterms:modified') || getTag('dcterms:issued');
           const creator = getTag('dcterms:creator');
