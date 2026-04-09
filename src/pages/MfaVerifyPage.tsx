@@ -127,6 +127,18 @@ export default function MfaVerifyPage() {
     navigate("/login", { replace: true });
   };
 
+  const handlePasskeyVerify = async () => {
+    setLoading(true);
+    const result = await passkeys.authenticateWithPasskey(user?.email);
+    setLoading(false);
+    if (result.success) {
+      toast.success("Verificatie geslaagd!");
+      navigate("/", { replace: true });
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+  };
+
   const switchMethod = (newMethod: MfaMethod) => {
     setMethod(newMethod);
     setCode("");
