@@ -46,6 +46,7 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
         leadEmail: lead.email,
       });
       toast.success(`${lead.naam} is omgezet naar lid #${lidnummer}`);
+      queryClient.invalidateQueries({ queryKey: ["members-data"] });
       setOpen(false);
       onConverted?.();
     } catch (err: any) {
