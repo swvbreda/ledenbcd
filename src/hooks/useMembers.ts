@@ -101,8 +101,8 @@ export function useMembers() {
     clearFilters,
     allMembers: rawMembers,
     activeLeadIds,
-    effectiveMembers,
-    effectiveLeads,
+    effectiveMembers: rawMembers,
+    effectiveLeads: rawLeads,
     conversions,
     dataLoading,
   };
