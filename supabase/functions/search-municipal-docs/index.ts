@@ -372,7 +372,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
     // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND title any "coffeeshop coffeeshopbeleid gedoogbeleid gedoogverklaring softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid exploitatievergunning"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND title any "coffeeshop coffeeshopbeleid gedoogbeleid gedoogverklaring softdrugs softdrugsbeleid cannabisbeleid damocles damoclesbeleid exploitatievergunning opiumwet"` },
     ];
 
     const allResults: any[] = [];
