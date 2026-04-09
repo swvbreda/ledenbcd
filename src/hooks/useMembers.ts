@@ -6,34 +6,6 @@ import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCat
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
-/** Apply conversions: converted leads become members with new id/fields */
-function applyConversions(members: Member[], leads: Member[], conversions: LeadConversion[]) {
-  const conversionMap = new Map(conversions.map((c) => [c.lead_id, c]));
-  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
-
-  const convertedMembers = leads
-    .filter((l) => convertedLeadIds.has(l.id))
-    .map((l) => {
-      const conv = conversionMap.get(l.id)!;
-      return {
-        ...l,
-        id: conv.lidnummer,
-        lidSinds: conv.lid_sinds,
-        factuurBedrijfsnaam: conv.factuur_bedrijfsnaam || l.factuurBedrijfsnaam,
-        factuurKvk: conv.factuur_kvk || undefined,
-        factuurEmail: conv.factuur_email || l.factuurEmail,
-        factuurAdres: conv.factuur_adres || l.factuurAdres,
-        factuurPostcode: conv.factuur_postcode || l.factuurPostcode,
-        factuurPlaats: conv.factuur_plaats || l.factuurPlaats,
-      } as Member;
-    });
-
-  const activeLeads = leads.filter((l) => !convertedLeadIds.has(l.id));
-  const allMembersCombined = [...members, ...convertedMembers];
-
-  return { members: allMembersCombined, leads: activeLeads };
-}
-
 export function useMembers() {
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
   const [searchQuery, setSearchQuery] = useState("");
