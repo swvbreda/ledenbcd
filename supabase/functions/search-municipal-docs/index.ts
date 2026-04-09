@@ -495,7 +495,13 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
 
       // Skip generic/irrelevant items
       const nameLower = name.toLowerCase();
-      if (nameLower.startsWith("vaststelling agenda") || nameLower.startsWith("vaststellen agenda") || nameLower.startsWith("termijnagenda") || nameLower === "algemeen") continue;
+      const genericTitles = ["vaststelling agenda", "vaststellen agenda", "termijnagenda", "algemeen", "mededelingen", "opening procedureel"];
+      if (genericTitles.some(g => nameLower.startsWith(g))) continue;
+
+      // Only keep results that mention coffeeshop-related terms
+      const coffeeTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "damocles", "opium", "hennep", "wiet"];
+      const allText = names.join(" ").toLowerCase();
+      if (!coffeeTerms.some(t => allText.includes(t))) continue;
 
       // Get date from agenda items
       const agendas = attrs.agenda || [];
