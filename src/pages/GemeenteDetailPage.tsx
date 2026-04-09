@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Building2, Users, Notebook, Search, X } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
+import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
@@ -166,16 +167,8 @@ const GemeenteDetailPage = () => {
       </div>
 
 
-      {/* Gemeentebeleid */}
-      <div className="bg-card rounded-lg border border-border p-5">
-        <h3 className="text-sm font-semibold font-display mb-2 flex items-center gap-2">
-          <Notebook size={16} className="text-primary" />
-          Gemeentebeleid
-        </h3>
-        <p className="text-sm text-muted-foreground italic">
-          Nog geen beleidsinformatie beschikbaar voor {decodedGemeente}.
-        </p>
-      </div>
+      {/* Gemeentebeleid & Raadsinformatie */}
+      <GemeentePublicaties gemeentenaam={decodedGemeente} />
 
       {/* Coffeeshops */}
       <div className="bg-card rounded-lg border border-border p-5">
