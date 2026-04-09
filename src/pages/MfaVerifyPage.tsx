@@ -10,11 +10,12 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
 
-type MfaMethod = "totp" | "email";
+type MfaMethod = "totp" | "email" | "passkey";
 
 export default function MfaVerifyPage() {
   const navigate = useNavigate();
   const { user, markEmailMfaVerified } = useAuth();
+  const passkeys = usePasskeys();
   const [method, setMethod] = useState<MfaMethod>("totp");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,11 @@ export default function MfaVerifyPage() {
   const [hasTotp, setHasTotp] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+
+  useEffect(() => {
+    isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
+  }, []);
 
   useEffect(() => {
     supabase.auth.mfa.listFactors().then(({ data }) => {
