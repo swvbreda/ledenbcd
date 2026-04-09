@@ -310,9 +310,9 @@ async function searchNotubizMeetings(
 
 async function searchCVDR(gemeentenaam: string) {
   try {
-    // Filter op geldende regelgeving — vervallen beleidsregels worden uitgesloten
+    // CVDR uses dcterms.creator for the municipality name (not "gemeente" index)
     const query = encodeURIComponent(
-      `gemeente="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog drugs opium hennep" AND overheidwet.geldigheidsstatus="geldend"`
+      `dcterms.creator="${gemeentenaam}" AND dcterms.title any "soft-drugs coffeeshop softdrugs cannabis gedoog drugs opium hennep damocles"`
     );
     const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=5&sortKeys=dcterms.modified,,0`;
 
@@ -342,10 +342,6 @@ async function searchCVDR(gemeentenaam: string) {
       const identifier = getTag('dcterms:identifier');
       const modified = getTag('dcterms:modified');
       const subject = getTag('dcterms:subject');
-      const geldigheidsstatus = getTag('overheidwet:geldigheidsstatus') || 'geldend';
-
-      // Skip vervallen regelgeving (extra veiligheid naast query-filter)
-      if (geldigheidsstatus === 'vervallen' || geldigheidsstatus === 'ingetrokken') continue;
 
       const regelingUrl = identifier
         ? `https://lokaleregelgeving.overheid.nl/${identifier}`
@@ -420,9 +416,12 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
           // Skip Kamerstukken that leak through
           if (identifier && identifier.startsWith("kst-")) continue;
           
-          // Skip individual permit decisions
+          // Skip individual permit/location decisions (e.g. "Coffeeshop - Slaghekstraat 58A", "Besluit: coffeeshop V.O.F.")
           const titleLower = (title || "").toLowerCase();
           if (titleLower.includes("verleend") || titleLower.includes("exploitatievergunning") || titleLower.includes("omgevingsvergunning")) continue;
+          if (/^coffeeshop\s*-\s/.test(titleLower)) continue;
+          if (/^besluit:\s*coffeeshop\s/.test(titleLower)) continue;
+          if (titleLower.includes("verlengen beslistermijn")) continue;
 
           const scoreBase = 20;
           
@@ -467,6 +466,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
 const RAADZAAM_GEMEENTEN: Record<string, string> = {
   "amsterdam": "gemeenteamsterdam",
   "utrecht": "gemeenteutrecht",
+  "almere": "raadvanalmere",
 };
 
 async function searchRaadzaam(gemeentenaam: string, keywords: string) {
