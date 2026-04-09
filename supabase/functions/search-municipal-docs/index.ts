@@ -372,7 +372,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   try {
     // Only search Gemeenteblad for coffeeshop policy documents specifically
     const collections = [
-      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid" NOT dcterms.title any "exploitatievergunning verleend verlenging aanvraag omgevingsvergunning perceel"` },
+      { type: "Gemeenteblad", query: `creator="${gemeentenaam}" AND dcterms.title any "coffeeshop coffeeshopbeleid gedoogbeleid softdrugs softdrugsbeleid cannabisbeleid damoclesbeleid exploitatievergunning"` },
     ];
 
     const allResults: any[] = [];
@@ -380,7 +380,7 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
     await Promise.all(collections.map(async ({ connection, type, query }) => {
       try {
         const encoded = encodeURIComponent(query);
-        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=5&sortKeys=modified,,0`;
+        const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${encoded}&maximumRecords=10&sortKeys=modified,,0`;
 
         console.log(`Searching Officiële Bekendmakingen (${type}) for: ${gemeentenaam}`);
         const res = await fetchWithTimeout(url, undefined, 8000);
@@ -416,12 +416,9 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
           // Skip Kamerstukken that leak through
           if (identifier && identifier.startsWith("kst-")) continue;
           
-          // Skip individual permit/location decisions (e.g. "Coffeeshop - Slaghekstraat 58A", "Besluit: coffeeshop V.O.F.")
           const titleLower = (title || "").toLowerCase();
-          if (titleLower.includes("verleend") || titleLower.includes("exploitatievergunning") || titleLower.includes("omgevingsvergunning")) continue;
-          if (/^coffeeshop\s*-\s/.test(titleLower)) continue;
-          if (/^besluit:\s*coffeeshop\s/.test(titleLower)) continue;
-          if (titleLower.includes("verlengen beslistermijn")) continue;
+          // Skip omgevingsvergunning (not coffeeshop related)
+          if (titleLower.includes("omgevingsvergunning") && !titleLower.includes("coffeeshop")) continue;
 
           const scoreBase = 20;
           
