@@ -457,6 +457,85 @@ async function searchOfficieleBekendmakingen(gemeentenaam: string) {
   }
 }
 
+/* ── Raadzaam (Spinque) ── */
+
+const RAADZAAM_GEMEENTEN: Record<string, string> = {
+  "amsterdam": "gemeenteamsterdam",
+  "utrecht": "gemeenteutrecht",
+};
+
+async function searchRaadzaam(gemeentenaam: string, keywords: string) {
+  const needle = gemeentenaam.toLowerCase().trim();
+  const workspace = RAADZAAM_GEMEENTEN[needle];
+  if (!workspace) return [];
+
+  const query = encodeURIComponent(keywords || "coffeeshop");
+  const url = `https://rest.spinque.com/4/${workspace}/api/raadzaam/e/search/p/q/${query}/results?config=production&count=15&offset=0`;
+
+  try {
+    console.log(`Searching Raadzaam for: ${gemeentenaam}`);
+    const res = await fetchWithTimeout(url, undefined, 10000);
+    if (!res.ok) { await res.text(); return []; }
+    const data = await res.json();
+    const items = data.items || [];
+
+    const results: any[] = [];
+    for (const item of items) {
+      const tuple = item.tuple?.[0];
+      if (!tuple) continue;
+
+      const attrs = tuple.attributes || {};
+      const names = attrs["https://schema.org/name"] || [];
+      const name = names[0] || "Onbekend raadsstuk";
+
+      // Get date from agenda items
+      const agendas = attrs.agenda || [];
+      let latestDate: string | null = null;
+      for (const ag of agendas) {
+        const d = ag["https://schema.org/startDate"];
+        if (d && (!latestDate || d > latestDate)) latestDate = d;
+      }
+
+      // Get document URL
+      const docUrls = attrs["https://schema.org/url"] || [];
+      let docUrl: string | null = null;
+      // Find a suitable URL - prefer raadzaam links
+      for (const u of docUrls) {
+        if (typeof u === "string" && u.startsWith("http")) {
+          docUrl = u;
+          break;
+        }
+      }
+      // Construct raadzaam link from item id
+      const itemId = tuple.id || "";
+      const slug = itemId.replace("https://amsterdam.nl/data/", "").replace(`https://${needle}.nl/data/`, "");
+      if (!docUrl && slug) {
+        docUrl = `https://raadzaam.${needle}.nl/document/${slug}`;
+      }
+
+      const types = attrs.type || [];
+      const typeLabel = types[0]?.label || "";
+
+      results.push({
+        id: `raadzaam-${slug || Math.random().toString(36).slice(2)}`,
+        score: (item.probability || 0) * 100 + 15,
+        name,
+        url: docUrl,
+        date: latestDate,
+        organization: gemeentenaam,
+        description: typeLabel ? `Raadsstuk: ${typeLabel}` : "Raadsstuk",
+        source: "raadzaam",
+      });
+    }
+
+    console.log(`Raadzaam found ${results.length} documents`);
+    return results;
+  } catch (e) {
+    console.error("Raadzaam search error:", e);
+    return [];
+  }
+}
+
 /* ── ORI ElasticSearch ── */
 
 async function searchORI(gemeentenaam: string, keywords: string) {
@@ -549,12 +628,13 @@ serve(async (req) => {
     console.log(`Searching for: ${gemeentenaam}, terms: ${searchTerms}`);
 
     // Run all searches in parallel
-    const [oriResult, orgId, cvdrDocs, parlaeusResults, obDocs] = await Promise.all([
+    const [oriResult, orgId, cvdrDocs, parlaeusResults, obDocs, raadzaamDocs] = await Promise.all([
       searchORI(gemeentenaam, searchTerms),
       findNotubizOrgId(gemeentenaam),
       searchCVDR(gemeentenaam),
       searchParlaeus(gemeentenaam, searchTerms),
       searchOfficieleBekendmakingen(gemeentenaam),
+      searchRaadzaam(gemeentenaam, searchTerms),
     ]);
 
     let notubizDocs: NotubizResult[] = [];
@@ -569,9 +649,10 @@ serve(async (req) => {
     console.log(`CVDR found ${cvdrDocs.length} beleidsregels`);
     console.log(`Parlaeus found ${parlaeusResults.length} documents`);
     console.log(`Officiële Bekendmakingen found ${obDocs.length} documents`);
+    console.log(`Raadzaam found ${raadzaamDocs.length} documents`);
 
-    // Merge: CVDR first, then OB, then Parlaeus, then Notubiz, then ORI
-    const allDocs = [...cvdrDocs, ...obDocs, ...parlaeusResults, ...notubizDocs, ...oriResult.documents];
+    // Merge: CVDR first, then Raadzaam, then OB, then Parlaeus, then Notubiz, then ORI
+    const allDocs = [...cvdrDocs, ...raadzaamDocs, ...obDocs, ...parlaeusResults, ...notubizDocs, ...oriResult.documents];
 
     // Deduplicate by document name similarity
     const seen = new Set<string>();
@@ -584,8 +665,16 @@ serve(async (req) => {
 
     // Sort by relevance + recency
     merged.sort((a, b) => {
-      const bonusA = a.source === "lokaleregelgeving" ? 5 : a.source === "officielebekendmakingen" ? 4 : a.source === "parlaeus" ? 3 : a.source === "notubiz" ? 1.5 : 0;
-      const bonusB = b.source === "lokaleregelgeving" ? 5 : b.source === "officielebekendmakingen" ? 4 : b.source === "parlaeus" ? 3 : b.source === "notubiz" ? 1.5 : 0;
+      const sourceBonus = (s: string) => {
+        switch (s) {
+          case "lokaleregelgeving": return 5;
+          case "raadzaam": return 4.5;
+          case "officielebekendmakingen": return 4;
+          case "parlaeus": return 3;
+          case "notubiz": return 1.5;
+          default: return 0;
+        }
+      };
       const recencyBonus = (dateStr: string | null) => {
         if (!dateStr) return 0;
         const d = new Date(dateStr);
@@ -595,13 +684,13 @@ serve(async (req) => {
         if (yearsAgo <= 6) return 5;
         return 0;
       };
-      return (b.score + bonusB + recencyBonus(b.date)) - (a.score + bonusA + recencyBonus(a.date));
+      return (b.score + sourceBonus(b.source) + recencyBonus(b.date)) - (a.score + sourceBonus(a.source) + recencyBonus(a.date));
     });
 
     const top = merged.slice(0, 20);
 
     console.log(
-      `Total: ${merged.length} docs (${cvdrDocs.length} CVDR, ${obDocs.length} OB, ${parlaeusResults.length} Parlaeus, ${notubizDocs.length} Notubiz, ${oriResult.documents.length} ORI), returning ${top.length}`,
+      `Total: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${obDocs.length} OB, ${parlaeusResults.length} Parlaeus, ${notubizDocs.length} Notubiz, ${oriResult.documents.length} ORI), returning ${top.length}`,
     );
 
     return new Response(
@@ -612,6 +701,7 @@ serve(async (req) => {
         notubizOrgId: orgId,
         sources: {
           lokaleregelgeving: cvdrDocs.length,
+          raadzaam: raadzaamDocs.length,
           officielebekendmakingen: obDocs.length,
           parlaeus: parlaeusResults.length,
           notubiz: notubizDocs.length,
