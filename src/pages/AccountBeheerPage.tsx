@@ -314,7 +314,7 @@ const AccountBeheerPage = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {loading || membersLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-muted-foreground" size={24} />
         </div>
