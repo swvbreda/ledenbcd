@@ -41,6 +41,7 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
         factuurBedrijfsnaam: factuurBedrijfsnaam || undefined,
         factuurKvk: factuurKvk || undefined,
         factuurEmail: factuurEmail || undefined,
+        leadEmail: lead.email,
       });
       toast.success(`${lead.naam} is omgezet naar lid #${lidnummer}`);
       setOpen(false);
