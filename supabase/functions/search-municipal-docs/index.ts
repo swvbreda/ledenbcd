@@ -493,6 +493,10 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
       const names = attrs["https://schema.org/name"] || [];
       const name = names[0] || "Onbekend raadsstuk";
 
+      // Skip generic/irrelevant items
+      const nameLower = name.toLowerCase();
+      if (nameLower.startsWith("vaststelling agenda") || nameLower.startsWith("vaststellen agenda") || nameLower.startsWith("termijnagenda") || nameLower === "algemeen") continue;
+
       // Get date from agenda items
       const agendas = attrs.agenda || [];
       let latestDate: string | null = null;
