@@ -20,10 +20,10 @@ interface MunicipalDocument {
 }
 
 const SOURCE_BADGES: Record<string, { label: string; className: string }> = {
-  lokaleregelgeving: { label: "Beleidsregel", className: "text-green-700 border-green-300 bg-green-50" },
-  officielebekendmakingen: { label: "Officiële Bekendmaking", className: "text-purple-700 border-purple-300 bg-purple-50" },
-  notubiz: { label: "Notubiz", className: "text-accent border-accent/30" },
-  parlaeus: { label: "Parlaeus", className: "text-blue-700 border-blue-300 bg-blue-50" },
+  lokaleregelgeving: { label: "Lokale Regelgeving", className: "text-green-700 border-green-300 bg-green-50" },
+  officielebekendmakingen: { label: "Officiële Bekendmaking", className: "text-blue-700 border-blue-300 bg-blue-50" },
+  notubiz: { label: "Notubiz", className: "text-orange-700 border-orange-300 bg-orange-50" },
+  parlaeus: { label: "Parlaeus", className: "text-teal-700 border-teal-300 bg-teal-50" },
   ori: { label: "Open Raadsinformatie", className: "text-muted-foreground border-border" },
 };
 
@@ -53,8 +53,9 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
       });
       if (error) throw error;
 
-      // Filter: alleen documenten van deze gemeente (niet Kamerstukken etc.)
+      // Filter: alleen documenten van deze gemeente + alleen met URL
       const gemeenteDocs = (data.documents || []).filter((doc: MunicipalDocument) => {
+        if (!doc.url) return false;
         const org = (doc.organization || "").toLowerCase();
         const naam = gemeentenaam.toLowerCase();
         return org.includes(naam) || org === naam || org === `gemeente ${naam}`;
@@ -144,15 +145,20 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
                   const sourceBadge = SOURCE_BADGES[doc.source || ""];
 
                   return (
-                    <div
+                    <a
                       key={doc.id}
-                      className="border rounded-lg p-3 text-sm hover:bg-muted/20 transition-colors"
+                      href={doc.url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="border rounded-lg p-3 text-sm hover:bg-muted/30 transition-colors block cursor-pointer group"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 min-w-0">
                           <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                           <div className="min-w-0">
-                            <p className="font-medium text-foreground line-clamp-2">{doc.name}</p>
+                            <p className="font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                              {doc.name}
+                            </p>
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                               {doc.date && (
                                 <span className="text-xs text-muted-foreground">
@@ -165,22 +171,16 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
                                 </Badge>
                               )}
                               {doc.description && (
-                                <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                <span className="text-xs text-muted-foreground truncate max-w-[250px]">
                                   {doc.description}
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        {doc.url && (
-                          <Button variant="ghost" size="sm" className="h-7 px-2 shrink-0" asChild>
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </Button>
-                        )}
+                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
