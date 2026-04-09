@@ -171,8 +171,11 @@ export function usePasskeys() {
       return { success: true };
     } catch (err: any) {
       setLoading(false);
-      if (err?.name === "NotAllowedError") return { success: false };
-      return { success: false, error: "Registratie mislukt" };
+      if (err?.name === "NotAllowedError") {
+        return { success: false, error: "Registratie geannuleerd of niet beschikbaar op dit apparaat. Controleer of je apparaat Touch ID, Face ID of Windows Hello ondersteunt." };
+      }
+      console.error("Passkey register error:", err?.name, err?.message);
+      return { success: false, error: `Registratie mislukt: ${err?.message || "onbekende fout"}` };
     }
   }, []);
 
