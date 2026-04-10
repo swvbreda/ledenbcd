@@ -571,6 +571,137 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
   }
 }
 
+/* ── Cross-municipal CVDR (no gemeente filter) ── */
+
+async function searchCVDRCross(keywords: string) {
+  try {
+    const terms = keywords.split(/\s+/).filter(Boolean).join(" ");
+    // Search for user terms in CVDR - include coffeeshop context terms to widen results
+    const allTerms = `${terms} coffeeshop`;
+    const query = encodeURIComponent(
+      `dcterms.title any "${allTerms}"`
+    );
+    const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=20&sortKeys=dcterms.modified,,0`;
+
+    console.log(`Cross-municipal CVDR search: ${terms}`);
+    const res = await fetchWithTimeout(url, undefined, 8000);
+    const xml = await res.text();
+
+    if (!xml.includes('<numberOfRecords>')) return [];
+
+    const numMatch = xml.match(/<numberOfRecords>(\d+)<\/numberOfRecords>/);
+    console.log(`Cross-municipal CVDR: ${numMatch?.[1] || 0} records`);
+    if (!numMatch || parseInt(numMatch[1]) === 0) return [];
+
+    const results: any[] = [];
+    const recordBlocks = xml.split('<record>').slice(1);
+    for (const block of recordBlocks) {
+      const getTag = (tag: string) => {
+        const m = block.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`));
+        return m ? m[1].trim() : null;
+      };
+
+      const title = getTag('dcterms:title') || "Beleidsregel";
+      const identifier = getTag('dcterms:identifier');
+      const modified = getTag('dcterms:modified');
+      const creator = getTag('dcterms:creator') || "Onbekend";
+      const subject = getTag('dcterms:subject');
+
+      const regelingUrl = identifier ? `https://lokaleregelgeving.overheid.nl/${identifier}` : null;
+
+      results.push({
+        id: `cvdr-${identifier || Math.random().toString(36).slice(2)}`,
+        score: 25,
+        name: `${title} (geldend)`,
+        url: regelingUrl,
+        date: modified,
+        organization: creator,
+        description: subject ? `Geldende beleidsregel — ${subject}` : 'Geldende beleidsregel',
+        source: "lokaleregelgeving",
+      });
+    }
+
+    return results;
+  } catch (e) {
+    console.error("Cross CVDR error:", e);
+    return [];
+  }
+}
+
+/* ── Cross-municipal OB (no gemeente filter) ── */
+
+async function searchOBCross(keywords: string) {
+  try {
+    const terms = keywords.split(/\s+/).filter(Boolean).join(" ");
+    const allTerms = `${terms} coffeeshop`;
+    const query = encodeURIComponent(
+      `title any "${allTerms}"`
+    );
+    const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${query}&maximumRecords=20&sortKeys=modified,,0`;
+
+    console.log(`Cross-municipal OB search: ${terms}`);
+    const res = await fetchWithTimeout(url, undefined, 8000);
+    const xml = await res.text();
+
+    const numMatch = xml.match(/<numberOfRecords>(\d+)<\/numberOfRecords>/);
+    console.log(`Cross-municipal OB: ${numMatch?.[1] || 0} records`);
+    if (!numMatch || parseInt(numMatch[1]) === 0) return [];
+
+    const results: any[] = [];
+    const recordBlocks = xml.split('<record>').slice(1);
+    for (const block of recordBlocks) {
+      const getTag = (tag: string) => {
+        const m = block.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`));
+        return m ? m[1].trim() : null;
+      };
+
+      const rawTitle = getTag('dcterms:title') || getTag('title') || "Gemeenteblad";
+      let title = rawTitle;
+      const descParts = rawTitle.split(/,\s*/);
+      if (descParts.length >= 4) {
+        const coffeeIdx = descParts.findIndex(p =>
+          /coffeeshop|cannabis|softdrug|gedoog|opium|damocles|hennep/i.test(p)
+        );
+        if (coffeeIdx >= 3) {
+          const relevantParts = descParts.slice(coffeeIdx).join(', ')
+            .replace(/,?\s*verzonden\s+\d{2}-\d{2}-\d{4}\s*$/, '');
+          title = relevantParts || rawTitle;
+        }
+      }
+
+      const identifier = getTag('dcterms:identifier') || getTag('identifier');
+      const modified = getTag('dcterms:modified') || getTag('dcterms:issued');
+      const creator = getTag('dcterms:creator') || "Onbekend";
+
+      if (identifier && identifier.startsWith("kst-")) continue;
+
+      const titleLower = title.toLowerCase();
+      if (titleLower.includes("omgevingsvergunning") && !titleLower.includes("coffeeshop")) continue;
+
+      const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium"];
+      if (!coffeeshopTerms.some(t => titleLower.includes(t))) continue;
+
+      const docUrl = identifier ? `https://zoek.officielebekendmakingen.nl/${identifier}.html` : null;
+
+      results.push({
+        id: `ob-${identifier || Math.random().toString(36).slice(2)}`,
+        score: 20,
+        name: title,
+        url: docUrl,
+        date: modified,
+        organization: creator,
+        description: "Gemeenteblad",
+        source: "officielebekendmakingen",
+      });
+    }
+
+    return results;
+  } catch (e) {
+    console.error("Cross OB error:", e);
+    return [];
+  }
+}
+
 /* ── ORI ElasticSearch ── */
 
 async function searchORI(gemeentenaam: string, keywords: string) {
@@ -655,8 +786,56 @@ serve(async (req) => {
   }
 
   try {
-    const { gemeentenaam, keywords } = await req.json();
+    const body = await req.json();
+    const { gemeentenaam, keywords, crossMunicipal } = body;
 
+    // Cross-municipal mode: search CVDR + OB across all gemeenten
+    if (crossMunicipal) {
+      const searchTerms = keywords || "coffeeshop beleid";
+      console.log(`Cross-municipal search, terms: ${searchTerms}`);
+
+      const [cvdrDocs, obDocs] = await Promise.all([
+        searchCVDRCross(searchTerms),
+        searchOBCross(searchTerms),
+      ]);
+
+      const allDocs = [...cvdrDocs, ...obDocs];
+
+      // Deduplicate
+      const seen = new Set<string>();
+      const merged = allDocs.filter((doc) => {
+        const key = doc.name.toLowerCase().replace(/\s+/g, " ").trim().substring(0, 60);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Sort by recency + score
+      merged.sort((a, b) => {
+        const sourceBonus = (s: string) => s === "lokaleregelgeving" ? 5 : s === "officielebekendmakingen" ? 4 : 0;
+        const recencyBonus = (dateStr: string | null) => {
+          if (!dateStr) return 0;
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return 0;
+          const yearsAgo = (Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+          if (yearsAgo <= 2) return 10;
+          if (yearsAgo <= 5) return 5;
+          return 0;
+        };
+        return (b.score + sourceBonus(b.source) + recencyBonus(b.date)) - (a.score + sourceBonus(a.source) + recencyBonus(a.date));
+      });
+
+      const top = merged.slice(0, 30);
+
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${obDocs.length} OB), returning ${top.length}`);
+
+      return new Response(
+        JSON.stringify({ documents: top, total: merged.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Single-municipality mode (existing behavior)
     if (!gemeentenaam) {
       return new Response(
         JSON.stringify({ error: "gemeentenaam is verplicht" }),
