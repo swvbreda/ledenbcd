@@ -899,7 +899,7 @@ async function searchNotubizCross(keywords: string) {
       }
     }
 
-    console.log(`Notubiz cross: ${gemeenteOrgs.length} gemeente orgs found, searching...`);
+    console.log(`Notubiz cross: ${gemeenteOrgs.length} gemeente orgs found, searching all in parallel...`);
 
     const terms = keywords.toLowerCase().split(/\s+/).filter(Boolean);
     const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "damocles", "opium", "hennep", "wiet"];
@@ -912,58 +912,54 @@ async function searchNotubizCross(keywords: string) {
     const fmt = (d: Date) =>
       `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01 00:00:00`;
 
-    const allResults: any[] = [];
+    // Search ALL orgs in parallel with short timeout — fire-and-forget style
+    const results = await Promise.all(gemeenteOrgs.map(async ({ name, id }) => {
+      try {
+        const eventsUrl = `${NOTUBIZ_API}/events?format=json&version=1.17.0&organisation_id=${id}&date_from=${encodeURIComponent(fmt(dateFrom))}&date_to=${encodeURIComponent(fmt(dateTo))}&page_size=50&page=1`;
+        const res = await fetchWithTimeout(eventsUrl, undefined, 4000);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const events = data.events || [];
 
-    // Step 3: Search events in batches of 10 orgs to avoid overwhelming
-    const batchSize = 10;
-    for (let i = 0; i < gemeenteOrgs.length; i += batchSize) {
-      const batch = gemeenteOrgs.slice(i, i + batchSize);
-      await Promise.all(batch.map(async ({ name, id }) => {
-        try {
-          const eventsUrl = `${NOTUBIZ_API}/events?format=json&version=1.17.0&organisation_id=${id}&date_from=${encodeURIComponent(fmt(dateFrom))}&date_to=${encodeURIComponent(fmt(dateTo))}&page_size=100&page=1`;
-          const res = await fetchWithTimeout(eventsUrl, undefined, 6000);
-          if (!res.ok) return;
-          const data = await res.json();
-          const events = data.events || [];
+        const gemeentenaam = name.replace(/^gemeente\s+/i, "").trim();
+        const capGemeente = gemeentenaam.charAt(0).toUpperCase() + gemeentenaam.slice(1);
+        const matches: any[] = [];
 
-          const gemeentenaam = name.replace(/^gemeente\s+/i, "").trim();
-          const capGemeente = gemeentenaam.charAt(0).toUpperCase() + gemeentenaam.slice(1);
+        for (const event of events) {
+          if (event.type !== "meeting") continue;
+          const attrs = event.attributes || [];
+          const title = attrs.find((a: any) => a.id === 1)?.value || "";
+          const titleLower = title.toLowerCase();
 
-          for (const event of events) {
-            if (event.type !== "meeting") continue;
-            const attrs = event.attributes || [];
-            const title = attrs.find((a: any) => a.id === 1)?.value || "";
-            const titleLower = title.toLowerCase();
+          const matchScore = allTerms.reduce(
+            (sc: number, t: string) => sc + (titleLower.includes(t) ? 1 : 0),
+            0,
+          );
+          if (matchScore === 0) continue;
 
-            // Check if title matches any search term or coffeeshop term
-            const matchScore = allTerms.reduce(
-              (sc: number, t: string) => sc + (titleLower.includes(t) ? 1 : 0),
-              0,
-            );
-            if (matchScore === 0) continue;
+          const meetingId = event.id;
+          const dateStr = event.plannings?.[0]?.start_date || event.creation_date;
+          const slug = gemeentenaam.replace(/\s+/g, "").replace(/-/g, "");
+          const meetingUrl = `https://${slug}.notubiz.nl/vergadering/${meetingId}`;
 
-            const meetingId = event.id;
-            const dateStr = event.plannings?.[0]?.start_date || event.creation_date;
-
-            // Link to the public Notubiz meeting page
-            const meetingUrl = `https://${gemeentenaam.replace(/\s+/g, "")}.notubiz.nl/vergadering/${meetingId}`;
-
-            allResults.push({
-              id: `notubiz-meeting-${meetingId}`,
-              score: matchScore * 3,
-              name: title,
-              url: meetingUrl,
-              date: dateStr,
-              organization: `Gemeente ${capGemeente}`,
-              description: `Vergadering`,
-              source: "notubiz",
-            });
-          }
-        } catch (_e) {
-          // Skip failed orgs silently
+          matches.push({
+            id: `notubiz-meeting-${meetingId}`,
+            score: matchScore * 3,
+            name: title,
+            url: meetingUrl,
+            date: dateStr,
+            organization: `Gemeente ${capGemeente}`,
+            description: `Vergadering`,
+            source: "notubiz",
+          });
         }
-      }));
-    }
+        return matches;
+      } catch (_e) {
+        return [];
+      }
+    }));
+
+    const allResults = results.flat();
 
     // Deduplicate
     const seen = new Set<string>();
