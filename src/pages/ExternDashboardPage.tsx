@@ -381,7 +381,10 @@ const ExternDashboardPage = () => {
             )}
 
             {supplierTab === "gemeenten" && (
-              <SupplierGemeentenOverzicht members={allMembers} />
+              <div className="space-y-4">
+                <SupplierGemeentenOverzicht members={allMembers} />
+                <DocumentenZoeker />
+              </div>
             )}
 
             <BenefitFormDialog
