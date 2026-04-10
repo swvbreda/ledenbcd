@@ -875,14 +875,32 @@ async function searchRaadzaamCross(keywords: string) {
 
 /* ── Cross-municipal Notubiz (search top coffeeshop municipalities via detailed agenda search) ── */
 
-// Top coffeeshop municipalities to search in Notubiz cross-municipal mode
+// All coffeeshop municipalities to search in Notubiz cross-municipal mode
 const NOTUBIZ_CROSS_CITIES = [
-  "Den Haag", "Rotterdam", "Haarlem", "Maastricht", "Tilburg",
-  "Eindhoven", "Nijmegen", "Groningen", "Breda", "Leiden",
-  "Zaanstad", "Dordrecht", "Enschede", "Apeldoorn", "Arnhem",
-  "Amersfoort", "Leeuwarden", "Almelo", "Deventer", "Heerlen",
-  "Venlo", "Sittard-Geleen", "Delft", "Alkmaar", "Emmen",
-  "Helmond", "Roosendaal", "Purmerend", "Zwolle", "Lelystad",
+  // Large (5+ coffeeshops)
+  "Den Haag", "Rotterdam", "Haarlem", "Maastricht", "Nijmegen",
+  "Leeuwarden", "Leiden", "Eindhoven", "Tilburg", "Arnhem",
+  "Enschede", "Groningen", "Hilversum", "Breda", "Amersfoort",
+  "Alkmaar", "Dordrecht", "'s-Hertogenbosch", "Apeldoorn",
+  // Medium (2-4 coffeeshops)
+  "Delft", "Gouda", "Tiel", "Deventer", "Zwolle", "Schiedam",
+  "Almere", "Gorinchem", "Venlo", "Wageningen", "Zutphen",
+  "Hengelo", "Heerenveen", "Vlaardingen", "Purmerend", "Zaanstad",
+  "Hoorn", "Den Helder", "Beverwijk", "Velsen", "Zandvoort",
+  "Haarlemmermeer", "Alphen aan den Rijn", "Veenendaal", "Culemborg",
+  "Vlissingen", "Goes", "Venray", "Weert", "Sittard-Geleen",
+  "Ede", "Doetinchem", "Almelo", "Emmen", "Meppel", "Sneek",
+  "Harlingen", "Drachten", "Hoogezand", "Veendam", "Oldambt",
+  "Hellevoetsluis",
+  // Small (1 coffeeshop)
+  "Gooise Meren", "Enkhuizen", "Schagen", "Lisse", "Zwijndrecht",
+  "Woerden", "Lelystad", "Sliedrecht", "Zeist", "De Bilt", "Soest",
+  "Harderwijk", "Rhenen", "Utrechtse Heuvelrug", "Terneuzen",
+  "Etten-Leur", "Waalwijk", "Oss", "Uden", "Helmond", "Roermond",
+  "Heerlen", "Kerkrade", "Oude IJsselstreek", "Winterswijk",
+  "Hardenberg", "Coevorden", "Kampen", "Steenwijkerland",
+  "Weststellingwerf", "Assen", "Tynaarlo", "Stadskanaal",
+  "Zoetermeer", "Maassluis",
 ];
 
 async function searchNotubizCross(keywords: string) {
@@ -900,7 +918,7 @@ async function searchNotubizCross(keywords: string) {
 
     // Search meetings with agenda items for each org in parallel (batches of 5)
     const allResults: any[] = [];
-    const batchSize = 5;
+    const batchSize = 8;
     for (let i = 0; i < validOrgs.length; i += batchSize) {
       const batch = validOrgs.slice(i, i + batchSize);
       const batchResults = await Promise.all(
