@@ -873,104 +873,46 @@ async function searchRaadzaamCross(keywords: string) {
   return allResults;
 }
 
-/* ── Cross-municipal Notubiz (search events across all Notubiz gemeenten) ── */
+/* ── Cross-municipal Notubiz (search top coffeeshop municipalities via detailed agenda search) ── */
+
+// Top coffeeshop municipalities to search in Notubiz cross-municipal mode
+const NOTUBIZ_CROSS_CITIES = [
+  "Den Haag", "Rotterdam", "Haarlem", "Maastricht", "Tilburg",
+  "Eindhoven", "Nijmegen", "Groningen", "Breda", "Leiden",
+  "Zaanstad", "Dordrecht", "Enschede", "Apeldoorn", "Arnhem",
+  "Amersfoort", "Leeuwarden", "Almelo", "Deventer", "Heerlen",
+  "Venlo", "Sittard-Geleen", "Delft", "Alkmaar", "Emmen",
+  "Helmond", "Roosendaal", "Purmerend", "Zwolle", "Lelystad",
+];
 
 async function searchNotubizCross(keywords: string) {
   try {
-    // Step 1: Get all Notubiz organizations
-    if (!orgCache) {
-      const res = await fetchWithTimeout(`${NOTUBIZ_API}/organisations?format=json&version=1.17.0`, undefined, 12000);
-      if (!res.ok) { await res.text(); return []; }
-      const data = await res.json();
-      const orgs = data?.organisations?.organisation ?? [];
-      orgCache = {};
-      for (const o of orgs) {
-        const name = (o.name || "").trim().toLowerCase();
-        const id = o?.["@attributes"]?.id;
-        if (name && id) orgCache[name] = Number(id);
-      }
+    // Resolve org IDs for top cities in parallel
+    const orgLookups = await Promise.all(
+      NOTUBIZ_CROSS_CITIES.map(async (city) => {
+        const orgId = await findNotubizOrgId(city);
+        return orgId ? { city, orgId } : null;
+      })
+    );
+
+    const validOrgs = orgLookups.filter((o): o is { city: string; orgId: number } => o !== null);
+    console.log(`Notubiz cross: found ${validOrgs.length}/${NOTUBIZ_CROSS_CITIES.length} orgs, searching meetings...`);
+
+    // Search meetings with agenda items for each org in parallel (batches of 5)
+    const allResults: any[] = [];
+    const batchSize = 5;
+    for (let i = 0; i < validOrgs.length; i += batchSize) {
+      const batch = validOrgs.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(({ city, orgId }) =>
+          searchNotubizMeetings(orgId, keywords, city).catch(() => [] as NotubizResult[])
+        )
+      );
+      allResults.push(...batchResults.flat());
     }
 
-    // Step 2: Get all gemeente org IDs (filter out test/demo/college)
-    const gemeenteOrgs: { name: string; id: number }[] = [];
-    for (const [name, id] of Object.entries(orgCache)) {
-      if (name.startsWith("gemeente ") && !name.includes("test") && !name.includes("demo")) {
-        gemeenteOrgs.push({ name, id });
-      }
-    }
-
-    console.log(`Notubiz cross: ${gemeenteOrgs.length} gemeente orgs found, searching all in parallel...`);
-
-    const terms = keywords.toLowerCase().split(/\s+/).filter(Boolean);
-    const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "damocles", "opium", "hennep", "wiet"];
-    const allTerms = [...terms, ...coffeeshopTerms.filter(t => !terms.includes(t))];
-
-    const dateFrom = new Date();
-    dateFrom.setFullYear(dateFrom.getFullYear() - 5);
-    const dateTo = new Date();
-    dateTo.setFullYear(dateTo.getFullYear() + 1);
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01 00:00:00`;
-
-    // Search ALL orgs in parallel with short timeout — fire-and-forget style
-    const results = await Promise.all(gemeenteOrgs.map(async ({ name, id }) => {
-      try {
-        const eventsUrl = `${NOTUBIZ_API}/events?format=json&version=1.17.0&organisation_id=${id}&date_from=${encodeURIComponent(fmt(dateFrom))}&date_to=${encodeURIComponent(fmt(dateTo))}&page_size=50&page=1`;
-        const res = await fetchWithTimeout(eventsUrl, undefined, 4000);
-        if (!res.ok) return [];
-        const data = await res.json();
-        const events = data.events || [];
-
-        const gemeentenaam = name.replace(/^gemeente\s+/i, "").trim();
-        const capGemeente = gemeentenaam.charAt(0).toUpperCase() + gemeentenaam.slice(1);
-        const matches: any[] = [];
-
-        for (const event of events) {
-          if (event.type !== "meeting") continue;
-          const attrs = event.attributes || [];
-          const title = attrs.find((a: any) => a.id === 1)?.value || "";
-          const titleLower = title.toLowerCase();
-
-          const matchScore = allTerms.reduce(
-            (sc: number, t: string) => sc + (titleLower.includes(t) ? 1 : 0),
-            0,
-          );
-          if (matchScore === 0) continue;
-
-          const meetingId = event.id;
-          const dateStr = event.plannings?.[0]?.start_date || event.creation_date;
-          const slug = gemeentenaam.replace(/\s+/g, "").replace(/-/g, "");
-          const meetingUrl = `https://${slug}.notubiz.nl/vergadering/${meetingId}`;
-
-          matches.push({
-            id: `notubiz-meeting-${meetingId}`,
-            score: matchScore * 3,
-            name: title,
-            url: meetingUrl,
-            date: dateStr,
-            organization: `Gemeente ${capGemeente}`,
-            description: `Vergadering`,
-            source: "notubiz",
-          });
-        }
-        return matches;
-      } catch (_e) {
-        return [];
-      }
-    }));
-
-    const allResults = results.flat();
-
-    // Deduplicate
-    const seen = new Set<string>();
-    const deduped = allResults.filter((r) => {
-      if (seen.has(r.id)) return false;
-      seen.add(r.id);
-      return true;
-    }).sort((a, b) => b.score - a.score);
-
-    console.log(`Notubiz cross found ${deduped.length} documents from ${gemeenteOrgs.length} gemeenten`);
-    return deduped;
+    console.log(`Notubiz cross found ${allResults.length} documents from ${validOrgs.length} gemeenten`);
+    return allResults;
   } catch (e) {
     console.error("Notubiz cross search error:", e);
     return [];
