@@ -873,6 +873,52 @@ async function searchRaadzaamCross(keywords: string) {
   return allResults;
 }
 
+/* ── Cross-municipal Notubiz (search top coffeeshop municipalities via detailed agenda search) ── */
+
+// Top coffeeshop municipalities to search in Notubiz cross-municipal mode
+const NOTUBIZ_CROSS_CITIES = [
+  "Den Haag", "Rotterdam", "Haarlem", "Maastricht", "Tilburg",
+  "Eindhoven", "Nijmegen", "Groningen", "Breda", "Leiden",
+  "Zaanstad", "Dordrecht", "Enschede", "Apeldoorn", "Arnhem",
+  "Amersfoort", "Leeuwarden", "Almelo", "Deventer", "Heerlen",
+  "Venlo", "Sittard-Geleen", "Delft", "Alkmaar", "Emmen",
+  "Helmond", "Roosendaal", "Purmerend", "Zwolle", "Lelystad",
+];
+
+async function searchNotubizCross(keywords: string) {
+  try {
+    // Resolve org IDs for top cities in parallel
+    const orgLookups = await Promise.all(
+      NOTUBIZ_CROSS_CITIES.map(async (city) => {
+        const orgId = await findNotubizOrgId(city);
+        return orgId ? { city, orgId } : null;
+      })
+    );
+
+    const validOrgs = orgLookups.filter((o): o is { city: string; orgId: number } => o !== null);
+    console.log(`Notubiz cross: found ${validOrgs.length}/${NOTUBIZ_CROSS_CITIES.length} orgs, searching meetings...`);
+
+    // Search meetings with agenda items for each org in parallel (batches of 5)
+    const allResults: any[] = [];
+    const batchSize = 5;
+    for (let i = 0; i < validOrgs.length; i += batchSize) {
+      const batch = validOrgs.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(({ city, orgId }) =>
+          searchNotubizMeetings(orgId, keywords, city).catch(() => [] as NotubizResult[])
+        )
+      );
+      allResults.push(...batchResults.flat());
+    }
+
+    console.log(`Notubiz cross found ${allResults.length} documents from ${validOrgs.length} gemeenten`);
+    return allResults;
+  } catch (e) {
+    console.error("Notubiz cross search error:", e);
+    return [];
+  }
+}
+
 /* ── Main handler ── */
 
 serve(async (req) => {
@@ -889,14 +935,15 @@ serve(async (req) => {
       const searchTerms = keywords || "coffeeshop beleid";
       console.log(`Cross-municipal search, terms: ${searchTerms}`);
 
-      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs] = await Promise.all([
+      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs, notubizDocs] = await Promise.all([
         searchCVDRCross(searchTerms),
         searchOBCross(searchTerms),
         searchORICross(searchTerms),
         searchRaadzaamCross(searchTerms),
+        searchNotubizCross(searchTerms),
       ]);
 
-      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...obDocs, ...oriDocs];
+      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...notubizDocs, ...obDocs, ...oriDocs];
 
       // Deduplicate
       const seen = new Set<string>();
@@ -913,6 +960,7 @@ serve(async (req) => {
           switch (s) {
             case "lokaleregelgeving": return 5;
             case "raadzaam": return 4.5;
+            case "notubiz": return 4;
             case "officielebekendmakingen": return 4;
             case "ori": return 3;
             default: return 0;
@@ -932,7 +980,7 @@ serve(async (req) => {
 
       const top = merged.slice(0, 40);
 
-      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${notubizDocs.length} Notubiz, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
 
       return new Response(
         JSON.stringify({ documents: top, total: merged.length }),
