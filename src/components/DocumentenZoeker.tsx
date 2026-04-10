@@ -24,6 +24,7 @@ const SOURCE_BADGES: Record<string, { label: string; className: string }> = {
   officielebekendmakingen: { label: "Officiële Bekendmaking", className: "text-blue-700 border-blue-300 bg-blue-50" },
   raadzaam: { label: "Raadzaam", className: "text-indigo-700 border-indigo-300 bg-indigo-50" },
   notubiz: { label: "Notubiz", className: "text-orange-700 border-orange-300 bg-orange-50" },
+  ibabs: { label: "iBabs", className: "text-purple-700 border-purple-300 bg-purple-50" },
   ori: { label: "Open Raadsinformatie", className: "text-muted-foreground border-border" },
 };
 

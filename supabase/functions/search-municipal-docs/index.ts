@@ -489,6 +489,8 @@ const RAADZAAM_GEMEENTEN: Record<string, string> = {
   "amsterdam": "gemeenteamsterdam",
   "utrecht": "gemeenteutrecht",
   "almere": "raadvanalmere",
+  "nijmegen": "nijmegen",
+  "rijswijk": "rijswijk",
 };
 
 async function searchRaadzaam(gemeentenaam: string, keywords: string) {
@@ -810,7 +812,7 @@ async function searchORICross(keywords: string) {
           ],
         },
       },
-      size: 25,
+      size: 50,
       _source: ["name", "url", "date", "organization", "description"],
       sort: [{ _score: "desc" }],
     };
@@ -831,16 +833,25 @@ async function searchORICross(keywords: string) {
 
     const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium", "wiet"];
     const documents = hits
-      .map((hit: any) => ({
-        id: hit._id,
-        score: hit._score,
-        name: hit._source?.name || "Onbekend document",
-        url: hit._source?.url || null,
-        date: hit._source?.date || null,
-        organization: hit._source?.organization?.name || "Onbekend",
-        description: hit._source?.description || null,
-        source: "ori",
-      }))
+      .map((hit: any) => {
+        const url = hit._source?.url || null;
+        const orgName = hit._source?.organization?.name || "Onbekend";
+        // Detect original source from URL for better labeling
+        let source = "ori";
+        if (url?.includes("ibabs")) source = "ibabs";
+        else if (url?.includes("notubiz")) source = "notubiz";
+        else if (url?.includes("gemeenteraad") || url?.includes("raad.")) source = "ori";
+        return {
+          id: hit._id,
+          score: hit._score,
+          name: hit._source?.name || "Onbekend document",
+          url,
+          date: hit._source?.date || null,
+          organization: orgName,
+          description: hit._source?.description || null,
+          source,
+        };
+      })
       .filter((doc: any) => {
         const nameLower = (doc.name || "").toLowerCase();
         return coffeeshopTerms.some(t => nameLower.includes(t)) && doc.url;
@@ -979,6 +990,7 @@ serve(async (req) => {
             case "lokaleregelgeving": return 5;
             case "raadzaam": return 4.5;
             case "notubiz": return 4;
+            case "ibabs": return 4;
             case "officielebekendmakingen": return 4;
             case "ori": return 3;
             default: return 0;
