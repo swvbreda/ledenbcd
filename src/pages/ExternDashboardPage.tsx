@@ -16,6 +16,7 @@ import { getBenefitImageUrl } from "@/hooks/useBenefits";
 import type { Member } from "@/data/types";
 import SupplierCoffeeshopTable from "@/components/SupplierCoffeeshopTable";
 import SupplierGemeentenOverzicht from "@/components/SupplierGemeentenOverzicht";
+import DocumentenZoeker from "@/components/DocumentenZoeker";
 
 interface OrgInfo {
   id: string;
