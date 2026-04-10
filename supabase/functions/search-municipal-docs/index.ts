@@ -889,12 +889,14 @@ serve(async (req) => {
       const searchTerms = keywords || "coffeeshop beleid";
       console.log(`Cross-municipal search, terms: ${searchTerms}`);
 
-      const [cvdrDocs, obDocs] = await Promise.all([
+      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs] = await Promise.all([
         searchCVDRCross(searchTerms),
         searchOBCross(searchTerms),
+        searchORICross(searchTerms),
+        searchRaadzaamCross(searchTerms),
       ]);
 
-      const allDocs = [...cvdrDocs, ...obDocs];
+      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...obDocs, ...oriDocs];
 
       // Deduplicate
       const seen = new Set<string>();
@@ -907,7 +909,15 @@ serve(async (req) => {
 
       // Sort by recency + score
       merged.sort((a, b) => {
-        const sourceBonus = (s: string) => s === "lokaleregelgeving" ? 5 : s === "officielebekendmakingen" ? 4 : 0;
+        const sourceBonus = (s: string) => {
+          switch (s) {
+            case "lokaleregelgeving": return 5;
+            case "raadzaam": return 4.5;
+            case "officielebekendmakingen": return 4;
+            case "ori": return 3;
+            default: return 0;
+          }
+        };
         const recencyBonus = (dateStr: string | null) => {
           if (!dateStr) return 0;
           const d = new Date(dateStr);
@@ -920,9 +930,9 @@ serve(async (req) => {
         return (b.score + sourceBonus(b.source) + recencyBonus(b.date)) - (a.score + sourceBonus(a.source) + recencyBonus(a.date));
       });
 
-      const top = merged.slice(0, 30);
+      const top = merged.slice(0, 40);
 
-      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${obDocs.length} OB), returning ${top.length}`);
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
 
       return new Response(
         JSON.stringify({ documents: top, total: merged.length }),
