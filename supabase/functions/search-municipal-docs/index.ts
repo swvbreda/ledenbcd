@@ -1022,6 +1022,7 @@ serve(async (req) => {
           switch (s) {
             case "lokaleregelgeving": return 5;
             case "raadzaam": return 4.5;
+            case "notubiz": return 4;
             case "officielebekendmakingen": return 4;
             case "ori": return 3;
             default: return 0;
