@@ -576,8 +576,10 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
 async function searchCVDRCross(keywords: string) {
   try {
     const terms = keywords.split(/\s+/).filter(Boolean).join(" ");
+    // Search for user terms in CVDR - include coffeeshop context terms to widen results
+    const allTerms = `${terms} coffeeshop`;
     const query = encodeURIComponent(
-      `dcterms.title any "${terms}" AND dcterms.creator any "gemeente"`
+      `dcterms.title any "${allTerms}"`
     );
     const url = `https://zoekservice.overheid.nl/sru/Search?version=2.0&operation=searchRetrieve&x-connection=cvdr&query=${query}&maximumRecords=20&sortKeys=dcterms.modified,,0`;
 
