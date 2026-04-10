@@ -489,6 +489,8 @@ const RAADZAAM_GEMEENTEN: Record<string, string> = {
   "amsterdam": "gemeenteamsterdam",
   "utrecht": "gemeenteutrecht",
   "almere": "raadvanalmere",
+  "nijmegen": "nijmegen",
+  "rijswijk": "rijswijk",
 };
 
 async function searchRaadzaam(gemeentenaam: string, keywords: string) {
