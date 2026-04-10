@@ -781,6 +781,98 @@ async function searchORI(gemeentenaam: string, keywords: string) {
   return { documents, total };
 }
 
+/* ── Cross-municipal ORI (search across ALL municipalities) ── */
+
+async function searchORICross(keywords: string) {
+  try {
+    const searchTerms = `${keywords} coffeeshop`;
+    console.log(`Cross-municipal ORI search: ${searchTerms}`);
+
+    const esQuery = {
+      query: {
+        bool: {
+          must: [
+            {
+              multi_match: {
+                query: searchTerms,
+                fields: ["name^3", "text"],
+                type: "best_fields",
+                fuzziness: "AUTO",
+              },
+            },
+          ],
+          filter: [
+            { wildcard: { _index: "ori_*" } },
+          ],
+          should: [
+            { range: { date: { gte: "now-2y", boost: 10 } } },
+            { range: { date: { gte: "now-5y", boost: 5 } } },
+          ],
+        },
+      },
+      size: 25,
+      _source: ["name", "url", "date", "organization", "description"],
+      sort: [{ _score: "desc" }],
+    };
+
+    const response = await fetchWithTimeout(ORI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(esQuery),
+    }, 10000);
+
+    if (!response.ok) {
+      console.error("Cross ORI error:", response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    const hits = data.hits?.hits || [];
+
+    const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium", "wiet"];
+    const documents = hits
+      .map((hit: any) => ({
+        id: hit._id,
+        score: hit._score,
+        name: hit._source?.name || "Onbekend document",
+        url: hit._source?.url || null,
+        date: hit._source?.date || null,
+        organization: hit._source?.organization?.name || "Onbekend",
+        description: hit._source?.description || null,
+        source: "ori",
+      }))
+      .filter((doc: any) => {
+        const nameLower = (doc.name || "").toLowerCase();
+        return coffeeshopTerms.some(t => nameLower.includes(t)) && doc.url;
+      });
+
+    console.log(`Cross ORI found ${documents.length} documents`);
+    return documents;
+  } catch (e) {
+    console.error("Cross ORI search error:", e);
+    return [];
+  }
+}
+
+/* ── Cross-municipal Raadzaam (search all 3 supported cities) ── */
+
+async function searchRaadzaamCross(keywords: string) {
+  const cities = Object.entries(RAADZAAM_GEMEENTEN);
+  const allResults: any[] = [];
+
+  await Promise.all(cities.map(async ([city, workspace]) => {
+    try {
+      const results = await searchRaadzaam(city, keywords);
+      allResults.push(...results);
+    } catch (e) {
+      console.error(`Cross Raadzaam error for ${city}:`, e);
+    }
+  }));
+
+  console.log(`Cross Raadzaam found ${allResults.length} documents`);
+  return allResults;
+}
+
 /* ── Main handler ── */
 
 serve(async (req) => {
@@ -797,12 +889,14 @@ serve(async (req) => {
       const searchTerms = keywords || "coffeeshop beleid";
       console.log(`Cross-municipal search, terms: ${searchTerms}`);
 
-      const [cvdrDocs, obDocs] = await Promise.all([
+      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs] = await Promise.all([
         searchCVDRCross(searchTerms),
         searchOBCross(searchTerms),
+        searchORICross(searchTerms),
+        searchRaadzaamCross(searchTerms),
       ]);
 
-      const allDocs = [...cvdrDocs, ...obDocs];
+      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...obDocs, ...oriDocs];
 
       // Deduplicate
       const seen = new Set<string>();
@@ -815,7 +909,15 @@ serve(async (req) => {
 
       // Sort by recency + score
       merged.sort((a, b) => {
-        const sourceBonus = (s: string) => s === "lokaleregelgeving" ? 5 : s === "officielebekendmakingen" ? 4 : 0;
+        const sourceBonus = (s: string) => {
+          switch (s) {
+            case "lokaleregelgeving": return 5;
+            case "raadzaam": return 4.5;
+            case "officielebekendmakingen": return 4;
+            case "ori": return 3;
+            default: return 0;
+          }
+        };
         const recencyBonus = (dateStr: string | null) => {
           if (!dateStr) return 0;
           const d = new Date(dateStr);
@@ -828,9 +930,9 @@ serve(async (req) => {
         return (b.score + sourceBonus(b.source) + recencyBonus(b.date)) - (a.score + sourceBonus(a.source) + recencyBonus(a.date));
       });
 
-      const top = merged.slice(0, 30);
+      const top = merged.slice(0, 40);
 
-      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${obDocs.length} OB), returning ${top.length}`);
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
 
       return new Response(
         JSON.stringify({ documents: top, total: merged.length }),
