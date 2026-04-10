@@ -343,8 +343,10 @@ async function searchCVDR(gemeentenaam: string) {
       const modified = getTag('dcterms:modified');
       const subject = getTag('dcterms:subject');
 
-      const regelingUrl = identifier
-        ? `https://lokaleregelgeving.overheid.nl/${identifier}`
+      // Strip version suffix (e.g. CVDR726134_1 → CVDR726134) for URL
+      const cleanId = identifier ? identifier.replace(/_\d+$/, '') : null;
+      const regelingUrl = cleanId
+        ? `https://lokaleregelgeving.overheid.nl/${cleanId}`
         : null;
 
       results.push({
@@ -607,7 +609,8 @@ async function searchCVDRCross(keywords: string) {
       const creator = getTag('dcterms:creator') || "Onbekend";
       const subject = getTag('dcterms:subject');
 
-      const regelingUrl = identifier ? `https://lokaleregelgeving.overheid.nl/${identifier}` : null;
+      const cleanId = identifier ? identifier.replace(/_\d+$/, '') : null;
+      const regelingUrl = cleanId ? `https://lokaleregelgeving.overheid.nl/${cleanId}` : null;
 
       results.push({
         id: `cvdr-${identifier || Math.random().toString(36).slice(2)}`,
