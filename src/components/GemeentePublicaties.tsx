@@ -106,11 +106,6 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
           {isSearching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </h3>
         <span className="flex items-center gap-2">
-          {documents.length > 0 && (
-            <Badge variant="outline" className="text-xs font-normal">
-              {total} documenten
-            </Badge>
-          )}
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </span>
       </button>
