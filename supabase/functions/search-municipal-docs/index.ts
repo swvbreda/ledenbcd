@@ -812,7 +812,7 @@ async function searchORICross(keywords: string) {
           ],
         },
       },
-      size: 25,
+      size: 50,
       _source: ["name", "url", "date", "organization", "description"],
       sort: [{ _score: "desc" }],
     };
