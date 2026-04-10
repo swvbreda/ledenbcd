@@ -655,8 +655,56 @@ serve(async (req) => {
   }
 
   try {
-    const { gemeentenaam, keywords } = await req.json();
+    const body = await req.json();
+    const { gemeentenaam, keywords, crossMunicipal } = body;
 
+    // Cross-municipal mode: search CVDR + OB across all gemeenten
+    if (crossMunicipal) {
+      const searchTerms = keywords || "coffeeshop beleid";
+      console.log(`Cross-municipal search, terms: ${searchTerms}`);
+
+      const [cvdrDocs, obDocs] = await Promise.all([
+        searchCVDRCross(searchTerms),
+        searchOBCross(searchTerms),
+      ]);
+
+      const allDocs = [...cvdrDocs, ...obDocs];
+
+      // Deduplicate
+      const seen = new Set<string>();
+      const merged = allDocs.filter((doc) => {
+        const key = doc.name.toLowerCase().replace(/\s+/g, " ").trim().substring(0, 60);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Sort by recency + score
+      merged.sort((a, b) => {
+        const sourceBonus = (s: string) => s === "lokaleregelgeving" ? 5 : s === "officielebekendmakingen" ? 4 : 0;
+        const recencyBonus = (dateStr: string | null) => {
+          if (!dateStr) return 0;
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return 0;
+          const yearsAgo = (Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+          if (yearsAgo <= 2) return 10;
+          if (yearsAgo <= 5) return 5;
+          return 0;
+        };
+        return (b.score + sourceBonus(b.source) + recencyBonus(b.date)) - (a.score + sourceBonus(a.source) + recencyBonus(a.date));
+      });
+
+      const top = merged.slice(0, 30);
+
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${obDocs.length} OB), returning ${top.length}`);
+
+      return new Response(
+        JSON.stringify({ documents: top, total: merged.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Single-municipality mode (existing behavior)
     if (!gemeentenaam) {
       return new Response(
         JSON.stringify({ error: "gemeentenaam is verplicht" }),
