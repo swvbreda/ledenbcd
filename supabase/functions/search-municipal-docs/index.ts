@@ -833,16 +833,25 @@ async function searchORICross(keywords: string) {
 
     const coffeeshopTerms = ["coffeeshop", "cannabis", "softdrug", "gedoog", "opiumwet", "damocles", "hennep", "opium", "wiet"];
     const documents = hits
-      .map((hit: any) => ({
-        id: hit._id,
-        score: hit._score,
-        name: hit._source?.name || "Onbekend document",
-        url: hit._source?.url || null,
-        date: hit._source?.date || null,
-        organization: hit._source?.organization?.name || "Onbekend",
-        description: hit._source?.description || null,
-        source: "ori",
-      }))
+      .map((hit: any) => {
+        const url = hit._source?.url || null;
+        const orgName = hit._source?.organization?.name || "Onbekend";
+        // Detect original source from URL for better labeling
+        let source = "ori";
+        if (url?.includes("ibabs")) source = "ibabs";
+        else if (url?.includes("notubiz")) source = "notubiz";
+        else if (url?.includes("gemeenteraad") || url?.includes("raad.")) source = "ori";
+        return {
+          id: hit._id,
+          score: hit._score,
+          name: hit._source?.name || "Onbekend document",
+          url,
+          date: hit._source?.date || null,
+          organization: orgName,
+          description: hit._source?.description || null,
+          source,
+        };
+      })
       .filter((doc: any) => {
         const nameLower = (doc.name || "").toLowerCase();
         return coffeeshopTerms.some(t => nameLower.includes(t)) && doc.url;
