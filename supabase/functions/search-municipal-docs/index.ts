@@ -631,8 +631,9 @@ async function searchCVDRCross(keywords: string) {
 async function searchOBCross(keywords: string) {
   try {
     const terms = keywords.split(/\s+/).filter(Boolean).join(" ");
+    // Search for the user's terms combined with coffeeshop context
     const query = encodeURIComponent(
-      `title any "${terms}" AND title any "coffeeshop cannabis softdrugs gedoog damocles opiumwet"`
+      `title any "${terms}" AND (title any "coffeeshop cannabis softdrugs gedoog damocles opiumwet" OR creator any "gemeente")`
     );
     const url = `https://zoek.officielebekendmakingen.nl/sru/Search?version=2.0&operation=searchRetrieve&query=${query}&maximumRecords=20&sortKeys=modified,,0`;
 
