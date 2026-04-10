@@ -997,14 +997,15 @@ serve(async (req) => {
       const searchTerms = keywords || "coffeeshop beleid";
       console.log(`Cross-municipal search, terms: ${searchTerms}`);
 
-      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs] = await Promise.all([
+      const [cvdrDocs, obDocs, oriDocs, raadzaamDocs, notubizDocs] = await Promise.all([
         searchCVDRCross(searchTerms),
         searchOBCross(searchTerms),
         searchORICross(searchTerms),
         searchRaadzaamCross(searchTerms),
+        searchNotubizCross(searchTerms),
       ]);
 
-      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...obDocs, ...oriDocs];
+      const allDocs = [...cvdrDocs, ...raadzaamDocs, ...notubizDocs, ...obDocs, ...oriDocs];
 
       // Deduplicate
       const seen = new Set<string>();
