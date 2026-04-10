@@ -5,6 +5,7 @@ import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
+import DocumentenZoeker from "@/components/DocumentenZoeker";
 import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
 
