@@ -609,7 +609,8 @@ async function searchCVDRCross(keywords: string) {
       const creator = getTag('dcterms:creator') || "Onbekend";
       const subject = getTag('dcterms:subject');
 
-      const regelingUrl = identifier ? `https://lokaleregelgeving.overheid.nl/${identifier}` : null;
+      const cleanId = identifier ? identifier.replace(/_\d+$/, '') : null;
+      const regelingUrl = cleanId ? `https://lokaleregelgeving.overheid.nl/${cleanId}` : null;
 
       results.push({
         id: `cvdr-${identifier || Math.random().toString(36).slice(2)}`,
