@@ -22,6 +22,8 @@ interface MunicipalDocument {
 const SOURCE_BADGES: Record<string, { label: string; className: string }> = {
   lokaleregelgeving: { label: "Lokale Regelgeving", className: "text-green-700 border-green-300 bg-green-50" },
   officielebekendmakingen: { label: "Officiële Bekendmaking", className: "text-blue-700 border-blue-300 bg-blue-50" },
+  raadzaam: { label: "Raadzaam", className: "text-indigo-700 border-indigo-300 bg-indigo-50" },
+  ori: { label: "Open Raadsinformatie", className: "text-muted-foreground border-border" },
 };
 
 export default function DocumentenZoeker() {
