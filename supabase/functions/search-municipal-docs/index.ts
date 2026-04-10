@@ -918,7 +918,7 @@ async function searchNotubizCross(keywords: string) {
 
     // Search meetings with agenda items for each org in parallel (batches of 5)
     const allResults: any[] = [];
-    const batchSize = 5;
+    const batchSize = 8;
     for (let i = 0; i < validOrgs.length; i += batchSize) {
       const batch = validOrgs.slice(i, i + batchSize);
       const batchResults = await Promise.all(
