@@ -1042,7 +1042,7 @@ serve(async (req) => {
 
       const top = merged.slice(0, 40);
 
-      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
+      console.log(`Cross-municipal: ${merged.length} docs (${cvdrDocs.length} CVDR, ${raadzaamDocs.length} Raadzaam, ${notubizDocs.length} Notubiz, ${obDocs.length} OB, ${oriDocs.length} ORI), returning ${top.length}`);
 
       return new Response(
         JSON.stringify({ documents: top, total: merged.length }),
