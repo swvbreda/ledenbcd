@@ -14,6 +14,7 @@ import InternalDeclarationsView from "@/components/budget/InternalDeclarationsVi
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import CrediteurenDebiteurenTab from "@/components/budget/CrediteurenDebiteurenTab";
+import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
