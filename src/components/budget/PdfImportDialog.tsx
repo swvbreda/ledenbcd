@@ -55,6 +55,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("line_items", JSON.stringify(allLineItems));
 
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-creditors`,
@@ -80,8 +81,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
 
       // Try to auto-match line items
       const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
-        let matchedId = "";
-        if (entry.line_item) {
+        let matchedId = entry.matched_line_item_id || "";
+        // Validate the AI-matched ID exists in our line items
+        if (matchedId && !allLineItems.find((li) => li.id === matchedId)) {
+          matchedId = "";
+        }
+        // Fallback: try local matching if AI didn't match
+        if (!matchedId && entry.line_item) {
           const match = allLineItems.find(
             (li) => li.label.toLowerCase().includes(entry.line_item.toLowerCase()) ||
               entry.line_item.toLowerCase().includes(li.label.split(" → ")[1]?.toLowerCase() ?? "")

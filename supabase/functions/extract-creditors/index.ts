@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -25,9 +26,39 @@ serve(async (req) => {
       });
     }
 
+    // Parse available line items sent from the client
+    const lineItemsJson = formData.get("line_items") as string | null;
+    let lineItemsContext = "";
+    if (lineItemsJson) {
+      try {
+        const lineItems = JSON.parse(lineItemsJson) as Array<{ id: string; label: string }>;
+        lineItemsContext = `\n\nBeschikbare begrotingsposten (id → label):\n${lineItems.map(li => `- ${li.id}: ${li.label}`).join("\n")}\n\nKoppel elke regel aan de best passende begrotingspost door het id in matched_line_item_id te zetten. Gebruik deze mappingregels:
+- "Vergaderkosten" → zoek post met "Vergaderkosten"
+- "Juridische kosten / bestuurlijk advies" → zoek post met "Juridische kosten"
+- "Representatiekosten", "Lobby", "Horeca", "Kosten" (onder categorie Representatiekosten) → zoek post met "Representatiekosten"
+- "Communicatie / marketing" → zoek post met "Communicatie"
+- "Reiskosten" → zoek post met "Reiskosten"
+- "ICT / Hosting / Domein / Mail" → zoek post met "ICT"
+- "Lidmaatschap", "Contributies" → zoek post met "Contributies"
+- "Bankkosten" → zoek post met "Bankkosten"
+- "Voorzitter" → zoek post met "Voorzitter"
+- "Onderzoek" → zoek post met "Onderzoek"
+- "Stg, Maatschappij en cannabis" of "Donatie" → zoek post met "Donatie Stg. Maatschappij"
+- "Secretariaatskosten" → zoek post met "Secretariaatskosten"
+- "Onkosten vergoedingen" → zoek post met "Onkosten"
+Als je geen match vindt, laat matched_line_item_id leeg.`;
+      } catch { /* ignore parse errors */ }
+    }
+
     // Convert PDF to base64
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = base64Encode(new Uint8Array(arrayBuffer));
+    const bytes = new Uint8Array(arrayBuffer);
+    // Encode in chunks to avoid stack overflow on large files
+    let base64 = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      base64 += base64Encode(bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+    }
 
     const systemPrompt = `Je bent een financiële data-extractor. Je analyseert crediteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
 
@@ -48,8 +79,9 @@ Geef het resultaat als JSON array met objecten. Gebruik deze exacte velden:
 - creditor_name: naam van de leverancier/crediteur
 - invoice_reference: factuurnummer
 - amount: bedrag als getal (positief)
+- matched_line_item_id: het id van de best passende begrotingspost (indien beschikbaar)
 
-Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele transactieregels op.`;
+Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele transactieregels op.${lineItemsContext}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -98,6 +130,7 @@ Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele tr
                         creditor_name: { type: "string", description: "Creditor/supplier name" },
                         invoice_reference: { type: "string", description: "Invoice number" },
                         amount: { type: "number", description: "Amount in EUR (positive)" },
+                        matched_line_item_id: { type: "string", description: "ID of the matched budget line item" },
                       },
                       required: ["creditor_name", "amount"],
                     },
