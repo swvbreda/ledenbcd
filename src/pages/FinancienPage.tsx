@@ -13,6 +13,8 @@ import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
+import OpenstaandePostenTab from "@/components/budget/OpenstaandePostenTab";
+import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
