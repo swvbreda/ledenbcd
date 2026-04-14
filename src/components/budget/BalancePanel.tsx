@@ -97,12 +97,12 @@ export default function BalancePanel({
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Middelen balans</h3>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <colgroup>
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
+            <col className="w-[30%]" />
+            <col className="w-[20%]" />
+            <col className="w-[30%]" />
+            <col className="w-[20%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
@@ -192,13 +192,12 @@ export default function BalancePanel({
           <h3 className="text-sm font-semibold">Resultaat</h3>
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <colgroup>
             <col className="w-[30%]" />
             <col className="w-[20%]" />
+            <col className="w-[30%]" />
             <col className="w-[20%]" />
-            <col className="w-[20%]" />
-            <col className="w-[10%]" />
           </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
