@@ -228,6 +228,22 @@ export function useBudgetMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  const addNote = useMutation({
+    mutationFn: async ({ note, userId }: { note: string; userId: string }) => {
+      const { error } = await supabase.from("budget_notes").insert({ year, note, created_by: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-notes", year] }),
+  });
+
+  const deleteNote = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("budget_notes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-notes", year] }),
+  });
+
   return {
     addCategory,
     addLineItem,
@@ -239,5 +255,22 @@ export function useBudgetMutations(year: number) {
     addBalanceItem,
     updateBalanceItem,
     deleteBalanceItem,
+    addNote,
+    deleteNote,
   };
+}
+
+export function useBudgetNotes(year: number) {
+  return useQuery({
+    queryKey: ["budget-notes", year],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("budget_notes")
+        .select("*")
+        .eq("year", year)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; note: string; created_at: string }[];
+    },
+  });
 }

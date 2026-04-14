@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Upload } from "lucide-react";
-import { useBudgetCategories, useBudgetBalance, useBudgetMutations } from "@/hooks/useBudget";
+import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
+import { useContributions } from "@/hooks/useContributions";
+import { useMembers } from "@/hooks/useMembers";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
@@ -27,14 +29,26 @@ export default function FinancienPage() {
   const { user, isAdmin } = useAuth();
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
+  const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
+  const { data: contributions } = useContributions(year);
+  const { effectiveMembers } = useMembers();
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+
+  const FIXED_AMOUNT = 3000;
+  const contributionStats = useMemo(() => {
+    const totalMembers = effectiveMembers.length;
+    const paidCount = (contributions ?? []).filter((c) => c.paid).length;
+    const unpaidCount = totalMembers - paidCount;
+    const totalReceived = (contributions ?? []).filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
+    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount: FIXED_AMOUNT };
+  }, [effectiveMembers, contributions]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
@@ -164,11 +178,16 @@ export default function FinancienPage() {
                   items={balanceItems || []}
                   totalBudgeted={totalBudgeted}
                   totalSpent={totalSpent}
+                  contributionStats={contributionStats}
+                  notes={budgetNotes}
+                  year={year}
                   onAdd={(name, amount, section) =>
                     mutations.addBalanceItem.mutate({ name, amount, section }, { onSuccess: () => toast.success("Post toegevoegd") })
                   }
                   onUpdate={(id, name, amount) => mutations.updateBalanceItem.mutate({ id, name, amount })}
                   onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
+                  onAddNote={(note) => user && mutations.addNote.mutate({ note, userId: user.id }, { onSuccess: () => toast.success("Notitie opgeslagen") })}
+                  onDeleteNote={(id) => mutations.deleteNote.mutate(id, { onSuccess: () => toast.success("Notitie verwijderd") })}
                 />
               </div>
             </div>
