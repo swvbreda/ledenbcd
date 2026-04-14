@@ -317,6 +317,9 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                     )}
                   </td>
                   <td className="px-2 py-1">
+                    <span className="text-muted-foreground">{v.category}</span>
+                  </td>
+                  <td className="px-2 py-1">
                     {isEditing ? (
                       <Select value={editLineItemId} onValueChange={setEditLineItemId}>
                         <SelectTrigger className="h-6 text-xs">
@@ -329,7 +332,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-muted-foreground">{v.category}</span>
+                      <span className="text-muted-foreground">{v.subcategory || "–"}</span>
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || "–"}</td>
