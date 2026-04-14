@@ -39,6 +39,7 @@ export interface BudgetBalanceItem {
   amount: number;
   section: string;
   sort_order: number;
+  side: string;
 }
 
 export function useBudgetCategories(year: number) {
