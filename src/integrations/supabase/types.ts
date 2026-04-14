@@ -549,6 +549,10 @@ export type Database = {
           km_return: number | null
           km_single: number | null
           max_allowance_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string | null
           trajectory: string | null
           updated_at: string
           year: number
@@ -567,6 +571,10 @@ export type Database = {
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
           trajectory?: string | null
           updated_at?: string
           year?: number
@@ -585,6 +593,10 @@ export type Database = {
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
           trajectory?: string | null
           updated_at?: string
           year?: number
