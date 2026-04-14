@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
+import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
 import ExpenseListView from "@/components/budget/ExpenseListView";
+import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +23,8 @@ export default function FinancienPage() {
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
   const mutations = useBudgetMutations(year);
+  const { data: internalDeclarations } = useInternalDeclarations(year);
+  const internalMutations = useInternalDeclarationMutations(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
@@ -72,6 +76,7 @@ export default function FinancienPage() {
           <TabsList>
             <TabsTrigger value="begroting">Begroting</TabsTrigger>
             <TabsTrigger value="declaraties">Declaraties</TabsTrigger>
+            <TabsTrigger value="intern">Interne declaraties</TabsTrigger>
           </TabsList>
 
           <TabsContent value="begroting">
@@ -153,6 +158,17 @@ export default function FinancienPage() {
               <ExpenseListView
                 categories={categories || []}
                 onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="intern">
+            <div className="mt-4">
+              <InternalDeclarationsView
+                declarations={internalDeclarations || []}
+                year={year}
+                onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie toegevoegd") })}
+                onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
               />
             </div>
           </TabsContent>
