@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
