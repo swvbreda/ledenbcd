@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
@@ -9,11 +9,10 @@ import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
-import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
-import OpenstaandePostenTab from "@/components/budget/OpenstaandePostenTab";
+import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
@@ -107,14 +106,11 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="declaraties" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Declaraties
+            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Boekingen
             </TabsTrigger>
             <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Interne declaraties
-            </TabsTrigger>
-            <TabsTrigger value="openstaand" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Openstaande posten
             </TabsTrigger>
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dossiers
@@ -211,18 +207,17 @@ export default function FinancienPage() {
             <ContributieTab year={year} />
           </TabsContent>
 
-          <TabsContent value="declaraties">
-            <div className="mt-4 space-y-3">
-              <div className="flex justify-end">
-                <Button size="sm" variant="outline" onClick={() => setPdfImportOpen(true)}>
-                  <Upload size={14} className="mr-1" /> PDF importeren
-                </Button>
-              </div>
-              <ExpenseListView
-                categories={categories || []}
-                onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
-              />
-            </div>
+          <TabsContent value="boekingen">
+            <BoekingenOverzicht
+              categories={categories || []}
+              contributions={contributions || []}
+              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              year={year}
+              contributionAmount={FIXED_AMOUNT}
+              onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
+              onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
+              onOpenPdfImport={() => setPdfImportOpen(true)}
+            />
           </TabsContent>
 
           <TabsContent value="intern">
@@ -238,17 +233,6 @@ export default function FinancienPage() {
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
               />
             </div>
-          </TabsContent>
-
-          <TabsContent value="openstaand">
-            <OpenstaandePostenTab
-              categories={categories || []}
-              contributions={contributions || []}
-              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
-              year={year}
-              contributionAmount={FIXED_AMOUNT}
-              onToggleExpensePaid={(id, paid) => mutations.toggleExpensePaid.mutate({ id, paid }, { onSuccess: () => toast.success("Betaalstatus bijgewerkt") })}
-            />
           </TabsContent>
 
           <TabsContent value="dossiers">
