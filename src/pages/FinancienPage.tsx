@@ -220,6 +220,21 @@ export default function FinancienPage() {
             />
           </TabsContent>
 
+          <TabsContent value="intern">
+            <div className="mt-4">
+              <InternalDeclarationsView
+                declarations={internalDeclarations || []}
+                year={year}
+                isAdmin={isAdmin}
+                userId={user?.id || ""}
+                onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie ingediend") })}
+                onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
+                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
+                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
+              />
+            </div>
+          </TabsContent>
+
           <TabsContent value="dossiers">
             <DossierOverzichtTab categories={categories || []} year={year} />
           </TabsContent>
