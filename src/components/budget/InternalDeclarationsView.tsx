@@ -90,10 +90,24 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
     else { setSortKey(key); setSortAsc(true); }
   };
 
+  const getMonthlyAllowanceCount = (name: string, type: string) => {
+    return declarations.filter(
+      (d) => d.board_member_name === name && d.declaration_type === type && d.year === year
+    ).length;
+  };
+
   const handleAdd = () => {
     if (!form.board_member_name || !form.expense_date) {
       toast.error("Naam en datum zijn verplicht");
       return;
+    }
+    // Max 10 maandelijkse vergoedingen per jaar voor woordvoering/penningmeester
+    if (form.declaration_type === "woordvoering" || form.declaration_type === "penningmeester") {
+      const count = getMonthlyAllowanceCount(form.board_member_name, form.declaration_type);
+      if (count >= 10) {
+        toast.error(`${form.board_member_name} heeft al ${count} van max 10 maandvergoedingen (${form.declaration_type}) voor ${year}`);
+        return;
+      }
     }
     const kmSingle = form.km_single ? parseFloat(form.km_single) : null;
     const kmReturn = form.km_return ? parseFloat(form.km_return) : null;
