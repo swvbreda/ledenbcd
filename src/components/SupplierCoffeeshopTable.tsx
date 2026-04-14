@@ -7,7 +7,6 @@ interface CoffeeshopRow {
   locatieNaam: string;
   plaats: string;
   stadsdeel: string;
-  adres: string;
 }
 
 type SortKey = "locatieNaam" | "plaats" | "stadsdeel";
@@ -23,7 +22,6 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
         locatieNaam: l.naam || m.naam,
         plaats: l.plaats || m.plaats,
         stadsdeel: l.stadsdeel || m.stadsdeel || "",
-        adres: l.adres || "",
       }))
     ), [members]);
 
@@ -84,7 +82,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
                 <span>{row.plaats}</span>
                 {row.stadsdeel && <span>· {row.stadsdeel}</span>}
               </div>
-              {row.adres && <p className="text-xs text-muted-foreground mt-0.5">{row.adres}</p>}
+              
             </div>
           ))}
         </div>
@@ -103,7 +101,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("stadsdeel")}>
                   <span className="inline-flex items-center gap-1">Stadsdeel <SortIcon col="stadsdeel" /></span>
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Adres</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -112,7 +110,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{row.locatieNaam}</td>
                   <td className="px-4 py-3 text-muted-foreground">{row.plaats}</td>
                   <td className="px-4 py-3 text-muted-foreground">{row.stadsdeel || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{row.adres || "—"}</td>
+                  
                 </tr>
               ))}
             </tbody>
