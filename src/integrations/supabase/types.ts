@@ -752,6 +752,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          invoice_date: string | null
           invoice_file_path: string | null
           invoice_number: string | null
           member_id: number
@@ -766,6 +767,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          invoice_date?: string | null
           invoice_file_path?: string | null
           invoice_number?: string | null
           member_id: number
@@ -780,6 +782,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          invoice_date?: string | null
           invoice_file_path?: string | null
           invoice_number?: string | null
           member_id?: number
