@@ -124,7 +124,7 @@ export function useCreateContributionInvoice() {
       member_id: number;
       year: number;
       invoice_number?: string | null;
-      invoice_file_path: string;
+      invoice_file_path?: string | null;
     }) => {
       const { data, error } = await supabase
         .from("contribution_invoices")
@@ -132,7 +132,7 @@ export function useCreateContributionInvoice() {
           member_id: input.member_id,
           year: input.year,
           invoice_number: input.invoice_number ?? null,
-          invoice_file_path: input.invoice_file_path,
+          invoice_file_path: input.invoice_file_path ?? null,
         })
         .select()
         .single();
