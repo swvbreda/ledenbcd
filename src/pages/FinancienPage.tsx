@@ -117,6 +117,9 @@ export default function FinancienPage() {
             <TabsTrigger value="overzicht" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Crediteuren / Debiteuren
             </TabsTrigger>
+            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Dossiers
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
