@@ -139,10 +139,12 @@ export default function EnqueteBeheerPage() {
 
   const exportCSV = (qs: Question[], resps: ResponseRow[]) => {
     const approved = resps.filter((r) => r.status === "approved");
-    // Group by respondent key (anonymous numbering)
+    // Group by respondent key: use submitted_at as unique key per submission batch
     const respondentMap = new Map<string, Map<string, string>>();
     for (const r of approved) {
-      const key = r.answer?.location || r.respondent_email || `anon-${respondentMap.size}`;
+      const key = r.respondent_email
+        ? `ext-${r.respondent_email}-${r.submitted_at}`
+        : `int-${r.submitted_at}`;
       if (!respondentMap.has(key)) respondentMap.set(key, new Map());
       const val = r.answer?.value;
       const display = Array.isArray(val) ? val.join("; ") : String(val ?? "");
