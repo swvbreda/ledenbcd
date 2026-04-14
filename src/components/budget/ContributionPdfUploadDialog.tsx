@@ -43,6 +43,14 @@ export default function ContributionPdfUploadDialog({ open, onOpenChange, member
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
 
+  const existingInvoiceNumbers = useMemo(() => {
+    const set = new Set<string>();
+    existingInvoices.forEach(inv => {
+      if (inv.invoice_number) set.add(inv.invoice_number.trim().toLowerCase());
+    });
+    return set;
+  }, [existingInvoices]);
+
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => a.naam.localeCompare(b.naam, "nl")),
     [members]
