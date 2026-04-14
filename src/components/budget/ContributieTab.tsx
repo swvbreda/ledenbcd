@@ -222,13 +222,15 @@ export default function ContributieTab({ year }: Props) {
         onOpenChange={setPdfDialogOpen}
         year={year}
         members={effectiveMembers.map((m) => ({ id: m.id, naam: m.naam }))}
-        onUploaded={async ({ member_id, invoice_file_path, invoice_number }) => {
-          await createInvoice.mutateAsync({
-            member_id,
-            year,
-            invoice_file_path,
-            invoice_number,
-          });
+        onImport={async (entries) => {
+          for (const entry of entries) {
+            await createInvoice.mutateAsync({
+              member_id: entry.member_id,
+              year,
+              invoice_file_path: null,
+              invoice_number: entry.invoice_number,
+            });
+          }
         }}
       />
 
