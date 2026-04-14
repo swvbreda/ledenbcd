@@ -100,7 +100,7 @@ const ExternDashboardPage = () => {
           if (orgData.type === "leverancier") {
             await Promise.all([
               loadSupplierBenefits(orgData.id),
-              loadCoffeeshopMembers(),
+              loadCoffeeshopMembers(orgData.id),
             ]);
           } else {
             await loadMembers(orgData.id);
