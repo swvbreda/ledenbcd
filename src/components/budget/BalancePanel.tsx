@@ -134,7 +134,7 @@ export default function BalancePanel({
                         </button>
                       </div>
                     ) : isAutoLeft ? (
-                      <span className="text-muted-foreground">{fmt(totalBudgeted)}</span>
+                      <CurrencyCell value={totalBudgeted} className="text-muted-foreground" />
                     ) : ""}
                   </td>
                   {/* Right cell */}
@@ -157,9 +157,9 @@ export default function BalancePanel({
             {/* Totaal row */}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-1.5"></td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(leftTotal + totalBudgeted)}</td>
+              <td className="text-right px-3 py-1.5"><CurrencyCell value={leftTotal + totalBudgeted} /></td>
               <td className="px-3 py-1.5"></td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(rightTotal)}</td>
+              <td className="text-right px-3 py-1.5"><CurrencyCell value={rightTotal} /></td>
             </tr>
           </tbody>
         </table>
@@ -215,9 +215,9 @@ export default function BalancePanel({
             {contributionStats && (
               <tr className="border-b border-border/50">
                 <td className="px-3 py-1.5">Ontvangen contributie</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">{fmt(contributionStats.totalReceived)}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums text-destructive">
-                  {fmt(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount)}
+                <td className="text-right px-3 py-1.5"><CurrencyCell value={contributionStats.totalReceived} /></td>
+                <td className="text-right px-3 py-1.5">
+                  <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className="text-destructive" />
                 </td>
                 <td />
               </tr>
@@ -225,7 +225,7 @@ export default function BalancePanel({
             {/* Uitgaven */}
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalSpent)}</td>
+              <td className="text-right px-3 py-1.5"><CurrencyCell value={totalSpent} /></td>
               <td className="px-2">
                 {contributionStats && (
                   <div className="text-[10px] text-muted-foreground leading-tight space-y-0.5">
@@ -239,11 +239,11 @@ export default function BalancePanel({
             {/* Totaal */}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2">Totaal</td>
-              <td className={`text-right px-3 py-2 tabular-nums`}>
-                {fmt(resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent)}
+              <td className="text-right px-3 py-2">
+                <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
               </td>
-              <td className={`text-right px-3 py-2 tabular-nums ${(contributionStats ? contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount : 0) < 0 ? "text-destructive" : ""}`}>
-                {contributionStats && fmt(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount)}
+              <td className="text-right px-3 py-2">
+                {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
               <td />
             </tr>
@@ -277,11 +277,11 @@ export default function BalancePanel({
                 </tr>
                 <tr className="border-b border-border/50">
                   <td className="px-3 py-1.5">Contributie</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">{fmt(contributionStats.contributionAmount)}</td>
+                  <td className="text-right px-3 py-1.5"><CurrencyCell value={contributionStats.contributionAmount} /></td>
                 </tr>
                 <tr>
                   <td className="px-3 py-1.5 font-medium">Inkomsten {year}</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums font-medium">{fmt(contributionStats.totalMembers * contributionStats.contributionAmount)}</td>
+                  <td className="text-right px-3 py-1.5 font-medium"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
                 </tr>
               </tbody>
             </table>
