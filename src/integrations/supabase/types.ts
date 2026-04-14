@@ -179,6 +179,7 @@ export type Database = {
           created_by: string
           creditor_name: string | null
           description: string | null
+          dossier: string | null
           expense_date: string | null
           id: string
           invoice_reference: string | null
@@ -192,6 +193,7 @@ export type Database = {
           created_by: string
           creditor_name?: string | null
           description?: string | null
+          dossier?: string | null
           expense_date?: string | null
           id?: string
           invoice_reference?: string | null
@@ -205,6 +207,7 @@ export type Database = {
           created_by?: string
           creditor_name?: string | null
           description?: string | null
+          dossier?: string | null
           expense_date?: string | null
           id?: string
           invoice_reference?: string | null
@@ -525,6 +528,63 @@ export type Database = {
           postcode?: string | null
           type?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      internal_declarations: {
+        Row: {
+          account_holder: string | null
+          amount: number
+          appointment: string | null
+          bank_account: string | null
+          board_member_name: string
+          created_at: string
+          declaration_type: string
+          expense_date: string | null
+          id: string
+          km_rate: number
+          km_return: number | null
+          km_single: number | null
+          max_allowance_note: string | null
+          trajectory: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          account_holder?: string | null
+          amount?: number
+          appointment?: string | null
+          bank_account?: string | null
+          board_member_name: string
+          created_at?: string
+          declaration_type?: string
+          expense_date?: string | null
+          id?: string
+          km_rate?: number
+          km_return?: number | null
+          km_single?: number | null
+          max_allowance_note?: string | null
+          trajectory?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          account_holder?: string | null
+          amount?: number
+          appointment?: string | null
+          bank_account?: string | null
+          board_member_name?: string
+          created_at?: string
+          declaration_type?: string
+          expense_date?: string | null
+          id?: string
+          km_rate?: number
+          km_return?: number | null
+          km_single?: number | null
+          max_allowance_note?: string | null
+          trajectory?: string | null
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }
