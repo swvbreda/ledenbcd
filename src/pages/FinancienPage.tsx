@@ -116,91 +116,93 @@ export default function FinancienPage() {
           </TabsList>
 
           <TabsContent value="dashboard">
-            <div className="mt-4">
-              <BalancePanel
-                items={balanceItems || []}
-                totalBudgeted={totalBudgeted}
-                totalSpent={totalSpent}
-                contributionStats={contributionStats}
-                notes={budgetNotes}
-                year={year}
-                onAdd={(name, amount, section, side) =>
-                  mutations.addBalanceItem.mutate({ name, amount, section, side }, { onSuccess: () => toast.success("Post toegevoegd") })
-                }
-                onUpdate={(id, name, amount) => mutations.updateBalanceItem.mutate({ id, name, amount })}
-                onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
-                onAddNote={(note) => user && mutations.addNote.mutate({ note, userId: user.id }, { onSuccess: () => toast.success("Notitie opgeslagen") })}
-                onDeleteNote={(id) => mutations.deleteNote.mutate(id, { onSuccess: () => toast.success("Notitie verwijderd") })}
-              />
+            <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
+              {/* Left: Budget categories */}
+              <div className="space-y-3">
+                {(categories || []).map((cat) => (
+                  <BudgetCategoryTable
+                    key={cat.id}
+                    category={cat}
+                    onAddLineItem={(catId, name, amount) =>
+                      mutations.addLineItem.mutate({ categoryId: catId, name, amount }, {
+                        onSuccess: () => toast.success("Post toegevoegd"),
+                      })
+                    }
+                    onUpdateLineItem={(id, name, amount) => mutations.updateLineItem.mutate({ id, name, amount })}
+                    onDeleteLineItem={(id) => mutations.deleteLineItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
+                    onDeleteCategory={(id) => mutations.deleteCategory.mutate(id, { onSuccess: () => toast.success("Categorie verwijderd") })}
+                    onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
+                  />
+                ))}
+
+                {(categories || []).length > 0 && (
+                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
+                    <table className="w-full text-sm table-fixed">
+                      <colgroup>
+                        <col />
+                        <col className="w-[120px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[32px]" />
+                      </colgroup>
+                      <tbody>
+                        <tr className="font-bold">
+                          <td className="px-3 py-2">Totalen</td>
+                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalBudgeted)}</td>
+                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalSpent)}</td>
+                          <td className={`text-right px-3 py-2 tabular-nums ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
+                            {fmt(totalBudgeted - totalSpent)}
+                          </td>
+                          <td />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {addingCategory ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Categorie naam (bijv. Advieskosten)"
+                      value={newCatName}
+                      onChange={(e) => setNewCatName(e.target.value)}
+                      className="h-8 text-sm"
+                      autoFocus
+                      onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+                    />
+                    <Button size="sm" variant="default" className="h-8" onClick={handleAddCategory}>Toevoegen</Button>
+                    <Button size="sm" variant="ghost" className="h-8" onClick={() => setAddingCategory(false)}>Annuleer</Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => setAddingCategory(true)}>
+                    <Plus size={14} className="mr-1" /> Categorie toevoegen
+                  </Button>
+                )}
+              </div>
+
+              {/* Right: Balance panel */}
+              <div>
+                <BalancePanel
+                  items={balanceItems || []}
+                  totalBudgeted={totalBudgeted}
+                  totalSpent={totalSpent}
+                  contributionStats={contributionStats}
+                  notes={budgetNotes}
+                  year={year}
+                  onAdd={(name, amount, section, side) =>
+                    mutations.addBalanceItem.mutate({ name, amount, section, side }, { onSuccess: () => toast.success("Post toegevoegd") })
+                  }
+                  onUpdate={(id, name, amount) => mutations.updateBalanceItem.mutate({ id, name, amount })}
+                  onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
+                  onAddNote={(note) => user && mutations.addNote.mutate({ note, userId: user.id }, { onSuccess: () => toast.success("Notitie opgeslagen") })}
+                  onDeleteNote={(id) => mutations.deleteNote.mutate(id, { onSuccess: () => toast.success("Notitie verwijderd") })}
+                />
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="contributie">
             <ContributieTab year={year} />
-          </TabsContent>
-
-          <TabsContent value="begroting">
-            <div className="space-y-3 mt-4">
-              {(categories || []).map((cat) => (
-                <BudgetCategoryTable
-                  key={cat.id}
-                  category={cat}
-                  onAddLineItem={(catId, name, amount) =>
-                    mutations.addLineItem.mutate({ categoryId: catId, name, amount }, {
-                      onSuccess: () => toast.success("Post toegevoegd"),
-                    })
-                  }
-                  onUpdateLineItem={(id, name, amount) => mutations.updateLineItem.mutate({ id, name, amount })}
-                  onDeleteLineItem={(id) => mutations.deleteLineItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
-                  onDeleteCategory={(id) => mutations.deleteCategory.mutate(id, { onSuccess: () => toast.success("Categorie verwijderd") })}
-                  onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
-                />
-              ))}
-
-              {(categories || []).length > 0 && (
-                <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
-                  <table className="w-full text-sm table-fixed">
-                    <colgroup>
-                      <col />
-                      <col className="w-[120px]" />
-                      <col className="w-[120px]" />
-                      <col className="w-[120px]" />
-                      <col className="w-[32px]" />
-                    </colgroup>
-                    <tbody>
-                      <tr className="font-bold">
-                        <td className="px-3 py-2">Totalen</td>
-                        <td className="text-right px-3 py-2 tabular-nums">{fmt(totalBudgeted)}</td>
-                        <td className="text-right px-3 py-2 tabular-nums">{fmt(totalSpent)}</td>
-                        <td className={`text-right px-3 py-2 tabular-nums ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
-                          {fmt(totalBudgeted - totalSpent)}
-                        </td>
-                        <td />
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {addingCategory ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Categorie naam (bijv. Advieskosten)"
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                    className="h-8 text-sm"
-                    autoFocus
-                    onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
-                  />
-                  <Button size="sm" variant="default" className="h-8" onClick={handleAddCategory}>Toevoegen</Button>
-                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setAddingCategory(false)}>Annuleer</Button>
-                </div>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => setAddingCategory(true)}>
-                  <Plus size={14} className="mr-1" /> Categorie toevoegen
-                </Button>
-              )}
-            </div>
           </TabsContent>
 
           <TabsContent value="declaraties">
