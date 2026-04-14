@@ -239,6 +239,20 @@ export default function FinancienPage() {
               />
             </div>
           </TabsContent>
+
+          <TabsContent value="openstaand">
+            <OpenstaandePostenTab
+              categories={categories || []}
+              contributions={contributions || []}
+              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              year={year}
+              contributionAmount={FIXED_AMOUNT}
+            />
+          </TabsContent>
+
+          <TabsContent value="dossiers">
+            <DossierOverzichtTab categories={categories || []} year={year} />
+          </TabsContent>
         </Tabs>
       )}
 
