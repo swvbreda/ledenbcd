@@ -181,8 +181,8 @@ export default function FinancienPage() {
                   contributionStats={contributionStats}
                   notes={budgetNotes}
                   year={year}
-                  onAdd={(name, amount, section) =>
-                    mutations.addBalanceItem.mutate({ name, amount, section }, { onSuccess: () => toast.success("Post toegevoegd") })
+                  onAdd={(name, amount, section, side) =>
+                    mutations.addBalanceItem.mutate({ name, amount, section, side }, { onSuccess: () => toast.success("Post toegevoegd") })
                   }
                   onUpdate={(id, name, amount) => mutations.updateBalanceItem.mutate({ id, name, amount })}
                   onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
