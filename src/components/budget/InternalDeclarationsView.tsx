@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { Trash2, Plus, Search, Download, ArrowUpDown } from "lucide-react";
+import { Trash2, Plus, Search, Download, ArrowUpDown, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
@@ -9,8 +10,12 @@ import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 interface Props {
   declarations: InternalDeclaration[];
   year: number;
-  onAdd: (decl: Omit<InternalDeclaration, "id">) => void;
+  isAdmin: boolean;
+  userId: string;
+  onAdd: (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => void;
   onDelete: (id: string) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
 }
 
 const fmtDate = (d: string | null) => {
@@ -20,15 +25,23 @@ const fmtDate = (d: string | null) => {
   return d;
 };
 
-type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type";
+const statusBadge = (status: string) => {
+  switch (status) {
+    case "approved": return <Badge variant="default" className="bg-green-600 text-xs">Goedgekeurd</Badge>;
+    case "rejected": return <Badge variant="destructive" className="text-xs">Afgewezen</Badge>;
+    default: return <Badge variant="secondary" className="text-xs">In afwachting</Badge>;
+  }
+};
 
-export default function InternalDeclarationsView({ declarations, year, onAdd, onDelete }: Props) {
+type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type" | "status";
+
+export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("expense_date");
   const [sortAsc, setSortAsc] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Form state
   const [form, setForm] = useState({
     board_member_name: "",
     declaration_type: "reiskosten",
@@ -45,6 +58,9 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     let list = [...declarations];
+    if (statusFilter !== "all") {
+      list = list.filter((d) => d.status === statusFilter);
+    }
     if (q) {
       list = list.filter(
         (d) =>
@@ -64,9 +80,10 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
       return 0;
     });
     return list;
-  }, [declarations, search, sortKey, sortAsc]);
+  }, [declarations, search, sortKey, sortAsc, statusFilter]);
 
   const total = filtered.reduce((s, d) => s + d.amount, 0);
+  const pendingCount = declarations.filter((d) => d.status === "pending").length;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -102,6 +119,8 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
       bank_account: form.bank_account || null,
       account_holder: form.account_holder || null,
       max_allowance_note: form.max_allowance_note || null,
+      status: "pending",
+      submitted_by: userId,
     });
     setForm({
       board_member_name: form.board_member_name,
@@ -118,7 +137,7 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
   };
 
   const handleExport = () => {
-    const headers = ["Afspraak", "Traject", "Km enkel", "Km retour", "Datum", "Wie", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Max vergoeding"];
+    const headers = ["Afspraak", "Traject", "Km enkel", "Km retour", "Datum", "Wie", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Max vergoeding", "Status"];
     const rows = filtered.map((d) => [
       d.appointment || "",
       d.trajectory || "",
@@ -130,6 +149,7 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
       d.bank_account || "",
       d.account_holder || "",
       d.max_allowance_note || "",
+      d.status,
     ]);
     const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -157,6 +177,12 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Zoek op naam, afspraak, traject..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm pl-8" />
         </div>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 text-xs rounded-md border border-input bg-background px-2">
+          <option value="all">Alle statussen</option>
+          <option value="pending">In afwachting{pendingCount > 0 ? ` (${pendingCount})` : ""}</option>
+          <option value="approved">Goedgekeurd</option>
+          <option value="rejected">Afgewezen</option>
+        </select>
         <button onClick={handleExport} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium hover:bg-accent transition-colors">
           <Download size={12} /> CSV
         </button>
@@ -206,7 +232,8 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Rekening</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Houder</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left hidden xl:table-cell">Max vergoeding</th>
-              <th className="w-8" />
+              <SortHeader label="Status" field="status" className="text-center" />
+              <th className="w-16" />
             </tr>
           </thead>
           <tbody>
@@ -222,21 +249,34 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
                 <td className="px-2 py-1.5 text-xs">{d.bank_account || "–"}</td>
                 <td className="px-2 py-1.5">{d.account_holder || "–"}</td>
                 <td className="px-2 py-1.5 text-xs hidden xl:table-cell">{d.max_allowance_note || "–"}</td>
-                <td className="px-1">
-                  <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive">
-                    <Trash2 size={12} />
-                  </button>
+                <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
+                <td className="px-1 whitespace-nowrap">
+                  {isAdmin && d.status === "pending" && (
+                    <span className="inline-flex gap-0.5">
+                      <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
+                        <X size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {isAdmin && (
+                    <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive">
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
+              <tr><td colSpan={12} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
             )}
             {filtered.length > 0 && (
               <tr className="bg-muted/30 font-semibold">
                 <td colSpan={6} className="px-2 py-1.5">Totaal</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={total} /></td>
-                <td colSpan={4} />
+                <td colSpan={5} />
               </tr>
             )}
           </tbody>
