@@ -107,7 +107,8 @@ export default function FinancienPage() {
               Contributie
             </TabsTrigger>
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Boekingen
+              Inkomsten / Uitgaven
+            </TabsTrigger>
             </TabsTrigger>
             <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Interne declaraties
