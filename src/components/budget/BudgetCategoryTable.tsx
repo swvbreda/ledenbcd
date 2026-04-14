@@ -45,7 +45,7 @@ export default function BudgetCategoryTable({
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden max-w-3xl">
+    <div className="border border-border rounded-lg overflow-hidden">
       <div
         className="flex items-center justify-between px-3 py-2 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
         onClick={() => setExpanded(!expanded)}
@@ -63,14 +63,21 @@ export default function BudgetCategoryTable({
 
       {expanded && (
         <div>
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
+            <colgroup>
+              <col />
+              <col className="w-[120px]" />
+              <col className="w-[120px]" />
+              <col className="w-[120px]" />
+              <col className="w-[32px]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Post</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Begroot</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Uitgaven</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Beschikbaar</th>
-                <th className="w-8" />
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Begroot</th>
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Uitgaven</th>
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Beschikbaar</th>
+                <th />
               </tr>
             </thead>
             <tbody>
