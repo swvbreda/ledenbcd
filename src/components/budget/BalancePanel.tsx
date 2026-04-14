@@ -88,13 +88,19 @@ export default function BalancePanel({
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Middelen balans</h3>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col />
+            <col className="w-[100px]" />
+            <col />
+            <col className="w-[100px]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
-              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs w-[35%]">Bestedingen</th>
-              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs w-[15%]"></th>
-              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs w-[35%]">Middelen</th>
-              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs w-[15%]"></th>
+              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs">Bestedingen</th>
+              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs"></th>
+              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs">Middelen</th>
+              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs"></th>
             </tr>
           </thead>
           <tbody>
@@ -177,14 +183,20 @@ export default function BalancePanel({
           <h3 className="text-sm font-semibold">Resultaat</h3>
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col />
+            <col className="w-[110px]" />
+            <col className="w-[110px]" />
+            <col className="w-[28px]" />
+          </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
-                <td className="px-3 py-1.5 w-[40%]">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums w-[25%]">{renderAmount(item)}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums w-[25%]" />
-                <td className="w-[10%] px-1">
+                <td className="px-3 py-1.5">{item.name}</td>
+                <td className="text-right px-3 py-1.5 tabular-nums">{renderAmount(item)}</td>
+                <td className="text-right px-3 py-1.5 tabular-nums" />
+                <td className="px-1">
                   <button onClick={() => onDelete(item.id)} className="p-1 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={12} /></button>
                 </td>
               </tr>
