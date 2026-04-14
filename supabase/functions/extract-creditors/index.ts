@@ -49,15 +49,18 @@ Als je geen match vindt, laat matched_line_item_id leeg.`;
       } catch { /* ignore parse errors */ }
     }
 
-    // Convert PDF to base64
+    // Convert PDF to base64 using btoa for correct padding
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
-    // Encode in chunks to avoid stack overflow on large files
-    let base64 = "";
-    const CHUNK = 32768;
+    const CHUNK = 8192;
+    let binary = "";
     for (let i = 0; i < bytes.length; i += CHUNK) {
-      base64 += base64Encode(bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+      const slice = bytes.subarray(i, Math.min(i + CHUNK, bytes.length));
+      for (let j = 0; j < slice.length; j++) {
+        binary += String.fromCharCode(slice[j]);
+      }
     }
+    const base64 = btoa(binary);
 
     const systemPrompt = `Je bent een financiële data-extractor. Je analyseert crediteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
 
