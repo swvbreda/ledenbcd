@@ -76,6 +76,7 @@ export default function FinancienPage() {
           <TabsList>
             <TabsTrigger value="begroting">Begroting</TabsTrigger>
             <TabsTrigger value="declaraties">Declaraties</TabsTrigger>
+            <TabsTrigger value="intern">Interne declaraties</TabsTrigger>
           </TabsList>
 
           <TabsContent value="begroting">
