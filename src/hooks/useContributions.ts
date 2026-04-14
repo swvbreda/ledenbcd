@@ -116,6 +116,36 @@ export function useContributionInvoices(year?: number) {
   });
 }
 
+export function useCreateContributionInvoice() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      member_id: number;
+      year: number;
+      invoice_number?: string | null;
+      invoice_file_path: string;
+    }) => {
+      const { data, error } = await supabase
+        .from("contribution_invoices")
+        .insert({
+          member_id: input.member_id,
+          year: input.year,
+          invoice_number: input.invoice_number ?? null,
+          invoice_file_path: input.invoice_file_path,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as ContributionInvoice;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["contribution-invoices"] });
+    },
+  });
+}
+
 export function useMemberInvoices(memberId: number) {
   const { user } = useAuth();
 

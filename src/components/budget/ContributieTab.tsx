@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
-import { useContributions, useUpsertContribution, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
+import {
+  useContributions,
+  useUpsertContribution,
+  useContributionInvoices,
+  useCreateContributionInvoice,
+  type Contribution,
+  type ContributionInvoice,
+} from "@/hooks/useContributions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembers } from "@/hooks/useMembers";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +19,9 @@ import { Euro, CheckCircle2, AlertCircle, Search, FileText, Download, Upload } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CsvImportDialog from "@/components/CsvImportDialog";
+import ContributionPdfUploadDialog from "@/components/budget/ContributionPdfUploadDialog";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
-const currentYear = new Date().getFullYear();
 const FIXED_AMOUNT = 3000;
 
 interface Props {
@@ -26,10 +33,12 @@ export default function ContributieTab({ year }: Props) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(year);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(year);
   const upsert = useUpsertContribution();
+  const createInvoice = useCreateContributionInvoice();
 
   const contribMap = useMemo(() => {
     const map = new Map<number, Contribution>();
@@ -132,7 +141,6 @@ export default function ContributieTab({ year }: Props) {
 
   return (
     <div className="space-y-4 mt-4">
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="border-border/60">
           <CardContent className="p-4">
@@ -175,7 +183,6 @@ export default function ContributieTab({ year }: Props) {
         </Card>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <SelectTrigger className="w-[160px] h-8 text-sm">
@@ -201,11 +208,29 @@ export default function ContributieTab({ year }: Props) {
           <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={handleExportCSV}>
             <Download size={12} /> CSV
           </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setPdfDialogOpen(true)}>
+            <FileText size={12} /> PDF uploaden
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setCsvDialogOpen(true)}>
-            <Upload size={12} /> Importeren
+            <Upload size={12} /> CSV importeren
           </Button>
         </div>
       </div>
+
+      <ContributionPdfUploadDialog
+        open={pdfDialogOpen}
+        onOpenChange={setPdfDialogOpen}
+        year={year}
+        members={effectiveMembers.map((m) => ({ id: m.id, naam: m.naam }))}
+        onUploaded={async ({ member_id, invoice_file_path, invoice_number }) => {
+          await createInvoice.mutateAsync({
+            member_id,
+            year,
+            invoice_file_path,
+            invoice_number,
+          });
+        }}
+      />
 
       <CsvImportDialog
         open={csvDialogOpen}
@@ -227,7 +252,6 @@ export default function ContributieTab({ year }: Props) {
         }}
       />
 
-      {/* Table */}
       <div className="border border-border rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -318,3 +342,4 @@ export default function ContributieTab({ year }: Props) {
     </div>
   );
 }
+
