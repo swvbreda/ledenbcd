@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Euro, Building2, Gift, Wallet } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -154,19 +154,6 @@ export function AppSidebar() {
                         >
                           <UserCog className="mr-2 h-4 w-4" />
                           {!collapsed && <span>Bestuur</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to="/contributie"
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                          onClick={closeMobile}
-                        >
-                          <Euro className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>Contributie</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

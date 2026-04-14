@@ -3,24 +3,28 @@ import { Plus, Upload } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
 import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
+import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
 export default function FinancienPage() {
   const [year, setYear] = useState(currentYear);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
   const mutations = useBudgetMutations(year);
@@ -31,6 +35,8 @@ export default function FinancienPage() {
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   const totalBudgeted = (categories || []).reduce(
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
@@ -53,14 +59,16 @@ export default function FinancienPage() {
   const fmt = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold font-display">Financieel Overzicht</h1>
-          <p className="text-sm text-muted-foreground">Begrotingen en uitgaven beheren</p>
-        </div>
+    <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
+      <BcdHeroBanner
+        title="Financieel Beheer"
+        subtitle="Begroting, contributie, declaraties en uitgaven beheren"
+      />
+
+      {/* Year selector */}
+      <div className="flex items-center justify-between">
         <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-          <SelectTrigger className="w-28 h-8">
+          <SelectTrigger className="w-[140px] h-9">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -72,18 +80,30 @@ export default function FinancienPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Laden...</p>
+        <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
-        <Tabs defaultValue="begroting">
-          <TabsList>
-            <TabsTrigger value="begroting">Begroting</TabsTrigger>
-            <TabsTrigger value="declaraties">Declaraties</TabsTrigger>
-            <TabsTrigger value="intern">Interne declaraties</TabsTrigger>
+        <Tabs defaultValue="contributie" className="space-y-1">
+          <TabsList className="bg-muted/60 h-10">
+            <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Contributie
+            </TabsTrigger>
+            <TabsTrigger value="begroting" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Begroting
+            </TabsTrigger>
+            <TabsTrigger value="declaraties" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Declaraties
+            </TabsTrigger>
+            <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Interne declaraties
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="contributie">
+            <ContributieTab year={year} />
+          </TabsContent>
 
           <TabsContent value="begroting">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 mt-4">
-              {/* Left: Budget categories */}
               <div className="space-y-3">
                 {(categories || []).map((cat) => (
                   <BudgetCategoryTable
@@ -139,7 +159,6 @@ export default function FinancienPage() {
                 )}
               </div>
 
-              {/* Right: Balance panel */}
               <div>
                 <BalancePanel
                   items={balanceItems || []}
