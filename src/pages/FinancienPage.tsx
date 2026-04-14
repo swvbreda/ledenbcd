@@ -29,14 +29,26 @@ export default function FinancienPage() {
   const { user, isAdmin } = useAuth();
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
+  const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
+  const { data: contributions } = useContributions(year);
+  const { effectiveMembers } = useMembers();
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+
+  const FIXED_AMOUNT = 3000;
+  const contributionStats = useMemo(() => {
+    const totalMembers = effectiveMembers.length;
+    const paidCount = (contributions ?? []).filter((c) => c.paid).length;
+    const unpaidCount = totalMembers - paidCount;
+    const totalReceived = (contributions ?? []).filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
+    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount: FIXED_AMOUNT };
+  }, [effectiveMembers, contributions]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
