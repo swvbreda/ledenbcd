@@ -187,6 +187,8 @@ export type Database = {
           id: string
           invoice_reference: string | null
           line_item_id: string
+          paid: boolean
+          paid_date: string | null
           pdf_file_path: string | null
           source: string
         }
@@ -201,6 +203,8 @@ export type Database = {
           id?: string
           invoice_reference?: string | null
           line_item_id: string
+          paid?: boolean
+          paid_date?: string | null
           pdf_file_path?: string | null
           source?: string
         }
@@ -215,6 +219,8 @@ export type Database = {
           id?: string
           invoice_reference?: string | null
           line_item_id?: string
+          paid?: boolean
+          paid_date?: string | null
           pdf_file_path?: string | null
           source?: string
         }
