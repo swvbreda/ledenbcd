@@ -124,10 +124,10 @@ export default function BudgetCategoryTable({
             })}
             <tr className="bg-muted/30 font-medium">
               <td className="px-3 py-1.5">Subtotaal</td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalBudgeted)}</td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalSpent)}</td>
-              <td className={`text-right px-3 py-1.5 tabular-nums ${totalRemaining < 0 ? "text-destructive" : "text-green-600"}`}>
-                {fmt(totalRemaining)}
+              <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
+              <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
+              <td className="px-3 py-1.5 font-semibold">
+                <CurrencyCell value={totalRemaining} className={totalRemaining < 0 ? "text-destructive" : "text-green-600"} />
               </td>
               <td />
             </tr>
