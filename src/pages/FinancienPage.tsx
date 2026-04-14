@@ -207,43 +207,16 @@ export default function FinancienPage() {
             <ContributieTab year={year} />
           </TabsContent>
 
-          <TabsContent value="declaraties">
-            <div className="mt-4 space-y-3">
-              <div className="flex justify-end">
-                <Button size="sm" variant="outline" onClick={() => setPdfImportOpen(true)}>
-                  <Upload size={14} className="mr-1" /> PDF importeren
-                </Button>
-              </div>
-              <ExpenseListView
-                categories={categories || []}
-                onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="intern">
-            <div className="mt-4">
-              <InternalDeclarationsView
-                declarations={internalDeclarations || []}
-                year={year}
-                isAdmin={isAdmin}
-                userId={user?.id || ""}
-                onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie ingediend") })}
-                onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
-                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
-                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="openstaand">
-            <OpenstaandePostenTab
+          <TabsContent value="boekingen">
+            <BoekingenOverzicht
               categories={categories || []}
               contributions={contributions || []}
               members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
               contributionAmount={FIXED_AMOUNT}
-              onToggleExpensePaid={(id, paid) => mutations.toggleExpensePaid.mutate({ id, paid }, { onSuccess: () => toast.success("Betaalstatus bijgewerkt") })}
+              onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
+              onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
+              onOpenPdfImport={() => setPdfImportOpen(true)}
             />
           </TabsContent>
 
