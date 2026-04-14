@@ -18,7 +18,7 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null } };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
 
 interface Props {
   categories: BudgetCategory[];
@@ -81,6 +81,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
           paid: c.paid,
           paid_date: c.paid_date,
           invoice_number: c.invoice_number,
+          invoice_date: c.invoice_date,
         },
       });
     }
@@ -105,7 +106,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     } else {
       const c = row.data;
       return {
-        date: c.paid_date || "",
+        date: c.invoice_date || c.paid_date || "",
         type: "Inkomst",
         name: c.memberName,
         dossier: "",

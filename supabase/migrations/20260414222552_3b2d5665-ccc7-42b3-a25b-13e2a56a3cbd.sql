@@ -1,0 +1,1 @@
+ALTER TABLE public.member_contributions ADD COLUMN invoice_date date;
