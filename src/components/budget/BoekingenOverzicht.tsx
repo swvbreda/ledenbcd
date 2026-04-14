@@ -18,7 +18,7 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null } };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
 
 interface Props {
   categories: BudgetCategory[];

@@ -20,6 +20,7 @@ export interface Contribution {
   paid_date: string | null;
   notes: string | null;
   invoice_number: string | null;
+  invoice_date: string | null;
   invoice_file_path: string | null;
   created_by: string;
   created_at: string;
