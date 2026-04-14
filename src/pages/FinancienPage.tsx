@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
@@ -8,6 +8,7 @@ import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
 import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
+import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +30,7 @@ export default function FinancienPage() {
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
+  const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
   const totalBudgeted = (categories || []).reduce(
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
@@ -154,7 +156,12 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="declaraties">
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" onClick={() => setPdfImportOpen(true)}>
+                  <Upload size={14} className="mr-1" /> PDF importeren
+                </Button>
+              </div>
               <ExpenseListView
                 categories={categories || []}
                 onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
@@ -184,6 +191,20 @@ export default function FinancienPage() {
           expenses={selectedLineItemExpenses}
           onAddExpense={(expense) => mutations.addExpense.mutate(expense, { onSuccess: () => toast.success("Uitgave toegevoegd") })}
           onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
+          userId={user.id}
+        />
+      )}
+
+      {user && (
+        <PdfImportDialog
+          open={pdfImportOpen}
+          onOpenChange={setPdfImportOpen}
+          categories={categories || []}
+          onImport={async (expenses) => {
+            for (const exp of expenses) {
+              await mutations.addExpense.mutateAsync(exp);
+            }
+          }}
           userId={user.id}
         />
       )}
