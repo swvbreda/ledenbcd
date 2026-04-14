@@ -90,10 +90,10 @@ export default function BalancePanel({
         </div>
         <table className="w-full text-sm">
           <colgroup>
-            <col className="w-[30%]" />
-            <col className="w-[20%]" />
-            <col className="w-[30%]" />
-            <col className="w-[20%]" />
+            <col className="w-[25%]" />
+            <col className="w-[25%]" />
+            <col className="w-[25%]" />
+            <col className="w-[25%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
