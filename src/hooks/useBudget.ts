@@ -26,6 +26,7 @@ export interface BudgetExpense {
   expense_date: string | null;
   creditor_name: string | null;
   invoice_reference: string | null;
+  dossier: string | null;
   source: string;
   pdf_file_path: string | null;
   created_at: string;
@@ -178,7 +179,7 @@ export function useBudgetMutations(year: number) {
   });
 
   const addExpense = useMutation({
-    mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; created_by: string }) => {
+    mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }) => {
       const { error } = await supabase.from("budget_expenses").insert(expense);
       if (error) throw error;
     },
