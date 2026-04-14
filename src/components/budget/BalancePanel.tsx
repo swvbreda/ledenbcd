@@ -297,10 +297,10 @@ export default function BalancePanel({
             </div>
             <table className="w-full text-xs text-muted-foreground">
               <tbody>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per uur</td><td className="text-right px-3 py-1">€ 5,50</td></tr>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per maand</td><td className="text-right px-3 py-1">€ 210</td></tr>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per jaar</td><td className="text-right px-3 py-1">€ 2.100</td></tr>
-                <tr><td className="px-3 py-1">Reiskosten</td><td className="text-right px-3 py-1">€ 0,23/km</td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1">Per uur</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">5,50</span></span></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1">Per maand</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">210</span></span></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1">Per jaar</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">2.100</span></span></td></tr>
+                <tr><td className="px-3 py-1">Reiskosten</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">0,23/km</span></span></td></tr>
               </tbody>
             </table>
           </div>

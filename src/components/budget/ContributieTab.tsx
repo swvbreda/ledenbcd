@@ -293,7 +293,7 @@ export default function ContributieTab({ year }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-center text-sm">{m.locaties?.length || m.aantalLocaties || 1}</TableCell>
-                    <TableCell className="text-right text-sm tabular-nums">€ {FIXED_AMOUNT.toLocaleString("nl-NL")}</TableCell>
+                    <TableCell className="text-right text-sm tabular-nums"><span className="inline-flex w-full"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">{FIXED_AMOUNT.toLocaleString("nl-NL")}</span></span></TableCell>
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isPaid}
