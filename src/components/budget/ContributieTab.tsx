@@ -34,6 +34,7 @@ export default function ContributieTab({ year }: Props) {
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "unpaid" | "no_invoice">("all");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [todoOpen, setTodoOpen] = useState(false);
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(year);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(year);
