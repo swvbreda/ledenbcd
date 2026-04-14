@@ -203,11 +203,14 @@ export default function BalancePanel({
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">{renderAmount(item)}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums" />
-                <td className="px-1">
-                  <button onClick={() => onDelete(item.id)} className="p-1 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={12} /></button>
+                <td className="text-right px-3 py-1.5 tabular-nums">
+                  <div className="flex items-center justify-end gap-1">
+                    {renderAmount(item)}
+                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={10} /></button>
+                  </div>
                 </td>
+                <td className="text-right px-3 py-1.5 tabular-nums" />
+                <td />
               </tr>
             ))}
             {/* Ontvangen contributie */}
@@ -225,7 +228,7 @@ export default function BalancePanel({
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
               <td className="text-right px-3 py-1.5"><CurrencyCell value={totalSpent} /></td>
-              <td className="px-2">
+              <td className="px-3 py-1.5">
                 {contributionStats && (
                   <div className="text-[10px] text-muted-foreground leading-tight space-y-0.5">
                     <div>{contributionStats.unpaidCount} leden nog betalen</div>
@@ -245,7 +248,6 @@ export default function BalancePanel({
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
               <td />
-            </tr>
           </tbody>
         </table>
         {adding === "resultaat" ? (
