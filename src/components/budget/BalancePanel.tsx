@@ -97,12 +97,12 @@ export default function BalancePanel({
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Middelen balans</h3>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <colgroup>
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
-            <col className="w-[25%]" />
+            <col className="w-[30%]" />
+            <col className="w-[20%]" />
+            <col className="w-[30%]" />
+            <col className="w-[20%]" />
           </colgroup>
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
@@ -192,23 +192,25 @@ export default function BalancePanel({
           <h3 className="text-sm font-semibold">Resultaat</h3>
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <colgroup>
             <col className="w-[30%]" />
             <col className="w-[20%]" />
+            <col className="w-[30%]" />
             <col className="w-[20%]" />
-            <col className="w-[20%]" />
-            <col className="w-[10%]" />
           </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">{renderAmount(item)}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums" />
-                <td className="px-1">
-                  <button onClick={() => onDelete(item.id)} className="p-1 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={12} /></button>
+                <td className="text-right px-3 py-1.5 tabular-nums">
+                  <div className="flex items-center justify-end gap-1">
+                    {renderAmount(item)}
+                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={10} /></button>
+                  </div>
                 </td>
+                <td className="text-right px-3 py-1.5 tabular-nums" />
+                <td />
               </tr>
             ))}
             {/* Ontvangen contributie */}
@@ -226,7 +228,7 @@ export default function BalancePanel({
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
               <td className="text-right px-3 py-1.5"><CurrencyCell value={totalSpent} /></td>
-              <td className="px-2">
+              <td className="px-3 py-1.5">
                 {contributionStats && (
                   <div className="text-[10px] text-muted-foreground leading-tight space-y-0.5">
                     <div>{contributionStats.unpaidCount} leden nog betalen</div>
