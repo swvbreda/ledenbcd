@@ -242,7 +242,6 @@ export default function FinancienPage() {
 
           <TabsContent value="openstaand">
             <OpenstaandePostenTab
-              categories={categories || []}
               contributions={contributions || []}
               members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
