@@ -197,6 +197,14 @@ export function useBudgetMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  const updateExpense = useMutation({
+    mutationFn: async ({ id, ...fields }: { id: string; dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => {
+      const { error } = await supabase.from("budget_expenses").update(fields).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const toggleExpensePaid = useMutation({
     mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
       const { error } = await supabase.from("budget_expenses").update({
