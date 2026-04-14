@@ -23,13 +23,12 @@ serve(async (req) => {
       });
     }
 
-    // Member list for matching
     const membersJson = formData.get("members") as string | null;
     let membersContext = "";
     if (membersJson) {
       try {
         const members = JSON.parse(membersJson) as Array<{ id: number; naam: string }>;
-        membersContext = `\n\nBeschikbare leden (id → naam):\n${members.map(m => `- ${m.id}: ${m.naam}`).join("\n")}\n\nProbeer de naam op de factuur te matchen met een van deze leden. Geef het id terug in matched_member_id.`;
+        membersContext = `\n\nBeschikbare leden (id → naam):\n${members.map(m => `- ${m.id}: ${m.naam}`).join("\n")}\n\nKoppel elke debiteur aan het best passende lid door het id in matched_member_id te zetten. Match op bedrijfsnaam, coffeeshopnaam of persoonsnaam. Als je geen match vindt, laat matched_member_id leeg.`;
       } catch { /* ignore */ }
     }
 
@@ -41,12 +40,24 @@ serve(async (req) => {
       base64 += base64Encode(bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
     }
 
-    const systemPrompt = `Je bent een financiële data-extractor. Je analyseert contributie-facturen (PDF) van een coffeeshopbond en extraheert:
-- Het factuurnummer
-- De naam van het lid / de coffeeshop / het bedrijf op de factuur
-- Het lidnummer als dat op de factuur staat
+    const systemPrompt = `Je bent een financiële data-extractor. Je analyseert debiteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
 
-Zoek naar patronen als "Factuurnummer:", "Factuur nr.", "Lidnummer:", "#", etc.${membersContext}`;
+Extraheer ALLE regels uit de debiteurenlijst. Elke regel bevat typisch:
+- Debiteur/Klant naam (de naam van het lid, coffeeshop of bedrijf)
+- Factuurnummer
+- Factuurdatum
+- Bedrag (in EUR)
+- Eventueel een lidnummer
+
+Geef het resultaat als JSON. Gebruik deze exacte velden:
+- debtor_name: naam van de debiteur/klant
+- invoice_number: factuurnummer
+- invoice_date: factuurdatum in YYYY-MM-DD formaat
+- amount: bedrag als getal (positief)
+- member_number: lidnummer als dat op de factuur staat (integer)
+- matched_member_id: het id van het best passende lid (indien beschikbaar)
+
+Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele factuurregels op.${membersContext}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -61,7 +72,7 @@ Zoek naar patronen als "Factuurnummer:", "Factuur nr.", "Lidnummer:", "#", etc.$
           {
             role: "user",
             content: [
-              { type: "text", text: "Extraheer het factuurnummer en het lid uit deze contributie-factuur." },
+              { type: "text", text: "Extraheer alle debiteurenregels uit deze Visionplanner PDF. Retourneer alleen de JSON." },
               { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64}` } },
             ],
           },
@@ -70,23 +81,33 @@ Zoek naar patronen als "Factuurnummer:", "Factuur nr.", "Lidnummer:", "#", etc.$
           {
             type: "function",
             function: {
-              name: "extract_invoice_info",
-              description: "Extract invoice number and member info from a contribution invoice PDF",
+              name: "extract_debtors",
+              description: "Return extracted debtor entries from a Visionplanner PDF",
               parameters: {
                 type: "object",
                 properties: {
-                  invoice_number: { type: "string", description: "The invoice number found on the PDF" },
-                  member_name: { type: "string", description: "Name of the member/coffeeshop/company on the invoice" },
-                  member_number: { type: "integer", description: "Member/lid number if found on the invoice" },
-                  matched_member_id: { type: "integer", description: "ID of the best matching member from the provided list" },
-                  confidence: { type: "string", enum: ["high", "medium", "low"], description: "Confidence level of the member match" },
+                  entries: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        debtor_name: { type: "string", description: "Name of the debtor/member" },
+                        invoice_number: { type: "string", description: "Invoice number" },
+                        invoice_date: { type: "string", description: "Invoice date in YYYY-MM-DD" },
+                        amount: { type: "number", description: "Amount in EUR (positive)" },
+                        member_number: { type: "integer", description: "Member number if found" },
+                        matched_member_id: { type: "integer", description: "ID of matched member" },
+                      },
+                      required: ["debtor_name", "amount"],
+                    },
+                  },
                 },
-                required: ["invoice_number"],
+                required: ["entries"],
               },
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "extract_invoice_info" } },
+        tool_choice: { type: "function", function: { name: "extract_debtors" } },
       }),
     });
 
@@ -118,12 +139,13 @@ Zoek naar patronen als "Factuurnummer:", "Factuur nr.", "Lidnummer:", "#", etc.$
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
+    const entries = parsed.entries || [];
 
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify({ entries, count: entries.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("extract-contribution-invoice error:", e);
+    console.error("extract-debtors error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Onbekende fout" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

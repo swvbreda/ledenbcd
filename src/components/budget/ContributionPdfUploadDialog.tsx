@@ -1,17 +1,27 @@
-import { useMemo, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileText, Loader2, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Upload, FileText, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
+import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface MemberOption {
   id: number;
   naam: string;
+}
+
+interface ExtractedEntry {
+  debtor_name: string;
+  invoice_number?: string;
+  invoice_date?: string;
+  amount: number;
+  member_number?: number;
+  matched_member_id?: number;
+  selected: boolean;
+  assigned_member_id?: string;
 }
 
 interface Props {
@@ -19,305 +29,246 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   members: MemberOption[];
   year: number;
-  onUploaded: (payload: { member_id: number; invoice_file_path: string; invoice_number?: string | null }) => Promise<void>;
+  onImport: (entries: { member_id: number; invoice_number?: string | null }[]) => Promise<void>;
 }
 
-interface AiSuggestion {
-  invoice_number?: string;
-  member_name?: string;
-  member_number?: number;
-  matched_member_id?: number;
-  confidence?: "high" | "medium" | "low";
-}
-
-export default function ContributionPdfUploadDialog({ open, onOpenChange, members, year, onUploaded }: Props) {
-  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
-  const [aiApplied, setAiApplied] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+export default function ContributionPdfUploadDialog({ open, onOpenChange, members, year, onImport }: Props) {
+  const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
+  const [entries, setEntries] = useState<ExtractedEntry[]>([]);
+  const [extracting, setExtracting] = useState(false);
 
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => a.naam.localeCompare(b.naam, "nl")),
     [members]
   );
 
-  const resetState = () => {
-    setSelectedMemberId("");
-    setInvoiceNumber("");
-    setUploading(false);
-    setAnalyzing(false);
-    setSelectedFile(null);
-    setAiSuggestion(null);
-    setAiApplied(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Alleen PDF-bestanden zijn toegestaan");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Bestand is te groot (max 20MB)");
+      return;
+    }
 
-  const handleClose = (nextOpen: boolean) => {
-    if (!nextOpen) resetState();
-    onOpenChange(nextOpen);
-  };
-
-  const analyzeWithAi = async (file: File) => {
-    setAnalyzing(true);
+    setExtracting(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      // Send member list for matching
-      const memberList = members.map(m => ({ id: m.id, naam: m.naam }));
-      formData.append("members", JSON.stringify(memberList));
+      formData.append("members", JSON.stringify(members.map(m => ({ id: m.id, naam: m.naam }))));
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-contribution-invoice`,
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-debtors`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: formData,
         }
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Onbekend" }));
-        console.warn("AI extraction failed:", err);
-        toast.info("AI-herkenning mislukt, vul handmatig in");
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "Onbekende fout" }));
+        throw new Error(err.error || `Fout ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      if (!data.entries?.length) {
+        toast.warning("Geen debiteurenregels gevonden in de PDF");
         return;
       }
 
-      const suggestion: AiSuggestion = await res.json();
-      setAiSuggestion(suggestion);
-
-      // Auto-apply suggestions
-      if (suggestion.invoice_number) {
-        setInvoiceNumber(suggestion.invoice_number);
-      }
-      if (suggestion.matched_member_id) {
-        setSelectedMemberId(String(suggestion.matched_member_id));
-      } else if (suggestion.member_number) {
-        // Try matching by member number directly
-        const match = members.find(m => m.id === suggestion.member_number);
-        if (match) setSelectedMemberId(String(match.id));
-      }
-      setAiApplied(true);
-      toast.success("Factuurnummer en lid automatisch herkend");
-    } catch (e) {
-      console.warn("AI analysis error:", e);
-      toast.info("AI-herkenning niet beschikbaar, vul handmatig in");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Alleen PDF-bestanden zijn toegestaan");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("Bestand is te groot (max 20MB)");
-      e.target.value = "";
-      return;
-    }
-
-    setSelectedFile(file);
-    setAiSuggestion(null);
-    setAiApplied(false);
-
-    // Start AI analysis in parallel
-    analyzeWithAi(file);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    const memberId = Number(selectedMemberId);
-    if (!memberId) {
-      toast.error("Selecteer eerst een lid");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const ext = selectedFile.name.split(".").pop()?.toLowerCase() || "pdf";
-      const safeInvoiceNumber = invoiceNumber.trim().replace(/[^a-zA-Z0-9-_]/g, "-");
-      const path = `${year}/${memberId}/${crypto.randomUUID()}${safeInvoiceNumber ? `-${safeInvoiceNumber}` : ""}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("contribution-invoices")
-        .upload(path, selectedFile, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      await onUploaded({
-        member_id: memberId,
-        invoice_file_path: path,
-        invoice_number: invoiceNumber.trim() || null,
+      const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
+        let matchedId = entry.matched_member_id ? String(entry.matched_member_id) : "";
+        // Validate
+        if (matchedId && !members.find(m => String(m.id) === matchedId)) {
+          matchedId = "";
+        }
+        // Fallback: try member_number
+        if (!matchedId && entry.member_number) {
+          const match = members.find(m => m.id === entry.member_number);
+          if (match) matchedId = String(match.id);
+        }
+        return { ...entry, selected: true, assigned_member_id: matchedId };
       });
 
-      toast.success("PDF-factuur geüpload");
-      handleClose(false);
-    } catch (error: any) {
-      toast.error(`Upload mislukt: ${error.message || "onbekende fout"}`);
+      setEntries(enriched);
+      setStep("review");
+      toast.success(`${data.count} regels geëxtraheerd`);
+    } catch (err: any) {
+      toast.error(err.message || "Fout bij PDF-extractie");
     } finally {
-      setUploading(false);
+      setExtracting(false);
     }
   };
 
-  const confidenceColor = (c?: string) => {
-    if (c === "high") return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    if (c === "medium") return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-    return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+  const toggleAll = (checked: boolean) => {
+    setEntries(prev => prev.map(e => ({ ...e, selected: checked })));
+  };
+
+  const toggleEntry = (idx: number) => {
+    setEntries(prev => prev.map((e, i) => (i === idx ? { ...e, selected: !e.selected } : e)));
+  };
+
+  const setMember = (idx: number, memberId: string) => {
+    setEntries(prev => prev.map((e, i) => (i === idx ? { ...e, assigned_member_id: memberId } : e)));
+  };
+
+  const selectedEntries = entries.filter(e => e.selected);
+  const readyEntries = selectedEntries.filter(e => e.assigned_member_id);
+  const total = selectedEntries.reduce((s, e) => s + e.amount, 0);
+
+  const handleImport = async () => {
+    if (readyEntries.length === 0) {
+      toast.error("Geen regels klaar voor import (wijs leden toe)");
+      return;
+    }
+    setStep("importing");
+    try {
+      await onImport(
+        readyEntries.map(e => ({
+          member_id: Number(e.assigned_member_id),
+          invoice_number: e.invoice_number || null,
+        }))
+      );
+      toast.success(`${readyEntries.length} contributie-facturen geïmporteerd`);
+      onOpenChange(false);
+      setStep("upload");
+      setEntries([]);
+    } catch (err: any) {
+      toast.error("Fout bij importeren: " + (err.message || "onbekend"));
+      setStep("review");
+    }
+  };
+
+  const handleClose = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setStep("upload");
+      setEntries([]);
+    }
+    onOpenChange(nextOpen);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            PDF-factuur uploaden ({year})
+            <FileText size={18} />
+            {step === "upload" ? `Visionplanner PDF importeren (${year})` : "Geëxtraheerde debiteurenregels"}
           </DialogTitle>
-          <DialogDescription>
-            Upload een contributie-PDF — factuurnummer en lid worden automatisch herkend via AI.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
-          {/* Step 1: File selection */}
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center space-y-3">
-            {analyzing ? (
-              <div className="flex flex-col items-center gap-3">
-                <Sparkles className="h-10 w-10 animate-pulse text-primary" />
-                <p className="text-sm text-muted-foreground">PDF wordt geanalyseerd door AI...</p>
-              </div>
-            ) : selectedFile ? (
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <span className="font-medium truncate max-w-[300px]">{selectedFile.name}</span>
+        {step === "upload" && (
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Upload een debiteurenlijst uit Visionplanner (PDF). De AI extraheert automatisch alle
+              regels en koppelt ze aan leden.
+            </p>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              {extracting ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="animate-spin text-primary" size={32} />
+                  <p className="text-sm text-muted-foreground">PDF wordt geanalyseerd door AI...</p>
                 </div>
-                <label className="inline-block">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={uploading || analyzing}
-                  />
-                  <span className="text-xs text-primary cursor-pointer hover:underline">Ander bestand</span>
-                </label>
-              </div>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Kies een PDF-factuur</p>
-                  <p className="text-xs text-muted-foreground mt-1">Factuurnummer en lid worden automatisch herkend</p>
-                </div>
-                <label className="inline-block">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={uploading || analyzing}
-                  />
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium cursor-pointer hover:bg-primary/90 transition-colors">
-                    <Upload className="h-4 w-4" /> PDF kiezen
-                  </span>
-                </label>
-              </>
-            )}
-          </div>
-
-          {/* AI suggestion banner */}
-          {aiApplied && aiSuggestion && (
-            <div className="flex items-start gap-2 rounded-md bg-muted/50 border px-3 py-2 text-xs">
-              <Sparkles className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-              <div className="space-y-0.5">
-                <span className="font-medium">AI-suggestie:</span>
-                {aiSuggestion.member_name && (
-                  <span className="block">Lid: {aiSuggestion.member_name}</span>
-                )}
-                {aiSuggestion.invoice_number && (
-                  <span className="block">Factuurnr: {aiSuggestion.invoice_number}</span>
-                )}
-                {aiSuggestion.confidence && (
-                  <Badge variant="outline" className={`text-[10px] mt-1 ${confidenceColor(aiSuggestion.confidence)}`}>
-                    {aiSuggestion.confidence === "high" ? "Zeker" : aiSuggestion.confidence === "medium" ? "Waarschijnlijk" : "Onzeker"}
-                  </Badge>
-                )}
-              </div>
-              {aiSuggestion.matched_member_id ? (
-                <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-green-600 shrink-0 ml-auto" />
               ) : (
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 text-yellow-600 shrink-0 ml-auto" />
+                <label className="cursor-pointer flex flex-col items-center gap-3">
+                  <Upload size={32} className="text-muted-foreground" />
+                  <span className="text-sm font-medium">Klik om een PDF te uploaden</span>
+                  <span className="text-xs text-muted-foreground">Max 20MB</span>
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 2: Confirm/edit fields (shown after file selected) */}
-          {selectedFile && !analyzing && (
-            <>
-              <div className="space-y-2">
-                <Label>Lid *</Label>
-                <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een lid" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortedMembers.map((member) => (
-                      <SelectItem key={member.id} value={String(member.id)}>
-                        #{member.id} {member.naam}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {step === "review" && (
+          <div className="flex-1 overflow-hidden flex flex-col gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="ml-auto text-xs text-muted-foreground">
+                {readyEntries.length}/{selectedEntries.length} gekoppeld • <CurrencyText value={total} />
+              </span>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="invoice-number">Factuurnummer</Label>
-                <Input
-                  id="invoice-number"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="Bijv. 2026012"
-                />
-              </div>
-            </>
-          )}
-        </div>
+            <div className="flex-1 overflow-auto border border-border rounded-lg">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-muted/50 backdrop-blur">
+                  <tr className="border-b border-border">
+                    <th className="px-2 py-1.5 w-8">
+                      <Checkbox
+                        checked={entries.every(e => e.selected)}
+                        onCheckedChange={(c) => toggleAll(!!c)}
+                      />
+                    </th>
+                    <th className="px-2 py-1.5 text-left font-medium">Debiteur</th>
+                    <th className="px-2 py-1.5 text-left font-medium">Factuurnr</th>
+                    <th className="px-2 py-1.5 text-left font-medium">Datum</th>
+                    <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>
+                    <th className="px-2 py-1.5 text-left font-medium min-w-[200px]">Lid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry, idx) => (
+                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"}`}>
+                      <td className="px-2 py-1">
+                        <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
+                      </td>
+                      <td className="px-2 py-1">{entry.debtor_name}</td>
+                      <td className="px-2 py-1 tabular-nums">{entry.invoice_number || "–"}</td>
+                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.invoice_date || "–"}</td>
+                      <td className="px-2 py-1 text-right"><CurrencyCell value={entry.amount} /></td>
+                      <td className="px-2 py-1">
+                        <Select
+                          value={entry.assigned_member_id || ""}
+                          onValueChange={(v) => setMember(idx, v)}
+                          disabled={!entry.selected}
+                        >
+                          <SelectTrigger className="h-6 text-xs">
+                            <SelectValue placeholder="Koppel lid..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sortedMembers.map(m => (
+                              <SelectItem key={m.id} value={String(m.id)} className="text-xs">
+                                #{m.id} {m.naam}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => handleClose(false)} disabled={uploading}>
-            Sluiten
-          </Button>
-          {selectedFile && !analyzing && (
-            <Button onClick={handleUpload} disabled={uploading || !selectedMemberId}>
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                  Uploaden...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-1.5" />
-                  Uploaden
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => { setStep("upload"); setEntries([]); }}>
+                Andere PDF
+              </Button>
+              <Button size="sm" onClick={handleImport} disabled={readyEntries.length === 0}>
+                <Check size={14} className="mr-1" />
+                {readyEntries.length} facturen importeren
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === "importing" && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <Loader2 className="animate-spin text-primary" size={32} />
+            <p className="text-sm text-muted-foreground">Contributie-facturen worden geïmporteerd...</p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
