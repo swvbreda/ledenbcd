@@ -266,11 +266,16 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                 </thead>
                 <tbody>
                   {entries.map((entry, idx) => (
-                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"}`}>
+                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"} ${entry.wrong_year ? "bg-destructive/5" : ""}`}>
                       <td className="px-2 py-1">
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
-                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.expense_date || "–"}</td>
+                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">
+                        {entry.expense_date || "–"}
+                        {entry.wrong_year && (
+                          <span className="ml-1 text-[10px] text-destructive font-medium">≠{year}</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1">{entry.creditor_name}</td>
                       <td className="px-2 py-1">{entry.dossier || "–"}</td>
                       <td className="px-2 py-1 tabular-nums">{entry.invoice_reference || "–"}</td>
