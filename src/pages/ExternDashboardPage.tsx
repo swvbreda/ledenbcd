@@ -100,7 +100,7 @@ const ExternDashboardPage = () => {
           if (orgData.type === "leverancier") {
             await Promise.all([
               loadSupplierBenefits(orgData.id),
-              loadCoffeeshopMembers(),
+              loadCoffeeshopMembers(orgData.id),
             ]);
           } else {
             await loadMembers(orgData.id);
@@ -112,33 +112,6 @@ const ExternDashboardPage = () => {
 
     load();
   }, [user]);
-
-  const loadCoffeeshopMembers = async () => {
-    const [membersRes, editsRes] = await Promise.all([
-      supabase.from("members_data").select("id, member_type, data").eq("member_type", "member"),
-      supabase.from("member_edits").select("member_id, data").order("updated_at", { ascending: true }),
-    ]);
-
-    if (membersRes.error) {
-      console.error("Error loading members:", membersRes.error);
-      return;
-    }
-
-    // Build latest edit per member
-    const editMap = new Map<number, Record<string, unknown>>();
-    (editsRes.data ?? []).forEach((e: any) => {
-      editMap.set(e.member_id, { ...(editMap.get(e.member_id) || {}), ...(e.data as Record<string, unknown>) });
-    });
-
-    const parsed: Member[] = (membersRes.data ?? []).map((row: any) => {
-      const payload = (row.data ?? {}) as Partial<Member>;
-      const base = { ...payload, id: typeof payload.id === "number" ? payload.id : row.id } as Member;
-      const edit = editMap.get(base.id);
-      if (edit) return { ...base, ...edit } as Member;
-      return base;
-    });
-    setAllMembers(parsed);
-  };
 
   const loadSupplierBenefits = async (orgId: string) => {
     const { data, error } = await supabase
@@ -154,46 +127,52 @@ const ExternDashboardPage = () => {
     setBenefits((data as unknown as Benefit[]) ?? []);
   };
 
+  const loadCoffeeshopMembers = async (orgId: string) => {
+    const { data: rpcData, error } = await supabase.rpc("get_members_for_extern", { _org_id: orgId });
+    if (error) {
+      console.error("Error loading members:", error);
+      return;
+    }
+    const rows = (rpcData as any[]) ?? [];
+    const parsed: Member[] = rows.map((r: any) => ({
+      id: r.id,
+      naam: r.naam || "-",
+      bedrijfsnaam: r.coffeeshop || r.naam || "-",
+      plaats: r.plaats || "-",
+      stadsdeel: r.stadsdeel || "",
+      jarenLid: null,
+      oprichtingJaar: null,
+      contactpersoon: "",
+      functie: "",
+      telefoon: "",
+      email: "",
+      aantalLocaties: Array.isArray(r.locaties) ? r.locaties.length : 0,
+      locaties: Array.isArray(r.locaties) ? r.locaties : [],
+      contacten: [],
+    } as Member));
+    setAllMembers(parsed);
+  };
+
   const loadMembers = async (orgId: string) => {
-    const { data: consents } = await supabase
-      .from("member_data_consents")
-      .select("member_id")
-      .eq("org_id", orgId)
-      .is("revoked_at", null);
-
-    const consentedIds = new Set(consents?.map(c => c.member_id) ?? []);
-
-    const { data: membersData } = await supabase
-      .from("members_data")
-      .select("id, data")
-      .eq("member_type", "member");
-
-    if (!membersData) return;
-
-    const mapped: MemberBasic[] = membersData.map(m => {
-      const d = m.data as any;
-      const hasConsent = consentedIds.has(m.id);
-
-      const base: MemberBasic = {
-        id: m.id,
-        naam: d["Naam"] || d["naam"] || "-",
-        coffeeshop: d["Coffeeshop"] || d["coffeeshop"] || "-",
-        plaats: d["Plaats"] || d["plaats"] || "-",
-        lid_sinds: d["Lid sinds"] || d["lid_sinds"] || null,
-        has_consent: hasConsent,
-      };
-
-      if (hasConsent) {
-        base.adres = d["Adres"] || d["adres"];
-        base.postcode = d["Postcode"] || d["postcode"];
-        base.kvk = d["KvK"] || d["kvk"];
-        base.email = d["Email"] || d["email"] || d["E-mail"];
-        base.telefoon = d["Telefoon"] || d["telefoon"];
-      }
-
-      return base;
-    });
-
+    const { data: rpcData, error } = await supabase.rpc("get_members_for_extern", { _org_id: orgId });
+    if (error) {
+      console.error("Error loading members:", error);
+      return;
+    }
+    const rows = (rpcData as any[]) ?? [];
+    const mapped: MemberBasic[] = rows.map((r: any) => ({
+      id: r.id,
+      naam: r.naam || "-",
+      coffeeshop: r.coffeeshop || r.naam || "-",
+      plaats: r.plaats || "-",
+      lid_sinds: r.lid_sinds ? Number(r.lid_sinds) : null,
+      has_consent: r.has_consent || false,
+      ...(r.has_consent ? {
+        email: r.email,
+        telefoon: r.telefoon,
+        kvk: r.kvk,
+      } : {}),
+    }));
     mapped.sort((a, b) => a.naam.localeCompare(b.naam));
     setMembers(mapped);
   };
