@@ -194,6 +194,20 @@ export default function FinancienPage() {
           userId={user.id}
         />
       )}
+
+      {user && (
+        <PdfImportDialog
+          open={pdfImportOpen}
+          onOpenChange={setPdfImportOpen}
+          categories={categories || []}
+          onImport={async (expenses) => {
+            for (const exp of expenses) {
+              await mutations.addExpense.mutateAsync(exp);
+            }
+          }}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 }
