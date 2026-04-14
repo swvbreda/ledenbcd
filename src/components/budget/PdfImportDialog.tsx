@@ -84,11 +84,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
       // Try to auto-match line items
       const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
         let matchedId = entry.matched_line_item_id || "";
-        // Validate the AI-matched ID exists in our line items
         if (matchedId && !allLineItems.find((li) => li.id === matchedId)) {
           matchedId = "";
         }
-        // Fallback: try local matching if AI didn't match
         if (!matchedId && entry.line_item) {
           const match = allLineItems.find(
             (li) => li.label.toLowerCase().includes(entry.line_item.toLowerCase()) ||
@@ -102,8 +100,16 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
           );
           if (match) matchedId = match.id;
         }
-        return { ...entry, selected: true, assigned_line_item_id: matchedId };
+        // Year validation: check if expense_date belongs to the selected year
+        const entryYear = entry.expense_date ? new Date(entry.expense_date).getFullYear() : null;
+        const wrongYear = entryYear !== null && entryYear !== year;
+        return { ...entry, selected: !wrongYear, assigned_line_item_id: matchedId, wrong_year: wrongYear };
       });
+
+      const wrongYearCount = enriched.filter(e => e.wrong_year).length;
+      if (wrongYearCount > 0) {
+        toast.warning(`${wrongYearCount} regels uit een ander jaar dan ${year} (automatisch uitgevinkt)`);
+      }
 
       setEntries(enriched);
       setStep("review");
