@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
+import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 
 interface Props {
   declarations: InternalDeclaration[];
@@ -11,9 +12,6 @@ interface Props {
   onAdd: (decl: Omit<InternalDeclaration, "id">) => void;
   onDelete: (id: string) => void;
 }
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 const fmtDate = (d: string | null) => {
   if (!d) return "";
@@ -220,7 +218,7 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
                 <td className="px-2 py-1.5 text-right tabular-nums">{d.km_return ?? "–"}</td>
                 <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
                 <td className="px-2 py-1.5">{d.board_member_name}</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{fmt(d.amount)}</td>
+                <td className="px-2 py-1.5 text-right"><CurrencyCell value={d.amount} /></td>
                 <td className="px-2 py-1.5 text-xs">{d.bank_account || "–"}</td>
                 <td className="px-2 py-1.5">{d.account_holder || "–"}</td>
                 <td className="px-2 py-1.5 text-xs hidden xl:table-cell">{d.max_allowance_note || "–"}</td>
@@ -237,7 +235,7 @@ export default function InternalDeclarationsView({ declarations, year, onAdd, on
             {filtered.length > 0 && (
               <tr className="bg-muted/30 font-semibold">
                 <td colSpan={6} className="px-2 py-1.5">Totaal</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{fmt(total)}</td>
+                <td className="px-2 py-1.5 text-right"><CurrencyCell value={total} /></td>
                 <td colSpan={4} />
               </tr>
             )}

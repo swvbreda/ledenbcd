@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, FileText, Loader2, Check, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import type { BudgetCategory } from "@/hooks/useBudget";
+import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface ExtractedEntry {
   expense_date?: string;
@@ -16,7 +17,6 @@ interface ExtractedEntry {
   creditor_name: string;
   invoice_reference?: string;
   amount: number;
-  // UI state
   selected: boolean;
   assigned_line_item_id?: string;
 }
@@ -28,9 +28,6 @@ interface Props {
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }[]) => Promise<void>;
   userId: string;
 }
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
@@ -230,7 +227,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                 Toepassen
               </Button>
               <span className="ml-auto text-xs text-muted-foreground">
-                {readyEntries.length}/{selectedEntries.length} klaar • {fmt(total)}
+                {readyEntries.length}/{selectedEntries.length} klaar • <CurrencyText value={total} />
               </span>
             </div>
 
@@ -263,7 +260,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                       <td className="px-2 py-1">{entry.creditor_name}</td>
                       <td className="px-2 py-1">{entry.dossier || "–"}</td>
                       <td className="px-2 py-1 tabular-nums">{entry.invoice_reference || "–"}</td>
-                      <td className="px-2 py-1 text-right tabular-nums">{fmt(entry.amount)}</td>
+                      <td className="px-2 py-1 text-right"><CurrencyCell value={entry.amount} /></td>
                       <td className="px-2 py-1">
                         <Select
                           value={entry.assigned_line_item_id || ""}
