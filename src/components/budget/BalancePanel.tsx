@@ -84,9 +84,10 @@ export default function BalancePanel({
       );
     }
     return (
-      <span className="cursor-pointer hover:text-primary transition-colors block text-right tabular-nums"
+      <span className="cursor-pointer hover:text-primary transition-colors inline-flex w-full tabular-nums"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
-        € {fmtNum(item.amount)}
+        <span className="shrink-0 mr-1">€</span>
+        <span className="flex-1 text-right">{fmtNum(item.amount)}</span>
       </span>
     );
   };
