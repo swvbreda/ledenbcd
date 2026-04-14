@@ -113,6 +113,12 @@ export default function FinancienPage() {
             <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Interne declaraties
             </TabsTrigger>
+            <TabsTrigger value="openstaand" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Openstaande posten
+            </TabsTrigger>
+            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Dossiers
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
