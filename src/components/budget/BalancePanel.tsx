@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CurrencyCell, formatEuro } from "@/components/budget/CurrencyAmount";
 
 interface ContributionStats {
   totalMembers: number;
@@ -27,19 +28,6 @@ interface Props {
   onDeleteNote?: (id: string) => void;
   year: number;
 }
-
-const fmtNum = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
-  <span className={`inline-flex w-full tabular-nums ${className}`}>
-    <span className="shrink-0 mr-1">€</span>
-    <span className="flex-1 text-right">{fmtNum(value)}</span>
-  </span>
-);
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function BalancePanel({
   items, totalBudgeted, totalSpent, contributionStats, notes,
@@ -87,7 +75,7 @@ export default function BalancePanel({
       <span className="cursor-pointer hover:text-primary transition-colors inline-flex w-full tabular-nums"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
         <span className="shrink-0 mr-1">€</span>
-        <span className="flex-1 text-right">{fmtNum(item.amount)}</span>
+        <span className="flex-1 text-right">{formatEuro(item.amount)}</span>
       </span>
     );
   };
