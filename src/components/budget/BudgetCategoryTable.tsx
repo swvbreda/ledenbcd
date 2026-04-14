@@ -106,10 +106,10 @@ export default function BudgetCategoryTable({
                   onClick={() => onOpenExpenses(li.id, li.name)}
                 >
                   <td className="px-3 py-1.5">{li.name}</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">{fmt(li.budgeted_amount)}</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">{spent > 0 ? fmt(spent) : ""}</td>
-                  <td className={`text-right px-3 py-1.5 tabular-nums ${remaining < 0 ? "text-destructive" : ""}`}>
-                    {fmt(remaining)}
+                  <td className="px-3 py-1.5"><CurrencyCell value={li.budgeted_amount} /></td>
+                  <td className="px-3 py-1.5">{spent > 0 ? <CurrencyCell value={spent} /> : ""}</td>
+                  <td className="px-3 py-1.5">
+                    <CurrencyCell value={remaining} className={remaining < 0 ? "text-destructive" : ""} />
                   </td>
                   <td className="px-1">
                     <button
