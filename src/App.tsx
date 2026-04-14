@@ -27,7 +27,7 @@ import EnqueteInvullenPage from "./pages/EnqueteInvullenPage";
 import EnqueteBeheerPage from "./pages/EnqueteBeheerPage";
 import EnqueteExternPage from "./pages/EnqueteExternPage";
 import EnqueteReviewPage from "./pages/EnqueteReviewPage";
-import ContributiePage from "./pages/ContributiePage";
+
 import ExternLoginPage from "./pages/ExternLoginPage";
 import ExternDashboardPage from "./pages/ExternDashboardPage";
 import ExternePartijenPage from "./pages/ExternePartijenPage";
@@ -85,7 +85,7 @@ const App = () => (
                   <Route path="/enquetes" element={<EnquetesPage />} />
                   <Route path="/enquetes/:id" element={<EnqueteInvullenPage />} />
                   <Route path="/enquetes/:id/beheer" element={<EnqueteBeheerPage />} />
-                  <Route path="/contributie" element={<ContributiePage />} />
+                  
                   <Route path="/externe-partijen" element={<ExternePartijenPage />} />
                   <Route path="/externe-partijen/:id" element={<ExternePartijDetailPage />} />
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
