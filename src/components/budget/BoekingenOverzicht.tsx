@@ -38,7 +38,7 @@ const fmtDate = (d: string | null) => {
   return d;
 };
 
-type SortKey = "date" | "type" | "name" | "dossier" | "category" | "invoice" | "amount" | "paid";
+type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
 export default function BoekingenOverzicht({ categories, contributions, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
@@ -97,7 +97,8 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         type: "Uitgave",
         name: e.creditor_name || e.description || "–",
         dossier: e.dossier || "",
-        category: `${e.categoryName} → ${e.lineItemName}`,
+        category: e.categoryName,
+        subcategory: e.lineItemName,
         invoice: e.invoice_reference || "",
         amount: -e.amount,
         paid: e.paid,
@@ -111,6 +112,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         name: c.memberName,
         dossier: "",
         category: "Contributie",
+        subcategory: "",
         invoice: c.invoice_number || "",
         amount: c.amount,
         paid: c.paid,
@@ -135,7 +137,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     if (q) {
       list = list.filter((r) => {
         const v = getRowValues(r);
-        return [v.name, v.dossier, v.category, v.invoice, v.type].some((s) => s.toLowerCase().includes(q));
+        return [v.name, v.dossier, v.category, v.subcategory, v.invoice, v.type].some((s) => s.toLowerCase().includes(q));
       });
     }
 
@@ -187,10 +189,10 @@ export default function BoekingenOverzicht({ categories, contributions, members,
   };
 
   const handleExport = () => {
-    const headers = ["Type", "Datum", "Naam", "Dossier", "Categorie", "Factuurnummer", "Bedrag", "Betaald"];
+    const headers = ["Type", "Datum", "Naam", "Dossier", "Categorie", "Begrotingspost", "Factuurnummer", "Bedrag", "Betaald"];
     const csvRows = filtered.map((r) => {
       const v = getRowValues(r);
-      return [v.type, v.date, v.name, v.dossier, v.category, v.invoice, v.amount, v.paid ? "Ja" : "Nee"];
+      return [v.type, v.date, v.name, v.dossier, v.category, v.subcategory, v.invoice, v.amount, v.paid ? "Ja" : "Nee"];
     });
     const csv = [headers, ...csvRows]
       .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
@@ -280,6 +282,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
               <SortHeader label="Naam" field="name" className="text-left" />
               <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Categorie" field="category" className="text-left" />
+              <SortHeader label="Begrotingspost" field="subcategory" className="text-left" />
               <SortHeader label="Factuurnr" field="invoice" className="text-left" />
               <SortHeader label="Bedrag" field="amount" className="text-right" />
               <SortHeader label="Status" field="paid" className="text-center w-[80px]" />
@@ -314,6 +317,9 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                     )}
                   </td>
                   <td className="px-2 py-1">
+                    <span className="text-muted-foreground">{v.category}</span>
+                  </td>
+                  <td className="px-2 py-1">
                     {isEditing ? (
                       <Select value={editLineItemId} onValueChange={setEditLineItemId}>
                         <SelectTrigger className="h-6 text-xs">
@@ -326,7 +332,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-muted-foreground">{v.category}</span>
+                      <span className="text-muted-foreground">{v.subcategory || "–"}</span>
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || "–"}</td>
@@ -377,7 +383,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
+                <td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
               </tr>
             )}
           </tbody>
