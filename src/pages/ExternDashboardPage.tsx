@@ -127,7 +127,7 @@ const ExternDashboardPage = () => {
     setBenefits((data as unknown as Benefit[]) ?? []);
   };
 
-
+  const loadCoffeeshopMembers = async (orgId: string) => {
     const { data: rpcData, error } = await supabase.rpc("get_members_for_extern", { _org_id: orgId });
     if (error) {
       console.error("Error loading members:", error);
