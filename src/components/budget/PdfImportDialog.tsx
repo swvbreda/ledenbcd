@@ -55,6 +55,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("line_items", JSON.stringify(allLineItems));
 
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-creditors`,
