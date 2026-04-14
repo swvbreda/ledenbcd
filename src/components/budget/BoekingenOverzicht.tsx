@@ -327,7 +327,6 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     >
                       {row.type === "income" ? "In" : row.type === "declaration" ? "Decl" : "Uit"}
                     </Badge>
-                    </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || "–"}</td>
                   <td className="px-2 py-1">{v.name}</td>
