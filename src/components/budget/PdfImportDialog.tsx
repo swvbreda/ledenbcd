@@ -189,7 +189,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText size={18} />
-            {step === "upload" ? "Visionplanner PDF importeren" : "Geëxtraheerde crediteurenregels"}
+            {step === "upload" ? `Visionplanner PDF importeren (${year})` : `Geëxtraheerde crediteurenregels (${year})`}
           </DialogTitle>
         </DialogHeader>
 
