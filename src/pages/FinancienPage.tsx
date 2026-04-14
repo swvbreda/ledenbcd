@@ -45,10 +45,12 @@ export default function FinancienPage() {
 
   const FIXED_AMOUNT = 3000;
   const contributionStats = useMemo(() => {
-    const totalMembers = effectiveMembers.length;
-    const paidCount = (contributions ?? []).filter((c) => c.paid).length;
+    const contribs = contributions ?? [];
+    // For years with contribution records, use that count; otherwise fall back to current members
+    const totalMembers = contribs.length > 0 ? contribs.length : effectiveMembers.length;
+    const paidCount = contribs.filter((c) => c.paid).length;
     const unpaidCount = totalMembers - paidCount;
-    const totalReceived = (contributions ?? []).filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
+    const totalReceived = contribs.filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
     return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount: FIXED_AMOUNT };
   }, [effectiveMembers, contributions]);
 
