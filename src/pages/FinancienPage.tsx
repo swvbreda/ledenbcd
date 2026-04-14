@@ -8,6 +8,7 @@ import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
 import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
+import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
