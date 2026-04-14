@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Upload } from "lucide-react";
-import { useBudgetCategories, useBudgetBalance, useBudgetMutations } from "@/hooks/useBudget";
+import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
+import { useContributions } from "@/hooks/useContributions";
+import { useMembers } from "@/hooks/useMembers";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
