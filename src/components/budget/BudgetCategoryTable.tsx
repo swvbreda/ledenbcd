@@ -45,7 +45,7 @@ export default function BudgetCategoryTable({
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden max-w-3xl">
       <div
         className="flex items-center justify-between px-3 py-2 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
         onClick={() => setExpanded(!expanded)}
