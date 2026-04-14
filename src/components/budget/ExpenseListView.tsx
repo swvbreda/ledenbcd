@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Trash2, ArrowUpDown, Search, Download } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
 import { Input } from "@/components/ui/input";
+import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 
 interface FlatExpense extends BudgetExpense {
   categoryName: string;
@@ -12,9 +13,6 @@ interface Props {
   categories: BudgetCategory[];
   onDeleteExpense: (id: string) => void;
 }
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 const fmtDate = (d: string | null) => {
   if (!d) return "";
@@ -160,7 +158,7 @@ export default function ExpenseListView({ categories, onDeleteExpense }: Props) 
                 <td className="px-2 py-1.5">{e.dossier || "–"}</td>
                 <td className="px-2 py-1.5">{e.creditor_name || "–"}</td>
                 <td className="px-2 py-1.5 tabular-nums">{e.invoice_reference || "–"}</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{fmt(e.amount)}</td>
+                <td className="px-2 py-1.5 text-right"><CurrencyCell value={e.amount} /></td>
                 <td className="px-1">
                   <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive">
                     <Trash2 size={12} />
@@ -176,7 +174,7 @@ export default function ExpenseListView({ categories, onDeleteExpense }: Props) 
             {filtered.length > 0 && (
               <tr className="bg-muted/30 font-semibold">
                 <td colSpan={6} className="px-2 py-1.5">Totaal</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{fmt(total)}</td>
+                <td className="px-2 py-1.5 text-right"><CurrencyCell value={total} /></td>
                 <td />
               </tr>
             )}

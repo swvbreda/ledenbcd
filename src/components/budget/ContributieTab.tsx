@@ -12,6 +12,7 @@ import { Euro, CheckCircle2, AlertCircle, Search, FileText, Download, Upload } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CsvImportDialog from "@/components/CsvImportDialog";
+import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 const currentYear = new Date().getFullYear();
 const FIXED_AMOUNT = 3000;
@@ -129,8 +130,6 @@ export default function ContributieTab({ year }: Props) {
     return <p className="text-sm text-muted-foreground py-8 text-center">Contributiegegevens laden...</p>;
   }
 
-  const fmt = (n: number) => `€ ${n.toLocaleString("nl-NL")}`;
-
   return (
     <div className="space-y-4 mt-4">
       {/* Stats */}
@@ -141,7 +140,7 @@ export default function ContributieTab({ year }: Props) {
               <Euro size={12} />
               Gefactureerd
             </div>
-            <p className="text-lg font-bold mt-1 tabular-nums">{fmt(stats.expectedAmount)}</p>
+            <p className="text-lg font-bold mt-1 tabular-nums"><CurrencyText value={stats.expectedAmount} /></p>
             <p className="text-xs text-muted-foreground">{stats.invoiced} / {stats.total} leden</p>
           </CardContent>
         </Card>
@@ -151,7 +150,7 @@ export default function ContributieTab({ year }: Props) {
               <CheckCircle2 size={12} className="text-emerald-500" />
               Ontvangen
             </div>
-            <p className="text-lg font-bold mt-1 text-emerald-600 tabular-nums">{fmt(stats.paidAmount)}</p>
+            <p className="text-lg font-bold mt-1 text-emerald-600 tabular-nums"><CurrencyText value={stats.paidAmount} /></p>
           </CardContent>
         </Card>
         <Card className="border-border/60">
@@ -160,7 +159,7 @@ export default function ContributieTab({ year }: Props) {
               <AlertCircle size={12} className="text-amber-500" />
               Openstaand
             </div>
-            <p className="text-lg font-bold mt-1 text-amber-600 tabular-nums">{fmt(stats.openAmount)}</p>
+            <p className="text-lg font-bold mt-1 text-amber-600 tabular-nums"><CurrencyText value={stats.openAmount} /></p>
           </CardContent>
         </Card>
         <Card className="border-border/60">
@@ -293,7 +292,7 @@ export default function ContributieTab({ year }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-center text-sm">{m.locaties?.length || m.aantalLocaties || 1}</TableCell>
-                    <TableCell className="text-right text-sm tabular-nums"><span className="inline-flex w-full"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">{FIXED_AMOUNT.toLocaleString("nl-NL")}</span></span></TableCell>
+                    <TableCell className="text-right text-sm"><CurrencyCell value={FIXED_AMOUNT} /></TableCell>
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isPaid}
