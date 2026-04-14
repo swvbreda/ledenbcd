@@ -104,9 +104,6 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="begroting" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Begroting
-            </TabsTrigger>
             <TabsTrigger value="declaraties" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Declaraties
             </TabsTrigger>
