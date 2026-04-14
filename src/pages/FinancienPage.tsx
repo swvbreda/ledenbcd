@@ -236,7 +236,11 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="dossiers">
-            <DossierOverzichtTab categories={categories || []} year={year} />
+            <DossierOverzichtTab
+              categories={categories || []}
+              year={year}
+              onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
+            />
           </TabsContent>
         </Tabs>
       )}
