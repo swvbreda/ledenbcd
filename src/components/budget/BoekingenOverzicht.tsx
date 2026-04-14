@@ -186,8 +186,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     let income = 0, expense = 0;
     for (const r of filtered) {
       const v = getRowValues(r);
-      if (v.amount > 0) income += v.amount;
-      else expense += Math.abs(v.amount);
+      if (v.isExpense) expense += v.amount;
+      else income += v.amount;
     }
     return { income, expense, net: income - expense };
   }, [filtered]);
