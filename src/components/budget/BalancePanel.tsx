@@ -83,9 +83,9 @@ export default function BalancePanel({
       );
     }
     return (
-      <span className="cursor-pointer hover:text-primary transition-colors"
+      <span className="cursor-pointer hover:text-primary transition-colors block text-right tabular-nums"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
-        {fmt(item.amount)}
+        € {fmtNum(item.amount)}
       </span>
     );
   };
