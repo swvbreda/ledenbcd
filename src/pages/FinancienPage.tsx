@@ -23,6 +23,8 @@ export default function FinancienPage() {
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
   const mutations = useBudgetMutations(year);
+  const { data: internalDeclarations } = useInternalDeclarations(year);
+  const internalMutations = useInternalDeclarationMutations(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
