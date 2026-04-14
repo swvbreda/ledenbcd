@@ -13,6 +13,7 @@ import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
+import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -134,21 +135,21 @@ export default function FinancienPage() {
 
                 {(categories || []).length > 0 && (
                   <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
-                    <table className="w-full text-sm table-fixed">
+                    <table className="w-full text-sm">
                       <colgroup>
-                        <col />
-                        <col className="w-[120px]" />
-                        <col className="w-[120px]" />
-                        <col className="w-[120px]" />
-                        <col className="w-[32px]" />
+                        <col className="w-[30%]" />
+                        <col className="w-[20%]" />
+                        <col className="w-[20%]" />
+                        <col className="w-[20%]" />
+                        <col className="w-[10%]" />
                       </colgroup>
                       <tbody>
                         <tr className="font-bold">
                           <td className="px-3 py-2">Totalen</td>
-                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalBudgeted)}</td>
-                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalSpent)}</td>
-                          <td className={`text-right px-3 py-2 tabular-nums ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
-                            {fmt(totalBudgeted - totalSpent)}
+                          <td className="px-3 py-2"><CurrencyCell value={totalBudgeted} /></td>
+                          <td className="px-3 py-2"><CurrencyCell value={totalSpent} /></td>
+                          <td className={`px-3 py-2 ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
+                            <CurrencyCell value={totalBudgeted - totalSpent} />
                           </td>
                           <td />
                         </tr>
