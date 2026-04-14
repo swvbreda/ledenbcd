@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_expenses ADD COLUMN dossier text;
