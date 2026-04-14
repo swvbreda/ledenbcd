@@ -3,7 +3,7 @@ import { Plus, Upload } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions } from "@/hooks/useContributions";
+import { useContributions, useContributionInvoices } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
@@ -13,6 +13,7 @@ import ExpenseListView from "@/components/budget/ExpenseListView";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
+import CrediteurenDebiteurenTab from "@/components/budget/CrediteurenDebiteurenTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
+  const { data: contributionInvoices } = useContributionInvoices(year);
   const { effectiveMembers } = useMembers();
 
   const [addingCategory, setAddingCategory] = useState(false);
@@ -110,6 +112,9 @@ export default function FinancienPage() {
             </TabsTrigger>
             <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Interne declaraties
+            </TabsTrigger>
+            <TabsTrigger value="overzicht" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Crediteuren / Debiteuren
             </TabsTrigger>
           </TabsList>
 
@@ -230,6 +235,15 @@ export default function FinancienPage() {
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="overzicht">
+            <CrediteurenDebiteurenTab
+              categories={categories || []}
+              contributions={contributionInvoices || []}
+              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              year={year}
+            />
           </TabsContent>
         </Tabs>
       )}
