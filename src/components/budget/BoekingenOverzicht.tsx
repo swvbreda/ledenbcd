@@ -43,7 +43,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, declarations, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -89,8 +89,14 @@ export default function BoekingenOverzicht({ categories, contributions, members,
       });
     }
 
+    for (const d of declarations || []) {
+      if (d.status === "approved") {
+        result.push({ type: "declaration", data: d });
+      }
+    }
+
     return result;
-  }, [categories, contributions, memberMap, contributionAmount]);
+  }, [categories, contributions, declarations, memberMap, contributionAmount]);
 
   const getRowValues = (row: LedgerRow) => {
     if (row.type === "expense") {
@@ -107,7 +113,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         paid: e.paid,
         id: e.id,
       };
-    } else {
+    } else if (row.type === "income") {
       const c = row.data;
       return {
         date: c.invoice_date || c.paid_date || "",
@@ -120,6 +126,20 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         amount: c.amount,
         paid: c.paid,
         id: c.id,
+      };
+    } else {
+      const d = row.data;
+      return {
+        date: d.expense_date || "",
+        type: "Declaratie",
+        name: d.board_member_name,
+        dossier: d.appointment || "",
+        category: "Declaratie",
+        subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : "Overig",
+        invoice: "",
+        amount: -d.amount,
+        paid: false,
+        id: d.id,
       };
     }
   };
