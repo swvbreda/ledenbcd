@@ -109,7 +109,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         category: e.categoryName,
         subcategory: e.lineItemName,
         invoice: e.invoice_reference || "",
-        amount: -e.amount,
+        amount: e.amount,
+        isExpense: true,
         paid: e.paid,
         id: e.id,
       };
@@ -124,6 +125,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         subcategory: "",
         invoice: c.invoice_number || "",
         amount: c.amount,
+        isExpense: false,
         paid: c.paid,
         id: c.id,
       };
@@ -137,7 +139,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         category: "Declaratie",
         subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : "Overig",
         invoice: "",
-        amount: -d.amount,
+        amount: d.amount,
+        isExpense: true,
         paid: false,
         id: d.id,
       };
@@ -183,8 +186,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     let income = 0, expense = 0;
     for (const r of filtered) {
       const v = getRowValues(r);
-      if (v.amount > 0) income += v.amount;
-      else expense += Math.abs(v.amount);
+      if (v.isExpense) expense += v.amount;
+      else income += v.amount;
     }
     return { income, expense, net: income - expense };
   }, [filtered]);
@@ -323,8 +326,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                 <tr key={`${row.type}-${v.id}`} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-1">
                     <Badge
-                      variant={row.type === "income" ? "default" : row.type === "declaration" ? "secondary" : "destructive"}
-                      className="text-[10px] px-1.5 py-0"
+                      variant={row.type === "income" ? "default" : "destructive"}
+                      className={`text-[10px] px-1.5 py-0 ${row.type === "income" ? "bg-green-600" : ""}`}
                     >
                       {row.type === "income" ? "In" : row.type === "declaration" ? "Decl" : "Uit"}
                     </Badge>
@@ -363,8 +366,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || "–"}</td>
-                  <td className={`px-2 py-1 text-right tabular-nums font-medium ${v.amount >= 0 ? "text-green-600" : "text-destructive"}`}>
-                    <CurrencyCell value={Math.abs(v.amount)} />
+                  <td className={`px-2 py-1 text-right tabular-nums font-medium ${v.isExpense ? "text-destructive" : "text-green-600"}`}>
+                    <CurrencyCell value={v.amount} />
                   </td>
                   <td className="px-2 py-1 text-center">
                     {isExpense ? (
