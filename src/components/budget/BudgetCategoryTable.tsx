@@ -13,6 +13,16 @@ interface Props {
   onOpenExpenses: (lineItemId: string, lineItemName: string) => void;
 }
 
+const fmtNum = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
+  <span className={`inline-flex w-full tabular-nums ${className}`}>
+    <span className="shrink-0">€</span>
+    <span className="flex-1 text-right">{fmtNum(value)}</span>
+  </span>
+);
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
@@ -96,10 +106,10 @@ export default function BudgetCategoryTable({
                   onClick={() => onOpenExpenses(li.id, li.name)}
                 >
                   <td className="px-3 py-1.5">{li.name}</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">{fmt(li.budgeted_amount)}</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">{spent > 0 ? fmt(spent) : ""}</td>
-                  <td className={`text-right px-3 py-1.5 tabular-nums ${remaining < 0 ? "text-destructive" : ""}`}>
-                    {fmt(remaining)}
+                  <td className="px-3 py-1.5"><CurrencyCell value={li.budgeted_amount} /></td>
+                  <td className="px-3 py-1.5">{spent > 0 ? <CurrencyCell value={spent} /> : ""}</td>
+                  <td className="px-3 py-1.5">
+                    <CurrencyCell value={remaining} className={remaining < 0 ? "text-destructive" : ""} />
                   </td>
                   <td className="px-1">
                     <button
@@ -114,10 +124,10 @@ export default function BudgetCategoryTable({
             })}
             <tr className="bg-muted/30 font-medium">
               <td className="px-3 py-1.5">Subtotaal</td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalBudgeted)}</td>
-              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalSpent)}</td>
-              <td className={`text-right px-3 py-1.5 tabular-nums ${totalRemaining < 0 ? "text-destructive" : "text-green-600"}`}>
-                {fmt(totalRemaining)}
+              <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
+              <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
+              <td className="px-3 py-1.5 font-semibold">
+                <CurrencyCell value={totalRemaining} className={totalRemaining < 0 ? "text-destructive" : "text-green-600"} />
               </td>
               <td />
             </tr>
