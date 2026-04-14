@@ -91,6 +91,12 @@ export default function ContributieTab({ year }: Props) {
     return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
   }, [effectiveMembers, contribMap, invoicesMap]);
 
+  const membersWithoutInvoice = useMemo(() => {
+    return effectiveMembers
+      .filter((m) => (invoicesMap.get(m.id) ?? []).length === 0)
+      .sort((a, b) => a.id - b.id);
+  }, [effectiveMembers, invoicesMap]);
+
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
     try {
