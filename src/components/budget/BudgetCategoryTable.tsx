@@ -17,9 +17,8 @@ const fmtNum = (n: number) =>
   new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
 const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
-  <span className={`inline-flex w-full tabular-nums ${className}`}>
-    <span className="shrink-0">€</span>
-    <span className="flex-1 text-right">{fmtNum(value)}</span>
+  <span className={`inline-flex gap-1 w-full tabular-nums ${className}`}>
+    <span className="text-right flex-1">{fmtNum(value)}</span>
   </span>
 );
 
