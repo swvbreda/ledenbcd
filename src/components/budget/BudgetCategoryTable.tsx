@@ -46,20 +46,40 @@ export default function BudgetCategoryTable({
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      <div
-        className="flex items-center justify-between px-3 py-2 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-2">
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <h3 className="text-sm font-semibold">{category.name}</h3>
-        </div>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>Begroot: <strong className="text-foreground">{fmt(totalBudgeted)}</strong></span>
-          <span>Uitgaven: <strong className="text-foreground">{fmt(totalSpent)}</strong></span>
-          <span>Beschikbaar: <strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}>{fmt(totalRemaining)}</strong></span>
-        </div>
-      </div>
+      <table className="w-full text-sm">
+        <colgroup>
+          <col className="w-[30%]" />
+          <col className="w-[20%]" />
+          <col className="w-[20%]" />
+          <col className="w-[20%]" />
+          <col className="w-[10%]" />
+        </colgroup>
+        <thead>
+          <tr
+            className="bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
+            onClick={() => setExpanded(!expanded)}
+          >
+            <td className="px-3 py-2">
+              <div className="flex items-center gap-2">
+                {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <h3 className="text-sm font-semibold">{category.name}</h3>
+              </div>
+            </td>
+            <td className="text-right px-3 py-2 text-sm">
+              <span className="text-muted-foreground text-xs">Begroot: </span>
+              <strong className="text-foreground">{fmt(totalBudgeted)}</strong>
+            </td>
+            <td className="text-right px-3 py-2 text-sm">
+              <span className="text-muted-foreground text-xs">Uitgaven: </span>
+              <strong className="text-foreground">{fmt(totalSpent)}</strong>
+            </td>
+            <td className="text-right px-3 py-2 text-sm">
+              <span className="text-muted-foreground text-xs">Beschikbaar: </span>
+              <strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}>{fmt(totalRemaining)}</strong>
+            </td>
+            <td />
+          </tr>
+        </thead>
 
       {expanded && (
         <div>
