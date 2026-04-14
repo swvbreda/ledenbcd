@@ -64,7 +64,7 @@ export default function BalancePanel({
       return (
         <div className="flex items-center gap-1 justify-end">
           <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
-            className="h-6 text-xs w-24 text-right" autoFocus
+            className="h-7 text-sm w-28 text-right" autoFocus
             onKeyDown={(e) => e.key === "Enter" && handleSaveEdit(item.id)} />
           <button onClick={() => handleSaveEdit(item.id)} className="text-green-600"><Check size={12} /></button>
           <button onClick={() => setEditId(null)} className="text-muted-foreground"><X size={12} /></button>
@@ -74,48 +74,67 @@ export default function BalancePanel({
     return (
       <span className="cursor-pointer hover:text-primary transition-colors inline-flex w-full tabular-nums"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
-        <span className="shrink-0 mr-1">€</span>
-        <span className="flex-1 text-right">{formatEuro(item.amount)}</span>
+        <CurrencyCell value={item.amount} />
       </span>
+    );
+  };
+
+  const renderAddForm = (section: string, showSideSelect = false) => {
+    if (adding === section) {
+      return (
+        <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
+          {showSideSelect && (
+            <Select value={addSide} onValueChange={setAddSide}>
+              <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Bestedingen</SelectItem>
+                <SelectItem value="right">Middelen</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          <Input placeholder="Naam" value={newName} onChange={(e) => setNewName(e.target.value)} className="h-7 text-sm flex-1" autoFocus />
+          <Input placeholder="Bedrag" type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="h-7 text-sm w-28" onKeyDown={(e) => e.key === "Enter" && handleAdd(section)} />
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => handleAdd(section)}>OK</Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAdding(null)}>✕</Button>
+        </div>
+      );
+    }
+    return (
+      <div className="px-3 py-1.5 border-t border-border/50">
+        <button onClick={() => { setAdding(section); if (showSideSelect) setAddSide("right"); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <Plus size={12} /> Post toevoegen
+        </button>
+      </div>
     );
   };
 
   return (
     <div className="space-y-4">
-      {/* Middelen balans - two column */}
+      {/* Middelen balans */}
       <div className="border border-border rounded-lg overflow-hidden">
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Middelen balans</h3>
         </div>
-        <table className="w-full text-sm table-fixed">
-          <colgroup>
-            <col className="w-[30%]" />
-            <col className="w-[20%]" />
-            <col className="w-[30%]" />
-            <col className="w-[20%]" />
-          </colgroup>
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
-              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs">Bestedingen</th>
-              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs"></th>
-              <th className="text-left px-3 py-1 font-medium text-muted-foreground text-xs">Middelen</th>
-              <th className="text-right px-3 py-1 font-medium text-muted-foreground text-xs"></th>
+              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Bestedingen</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground text-xs w-[15%]"></th>
+              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Middelen</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground text-xs w-[15%]"></th>
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: Math.max(middelenLeft.length + 1, middelenRight.length) }).map((_, i) => {
               const left = middelenLeft[i];
-              // For right side, we use actual items; the extra auto-computed row (Begrote uitgaven) goes on left
               const right = middelenRight[i];
-              // Show "Begrote uitgaven" as last left item (auto-computed)
               const isAutoLeft = !left && i === middelenLeft.length;
               return (
                 <tr key={i} className="border-b border-border/50">
-                  {/* Left cell */}
                   <td className="px-3 py-1.5 text-muted-foreground">
                     {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
                     {left ? (
                       <div className="flex items-center justify-end gap-1">
                         {renderAmount(left)}
@@ -127,11 +146,10 @@ export default function BalancePanel({
                       <CurrencyCell value={totalBudgeted} className="text-muted-foreground" />
                     ) : ""}
                   </td>
-                  {/* Right cell */}
                   <td className="px-3 py-1.5">
                     {right ? right.name : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums">
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
                     {right ? (
                       <div className="flex items-center justify-end gap-1">
                         {renderAmount(right)}
@@ -144,36 +162,15 @@ export default function BalancePanel({
                 </tr>
               );
             })}
-            {/* Totaal row */}
             <tr className="bg-primary/5 font-semibold border-t border-border">
-              <td className="px-3 py-1.5"></td>
-              <td className="text-right px-3 py-1.5"><CurrencyCell value={leftTotal + totalBudgeted} /></td>
-              <td className="px-3 py-1.5"></td>
-              <td className="text-right px-3 py-1.5"><CurrencyCell value={rightTotal} /></td>
+              <td className="px-3 py-2"></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={leftTotal + totalBudgeted} /></td>
+              <td className="px-3 py-2"></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={rightTotal} /></td>
             </tr>
           </tbody>
         </table>
-        {adding === "middelen" ? (
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
-            <Select value={addSide} onValueChange={setAddSide}>
-              <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Bestedingen</SelectItem>
-                <SelectItem value="right">Middelen</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input placeholder="Naam" value={newName} onChange={(e) => setNewName(e.target.value)} className="h-7 text-sm flex-1" autoFocus />
-            <Input placeholder="Bedrag" type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="h-7 text-sm w-24" onKeyDown={(e) => e.key === "Enter" && handleAdd("middelen")} />
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => handleAdd("middelen")}>OK</Button>
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAdding(null)}>✕</Button>
-          </div>
-        ) : (
-          <div className="px-3 py-1.5 border-t border-border/50">
-            <button onClick={() => { setAdding("middelen"); setAddSide("right"); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <Plus size={12} /> Post toevoegen
-            </button>
-          </div>
-        )}
+        {renderAddForm("middelen", true)}
       </div>
 
       {/* Resultaat */}
@@ -182,45 +179,43 @@ export default function BalancePanel({
           <h3 className="text-sm font-semibold">Resultaat</h3>
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
-        <table className="w-full text-sm table-fixed">
+        <table className="w-full text-sm">
           <colgroup>
-            <col className="w-[30%]" />
+            <col className="w-[35%]" />
             <col className="w-[20%]" />
-            <col className="w-[30%]" />
-            <col className="w-[20%]" />
+            <col />
+            <col className="w-[5%]" />
           </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">
+                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
                   <div className="flex items-center justify-end gap-1">
                     {renderAmount(item)}
                     <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={10} /></button>
                   </div>
                 </td>
-                <td className="text-right px-3 py-1.5 tabular-nums" />
+                <td />
                 <td />
               </tr>
             ))}
-            {/* Ontvangen contributie */}
             {contributionStats && (
               <tr className="border-b border-border/50">
                 <td className="px-3 py-1.5">Ontvangen contributie</td>
-                <td className="text-right px-3 py-1.5"><CurrencyCell value={contributionStats.totalReceived} /></td>
-                <td className="text-right px-3 py-1.5">
+                <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.totalReceived} /></td>
+                <td className="text-right px-3 py-1.5 whitespace-nowrap">
                   <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className="text-destructive" />
                 </td>
                 <td />
               </tr>
             )}
-            {/* Uitgaven */}
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
-              <td className="text-right px-3 py-1.5"><CurrencyCell value={totalSpent} /></td>
+              <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5">
                 {contributionStats && (
-                  <div className="text-[10px] text-muted-foreground leading-tight space-y-0.5">
+                  <div className="text-xs text-muted-foreground leading-tight space-y-0.5">
                     <div>{contributionStats.unpaidCount} leden nog betalen</div>
                     <div>{contributionStats.paidCount} hebben betaald</div>
                   </div>
@@ -228,36 +223,22 @@ export default function BalancePanel({
               </td>
               <td />
             </tr>
-            {/* Totaal */}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2">Totaal</td>
-              <td className="text-right px-3 py-2">
+              <td className="text-right px-3 py-2 whitespace-nowrap">
                 <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
               </td>
-              <td className="text-right px-3 py-2">
+              <td className="text-right px-3 py-2 whitespace-nowrap">
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
               <td />
             </tr>
           </tbody>
         </table>
-        {adding === "resultaat" ? (
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
-            <Input placeholder="Naam" value={newName} onChange={(e) => setNewName(e.target.value)} className="h-7 text-sm flex-1" autoFocus />
-            <Input placeholder="Bedrag" type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} className="h-7 text-sm w-24" onKeyDown={(e) => e.key === "Enter" && handleAdd("resultaat")} />
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => handleAdd("resultaat")}>OK</Button>
-            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAdding(null)}>✕</Button>
-          </div>
-        ) : (
-          <div className="px-3 py-1.5 border-t border-border/50">
-            <button onClick={() => setAdding("resultaat")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <Plus size={12} /> Post toevoegen
-            </button>
-          </div>
-        )}
+        {renderAddForm("resultaat")}
       </div>
 
-      {/* Contributie & Leden overzicht */}
+      {/* Contributie & Vrijwilligersvergoeding */}
       {contributionStats && (
         <div className="grid grid-cols-2 gap-4">
           <div className="border border-border rounded-lg overflow-hidden">
@@ -269,11 +250,11 @@ export default function BalancePanel({
                 </tr>
                 <tr className="border-b border-border/50">
                   <td className="px-3 py-1.5">Contributie</td>
-                  <td className="text-right px-3 py-1.5"><CurrencyCell value={contributionStats.contributionAmount} /></td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.contributionAmount} /></td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-1.5 font-medium">Inkomsten {year}</td>
-                  <td className="text-right px-3 py-1.5 font-medium"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
+                  <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
+                  <td className="text-right px-3 py-1.5 font-semibold whitespace-nowrap"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
                 </tr>
               </tbody>
             </table>
@@ -283,12 +264,24 @@ export default function BalancePanel({
             <div className="px-3 py-2 bg-muted/50">
               <h3 className="text-xs font-semibold">Max. vrijwilligersvergoeding</h3>
             </div>
-            <table className="w-full text-xs text-muted-foreground">
+            <table className="w-full text-sm text-muted-foreground">
               <tbody>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per uur</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">5,50</span></span></td></tr>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per maand</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">210</span></span></td></tr>
-                <tr className="border-b border-border/50"><td className="px-3 py-1">Per jaar</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">2.100</span></span></td></tr>
-                <tr><td className="px-3 py-1">Reiskosten</td><td className="text-right px-3 py-1"><span className="inline-flex w-full tabular-nums text-muted-foreground"><span className="shrink-0 mr-1">€</span><span className="flex-1 text-right">0,23/km</span></span></td></tr>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1">Per uur</td>
+                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="5,50" /></td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1">Per maand</td>
+                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="210" /></td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1">Per jaar</td>
+                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="2.100" /></td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-1">Reiskosten</td>
+                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="0,23/km" /></td>
+                </tr>
               </tbody>
             </table>
           </div>
