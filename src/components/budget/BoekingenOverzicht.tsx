@@ -366,8 +366,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || "–"}</td>
-                  <td className={`px-2 py-1 text-right tabular-nums font-medium ${v.amount >= 0 ? "text-green-600" : "text-destructive"}`}>
-                    <CurrencyCell value={Math.abs(v.amount)} />
+                  <td className={`px-2 py-1 text-right tabular-nums font-medium ${v.isExpense ? "text-destructive" : "text-green-600"}`}>
+                    <CurrencyCell value={v.amount} />
                   </td>
                   <td className="px-2 py-1 text-center">
                     {isExpense ? (
