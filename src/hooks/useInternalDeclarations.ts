@@ -16,6 +16,10 @@ export interface InternalDeclaration {
   bank_account: string | null;
   account_holder: string | null;
   max_allowance_note: string | null;
+  status: string;
+  submitted_by: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
 }
 
 export function useInternalDeclarations(year: number) {
@@ -44,7 +48,7 @@ export function useInternalDeclarationMutations(year: number) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["internal-declarations", year] });
 
   const add = useMutation({
-    mutationFn: async (decl: Omit<InternalDeclaration, "id">) => {
+    mutationFn: async (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => {
       const { error } = await supabase.from("internal_declarations").insert(decl as any);
       if (error) throw error;
     },
@@ -59,5 +63,27 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, remove };
+  const approve = useMutation({
+    mutationFn: async ({ id, reviewerId }: { id: string; reviewerId: string }) => {
+      const { error } = await supabase
+        .from("internal_declarations")
+        .update({ status: "approved", reviewed_by: reviewerId, reviewed_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const reject = useMutation({
+    mutationFn: async ({ id, reviewerId }: { id: string; reviewerId: string }) => {
+      const { error } = await supabase
+        .from("internal_declarations")
+        .update({ status: "rejected", reviewed_by: reviewerId, reviewed_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return { add, remove, approve, reject };
 }
