@@ -1,21 +1,36 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import type { BudgetCategory } from "@/hooks/useBudget";
 
 interface Props {
   categories: BudgetCategory[];
   year: number;
+  onUpdateExpense?: (id: string, fields: { dossier?: string | null }) => void;
+}
+
+interface DossierEntry {
+  id: string;
+  date: string;
+  creditor: string;
+  invoice: string;
+  amount: number;
+  category: string;
 }
 
 interface DossierRow {
   dossier: string;
-  entries: { date: string; creditor: string; invoice: string; amount: number; category: string }[];
+  entries: DossierEntry[];
   total: number;
 }
 
-export default function DossierOverzichtTab({ categories, year }: Props) {
+export default function DossierOverzichtTab({ categories, year, onUpdateExpense }: Props) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
   const dossiers = useMemo(() => {
-    const map = new Map<string, DossierRow["entries"]>();
+    const map = new Map<string, DossierEntry[]>();
 
     for (const cat of categories) {
       for (const li of cat.line_items) {
@@ -24,6 +39,7 @@ export default function DossierOverzichtTab({ categories, year }: Props) {
           if (!dossier) continue;
           if (!map.has(dossier)) map.set(dossier, []);
           map.get(dossier)!.push({
+            id: exp.id,
             date: exp.expense_date || "",
             creditor: exp.creditor_name || exp.description || "–",
             invoice: exp.invoice_reference || "",
@@ -44,6 +60,18 @@ export default function DossierOverzichtTab({ categories, year }: Props) {
   }, [categories]);
 
   const grandTotal = dossiers.reduce((s, d) => s + d.total, 0);
+
+  const startEdit = (id: string, currentDossier: string) => {
+    setEditingId(id);
+    setEditValue(currentDossier);
+  };
+
+  const saveEdit = (dossierName: string) => {
+    if (!editingId || !onUpdateExpense) return;
+    const newVal = editValue.trim() || null;
+    onUpdateExpense(editingId, { dossier: newVal });
+    setEditingId(null);
+  };
 
   return (
     <div className="mt-4 space-y-3">
@@ -69,20 +97,58 @@ export default function DossierOverzichtTab({ categories, year }: Props) {
                   <th className="px-3 py-1 text-left font-medium w-[15%]">Datum</th>
                   <th className="px-3 py-1 text-left font-medium w-[25%]">Crediteur</th>
                   <th className="px-3 py-1 text-left font-medium w-[15%]">Factuurnr</th>
-                  <th className="px-3 py-1 text-left font-medium w-[30%]">Begrotingspost</th>
-                  <th className="px-3 py-1 text-right font-medium w-[15%]">Bedrag</th>
+                  <th className="px-3 py-1 text-left font-medium w-[20%]">Begrotingspost</th>
+                  <th className="px-3 py-1 text-left font-medium w-[15%]">Dossier</th>
+                  <th className="px-3 py-1 text-right font-medium w-[10%]">Bedrag</th>
                 </tr>
               </thead>
               <tbody>
-                {d.entries.map((e, i) => (
-                  <tr key={i} className="border-b border-border/30 hover:bg-muted/20">
-                    <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
-                    <td className="px-3 py-1">{e.creditor}</td>
-                    <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
-                    <td className="px-3 py-1 text-muted-foreground">{e.category}</td>
-                    <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
-                  </tr>
-                ))}
+                {d.entries.map((e) => {
+                  const isEditing = editingId === e.id;
+                  return (
+                    <tr key={e.id} className="border-b border-border/30 hover:bg-muted/20">
+                      <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
+                      <td className="px-3 py-1">{e.creditor}</td>
+                      <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
+                      <td className="px-3 py-1 text-muted-foreground">{e.category}</td>
+                      <td className="px-3 py-1">
+                        {isEditing ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={editValue}
+                              onChange={(ev) => setEditValue(ev.target.value)}
+                              className="h-6 text-xs"
+                              autoFocus
+                              onKeyDown={(ev) => {
+                                if (ev.key === "Enter") saveEdit(d.dossier);
+                                if (ev.key === "Escape") setEditingId(null);
+                              }}
+                            />
+                            <button onClick={() => saveEdit(d.dossier)} className="p-0.5 text-green-600 hover:text-green-700">
+                              <Check size={12} />
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="p-0.5 text-muted-foreground hover:text-destructive">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="flex items-center gap-1 group">
+                            {d.dossier}
+                            {onUpdateExpense && (
+                              <button
+                                onClick={() => startEdit(e.id, d.dossier)}
+                                className="p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity"
+                              >
+                                <Pencil size={10} />
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
