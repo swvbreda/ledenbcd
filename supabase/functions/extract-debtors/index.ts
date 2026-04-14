@@ -1,10 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -32,13 +39,20 @@ serve(async (req) => {
       } catch { /* ignore */ }
     }
 
+    // Convert to proper base64 - use btoa for correct padding
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
-    let base64 = "";
-    const CHUNK = 32768;
+    
+    // For large files, chunk the string building but encode as one
+    const CHUNK = 8192;
+    let binary = "";
     for (let i = 0; i < bytes.length; i += CHUNK) {
-      base64 += base64Encode(bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+      const slice = bytes.subarray(i, Math.min(i + CHUNK, bytes.length));
+      for (let j = 0; j < slice.length; j++) {
+        binary += String.fromCharCode(slice[j]);
+      }
     }
+    const base64 = btoa(binary);
 
     const systemPrompt = `Je bent een financiële data-extractor. Je analyseert debiteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
 
