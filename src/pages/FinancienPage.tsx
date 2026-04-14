@@ -136,17 +136,17 @@ export default function FinancienPage() {
                 ))}
 
                 {(categories || []).length > 0 && (
-                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
+                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5 max-w-3xl">
                     <table className="w-full text-sm">
                       <tbody>
                         <tr className="font-bold">
-                          <td className="px-3 py-2 w-[40%]">Totalen</td>
-                          <td className="text-right px-3 py-2 tabular-nums w-[18%]">{fmt(totalBudgeted)}</td>
-                          <td className="text-right px-3 py-2 tabular-nums w-[18%]">{fmt(totalSpent)}</td>
-                          <td className={`text-right px-3 py-2 tabular-nums w-[18%] ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
+                          <td className="px-3 py-2">Totalen</td>
+                          <td className="text-right px-3 py-2 tabular-nums w-32">{fmt(totalBudgeted)}</td>
+                          <td className="text-right px-3 py-2 tabular-nums w-32">{fmt(totalSpent)}</td>
+                          <td className={`text-right px-3 py-2 tabular-nums w-32 ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
                             {fmt(totalBudgeted - totalSpent)}
                           </td>
-                          <td className="w-[6%]" />
+                          <td className="w-8" />
                         </tr>
                       </tbody>
                     </table>
