@@ -28,6 +28,15 @@ interface Props {
   year: number;
 }
 
+const fmtNum = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
+  <span className={`tabular-nums text-right block ${className}`}>
+    € {fmtNum(value)}
+  </span>
+);
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
