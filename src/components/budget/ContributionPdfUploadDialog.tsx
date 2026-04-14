@@ -13,6 +13,11 @@ interface MemberOption {
   naam: string;
 }
 
+interface ExistingInvoice {
+  invoice_number: string | null;
+  member_id: number;
+}
+
 interface ExtractedEntry {
   debtor_name: string;
   invoice_number?: string;
@@ -29,10 +34,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   members: MemberOption[];
   year: number;
+  existingInvoices?: ExistingInvoice[];
   onImport: (entries: { member_id: number; invoice_number?: string | null }[]) => Promise<void>;
 }
 
-export default function ContributionPdfUploadDialog({ open, onOpenChange, members, year, onImport }: Props) {
+export default function ContributionPdfUploadDialog({ open, onOpenChange, members, year, existingInvoices = [], onImport }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
