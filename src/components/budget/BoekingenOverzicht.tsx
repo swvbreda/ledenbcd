@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
+import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import type { Contribution } from "@/hooks/useContributions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,13 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } }
+  | { type: "declaration"; data: InternalDeclaration };
 
 interface Props {
   categories: BudgetCategory[];
   contributions: Contribution[];
+  declarations: InternalDeclaration[];
   members: MemberOption[];
   year: number;
   contributionAmount: number;
@@ -40,14 +43,14 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, declarations, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
+  const [filterType, setFilterType] = useState<"all" | "expense" | "income" | "declaration">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
 
   const allLineItems = useMemo(() =>
@@ -86,8 +89,14 @@ export default function BoekingenOverzicht({ categories, contributions, members,
       });
     }
 
+    for (const d of declarations || []) {
+      if (d.status === "approved") {
+        result.push({ type: "declaration", data: d });
+      }
+    }
+
     return result;
-  }, [categories, contributions, memberMap, contributionAmount]);
+  }, [categories, contributions, declarations, memberMap, contributionAmount]);
 
   const getRowValues = (row: LedgerRow) => {
     if (row.type === "expense") {
@@ -104,7 +113,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         paid: e.paid,
         id: e.id,
       };
-    } else {
+    } else if (row.type === "income") {
       const c = row.data;
       return {
         date: c.invoice_date || c.paid_date || "",
@@ -117,6 +126,20 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         amount: c.amount,
         paid: c.paid,
         id: c.id,
+      };
+    } else {
+      const d = row.data;
+      return {
+        date: d.expense_date || "",
+        type: "Declaratie",
+        name: d.board_member_name,
+        dossier: d.appointment || "",
+        category: "Declaratie",
+        subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : "Overig",
+        invoice: "",
+        amount: -d.amount,
+        paid: false,
+        id: d.id,
       };
     }
   };
@@ -239,6 +262,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
             <SelectItem value="all" className="text-xs">Alles</SelectItem>
             <SelectItem value="expense" className="text-xs">Uitgaven</SelectItem>
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
+            <SelectItem value="declaration" className="text-xs">Declaraties</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
@@ -298,8 +322,11 @@ export default function BoekingenOverzicht({ categories, contributions, members,
               return (
                 <tr key={`${row.type}-${v.id}`} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-1">
-                    <Badge variant={isExpense ? "destructive" : "default"} className="text-[10px] px-1.5 py-0">
-                      {isExpense ? "Uit" : "In"}
+                    <Badge
+                      variant={row.type === "income" ? "default" : row.type === "declaration" ? "secondary" : "destructive"}
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      {row.type === "income" ? "In" : row.type === "declaration" ? "Decl" : "Uit"}
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || "–"}</td>
