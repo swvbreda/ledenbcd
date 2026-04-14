@@ -156,7 +156,12 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="declaraties">
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" onClick={() => setPdfImportOpen(true)}>
+                  <Upload size={14} className="mr-1" /> PDF importeren
+                </Button>
+              </div>
               <ExpenseListView
                 categories={categories || []}
                 onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
