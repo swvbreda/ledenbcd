@@ -224,12 +224,23 @@ export default function ContributieTab({ year }: Props) {
         members={effectiveMembers.map((m) => ({ id: m.id, naam: m.naam }))}
         onImport={async (entries) => {
           for (const entry of entries) {
+            // Create invoice record
             await createInvoice.mutateAsync({
               member_id: entry.member_id,
               year,
               invoice_file_path: null,
               invoice_number: entry.invoice_number,
             });
+            // Ensure a contribution record exists (unpaid by default)
+            if (!contribMap.has(entry.member_id)) {
+              await upsert.mutateAsync({
+                member_id: entry.member_id,
+                year,
+                amount: FIXED_AMOUNT,
+                paid: false,
+                paid_date: null,
+              });
+            }
           }
         }}
       />
