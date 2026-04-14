@@ -223,6 +223,7 @@ export default function ContributieTab({ year }: Props) {
       )}
 
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <SelectTrigger className="w-[160px] h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
