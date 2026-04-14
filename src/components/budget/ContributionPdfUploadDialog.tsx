@@ -98,17 +98,21 @@ export default function ContributionPdfUploadDialog({ open, onOpenChange, member
 
       const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
         let matchedId = entry.matched_member_id ? String(entry.matched_member_id) : "";
-        // Validate
         if (matchedId && !members.find(m => String(m.id) === matchedId)) {
           matchedId = "";
         }
-        // Fallback: try member_number
         if (!matchedId && entry.member_number) {
           const match = members.find(m => m.id === entry.member_number);
           if (match) matchedId = String(match.id);
         }
-        return { ...entry, selected: true, assigned_member_id: matchedId };
+        const isDuplicate = !!(entry.invoice_number && existingInvoiceNumbers.has(entry.invoice_number.trim().toLowerCase()));
+        return { ...entry, selected: !isDuplicate, assigned_member_id: matchedId };
       });
+
+      const dupeCount = enriched.filter(e => !e.selected && e.invoice_number && existingInvoiceNumbers.has(e.invoice_number.trim().toLowerCase())).length;
+      if (dupeCount > 0) {
+        toast.info(`${dupeCount} facturen al geïmporteerd (overgeslagen)`);
+      }
 
       setEntries(enriched);
       setStep("review");
@@ -238,7 +242,12 @@ export default function ContributionPdfUploadDialog({ open, onOpenChange, member
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
                       <td className="px-2 py-1">{entry.debtor_name}</td>
-                      <td className="px-2 py-1 tabular-nums">{entry.invoice_number || "–"}</td>
+                      <td className="px-2 py-1 tabular-nums">
+                        {entry.invoice_number || "–"}
+                        {entry.invoice_number && existingInvoiceNumbers.has(entry.invoice_number.trim().toLowerCase()) && (
+                          <span className="ml-1 text-[10px] text-destructive font-medium">DUBBEL</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.invoice_date || "–"}</td>
                       <td className="px-2 py-1 text-right"><CurrencyCell value={entry.amount} /></td>
                       <td className="px-2 py-1">
