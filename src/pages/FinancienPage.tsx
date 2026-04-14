@@ -117,7 +117,7 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="begroting">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 mt-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6 mt-4">
               <div className="space-y-3">
                 {(categories || []).map((cat) => (
                   <BudgetCategoryTable
@@ -136,17 +136,24 @@ export default function FinancienPage() {
                 ))}
 
                 {(categories || []).length > 0 && (
-                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5 max-w-3xl">
-                    <table className="w-full text-sm">
+                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
+                    <table className="w-full text-sm table-fixed">
+                      <colgroup>
+                        <col />
+                        <col className="w-[120px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[120px]" />
+                        <col className="w-[32px]" />
+                      </colgroup>
                       <tbody>
                         <tr className="font-bold">
                           <td className="px-3 py-2">Totalen</td>
-                          <td className="text-right px-3 py-2 tabular-nums w-32">{fmt(totalBudgeted)}</td>
-                          <td className="text-right px-3 py-2 tabular-nums w-32">{fmt(totalSpent)}</td>
-                          <td className={`text-right px-3 py-2 tabular-nums w-32 ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
+                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalBudgeted)}</td>
+                          <td className="text-right px-3 py-2 tabular-nums">{fmt(totalSpent)}</td>
+                          <td className={`text-right px-3 py-2 tabular-nums ${totalBudgeted - totalSpent < 0 ? "text-destructive" : "text-green-600"}`}>
                             {fmt(totalBudgeted - totalSpent)}
                           </td>
-                          <td className="w-8" />
+                          <td />
                         </tr>
                       </tbody>
                     </table>
