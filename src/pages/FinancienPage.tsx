@@ -258,6 +258,7 @@ export default function FinancienPage() {
             }
           }}
           userId={user.id}
+          year={year}
         />
       )}
     </div>

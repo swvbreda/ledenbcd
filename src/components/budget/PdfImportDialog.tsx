@@ -19,6 +19,7 @@ interface ExtractedEntry {
   amount: number;
   selected: boolean;
   assigned_line_item_id?: string;
+  wrong_year?: boolean;
 }
 
 interface Props {
@@ -27,9 +28,10 @@ interface Props {
   categories: BudgetCategory[];
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }[]) => Promise<void>;
   userId: string;
+  year: number;
 }
 
-export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId }: Props) {
+export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId, year }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
@@ -82,11 +84,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
       // Try to auto-match line items
       const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
         let matchedId = entry.matched_line_item_id || "";
-        // Validate the AI-matched ID exists in our line items
         if (matchedId && !allLineItems.find((li) => li.id === matchedId)) {
           matchedId = "";
         }
-        // Fallback: try local matching if AI didn't match
         if (!matchedId && entry.line_item) {
           const match = allLineItems.find(
             (li) => li.label.toLowerCase().includes(entry.line_item.toLowerCase()) ||
@@ -100,8 +100,16 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
           );
           if (match) matchedId = match.id;
         }
-        return { ...entry, selected: true, assigned_line_item_id: matchedId };
+        // Year validation: check if expense_date belongs to the selected year
+        const entryYear = entry.expense_date ? new Date(entry.expense_date).getFullYear() : null;
+        const wrongYear = entryYear !== null && entryYear !== year;
+        return { ...entry, selected: !wrongYear, assigned_line_item_id: matchedId, wrong_year: wrongYear };
       });
+
+      const wrongYearCount = enriched.filter(e => e.wrong_year).length;
+      if (wrongYearCount > 0) {
+        toast.warning(`${wrongYearCount} regels uit een ander jaar dan ${year} (automatisch uitgevinkt)`);
+      }
 
       setEntries(enriched);
       setStep("review");
@@ -181,7 +189,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText size={18} />
-            {step === "upload" ? "Visionplanner PDF importeren" : "Geëxtraheerde crediteurenregels"}
+            {step === "upload" ? `Visionplanner PDF importeren (${year})` : `Geëxtraheerde crediteurenregels (${year})`}
           </DialogTitle>
         </DialogHeader>
 
@@ -258,11 +266,16 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                 </thead>
                 <tbody>
                   {entries.map((entry, idx) => (
-                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"}`}>
+                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"} ${entry.wrong_year ? "bg-destructive/5" : ""}`}>
                       <td className="px-2 py-1">
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
-                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.expense_date || "–"}</td>
+                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">
+                        {entry.expense_date || "–"}
+                        {entry.wrong_year && (
+                          <span className="ml-1 text-[10px] text-destructive font-medium">≠{year}</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1">{entry.creditor_name}</td>
                       <td className="px-2 py-1">{entry.dossier || "–"}</td>
                       <td className="px-2 py-1 tabular-nums">{entry.invoice_reference || "–"}</td>
