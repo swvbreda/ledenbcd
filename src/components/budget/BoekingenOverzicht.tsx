@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
+import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import type { Contribution } from "@/hooks/useContributions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,13 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } }
+  | { type: "declaration"; data: InternalDeclaration };
 
 interface Props {
   categories: BudgetCategory[];
   contributions: Contribution[];
+  declarations: InternalDeclaration[];
   members: MemberOption[];
   year: number;
   contributionAmount: number;
