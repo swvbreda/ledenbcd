@@ -3,6 +3,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import type { BudgetCategory } from "@/hooks/useBudget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface Props {
   category: BudgetCategory;
@@ -12,19 +13,6 @@ interface Props {
   onDeleteCategory: (id: string) => void;
   onOpenExpenses: (lineItemId: string, lineItemName: string) => void;
 }
-
-const fmtNum = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
-  <span className={`inline-flex w-full tabular-nums ${className}`}>
-    <span className="shrink-0 mr-1">€</span>
-    <span className="flex-1 text-right">{fmtNum(value)}</span>
-  </span>
-);
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function BudgetCategoryTable({
   category,
@@ -76,13 +64,13 @@ export default function BudgetCategoryTable({
               </div>
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground">{fmt(totalBudgeted)}</strong></>}
+              {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Uitgaven: </span><strong className="text-foreground">{fmt(totalSpent)}</strong></>}
+              {!expanded && <><span className="text-muted-foreground text-xs">Uitgaven: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Beschikbaar: </span><strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}>{fmt(totalRemaining)}</strong></>}
+              {!expanded && <><span className="text-muted-foreground text-xs">Beschikbaar: </span><strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}><CurrencyText value={totalRemaining} className="justify-end" /></strong></>}
             </td>
             <td />
           </tr>

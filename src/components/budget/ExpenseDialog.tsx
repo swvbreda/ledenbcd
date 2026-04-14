@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, Plus } from "lucide-react";
 import type { BudgetExpense } from "@/hooks/useBudget";
+import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 
 interface Props {
   open: boolean;
@@ -15,9 +16,6 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   userId: string;
 }
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
 export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineItemId, expenses, onAddExpense, onDeleteExpense, userId }: Props) {
   const [description, setDescription] = useState("");
@@ -78,7 +76,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                       <td className="px-2 py-1">{e.dossier || "–"}</td>
                       <td className="px-2 py-1">{e.creditor_name || "–"}</td>
                       <td className="px-2 py-1 tabular-nums">{e.invoice_reference || "–"}</td>
-                      <td className="text-right px-2 py-1 tabular-nums">{fmt(e.amount)}</td>
+                      <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive">
                           <Trash2 size={12} />
@@ -88,7 +86,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   ))}
                   <tr className="font-medium bg-muted/30">
                     <td className="px-2 py-1" colSpan={5}>Totaal</td>
-                    <td className="text-right px-2 py-1 tabular-nums">{fmt(total)}</td>
+                    <td className="text-right px-2 py-1"><CurrencyCell value={total} /></td>
                     <td />
                   </tr>
                 </tbody>
