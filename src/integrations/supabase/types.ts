@@ -112,6 +112,178 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_balance_items: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          name: string
+          section: string
+          sort_order: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          name: string
+          section?: string
+          sort_order?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          name?: string
+          section?: string
+          sort_order?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      budget_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      budget_expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          creditor_name: string | null
+          description: string | null
+          expense_date: string | null
+          id: string
+          invoice_reference: string | null
+          line_item_id: string
+          pdf_file_path: string | null
+          source: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by: string
+          creditor_name?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          invoice_reference?: string | null
+          line_item_id: string
+          pdf_file_path?: string | null
+          source?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          creditor_name?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          invoice_reference?: string | null
+          line_item_id?: string
+          pdf_file_path?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_expenses_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_line_items: {
+        Row: {
+          budgeted_amount: number
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          budgeted_amount?: number
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          budgeted_amount?: number
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_notes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          note: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          note: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string
+          year?: number
+        }
+        Relationships: []
+      }
       contribution_invoices: {
         Row: {
           created_at: string
