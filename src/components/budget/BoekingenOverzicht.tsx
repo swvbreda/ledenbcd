@@ -321,8 +321,12 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
               return (
                 <tr key={`${row.type}-${v.id}`} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-1">
-                    <Badge variant={isExpense ? "destructive" : "default"} className="text-[10px] px-1.5 py-0">
-                      {isExpense ? "Uit" : "In"}
+                    <Badge
+                      variant={row.type === "income" ? "default" : row.type === "declaration" ? "secondary" : "destructive"}
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      {row.type === "income" ? "In" : row.type === "declaration" ? "Decl" : "Uit"}
+                    </Badge>
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || "–"}</td>
