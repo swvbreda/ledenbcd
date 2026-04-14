@@ -19,6 +19,7 @@ interface ExtractedEntry {
   amount: number;
   selected: boolean;
   assigned_line_item_id?: string;
+  wrong_year?: boolean;
 }
 
 interface Props {
