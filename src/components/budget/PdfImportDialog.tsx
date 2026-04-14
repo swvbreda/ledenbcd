@@ -27,9 +27,10 @@ interface Props {
   categories: BudgetCategory[];
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }[]) => Promise<void>;
   userId: string;
+  year: number;
 }
 
-export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId }: Props) {
+export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId, year }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
