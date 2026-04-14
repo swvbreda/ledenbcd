@@ -161,6 +161,17 @@ export default function FinancienPage() {
               />
             </div>
           </TabsContent>
+
+          <TabsContent value="intern">
+            <div className="mt-4">
+              <InternalDeclarationsView
+                declarations={internalDeclarations || []}
+                year={year}
+                onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie toegevoegd") })}
+                onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
+              />
+            </div>
+          </TabsContent>
         </Tabs>
       )}
 
