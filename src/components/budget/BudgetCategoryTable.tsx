@@ -13,6 +13,16 @@ interface Props {
   onOpenExpenses: (lineItemId: string, lineItemName: string) => void;
 }
 
+const fmtNum = (n: number) =>
+  new Intl.NumberFormat("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+const CurrencyCell = ({ value, className = "" }: { value: number; className?: string }) => (
+  <span className={`inline-flex w-full tabular-nums ${className}`}>
+    <span className="shrink-0">€</span>
+    <span className="flex-1 text-right">{fmtNum(value)}</span>
+  </span>
+);
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
