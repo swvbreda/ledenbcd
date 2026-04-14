@@ -39,6 +39,7 @@ export interface BudgetBalanceItem {
   amount: number;
   section: string;
   sort_order: number;
+  side: string;
 }
 
 export function useBudgetCategories(year: number) {
@@ -195,7 +196,7 @@ export function useBudgetMutations(year: number) {
   });
 
   const addBalanceItem = useMutation({
-    mutationFn: async ({ name, amount, section }: { name: string; amount: number; section: string }) => {
+    mutationFn: async ({ name, amount, section, side = 'right' }: { name: string; amount: number; section: string; side?: string }) => {
       const { data: existing } = await supabase
         .from("budget_balance_items")
         .select("sort_order")
@@ -203,7 +204,7 @@ export function useBudgetMutations(year: number) {
         .order("sort_order", { ascending: false })
         .limit(1);
       const nextOrder = (existing?.[0]?.sort_order ?? -1) + 1;
-      const { error } = await supabase.from("budget_balance_items").insert({ year, name, amount, section, sort_order: nextOrder });
+      const { error } = await supabase.from("budget_balance_items").insert({ year, name, amount, section, side, sort_order: nextOrder });
       if (error) throw error;
     },
     onSuccess: invalidate,

@@ -119,6 +119,7 @@ export type Database = {
           id: string
           name: string
           section: string
+          side: string
           sort_order: number
           updated_at: string
           year: number
@@ -129,6 +130,7 @@ export type Database = {
           id?: string
           name: string
           section?: string
+          side?: string
           sort_order?: number
           updated_at?: string
           year: number
@@ -139,6 +141,7 @@ export type Database = {
           id?: string
           name?: string
           section?: string
+          side?: string
           sort_order?: number
           updated_at?: string
           year?: number

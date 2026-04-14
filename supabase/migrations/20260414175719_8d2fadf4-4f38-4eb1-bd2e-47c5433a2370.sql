@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_balance_items ADD COLUMN side text NOT NULL DEFAULT 'right';
