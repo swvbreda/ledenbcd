@@ -66,16 +66,13 @@ export default function BudgetCategoryTable({
               </div>
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              <span className="text-muted-foreground text-xs">Begroot: </span>
-              <strong className="text-foreground">{fmt(totalBudgeted)}</strong>
+              {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground">{fmt(totalBudgeted)}</strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              <span className="text-muted-foreground text-xs">Uitgaven: </span>
-              <strong className="text-foreground">{fmt(totalSpent)}</strong>
+              {!expanded && <><span className="text-muted-foreground text-xs">Uitgaven: </span><strong className="text-foreground">{fmt(totalSpent)}</strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              <span className="text-muted-foreground text-xs">Beschikbaar: </span>
-              <strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}>{fmt(totalRemaining)}</strong>
+              {!expanded && <><span className="text-muted-foreground text-xs">Beschikbaar: </span><strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}>{fmt(totalRemaining)}</strong></>}
             </td>
             <td />
           </tr>
