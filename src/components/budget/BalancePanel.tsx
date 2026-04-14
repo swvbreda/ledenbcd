@@ -90,10 +90,10 @@ export default function BalancePanel({
         </div>
         <table className="w-full text-sm table-fixed">
           <colgroup>
-            <col />
-            <col className="w-[100px]" />
-            <col />
-            <col className="w-[100px]" />
+            <col style={{ width: "35%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "35%" }} />
+            <col style={{ width: "15%" }} />
           </colgroup>
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
