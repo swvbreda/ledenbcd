@@ -249,6 +249,10 @@ export default function FinancienPage() {
               year={year}
             />
           </TabsContent>
+
+          <TabsContent value="dossiers">
+            <DossierOverzichtTab categories={categories || []} year={year} />
+          </TabsContent>
         </Tabs>
       )}
 
