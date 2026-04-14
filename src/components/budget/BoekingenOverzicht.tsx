@@ -50,7 +50,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "expense" | "income">("all");
+  const [filterType, setFilterType] = useState<"all" | "expense" | "income" | "declaration">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
 
   const allLineItems = useMemo(() =>
@@ -262,6 +262,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
             <SelectItem value="all" className="text-xs">Alles</SelectItem>
             <SelectItem value="expense" className="text-xs">Uitgaven</SelectItem>
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
+            <SelectItem value="declaration" className="text-xs">Declaraties</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
