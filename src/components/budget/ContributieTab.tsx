@@ -222,6 +222,7 @@ export default function ContributieTab({ year }: Props) {
         onOpenChange={setPdfDialogOpen}
         year={year}
         members={effectiveMembers.map((m) => ({ id: m.id, naam: m.naam }))}
+        existingInvoices={(invoicesData ?? []).map(inv => ({ invoice_number: inv.invoice_number, member_id: inv.member_id }))}
         onImport={async (entries) => {
           for (const entry of entries) {
             // Create invoice record
