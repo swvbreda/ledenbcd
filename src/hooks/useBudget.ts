@@ -266,6 +266,7 @@ export function useBudgetMutations(year: number) {
     deleteCategory,
     addExpense,
     deleteExpense,
+    toggleExpensePaid,
     addBalanceItem,
     updateBalanceItem,
     deleteBalanceItem,
