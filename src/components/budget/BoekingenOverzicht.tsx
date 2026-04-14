@@ -109,7 +109,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         category: e.categoryName,
         subcategory: e.lineItemName,
         invoice: e.invoice_reference || "",
-        amount: -e.amount,
+        amount: e.amount,
+        isExpense: true,
         paid: e.paid,
         id: e.id,
       };
@@ -124,6 +125,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         subcategory: "",
         invoice: c.invoice_number || "",
         amount: c.amount,
+        isExpense: false,
         paid: c.paid,
         id: c.id,
       };
@@ -137,7 +139,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         category: "Declaratie",
         subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : "Overig",
         invoice: "",
-        amount: -d.amount,
+        amount: d.amount,
+        isExpense: true,
         paid: false,
         id: d.id,
       };
