@@ -106,7 +106,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     } else {
       const c = row.data;
       return {
-        date: c.paid_date || "",
+        date: c.invoice_date || c.paid_date || "",
         type: "Inkomst",
         name: c.memberName,
         dossier: "",
