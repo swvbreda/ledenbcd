@@ -80,65 +80,56 @@ export default function BudgetCategoryTable({
             <td />
           </tr>
         </thead>
+        {expanded && (
+          <tbody>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Post</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Begroot</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Uitgaven</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Beschikbaar</th>
+              <th />
+            </tr>
+            {category.line_items.map((li) => {
+              const spent = li.expenses.reduce((s, e) => s + e.amount, 0);
+              const remaining = li.budgeted_amount - spent;
+              return (
+                <tr
+                  key={li.id}
+                  className="border-b border-border/50 hover:bg-muted/20 cursor-pointer transition-colors"
+                  onClick={() => onOpenExpenses(li.id, li.name)}
+                >
+                  <td className="px-3 py-1.5">{li.name}</td>
+                  <td className="text-right px-3 py-1.5 tabular-nums">{fmt(li.budgeted_amount)}</td>
+                  <td className="text-right px-3 py-1.5 tabular-nums">{spent > 0 ? fmt(spent) : ""}</td>
+                  <td className={`text-right px-3 py-1.5 tabular-nums ${remaining < 0 ? "text-destructive" : ""}`}>
+                    {fmt(remaining)}
+                  </td>
+                  <td className="px-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteLineItem(li.id); }}
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+            <tr className="bg-muted/30 font-medium">
+              <td className="px-3 py-1.5">Subtotaal</td>
+              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalBudgeted)}</td>
+              <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalSpent)}</td>
+              <td className={`text-right px-3 py-1.5 tabular-nums ${totalRemaining < 0 ? "text-destructive" : ""}`}>
+                {fmt(totalRemaining)}
+              </td>
+              <td />
+            </tr>
+          </tbody>
+        )}
+      </table>
 
       {expanded && (
-        <div>
-          <table className="w-full text-sm">
-            <colgroup>
-              <col className="w-[30%]" />
-              <col className="w-[20%]" />
-              <col className="w-[20%]" />
-              <col className="w-[20%]" />
-              <col className="w-[10%]" />
-            </colgroup>
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Post</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Begroot</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Uitgaven</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Beschikbaar</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {category.line_items.map((li) => {
-                const spent = li.expenses.reduce((s, e) => s + e.amount, 0);
-                const remaining = li.budgeted_amount - spent;
-                return (
-                  <tr
-                    key={li.id}
-                    className="border-b border-border/50 hover:bg-muted/20 cursor-pointer transition-colors"
-                    onClick={() => onOpenExpenses(li.id, li.name)}
-                  >
-                    <td className="px-3 py-1.5">{li.name}</td>
-                    <td className="text-right px-3 py-1.5 tabular-nums">{fmt(li.budgeted_amount)}</td>
-                    <td className="text-right px-3 py-1.5 tabular-nums">{spent > 0 ? fmt(spent) : ""}</td>
-                    <td className={`text-right px-3 py-1.5 tabular-nums ${remaining < 0 ? "text-destructive" : ""}`}>
-                      {fmt(remaining)}
-                    </td>
-                    <td className="px-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteLineItem(li.id); }}
-                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr className="bg-muted/30 font-medium">
-                <td className="px-3 py-1.5">Subtotaal</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalBudgeted)}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums">{fmt(totalSpent)}</td>
-                <td className={`text-right px-3 py-1.5 tabular-nums ${totalRemaining < 0 ? "text-destructive" : ""}`}>
-                  {fmt(totalRemaining)}
-                </td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-
+        <>
           {adding ? (
             <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">
               <Input
@@ -176,7 +167,7 @@ export default function BudgetCategoryTable({
               </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
