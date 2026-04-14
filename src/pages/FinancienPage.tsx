@@ -30,6 +30,7 @@ export default function FinancienPage() {
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
+  const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
   const totalBudgeted = (categories || []).reduce(
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
