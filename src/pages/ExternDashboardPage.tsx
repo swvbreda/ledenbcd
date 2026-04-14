@@ -113,7 +113,21 @@ const ExternDashboardPage = () => {
     load();
   }, [user]);
 
-  const loadCoffeeshopMembers = async (orgId: string) => {
+  const loadSupplierBenefits = async (orgId: string) => {
+    const { data, error } = await supabase
+      .from("member_benefits")
+      .select("*")
+      .eq("supplier_org_id", orgId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading benefits:", error);
+      return;
+    }
+    setBenefits((data as unknown as Benefit[]) ?? []);
+  };
+
+
     const { data: rpcData, error } = await supabase.rpc("get_members_for_extern", { _org_id: orgId });
     if (error) {
       console.error("Error loading members:", error);
