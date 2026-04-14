@@ -248,6 +248,7 @@ export default function BalancePanel({
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
               <td />
+            </tr>
           </tbody>
         </table>
         {adding === "resultaat" ? (
