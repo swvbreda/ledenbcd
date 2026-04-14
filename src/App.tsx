@@ -12,6 +12,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index";
 import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
+import FinancienPage from "./pages/FinancienPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
@@ -89,6 +90,7 @@ const App = () => (
                   <Route path="/externe-partijen/:id" element={<ExternePartijDetailPage />} />
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
+                  <Route path="/financien" element={<FinancienPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />
