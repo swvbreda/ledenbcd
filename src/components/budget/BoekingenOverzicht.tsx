@@ -81,6 +81,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
           paid: c.paid,
           paid_date: c.paid_date,
           invoice_number: c.invoice_number,
+          invoice_date: c.invoice_date,
         },
       });
     }
