@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Euro, CheckCircle2, AlertCircle, Search, FileText, Download, Upload } from "lucide-react";
+import { Euro, CheckCircle2, AlertCircle, Search, FileText, Download, Upload, ListTodo, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CsvImportDialog from "@/components/CsvImportDialog";
