@@ -66,11 +66,11 @@ export default function BudgetCategoryTable({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground w-[40%]">Post</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-[18%]">Begroot</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-[18%]">Uitgaven</th>
-                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-[18%]">Beschikbaar</th>
-                <th className="w-[6%]" />
+                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Post</th>
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Begroot</th>
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Uitgaven</th>
+                <th className="text-right px-3 py-1.5 font-medium text-muted-foreground w-32">Beschikbaar</th>
+                <th className="w-8" />
               </tr>
             </thead>
             <tbody>
