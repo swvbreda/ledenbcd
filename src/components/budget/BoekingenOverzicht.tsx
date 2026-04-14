@@ -383,7 +383,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
+                <td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
               </tr>
             )}
           </tbody>
