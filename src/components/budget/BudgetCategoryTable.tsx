@@ -63,13 +63,13 @@ export default function BudgetCategoryTable({
 
       {expanded && (
         <div>
-          <table className="w-full text-sm table-fixed">
+          <table className="w-full text-sm">
             <colgroup>
-              <col />
-              <col className="w-[120px]" />
-              <col className="w-[120px]" />
-              <col className="w-[120px]" />
-              <col className="w-[32px]" />
+              <col className="w-[30%]" />
+              <col className="w-[20%]" />
+              <col className="w-[20%]" />
+              <col className="w-[20%]" />
+              <col className="w-[10%]" />
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-muted/30">
