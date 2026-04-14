@@ -242,10 +242,12 @@ export default function FinancienPage() {
 
           <TabsContent value="openstaand">
             <OpenstaandePostenTab
+              categories={categories || []}
               contributions={contributions || []}
               members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
               contributionAmount={FIXED_AMOUNT}
+              onToggleExpensePaid={(id, paid) => mutations.toggleExpensePaid.mutate({ id, paid }, { onSuccess: () => toast.success("Betaalstatus bijgewerkt") })}
             />
           </TabsContent>
 

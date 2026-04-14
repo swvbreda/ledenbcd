@@ -29,6 +29,8 @@ export interface BudgetExpense {
   dossier: string | null;
   source: string;
   pdf_file_path: string | null;
+  paid: boolean;
+  paid_date: string | null;
   created_at: string;
 }
 
@@ -195,6 +197,17 @@ export function useBudgetMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  const toggleExpensePaid = useMutation({
+    mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
+      const { error } = await supabase.from("budget_expenses").update({
+        paid,
+        paid_date: paid ? new Date().toISOString().slice(0, 10) : null,
+      }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const addBalanceItem = useMutation({
     mutationFn: async ({ name, amount, section, side = 'right' }: { name: string; amount: number; section: string; side?: string }) => {
       const { data: existing } = await supabase
@@ -253,6 +266,7 @@ export function useBudgetMutations(year: number) {
     deleteCategory,
     addExpense,
     deleteExpense,
+    toggleExpensePaid,
     addBalanceItem,
     updateBalanceItem,
     deleteBalanceItem,
