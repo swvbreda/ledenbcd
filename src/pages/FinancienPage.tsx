@@ -14,6 +14,7 @@ import InternalDeclarationsView from "@/components/budget/InternalDeclarationsVi
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import CrediteurenDebiteurenTab from "@/components/budget/CrediteurenDebiteurenTab";
+import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,6 +116,9 @@ export default function FinancienPage() {
             </TabsTrigger>
             <TabsTrigger value="overzicht" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Crediteuren / Debiteuren
+            </TabsTrigger>
+            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Dossiers
             </TabsTrigger>
           </TabsList>
 
@@ -244,6 +248,10 @@ export default function FinancienPage() {
               members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
             />
+          </TabsContent>
+
+          <TabsContent value="dossiers">
+            <DossierOverzichtTab categories={categories || []} year={year} />
           </TabsContent>
         </Tabs>
       )}
