@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { corsHeaders } from "@supabase/supabase-js/cors";
 
 serve(async (req) => {
@@ -23,7 +24,7 @@ serve(async (req) => {
 
     // Convert PDF to base64
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const base64 = base64Encode(new Uint8Array(arrayBuffer));
 
     const systemPrompt = `Je bent een financiële data-extractor. Je analyseert crediteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
 
