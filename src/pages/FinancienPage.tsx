@@ -118,8 +118,6 @@ export default function FinancienPage() {
         {todoOpen && (
           <FinancieelTodoOverzicht
             declarations={internalDeclarations || []}
-            contributions={contributions || []}
-            members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
             year={year}
           />
         )}
