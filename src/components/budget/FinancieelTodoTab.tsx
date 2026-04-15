@@ -535,7 +535,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                     <td className="px-2 py-1.5 align-middle">
                       <div className="flex items-center justify-end gap-0.5">
                         <button onClick={() => complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") })} className="p-1 text-muted-foreground hover:text-green-600" title="Afronden"><CheckCircle2 size={13} /></button>
-                        <button onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("On hold") })} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
+                        <button onClick={() => { setHoldDialogId(todo.id); setHoldReason(""); }} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
                         <button onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Genegeerd") })} className="p-1 text-muted-foreground hover:text-destructive" title="Negeren"><X size={13} /></button>
                       </div>
                     </td>
