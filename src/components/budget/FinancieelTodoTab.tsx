@@ -122,6 +122,33 @@ export default function FinancieelTodoTab({ year }: Props) {
     [todos]
   );
 
+  const sortItems = (items: FinanceTodo[]) => {
+    if (!sortKey) return items;
+    return [...items].sort((a, b) => {
+      let av: string | number | null = null;
+      let bv: string | number | null = null;
+      if (sortKey === "title") { av = a.title.toLowerCase(); bv = b.title.toLowerCase(); }
+      else if (sortKey === "todo_type") { av = a.todo_type; bv = b.todo_type; }
+      else if (sortKey === "assigned_to") { av = a.assigned_to; bv = b.assigned_to; }
+      else if (sortKey === "member_id") { av = a.member_id ?? 0; bv = b.member_id ?? 0; }
+      else if (sortKey === "due_date") { av = a.due_date ?? "9999"; bv = b.due_date ?? "9999"; }
+      if (av == null || bv == null) return 0;
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortKey(null); setSortDir("asc"); }
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
   const grouped = useMemo(() => {
     const categoryOrder = ["contributie", "crediteur", "declaratie", "overig"];
     const groups: Record<string, FinanceTodo[]> = {};
@@ -130,13 +157,12 @@ export default function FinancieelTodoTab({ year }: Props) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     }
-    // Sort by category order
     const sorted: [string, FinanceTodo[]][] = [];
     for (const cat of categoryOrder) {
-      if (groups[cat]) sorted.push([cat, groups[cat]]);
+      if (groups[cat]) sorted.push([cat, sortItems(groups[cat])]);
     }
     return sorted;
-  }, [pending]);
+  }, [pending, sortKey, sortDir]);
 
   const handleAddTodo = () => {
     if (!newTitle.trim()) return;
