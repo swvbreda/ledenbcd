@@ -236,16 +236,15 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
+              <SortHeader label="Datum" field="expense_date" className="text-left" />
+              <SortHeader label="Wie" field="board_member_name" className="text-left" />
               <SortHeader label="Afspraak" field="appointment" className="text-left" />
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Traject</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Km</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Retour</th>
-              <SortHeader label="Datum" field="expense_date" className="text-left" />
-              <SortHeader label="Wie" field="board_member_name" className="text-left" />
               <SortHeader label="Bedrag" field="amount" className="text-right" />
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Rekening</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Houder</th>
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-left hidden xl:table-cell">Max vergoeding</th>
               <SortHeader label="Status" field="status" className="text-center" />
               <th className="w-16" />
             </tr>
@@ -253,16 +252,15 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
           <tbody>
             {filtered.map((d) => (
               <tr key={d.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
+                <td className="px-2 py-1.5">{d.board_member_name}</td>
                 <td className="px-2 py-1.5">{d.appointment || "–"}</td>
                 <td className="px-2 py-1.5">{d.trajectory || "–"}</td>
                 <td className="px-2 py-1.5 text-right tabular-nums">{d.km_single ?? "–"}</td>
                 <td className="px-2 py-1.5 text-right tabular-nums">{d.km_return ?? "–"}</td>
-                <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
-                <td className="px-2 py-1.5">{d.board_member_name}</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={d.amount} /></td>
                 <td className="px-2 py-1.5 text-xs">{d.bank_account || "–"}</td>
                 <td className="px-2 py-1.5">{d.account_holder || "–"}</td>
-                <td className="px-2 py-1.5 text-xs hidden xl:table-cell">{d.max_allowance_note || "–"}</td>
                 <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
                 <td className="px-1 whitespace-nowrap">
                   {isAdmin && (
