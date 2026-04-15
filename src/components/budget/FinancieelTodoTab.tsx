@@ -23,6 +23,7 @@ const typeLabels: Record<string, string> = {
   unpaid_contribution: "Betaling opvolgen",
   overdue_invoice: "Betalingsherinnering",
   pending_declaration: "Declaratie goedkeuren",
+  member_archived: "Opzegging verwerken",
   manual: "Handmatig",
 };
 
