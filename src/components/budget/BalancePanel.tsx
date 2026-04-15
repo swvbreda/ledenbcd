@@ -237,72 +237,44 @@ export default function BalancePanel({
 
       {/* Contributie & Vrijwilligersvergoeding */}
       {contributionStats && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <tbody>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1.5 font-semibold">Aantal leden</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums font-semibold">{contributionStats.totalMembers}</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1.5">Contributie</td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.contributionAmount} /></td>
-                </tr>
+        <div className="border border-border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="border-b border-border/50">
+                <td className="px-3 py-1.5 font-semibold">Aantal leden</td>
+                <td className="text-right px-3 py-1.5 tabular-nums font-semibold">{contributionStats.totalMembers}</td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="px-3 py-1.5">Contributie</td>
+                <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.contributionAmount} /></td>
+              </tr>
+              <tr>
+                <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
+                <td className="text-right px-3 py-1.5 font-semibold whitespace-nowrap"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
+              </tr>
+              {onUpdateYearSettings && (
                 <tr>
-                  <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
-                  <td className="text-right px-3 py-1.5 font-semibold whitespace-nowrap"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
+                  <td colSpan={2} className="px-3 py-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{contributionStats.totalMembers} leden ×</span>
+                      <Input
+                        type="number"
+                        placeholder="Bedrag"
+                        defaultValue={contributionStats.contributionAmount || ""}
+                        onBlur={(e) => {
+                          const val = Number(e.target.value);
+                          if (val > 0 && val !== contributionStats.contributionAmount) {
+                            onUpdateYearSettings({ budgeted_member_count: contributionStats.totalMembers, contribution_amount: val });
+                          }
+                        }}
+                        className="h-6 w-20 text-xs"
+                      />
+                    </div>
+                  </td>
                 </tr>
-                {onUpdateYearSettings && (
-                  <tr>
-                    <td colSpan={2} className="px-3 py-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{contributionStats.totalMembers} leden ×</span>
-                        <Input
-                          type="number"
-                          placeholder="Bedrag"
-                          defaultValue={contributionStats.contributionAmount || ""}
-                          onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (val > 0 && val !== contributionStats.contributionAmount) {
-                              onUpdateYearSettings({ budgeted_member_count: contributionStats.totalMembers, contribution_amount: val });
-                            }
-                          }}
-                          className="h-6 w-20 text-xs"
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="border border-border rounded-lg overflow-hidden">
-            <div className="px-3 py-2 bg-muted/50">
-              <h3 className="text-xs font-semibold">Max. vrijwilligersvergoeding</h3>
-            </div>
-            <table className="w-full text-sm text-muted-foreground">
-              <tbody>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1">Per uur</td>
-                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="5,50" /></td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1">Per maand</td>
-                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="210" /></td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1">Per jaar</td>
-                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="2.100" /></td>
-                </tr>
-                <tr>
-                  <td className="px-3 py-1">Reiskosten</td>
-                  <td className="text-right px-3 py-1 whitespace-nowrap"><CurrencyCell value="0,23/km" /></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
