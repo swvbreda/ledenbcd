@@ -574,6 +574,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          file_path: string | null
           id: string
           member_id: number | null
           notes: string | null
@@ -591,6 +592,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          file_path?: string | null
           id?: string
           member_id?: number | null
           notes?: string | null
@@ -608,6 +610,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          file_path?: string | null
           id?: string
           member_id?: number | null
           notes?: string | null
