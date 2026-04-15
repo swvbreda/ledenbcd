@@ -84,6 +84,8 @@ serve(async (req) => {
     }
 
     // 2. Unpaid contributions (invoiced but not yet paid)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const unpaidSet = existingByType.get("unpaid_contribution") ?? new Set();
     for (const c of contribs) {
       if (!c.paid && !unpaidSet.has(c.member_id)) {
@@ -107,10 +109,6 @@ serve(async (req) => {
         });
       }
     }
-
-    // Keep thirtyDaysAgo for the overdue check above
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // 3. Pending declarations
     const pendingDeclSet = existingByType.get("pending_declaration") ?? new Set();
