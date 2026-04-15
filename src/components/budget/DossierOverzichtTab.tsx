@@ -97,17 +97,15 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
                   <th className="px-3 py-1 text-left font-medium w-[15%]">Datum</th>
-                  <th className="px-3 py-1 text-left font-medium w-[20%]">Crediteur</th>
-                  <th className="px-3 py-1 text-left font-medium w-[12%]">Factuurnr</th>
-                  <th className="px-3 py-1 text-left font-medium w-[15%]">Categorie</th>
-                  <th className="px-3 py-1 text-left font-medium w-[15%]">Begrotingspost</th>
-                  <th className="px-3 py-1 text-left font-medium w-[13%]">Dossier</th>
+                  <th className="px-3 py-1 text-left font-medium w-[25%]">Crediteur</th>
+                  <th className="px-3 py-1 text-left font-medium w-[15%]">Factuurnr</th>
+                  <th className="px-3 py-1 text-left font-medium w-[18%]">Categorie</th>
+                  <th className="px-3 py-1 text-left font-medium w-[17%]">Begrotingspost</th>
                   <th className="px-3 py-1 text-right font-medium w-[10%]">Bedrag</th>
                 </tr>
               </thead>
               <tbody>
                 {d.entries.map((e) => {
-                  const isEditing = editingId === e.id;
                   return (
                     <tr key={e.id} className="border-b border-border/30 hover:bg-muted/20">
                       <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
@@ -115,39 +113,6 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                       <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
                       <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
                       <td className="px-3 py-1 text-muted-foreground">{e.lineItemName}</td>
-                      <td className="px-3 py-1">
-                        {isEditing ? (
-                          <div className="flex items-center gap-1">
-                            <Input
-                              value={editValue}
-                              onChange={(ev) => setEditValue(ev.target.value)}
-                              className="h-6 text-xs"
-                              autoFocus
-                              onKeyDown={(ev) => {
-                                if (ev.key === "Enter") saveEdit(d.dossier);
-                                if (ev.key === "Escape") setEditingId(null);
-                              }}
-                            />
-                            <button onClick={() => saveEdit(d.dossier)} className="p-0.5 text-green-600 hover:text-green-700">
-                              <Check size={12} />
-                            </button>
-                            <button onClick={() => setEditingId(null)} className="p-0.5 text-muted-foreground hover:text-destructive">
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="flex items-center gap-1 group">
-                            {d.dossier}
-                            {onUpdateExpense && (
-                              <button
-                                onClick={() => startEdit(e.id, d.dossier)}
-                                className="p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity"
-                              >
-                                <Pencil size={10} />
-                              </button>
-                            )}
-                          </span>
-                        )}
                       </td>
                       <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
                     </tr>
