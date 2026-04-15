@@ -262,6 +262,43 @@ export default function FinancieelTodoTab({ year }: Props) {
         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
         onChange={onFileSelected}
       />
+      {/* Hold reason dialog */}
+      {holdDialogId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="p-4 space-y-3">
+              <h4 className="text-sm font-semibold">Reden voor on hold</h4>
+              <p className="text-xs text-muted-foreground">Geef aan waarom deze taak on hold wordt gezet.</p>
+              <Textarea
+                placeholder="Reden..."
+                value={holdReason}
+                onChange={(e) => setHoldReason(e.target.value)}
+                className="text-sm min-h-[60px]"
+                rows={2}
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setHoldDialogId(null)}>
+                  Annuleer
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs"
+                  disabled={!holdReason.trim()}
+                  onClick={() => {
+                    hold.mutate(
+                      { id: holdDialogId, reason: holdReason.trim(), notes_by: user?.email || "Onbekend" },
+                      { onSuccess: () => { toast.success("On hold gezet"); setHoldDialogId(null); setHoldReason(""); } }
+                    );
+                  }}
+                >
+                  On hold zetten
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
       {/* AI Summary */}
       {aiSummary && (
         <Card className="border-primary/30 bg-primary/5">
