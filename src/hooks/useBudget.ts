@@ -298,3 +298,46 @@ export function useBudgetNotes(year: number) {
     },
   });
 }
+
+export interface BudgetYearSettings {
+  id: string;
+  year: number;
+  budgeted_member_count: number;
+  contribution_amount: number;
+}
+
+export function useBudgetYearSettings(year: number) {
+  return useQuery({
+    queryKey: ["budget-year-settings", year],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("budget_year_settings")
+        .select("*")
+        .eq("year", year)
+        .maybeSingle();
+      if (error) throw error;
+      return data as BudgetYearSettings | null;
+    },
+  });
+}
+
+export function useBudgetYearSettingsMutation(year: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ budgeted_member_count, contribution_amount }: { budgeted_member_count: number; contribution_amount: number }) => {
+      const { data: existing } = await supabase
+        .from("budget_year_settings")
+        .select("id")
+        .eq("year", year)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase.from("budget_year_settings").update({ budgeted_member_count, contribution_amount, updated_at: new Date().toISOString() }).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("budget_year_settings").insert({ year, budgeted_member_count, contribution_amount });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-year-settings", year] }),
+  });
+}
