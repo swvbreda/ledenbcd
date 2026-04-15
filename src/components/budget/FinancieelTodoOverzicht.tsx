@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertCircle, CheckCircle2, Receipt, Upload, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Receipt, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Declaration {
@@ -9,7 +9,6 @@ interface Declaration {
   amount: number;
   status: string;
   expense_date?: string | null;
-  created_at?: string;
 }
 
 interface Contribution {
@@ -20,16 +19,6 @@ interface Contribution {
   invoice_file_path?: string | null;
 }
 
-interface Expense {
-  id: string;
-  description?: string | null;
-  creditor_name?: string | null;
-  amount: number;
-  paid: boolean;
-  pdf_file_path?: string | null;
-  expense_date?: string | null;
-}
-
 interface MemberBasic {
   id: number;
   naam: string;
@@ -38,7 +27,6 @@ interface MemberBasic {
 interface Props {
   declarations: Declaration[];
   contributions: Contribution[];
-  expenses: Expense[];
   members: MemberBasic[];
   year: number;
 }
@@ -51,7 +39,7 @@ const fmtDate = (d: string | null | undefined) => {
   return new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
 };
 
-export default function FinancieelTodoOverzicht({ declarations, contributions, expenses, members, year }: Props) {
+export default function FinancieelTodoOverzicht({ declarations, contributions, members, year }: Props) {
   const pendingDeclarations = useMemo(
     () => declarations.filter((d) => d.status === "pending"),
     [declarations]
@@ -68,12 +56,7 @@ export default function FinancieelTodoOverzicht({ declarations, contributions, e
       .map((m) => ({ id: m.id, naam: m.naam }));
   }, [contributions, members]);
 
-  const missingReceipts = useMemo(
-    () => expenses.filter((e) => !e.pdf_file_path && e.amount > 0),
-    [expenses]
-  );
-
-  const totalTodos = pendingDeclarations.length + missingInvoices.length + missingReceipts.length;
+  const totalTodos = pendingDeclarations.length + missingInvoices.length;
 
   if (totalTodos === 0) {
     return (
@@ -92,7 +75,6 @@ export default function FinancieelTodoOverzicht({ declarations, contributions, e
       </div>
 
       <div className="divide-y divide-border">
-        {/* Pending declarations — actie: penningmeester moet goedkeuren */}
         {pendingDeclarations.map((d) => (
           <div key={`decl-${d.id}`} className="px-4 py-2.5 flex items-start gap-3">
             <AlertCircle size={16} className="text-orange-500 shrink-0 mt-0.5" />
@@ -112,7 +94,6 @@ export default function FinancieelTodoOverzicht({ declarations, contributions, e
           </div>
         ))}
 
-        {/* Missing invoices — actie: penningmeester moet factuur versturen */}
         {missingInvoices.length > 0 && (
           <div className="px-4 py-2.5 flex items-start gap-3">
             <Receipt size={16} className="text-blue-500 shrink-0 mt-0.5" />
@@ -133,25 +114,6 @@ export default function FinancieelTodoOverzicht({ declarations, contributions, e
             </div>
           </div>
         )}
-
-        {/* Missing receipts — actie: bestuurslid moet bestand uploaden */}
-        {missingReceipts.map((e) => (
-          <div key={`receipt-${e.id}`} className="px-4 py-2.5 flex items-start gap-3">
-            <Upload size={16} className="text-purple-500 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm">
-                <span className="font-medium">Bestand uploaden</span>
-                <span className="text-muted-foreground"> — </span>
-                <span>{e.creditor_name || e.description || "Onbekende uitgave"}</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {fmtDate(e.expense_date) && <>Datum: {fmtDate(e.expense_date)} · </>}
-                Bedrag: {fmt(e.amount)} · Actie: Factuur/bon uploaden
-              </p>
-            </div>
-            <Badge variant="secondary" className="text-xs shrink-0">Upload</Badge>
-          </div>
-        ))}
       </div>
     </div>
   );
