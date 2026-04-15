@@ -14,6 +14,7 @@ import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
+import FinancieelTodoOverzicht from "@/components/budget/FinancieelTodoOverzicht";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
