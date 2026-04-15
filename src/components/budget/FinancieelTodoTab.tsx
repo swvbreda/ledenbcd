@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2, Upload } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2, Upload, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import AdminUploadDialog from "./AdminUploadDialog";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
@@ -71,6 +71,8 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<"title" | "todo_type" | "assigned_to" | "member_id" | "due_date" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // Add form state
   const [newTitle, setNewTitle] = useState("");
@@ -120,6 +122,33 @@ export default function FinancieelTodoTab({ year }: Props) {
     [todos]
   );
 
+  const sortItems = (items: FinanceTodo[]) => {
+    if (!sortKey) return items;
+    return [...items].sort((a, b) => {
+      let av: string | number | null = null;
+      let bv: string | number | null = null;
+      if (sortKey === "title") { av = a.title.toLowerCase(); bv = b.title.toLowerCase(); }
+      else if (sortKey === "todo_type") { av = a.todo_type; bv = b.todo_type; }
+      else if (sortKey === "assigned_to") { av = a.assigned_to; bv = b.assigned_to; }
+      else if (sortKey === "member_id") { av = a.member_id ?? 0; bv = b.member_id ?? 0; }
+      else if (sortKey === "due_date") { av = a.due_date ?? "9999"; bv = b.due_date ?? "9999"; }
+      if (av == null || bv == null) return 0;
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortKey(null); setSortDir("asc"); }
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
   const grouped = useMemo(() => {
     const categoryOrder = ["contributie", "crediteur", "declaratie", "overig"];
     const groups: Record<string, FinanceTodo[]> = {};
@@ -128,13 +157,12 @@ export default function FinancieelTodoTab({ year }: Props) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     }
-    // Sort by category order
     const sorted: [string, FinanceTodo[]][] = [];
     for (const cat of categoryOrder) {
-      if (groups[cat]) sorted.push([cat, groups[cat]]);
+      if (groups[cat]) sorted.push([cat, sortItems(groups[cat])]);
     }
     return sorted;
-  }, [pending]);
+  }, [pending, sortKey, sortDir]);
 
   const handleAddTodo = () => {
     if (!newTitle.trim()) return;
@@ -405,11 +433,28 @@ export default function FinancieelTodoTab({ year }: Props) {
                       }}
                     />
                   </th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[35%]">Taak</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[100px]">Type</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[110px]">Verantwoordelijke</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[50px]">Lid</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[75px]">Deadline</th>
+                  {([
+                    ["title", "Taak", "w-[35%]", "text-left"],
+                    ["todo_type", "Type", "w-[100px]", "text-left"],
+                    ["assigned_to", "Verantwoordelijke", "w-[110px]", "text-left"],
+                    ["member_id", "Lid", "w-[50px]", "text-left"],
+                    ["due_date", "Deadline", "w-[75px]", "text-left"],
+                  ] as const).map(([key, label, width, align]) => (
+                    <th
+                      key={key}
+                      className={`${align} px-2 py-1.5 font-medium ${width} cursor-pointer select-none hover:text-foreground transition-colors`}
+                      onClick={() => toggleSort(key)}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {label}
+                        {sortKey === key ? (
+                          sortDir === "asc" ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                        ) : (
+                          <ArrowUpDown size={10} className="opacity-30" />
+                        )}
+                      </span>
+                    </th>
+                  ))}
                   <th className="w-[80px] px-2 py-1.5 font-medium text-right">Acties</th>
                 </tr>
               </thead>
