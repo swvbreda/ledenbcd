@@ -198,6 +198,14 @@ export default function FinancieelTodoTab({ year }: Props) {
 
   return (
     <div className="mt-4 space-y-4">
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+        onChange={onFileSelected}
+      />
       {/* AI Summary */}
       {aiSummary && (
         <Card className="border-primary/30 bg-primary/5">
