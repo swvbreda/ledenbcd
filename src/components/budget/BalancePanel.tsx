@@ -155,39 +155,26 @@ export default function BalancePanel({
               <td className="px-3 py-1.5">
                     {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                    {left ? (
-                      <div className="flex items-center justify-end gap-1 group">
-                        {renderAmount(left)}
-                        <button onClick={() => onDelete(left.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    ) : isAutoLeft ? (
-                      <CurrencyCell value={totalBudgeted} className="text-muted-foreground" />
-                    ) : ""}
+              <td className="px-3 py-1.5">
+                    {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
+                  </td>
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                    {renderItemCell(left, isAutoLeft, totalBudgeted)}
                   </td>
                   <td className="px-3 py-1.5">
                     {right ? right.name : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                    {right ? (
-                      <div className="flex items-center justify-end gap-1 group">
-                        {renderAmount(right)}
-                        <button onClick={() => onDelete(right.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    ) : ""}
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                    {renderItemCell(right)}
                   </td>
                 </tr>
               );
             })}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2"></td>
-              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={leftTotal + (hasManualBudgetedExpenses ? 0 : totalBudgeted)} /></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={leftTotal + (hasManualBudgetedExpenses ? 0 : totalBudgeted)} /></td>
               <td className="px-3 py-2"></td>
-              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={rightTotal} /></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={rightTotal} /></td>
             </tr>
           </tbody>
         </table>
