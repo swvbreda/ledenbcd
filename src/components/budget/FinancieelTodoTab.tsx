@@ -298,7 +298,7 @@ export default function FinancieelTodoTab({ year }: Props) {
             </CardContent>
           </Card>
         </div>
-      )
+      )}
       {/* AI Summary */}
       {aiSummary && (
         <Card className="border-primary/30 bg-primary/5">
