@@ -84,7 +84,7 @@ const ContributiePage = () => {
     const expectedAmount = invoiced * contributionAmount;
     const paidAmount = paid * contributionAmount;
     return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
-  }, [effectiveMembers, contribMap, invoicesMap]);
+  }, [effectiveMembers, contribMap, invoicesMap, contributionAmount]);
 
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
