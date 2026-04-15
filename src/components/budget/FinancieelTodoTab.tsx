@@ -405,7 +405,39 @@ export default function FinancieelTodoTab({ year }: Props) {
         </div>
       )}
 
-      {/* Done section */}
+      {/* On Hold section */}
+      {onHold.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <PauseCircle size={14} className="text-amber-500" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              On hold
+            </span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{onHold.length}</Badge>
+          </div>
+          <div className="border border-border rounded-lg divide-y divide-border overflow-hidden opacity-75">
+            {onHold.map((todo) => (
+              <div key={todo.id} className="px-4 py-2 flex items-center gap-3">
+                <PauseCircle size={14} className="text-amber-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm">{todo.title}</span>
+                  {todo.notes && (
+                    <p className="text-xs text-muted-foreground mt-0.5 italic">{todo.notes}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => reopen.mutate(todo.id, { onSuccess: () => toast.success("Taak heropend") })}
+                  className="p-1 text-muted-foreground hover:text-foreground"
+                  title="Heractiveren"
+                >
+                  <RotateCcw size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {done.length > 0 && (
         <div>
           <button
