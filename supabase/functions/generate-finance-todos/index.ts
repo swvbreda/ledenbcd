@@ -136,7 +136,10 @@ serve(async (req) => {
 
     // Insert new todos
     if (newTodos.length > 0) {
-      const { error } = await supabase.from("finance_todos").insert(newTodos);
+      const { error } = await supabase.from("finance_todos").upsert(newTodos, {
+        onConflict: "todo_type,member_id,year",
+        ignoreDuplicates: true,
+      });
       if (error) throw error;
     }
 
