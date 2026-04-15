@@ -25,6 +25,26 @@ const typeLabels: Record<string, string> = {
   manual: "Handmatig",
 };
 
+const typeCategoryLabels: Record<string, string> = {
+  contributie: "Contributies",
+  crediteur: "Crediteuren",
+  declaratie: "Declaraties",
+  overig: "Overig",
+};
+
+const typeCategoryIcons: Record<string, string> = {
+  contributie: "💰",
+  crediteur: "🧾",
+  declaratie: "📋",
+  overig: "📌",
+};
+
+const getTypeCategory = (todoType: string): string => {
+  if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
+  if (todoType === "pending_declaration") return "declaratie";
+  return "overig";
+};
+
 const typeColors: Record<string, string> = {
   new_member_invoice: "bg-blue-100 text-blue-800",
   unpaid_contribution: "bg-amber-100 text-amber-800",
@@ -106,13 +126,19 @@ export default function FinancieelTodoTab({ year }: Props) {
   );
 
   const grouped = useMemo(() => {
+    const categoryOrder = ["contributie", "crediteur", "declaratie", "overig"];
     const groups: Record<string, FinanceTodo[]> = {};
     for (const t of pending) {
-      const key = t.assigned_to;
+      const key = getTypeCategory(t.todo_type);
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     }
-    return groups;
+    // Sort by category order
+    const sorted: [string, FinanceTodo[]][] = [];
+    for (const cat of categoryOrder) {
+      if (groups[cat]) sorted.push([cat, groups[cat]]);
+    }
+    return sorted;
   }, [pending]);
 
   const handleAddTodo = () => {
@@ -318,13 +344,13 @@ export default function FinancieelTodoTab({ year }: Props) {
         </Card>
       )}
 
-      {/* Grouped by assignee */}
-      {Object.entries(grouped).map(([assignee, items]) => (
-        <div key={assignee} className="space-y-2">
+      {/* Grouped by type category */}
+      {grouped.map(([category, items]) => (
+        <div key={category} className="space-y-2">
           <div className="flex items-center gap-2">
-            <User size={14} className="text-muted-foreground" />
+            <span className="text-sm">{typeCategoryIcons[category]}</span>
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {assigneeLabels[assignee] || assignee}
+              {typeCategoryLabels[category] || category}
             </span>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{items.length}</Badge>
           </div>
@@ -344,6 +370,9 @@ export default function FinancieelTodoTab({ year }: Props) {
                       <span className="text-sm font-medium">{todo.title}</span>
                       <Badge className={`text-[10px] px-1.5 py-0 ${typeColors[todo.todo_type] || typeColors.manual}`}>
                         {typeLabels[todo.todo_type] || todo.todo_type}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {assigneeLabels[todo.assigned_to] || todo.assigned_to}
                       </Badge>
                     </div>
                     {todo.description && (
