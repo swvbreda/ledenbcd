@@ -17,6 +17,7 @@ export interface FinanceTodo {
   year: number;
   created_at: string;
   completed_at: string | null;
+  file_path: string | null;
 }
 
 export function useFinanceTodos(year: number) {
