@@ -391,9 +391,9 @@ export default function FinancieelTodoTab({ year }: Props) {
           </div>
           <div className="border border-border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
-              <thead>
+               <thead>
                 <tr className="bg-muted/40 text-xs text-muted-foreground">
-                  <th className="w-8 px-3 py-2">
+                  <th className="w-7 px-2 py-1.5">
                     <Checkbox
                       checked={items.every((t) => selectedIds.has(t.id))}
                       onCheckedChange={(checked) => {
@@ -405,12 +405,12 @@ export default function FinancieelTodoTab({ year }: Props) {
                       }}
                     />
                   </th>
-                  <th className="text-left px-3 py-2 font-medium">Taak</th>
-                  <th className="text-left px-3 py-2 font-medium w-[120px]">Type</th>
-                  <th className="text-left px-3 py-2 font-medium w-[120px]">Verantwoordelijke</th>
-                  <th className="text-left px-3 py-2 font-medium w-[80px]">Lid</th>
-                  <th className="text-left px-3 py-2 font-medium w-[90px]">Deadline</th>
-                  <th className="w-[100px] px-3 py-2 font-medium text-right">Acties</th>
+                  <th className="text-left px-2 py-1.5 font-medium">Taak</th>
+                  <th className="text-left px-2 py-1.5 font-medium w-[100px]">Type</th>
+                  <th className="text-left px-2 py-1.5 font-medium w-[110px]">Verantwoordelijke</th>
+                  <th className="text-left px-2 py-1.5 font-medium w-[50px]">Lid</th>
+                  <th className="text-left px-2 py-1.5 font-medium w-[75px]">Deadline</th>
+                  <th className="w-[80px] px-2 py-1.5 font-medium text-right">Acties</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -419,7 +419,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                     key={todo.id}
                     className={`hover:bg-muted/20 transition-colors ${selectedIds.has(todo.id) ? "bg-primary/5" : ""}`}
                   >
-                    <td className="px-3 py-2.5 align-top">
+                    <td className="px-2 py-1.5 align-middle w-7">
                       <Checkbox
                         checked={selectedIds.has(todo.id)}
                         onCheckedChange={(checked) => {
@@ -431,131 +431,62 @@ export default function FinancieelTodoTab({ year }: Props) {
                         }}
                       />
                     </td>
-                    <td className="px-3 py-2.5 align-top">
-                      <div className="font-medium">{todo.title}</div>
-                      {todo.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{todo.description}</p>
-                      )}
-                      {/* Inline notes & file */}
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <button
-                          onClick={() => toggleNotes(todo.id)}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors"
-                        >
-                          <StickyNote size={10} />
-                          {todo.notes ? "Notitie" : "Notitie toevoegen"}
+                    <td className="px-2 py-1.5 align-middle">
+                      <span className="text-sm font-medium">{todo.title}</span>
+                      <span className="inline-flex items-center gap-2 ml-2 text-[11px] text-muted-foreground">
+                        <button onClick={() => toggleNotes(todo.id)} className="hover:text-foreground transition-colors inline-flex items-center gap-0.5">
+                          <StickyNote size={9} />
+                          {todo.notes ? "Notitie" : "+"}
                         </button>
                         {todo.file_path ? (
-                          <span className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleDownloadFile(todo.file_path!)}
-                              className="flex items-center gap-1 hover:text-foreground transition-colors text-primary"
-                            >
-                              <FileText size={10} />
-                              {todo.file_path.split("/").pop()}
-                            </button>
-                            <button
-                              onClick={() => {
-                                removeFile.mutate(
-                                  { id: todo.id, file_path: todo.file_path! },
-                                  { onSuccess: () => toast.success("Bestand verwijderd") }
-                                );
-                              }}
-                              className="hover:text-destructive transition-colors"
-                            >
-                              <Trash2 size={10} />
-                            </button>
-                          </span>
+                          <button onClick={() => handleDownloadFile(todo.file_path!)} className="hover:text-foreground transition-colors text-primary inline-flex items-center gap-0.5">
+                            <FileText size={9} />
+                            {todo.file_path.split("/").pop()?.substring(0, 15)}
+                          </button>
                         ) : (
-                          <button
-                            onClick={() => handleFileUpload(todo.id)}
-                            className="flex items-center gap-1 hover:text-foreground transition-colors"
-                            disabled={uploadFile.isPending}
-                          >
-                            <Paperclip size={10} />
-                            {uploadFile.isPending && uploadingTodoId === todo.id ? "Uploaden..." : "Bestand"}
+                          <button onClick={() => handleFileUpload(todo.id)} className="hover:text-foreground transition-colors inline-flex items-center gap-0.5" disabled={uploadFile.isPending}>
+                            <Paperclip size={9} />
                           </button>
                         )}
-                      </div>
-                      {/* Expanded notes */}
+                      </span>
+                      {/* Expanded notes row */}
                       {expandedNotes.has(todo.id) && (
-                        <div className="mt-2">
+                        <div className="mt-1.5">
                           {todo.notes && editingNoteId !== todo.id && (
-                            <div
-                              className="text-xs bg-muted/40 rounded p-2 mb-2 cursor-pointer hover:bg-muted/60 transition-colors"
-                              onClick={() => { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); }}
-                            >
-                              <p>{todo.notes}</p>
-                              {todo.notes_by && <p className="text-muted-foreground mt-1 italic">— {todo.notes_by}</p>}
+                            <div className="text-xs bg-muted/40 rounded p-1.5 mb-1 cursor-pointer hover:bg-muted/60" onClick={() => { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); }}>
+                              <span>{todo.notes}</span>
+                              {todo.notes_by && <span className="text-muted-foreground italic ml-1">— {todo.notes_by}</span>}
                             </div>
                           )}
                           {(editingNoteId === todo.id || !todo.notes) && (
-                            <div className="flex gap-2">
-                              <Textarea
-                                placeholder="Notitie schrijven..."
-                                value={editingNoteId === todo.id ? noteText : ""}
-                                onChange={(e) => {
-                                  if (editingNoteId !== todo.id) { setEditingNoteId(todo.id); }
-                                  setNoteText(e.target.value);
-                                }}
-                                onFocus={() => {
-                                  if (editingNoteId !== todo.id) { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); }
-                                }}
-                                className="text-xs min-h-[50px] flex-1"
-                                rows={2}
-                              />
-                              <div className="flex flex-col gap-1">
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveNote(todo.id)} disabled={!noteText.trim() && !todo.notes} title="Opslaan">
-                                  <Send size={12} />
-                                </Button>
-                                {editingNoteId === todo.id && (
-                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingNoteId(null); setNoteText(""); }} title="Annuleren">
-                                    <X size={12} />
-                                  </Button>
-                                )}
-                              </div>
+                            <div className="flex gap-1">
+                              <Textarea placeholder="Notitie..." value={editingNoteId === todo.id ? noteText : ""} onChange={(e) => { if (editingNoteId !== todo.id) setEditingNoteId(todo.id); setNoteText(e.target.value); }} onFocus={() => { if (editingNoteId !== todo.id) { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); } }} className="text-xs min-h-[36px] flex-1" rows={1} />
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveNote(todo.id)} disabled={!noteText.trim() && !todo.notes}><Send size={10} /></Button>
+                              {editingNoteId === todo.id && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingNoteId(null); setNoteText(""); }}><X size={10} /></Button>}
                             </div>
                           )}
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 align-top">
+                    <td className="px-2 py-1.5 align-middle">
                       <Badge className={`text-[10px] px-1.5 py-0 ${typeColors[todo.todo_type] || typeColors.manual}`}>
                         {typeLabels[todo.todo_type] || todo.todo_type}
                       </Badge>
                     </td>
-                    <td className="px-3 py-2.5 align-top text-xs">
+                    <td className="px-2 py-1.5 align-middle text-xs">
                       {assigneeLabels[todo.assigned_to] || todo.assigned_to}
                     </td>
-                    <td className="px-3 py-2.5 align-top text-xs text-muted-foreground">
+                    <td className="px-2 py-1.5 align-middle text-xs text-muted-foreground tabular-nums">
                       {todo.member_id ? `#${todo.member_id}` : "—"}
                     </td>
-                    <td className="px-3 py-2.5 align-top text-xs text-muted-foreground">
+                    <td className="px-2 py-1.5 align-middle text-xs text-muted-foreground">
                       {fmtDate(todo.due_date) || "—"}
                     </td>
-                    <td className="px-3 py-2.5 align-top">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") })}
-                          className="p-1 text-muted-foreground hover:text-green-600 transition-colors"
-                          title="Afronden"
-                        >
-                          <CheckCircle2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("Taak on hold gezet") })}
-                          className="p-1 text-muted-foreground hover:text-amber-600 transition-colors"
-                          title="On hold"
-                        >
-                          <PauseCircle size={14} />
-                        </button>
-                        <button
-                          onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
-                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                          title="Negeren"
-                        >
-                          <X size={14} />
-                        </button>
+                    <td className="px-2 py-1.5 align-middle">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <button onClick={() => complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") })} className="p-1 text-muted-foreground hover:text-green-600" title="Afronden"><CheckCircle2 size={13} /></button>
+                        <button onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("On hold") })} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
+                        <button onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Genegeerd") })} className="p-1 text-muted-foreground hover:text-destructive" title="Negeren"><X size={13} /></button>
                       </div>
                     </td>
                   </tr>
