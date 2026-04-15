@@ -251,6 +251,47 @@ export default function FinancieelTodoTab({ year }: Props) {
         onComplete={() => refetch()}
       />
 
+      {/* Bulk actions */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+          <span className="text-sm font-medium">{selectedIds.size} geselecteerd</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1"
+            onClick={() => {
+              selectedIds.forEach((id) => complete.mutate(id));
+              toast.success(`${selectedIds.size} taken afgerond`);
+              setSelectedIds(new Set());
+            }}
+          >
+            <CheckCircle2 size={12} />
+            Afronden
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1"
+            onClick={() => {
+              selectedIds.forEach((id) => dismiss.mutate(id));
+              toast.success(`${selectedIds.size} taken genegeerd`);
+              setSelectedIds(new Set());
+            }}
+          >
+            <X size={12} />
+            Negeren
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Deselecteer
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
