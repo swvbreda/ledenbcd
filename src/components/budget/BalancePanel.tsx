@@ -257,19 +257,7 @@ export default function BalancePanel({
                   <tr>
                     <td colSpan={2} className="px-3 py-1.5">
                       <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Leden"
-                          defaultValue={contributionStats.totalMembers || ""}
-                          onBlur={(e) => {
-                            const val = Number(e.target.value);
-                            if (val > 0 && val !== contributionStats.totalMembers) {
-                              onUpdateYearSettings({ budgeted_member_count: val, contribution_amount: contributionStats.contributionAmount });
-                            }
-                          }}
-                          className="h-6 w-16 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground">leden ×</span>
+                        <span className="text-xs text-muted-foreground">{contributionStats.totalMembers} leden ×</span>
                         <Input
                           type="number"
                           placeholder="Bedrag"
