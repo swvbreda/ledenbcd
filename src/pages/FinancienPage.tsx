@@ -100,27 +100,12 @@ export default function FinancienPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant={todoOpen ? "default" : "outline"}
-          size="sm"
-          onClick={() => setTodoOpen(!todoOpen)}
-          className="gap-1.5"
-        >
-          <ListTodo size={16} />
-          To Do
-        </Button>
       </div>
 
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
         <>
-        {todoOpen && (
-          <FinancieelTodoOverzicht
-            declarations={internalDeclarations || []}
-            year={year}
-          />
-        )}
 
         <Tabs defaultValue="dashboard" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
