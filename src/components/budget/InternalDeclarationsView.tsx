@@ -295,6 +295,37 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
           </tbody>
         </table>
       </div>
+
+      {/* Max. vrijwilligersvergoeding */}
+      <div className="border border-border rounded-lg overflow-hidden max-w-sm">
+        <div className="px-3 py-2 bg-muted/50">
+          <h3 className="text-xs font-semibold">Max. vrijwilligersvergoeding</h3>
+        </div>
+        <table className="w-full text-sm text-muted-foreground">
+          <tbody>
+            <tr className="border-b border-border/50">
+              <td className="px-3 py-1">Per uur</td>
+              <td className="text-right px-3 py-1">€</td>
+              <td className="text-right px-3 py-1 tabular-nums">5,50</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="px-3 py-1">Per maand</td>
+              <td className="text-right px-3 py-1">€</td>
+              <td className="text-right px-3 py-1 tabular-nums">210</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="px-3 py-1">Per jaar</td>
+              <td className="text-right px-3 py-1">€</td>
+              <td className="text-right px-3 py-1 tabular-nums">2.100</td>
+            </tr>
+            <tr>
+              <td className="px-3 py-1">Reiskosten</td>
+              <td className="text-right px-3 py-1">€</td>
+              <td className="text-right px-3 py-1 tabular-nums">0,23/km</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
