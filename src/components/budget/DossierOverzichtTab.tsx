@@ -228,7 +228,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                   )}
                 </div>
               )}
-              <span className="text-xs font-medium tabular-nums whitespace-nowrap"><CurrencyText value={d.total} /></span>
+              <span className="text-xs font-medium tabular-nums whitespace-nowrap text-right min-w-[10%] pr-1"><CurrencyText value={d.total} /></span>
             </div>
             <table className="w-full text-xs">
               <thead>
