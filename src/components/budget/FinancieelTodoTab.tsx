@@ -37,6 +37,7 @@ const typeCategoryLabels: Record<string, string> = {
 const getTypeCategory = (todoType: string): string => {
   if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
   if (todoType === "pending_declaration") return "declaratie";
+  if (todoType === "member_archived") return "overig";
   return "overig";
 };
 
