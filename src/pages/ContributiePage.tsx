@@ -81,8 +81,8 @@ const ContributiePage = () => {
     effectiveMembers.forEach((m) => {
       if (contribMap.get(m.id)?.paid) paid++;
     });
-    const expectedAmount = invoiced * FIXED_AMOUNT;
-    const paidAmount = paid * FIXED_AMOUNT;
+    const expectedAmount = invoiced * contributionAmount;
+    const paidAmount = paid * contributionAmount;
     return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
   }, [effectiveMembers, contribMap, invoicesMap]);
 
@@ -92,7 +92,7 @@ const ContributiePage = () => {
       await upsert.mutateAsync({
         member_id: memberId,
         year: selectedYear,
-        amount: FIXED_AMOUNT,
+        amount: contributionAmount,
         paid: !currentlyPaid,
         paid_date: !currentlyPaid ? new Date().toISOString().split("T")[0] : null,
         notes: existing?.notes ?? null,
@@ -115,7 +115,7 @@ const ContributiePage = () => {
         `"${m.plaats}"`,
         m.locaties?.length || m.aantalLocaties || 1,
         `"${invoiceNrs}"`,
-        FIXED_AMOUNT,
+        contributionAmount,
         c?.paid ? "Ja" : "Nee",
         c?.paid_date ?? "",
       ].join(",");
@@ -147,7 +147,7 @@ const ContributiePage = () => {
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <BcdHeroBanner
         title="Contributie"
-        subtitle={`Contributie-administratie per lid per jaar — € ${FIXED_AMOUNT.toLocaleString("nl-NL")} per lid`}
+        subtitle={`Contributie-administratie per lid per jaar — € ${contributionAmount.toLocaleString("nl-NL")} per lid`}
       />
 
       {/* Stats cards */}
@@ -247,7 +247,7 @@ const ContributiePage = () => {
             await upsert.mutateAsync({
               member_id: u.member_id,
               year: selectedYear,
-              amount: FIXED_AMOUNT,
+              amount: contributionAmount,
               paid: u.paid,
               paid_date: u.paid_date,
             });
@@ -326,7 +326,7 @@ const ContributiePage = () => {
                         {m.locaties?.length || m.aantalLocaties || 1}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        € {FIXED_AMOUNT.toLocaleString("nl-NL")}
+                        € {contributionAmount.toLocaleString("nl-NL")}
                       </TableCell>
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
