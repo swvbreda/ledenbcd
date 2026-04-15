@@ -93,15 +93,20 @@ serve(async (req) => {
         const naam = member?.data?.naam ?? `Lid #${c.member_id}`;
         const invoiceDate = c.invoice_date ? new Date(c.invoice_date) : null;
         const isOverdue = invoiceDate && invoiceDate < thirtyDaysAgo;
+        const amount = `€${Number(c.amount).toLocaleString("nl-NL", { minimumFractionDigits: 2 })}`;
+        
+        const details: string[] = [];
+        if (c.invoice_number) details.push(`Factuurnr: ${c.invoice_number}`);
+        if (c.invoice_date) details.push(`Factuurdatum: ${c.invoice_date}`);
+        details.push(`Bedrag: ${amount}`);
+        if (!c.invoice_number && !c.invoice_date) details.push("Nog geen factuur verstuurd");
         
         newTodos.push({
           todo_type: "unpaid_contribution",
           title: isOverdue
-            ? `Herinnering sturen aan ${naam}`
-            : `Betaling opvolgen van ${naam}`,
-          description: isOverdue
-            ? `De contributiefactuur van ${naam} (lid #${c.member_id}) staat open sinds ${c.invoice_date}. Er moet een betalingsherinnering worden verstuurd.`
-            : `De contributie van ${naam} (lid #${c.member_id}) voor ${currentYear} is nog niet betaald.${c.invoice_date ? ` Factuurdatum: ${c.invoice_date}.` : ""} Opvolging is vereist.`,
+            ? `Herinnering: ${naam} — ${amount}`
+            : `Opvolgen: ${naam} — ${amount}`,
+          description: `${details.join(" · ")}`,
           assigned_to: isOverdue ? "penningmeester" : "secretariaat",
           member_id: c.member_id,
           reference_id: c.id,
