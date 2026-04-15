@@ -371,6 +371,9 @@ export default function FinancieelTodoTab({ year }: Props) {
                       <Badge className={`text-[10px] px-1.5 py-0 ${typeColors[todo.todo_type] || typeColors.manual}`}>
                         {typeLabels[todo.todo_type] || todo.todo_type}
                       </Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {assigneeLabels[todo.assigned_to] || todo.assigned_to}
+                      </Badge>
                     </div>
                     {todo.description && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{todo.description}</p>
