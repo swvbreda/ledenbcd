@@ -96,33 +96,38 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
   };
 
   const applyProposal = async (proposal: Proposal, index: number) => {
-    if (!proposal.contribution_id || proposal.applied) return;
-    setApplyingId(proposal.contribution_id);
+    if (!proposal.match_id || proposal.applied) return;
+    setApplyingId(proposal.match_id);
 
     try {
-      if (proposal.type === "payment_received") {
+      const today = proposal.date || new Date().toISOString().split("T")[0];
+
+      if (proposal.type === "contribution_payment") {
         const { error } = await supabase
           .from("member_contributions")
-          .update({
-            paid: true,
-            paid_date: proposal.date || new Date().toISOString().split("T")[0],
-          })
-          .eq("id", proposal.contribution_id)
+          .update({ paid: true, paid_date: today })
+          .eq("id", proposal.match_id)
           .eq("paid", false);
         if (error) throw error;
 
-        // Complete related todo
         await supabase
           .from("finance_todos")
           .update({ status: "done", completed_at: new Date().toISOString() })
-          .eq("reference_id", proposal.contribution_id)
+          .eq("reference_id", proposal.match_id)
           .eq("status", "pending");
+      } else if (proposal.type === "expense_payment") {
+        const { error } = await supabase
+          .from("budget_expenses")
+          .update({ paid: true, paid_date: today })
+          .eq("id", proposal.match_id)
+          .eq("paid", false);
+        if (error) throw error;
       }
 
       setProposals((prev) =>
         prev?.map((p, i) => (i === index ? { ...p, applied: true } : p)) ?? null
       );
-      toast.success("Verwerkt: " + proposal.member_name);
+      toast.success("Verwerkt: " + proposal.name);
     } catch (e: any) {
       toast.error("Fout: " + e.message);
     } finally {
