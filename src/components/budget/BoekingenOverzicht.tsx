@@ -265,9 +265,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="text-xs">Alles</SelectItem>
-            <SelectItem value="expense" className="text-xs">Uitgaven</SelectItem>
+            <SelectItem value="out" className="text-xs">Uitgaven</SelectItem>
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
-            <SelectItem value="declaration" className="text-xs">Declaraties</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
