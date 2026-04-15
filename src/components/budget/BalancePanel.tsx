@@ -76,11 +76,28 @@ export default function BalancePanel({
       );
     }
     return (
-      <span className="cursor-pointer hover:text-primary transition-colors flex-1 min-w-0"
+      <span className="cursor-pointer hover:text-primary transition-colors block"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
         <CurrencyCell value={item.amount} />
       </span>
     );
+  };
+
+  const renderItemCell = (item: BudgetBalanceItem | undefined, isAuto = false, autoValue = 0) => {
+    if (item) {
+      return (
+        <div className="relative group">
+          {renderAmount(item)}
+          <button onClick={() => onDelete(item.id)} className="absolute -right-4 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100">
+            <Trash2 size={10} />
+          </button>
+        </div>
+      );
+    }
+    if (isAuto) {
+      return <CurrencyCell value={autoValue} className="text-muted-foreground" />;
+    }
+    return null;
   };
 
   const renderAddForm = (section: string, showSideSelect = false) => {
