@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2, Upload } from "lucide-react";
+import AdminUploadDialog from "./AdminUploadDialog";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingTodoId, setUploadingTodoId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState("");
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const { user } = useAuth();
@@ -220,12 +222,29 @@ export default function FinancieelTodoTab({ year }: Props) {
         </Card>
       )}
 
+      {/* Admin Upload Dialog */}
+      <AdminUploadDialog
+        year={year}
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        onComplete={() => refetch()}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
           {pending.length === 0 ? "Geen openstaande taken" : `${pending.length} openstaande taken`}
         </h3>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowUploadDialog(true)}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Upload size={12} />
+            Administratie bijwerken
+          </Button>
           <Button
             variant="outline"
             size="sm"
