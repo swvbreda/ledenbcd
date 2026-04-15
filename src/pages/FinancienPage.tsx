@@ -104,8 +104,11 @@ export default function FinancienPage() {
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
-        <Tabs defaultValue="dashboard" className="space-y-1">
+        <Tabs defaultValue="todo" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
+            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              To Do
+            </TabsTrigger>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dashboard
             </TabsTrigger>
