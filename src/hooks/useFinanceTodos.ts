@@ -8,6 +8,7 @@ export interface FinanceTodo {
   title: string;
   description: string | null;
   notes: string | null;
+  notes_by: string | null;
   assigned_to: string;
   member_id: number | null;
   reference_id: string | null;
@@ -91,10 +92,10 @@ export function useFinanceTodoMutations(year: number) {
   });
 
   const updateNotes = useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+    mutationFn: async ({ id, notes, notes_by }: { id: string; notes: string; notes_by: string }) => {
       const { error } = await supabase
         .from("finance_todos")
-        .update({ notes })
+        .update({ notes, notes_by })
         .eq("id", id);
       if (error) throw error;
     },
