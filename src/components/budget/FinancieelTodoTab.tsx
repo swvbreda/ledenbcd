@@ -43,7 +43,7 @@ const fmtDate = (d: string | null) => {
 
 export default function FinancieelTodoTab({ year }: Props) {
   const { data: todos, isLoading, refetch } = useFinanceTodos(year);
-  const { complete, dismiss, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
+  const { complete, dismiss, hold, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -86,6 +86,11 @@ export default function FinancieelTodoTab({ year }: Props) {
 
   const pending = useMemo(
     () => (todos ?? []).filter((t) => t.status === "pending"),
+    [todos]
+  );
+
+  const onHold = useMemo(
+    () => (todos ?? []).filter((t) => t.status === "on_hold"),
     [todos]
   );
 
