@@ -190,37 +190,6 @@ export default function ContributieTab({ year }: Props) {
         </Card>
       </div>
 
-      {membersWithoutInvoice.length > 0 && (
-        <Card className="border-amber-300 bg-amber-50/50">
-          <CardContent className="p-4">
-            <button
-              onClick={() => setTodoOpen(!todoOpen)}
-              className="flex items-center gap-2 w-full text-left"
-            >
-              <ListTodo size={16} className="text-amber-600" />
-              <span className="font-semibold text-sm text-amber-800">
-                To-do: {membersWithoutInvoice.length} {membersWithoutInvoice.length === 1 ? "lid" : "leden"} zonder factuur
-              </span>
-              {todoOpen ? <ChevronUp size={14} className="ml-auto text-amber-600" /> : <ChevronDown size={14} className="ml-auto text-amber-600" />}
-            </button>
-            {todoOpen && (
-              <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
-                {membersWithoutInvoice.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center gap-3 text-sm py-1.5 px-2 rounded hover:bg-amber-100/60 cursor-pointer"
-                    onClick={() => navigate(`/leden/${m.id}`)}
-                  >
-                    <span className="text-muted-foreground tabular-nums w-10">{m.id}</span>
-                    <span className="font-medium">{m.naam}</span>
-                    <span className="text-muted-foreground">{m.plaats}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
