@@ -155,9 +155,9 @@ export default function ExpenseListView({ categories, onDeleteExpense }: Props) 
                 <td className="px-2 py-1.5 tabular-nums whitespace-nowrap">{fmtDate(e.expense_date)}</td>
                 <td className="px-2 py-1.5">{e.categoryName}</td>
                 <td className="px-2 py-1.5">{e.lineItemName}</td>
-                <td className="px-2 py-1.5">{e.dossier || "–"}</td>
-                <td className="px-2 py-1.5">{e.creditor_name || "–"}</td>
-                <td className="px-2 py-1.5 tabular-nums">{e.invoice_reference || "–"}</td>
+                <td className="px-2 py-1.5">{e.dossier || ""}</td>
+                <td className="px-2 py-1.5">{e.creditor_name || ""}</td>
+                <td className="px-2 py-1.5 tabular-nums">{e.invoice_reference || ""}</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={e.amount} /></td>
                 <td className="px-1">
                   <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive">

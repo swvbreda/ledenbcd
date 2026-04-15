@@ -28,7 +28,7 @@ export default function OpenstaandePostenTab({ categories, contributions, member
           .map((exp) => ({
             id: exp.id,
             date: exp.expense_date || "",
-            name: exp.creditor_name || exp.description || "–",
+            name: exp.creditor_name || exp.description || "",
             invoice: exp.invoice_reference || "",
             amount: exp.amount,
             category: `${cat.name} → ${li.name}`,
@@ -85,9 +85,9 @@ export default function OpenstaandePostenTab({ categories, contributions, member
                         title="Markeer als betaald"
                       />
                     </td>
-                    <td className="px-2 py-1 whitespace-nowrap tabular-nums">{c.date || "–"}</td>
+                    <td className="px-2 py-1 whitespace-nowrap tabular-nums">{c.date || ""}</td>
                     <td className="px-2 py-1">{c.name}</td>
-                    <td className="px-2 py-1 tabular-nums">{c.invoice || "–"}</td>
+                    <td className="px-2 py-1 tabular-nums">{c.invoice || ""}</td>
                     <td className="px-2 py-1 text-right"><CurrencyCell value={c.amount} /></td>
                   </tr>
                 ))

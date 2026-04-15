@@ -253,13 +253,13 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
               <tr key={d.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                 <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
                 <td className="px-2 py-1.5">{d.board_member_name}</td>
-                <td className="px-2 py-1.5">{d.appointment || "–"}</td>
-                <td className="px-2 py-1.5">{d.trajectory || "–"}</td>
+                <td className="px-2 py-1.5">{d.appointment || ""}</td>
+                <td className="px-2 py-1.5">{d.trajectory || ""}</td>
                 <td className="px-2 py-1.5 text-right tabular-nums">{d.km_single ?? "–"}</td>
                 <td className="px-2 py-1.5 text-right tabular-nums">{d.km_return ?? "–"}</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={d.amount} /></td>
-                <td className="px-2 py-1.5 text-xs">{d.bank_account || "–"}</td>
-                <td className="px-2 py-1.5">{d.account_holder || "–"}</td>
+                <td className="px-2 py-1.5 text-xs">{d.bank_account || ""}</td>
+                <td className="px-2 py-1.5">{d.account_holder || ""}</td>
                 <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
                 <td className="px-1 whitespace-nowrap">
                   {isAdmin && (

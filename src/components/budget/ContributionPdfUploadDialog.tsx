@@ -243,12 +243,12 @@ export default function ContributionPdfUploadDialog({ open, onOpenChange, member
                       </td>
                       <td className="px-2 py-1">{entry.debtor_name}</td>
                       <td className="px-2 py-1 tabular-nums">
-                        {entry.invoice_number || "–"}
+                        {entry.invoice_number || ""}
                         {entry.invoice_number && existingInvoiceNumbers.has(entry.invoice_number.trim().toLowerCase()) && (
                           <span className="ml-1 text-[10px] text-destructive font-medium">DUBBEL</span>
                         )}
                       </td>
-                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.invoice_date || "–"}</td>
+                      <td className="px-2 py-1 whitespace-nowrap tabular-nums">{entry.invoice_date || ""}</td>
                       <td className="px-2 py-1 text-right"><CurrencyCell value={entry.amount} /></td>
                       <td className="px-2 py-1">
                         <Select
