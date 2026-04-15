@@ -330,7 +330,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                     {todo.description && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{todo.description}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                       {todo.due_date && (
                         <span className="flex items-center gap-1">
                           <Clock size={10} /> {fmtDate(todo.due_date)}
@@ -347,6 +347,40 @@ export default function FinancieelTodoTab({ year }: Props) {
                         {todo.notes ? "Notitie" : "Notitie toevoegen"}
                         {expandedNotes.has(todo.id) ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                       </button>
+                      {todo.file_path ? (
+                        <span className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDownloadFile(todo.file_path!)}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors text-primary"
+                            title="Bestand openen"
+                          >
+                            <FileText size={10} />
+                            {todo.file_path.split("/").pop()}
+                          </button>
+                          <button
+                            onClick={() => {
+                              removeFile.mutate(
+                                { id: todo.id, file_path: todo.file_path! },
+                                { onSuccess: () => toast.success("Bestand verwijderd") }
+                              );
+                            }}
+                            className="hover:text-destructive transition-colors"
+                            title="Bestand verwijderen"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleFileUpload(todo.id)}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          title="Bestand uploaden"
+                          disabled={uploadFile.isPending}
+                        >
+                          <Paperclip size={10} />
+                          {uploadFile.isPending && uploadingTodoId === todo.id ? "Uploaden..." : "Bestand"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
