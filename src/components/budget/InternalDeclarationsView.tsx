@@ -265,20 +265,22 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
                 <td className="px-2 py-1.5 text-xs hidden xl:table-cell">{d.max_allowance_note || "–"}</td>
                 <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
                 <td className="px-1 whitespace-nowrap">
-                  {isAdmin && d.status === "pending" && (
+                  {isAdmin && (
                     <span className="inline-flex gap-0.5">
-                      <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
-                        <Check size={14} />
-                      </button>
-                      <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
-                        <X size={14} />
+                      {d.status !== "approved" && (
+                        <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
+                          <Check size={14} />
+                        </button>
+                      )}
+                      {d.status !== "rejected" && (
+                        <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
+                          <X size={14} />
+                        </button>
+                      )}
+                      <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
+                        <Trash2 size={12} />
                       </button>
                     </span>
-                  )}
-                  {isAdmin && (
-                    <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive">
-                      <Trash2 size={12} />
-                    </button>
                   )}
                 </td>
               </tr>
