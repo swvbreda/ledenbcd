@@ -272,6 +272,7 @@ export default function FinancienPage() {
             />
           </TabsContent>
         </Tabs>
+        </>
       )}
 
       {expenseDialog && user && (
