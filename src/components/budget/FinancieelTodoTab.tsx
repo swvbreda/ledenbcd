@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import { CheckCircle2, Clock, AlertCircle, Sparkles, User, X, RotateCcw, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -39,10 +42,22 @@ const fmtDate = (d: string | null) => {
 
 export default function FinancieelTodoTab({ year }: Props) {
   const { data: todos, isLoading, refetch } = useFinanceTodos(year);
-  const { complete, dismiss, reopen } = useFinanceTodoMutations(year);
+  const { complete, dismiss, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+
+  // Add form state
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newAssignee, setNewAssignee] = useState("secretariaat");
+  const [newDueDate, setNewDueDate] = useState("");
+
+  // Notes editing
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
 
   const generateTodos = async () => {
     setGenerating(true);
@@ -63,7 +78,6 @@ export default function FinancieelTodoTab({ year }: Props) {
     }
   };
 
-  // Auto-generate on mount
   useEffect(() => {
     generateTodos();
   }, [year]);
@@ -87,6 +101,49 @@ export default function FinancieelTodoTab({ year }: Props) {
     }
     return groups;
   }, [pending]);
+
+  const handleAddTodo = () => {
+    if (!newTitle.trim()) return;
+    addTodo.mutate(
+      {
+        title: newTitle.trim(),
+        description: newDescription.trim() || undefined,
+        assigned_to: newAssignee,
+        due_date: newDueDate || null,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Taak aangemaakt");
+          setNewTitle("");
+          setNewDescription("");
+          setNewDueDate("");
+          setShowAddForm(false);
+        },
+      }
+    );
+  };
+
+  const handleSaveNote = (todoId: string) => {
+    updateNotes.mutate(
+      { id: todoId, notes: noteText },
+      {
+        onSuccess: () => {
+          toast.success("Notitie opgeslagen");
+          setEditingNoteId(null);
+          setNoteText("");
+        },
+      }
+    );
+  };
+
+  const toggleNotes = (id: string) => {
+    setExpandedNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -121,6 +178,15 @@ export default function FinancieelTodoTab({ year }: Props) {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Plus size={12} />
+            Taak toevoegen
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={generateTodos}
             disabled={generating}
             className="gap-1.5 h-8 text-xs"
@@ -130,6 +196,57 @@ export default function FinancieelTodoTab({ year }: Props) {
           </Button>
         </div>
       </div>
+
+      {/* Add form */}
+      {showAddForm && (
+        <Card className="border-border">
+          <CardContent className="p-4 space-y-3">
+            <h4 className="text-sm font-semibold">Nieuwe taak</h4>
+            <Input
+              placeholder="Titel van de taak..."
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="h-8 text-sm"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAddTodo()}
+            />
+            <Textarea
+              placeholder="Beschrijving (optioneel)..."
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="text-sm min-h-[60px]"
+              rows={2}
+            />
+            <div className="flex gap-2 items-center flex-wrap">
+              <Select value={newAssignee} onValueChange={setNewAssignee}>
+                <SelectTrigger className="h-8 w-[160px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="secretariaat" className="text-xs">Secretariaat</SelectItem>
+                  <SelectItem value="penningmeester" className="text-xs">Penningmeester</SelectItem>
+                  <SelectItem value="bestuur" className="text-xs">Bestuur</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                type="date"
+                value={newDueDate}
+                onChange={(e) => setNewDueDate(e.target.value)}
+                className="h-8 text-xs w-[160px]"
+                placeholder="Deadline"
+              />
+              <div className="flex gap-2 ml-auto">
+                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setShowAddForm(false)}>
+                  Annuleer
+                </Button>
+                <Button size="sm" className="h-8 text-xs" onClick={handleAddTodo} disabled={!newTitle.trim()}>
+                  Toevoegen
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Grouped by assignee */}
       {Object.entries(grouped).map(([assignee, items]) => (
@@ -143,50 +260,126 @@ export default function FinancieelTodoTab({ year }: Props) {
           </div>
           <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
             {items.map((todo) => (
-              <div key={todo.id} className="px-4 py-3 flex items-start gap-3 hover:bg-muted/20 transition-colors">
-                <button
-                  onClick={() => {
-                    complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") });
-                  }}
-                  className="mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary hover:bg-primary/10 transition-colors"
-                  title="Markeer als afgerond"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium">{todo.title}</span>
-                    <Badge className={`text-[10px] px-1.5 py-0 ${typeColors[todo.todo_type] || typeColors.manual}`}>
-                      {typeLabels[todo.todo_type] || todo.todo_type}
-                    </Badge>
-                  </div>
-                  {todo.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{todo.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                    {todo.due_date && (
-                      <span className="flex items-center gap-1">
-                        <Clock size={10} /> {fmtDate(todo.due_date)}
-                      </span>
+              <div key={todo.id}>
+                <div className="px-4 py-3 flex items-start gap-3 hover:bg-muted/20 transition-colors">
+                  <button
+                    onClick={() => {
+                      complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") });
+                    }}
+                    className="mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary hover:bg-primary/10 transition-colors"
+                    title="Markeer als afgerond"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{todo.title}</span>
+                      <Badge className={`text-[10px] px-1.5 py-0 ${typeColors[todo.todo_type] || typeColors.manual}`}>
+                        {typeLabels[todo.todo_type] || todo.todo_type}
+                      </Badge>
+                    </div>
+                    {todo.description && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{todo.description}</p>
                     )}
-                    {todo.member_id && (
-                      <span>Lid #{todo.member_id}</span>
-                    )}
-                    <span>{fmtDate(todo.created_at)}</span>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                      {todo.due_date && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={10} /> {fmtDate(todo.due_date)}
+                        </span>
+                      )}
+                      {todo.member_id && <span>Lid #{todo.member_id}</span>}
+                      <span>{fmtDate(todo.created_at)}</span>
+                      <button
+                        onClick={() => toggleNotes(todo.id)}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                        title="Notities"
+                      >
+                        <StickyNote size={10} />
+                        {todo.notes ? "Notitie" : "Notitie toevoegen"}
+                        {expandedNotes.has(todo.id) ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                      </button>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
+                    className="p-1 text-muted-foreground hover:text-destructive shrink-0"
+                    title="Negeren"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
-                  className="p-1 text-muted-foreground hover:text-destructive shrink-0"
-                  title="Negeren"
-                >
-                  <X size={14} />
-                </button>
+
+                {/* Notes section */}
+                {expandedNotes.has(todo.id) && (
+                  <div className="px-4 pb-3 pl-12">
+                    {todo.notes && editingNoteId !== todo.id && (
+                      <div
+                        className="text-xs bg-muted/40 rounded p-2 mb-2 cursor-pointer hover:bg-muted/60 transition-colors"
+                        onClick={() => {
+                          setEditingNoteId(todo.id);
+                          setNoteText(todo.notes || "");
+                        }}
+                      >
+                        {todo.notes}
+                      </div>
+                    )}
+                    {(editingNoteId === todo.id || !todo.notes) && (
+                      <div className="flex gap-2">
+                        <Textarea
+                          placeholder="Notitie schrijven..."
+                          value={editingNoteId === todo.id ? noteText : ""}
+                          onChange={(e) => {
+                            if (editingNoteId !== todo.id) {
+                              setEditingNoteId(todo.id);
+                              setNoteText(e.target.value);
+                            } else {
+                              setNoteText(e.target.value);
+                            }
+                          }}
+                          onFocus={() => {
+                            if (editingNoteId !== todo.id) {
+                              setEditingNoteId(todo.id);
+                              setNoteText(todo.notes || "");
+                            }
+                          }}
+                          className="text-xs min-h-[50px] flex-1"
+                          rows={2}
+                        />
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleSaveNote(todo.id)}
+                            disabled={!noteText.trim() && !todo.notes}
+                            title="Opslaan"
+                          >
+                            <Send size={12} />
+                          </Button>
+                          {editingNoteId === todo.id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                setEditingNoteId(null);
+                                setNoteText("");
+                              }}
+                              title="Annuleren"
+                            >
+                              <X size={12} />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       ))}
 
-      {pending.length === 0 && (
+      {pending.length === 0 && !showAddForm && (
         <div className="flex items-center gap-3 py-6 px-4 rounded-lg border border-border bg-muted/30">
           <CheckCircle2 size={20} className="text-green-600 shrink-0" />
           <p className="text-sm text-muted-foreground">Alles is up-to-date voor {year}. Geen openstaande taken.</p>
