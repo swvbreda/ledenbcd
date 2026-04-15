@@ -50,7 +50,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "expense" | "income" | "declaration">("all");
+  const [filterType, setFilterType] = useState<"all" | "out" | "income">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
 
   const allLineItems = useMemo(() =>
@@ -151,8 +151,10 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     const q = search.toLowerCase();
     let list = rows;
 
-    if (filterType !== "all") {
-      list = list.filter((r) => r.type === filterType);
+    if (filterType === "income") {
+      list = list.filter((r) => r.type === "income");
+    } else if (filterType === "out") {
+      list = list.filter((r) => r.type === "expense" || r.type === "declaration");
     }
     if (filterPaid !== "all") {
       list = list.filter((r) => {
@@ -263,9 +265,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="text-xs">Alles</SelectItem>
-            <SelectItem value="expense" className="text-xs">Uitgaven</SelectItem>
+            <SelectItem value="out" className="text-xs">Uitgaven</SelectItem>
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
-            <SelectItem value="declaration" className="text-xs">Declaraties</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
