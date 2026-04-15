@@ -45,6 +45,7 @@ export default function FinancienPage() {
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [todoOpen, setTodoOpen] = useState(false);
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
   const contributionStats = useMemo(() => {
