@@ -76,11 +76,28 @@ export default function BalancePanel({
       );
     }
     return (
-      <span className="cursor-pointer hover:text-primary transition-colors flex-1 min-w-0"
+      <span className="cursor-pointer hover:text-primary transition-colors block"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
         <CurrencyCell value={item.amount} />
       </span>
     );
+  };
+
+  const renderItemCell = (item: BudgetBalanceItem | undefined, isAuto = false, autoValue = 0) => {
+    if (item) {
+      return (
+        <div className="relative group">
+          {renderAmount(item)}
+          <button onClick={() => onDelete(item.id)} className="absolute -right-4 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100">
+            <Trash2 size={10} />
+          </button>
+        </div>
+      );
+    }
+    if (isAuto) {
+      return <CurrencyCell value={autoValue} className="text-muted-foreground" />;
+    }
+    return null;
   };
 
   const renderAddForm = (section: string, showSideSelect = false) => {
@@ -138,39 +155,26 @@ export default function BalancePanel({
               <td className="px-3 py-1.5">
                     {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                    {left ? (
-                      <div className="flex items-center justify-end gap-1 group">
-                        {renderAmount(left)}
-                        <button onClick={() => onDelete(left.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    ) : isAutoLeft ? (
-                      <CurrencyCell value={totalBudgeted} className="text-muted-foreground" />
-                    ) : ""}
+              <td className="px-3 py-1.5">
+                    {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
+                  </td>
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                    {renderItemCell(left, isAutoLeft, totalBudgeted)}
                   </td>
                   <td className="px-3 py-1.5">
                     {right ? right.name : ""}
                   </td>
-                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                    {right ? (
-                      <div className="flex items-center justify-end gap-1 group">
-                        {renderAmount(right)}
-                        <button onClick={() => onDelete(right.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    ) : ""}
+                  <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                    {renderItemCell(right)}
                   </td>
                 </tr>
               );
             })}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2"></td>
-              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={leftTotal + (hasManualBudgetedExpenses ? 0 : totalBudgeted)} /></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={leftTotal + (hasManualBudgetedExpenses ? 0 : totalBudgeted)} /></td>
               <td className="px-3 py-2"></td>
-              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={rightTotal} /></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={rightTotal} /></td>
             </tr>
           </tbody>
         </table>
@@ -184,39 +188,33 @@ export default function BalancePanel({
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
         <table className="w-full text-sm">
-          <colgroup>
+           <colgroup>
             <col className="w-[35%]" />
             <col className="w-[20%]" />
             <col />
-            <col className="w-[5%]" />
           </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                  <div className="flex items-center justify-end gap-1 group">
-                    {renderAmount(item)}
-                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0"><Trash2 size={10} /></button>
-                  </div>
+                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                  {renderItemCell(item)}
                 </td>
-                <td />
                 <td />
               </tr>
             ))}
             {contributionStats && (
               <tr className="border-b border-border/50">
                 <td className="px-3 py-1.5">Ontvangen contributie</td>
-                <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.totalReceived} /></td>
+                <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={contributionStats.totalReceived} /></td>
                 <td className="text-right px-3 py-1.5 whitespace-nowrap">
                   <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className="text-destructive" />
                 </td>
-                <td />
               </tr>
             )}
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
-              <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={totalSpent} /></td>
+              <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5">
                 {contributionStats && (
                   <div className="text-xs text-muted-foreground leading-tight space-y-0.5">
@@ -225,17 +223,15 @@ export default function BalancePanel({
                   </div>
                 )}
               </td>
-              <td />
             </tr>
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2">Totaal</td>
-              <td className="text-right px-3 py-2 whitespace-nowrap">
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7">
                 <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
               </td>
               <td className="text-right px-3 py-2 whitespace-nowrap">
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
-              <td />
             </tr>
           </tbody>
         </table>
