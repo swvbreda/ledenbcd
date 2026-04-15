@@ -103,7 +103,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       const e = row.data;
       return {
         date: e.expense_date || "",
-        type: "Uitgave",
+        type: "Uit",
         name: e.creditor_name || e.description || "–",
         dossier: e.dossier || "",
         category: e.categoryName,
