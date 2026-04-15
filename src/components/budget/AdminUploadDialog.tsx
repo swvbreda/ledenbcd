@@ -8,12 +8,11 @@ import { toast } from "sonner";
 
 interface Proposal {
   type: string;
-  member_id: number | null;
-  member_name: string;
+  match_id: string | null;
+  name: string;
   amount: number;
   date: string | null;
   invoice_number: string | null;
-  contribution_id: string | null;
   confidence: "high" | "medium" | "low";
   description: string;
   applied: boolean;
