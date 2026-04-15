@@ -16,7 +16,8 @@ interface DossierEntry {
   creditor: string;
   invoice: string;
   amount: number;
-  category: string;
+  categoryName: string;
+  lineItemName: string;
 }
 
 interface DossierRow {
@@ -44,7 +45,8 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
             creditor: exp.creditor_name || exp.description || "–",
             invoice: exp.invoice_reference || "",
             amount: exp.amount,
-            category: `${cat.name} → ${li.name}`,
+            categoryName: cat.name,
+            lineItemName: li.name,
           });
         }
       }
@@ -95,10 +97,11 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
                   <th className="px-3 py-1 text-left font-medium w-[15%]">Datum</th>
-                  <th className="px-3 py-1 text-left font-medium w-[25%]">Crediteur</th>
-                  <th className="px-3 py-1 text-left font-medium w-[15%]">Factuurnr</th>
-                  <th className="px-3 py-1 text-left font-medium w-[20%]">Begrotingspost</th>
-                  <th className="px-3 py-1 text-left font-medium w-[15%]">Dossier</th>
+                  <th className="px-3 py-1 text-left font-medium w-[20%]">Crediteur</th>
+                  <th className="px-3 py-1 text-left font-medium w-[12%]">Factuurnr</th>
+                  <th className="px-3 py-1 text-left font-medium w-[15%]">Categorie</th>
+                  <th className="px-3 py-1 text-left font-medium w-[15%]">Begrotingspost</th>
+                  <th className="px-3 py-1 text-left font-medium w-[13%]">Dossier</th>
                   <th className="px-3 py-1 text-right font-medium w-[10%]">Bedrag</th>
                 </tr>
               </thead>
@@ -110,7 +113,8 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                       <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
                       <td className="px-3 py-1">{e.creditor}</td>
                       <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
-                      <td className="px-3 py-1 text-muted-foreground">{e.category}</td>
+                      <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
+                      <td className="px-3 py-1 text-muted-foreground">{e.lineItemName}</td>
                       <td className="px-3 py-1">
                         {isEditing ? (
                           <div className="flex items-center gap-1">
