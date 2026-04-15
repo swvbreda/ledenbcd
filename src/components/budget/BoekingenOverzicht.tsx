@@ -103,7 +103,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       const e = row.data;
       return {
         date: e.expense_date || "",
-        type: "Uitgave",
+        type: "Uit",
         name: e.creditor_name || e.description || "–",
         dossier: e.dossier || "",
         category: e.categoryName,
@@ -118,7 +118,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       const c = row.data;
       return {
         date: c.invoice_date || c.paid_date || "",
-        type: "Inkomst",
+        type: "In",
         name: c.memberName,
         dossier: "",
         category: "Contributie",
@@ -133,7 +133,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       const d = row.data;
       return {
         date: d.expense_date || "",
-        type: "Declaratie",
+        type: "Uit",
         name: d.board_member_name,
         dossier: d.appointment || "",
         category: "Declaratie",
