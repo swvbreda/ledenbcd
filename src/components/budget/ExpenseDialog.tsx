@@ -71,11 +71,11 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                 <tbody>
                   {expenses.map((e) => (
                     <tr key={e.id} className="border-b border-border/50">
-                      <td className="px-2 py-1 whitespace-nowrap">{e.expense_date || "–"}</td>
-                      <td className="px-2 py-1">{e.description || "–"}</td>
-                      <td className="px-2 py-1">{e.dossier || "–"}</td>
-                      <td className="px-2 py-1">{e.creditor_name || "–"}</td>
-                      <td className="px-2 py-1 tabular-nums">{e.invoice_reference || "–"}</td>
+                      <td className="px-2 py-1 whitespace-nowrap">{e.expense_date || ""}</td>
+                      <td className="px-2 py-1">{e.description || ""}</td>
+                      <td className="px-2 py-1">{e.dossier || ""}</td>
+                      <td className="px-2 py-1">{e.creditor_name || ""}</td>
+                      <td className="px-2 py-1 tabular-nums">{e.invoice_reference || ""}</td>
                       <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive">

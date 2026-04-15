@@ -104,7 +104,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       return {
         date: e.expense_date || "",
         type: "Uit",
-        name: e.creditor_name || e.description || "–",
+        name: e.creditor_name || e.description || "",
         dossier: e.dossier || "",
         category: e.categoryName,
         subcategory: e.lineItemName,
@@ -333,7 +333,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                       {row.type === "income" ? "In" : "Uit"}
                     </Badge>
                   </td>
-                  <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || "–"}</td>
+                  <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || ""}</td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
                     {isEditing ? (
@@ -344,7 +344,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                         placeholder="Dossier..."
                       />
                     ) : (
-                      v.dossier || "–"
+                      v.dossier || ""
                     )}
                   </td>
                   <td className="px-2 py-1">
@@ -363,10 +363,10 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-muted-foreground">{v.subcategory || "–"}</span>
+                      <span className="text-muted-foreground">{v.subcategory || ""}</span>
                     )}
                   </td>
-                  <td className="px-2 py-1 tabular-nums">{v.invoice || "–"}</td>
+                  <td className="px-2 py-1 tabular-nums">{v.invoice || ""}</td>
                   <td className="px-2 py-1 text-right tabular-nums font-medium text-foreground">
                     {v.isExpense && <span>−</span>}
                     <CurrencyCell value={v.amount} />

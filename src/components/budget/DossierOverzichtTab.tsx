@@ -66,7 +66,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
           list.push({
             id: exp.id,
             date: exp.expense_date || "",
-            creditor: exp.creditor_name || exp.description || "–",
+            creditor: exp.creditor_name || exp.description || "",
             invoice: exp.invoice_reference || "",
             amount: exp.amount,
             categoryName: cat.name,
@@ -245,9 +245,9 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
               <tbody>
                 {d.entries.map((e) => (
                   <tr key={e.id} className="border-b border-border/30 hover:bg-muted/20 group">
-                    <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
+                    <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || ""}</td>
                     <td className="px-3 py-1">{e.creditor}</td>
-                    <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
+                    <td className="px-3 py-1 tabular-nums">{e.invoice || ""}</td>
                     <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
                     <td className="px-3 py-1 text-muted-foreground">{e.lineItemName}</td>
                     <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
@@ -355,9 +355,9 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                               onCheckedChange={() => toggleExpense(e.id)}
                             />
                           </td>
-                          <td className="px-2 py-1 tabular-nums whitespace-nowrap">{e.date || "–"}</td>
+                          <td className="px-2 py-1 tabular-nums whitespace-nowrap">{e.date || ""}</td>
                           <td className="px-2 py-1">{e.creditor}</td>
-                          <td className="px-2 py-1 tabular-nums">{e.invoice || "–"}</td>
+                          <td className="px-2 py-1 tabular-nums">{e.invoice || ""}</td>
                           <td className="px-2 py-1 text-muted-foreground">{e.categoryName}</td>
                           <td className="px-2 py-1 text-right tabular-nums"><CurrencyCell value={e.amount} /></td>
                         </tr>
