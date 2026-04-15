@@ -137,11 +137,11 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         name: d.board_member_name,
         dossier: d.appointment || "",
         category: "Declaratie",
-        subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : "Overig",
+        subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : d.declaration_type === "woordvoering" ? "Woordvoering" : d.declaration_type === "penningmeester" ? "Penningmeester" : d.declaration_type,
         invoice: "",
         amount: d.amount,
         isExpense: true,
-        paid: false,
+        paid: d.status === "approved",
         id: d.id,
       };
     }
