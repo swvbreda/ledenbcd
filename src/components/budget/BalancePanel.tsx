@@ -195,9 +195,9 @@ export default function BalancePanel({
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
                 <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1 group">
                     {renderAmount(item)}
-                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100"><Trash2 size={10} /></button>
+                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0"><Trash2 size={10} /></button>
                   </div>
                 </td>
                 <td />
