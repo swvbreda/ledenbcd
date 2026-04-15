@@ -1,0 +1,1 @@
+ALTER TABLE public.finance_todos ADD COLUMN notes TEXT;
