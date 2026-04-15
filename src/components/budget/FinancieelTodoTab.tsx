@@ -32,13 +32,6 @@ const typeCategoryLabels: Record<string, string> = {
   overig: "Overig",
 };
 
-const typeCategoryIcons: Record<string, string> = {
-  contributie: "💰",
-  crediteur: "🧾",
-  declaratie: "📋",
-  overig: "📌",
-};
-
 const getTypeCategory = (todoType: string): string => {
   if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
   if (todoType === "pending_declaration") return "declaratie";
