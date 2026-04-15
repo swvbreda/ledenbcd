@@ -135,14 +135,14 @@ export default function BalancePanel({
               const isAutoLeft = !hasManualBudgetedExpenses && !left && i === middelenLeft.length;
               return (
                 <tr key={i} className="border-b border-border/50">
-                  <td className="px-3 py-1.5 text-muted-foreground">
+              <td className="px-3 py-1.5">
                     {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
                   </td>
                   <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
                     {left ? (
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 group">
                         {renderAmount(left)}
-                        <button onClick={() => onDelete(left.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100">
+                        <button onClick={() => onDelete(left.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
                           <Trash2 size={10} />
                         </button>
                       </div>
@@ -155,9 +155,9 @@ export default function BalancePanel({
                   </td>
                   <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
                     {right ? (
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 group">
                         {renderAmount(right)}
-                        <button onClick={() => onDelete(right.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 hover:opacity-100">
+                        <button onClick={() => onDelete(right.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0">
                           <Trash2 size={10} />
                         </button>
                       </div>
@@ -168,7 +168,7 @@ export default function BalancePanel({
             })}
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2"></td>
-              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={leftTotal + totalBudgeted} /></td>
+              <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={leftTotal + (hasManualBudgetedExpenses ? 0 : totalBudgeted)} /></td>
               <td className="px-3 py-2"></td>
               <td className="text-right px-3 py-2 whitespace-nowrap"><CurrencyCell value={rightTotal} /></td>
             </tr>
