@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ListTodo } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
@@ -45,6 +45,7 @@ export default function FinancienPage() {
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [todoOpen, setTodoOpen] = useState(false);
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
   const contributionStats = useMemo(() => {
@@ -88,7 +89,7 @@ export default function FinancienPage() {
       />
 
       {/* Year selector */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
           <SelectTrigger className="w-[140px] h-9">
             <SelectValue />
@@ -99,16 +100,33 @@ export default function FinancienPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={todoOpen ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTodoOpen(!todoOpen)}
+          className="gap-1.5"
+        >
+          <ListTodo size={16} />
+          To Do
+        </Button>
       </div>
 
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
-        <Tabs defaultValue="todo" className="space-y-1">
+        <>
+        {todoOpen && (
+          <FinancieelTodoOverzicht
+            declarations={internalDeclarations || []}
+            contributions={contributions || []}
+            expenses={(categories || []).flatMap((c) => c.line_items.flatMap((li) => li.expenses))}
+            members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+            year={year}
+          />
+        )}
+
+        <Tabs defaultValue="dashboard" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
-            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              To Do
-            </TabsTrigger>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dashboard
             </TabsTrigger>
@@ -125,16 +143,6 @@ export default function FinancienPage() {
               Dossiers
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="todo">
-            <FinancieelTodoOverzicht
-              declarations={internalDeclarations || []}
-              contributions={contributions || []}
-              expenses={(categories || []).flatMap((c) => c.line_items.flatMap((li) => li.expenses))}
-              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
-              year={year}
-            />
-          </TabsContent>
 
           <TabsContent value="dashboard">
             <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
@@ -264,6 +272,7 @@ export default function FinancienPage() {
             />
           </TabsContent>
         </Tabs>
+        </>
       )}
 
       {expenseDialog && user && (

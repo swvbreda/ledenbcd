@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { AlertCircle, FileText, CheckCircle2, Receipt, Upload } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, CheckCircle2, Receipt, Upload, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Declaration {
@@ -10,6 +9,7 @@ interface Declaration {
   amount: number;
   status: string;
   expense_date?: string | null;
+  created_at?: string;
 }
 
 interface Contribution {
@@ -46,13 +46,12 @@ interface Props {
 const fmt = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
-export default function FinancieelTodoOverzicht({ declarations, contributions, expenses, members, year }: Props) {
-  const memberMap = useMemo(() => {
-    const m = new Map<number, string>();
-    members.forEach((mem) => m.set(mem.id, mem.naam));
-    return m;
-  }, [members]);
+const fmtDate = (d: string | null | undefined) => {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
+};
 
+export default function FinancieelTodoOverzicht({ declarations, contributions, expenses, members, year }: Props) {
   const pendingDeclarations = useMemo(
     () => declarations.filter((d) => d.status === "pending"),
     [declarations]
@@ -74,102 +73,86 @@ export default function FinancieelTodoOverzicht({ declarations, contributions, e
     [expenses]
   );
 
-  const totalTodos = pendingDeclarations.length + (missingInvoices.length > 0 ? 1 : 0) + (missingReceipts.length > 0 ? 1 : 0);
+  const totalTodos = pendingDeclarations.length + missingInvoices.length + missingReceipts.length;
 
   if (totalTodos === 0) {
     return (
-      <div className="mt-4 flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <CheckCircle2 size={48} className="mb-3 text-green-500" />
-        <p className="text-lg font-medium">Alles is up-to-date!</p>
-        <p className="text-sm">Er zijn geen openstaande taken voor {year}.</p>
+      <div className="flex items-center gap-3 py-4 px-4 rounded-lg border border-border bg-muted/30 mb-4">
+        <CheckCircle2 size={20} className="text-green-600 shrink-0" />
+        <p className="text-sm text-muted-foreground">Alles is up-to-date voor {year}. Geen openstaande taken.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-4 space-y-4">
-      {/* Pending declarations */}
-      {pendingDeclarations.length > 0 && (
-        <Card className="border-2 border-orange-300/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertCircle size={18} className="text-orange-500" />
-              Declaraties ter goedkeuring
-              <Badge variant="secondary" className="ml-auto">{pendingDeclarations.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="divide-y divide-border">
-              {pendingDeclarations.map((d) => (
-                <div key={d.id} className="flex items-center justify-between py-2 text-sm">
-                  <div>
-                    <span className="font-medium">{d.board_member_name}</span>
-                    {d.appointment && <span className="text-muted-foreground ml-2">— {d.appointment}</span>}
-                    {d.expense_date && (
-                      <span className="text-muted-foreground ml-2 text-xs">
-                        {new Date(d.expense_date).toLocaleDateString("nl-NL")}
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-medium tabular-nums">{fmt(d.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+    <div className="mb-4 border-2 border-primary/60 rounded-lg overflow-hidden">
+      <div className="bg-primary/5 px-4 py-2.5 border-b border-border flex items-center gap-2">
+        <Clock size={16} className="text-primary" />
+        <h2 className="text-sm font-semibold">Openstaande taken ({totalTodos})</h2>
+      </div>
 
-      {/* Missing contribution invoices */}
-      {missingInvoices.length > 0 && (
-        <Card className="border-2 border-blue-300/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Receipt size={18} className="text-blue-500" />
-              Contributiefacturen nog te versturen
-              <Badge variant="secondary" className="ml-auto">{missingInvoices.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
-              {missingInvoices.map((m) => (
-                <div key={m.id} className="py-1.5 text-sm">
-                  {m.naam}
-                </div>
-              ))}
+      <div className="divide-y divide-border">
+        {/* Pending declarations — actie: penningmeester moet goedkeuren */}
+        {pendingDeclarations.map((d) => (
+          <div key={`decl-${d.id}`} className="px-4 py-2.5 flex items-start gap-3">
+            <AlertCircle size={16} className="text-orange-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm">
+                <span className="font-medium">Declaratie goedkeuren</span>
+                <span className="text-muted-foreground"> — </span>
+                <span>{d.board_member_name}</span>
+                {d.appointment && <span className="text-muted-foreground"> ({d.appointment})</span>}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {fmtDate(d.expense_date) && <>Datum: {fmtDate(d.expense_date)} · </>}
+                Bedrag: {fmt(d.amount)} · Actie: Penningmeester
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <Badge variant="secondary" className="text-xs shrink-0">Goedkeuren</Badge>
+          </div>
+        ))}
 
-      {/* Missing receipts / documents */}
-      {missingReceipts.length > 0 && (
-        <Card className="border-2 border-purple-300/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Upload size={18} className="text-purple-500" />
-              Bestanden nog te uploaden
-              <Badge variant="secondary" className="ml-auto">{missingReceipts.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
-              {missingReceipts.map((e) => (
-                <div key={e.id} className="flex items-center justify-between py-2 text-sm">
-                  <div>
-                    <span className="font-medium">{e.creditor_name || e.description || "Onbekend"}</span>
-                    {e.expense_date && (
-                      <span className="text-muted-foreground ml-2 text-xs">
-                        {new Date(e.expense_date).toLocaleDateString("nl-NL")}
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-medium tabular-nums">{fmt(e.amount)}</span>
-                </div>
-              ))}
+        {/* Missing invoices — actie: penningmeester moet factuur versturen */}
+        {missingInvoices.length > 0 && (
+          <div className="px-4 py-2.5 flex items-start gap-3">
+            <Receipt size={16} className="text-blue-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm">
+                <span className="font-medium">Contributiefacturen versturen</span>
+                <span className="text-muted-foreground"> — {missingInvoices.length} leden hebben nog geen factuur voor {year}</span>
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {missingInvoices.slice(0, 10).map((m) => (
+                  <Badge key={m.id} variant="outline" className="text-xs font-normal">{m.naam}</Badge>
+                ))}
+                {missingInvoices.length > 10 && (
+                  <Badge variant="outline" className="text-xs font-normal">+{missingInvoices.length - 10} meer</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Actie: Penningmeester · Tab: Contributie</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+
+        {/* Missing receipts — actie: bestuurslid moet bestand uploaden */}
+        {missingReceipts.map((e) => (
+          <div key={`receipt-${e.id}`} className="px-4 py-2.5 flex items-start gap-3">
+            <Upload size={16} className="text-purple-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm">
+                <span className="font-medium">Bestand uploaden</span>
+                <span className="text-muted-foreground"> — </span>
+                <span>{e.creditor_name || e.description || "Onbekende uitgave"}</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {fmtDate(e.expense_date) && <>Datum: {fmtDate(e.expense_date)} · </>}
+                Bedrag: {fmt(e.amount)} · Actie: Factuur/bon uploaden
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-xs shrink-0">Upload</Badge>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
