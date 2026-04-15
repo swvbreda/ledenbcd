@@ -152,10 +152,7 @@ export default function BalancePanel({
               const isAutoLeft = !hasManualBudgetedExpenses && !left && i === middelenLeft.length;
               return (
                 <tr key={i} className="border-b border-border/50">
-              <td className="px-3 py-1.5">
-                    {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
-                  </td>
-              <td className="px-3 py-1.5">
+                  <td className="px-3 py-1.5">
                     {left ? left.name : isAutoLeft ? "Begrote uitgaven" : ""}
                   </td>
                   <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
