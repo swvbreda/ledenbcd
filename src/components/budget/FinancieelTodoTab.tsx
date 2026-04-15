@@ -74,6 +74,8 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [holdDialogId, setHoldDialogId] = useState<string | null>(null);
+  const [holdReason, setHoldReason] = useState("");
   const [sortKey, setSortKey] = useState<"title" | "todo_type" | "assigned_to" | "member_id" | "due_date" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -260,6 +262,43 @@ export default function FinancieelTodoTab({ year }: Props) {
         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
         onChange={onFileSelected}
       />
+      {/* Hold reason dialog */}
+      {holdDialogId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="p-4 space-y-3">
+              <h4 className="text-sm font-semibold">Reden voor on hold</h4>
+              <p className="text-xs text-muted-foreground">Geef aan waarom deze taak on hold wordt gezet.</p>
+              <Textarea
+                placeholder="Reden..."
+                value={holdReason}
+                onChange={(e) => setHoldReason(e.target.value)}
+                className="text-sm min-h-[60px]"
+                rows={2}
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end">
+                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setHoldDialogId(null)}>
+                  Annuleer
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs"
+                  disabled={!holdReason.trim()}
+                  onClick={() => {
+                    hold.mutate(
+                      { id: holdDialogId, reason: holdReason.trim(), notes_by: user?.email || "Onbekend" },
+                      { onSuccess: () => { toast.success("On hold gezet"); setHoldDialogId(null); setHoldReason(""); } }
+                    );
+                  }}
+                >
+                  On hold zetten
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       {/* AI Summary */}
       {aiSummary && (
         <Card className="border-primary/30 bg-primary/5">
@@ -533,7 +572,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                     <td className="px-2 py-1.5 align-middle">
                       <div className="flex items-center justify-end gap-0.5">
                         <button onClick={() => complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") })} className="p-1 text-muted-foreground hover:text-green-600" title="Afronden"><CheckCircle2 size={13} /></button>
-                        <button onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("On hold") })} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
+                        <button onClick={() => { setHoldDialogId(todo.id); setHoldReason(""); }} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
                         <button onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Genegeerd") })} className="p-1 text-muted-foreground hover:text-destructive" title="Negeren"><X size={13} /></button>
                       </div>
                     </td>

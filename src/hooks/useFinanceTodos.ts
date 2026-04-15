@@ -62,10 +62,10 @@ export function useFinanceTodoMutations(year: number) {
   });
 
   const hold = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, reason, notes_by }: { id: string; reason: string; notes_by: string }) => {
       const { error } = await supabase
         .from("finance_todos")
-        .update({ status: "on_hold" })
+        .update({ status: "on_hold", notes: reason, notes_by })
         .eq("id", id);
       if (error) throw error;
     },
