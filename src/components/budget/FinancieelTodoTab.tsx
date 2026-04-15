@@ -18,6 +18,7 @@ interface Props {
 
 const typeLabels: Record<string, string> = {
   new_member_invoice: "Factuur aanmaken",
+  unpaid_contribution: "Betaling opvolgen",
   overdue_invoice: "Betalingsherinnering",
   pending_declaration: "Declaratie goedkeuren",
   manual: "Handmatig",
@@ -25,7 +26,8 @@ const typeLabels: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   new_member_invoice: "bg-blue-100 text-blue-800",
-  overdue_invoice: "bg-amber-100 text-amber-800",
+  unpaid_contribution: "bg-amber-100 text-amber-800",
+  overdue_invoice: "bg-red-100 text-red-800",
   pending_declaration: "bg-orange-100 text-orange-800",
   manual: "bg-muted text-muted-foreground",
 };
