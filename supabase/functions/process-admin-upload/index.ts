@@ -47,68 +47,76 @@ serve(async (req) => {
     }
 
     // Fetch current administration data for matching
-    const [membersRes, contribsRes, invoicesRes] = await Promise.all([
+    const [membersRes, contribsRes, invoicesRes, expensesRes] = await Promise.all([
       supabase.from("members_data").select("id, data").eq("member_type", "member"),
       supabase.from("member_contributions").select("*").eq("year", year),
       supabase.from("contribution_invoices").select("*").eq("year", year),
+      supabase
+        .from("budget_expenses")
+        .select("id, creditor_name, amount, paid, paid_date, invoice_reference, description, line_item_id, expense_date")
+        .eq("paid", false),
     ]);
 
     const members = membersRes.data ?? [];
     const contribs = contribsRes.data ?? [];
     const invoices = invoicesRes.data ?? [];
+    const expenses = expensesRes.data ?? [];
 
     // Build context for AI
     const memberList = members.map((m: any) => ({
       id: m.id,
       naam: m.data?.naam,
       bedrijfsnaam: m.data?.bedrijfsnaam,
-      coffeeshop: m.data?.coffeeshop,
     }));
 
-    const contribList = contribs.map((c: any) => ({
+    const contribList = contribs.filter((c: any) => !c.paid).map((c: any) => ({
       id: c.id,
       member_id: c.member_id,
       amount: c.amount,
-      paid: c.paid,
       invoice_number: c.invoice_number,
       invoice_date: c.invoice_date,
     }));
 
-    const invoiceList = invoices.map((i: any) => ({
-      id: i.id,
-      member_id: i.member_id,
-      invoice_number: i.invoice_number,
+    const expenseList = expenses.map((e: any) => ({
+      id: e.id,
+      creditor_name: e.creditor_name,
+      amount: e.amount,
+      invoice_reference: e.invoice_reference,
+      description: e.description,
     }));
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("AI not configured");
 
     const prompt = `Je bent een financieel administratie-assistent voor een branchevereniging (BCD). 
-Analyseer het bijgevoegde bestand en extraheer betalingen, facturen of andere financiële transacties.
+Analyseer het bijgevoegde bestand en extraheer alle betalingen/transacties.
 
-Match elke transactie aan een lid uit de ledenlijst op basis van naam, bedrijfsnaam, factuurnummer, of bedrag.
+Er zijn TWEE soorten matches mogelijk:
 
-LEDENLIJST (id, naam, bedrijfsnaam):
-${JSON.stringify(memberList, null, 0)}
-
-CONTRIBUTIE-ADMINISTRATIE (id, member_id, bedrag, betaald, factuurnr, factuurdatum):
+1. LEDENCONTRIBUTIES — match op lidnaam, bedrijfsnaam of factuurnummer:
+OPENSTAANDE CONTRIBUTIES (id, member_id, bedrag, factuurnr):
 ${JSON.stringify(contribList, null, 0)}
 
-FACTUREN (id, member_id, factuurnr):
-${JSON.stringify(invoiceList, null, 0)}
+LEDEN (id, naam, bedrijfsnaam):
+${JSON.stringify(memberList, null, 0)}
 
-Geef je antwoord UITSLUITEND als JSON array met objecten. Elk object heeft:
-- "type": "payment_received" | "invoice_sent" | "unknown"
-- "member_id": number of null als niet gematcht
-- "member_name": string (naam uit het bestand)
+2. CREDITEURENBETALINGEN — match op crediteur-naam, bedrag of factuurreferentie:
+ONBETAALDE UITGAVEN (id, creditor_name, bedrag, factuurreferentie):
+${JSON.stringify(expenseList, null, 0)}
+
+Match elke transactie uit het bestand aan een contributie OF een uitgave. Probeer altijd te matchen op naam en bedrag.
+
+Geef je antwoord UITSLUITEND als JSON array. Elk object heeft:
+- "type": "contribution_payment" | "expense_payment" | "unknown"
+- "match_id": string (uuid van de gematchte contributie of expense) of null
+- "name": string (naam uit het bestand)
 - "amount": number (bedrag)
-- "date": string (datum, YYYY-MM-DD) of null
+- "date": string (YYYY-MM-DD) of null
 - "invoice_number": string of null
-- "contribution_id": string (uuid van de contributie) of null als niet gematcht
 - "confidence": "high" | "medium" | "low"
-- "description": string (korte uitleg van de match)
+- "description": string (korte uitleg)
 
-Alleen JSON array teruggeven, geen andere tekst.`;
+Alleen JSON array, geen andere tekst.`;
 
     // Build the AI request
     const messages: any[] = [
