@@ -567,6 +567,54 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_todos: {
+        Row: {
+          assigned_to: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          member_id: number | null
+          reference_id: string | null
+          status: string
+          title: string
+          todo_type: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          assigned_to?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          member_id?: number | null
+          reference_id?: string | null
+          status?: string
+          title: string
+          todo_type?: string
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          assigned_to?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          member_id?: number | null
+          reference_id?: string | null
+          status?: string
+          title?: string
+          todo_type?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       internal_declarations: {
         Row: {
           account_holder: string | null
