@@ -305,13 +305,22 @@ export default function FinancieelTodoTab({ year }: Props) {
                       </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
-                    className="p-1 text-muted-foreground hover:text-destructive shrink-0"
-                    title="Negeren"
-                  >
-                    <X size={14} />
-                  </button>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("Taak on hold gezet") })}
+                      className="p-1 text-muted-foreground hover:text-amber-600"
+                      title="On hold zetten"
+                    >
+                      <PauseCircle size={14} />
+                    </button>
+                    <button
+                      onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
+                      className="p-1 text-muted-foreground hover:text-destructive"
+                      title="Negeren"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Notes section */}
