@@ -113,7 +113,6 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                       <td className="px-3 py-1 tabular-nums">{e.invoice || "–"}</td>
                       <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
                       <td className="px-3 py-1 text-muted-foreground">{e.lineItemName}</td>
-                      </td>
                       <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
                     </tr>
                   );
