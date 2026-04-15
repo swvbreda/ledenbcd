@@ -15,10 +15,11 @@ import { Euro, CheckCircle2, AlertCircle, Search, MapPin, FileText, Download, Up
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CsvImportDialog from "@/components/CsvImportDialog";
+import { useBudgetYearSettings } from "@/hooks/useBudget";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-const FIXED_AMOUNT = 3000;
+const DEFAULT_AMOUNT = 3000;
 
 const ContributiePage = () => {
   const { isAdmin } = useAuth();
@@ -31,6 +32,8 @@ const ContributiePage = () => {
   const { data: contributions, isLoading } = useContributions(selectedYear);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(selectedYear);
   const upsert = useUpsertContribution();
+  const { data: yearSettings } = useBudgetYearSettings(selectedYear);
+  const contributionAmount = yearSettings?.contribution_amount ?? DEFAULT_AMOUNT;
 
   const contribMap = useMemo(() => {
     const map = new Map<number, Contribution>();
