@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, ListTodo } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
@@ -14,7 +14,7 @@ import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
-import FinancieelTodoOverzicht from "@/components/budget/FinancieelTodoOverzicht";
+import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ export default function FinancienPage() {
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
-  const [todoOpen, setTodoOpen] = useState(false);
+  
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
   const contributionStats = useMemo(() => {
@@ -100,27 +100,12 @@ export default function FinancienPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant={todoOpen ? "default" : "outline"}
-          size="sm"
-          onClick={() => setTodoOpen(!todoOpen)}
-          className="gap-1.5"
-        >
-          <ListTodo size={16} />
-          To Do
-        </Button>
       </div>
 
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
         <>
-        {todoOpen && (
-          <FinancieelTodoOverzicht
-            declarations={internalDeclarations || []}
-            year={year}
-          />
-        )}
 
         <Tabs defaultValue="dashboard" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
@@ -138,6 +123,9 @@ export default function FinancienPage() {
             </TabsTrigger>
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dossiers
+            </TabsTrigger>
+            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              To Do
             </TabsTrigger>
           </TabsList>
 
@@ -267,6 +255,10 @@ export default function FinancienPage() {
               year={year}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
             />
+          </TabsContent>
+
+          <TabsContent value="todo">
+            <FinancieelTodoTab year={year} />
           </TabsContent>
         </Tabs>
         </>
