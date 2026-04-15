@@ -203,6 +203,7 @@ export default function FinancienPage() {
                   onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
                   onAddNote={(note) => user && mutations.addNote.mutate({ note, userId: user.id }, { onSuccess: () => toast.success("Notitie opgeslagen") })}
                   onDeleteNote={(id) => mutations.deleteNote.mutate(id, { onSuccess: () => toast.success("Notitie verwijderd") })}
+                  onUpdateYearSettings={(settings) => yearSettingsMutation.mutate(settings, { onSuccess: () => toast.success("Jaarinstellingen opgeslagen") })}
                 />
               </div>
             </div>
