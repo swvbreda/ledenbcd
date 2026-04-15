@@ -16,7 +16,8 @@ interface DossierEntry {
   creditor: string;
   invoice: string;
   amount: number;
-  category: string;
+  categoryName: string;
+  lineItemName: string;
 }
 
 interface DossierRow {
