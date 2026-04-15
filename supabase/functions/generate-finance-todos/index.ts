@@ -37,7 +37,8 @@ serve(async (req) => {
       supabase.from("member_contributions").select("*").eq("year", currentYear),
       supabase.from("contribution_invoices").select("*").eq("year", currentYear),
       supabase.from("internal_declarations").select("*").eq("year", currentYear),
-      supabase.from("finance_todos").select("*").eq("year", currentYear).in("status", ["pending", "on_hold"]),
+      // Check ALL statuses to never recreate dismissed/done/on_hold tasks
+      supabase.from("finance_todos").select("*").eq("year", currentYear),
     ]);
 
     const members = membersRes.data ?? [];
@@ -135,7 +136,10 @@ serve(async (req) => {
 
     // Insert new todos
     if (newTodos.length > 0) {
-      const { error } = await supabase.from("finance_todos").insert(newTodos);
+      const { error } = await supabase.from("finance_todos").upsert(newTodos, {
+        onConflict: "todo_type,member_id,year",
+        ignoreDuplicates: true,
+      });
       if (error) throw error;
     }
 
