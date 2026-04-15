@@ -50,6 +50,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingTodoId, setUploadingTodoId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState("");
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const { user } = useAuth();
