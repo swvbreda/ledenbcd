@@ -37,7 +37,7 @@ serve(async (req) => {
       supabase.from("member_contributions").select("*").eq("year", currentYear),
       supabase.from("contribution_invoices").select("*").eq("year", currentYear),
       supabase.from("internal_declarations").select("*").eq("year", currentYear),
-      supabase.from("finance_todos").select("*").eq("year", currentYear).eq("status", "pending"),
+      supabase.from("finance_todos").select("*").eq("year", currentYear).in("status", ["pending", "on_hold"]),
     ]);
 
     const members = membersRes.data ?? [];
