@@ -151,8 +151,10 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     const q = search.toLowerCase();
     let list = rows;
 
-    if (filterType !== "all") {
-      list = list.filter((r) => r.type === filterType);
+    if (filterType === "income") {
+      list = list.filter((r) => r.type === "income");
+    } else if (filterType === "out") {
+      list = list.filter((r) => r.type === "expense" || r.type === "declaration");
     }
     if (filterPaid !== "all") {
       list = list.filter((r) => {
