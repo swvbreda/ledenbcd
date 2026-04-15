@@ -126,6 +126,16 @@ export default function FinancienPage() {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="todo">
+            <FinancieelTodoOverzicht
+              declarations={internalDeclarations || []}
+              contributions={contributions || []}
+              expenses={(categories || []).flatMap((c) => c.line_items.flatMap((li) => li.expenses))}
+              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              year={year}
+            />
+          </TabsContent>
+
           <TabsContent value="dashboard">
             <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
               {/* Left: Budget categories */}
