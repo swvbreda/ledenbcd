@@ -344,13 +344,13 @@ export default function FinancieelTodoTab({ year }: Props) {
         </Card>
       )}
 
-      {/* Grouped by assignee */}
-      {Object.entries(grouped).map(([assignee, items]) => (
-        <div key={assignee} className="space-y-2">
+      {/* Grouped by type category */}
+      {grouped.map(([category, items]) => (
+        <div key={category} className="space-y-2">
           <div className="flex items-center gap-2">
-            <User size={14} className="text-muted-foreground" />
+            <span className="text-sm">{typeCategoryIcons[category]}</span>
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {assigneeLabels[assignee] || assignee}
+              {typeCategoryLabels[category] || category}
             </span>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{items.length}</Badge>
           </div>
