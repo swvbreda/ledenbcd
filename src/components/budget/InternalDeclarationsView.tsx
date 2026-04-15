@@ -38,7 +38,7 @@ type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajector
 export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("expense_date");
-  const [sortAsc, setSortAsc] = useState(true);
+  const [sortAsc, setSortAsc] = useState(false);
   const [adding, setAdding] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
