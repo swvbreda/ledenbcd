@@ -330,7 +330,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                       variant={row.type === "income" ? "default" : "destructive"}
                       className={`text-[10px] px-1.5 py-0 ${row.type === "income" ? "bg-green-600" : ""}`}
                     >
-                      {row.type === "income" ? "In" : row.type === "declaration" ? "Decl" : "Uit"}
+                      {row.type === "income" ? "In" : "Uit"}
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || "–"}</td>
