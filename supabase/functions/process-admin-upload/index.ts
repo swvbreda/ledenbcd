@@ -122,7 +122,14 @@ Alleen JSON array teruggeven, geen andere tekst.`;
       });
     } else {
       // For PDFs and images, encode as base64 and use vision
-      const base64 = btoa(String.fromCharCode(...fileBytes));
+      // Chunk the conversion to avoid stack overflow with large files
+      let binary = "";
+      const chunkSize = 8192;
+      for (let i = 0; i < fileBytes.length; i += chunkSize) {
+        const chunk = fileBytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+      }
+      const base64 = btoa(binary);
       const mimeType = file.type || "application/pdf";
       messages.push({
         role: "user",
