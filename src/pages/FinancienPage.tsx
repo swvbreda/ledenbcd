@@ -89,7 +89,7 @@ export default function FinancienPage() {
       />
 
       {/* Year selector */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
           <SelectTrigger className="w-[140px] h-9">
             <SelectValue />
@@ -100,6 +100,15 @@ export default function FinancienPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={todoOpen ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTodoOpen(!todoOpen)}
+          className="gap-1.5"
+        >
+          <ListTodo size={16} />
+          To Do
+        </Button>
       </div>
 
       {isLoading ? (
