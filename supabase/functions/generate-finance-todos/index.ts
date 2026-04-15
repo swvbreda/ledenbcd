@@ -68,10 +68,14 @@ serve(async (req) => {
     const invoiceMemberIds = new Set(invoices.map((i: any) => i.member_id));
     const contribMap = new Map(contribs.map((c: any) => [c.member_id, c]));
 
+    // Track members that need an invoice (no invoice yet) — these should NOT get a payment reminder
+    const membersNeedingInvoice = new Set<number>();
+
     // 1. Members without invoice
     const newMemberSet = existingByType.get("new_member_invoice") ?? new Set();
     for (const m of members) {
       if (!invoiceMemberIds.has(m.id) && !newMemberSet.has(m.id)) {
+        membersNeedingInvoice.add(m.id);
         const naam = m.data?.naam ?? `Lid #${m.id}`;
         newTodos.push({
           todo_type: "new_member_invoice",
@@ -81,6 +85,9 @@ serve(async (req) => {
           member_id: m.id,
           year: currentYear,
         });
+      } else if (!invoiceMemberIds.has(m.id) && newMemberSet.has(m.id)) {
+        // Already has a new_member_invoice todo — still skip payment reminders
+        membersNeedingInvoice.add(m.id);
       }
     }
 
