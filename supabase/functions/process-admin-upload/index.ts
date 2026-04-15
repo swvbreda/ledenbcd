@@ -186,31 +186,37 @@ Alleen JSON array, geen andere tekst.`;
     const proposals: any[] = [];
 
     for (const match of matches) {
-      if (match.confidence === "high" && match.contribution_id && match.type === "payment_received") {
-        // Auto-apply: mark contribution as paid
-        const { error } = await supabase
-          .from("member_contributions")
-          .update({
-            paid: true,
-            paid_date: match.date || new Date().toISOString().split("T")[0],
-          })
-          .eq("id", match.contribution_id)
-          .eq("paid", false);
+      if (match.confidence === "high" && match.match_id) {
+        const today = match.date || new Date().toISOString().split("T")[0];
 
-        if (!error) {
-          // Complete related todo
-          await supabase
-            .from("finance_todos")
-            .update({ status: "done", completed_at: new Date().toISOString() })
-            .eq("reference_id", match.contribution_id)
-            .eq("status", "pending");
-
-          autoApplied.push(match.contribution_id);
-          match.applied = true;
+        if (match.type === "contribution_payment") {
+          const { error } = await supabase
+            .from("member_contributions")
+            .update({ paid: true, paid_date: today })
+            .eq("id", match.match_id)
+            .eq("paid", false);
+          if (!error) {
+            await supabase
+              .from("finance_todos")
+              .update({ status: "done", completed_at: new Date().toISOString() })
+              .eq("reference_id", match.match_id)
+              .eq("status", "pending");
+            autoApplied.push(match.match_id);
+            match.applied = true;
+          }
+        } else if (match.type === "expense_payment") {
+          const { error } = await supabase
+            .from("budget_expenses")
+            .update({ paid: true, paid_date: today })
+            .eq("id", match.match_id)
+            .eq("paid", false);
+          if (!error) {
+            autoApplied.push(match.match_id);
+            match.applied = true;
+          }
         }
-      } else {
-        match.applied = false;
       }
+      if (!match.applied) match.applied = false;
       proposals.push(match);
     }
 
