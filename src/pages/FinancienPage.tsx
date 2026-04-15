@@ -124,6 +124,9 @@ export default function FinancienPage() {
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dossiers
             </TabsTrigger>
+            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              To Do
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -252,6 +255,10 @@ export default function FinancienPage() {
               year={year}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
             />
+          </TabsContent>
+
+          <TabsContent value="todo">
+            <FinancieelTodoTab year={year} />
           </TabsContent>
         </Tabs>
         </>
