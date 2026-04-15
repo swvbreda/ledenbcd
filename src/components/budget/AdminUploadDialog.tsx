@@ -38,8 +38,8 @@ const confidenceLabels: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
-  payment_received: "Betaling ontvangen",
-  invoice_sent: "Factuur verstuurd",
+  contribution_payment: "Contributie",
+  expense_payment: "Crediteur",
   unknown: "Onbekend",
 };
 
