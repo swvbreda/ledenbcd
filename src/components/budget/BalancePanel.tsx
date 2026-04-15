@@ -76,7 +76,7 @@ export default function BalancePanel({
       );
     }
     return (
-      <span className="cursor-pointer hover:text-primary transition-colors inline-flex w-full tabular-nums"
+      <span className="cursor-pointer hover:text-primary transition-colors flex-1 min-w-0"
         onClick={() => { setEditId(item.id); setEditAmount(String(item.amount)); }}>
         <CurrencyCell value={item.amount} />
       </span>
