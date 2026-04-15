@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX finance_todos_dedup_idx ON public.finance_todos (todo_type, member_id, year) WHERE member_id IS NOT NULL;
