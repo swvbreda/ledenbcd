@@ -25,6 +25,26 @@ const typeLabels: Record<string, string> = {
   manual: "Handmatig",
 };
 
+const typeCategoryLabels: Record<string, string> = {
+  contributie: "Contributies",
+  crediteur: "Crediteuren",
+  declaratie: "Declaraties",
+  overig: "Overig",
+};
+
+const typeCategoryIcons: Record<string, string> = {
+  contributie: "💰",
+  crediteur: "🧾",
+  declaratie: "📋",
+  overig: "📌",
+};
+
+const getTypeCategory = (todoType: string): string => {
+  if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
+  if (todoType === "pending_declaration") return "declaratie";
+  return "overig";
+};
+
 const typeColors: Record<string, string> = {
   new_member_invoice: "bg-blue-100 text-blue-800",
   unpaid_contribution: "bg-amber-100 text-amber-800",
