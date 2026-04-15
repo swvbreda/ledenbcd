@@ -433,11 +433,28 @@ export default function FinancieelTodoTab({ year }: Props) {
                       }}
                     />
                   </th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[35%]">Taak</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[100px]">Type</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[110px]">Verantwoordelijke</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[50px]">Lid</th>
-                  <th className="text-left px-2 py-1.5 font-medium w-[75px]">Deadline</th>
+                  {([
+                    ["title", "Taak", "w-[35%]", "text-left"],
+                    ["todo_type", "Type", "w-[100px]", "text-left"],
+                    ["assigned_to", "Verantwoordelijke", "w-[110px]", "text-left"],
+                    ["member_id", "Lid", "w-[50px]", "text-left"],
+                    ["due_date", "Deadline", "w-[75px]", "text-left"],
+                  ] as const).map(([key, label, width, align]) => (
+                    <th
+                      key={key}
+                      className={`${align} px-2 py-1.5 font-medium ${width} cursor-pointer select-none hover:text-foreground transition-colors`}
+                      onClick={() => toggleSort(key)}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {label}
+                        {sortKey === key ? (
+                          sortDir === "asc" ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                        ) : (
+                          <ArrowUpDown size={10} className="opacity-30" />
+                        )}
+                      </span>
+                    </th>
+                  ))}
                   <th className="w-[80px] px-2 py-1.5 font-medium text-right">Acties</th>
                 </tr>
               </thead>
