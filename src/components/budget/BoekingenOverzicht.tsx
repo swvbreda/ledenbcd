@@ -118,7 +118,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       const c = row.data;
       return {
         date: c.invoice_date || c.paid_date || "",
-        type: "Inkomst",
+        type: "In",
         name: c.memberName,
         dossier: "",
         category: "Contributie",
