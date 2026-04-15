@@ -151,7 +151,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
   };
 
   const handleExport = () => {
-    const headers = ["Datum", "Wie", "Afspraak", "Traject", "Km enkel", "Km retour", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Status"];
+    const headers = ["Datum", "Wie", "Omschrijving", "Traject", "Km enkel", "Km retour", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Status"];
     const rows = filtered.map((d) => [
       d.expense_date || "",
       d.board_member_name,
@@ -188,7 +188,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Zoek op naam, afspraak, traject..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm pl-8" />
+          <Input placeholder="Zoek op naam, omschrijving, traject..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm pl-8" />
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 text-xs rounded-md border border-input bg-background px-2">
           <option value="all">Alle statussen</option>
@@ -215,7 +215,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
               <option value="woordvoering">Woordvoering</option>
               <option value="penningmeester">Penningmeester</option>
             </select>
-            <Input placeholder="Afspraak" value={form.appointment} onChange={(e) => setForm({ ...form, appointment: e.target.value })} className="h-8 text-sm" />
+            <Input placeholder="Omschrijving" value={form.appointment} onChange={(e) => setForm({ ...form, appointment: e.target.value })} className="h-8 text-sm" />
             <Input placeholder="Traject (bijv. A'veen – Utrecht)" value={form.trajectory} onChange={(e) => setForm({ ...form, trajectory: e.target.value })} className="h-8 text-sm" />
             <Input type="number" placeholder="Km enkel" value={form.km_single} onChange={(e) => setForm({ ...form, km_single: e.target.value })} className="h-8 text-sm" />
             <Input type="number" placeholder="Km retour" value={form.km_return} onChange={(e) => setForm({ ...form, km_return: e.target.value })} className="h-8 text-sm" />
@@ -237,7 +237,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
             <tr className="border-b border-border bg-muted/30">
               <SortHeader label="Datum" field="expense_date" className="text-left" />
               <SortHeader label="Wie" field="board_member_name" className="text-left" />
-              <SortHeader label="Afspraak" field="appointment" className="text-left" />
+              <SortHeader label="Omschrijving" field="appointment" className="text-left" />
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Traject</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Km</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Retour</th>
