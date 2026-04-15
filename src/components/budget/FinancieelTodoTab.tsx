@@ -46,6 +46,7 @@ const typeColors: Record<string, string> = {
   unpaid_contribution: "bg-amber-100 text-amber-800",
   overdue_invoice: "bg-red-100 text-red-800",
   pending_declaration: "bg-orange-100 text-orange-800",
+  member_archived: "bg-rose-100 text-rose-800",
   manual: "bg-muted text-muted-foreground",
 };
 
