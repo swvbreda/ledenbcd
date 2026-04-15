@@ -247,11 +247,29 @@ export default function BalancePanel({
               <tbody>
                 <tr className="border-b border-border/50">
                   <td className="px-3 py-1.5 font-semibold">Aantal leden</td>
-                  <td className="text-right px-3 py-1.5 tabular-nums font-semibold">{contributionStats.totalMembers}</td>
+                  <td className="text-right px-3 py-1.5 tabular-nums font-semibold">
+                    {onUpdateYearSettings ? (
+                      <Input
+                        type="number"
+                        value={contributionStats.totalMembers}
+                        onChange={(e) => onUpdateYearSettings({ budgeted_member_count: Number(e.target.value), contribution_amount: contributionStats.contributionAmount })}
+                        className="h-6 w-16 text-right text-sm ml-auto"
+                      />
+                    ) : contributionStats.totalMembers}
+                  </td>
                 </tr>
                 <tr className="border-b border-border/50">
                   <td className="px-3 py-1.5">Contributie</td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.contributionAmount} /></td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap">
+                    {onUpdateYearSettings ? (
+                      <Input
+                        type="number"
+                        value={contributionStats.contributionAmount}
+                        onChange={(e) => onUpdateYearSettings({ budgeted_member_count: contributionStats.totalMembers, contribution_amount: Number(e.target.value) })}
+                        className="h-6 w-24 text-right text-sm ml-auto"
+                      />
+                    ) : <CurrencyCell value={contributionStats.contributionAmount} />}
+                  </td>
                 </tr>
                 <tr>
                   <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
