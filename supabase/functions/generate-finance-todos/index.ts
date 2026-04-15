@@ -143,13 +143,16 @@ serve(async (req) => {
       }
     }
 
-    // Insert new todos
-    if (newTodos.length > 0) {
-      const { error } = await supabase.from("finance_todos").upsert(newTodos, {
-        onConflict: "todo_type,member_id,year",
-        ignoreDuplicates: true,
-      });
-      if (error) throw error;
+    // Insert new todos one by one, ignoring unique constraint violations
+    let created = 0;
+    for (const todo of newTodos) {
+      const { error } = await supabase.from("finance_todos").insert(todo);
+      if (error) {
+        // Skip unique constraint violations (duplicate key)
+        if (error.code === "23505") continue;
+        throw error;
+      }
+      created++;
     }
 
     // Now use AI to generate a summary/advice
