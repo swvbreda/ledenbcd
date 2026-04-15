@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2 } from "lucide-react";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
