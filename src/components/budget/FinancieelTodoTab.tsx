@@ -147,7 +147,38 @@ export default function FinancieelTodoTab({ year }: Props) {
     );
   };
 
-  const toggleNotes = (id: string) => {
+  const handleFileUpload = (todoId: string) => {
+    setUploadingTodoId(todoId);
+    fileInputRef.current?.click();
+  };
+
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingTodoId) return;
+    uploadFile.mutate(
+      { id: uploadingTodoId, file },
+      {
+        onSuccess: () => {
+          toast.success("Bestand geüpload");
+          setUploadingTodoId(null);
+        },
+        onError: (err: any) => toast.error("Upload mislukt: " + err.message),
+      }
+    );
+    e.target.value = "";
+  };
+
+  const getFileUrl = (filePath: string) => {
+    const { data } = supabase.storage.from("finance-todo-files").getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  const handleDownloadFile = async (filePath: string) => {
+    const { data, error } = await supabase.storage.from("finance-todo-files").createSignedUrl(filePath, 60);
+    if (error) { toast.error("Kan bestand niet openen"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
     setExpandedNotes((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
