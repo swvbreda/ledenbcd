@@ -296,6 +296,33 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_year_settings: {
+        Row: {
+          budgeted_member_count: number
+          contribution_amount: number
+          created_at: string
+          id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          budgeted_member_count?: number
+          contribution_amount?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          budgeted_member_count?: number
+          contribution_amount?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       contribution_invoices: {
         Row: {
           created_at: string
