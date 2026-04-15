@@ -96,6 +96,8 @@ serve(async (req) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const unpaidSet = existingByType.get("unpaid_contribution") ?? new Set();
     for (const c of contribs) {
+      // Skip members that still need an invoice — can't remind if no invoice sent
+      if (membersNeedingInvoice.has(c.member_id)) continue;
       if (!c.paid && !unpaidSet.has(c.member_id)) {
         const member = members.find((m: any) => m.id === c.member_id);
         const naam = member?.data?.naam ?? `Lid #${c.member_id}`;
