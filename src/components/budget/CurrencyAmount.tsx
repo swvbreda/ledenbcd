@@ -22,9 +22,9 @@ export function CurrencyCell({
   symbolClassName,
 }: CurrencyAmountProps) {
   return (
-    <span className={joinClasses("inline-flex w-full items-baseline tabular-nums", className)}>
-      <span className={joinClasses("shrink-0 mr-1", symbolClassName)}>€</span>
-      <span className={joinClasses("flex-1 text-right", valueClassName)}>{formatEuro(value)}</span>
+    <span className={joinClasses("inline-flex w-full items-baseline tabular-nums font-normal", className)}>
+      <span className={joinClasses("shrink-0 w-4 text-left", symbolClassName)}>€</span>
+      <span className={joinClasses("flex-1 text-right font-inherit", valueClassName)}>{formatEuro(value)}</span>
     </span>
   );
 }
