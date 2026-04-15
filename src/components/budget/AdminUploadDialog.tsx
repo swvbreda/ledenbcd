@@ -145,7 +145,7 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
     onOpenChange(false);
   };
 
-  const pendingProposals = proposals?.filter((p) => !p.applied && p.match_id) ?? [];
+  const pendingProposals = proposals?.filter((p) => !p.applied && p.match_id) ?? []; 
   const appliedProposals = proposals?.filter((p) => p.applied) ?? [];
   const unmatchedProposals = proposals?.filter((p) => !p.match_id && !p.applied) ?? [];
 
