@@ -32,7 +32,7 @@ interface Props {
 
 export default function BalancePanel({
   items, totalBudgeted, totalSpent, contributionStats, notes,
-  onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, year,
+  onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, onUpdateYearSettings, year,
 }: Props) {
   const [adding, setAdding] = useState<string | null>(null);
   const [addSide, setAddSide] = useState<string>("right");
