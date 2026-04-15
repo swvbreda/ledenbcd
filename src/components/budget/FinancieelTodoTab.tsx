@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle } from "lucide-react";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +43,7 @@ const fmtDate = (d: string | null) => {
 
 export default function FinancieelTodoTab({ year }: Props) {
   const { data: todos, isLoading, refetch } = useFinanceTodos(year);
-  const { complete, dismiss, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
+  const { complete, dismiss, hold, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -86,6 +86,11 @@ export default function FinancieelTodoTab({ year }: Props) {
 
   const pending = useMemo(
     () => (todos ?? []).filter((t) => t.status === "pending"),
+    [todos]
+  );
+
+  const onHold = useMemo(
+    () => (todos ?? []).filter((t) => t.status === "on_hold"),
     [todos]
   );
 
@@ -300,13 +305,22 @@ export default function FinancieelTodoTab({ year }: Props) {
                       </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
-                    className="p-1 text-muted-foreground hover:text-destructive shrink-0"
-                    title="Negeren"
-                  >
-                    <X size={14} />
-                  </button>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() => hold.mutate(todo.id, { onSuccess: () => toast.success("Taak on hold gezet") })}
+                      className="p-1 text-muted-foreground hover:text-amber-600"
+                      title="On hold zetten"
+                    >
+                      <PauseCircle size={14} />
+                    </button>
+                    <button
+                      onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Taak genegeerd") })}
+                      className="p-1 text-muted-foreground hover:text-destructive"
+                      title="Negeren"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Notes section */}
@@ -391,7 +405,39 @@ export default function FinancieelTodoTab({ year }: Props) {
         </div>
       )}
 
-      {/* Done section */}
+      {/* On Hold section */}
+      {onHold.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <PauseCircle size={14} className="text-amber-500" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              On hold
+            </span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{onHold.length}</Badge>
+          </div>
+          <div className="border border-border rounded-lg divide-y divide-border overflow-hidden opacity-75">
+            {onHold.map((todo) => (
+              <div key={todo.id} className="px-4 py-2 flex items-center gap-3">
+                <PauseCircle size={14} className="text-amber-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm">{todo.title}</span>
+                  {todo.notes && (
+                    <p className="text-xs text-muted-foreground mt-0.5 italic">{todo.notes}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => reopen.mutate(todo.id, { onSuccess: () => toast.success("Taak heropend") })}
+                  className="p-1 text-muted-foreground hover:text-foreground"
+                  title="Heractiveren"
+                >
+                  <RotateCcw size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {done.length > 0 && (
         <div>
           <button
