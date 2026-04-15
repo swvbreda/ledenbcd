@@ -179,6 +179,7 @@ export default function FinancieelTodoTab({ year }: Props) {
     window.open(data.signedUrl, "_blank");
   };
 
+  const toggleNotes = (id: string) => {
     setExpandedNotes((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
