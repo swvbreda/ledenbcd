@@ -26,6 +26,7 @@ interface Props {
   onDelete: (id: string) => void;
   onAddNote?: (note: string) => void;
   onDeleteNote?: (id: string) => void;
+  onUpdateYearSettings?: (settings: { budgeted_member_count: number; contribution_amount: number }) => void;
   year: number;
 }
 
