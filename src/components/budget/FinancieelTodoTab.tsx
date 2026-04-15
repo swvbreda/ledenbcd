@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const { user } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
@@ -125,7 +127,7 @@ export default function FinancieelTodoTab({ year }: Props) {
 
   const handleSaveNote = (todoId: string) => {
     updateNotes.mutate(
-      { id: todoId, notes: noteText },
+      { id: todoId, notes: noteText, notes_by: user?.email || "Onbekend" },
       {
         onSuccess: () => {
           toast.success("Notitie opgeslagen");
@@ -318,7 +320,10 @@ export default function FinancieelTodoTab({ year }: Props) {
                           setNoteText(todo.notes || "");
                         }}
                       >
-                        {todo.notes}
+                        <p>{todo.notes}</p>
+                        {todo.notes_by && (
+                          <p className="text-muted-foreground mt-1 italic">— {todo.notes_by}</p>
+                        )}
                       </div>
                     )}
                     {(editingNoteId === todo.id || !todo.notes) && (
