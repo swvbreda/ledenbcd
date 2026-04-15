@@ -45,7 +45,9 @@ const fmtDate = (d: string | null) => {
 
 export default function FinancieelTodoTab({ year }: Props) {
   const { data: todos, isLoading, refetch } = useFinanceTodos(year);
-  const { complete, dismiss, hold, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
+  const { complete, dismiss, hold, reopen, addTodo, updateNotes, uploadFile, removeFile } = useFinanceTodoMutations(year);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingTodoId, setUploadingTodoId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
