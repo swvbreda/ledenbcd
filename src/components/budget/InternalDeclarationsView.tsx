@@ -151,18 +151,17 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
   };
 
   const handleExport = () => {
-    const headers = ["Afspraak", "Traject", "Km enkel", "Km retour", "Datum", "Wie", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Max vergoeding", "Status"];
+    const headers = ["Datum", "Wie", "Afspraak", "Traject", "Km enkel", "Km retour", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Status"];
     const rows = filtered.map((d) => [
+      d.expense_date || "",
+      d.board_member_name,
       d.appointment || "",
       d.trajectory || "",
       d.km_single || "",
       d.km_return || "",
-      d.expense_date || "",
-      d.board_member_name,
       d.amount,
       d.bank_account || "",
       d.account_holder || "",
-      d.max_allowance_note || "",
       d.status,
     ]);
     const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
