@@ -222,12 +222,29 @@ export default function FinancieelTodoTab({ year }: Props) {
         </Card>
       )}
 
+      {/* Admin Upload Dialog */}
+      <AdminUploadDialog
+        year={year}
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        onComplete={() => refetch()}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
           {pending.length === 0 ? "Geen openstaande taken" : `${pending.length} openstaande taken`}
         </h3>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowUploadDialog(true)}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Upload size={12} />
+            Administratie bijwerken
+          </Button>
           <Button
             variant="outline"
             size="sm"
