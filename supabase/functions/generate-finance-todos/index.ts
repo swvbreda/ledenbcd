@@ -83,29 +83,34 @@ serve(async (req) => {
       }
     }
 
-    // 2. Overdue invoices (invoiced but not paid, invoice_date > 30 days ago)
-    const overdueSet = existingByType.get("overdue_invoice") ?? new Set();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+    // 2. Unpaid contributions (invoiced but not yet paid)
+    const unpaidSet = existingByType.get("unpaid_contribution") ?? new Set();
     for (const c of contribs) {
-      if (!c.paid && c.invoice_date && !overdueSet.has(c.member_id)) {
-        const invoiceDate = new Date(c.invoice_date);
-        if (invoiceDate < thirtyDaysAgo) {
-          const member = members.find((m: any) => m.id === c.member_id);
-          const naam = member?.data?.naam ?? `Lid #${c.member_id}`;
-          newTodos.push({
-            todo_type: "overdue_invoice",
-            title: `Herinnering sturen aan ${naam}`,
-            description: `De contributiefactuur van ${naam} (lid #${c.member_id}) staat open sinds ${c.invoice_date}. Er moet een betalingsherinnering worden verstuurd.`,
-            assigned_to: "penningmeester",
-            member_id: c.member_id,
-            reference_id: c.id,
-            year: currentYear,
-          });
-        }
+      if (!c.paid && !unpaidSet.has(c.member_id)) {
+        const member = members.find((m: any) => m.id === c.member_id);
+        const naam = member?.data?.naam ?? `Lid #${c.member_id}`;
+        const invoiceDate = c.invoice_date ? new Date(c.invoice_date) : null;
+        const isOverdue = invoiceDate && invoiceDate < thirtyDaysAgo;
+        
+        newTodos.push({
+          todo_type: "unpaid_contribution",
+          title: isOverdue
+            ? `Herinnering sturen aan ${naam}`
+            : `Betaling opvolgen van ${naam}`,
+          description: isOverdue
+            ? `De contributiefactuur van ${naam} (lid #${c.member_id}) staat open sinds ${c.invoice_date}. Er moet een betalingsherinnering worden verstuurd.`
+            : `De contributie van ${naam} (lid #${c.member_id}) voor ${currentYear} is nog niet betaald.${c.invoice_date ? ` Factuurdatum: ${c.invoice_date}.` : ""} Opvolging is vereist.`,
+          assigned_to: isOverdue ? "penningmeester" : "secretariaat",
+          member_id: c.member_id,
+          reference_id: c.id,
+          year: currentYear,
+        });
       }
     }
+
+    // Keep thirtyDaysAgo for the overdue check above
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     // 3. Pending declarations
     const pendingDeclSet = existingByType.get("pending_declaration") ?? new Set();
