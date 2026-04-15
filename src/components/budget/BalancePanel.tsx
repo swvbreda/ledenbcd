@@ -45,6 +45,9 @@ export default function BalancePanel({
   const middelenLeft = items.filter((i) => i.section === "middelen" && i.side === "left");
   const middelenRight = items.filter((i) => i.section === "middelen" && i.side === "right");
   const resultaatItems = items.filter((i) => i.section === "resultaat");
+  const hasManualBudgetedExpenses = middelenLeft.some(
+    (item) => item.name.trim().toLowerCase() === "begrote uitgaven",
+  );
 
   const leftTotal = middelenLeft.reduce((s, i) => s + i.amount, 0);
   const rightTotal = middelenRight.reduce((s, i) => s + i.amount, 0);
@@ -126,10 +129,10 @@ export default function BalancePanel({
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: Math.max(middelenLeft.length + 1, middelenRight.length) }).map((_, i) => {
+            {Array.from({ length: Math.max(middelenLeft.length + (hasManualBudgetedExpenses ? 0 : 1), middelenRight.length) }).map((_, i) => {
               const left = middelenLeft[i];
               const right = middelenRight[i];
-              const isAutoLeft = !left && i === middelenLeft.length;
+              const isAutoLeft = !hasManualBudgetedExpenses && !left && i === middelenLeft.length;
               return (
                 <tr key={i} className="border-b border-border/50">
                   <td className="px-3 py-1.5 text-muted-foreground">
