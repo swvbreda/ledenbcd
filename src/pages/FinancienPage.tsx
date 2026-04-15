@@ -114,6 +114,7 @@ export default function FinancienPage() {
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
+        <>
         {todoOpen && (
           <FinancieelTodoOverzicht
             declarations={internalDeclarations || []}
