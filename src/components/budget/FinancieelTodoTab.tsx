@@ -70,6 +70,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const { user } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Add form state
   const [newTitle, setNewTitle] = useState("");
