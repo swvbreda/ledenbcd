@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes } from "@/hooks/useBudget";
+import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import { useContributions } from "@/hooks/useContributions";
@@ -37,22 +37,25 @@ export default function FinancienPage() {
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
   const { effectiveMembers } = useMembers();
+  const { data: yearSettings } = useBudgetYearSettings(year);
+  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
-  const FIXED_AMOUNT = 3000;
+  const contributionAmount = yearSettings?.contribution_amount ?? 3000;
   const contributionStats = useMemo(() => {
     const contribs = contributions ?? [];
-    // For years with contribution records, use that count; otherwise fall back to current members
-    const totalMembers = contribs.length > 0 ? contribs.length : effectiveMembers.length;
+    const totalMembers = yearSettings?.budgeted_member_count
+      ? yearSettings.budgeted_member_count
+      : contribs.length > 0 ? contribs.length : effectiveMembers.length;
     const paidCount = contribs.filter((c) => c.paid).length;
     const unpaidCount = totalMembers - paidCount;
     const totalReceived = contribs.filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
-    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount: FIXED_AMOUNT };
-  }, [effectiveMembers, contributions]);
+    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount };
+  }, [effectiveMembers, contributions, yearSettings, contributionAmount]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
@@ -200,6 +203,7 @@ export default function FinancienPage() {
                   onDelete={(id) => mutations.deleteBalanceItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
                   onAddNote={(note) => user && mutations.addNote.mutate({ note, userId: user.id }, { onSuccess: () => toast.success("Notitie opgeslagen") })}
                   onDeleteNote={(id) => mutations.deleteNote.mutate(id, { onSuccess: () => toast.success("Notitie verwijderd") })}
+                  onUpdateYearSettings={(settings) => yearSettingsMutation.mutate(settings, { onSuccess: () => toast.success("Jaarinstellingen opgeslagen") })}
                 />
               </div>
             </div>
@@ -216,7 +220,7 @@ export default function FinancienPage() {
               declarations={internalDeclarations || []}
               members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
-              contributionAmount={FIXED_AMOUNT}
+              contributionAmount={contributionAmount}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}

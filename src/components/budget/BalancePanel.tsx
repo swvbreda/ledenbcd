@@ -26,12 +26,13 @@ interface Props {
   onDelete: (id: string) => void;
   onAddNote?: (note: string) => void;
   onDeleteNote?: (id: string) => void;
+  onUpdateYearSettings?: (settings: { budgeted_member_count: number; contribution_amount: number }) => void;
   year: number;
 }
 
 export default function BalancePanel({
   items, totalBudgeted, totalSpent, contributionStats, notes,
-  onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, year,
+  onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, onUpdateYearSettings, year,
 }: Props) {
   const [adding, setAdding] = useState<string | null>(null);
   const [addSide, setAddSide] = useState<string>("right");
@@ -256,6 +257,39 @@ export default function BalancePanel({
                   <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
                   <td className="text-right px-3 py-1.5 font-semibold whitespace-nowrap"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
                 </tr>
+                {onUpdateYearSettings && (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Leden"
+                          defaultValue={contributionStats.totalMembers || ""}
+                          onBlur={(e) => {
+                            const val = Number(e.target.value);
+                            if (val > 0 && val !== contributionStats.totalMembers) {
+                              onUpdateYearSettings({ budgeted_member_count: val, contribution_amount: contributionStats.contributionAmount });
+                            }
+                          }}
+                          className="h-6 w-16 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground">leden ×</span>
+                        <Input
+                          type="number"
+                          placeholder="Bedrag"
+                          defaultValue={contributionStats.contributionAmount || ""}
+                          onBlur={(e) => {
+                            const val = Number(e.target.value);
+                            if (val > 0 && val !== contributionStats.contributionAmount) {
+                              onUpdateYearSettings({ budgeted_member_count: contributionStats.totalMembers, contribution_amount: val });
+                            }
+                          }}
+                          className="h-6 w-20 text-xs"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
