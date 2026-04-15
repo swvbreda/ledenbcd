@@ -390,7 +390,7 @@ export default function FinancieelTodoTab({ year }: Props) {
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{items.length}</Badge>
           </div>
           <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
                <thead>
                 <tr className="bg-muted/40 text-xs text-muted-foreground">
                   <th className="w-7 px-2 py-1.5">
@@ -405,7 +405,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                       }}
                     />
                   </th>
-                  <th className="text-left px-2 py-1.5 font-medium">Taak</th>
+                  <th className="text-left px-2 py-1.5 font-medium w-[35%]">Taak</th>
                   <th className="text-left px-2 py-1.5 font-medium w-[100px]">Type</th>
                   <th className="text-left px-2 py-1.5 font-medium w-[110px]">Verantwoordelijke</th>
                   <th className="text-left px-2 py-1.5 font-medium w-[50px]">Lid</th>
