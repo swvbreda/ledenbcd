@@ -188,39 +188,33 @@ export default function BalancePanel({
           <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
         <table className="w-full text-sm">
-          <colgroup>
+           <colgroup>
             <col className="w-[35%]" />
             <col className="w-[20%]" />
             <col />
-            <col className="w-[5%]" />
           </colgroup>
           <tbody>
             {resultaatItems.map((item) => (
               <tr key={item.id} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap">
-                  <div className="flex items-center justify-end gap-1 group">
-                    {renderAmount(item)}
-                    <button onClick={() => onDelete(item.id)} className="p-0.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 shrink-0"><Trash2 size={10} /></button>
-                  </div>
+                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
+                  {renderItemCell(item)}
                 </td>
-                <td />
                 <td />
               </tr>
             ))}
             {contributionStats && (
               <tr className="border-b border-border/50">
                 <td className="px-3 py-1.5">Ontvangen contributie</td>
-                <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.totalReceived} /></td>
+                <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={contributionStats.totalReceived} /></td>
                 <td className="text-right px-3 py-1.5 whitespace-nowrap">
                   <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className="text-destructive" />
                 </td>
-                <td />
               </tr>
             )}
             <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
-              <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={totalSpent} /></td>
+              <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5">
                 {contributionStats && (
                   <div className="text-xs text-muted-foreground leading-tight space-y-0.5">
@@ -229,17 +223,15 @@ export default function BalancePanel({
                   </div>
                 )}
               </td>
-              <td />
             </tr>
             <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2">Totaal</td>
-              <td className="text-right px-3 py-2 whitespace-nowrap">
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7">
                 <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
               </td>
               <td className="text-right px-3 py-2 whitespace-nowrap">
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
-              <td />
             </tr>
           </tbody>
         </table>
