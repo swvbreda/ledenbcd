@@ -145,9 +145,9 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
     onOpenChange(false);
   };
 
-  const pendingProposals = proposals?.filter((p) => !p.applied && p.contribution_id) ?? [];
+  const pendingProposals = proposals?.filter((p) => !p.applied && p.match_id) ?? [];
   const appliedProposals = proposals?.filter((p) => p.applied) ?? [];
-  const unmatchedProposals = proposals?.filter((p) => !p.contribution_id && !p.applied) ?? [];
+  const unmatchedProposals = proposals?.filter((p) => !p.match_id && !p.applied) ?? [];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -222,7 +222,7 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
                   {appliedProposals.map((p, i) => (
                     <div key={i} className="px-4 py-2 flex items-center gap-3 text-sm">
                       <CheckCircle2 size={14} className="text-green-600 shrink-0" />
-                      <span className="flex-1">{p.member_name}</span>
+                      <span className="flex-1">{p.name}</span>
                       <span className="tabular-nums font-medium">{fmt(p.amount)}</span>
                       <Badge className={`text-[10px] ${confidenceColors[p.confidence]}`}>
                         {confidenceLabels[p.confidence]}
@@ -248,7 +248,7 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
                           <AlertCircle size={14} className="text-amber-500 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-medium">{p.member_name}</span>
+                              <span className="text-sm font-medium">{p.name}</span>
                               <Badge className={`text-[10px] ${confidenceColors[p.confidence]}`}>
                                 {confidenceLabels[p.confidence]}
                               </Badge>
@@ -264,9 +264,9 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
                             variant="outline"
                             className="h-7 text-xs gap-1"
                             onClick={() => applyProposal(p, realIdx)}
-                            disabled={applyingId === p.contribution_id}
+                            disabled={applyingId === p.match_id}
                           >
-                            {applyingId === p.contribution_id ? (
+                            {applyingId === p.match_id ? (
                               <Loader2 size={10} className="animate-spin" />
                             ) : (
                               <CheckCircle2 size={10} />
@@ -291,7 +291,7 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
                   {unmatchedProposals.map((p, i) => (
                     <div key={i} className="px-4 py-2 flex items-center gap-3 text-sm">
                       <XCircle size={14} className="text-muted-foreground shrink-0" />
-                      <span className="flex-1">{p.member_name}</span>
+                      <span className="flex-1">{p.name}</span>
                       <span className="tabular-nums">{fmt(p.amount)}</span>
                       <span className="text-xs text-muted-foreground">{p.description}</span>
                     </div>
