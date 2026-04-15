@@ -37,22 +37,25 @@ export default function FinancienPage() {
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
   const { effectiveMembers } = useMembers();
+  const { data: yearSettings } = useBudgetYearSettings(year);
+  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
-  const FIXED_AMOUNT = 3000;
+  const contributionAmount = yearSettings?.contribution_amount ?? 3000;
   const contributionStats = useMemo(() => {
     const contribs = contributions ?? [];
-    // For years with contribution records, use that count; otherwise fall back to current members
-    const totalMembers = contribs.length > 0 ? contribs.length : effectiveMembers.length;
+    const totalMembers = yearSettings?.budgeted_member_count
+      ? yearSettings.budgeted_member_count
+      : contribs.length > 0 ? contribs.length : effectiveMembers.length;
     const paidCount = contribs.filter((c) => c.paid).length;
     const unpaidCount = totalMembers - paidCount;
     const totalReceived = contribs.filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
-    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount: FIXED_AMOUNT };
-  }, [effectiveMembers, contributions]);
+    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount };
+  }, [effectiveMembers, contributions, yearSettings, contributionAmount]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
