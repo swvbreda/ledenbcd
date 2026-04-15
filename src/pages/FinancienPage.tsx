@@ -14,6 +14,7 @@ import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
+import FinancieelTodoOverzicht from "@/components/budget/FinancieelTodoOverzicht";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,8 +104,11 @@ export default function FinancienPage() {
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
       ) : (
-        <Tabs defaultValue="dashboard" className="space-y-1">
+        <Tabs defaultValue="todo" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
+            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              To Do
+            </TabsTrigger>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dashboard
             </TabsTrigger>
@@ -121,6 +125,16 @@ export default function FinancienPage() {
               Dossiers
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="todo">
+            <FinancieelTodoOverzicht
+              declarations={internalDeclarations || []}
+              contributions={contributions || []}
+              expenses={(categories || []).flatMap((c) => c.line_items.flatMap((li) => li.expenses))}
+              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              year={year}
+            />
+          </TabsContent>
 
           <TabsContent value="dashboard">
             <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
