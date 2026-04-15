@@ -50,7 +50,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "expense" | "income" | "declaration">("all");
+  const [filterType, setFilterType] = useState<"all" | "out" | "income">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
 
   const allLineItems = useMemo(() =>
