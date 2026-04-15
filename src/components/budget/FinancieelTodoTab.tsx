@@ -23,6 +23,7 @@ const typeLabels: Record<string, string> = {
   unpaid_contribution: "Betaling opvolgen",
   overdue_invoice: "Betalingsherinnering",
   pending_declaration: "Declaratie goedkeuren",
+  member_archived: "Opzegging verwerken",
   manual: "Handmatig",
 };
 
@@ -36,6 +37,7 @@ const typeCategoryLabels: Record<string, string> = {
 const getTypeCategory = (todoType: string): string => {
   if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
   if (todoType === "pending_declaration") return "declaratie";
+  if (todoType === "member_archived") return "overig";
   return "overig";
 };
 
@@ -44,6 +46,7 @@ const typeColors: Record<string, string> = {
   unpaid_contribution: "bg-amber-100 text-amber-800",
   overdue_invoice: "bg-red-100 text-red-800",
   pending_declaration: "bg-orange-100 text-orange-800",
+  member_archived: "bg-rose-100 text-rose-800",
   manual: "bg-muted text-muted-foreground",
 };
 
