@@ -91,8 +91,8 @@ export default function BalancePanel({
             <Select value={addSide} onValueChange={setAddSide}>
               <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="left">Bestedingen</SelectItem>
-                <SelectItem value="right">Middelen</SelectItem>
+                <SelectItem value="left">Debet</SelectItem>
+                <SelectItem value="right">Credit</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -122,9 +122,9 @@ export default function BalancePanel({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
-              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Bestedingen</th>
+              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Debet</th>
               <th className="text-right px-3 py-1.5 font-medium text-muted-foreground text-xs w-[15%]"></th>
-              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Middelen</th>
+              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Credit</th>
               <th className="text-right px-3 py-1.5 font-medium text-muted-foreground text-xs w-[15%]"></th>
             </tr>
           </thead>
