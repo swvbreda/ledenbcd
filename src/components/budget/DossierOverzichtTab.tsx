@@ -45,7 +45,8 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
             creditor: exp.creditor_name || exp.description || "–",
             invoice: exp.invoice_reference || "",
             amount: exp.amount,
-            category: `${cat.name} → ${li.name}`,
+            categoryName: cat.name,
+            lineItemName: li.name,
           });
         }
       }
