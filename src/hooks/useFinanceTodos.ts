@@ -17,6 +17,7 @@ export interface FinanceTodo {
   year: number;
   created_at: string;
   completed_at: string | null;
+  file_path: string | null;
 }
 
 export function useFinanceTodos(year: number) {
@@ -113,5 +114,34 @@ export function useFinanceTodoMutations(year: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
-  return { complete, dismiss, hold, reopen, addTodo, updateNotes };
+  const uploadFile = useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const ext = file.name.split(".").pop();
+      const path = `${year}/${id}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("finance-todo-files")
+        .upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { error: updateErr } = await supabase
+        .from("finance_todos")
+        .update({ file_path: path })
+        .eq("id", id);
+      if (updateErr) throw updateErr;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
+  const removeFile = useMutation({
+    mutationFn: async ({ id, file_path }: { id: string; file_path: string }) => {
+      await supabase.storage.from("finance-todo-files").remove([file_path]);
+      const { error } = await supabase
+        .from("finance_todos")
+        .update({ file_path: null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
+  return { complete, dismiss, hold, reopen, addTodo, updateNotes, uploadFile, removeFile };
 }

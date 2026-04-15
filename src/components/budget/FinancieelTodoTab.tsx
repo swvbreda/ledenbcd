@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2 } from "lucide-react";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +45,9 @@ const fmtDate = (d: string | null) => {
 
 export default function FinancieelTodoTab({ year }: Props) {
   const { data: todos, isLoading, refetch } = useFinanceTodos(year);
-  const { complete, dismiss, hold, reopen, addTodo, updateNotes } = useFinanceTodoMutations(year);
+  const { complete, dismiss, hold, reopen, addTodo, updateNotes, uploadFile, removeFile } = useFinanceTodoMutations(year);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingTodoId, setUploadingTodoId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState("");
   const [generating, setGenerating] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -145,6 +147,38 @@ export default function FinancieelTodoTab({ year }: Props) {
     );
   };
 
+  const handleFileUpload = (todoId: string) => {
+    setUploadingTodoId(todoId);
+    fileInputRef.current?.click();
+  };
+
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingTodoId) return;
+    uploadFile.mutate(
+      { id: uploadingTodoId, file },
+      {
+        onSuccess: () => {
+          toast.success("Bestand geüpload");
+          setUploadingTodoId(null);
+        },
+        onError: (err: any) => toast.error("Upload mislukt: " + err.message),
+      }
+    );
+    e.target.value = "";
+  };
+
+  const getFileUrl = (filePath: string) => {
+    const { data } = supabase.storage.from("finance-todo-files").getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  const handleDownloadFile = async (filePath: string) => {
+    const { data, error } = await supabase.storage.from("finance-todo-files").createSignedUrl(filePath, 60);
+    if (error) { toast.error("Kan bestand niet openen"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
   const toggleNotes = (id: string) => {
     setExpandedNotes((prev) => {
       const next = new Set(prev);
@@ -164,6 +198,14 @@ export default function FinancieelTodoTab({ year }: Props) {
 
   return (
     <div className="mt-4 space-y-4">
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+        onChange={onFileSelected}
+      />
       {/* AI Summary */}
       {aiSummary && (
         <Card className="border-primary/30 bg-primary/5">
@@ -288,7 +330,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                     {todo.description && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{todo.description}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                       {todo.due_date && (
                         <span className="flex items-center gap-1">
                           <Clock size={10} /> {fmtDate(todo.due_date)}
@@ -305,6 +347,40 @@ export default function FinancieelTodoTab({ year }: Props) {
                         {todo.notes ? "Notitie" : "Notitie toevoegen"}
                         {expandedNotes.has(todo.id) ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                       </button>
+                      {todo.file_path ? (
+                        <span className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDownloadFile(todo.file_path!)}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors text-primary"
+                            title="Bestand openen"
+                          >
+                            <FileText size={10} />
+                            {todo.file_path.split("/").pop()}
+                          </button>
+                          <button
+                            onClick={() => {
+                              removeFile.mutate(
+                                { id: todo.id, file_path: todo.file_path! },
+                                { onSuccess: () => toast.success("Bestand verwijderd") }
+                              );
+                            }}
+                            className="hover:text-destructive transition-colors"
+                            title="Bestand verwijderen"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleFileUpload(todo.id)}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          title="Bestand uploaden"
+                          disabled={uploadFile.isPending}
+                        >
+                          <Paperclip size={10} />
+                          {uploadFile.isPending && uploadingTodoId === todo.id ? "Uploaden..." : "Bestand"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
