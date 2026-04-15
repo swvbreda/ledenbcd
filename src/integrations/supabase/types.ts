@@ -576,6 +576,7 @@ export type Database = {
           due_date: string | null
           id: string
           member_id: number | null
+          notes: string | null
           reference_id: string | null
           status: string
           title: string
@@ -591,6 +592,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           member_id?: number | null
+          notes?: string | null
           reference_id?: string | null
           status?: string
           title: string
@@ -606,6 +608,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           member_id?: number | null
+          notes?: string | null
           reference_id?: string | null
           status?: string
           title?: string

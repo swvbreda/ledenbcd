@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface FinanceTodo {
   id: string;
   todo_type: string;
   title: string;
   description: string | null;
+  notes: string | null;
   assigned_to: string;
   member_id: number | null;
   reference_id: string | null;
@@ -68,5 +70,36 @@ export function useFinanceTodoMutations(year: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
-  return { complete, dismiss, reopen };
+  const addTodo = useMutation({
+    mutationFn: async (todo: {
+      title: string;
+      description?: string;
+      assigned_to: string;
+      due_date?: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("finance_todos")
+        .insert({
+          ...todo,
+          todo_type: "manual",
+          year,
+          status: "pending",
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
+  const updateNotes = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      const { error } = await supabase
+        .from("finance_todos")
+        .update({ notes })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
+  return { complete, dismiss, reopen, addTodo, updateNotes };
 }
