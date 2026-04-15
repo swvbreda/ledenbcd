@@ -372,21 +372,9 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     <CurrencyCell value={v.amount} />
                   </td>
                   <td className="px-2 py-1 text-center">
-                    {isExpense ? (
-                      <Checkbox
-                        checked={v.paid}
-                        onCheckedChange={(checked) => {
-                          onUpdateExpense(v.id, {
-                            paid: !!checked,
-                            paid_date: checked ? new Date().toISOString().slice(0, 10) : null,
-                          });
-                        }}
-                      />
-                    ) : (
-                      <span className={`text-[10px] font-medium ${v.paid ? "text-green-600" : "text-amber-500"}`}>
-                        {v.paid ? "Betaald" : "Open"}
-                      </span>
-                    )}
+                    <span className={`text-[10px] font-medium ${v.paid ? "text-green-600" : "text-amber-500"}`}>
+                      {v.paid ? "Betaald" : "Open"}
+                    </span>
                   </td>
                   <td className="px-1 flex items-center gap-0.5 py-1">
                     {isExpense && !isEditing && (
