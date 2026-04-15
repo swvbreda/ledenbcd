@@ -60,6 +60,17 @@ export function useFinanceTodoMutations(year: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
+  const hold = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("finance_todos")
+        .update({ status: "on_hold" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+  });
+
   const reopen = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -102,5 +113,5 @@ export function useFinanceTodoMutations(year: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
-  return { complete, dismiss, reopen, addTodo, updateNotes };
+  return { complete, dismiss, hold, reopen, addTodo, updateNotes };
 }
