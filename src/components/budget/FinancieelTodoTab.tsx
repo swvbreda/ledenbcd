@@ -71,6 +71,8 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<"title" | "todo_type" | "assigned_to" | "member_id" | "due_date" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // Add form state
   const [newTitle, setNewTitle] = useState("");
