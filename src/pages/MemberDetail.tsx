@@ -41,7 +41,8 @@ const MemberDetail = () => {
   const { isAdmin, isInhuur, linkedMemberIds } = useAuth();
   const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
-  const canSeeDetails = isAdmin || isInhuur || isOwnProfile;
+  const canSeeContacts = isAdmin || isInhuur || isOwnProfile;
+  const canSeeFinance = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
   const saveContactpersoonMutation = useSaveMemberEdit();
@@ -187,7 +188,7 @@ const MemberDetail = () => {
                       {member.bestuursfunctie}
                     </span>
                   )}
-                  {canSeeDetails && currentYearContrib && (
+                  {canSeeFinance && currentYearContrib && (
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] sm:text-xs font-semibold ${
                       currentYearContrib.paid
                         ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
@@ -361,8 +362,8 @@ const MemberDetail = () => {
             )}
           </div>
 
-          {canSeeDetails ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {canSeeContacts ? (
+            <div className={`grid grid-cols-1 ${canSeeFinance ? 'lg:grid-cols-2' : ''} gap-4`}>
               {/* Contactpersonen */}
               <div className="bg-card rounded-lg border border-border p-5">
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
@@ -459,43 +460,45 @@ const MemberDetail = () => {
                 </div>
               </div>
 
-              {/* Factuurgegevens */}
-              <div className="bg-card rounded-lg border border-border p-5">
-                <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-                  <FileText size={16} className="text-primary" /> Factuurgegevens
-                </h3>
-                <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                  <span className="text-muted-foreground">Bedrijfsnaam</span>
-                  <span className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam || "—"}</span>
+              {/* Factuurgegevens - alleen voor admin en eigen profiel */}
+              {canSeeFinance && (
+                <div className="bg-card rounded-lg border border-border p-5">
+                  <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
+                    <FileText size={16} className="text-primary" /> Factuurgegevens
+                  </h3>
+                  <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                    <span className="text-muted-foreground">Bedrijfsnaam</span>
+                    <span className="font-medium">{member.factuurBedrijfsnaam || member.bedrijfsnaam || "—"}</span>
 
-                  <span className="text-muted-foreground">KVK</span>
-                  <span className="font-mono">{member.factuurKvk || member.kvk || "—"}</span>
+                    <span className="text-muted-foreground">KVK</span>
+                    <span className="font-mono">{member.factuurKvk || member.kvk || "—"}</span>
 
-                  <span className="text-muted-foreground">Adres</span>
-                  <span>
-                    {member.factuurAdres ? (
-                      <>
-                        {member.factuurAdres}
-                        <br />
-                        {member.factuurPostcode && <>{member.factuurPostcode} </>}
-                        {member.factuurPlaats}
-                      </>
-                    ) : "—"}
-                  </span>
+                    <span className="text-muted-foreground">Adres</span>
+                    <span>
+                      {member.factuurAdres ? (
+                        <>
+                          {member.factuurAdres}
+                          <br />
+                          {member.factuurPostcode && <>{member.factuurPostcode} </>}
+                          {member.factuurPlaats}
+                        </>
+                      ) : "—"}
+                    </span>
 
-                  <span className="text-muted-foreground">E-mail</span>
-                  <span>
-                    {member.factuurEmail ? (
-                      <a href={`mailto:${member.factuurEmail}`} className="text-muted-foreground hover:underline">
-                        {member.factuurEmail}
-                      </a>
-                    ) : "—"}
-                  </span>
+                    <span className="text-muted-foreground">E-mail</span>
+                    <span>
+                      {member.factuurEmail ? (
+                        <a href={`mailto:${member.factuurEmail}`} className="text-muted-foreground hover:underline">
+                          {member.factuurEmail}
+                        </a>
+                      ) : "—"}
+                    </span>
 
-                  <span className="text-muted-foreground">Telefoon</span>
-                  <span>{member.factuurTelefoon || "—"}</span>
+                    <span className="text-muted-foreground">Telefoon</span>
+                    <span>{member.factuurTelefoon || "—"}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="bg-card rounded-lg border border-border p-5 flex items-center gap-3 text-muted-foreground">
@@ -505,7 +508,7 @@ const MemberDetail = () => {
           )}
 
           {/* Contributie & Facturen */}
-          {canSeeDetails && ((memberContributions ?? []).length > 0 || (memberInvoices ?? []).length > 0) && (
+          {canSeeFinance && ((memberContributions ?? []).length > 0 || (memberInvoices ?? []).length > 0) && (
             <div className="bg-card rounded-lg border border-border p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2">
