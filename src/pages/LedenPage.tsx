@@ -73,7 +73,7 @@ const LedenPage = () => {
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "coffeeshops"
     ? `${totalLocations} coffeeshops`
-    : isAdmin
+    : canSeeLeads
     ? `${mergedSearched.length} leden + leads`
     : `${ledenOnly.length} leden`;
 
