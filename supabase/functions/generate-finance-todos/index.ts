@@ -213,7 +213,6 @@ Geef een kort overzicht (max 3-4 zinnen) van de belangrijkste prioriteiten en ev
       JSON.stringify({ created, aiSummary }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-    );
   } catch (e) {
     console.error("generate-finance-todos error:", e);
     return new Response(
