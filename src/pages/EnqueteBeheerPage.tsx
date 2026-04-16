@@ -32,7 +32,8 @@ interface ResponseRow {
 
 export default function EnqueteBeheerPage() {
   const { id } = useParams<{ id: string }>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isInhuur } = useAuth();
+  const canManage = isAdmin || isInhuur;
   const navigate = useNavigate();
   const [survey, setSurvey] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -74,8 +75,8 @@ export default function EnqueteBeheerPage() {
     fetchData();
   }, [id]);
 
-  if (!isAdmin) {
-    return <div className="p-6 text-destructive">Alleen admins hebben toegang.</div>;
+  if (!canManage) {
+    return <div className="p-6 text-destructive">Alleen admins en inhuur hebben toegang.</div>;
   }
 
   const addQuestion = async () => {
