@@ -20,7 +20,8 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isInhuur } = useAuth();
+  const canSeeLeads = isAdmin || isInhuur;
   const { allMembersAndLeads, isLoading: dataLoading } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -122,7 +123,7 @@ const LedenPage = () => {
                 <Users size={14} />
                 Leden ({ledenOnly.length})
               </TabsTrigger>
-              {isAdmin && (
+              {canSeeLeads && (
                 <TabsTrigger value="leads" className="gap-1.5">
                   <UserPlus size={14} />
                   Leads ({leadsOnly.length})
