@@ -87,6 +87,7 @@ const AccountBeheerPage = () => {
   const getRoleLabel = (role: string) => {
     if (role === "admin") return "Admin";
     if (role === "extern") return "Extern";
+    if (role === "inhuur") return "Inhuur";
     return "Gebruiker";
   };
 
