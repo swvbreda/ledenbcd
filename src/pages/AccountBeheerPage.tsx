@@ -54,6 +54,7 @@ const AccountBeheerPage = () => {
   const [editUser, setEditUser] = useState<UserAccount | null>(null);
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("user");
+  const [editName, setEditName] = useState("");
   const [resetPwUser, setResetPwUser] = useState<UserAccount | null>(null);
   const [resetPw, setResetPw] = useState("");
   const [resetPwConfirm, setResetPwConfirm] = useState("");
@@ -273,8 +274,47 @@ const AccountBeheerPage = () => {
     if (editEmail && editEmail !== editUser.email) body.email = editEmail;
     if (editRole !== editUser.role) body.role = editRole;
     const { error } = await supabase.functions.invoke("manage-users", { body });
+    if (error) { setSaving(false); toast.error("Fout bij opslaan: " + error.message); return; }
+
+    // Save name change to member_edits if linked to a member
+    const info = getDisplayInfo(editUser);
+    if (editName && editName !== info.personName && info.memberIds.length > 0) {
+      const memberId = info.memberIds[0];
+      const member = memberMap.get(memberId);
+      if (member) {
+        // Fetch existing edits to merge
+        const { data: existing } = await supabase
+          .from("member_edits")
+          .select("data")
+          .eq("member_id", memberId)
+          .maybeSingle();
+
+        const existingData = (existing?.data as Record<string, unknown>) || {};
+        const mergedData = { ...existingData, contactpersoon: editName };
+
+        const { error: editError } = await supabase
+          .from("member_edits")
+          .upsert(
+            {
+              member_id: memberId,
+              data: mergedData as any,
+              updated_by: user!.id,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "member_id" }
+          );
+        if (editError) {
+          console.error("Error saving name edit:", editError);
+          toast.error("Account bijgewerkt, maar naam niet opgeslagen");
+          setSaving(false);
+          setEditUser(null);
+          fetchUsers();
+          return;
+        }
+      }
+    }
+
     setSaving(false);
-    if (error) { toast.error("Fout bij opslaan: " + error.message); return; }
     toast.success("Account bijgewerkt");
     setEditUser(null);
     fetchUsers();
@@ -409,7 +449,7 @@ const AccountBeheerPage = () => {
                       <td className="px-1 sm:px-4 py-2 sm:py-3">
                         <div className="flex items-center gap-0.5 sm:gap-1">
                           <button
-                            onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); }}
+                            onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); setEditName(getDisplayInfo(u).personName); }}
                             className="p-1 sm:p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             title="Bewerken"
                           >
@@ -563,6 +603,14 @@ const AccountBeheerPage = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Naam</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Naam contactpersoon"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">E-mailadres</label>
               <Input
