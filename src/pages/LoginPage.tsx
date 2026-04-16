@@ -53,8 +53,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Set session persistence based on "remember me"
-    await supabase.auth.setSession; // no-op placeholder
+    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
