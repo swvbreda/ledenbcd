@@ -41,7 +41,8 @@ const MemberDetail = () => {
   const { isAdmin, isInhuur, linkedMemberIds } = useAuth();
   const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
-  const canSeeDetails = isAdmin || isInhuur || isOwnProfile;
+  const canSeeContacts = isAdmin || isInhuur || isOwnProfile;
+  const canSeeFinance = isAdmin || isOwnProfile;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
   const saveContactpersoonMutation = useSaveMemberEdit();
