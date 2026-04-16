@@ -432,51 +432,159 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
 // ── Profile Card ──
 function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const { user, isAdmin } = useAuth();
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editTelefoon, setEditTelefoon] = useState("");
+  const [editEmail2, setEditEmail2] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (linkedMember) {
+      setEditName(linkedMember.contactpersoon || "");
+      setEditTelefoon(linkedMember.telefoon || "");
+      setEditEmail2(linkedMember.email || "");
+    }
+  }, [linkedMember]);
+
+  const handleSaveProfile = async () => {
+    if (!linkedMember || !user) return;
+    setSaving(true);
+    
+    const editData: Record<string, unknown> = {};
+    if (editName !== (linkedMember.contactpersoon || "")) editData.contactpersoon = editName;
+    if (editTelefoon !== (linkedMember.telefoon || "")) editData.telefoon = editTelefoon;
+    if (editEmail2 !== (linkedMember.email || "")) editData.email = editEmail2;
+
+    if (Object.keys(editData).length === 0) {
+      setSaving(false);
+      setEditingProfile(false);
+      return;
+    }
+
+    if (isAdmin) {
+      // Admin: save directly
+      const { data: existing } = await supabase
+        .from("member_edits")
+        .select("data")
+        .eq("member_id", linkedMember.id)
+        .maybeSingle();
+      const existingData = (existing?.data as Record<string, unknown>) || {};
+      const mergedData = { ...existingData, ...editData };
+
+      const { error } = await supabase
+        .from("member_edits")
+        .upsert(
+          { member_id: linkedMember.id, data: mergedData as any, updated_by: user.id, updated_at: new Date().toISOString() },
+          { onConflict: "member_id" }
+        );
+      setSaving(false);
+      if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
+      toast.success("Gegevens opgeslagen");
+    } else {
+      // Member: submit edit request
+      const { error } = await supabase
+        .from("member_edit_requests")
+        .insert({ member_id: linkedMember.id, data: editData as any, submitted_by: user.id });
+      setSaving(false);
+      if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
+      toast.success("Wijziging ingediend ter goedkeuring");
+    }
+    setEditingProfile(false);
+  };
+
   return (
     <Card className="p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <User size={16} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold font-display">Profiel</h3>
-      </div>
-      <div className="space-y-2 text-sm">
-        <div className="flex items-start gap-2">
-          <span className="text-muted-foreground w-28 shrink-0">E-mail:</span>
-          <span className="font-medium break-all">{user?.email}</span>
-        </div>
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground w-28 shrink-0">Rol:</span>
-          <span className="font-medium flex items-center gap-1.5">
-            {isAdmin && <Shield size={12} className="text-primary" />}
-            {isAdmin ? "Beheerder" : "Lid"}
-          </span>
+          <User size={16} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold font-display">Profiel</h3>
         </div>
-        {linkedMember && (
-          <>
-            <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Gekoppeld lid:</span>
-              <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
-            </div>
-            {linkedMember.contactpersoon && (
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground w-28 shrink-0">Contactpersoon:</span>
-                <span className="font-medium">{linkedMember.contactpersoon}</span>
-              </div>
-            )}
-            {linkedMember.telefoon && (
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground w-28 shrink-0">Telefoon:</span>
-                <span className="font-medium">{linkedMember.telefoon}</span>
-              </div>
-            )}
-            {linkedMember.plaats && (
-              <div className="flex items-start gap-2">
-                <span className="text-muted-foreground w-28 shrink-0">Plaats:</span>
-                <span className="font-medium">{linkedMember.plaats}</span>
-              </div>
-            )}
-          </>
+        {linkedMember && !editingProfile && (
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditingProfile(true)}>
+            <Pencil size={14} /> Bewerken
+          </Button>
         )}
       </div>
+
+      {editingProfile && linkedMember ? (
+        <div className="space-y-3 max-w-sm">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-0.5">Naam contactpersoon</label>
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-0.5">E-mail (lid)</label>
+            <Input value={editEmail2} onChange={(e) => setEditEmail2(e.target.value)} className="h-8 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-0.5">Telefoon</label>
+            <Input value={editTelefoon} onChange={(e) => setEditTelefoon(e.target.value)} className="h-8 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-0.5">Account e-mail</label>
+            <Input value={user?.email || ""} disabled className="h-8 text-sm bg-muted" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={handleSaveProfile} disabled={saving} className="gap-1.5">
+              <Save size={14} /> {saving ? "Opslaan..." : "Opslaan"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setEditingProfile(false)} className="gap-1.5">
+              <X size={14} /> Annuleren
+            </Button>
+          </div>
+          {!isAdmin && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Clock size={12} /> Wijzigingen worden beoordeeld door het bestuur.
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2 text-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-muted-foreground w-28 shrink-0">Account e-mail:</span>
+            <span className="font-medium break-all">{user?.email}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground w-28 shrink-0">Rol:</span>
+            <span className="font-medium flex items-center gap-1.5">
+              {isAdmin && <Shield size={12} className="text-primary" />}
+              {isAdmin ? "Beheerder" : "Lid"}
+            </span>
+          </div>
+          {linkedMember && (
+            <>
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground w-28 shrink-0">Gekoppeld lid:</span>
+                <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
+              </div>
+              {linkedMember.contactpersoon && (
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground w-28 shrink-0">Contactpersoon:</span>
+                  <span className="font-medium">{linkedMember.contactpersoon}</span>
+                </div>
+              )}
+              {linkedMember.email && (
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground w-28 shrink-0">E-mail (lid):</span>
+                  <span className="font-medium break-all">{linkedMember.email}</span>
+                </div>
+              )}
+              {linkedMember.telefoon && (
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground w-28 shrink-0">Telefoon:</span>
+                  <span className="font-medium">{linkedMember.telefoon}</span>
+                </div>
+              )}
+              {linkedMember.plaats && (
+                <div className="flex items-start gap-2">
+                  <span className="text-muted-foreground w-28 shrink-0">Plaats:</span>
+                  <span className="font-medium">{linkedMember.plaats}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
