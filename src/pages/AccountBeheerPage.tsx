@@ -87,6 +87,7 @@ const AccountBeheerPage = () => {
   const getRoleLabel = (role: string) => {
     if (role === "admin") return "Admin";
     if (role === "extern") return "Extern";
+    if (role === "inhuur") return "Inhuur";
     return "Gebruiker";
   };
 
@@ -314,7 +315,7 @@ const AccountBeheerPage = () => {
         </Button>
       </div>
 
-      {loading || membersLoading ? (
+      {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-muted-foreground" size={24} />
         </div>
@@ -395,12 +396,12 @@ const AccountBeheerPage = () => {
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
                           u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
-                            : u.role === "extern"
+                            : u.role === "extern" || u.role === "inhuur"
                               ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
+                              : "bg-muted text-muted-foreground"
                         }`}>
                           {u.role === "admin" && <Shield size={11} />}
-                          {u.role === "extern" && <Building2 size={11} />}
+                          {(u.role === "extern" || u.role === "inhuur") && <Building2 size={11} />}
                           {getRoleLabel(u.role)}
                         </span>
                       </td>
@@ -452,6 +453,8 @@ const AccountBeheerPage = () => {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="user">Gebruiker</SelectItem>
+                <SelectItem value="extern">Externe partij</SelectItem>
+                <SelectItem value="inhuur">Inhuur</SelectItem>
                 <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
               </SelectContent>
             </Select>
@@ -574,7 +577,8 @@ const AccountBeheerPage = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="user">Gebruiker</SelectItem>
-                    <SelectItem value="extern">Externe partij</SelectItem>
+                  <SelectItem value="extern">Externe partij</SelectItem>
+                  <SelectItem value="inhuur">Inhuur</SelectItem>
                   <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
                 </SelectContent>
               </Select>
