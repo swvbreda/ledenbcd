@@ -321,6 +321,18 @@ const LoginPage = () => {
                 </div>
               )}
 
+              {!resetMode && !registerMode && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => handleRememberMe(e.target.checked)}
+                    className="rounded border-input h-4 w-4 text-primary focus:ring-ring"
+                  />
+                  <span className="text-sm text-muted-foreground">Onthoud mij</span>
+                </label>
+              )}
+
               {error && (
                 <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>
               )}
