@@ -12,6 +12,9 @@ const LoginPage = () => {
   const biometric = useBiometricAuth();
   const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem("remember_me") !== "false"; } catch { return true; }
+  });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
