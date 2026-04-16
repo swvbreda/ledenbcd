@@ -40,7 +40,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
-  const { isAdmin, linkedMemberId } = useAuth();
+  const { isAdmin, isInhuur, linkedMemberId } = useAuth();
+  const canSeeDetails = isAdmin || isInhuur;
   const { rawLeads: allLeads } = useMembersData();
   const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, { naam: string; functie: string }[]>>(new Map());
 
@@ -191,8 +192,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("jarenLid")}>
                 <span className="inline-flex items-center gap-1">Jaren Lid <SortIcon col="jarenLid" /></span>
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
-              <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+              {canSeeDetails && (
+                <>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Eigenaar</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contactpersoon</th>
+                </>
+              )}
               <th className="px-4 py-3 text-center font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-24" onClick={() => handleSort("oprichtingJaar")}>
                 <span className="inline-flex items-center gap-1">Oprichting <SortIcon col="oprichtingJaar" /></span>
               </th>
@@ -253,7 +258,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                {(() => {
+                {canSeeDetails && (() => {
                     const boardEntries = boardMembersByLid.get(member.id) || [];
                     const eigenaarMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
                     const cpMatch = contactpersoon && boardEntries.find(bn => contactpersoon.toLowerCase().includes(bn.naam) || bn.naam.includes(contactpersoon.toLowerCase()));

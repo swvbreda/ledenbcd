@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isExtern: boolean;
+  isInhuur: boolean;
   linkedMemberId: number | null;
   linkedMemberIds: number[];
   mfaStatus: "verified" | "needs_verify" | "needs_setup" | "loading";
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   isExtern: false,
+  isInhuur: false,
   linkedMemberId: null,
   linkedMemberIds: [],
   mfaStatus: "loading",
@@ -201,9 +203,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const linkedMemberId = linkedMemberIds[0] ?? null;
+  const isInhuur = !isAdmin && !isExtern && !!user && linkedMemberIds.length === 0;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
       {children}
     </AuthContext.Provider>
   );

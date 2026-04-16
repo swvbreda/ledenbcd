@@ -23,7 +23,8 @@ interface Survey {
 }
 
 export default function EnquetesPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isInhuur } = useAuth();
+  const canManage = isAdmin || isInhuur;
   const navigate = useNavigate();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [completions, setCompletions] = useState<string[]>([]);
@@ -112,9 +113,11 @@ export default function EnquetesPage() {
   return (
     <div className="p-4 md:p-6 space-y-6 w-full max-w-4xl mx-auto">
       <BcdHeroBanner title="Enquêtes" subtitle="Anonieme enquêtes voor leden">
-        <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">
-          <Plus size={16} className="mr-1" /> Nieuwe enquête
-        </Button>
+        {canManage && (
+          <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">
+            <Plus size={16} className="mr-1" /> Nieuwe enquête
+          </Button>
+        )}
       </BcdHeroBanner>
 
       {surveys.length === 0 ? (
@@ -139,9 +142,11 @@ export default function EnquetesPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                     <Badge variant="outline" className="gap-1">
-                        <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
-                      </Badge>
+                     {canManage && (
+                       <Badge variant="outline" className="gap-1">
+                          <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                        </Badge>
+                      )}
                       {completed && (
                         <Badge variant="secondary" className="gap-1">
                           <CheckCircle2 size={12} /> Ingevuld
@@ -186,13 +191,15 @@ export default function EnquetesPage() {
                          <Shield size={14} className="mr-1" /> Responses beoordelen
                        </Button>
                      )}
-                     <Button
+                     {canManage && (
+                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => navigate(`/enquetes/${s.id}/beheer`)}
                       >
                         <BarChart3 size={14} className="mr-1" /> Beheer & resultaten
                       </Button>
+                      )}
                       {isAdmin && (
                         <>
                           <Button
