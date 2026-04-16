@@ -282,13 +282,22 @@ const AccountBeheerPage = () => {
       const memberId = info.memberIds[0];
       const member = memberMap.get(memberId);
       if (member) {
-        const editData: Record<string, unknown> = { contactpersoon: editName };
+        // Fetch existing edits to merge
+        const { data: existing } = await supabase
+          .from("member_edits")
+          .select("data")
+          .eq("member_id", memberId)
+          .maybeSingle();
+
+        const existingData = (existing?.data as Record<string, unknown>) || {};
+        const mergedData = { ...existingData, contactpersoon: editName };
+
         const { error: editError } = await supabase
           .from("member_edits")
           .upsert(
             {
               member_id: memberId,
-              data: editData as any,
+              data: mergedData as any,
               updated_by: user!.id,
               updated_at: new Date().toISOString(),
             },
