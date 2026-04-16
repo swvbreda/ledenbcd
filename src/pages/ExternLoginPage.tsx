@@ -10,6 +10,9 @@ const ExternLoginPage = () => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem("remember_me") !== "false"; } catch { return true; }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,6 +39,7 @@ const ExternLoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
@@ -238,6 +242,21 @@ const ExternLoginPage = () => {
                     </button>
                   </div>
                 </div>
+              )}
+
+              {mode === "login" && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => {
+                      setRememberMe(e.target.checked);
+                      try { localStorage.setItem("remember_me", String(e.target.checked)); } catch {}
+                    }}
+                    className="rounded border-input h-4 w-4 text-primary focus:ring-ring"
+                  />
+                  <span className="text-sm text-muted-foreground">Onthoud mij</span>
+                </label>
               )}
 
               {error && (
