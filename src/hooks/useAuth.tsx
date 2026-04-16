@@ -203,9 +203,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const linkedMemberId = linkedMemberIds[0] ?? null;
+  const isInhuur = !isAdmin && !isExtern && !!user && linkedMemberIds.length === 0;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
       {children}
     </AuthContext.Provider>
   );
