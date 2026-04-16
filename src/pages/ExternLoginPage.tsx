@@ -10,6 +10,9 @@ const ExternLoginPage = () => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem("remember_me") !== "false"; } catch { return true; }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
