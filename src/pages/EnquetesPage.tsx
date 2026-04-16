@@ -112,11 +112,9 @@ export default function EnquetesPage() {
   return (
     <div className="p-4 md:p-6 space-y-6 w-full max-w-4xl mx-auto">
       <BcdHeroBanner title="Enquêtes" subtitle="Anonieme enquêtes voor leden">
-        {isAdmin && (
-          <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">
-            <Plus size={16} className="mr-1" /> Nieuwe enquête
-          </Button>
-        )}
+        <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">
+          <Plus size={16} className="mr-1" /> Nieuwe enquête
+        </Button>
       </BcdHeroBanner>
 
       {surveys.length === 0 ? (
@@ -141,11 +139,9 @@ export default function EnquetesPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {isAdmin && (
-                        <Badge variant="outline" className="gap-1">
-                          <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
-                        </Badge>
-                      )}
+                     <Badge variant="outline" className="gap-1">
+                        <Users size={12} /> {responseCounts[s.id] || 0} respondent{(responseCounts[s.id] || 0) !== 1 ? "en" : ""}
+                      </Badge>
                       {completed && (
                         <Badge variant="secondary" className="gap-1">
                           <CheckCircle2 size={12} /> Ingevuld
@@ -190,32 +186,32 @@ export default function EnquetesPage() {
                          <Shield size={14} className="mr-1" /> Responses beoordelen
                        </Button>
                      )}
-                     {isAdmin && (
-                       <>
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={() => navigate(`/enquetes/${s.id}/beheer`)}
-                         >
-                           <BarChart3 size={14} className="mr-1" /> Beheer & resultaten
-                         </Button>
-                         <Button
-                           size="sm"
-                           variant="ghost"
-                           onClick={() => handleToggleActive(s.id, s.active)}
-                         >
-                           {s.active ? "Sluiten" : "Heropenen"}
-                         </Button>
-                         <Button
-                           size="sm"
-                           variant="ghost"
-                           className="text-destructive"
-                           onClick={() => handleDelete(s.id)}
-                         >
-                           <Trash2 size={14} />
-                         </Button>
-                       </>
-                     )}
+                     <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/enquetes/${s.id}/beheer`)}
+                      >
+                        <BarChart3 size={14} className="mr-1" /> Beheer & resultaten
+                      </Button>
+                      {isAdmin && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleToggleActive(s.id, s.active)}
+                          >
+                            {s.active ? "Sluiten" : "Heropenen"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => handleDelete(s.id)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </>
+                      )}
                    </div>
                 </CardContent>
               </Card>
