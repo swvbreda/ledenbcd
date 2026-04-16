@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const ALLOWED_ROLES = ["admin", "user"];
+    const ALLOWED_ROLES = ["admin", "user", "extern", "inhuur"];
 
     if (action === "create") {
       const email = payload.email as string | undefined;
