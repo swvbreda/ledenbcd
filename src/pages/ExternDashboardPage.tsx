@@ -36,6 +36,7 @@ interface MemberBasic {
   plaats: string;
   lid_sinds: number | null;
   has_consent: boolean;
+  contactpersoon?: string;
   adres?: string;
   postcode?: string;
   kvk?: string;
@@ -167,6 +168,7 @@ const ExternDashboardPage = () => {
       plaats: r.plaats || "-",
       lid_sinds: r.lid_sinds ? Number(r.lid_sinds) : null,
       has_consent: r.has_consent || false,
+      contactpersoon: r.contactpersoon || "",
       ...(r.has_consent ? {
         email: r.email,
         telefoon: r.telefoon,
@@ -418,6 +420,7 @@ const ExternDashboardPage = () => {
                       <td className="px-4 py-3 text-xs">
                         {m.has_consent ? (
                           <div className="space-y-0.5">
+                            {m.contactpersoon && <div>Contactpersoon: {m.contactpersoon}</div>}
                             {m.email && <div>{m.email}</div>}
                             {m.telefoon && <div>{m.telefoon}</div>}
                             {m.adres && <div>{m.adres}</div>}
@@ -425,7 +428,14 @@ const ExternDashboardPage = () => {
                             {m.kvk && <div>KvK: {m.kvk}</div>}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground italic">Geen toestemming</span>
+                          m.contactpersoon ? (
+                            <div className="space-y-0.5">
+                              <div>Contactpersoon: {m.contactpersoon}</div>
+                              <div className="text-muted-foreground italic">Geen toestemming voor overige contactgegevens</div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic">Geen toestemming</span>
+                          )
                         )}
                       </td>
                     </tr>
