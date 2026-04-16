@@ -39,6 +39,7 @@ const ExternLoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
