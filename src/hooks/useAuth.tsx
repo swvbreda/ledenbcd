@@ -173,9 +173,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mounted) setLoading(false);
     });
 
+    // "Onthoud mij" — clear session when browser closes if disabled
+    const handleBeforeUnload = () => {
+      try {
+        if (localStorage.getItem("remember_me") === "false") {
+          // Remove Supabase session tokens so next visit requires login
+          const storageKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
+          if (storageKey) localStorage.removeItem(storageKey);
+        }
+      } catch {}
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 

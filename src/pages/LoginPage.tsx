@@ -12,6 +12,9 @@ const LoginPage = () => {
   const biometric = useBiometricAuth();
   const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return localStorage.getItem("remember_me") !== "false"; } catch { return true; }
+  });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,10 +44,16 @@ const LoginPage = () => {
     return <Navigate to="/" replace />;
   }
 
+  const handleRememberMe = (checked: boolean) => {
+    setRememberMe(checked);
+    try { localStorage.setItem("remember_me", String(checked)); } catch {}
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
@@ -310,6 +319,18 @@ const LoginPage = () => {
                     />
                   </div>
                 </div>
+              )}
+
+              {!resetMode && !registerMode && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => handleRememberMe(e.target.checked)}
+                    className="rounded border-input h-4 w-4 text-primary focus:ring-ring"
+                  />
+                  <span className="text-sm text-muted-foreground">Onthoud mij</span>
+                </label>
               )}
 
               {error && (
