@@ -44,10 +44,17 @@ const LoginPage = () => {
     return <Navigate to="/" replace />;
   }
 
+  const handleRememberMe = (checked: boolean) => {
+    setRememberMe(checked);
+    try { localStorage.setItem("remember_me", String(checked)); } catch {}
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    // Set session persistence based on "remember me"
+    await supabase.auth.setSession; // no-op placeholder
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
