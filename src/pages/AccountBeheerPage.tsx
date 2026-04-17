@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMemberEdits } from "@/hooks/useMemberEdits";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound, Building2 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
