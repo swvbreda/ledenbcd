@@ -145,8 +145,12 @@ const AccountBeheerPage = () => {
       return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids, orgLinks };
     }
     if (ids.length > 0) {
-      const firstMember = memberMap.get(ids[0]);
-      if (!firstMember) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids, orgLinks };
+      const firstMemberRaw = memberMap.get(ids[0]);
+      if (!firstMemberRaw) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids, orgLinks };
+
+      // Apply pending edits (member_edits) on top of raw member data
+      const edits = editsMap?.get(ids[0]) as Partial<typeof firstMemberRaw> | undefined;
+      const firstMember = edits ? { ...firstMemberRaw, ...edits } : firstMemberRaw;
 
       // Match account email to the correct contact person within the member
       const emailLower = u.email?.toLowerCase() ?? "";
