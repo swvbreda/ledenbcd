@@ -93,7 +93,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const generateTodos = async () => {
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-finance-todos", {
+      const { data, error } = await invokeWithAuth("generate-finance-todos", {
         body: { year },
       });
       if (error) throw error;
