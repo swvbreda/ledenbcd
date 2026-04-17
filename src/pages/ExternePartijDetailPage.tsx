@@ -89,7 +89,7 @@ export default function ExternePartijDetailPage() {
 
       // Fetch emails for linked accounts
       if (accountsRes.data && accountsRes.data.length > 0) {
-        const { data: usersData } = await supabase.functions.invoke("manage-users", {
+        const { data: usersData } = await invokeWithAuth("manage-users", {
           body: { action: "list_users" },
         });
         const userMap = new Map<string, string>();
