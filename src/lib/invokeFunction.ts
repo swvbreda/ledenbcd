@@ -21,6 +21,21 @@ type InvokeResult<T> = {
   error: { message: string; name?: string } | null;
 };
 
+const SESSION_EXPIRED_EVENT = "auth:session-expired";
+let sessionExpiredDispatched = false;
+
+function dispatchSessionExpired() {
+  if (sessionExpiredDispatched) return;
+  sessionExpiredDispatched = true;
+  // Reset shortly after so a new login can trigger it again later
+  setTimeout(() => { sessionExpiredDispatched = false; }, 2000);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  }
+}
+
+export const SESSION_EXPIRED_EVENT_NAME = SESSION_EXPIRED_EVENT;
+
 async function getAccessToken(forceRefresh = false): Promise<string | null> {
   if (forceRefresh) {
     const { data, error } = await supabase.auth.refreshSession();
@@ -69,6 +84,7 @@ export async function invokeWithAuth<T = any>(
     // No session at all -> try a refresh once before giving up
     token = await getAccessToken(true);
     if (!token) {
+      dispatchSessionExpired();
       return { data: null, error: { message: "Niet ingelogd. Log opnieuw in.", name: "NoSession" } };
     }
   }
@@ -79,8 +95,13 @@ export async function invokeWithAuth<T = any>(
   // Auth-related failure -> refresh session and retry once
   const refreshedToken = await getAccessToken(true);
   if (!refreshedToken) {
+    dispatchSessionExpired();
     return { data: null, error: { message: "Sessie verlopen. Log opnieuw in.", name: "SessionExpired" } };
   }
 
-  return await callFunction<T>(functionName, options, refreshedToken);
+  const second = await callFunction<T>(functionName, options, refreshedToken);
+  if (isAuthError(second.error)) {
+    dispatchSessionExpired();
+  }
+  return second;
 }
