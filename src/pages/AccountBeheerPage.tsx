@@ -276,6 +276,25 @@ const AccountBeheerPage = () => {
     const { error } = await supabase.functions.invoke("manage-users", { body });
     if (error) { setSaving(false); toast.error("Fout bij opslaan: " + error.message); return; }
 
+    // Auto-link member if one was selected in the search field
+    const currentInfo = getDisplayInfo(editUser);
+    if (linkMemberId && currentInfo.memberIds.length === 0 && currentInfo.orgLinks.length === 0) {
+      const mid = parseInt(linkMemberId);
+      if (!isNaN(mid)) {
+        const { error: linkErr } = await supabase.functions.invoke("manage-users", {
+          body: { action: "link_member", user_id: editUser.id, member_id: mid },
+        });
+        if (linkErr) {
+          setSaving(false);
+          toast.error("Account bijgewerkt, maar koppelen mislukt: " + linkErr.message);
+          return;
+        }
+        toast.success(`Lid #${mid} gekoppeld`);
+        setLinkSearch("");
+        setLinkMemberId("");
+      }
+    }
+
     // Save name change to member_edits if linked to a member
     const info = getDisplayInfo(editUser);
     if (editName && editName !== info.personName && info.memberIds.length > 0) {
@@ -739,31 +758,23 @@ const AccountBeheerPage = () => {
                           </div>
                         );
                       })()}
-                      {linkMemberId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5 w-full"
-                          disabled={saving}
-                          onClick={async () => {
-                            const mid = parseInt(linkMemberId);
-                            if (isNaN(mid)) return;
-                            setSaving(true);
-                            const { error } = await supabase.functions.invoke("manage-users", {
-                              body: { action: "link_member", user_id: editUser!.id, member_id: mid },
-                            });
-                            setSaving(false);
-                            if (error) { toast.error("Fout bij koppelen: " + error.message); return; }
-                            toast.success(`Lid #${mid} gekoppeld`);
-                            setLinkSearch("");
-                            setLinkMemberId("");
-                            setEditUser(null);
-                            fetchUsers();
-                          }}
-                        >
-                          <Link size={12} /> {saving ? "Koppelen..." : "Lid koppelen"}
-                        </Button>
-                      )}
+                      {linkMemberId && (() => {
+                        const m = memberMap.get(parseInt(linkMemberId));
+                        return (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/5 border border-primary/20 text-sm">
+                            <Link size={12} className="text-primary" />
+                            <span className="text-muted-foreground">Wordt gekoppeld bij opslaan:</span>
+                            <span className="font-medium">#{linkMemberId} {m?.naam}</span>
+                            <button
+                              onClick={() => { setLinkMemberId(""); setLinkSearch(""); }}
+                              className="ml-auto text-muted-foreground hover:text-destructive"
+                              title="Annuleren"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
