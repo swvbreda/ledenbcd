@@ -43,7 +43,7 @@ export default function DocumentenZoeker() {
     setShowAll(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke("search-municipal-docs", {
+      const { data, error } = await invokeWithAuth("search-municipal-docs", {
         body: { crossMunicipal: true, keywords: zoektermen },
       });
       if (error) throw error;
