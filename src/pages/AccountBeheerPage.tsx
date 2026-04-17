@@ -303,13 +303,12 @@ const AccountBeheerPage = () => {
       }
     }
 
-    // Save name change to member_edits if linked to a member
+    // Save name change
     const info = getDisplayInfo(editUser);
-    if (editName && editName !== info.personName && info.memberIds.length > 0) {
-      const memberId = info.memberIds[0];
-      const member = memberMap.get(memberId);
-      if (member) {
-        // Fetch existing edits to merge
+    if (editName && editName !== info.personName) {
+      // Case 1: linked to a member -> save to member_edits.contactpersoon
+      if (info.memberIds.length > 0) {
+        const memberId = info.memberIds[0];
         const { data: existing } = await supabase
           .from("member_edits")
           .select("data")
@@ -332,6 +331,23 @@ const AccountBeheerPage = () => {
           );
         if (editError) {
           console.error("Error saving name edit:", editError);
+          toast.error("Account bijgewerkt, maar naam niet opgeslagen");
+          setSaving(false);
+          setEditUser(null);
+          fetchUsers();
+          return;
+        }
+        queryClient.invalidateQueries({ queryKey: ["member-edits"] });
+      }
+      // Case 2: linked to an external organization -> save to external_organizations.contact_name
+      else if (info.orgLinks.length > 0) {
+        const orgId = info.orgLinks[0].orgId;
+        const { error: orgError } = await supabase
+          .from("external_organizations")
+          .update({ contact_name: editName })
+          .eq("id", orgId);
+        if (orgError) {
+          console.error("Error saving org contact name:", orgError);
           toast.error("Account bijgewerkt, maar naam niet opgeslagen");
           setSaving(false);
           setEditUser(null);
