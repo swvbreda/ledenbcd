@@ -31,6 +31,7 @@ interface UserAccount {
   email: string;
   created_at: string;
   last_sign_in_at: string | null;
+  full_name?: string | null;
   role: string;
   member_id: number | null;
   member_ids: number[];
@@ -182,7 +183,7 @@ const AccountBeheerPage = () => {
     if (orgLinks.length > 0) {
       return { label: orgLinks[0].name, personName: orgLinks[0].contactName || "", isBoard: false, memberIds: [], orgLinks };
     }
-    return { label: "", personName: "", isBoard: false, memberIds: [], orgLinks: [] };
+    return { label: "", personName: u.full_name || "", isBoard: false, memberIds: [], orgLinks: [] };
   };
 
   const filteredUsers = useMemo(() => {
@@ -273,14 +274,16 @@ const AccountBeheerPage = () => {
   const handleEdit = async () => {
     if (!editUser) return;
     setSaving(true);
+    const info = getDisplayInfo(editUser);
     const body: Record<string, unknown> = { action: "update_user", user_id: editUser.id };
     if (editEmail && editEmail !== editUser.email) body.email = editEmail;
     if (editRole !== editUser.role) body.role = editRole;
+    if (editName.trim() !== info.personName.trim()) body.name = editName.trim() || null;
     const { error } = await invokeManageUsers(body);
     if (error) { setSaving(false); toast.error("Fout bij opslaan: " + error.message); return; }
 
     // Auto-link member if one was selected in the search field
-    const currentInfo = getDisplayInfo(editUser);
+    const currentInfo = info;
     if (linkMemberId && currentInfo.memberIds.length === 0 && currentInfo.orgLinks.length === 0) {
       const mid = parseInt(linkMemberId);
       if (!isNaN(mid)) {
@@ -297,8 +300,7 @@ const AccountBeheerPage = () => {
     }
 
     // Save name change
-    const info = getDisplayInfo(editUser);
-    if (editName && editName !== info.personName) {
+    if (editName.trim() && editName.trim() !== info.personName.trim()) {
       // Case 1: linked to a member -> save to member_edits.contactpersoon
       if (info.memberIds.length > 0) {
         const memberId = info.memberIds[0];
