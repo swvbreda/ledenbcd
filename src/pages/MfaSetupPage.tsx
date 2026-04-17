@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, CheckCircle2, Smartphone, ArrowRight, ExternalLink, Copy, Check, Mail, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
