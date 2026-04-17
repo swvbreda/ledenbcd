@@ -214,7 +214,7 @@ export default function MfaVerifyPage() {
                 onClick={async () => {
                   // Use admin edge function to unenroll all TOTP factors (bypasses AAL2)
                   try {
-                    await supabase.functions.invoke("reset-mfa");
+                    await invokeWithAuth("reset-mfa", {});
                   } catch (e) {
                     console.error("reset-mfa error:", e);
                   }
