@@ -56,7 +56,7 @@ export default function ExternePartijenPage() {
   }, [isAdmin]);
 
   const syncSupplierBenefits = async (orgId: string) => {
-    const { data, error } = await supabase.functions.invoke("manage-users", {
+    const { data, error } = await invokeWithAuth("manage-users", {
       body: { action: "sync_supplier_benefits", org_id: orgId },
     });
 
