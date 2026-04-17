@@ -64,7 +64,7 @@ export default function MfaSetupPage() {
     setEnrolling(true);
     // Use admin edge function to remove all existing TOTP factors (bypasses AAL2 requirement)
     try {
-      const { error: resetError } = await supabase.functions.invoke("reset-mfa");
+      const { error: resetError } = await invokeWithAuth("reset-mfa", {});
       if (resetError) {
         console.error("reset-mfa error:", resetError);
       }
