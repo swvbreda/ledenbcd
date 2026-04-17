@@ -276,6 +276,25 @@ const AccountBeheerPage = () => {
     const { error } = await supabase.functions.invoke("manage-users", { body });
     if (error) { setSaving(false); toast.error("Fout bij opslaan: " + error.message); return; }
 
+    // Auto-link member if one was selected in the search field
+    const currentInfo = getDisplayInfo(editUser);
+    if (linkMemberId && currentInfo.memberIds.length === 0 && currentInfo.orgLinks.length === 0) {
+      const mid = parseInt(linkMemberId);
+      if (!isNaN(mid)) {
+        const { error: linkErr } = await supabase.functions.invoke("manage-users", {
+          body: { action: "link_member", user_id: editUser.id, member_id: mid },
+        });
+        if (linkErr) {
+          setSaving(false);
+          toast.error("Account bijgewerkt, maar koppelen mislukt: " + linkErr.message);
+          return;
+        }
+        toast.success(`Lid #${mid} gekoppeld`);
+        setLinkSearch("");
+        setLinkMemberId("");
+      }
+    }
+
     // Save name change to member_edits if linked to a member
     const info = getDisplayInfo(editUser);
     if (editName && editName !== info.personName && info.memberIds.length > 0) {
