@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { SESSION_EXPIRED_EVENT_NAME } from "@/lib/invokeFunction";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -187,10 +189,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
+    // Global handler: when invokeWithAuth detects an unrecoverable auth failure,
+    // sign the user out and send them to the login page with a single toast.
+    const handleSessionExpired = async () => {
+      try {
+        if (user?.id) {
+          try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${user.id}`); } catch {}
+        }
+        try { localStorage.removeItem(PASSKEY_MFA_PENDING_KEY); } catch {}
+        await supabase.auth.signOut();
+      } catch {}
+
+      const path = window.location.pathname;
+      const isAuthRoute =
+        path.startsWith("/login") ||
+        path.startsWith("/extern-login") ||
+        path.startsWith("/reset-password") ||
+        path.startsWith("/mfa-");
+      if (isAuthRoute) return;
+
+      toast.error("Sessie verlopen. Log opnieuw in.");
+      const target = path.startsWith("/extern") ? "/extern-login" : "/login";
+      window.location.assign(target);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT_NAME, handleSessionExpired);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener(SESSION_EXPIRED_EVENT_NAME, handleSessionExpired);
     };
   }, []);
 
