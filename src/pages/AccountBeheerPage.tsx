@@ -20,17 +20,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 
 async function invokeManageUsers(body: Record<string, unknown>) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-  if (!token) {
-    return { data: null, error: { message: "Niet ingelogd. Log opnieuw in." } as any };
-  }
-  return await supabase.functions.invoke("manage-users", {
-    body,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  return await invokeWithAuth("manage-users", { body });
 }
 
 interface UserAccount {
