@@ -50,7 +50,7 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
     setShowAll(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke("search-municipal-docs", {
+      const { data, error } = await invokeWithAuth("search-municipal-docs", {
         body: { gemeentenaam, keywords: keywords ?? (zoektermen || "coffeeshop beleid") },
       });
       if (error) throw error;
