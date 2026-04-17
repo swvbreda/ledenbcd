@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowLeft, Building2, Globe, Phone, Mail, MapPin, FileText,
