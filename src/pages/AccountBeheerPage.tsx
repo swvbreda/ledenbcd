@@ -209,9 +209,7 @@ const AccountBeheerPage = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("manage-users", {
-        body: { action: "list" },
-      });
+      const { data, error } = await invokeManageUsers({ action: "list" });
       if (error) {
         toast.error("Fout bij ophalen accounts: " + error.message);
         setUsers([]);
@@ -241,9 +239,7 @@ const AccountBeheerPage = () => {
     if (!newEmail || !newPassword) { toast.error("Vul e-mail en wachtwoord in"); return; }
     if (newPassword.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
     setSaving(true);
-    const { error } = await supabase.functions.invoke("manage-users", {
-      body: { action: "create", email: newEmail, password: newPassword, role: newRole },
-    });
+    const { error } = await invokeManageUsers({ action: "create", email: newEmail, password: newPassword, role: newRole });
     setSaving(false);
     if (error) { toast.error("Fout bij aanmaken: " + error.message); return; }
     toast.success("Account aangemaakt");
@@ -254,9 +250,7 @@ const AccountBeheerPage = () => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.functions.invoke("manage-users", {
-      body: { action: "delete", user_id: deleteId },
-    });
+    const { error } = await invokeManageUsers({ action: "delete", user_id: deleteId });
     if (error) { toast.error("Fout bij verwijderen: " + error.message); }
     else { toast.success("Account verwijderd"); fetchUsers(); }
     setDeleteId(null);
@@ -267,9 +261,7 @@ const AccountBeheerPage = () => {
     const mid = parseInt(linkMemberId);
     if (isNaN(mid)) { toast.error("Voer een geldig lidnummer in"); return; }
     setSaving(true);
-    const { error } = await supabase.functions.invoke("manage-users", {
-      body: { action: "link_member", user_id: linkDialogUser.id, member_id: mid },
-    });
+    const { error } = await invokeManageUsers({ action: "link_member", user_id: linkDialogUser.id, member_id: mid });
     setSaving(false);
     if (error) { toast.error("Fout bij koppelen: " + error.message); return; }
     toast.success(`Lid #${mid} gekoppeld`);
@@ -279,9 +271,7 @@ const AccountBeheerPage = () => {
   };
 
   const handleUnlink = async (userId: string, memberId: number) => {
-    const { error } = await supabase.functions.invoke("manage-users", {
-      body: { action: "unlink_member", user_id: userId, member_id: memberId },
-    });
+    const { error } = await invokeManageUsers({ action: "unlink_member", user_id: userId, member_id: memberId });
     if (error) { toast.error("Fout bij ontkoppelen: " + error.message); return; }
     toast.success(`Lid #${memberId} ontkoppeld`);
     fetchUsers();
@@ -293,7 +283,7 @@ const AccountBeheerPage = () => {
     const body: Record<string, unknown> = { action: "update_user", user_id: editUser.id };
     if (editEmail && editEmail !== editUser.email) body.email = editEmail;
     if (editRole !== editUser.role) body.role = editRole;
-    const { error } = await supabase.functions.invoke("manage-users", { body });
+    const { error } = await invokeManageUsers(body);
     if (error) { setSaving(false); toast.error("Fout bij opslaan: " + error.message); return; }
 
     // Auto-link member if one was selected in the search field
@@ -301,9 +291,7 @@ const AccountBeheerPage = () => {
     if (linkMemberId && currentInfo.memberIds.length === 0 && currentInfo.orgLinks.length === 0) {
       const mid = parseInt(linkMemberId);
       if (!isNaN(mid)) {
-        const { error: linkErr } = await supabase.functions.invoke("manage-users", {
-          body: { action: "link_member", user_id: editUser.id, member_id: mid },
-        });
+        const { error: linkErr } = await invokeManageUsers({ action: "link_member", user_id: editUser.id, member_id: mid });
         if (linkErr) {
           setSaving(false);
           toast.error("Account bijgewerkt, maar koppelen mislukt: " + linkErr.message);
@@ -860,9 +848,7 @@ const AccountBeheerPage = () => {
                 if (resetPw.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
                 if (resetPw !== resetPwConfirm) { toast.error("Wachtwoorden komen niet overeen"); return; }
                 setSaving(true);
-                const { error } = await supabase.functions.invoke("manage-users", {
-                  body: { action: "reset_password", user_id: resetPwUser!.id, password: resetPw },
-                });
+                const { error } = await invokeManageUsers({ action: "reset_password", user_id: resetPwUser!.id, password: resetPw });
                 setSaving(false);
                 if (error) { toast.error("Fout bij resetten: " + error.message); return; }
                 toast.success("Wachtwoord succesvol gewijzigd");
