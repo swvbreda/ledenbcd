@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function invokeWithAuth<T = any>(
   functionName: string,
-  options: { body?: unknown; headers?: Record<string, string>; method?: string } = {},
+  options: { body?: unknown; headers?: Record<string, string>; method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" } = {},
 ): Promise<{ data: T | null; error: { message: string; name?: string } | null }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
