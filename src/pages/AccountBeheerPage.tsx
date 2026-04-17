@@ -274,6 +274,7 @@ const AccountBeheerPage = () => {
   const handleEdit = async () => {
     if (!editUser) return;
     setSaving(true);
+    const info = getDisplayInfo(editUser);
     const body: Record<string, unknown> = { action: "update_user", user_id: editUser.id };
     if (editEmail && editEmail !== editUser.email) body.email = editEmail;
     if (editRole !== editUser.role) body.role = editRole;
@@ -299,7 +300,7 @@ const AccountBeheerPage = () => {
     }
 
     // Save name change
-    if (editName && editName !== info.personName) {
+    if (editName.trim() && editName.trim() !== info.personName.trim()) {
       // Case 1: linked to a member -> save to member_edits.contactpersoon
       if (info.memberIds.length > 0) {
         const memberId = info.memberIds[0];
