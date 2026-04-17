@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, CheckCircle2, Smartphone, ArrowRight, ExternalLink, Copy, Check, Mail, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export default function MfaSetupPage() {
     setEnrolling(true);
     // Use admin edge function to remove all existing TOTP factors (bypasses AAL2 requirement)
     try {
-      const { error: resetError } = await supabase.functions.invoke("reset-mfa");
+      const { error: resetError } = await invokeWithAuth("reset-mfa", {});
       if (resetError) {
         console.error("reset-mfa error:", resetError);
       }

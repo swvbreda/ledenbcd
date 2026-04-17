@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Building2, Check, X, Clock, Pencil, Save } from "lucide-react";
@@ -55,7 +56,7 @@ export default function ExternePartijenPage() {
   }, [isAdmin]);
 
   const syncSupplierBenefits = async (orgId: string) => {
-    const { data, error } = await supabase.functions.invoke("manage-users", {
+    const { data, error } = await invokeWithAuth("manage-users", {
       body: { action: "sync_supplier_benefits", org_id: orgId },
     });
 

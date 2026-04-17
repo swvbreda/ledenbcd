@@ -5,6 +5,7 @@ import AdminUploadDialog from "./AdminUploadDialog";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,7 +93,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const generateTodos = async () => {
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-finance-todos", {
+      const { data, error } = await invokeWithAuth("generate-finance-todos", {
         body: { year },
       });
       if (error) throw error;
