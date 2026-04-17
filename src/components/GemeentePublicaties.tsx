@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronUp, AlertCircle, Notebook,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 
 interface MunicipalDocument {
   id: string;
