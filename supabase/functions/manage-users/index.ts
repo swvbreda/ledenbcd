@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
         email: u.email,
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
+        full_name: (u.user_metadata as Record<string, unknown> | undefined)?.full_name ?? null,
         role: roleMap.get(u.id) || "user",
         member_ids: profileMap.get(u.id) || [],
         member_id: (profileMap.get(u.id) || [])[0] || null,
@@ -310,6 +311,7 @@ Deno.serve(async (req) => {
     if (action === "update_user") {
       const user_id = payload.user_id as string | undefined;
       const email = payload.email as string | undefined;
+      const name = payload.name as string | null | undefined;
       const role = payload.role as string | undefined;
 
       if (!user_id) {
@@ -319,9 +321,25 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update email if provided
-      if (email) {
-        const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, { email });
+      // Update auth user fields if provided
+      if (email || name !== undefined) {
+        const authUpdates: { email?: string; user_metadata?: Record<string, unknown> } = {};
+
+        if (email) {
+          authUpdates.email = email;
+        }
+
+        if (name !== undefined) {
+          const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(user_id);
+          if (userError) throw userError;
+
+          authUpdates.user_metadata = {
+            ...((userData.user?.user_metadata as Record<string, unknown> | undefined) ?? {}),
+            full_name: name || null,
+          };
+        }
+
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, authUpdates);
         if (updateError) throw updateError;
       }
 
