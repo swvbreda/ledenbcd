@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid, List, ChevronDown, ChevronRight as ChevronRightSm } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Use CDN worker matching installed version
@@ -23,6 +23,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
   const [showThumbs, setShowThumbs] = useState(false);
+  const [showOutline, setShowOutline] = useState(false);
+  const [outline, setOutline] = useState<any[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         setPdf(doc);
         setNumPages(doc.numPages);
         setPageNum(1);
+        try {
+          const ol = await doc.getOutline();
+          if (!cancelled) setOutline(ol ?? []);
+        } catch {
+          if (!cancelled) setOutline([]);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Kon PDF niet laden");
       } finally {
@@ -145,6 +153,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
+        <Button size="sm" variant={showOutline ? "default" : "outline"} onClick={() => setShowOutline((v) => !v)} aria-label="Inhoudsopgave" disabled={!outline || outline.length === 0}>
+          <List size={16} />
+        </Button>
         <span className="w-2" />
         <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
           <ChevronLeft size={16} />
@@ -170,6 +181,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
           <ThumbnailSidebar
             pdf={pdf}
             current={pageNum}
+            onSelect={(p) => setPageNum(p)}
+          />
+        )}
+        {showOutline && pdf && outline && outline.length > 0 && (
+          <OutlineSidebar
+            pdf={pdf}
+            items={outline}
             onSelect={(p) => setPageNum(p)}
           />
         )}
@@ -272,5 +290,104 @@ function Thumbnail({
         {pageNum}
       </span>
     </button>
+  );
+}
+
+async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<number | null> {
+  try {
+    let resolved = dest;
+    if (typeof dest === "string") {
+      resolved = await pdf.getDestination(dest);
+    }
+    if (!resolved) return null;
+    const ref = resolved[0];
+    const idx = await pdf.getPageIndex(ref);
+    return idx + 1;
+  } catch {
+    return null;
+  }
+}
+
+function OutlineSidebar({
+  pdf,
+  items,
+  onSelect,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  items: any[];
+  onSelect: (p: number) => void;
+}) {
+  return (
+    <div className="w-64 max-h-[80vh] overflow-y-auto border-2 border-primary/60 rounded-md bg-card p-2 shrink-0 text-sm">
+      <p className="text-xs font-semibold text-muted-foreground px-1 pb-2">Inhoudsopgave</p>
+      <OutlineList pdf={pdf} items={items} onSelect={onSelect} depth={0} />
+    </div>
+  );
+}
+
+function OutlineList({
+  pdf,
+  items,
+  onSelect,
+  depth,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  items: any[];
+  onSelect: (p: number) => void;
+  depth: number;
+}) {
+  return (
+    <ul className="space-y-0.5">
+      {items.map((item, i) => (
+        <OutlineItem key={i} pdf={pdf} item={item} onSelect={onSelect} depth={depth} />
+      ))}
+    </ul>
+  );
+}
+
+function OutlineItem({
+  pdf,
+  item,
+  onSelect,
+  depth,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  item: any;
+  onSelect: (p: number) => void;
+  depth: number;
+}) {
+  const [open, setOpen] = useState(true);
+  const hasChildren = Array.isArray(item.items) && item.items.length > 0;
+  const handleClick = async () => {
+    const p = await destToPage(pdf, item.dest);
+    if (p) onSelect(p);
+  };
+  return (
+    <li>
+      <div className="flex items-start gap-1" style={{ paddingLeft: depth * 8 }}>
+        {hasChildren ? (
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
+            aria-label={open ? "Inklappen" : "Uitklappen"}
+          >
+            {open ? <ChevronDown size={12} /> : <ChevronRightSm size={12} />}
+          </button>
+        ) : (
+          <span className="w-3 shrink-0" />
+        )}
+        <button
+          type="button"
+          onClick={handleClick}
+          className="text-left text-xs leading-snug py-0.5 hover:text-primary flex-1"
+        >
+          {item.title}
+        </button>
+      </div>
+      {hasChildren && open && (
+        <OutlineList pdf={pdf} items={item.items} onSelect={onSelect} depth={depth + 1} />
+      )}
+    </li>
   );
 }
