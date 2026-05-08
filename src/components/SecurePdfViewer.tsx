@@ -292,3 +292,102 @@ function Thumbnail({
     </button>
   );
 }
+
+async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<number | null> {
+  try {
+    let resolved = dest;
+    if (typeof dest === "string") {
+      resolved = await pdf.getDestination(dest);
+    }
+    if (!resolved) return null;
+    const ref = resolved[0];
+    const idx = await pdf.getPageIndex(ref);
+    return idx + 1;
+  } catch {
+    return null;
+  }
+}
+
+function OutlineSidebar({
+  pdf,
+  items,
+  onSelect,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  items: any[];
+  onSelect: (p: number) => void;
+}) {
+  return (
+    <div className="w-64 max-h-[80vh] overflow-y-auto border-2 border-primary/60 rounded-md bg-card p-2 shrink-0 text-sm">
+      <p className="text-xs font-semibold text-muted-foreground px-1 pb-2">Inhoudsopgave</p>
+      <OutlineList pdf={pdf} items={items} onSelect={onSelect} depth={0} />
+    </div>
+  );
+}
+
+function OutlineList({
+  pdf,
+  items,
+  onSelect,
+  depth,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  items: any[];
+  onSelect: (p: number) => void;
+  depth: number;
+}) {
+  return (
+    <ul className="space-y-0.5">
+      {items.map((item, i) => (
+        <OutlineItem key={i} pdf={pdf} item={item} onSelect={onSelect} depth={depth} />
+      ))}
+    </ul>
+  );
+}
+
+function OutlineItem({
+  pdf,
+  item,
+  onSelect,
+  depth,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  item: any;
+  onSelect: (p: number) => void;
+  depth: number;
+}) {
+  const [open, setOpen] = useState(true);
+  const hasChildren = Array.isArray(item.items) && item.items.length > 0;
+  const handleClick = async () => {
+    const p = await destToPage(pdf, item.dest);
+    if (p) onSelect(p);
+  };
+  return (
+    <li>
+      <div className="flex items-start gap-1" style={{ paddingLeft: depth * 8 }}>
+        {hasChildren ? (
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
+            aria-label={open ? "Inklappen" : "Uitklappen"}
+          >
+            {open ? <ChevronDown size={12} /> : <ChevronRightSm size={12} />}
+          </button>
+        ) : (
+          <span className="w-3 shrink-0" />
+        )}
+        <button
+          type="button"
+          onClick={handleClick}
+          className="text-left text-xs leading-snug py-0.5 hover:text-primary flex-1"
+        >
+          {item.title}
+        </button>
+      </div>
+      {hasChildren && open && (
+        <OutlineList pdf={pdf} items={item.items} onSelect={onSelect} depth={depth + 1} />
+      )}
+    </li>
+  );
+}
