@@ -72,6 +72,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
       canvas.style.height = `${viewport.height}px`;
       await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
       if (cancelled) return;
+      // Scroll viewer back to top of new page
+      containerRef.current?.scrollTo({ top: 0, left: 0 });
+      containerRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      if (cancelled) return;
       // Collect internal link annotations
       try {
         const annots = await page.getAnnotations();
