@@ -20,7 +20,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1); // user zoom multiplier (1 = fit width)
+  const [scale, setScale] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? 1.6 : 1,
+  ); // user zoom multiplier (1 = fit width)
   const [fitScale, setFitScale] = useState(1); // auto-computed to fit container width
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +57,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
     if (yPdf == null || !canvasEl) {
       c.scrollTo({ top: 0, left: 0 });
     } else {
-      // Convert PDF-space y (origin bottom-left) to canvas-space pixels
+      // Convert PDF-space y (origin bottom-left) to CSS pixels (matches canvas style size)
       const renderScale = fitScale * scale;
-      const pageHeightPdf = canvasEl.height / renderScale;
+      const pageHeightCss = parseFloat(canvasEl.style.height || `${canvasEl.height}`);
+      const pageHeightPdf = pageHeightCss / renderScale;
       const offsetPx = (pageHeightPdf - yPdf) * renderScale;
       c.scrollTo({ top: Math.max(0, offsetPx - 8), left: 0 });
     }
@@ -101,14 +104,16 @@ export default function SecurePdfViewer({ url, data }: Props) {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
       const renderScale = fitScale * scale;
+      const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
       const viewport = page.getViewport({ scale: renderScale });
+      const hiResViewport = page.getViewport({ scale: renderScale * dpr });
       const canvas = canvasEl;
       const ctx = canvas.getContext("2d")!;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      canvas.width = hiResViewport.width;
+      canvas.height = hiResViewport.height;
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
-      await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+      await page.render({ canvasContext: ctx, viewport: hiResViewport, canvas } as any).promise;
       if (cancelled) return;
       // Scroll to pending sub-target (or top of page) after render
       applyPendingScroll();
