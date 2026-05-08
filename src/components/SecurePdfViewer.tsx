@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Use CDN worker matching installed version
@@ -22,6 +22,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
+  const [showThumbs, setShowThumbs] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +142,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
       `}</style>
 
       <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+        <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
+          <LayoutGrid size={16} />
+        </Button>
+        <span className="w-2" />
         <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
           <ChevronLeft size={16} />
         </Button>
@@ -160,11 +165,19 @@ export default function SecurePdfViewer({ url, data }: Props) {
         </Button>
       </div>
 
-      <div
-        ref={containerRef}
-        className="relative mx-auto inline-block max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30"
-        style={{ display: "block" }}
-      >
+      <div className="flex gap-3 items-start">
+        {showThumbs && pdf && (
+          <ThumbnailSidebar
+            pdf={pdf}
+            current={pageNum}
+            onSelect={(p) => setPageNum(p)}
+          />
+        )}
+        <div
+          ref={containerRef}
+          className="relative mx-auto inline-block max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1"
+          style={{ display: "block" }}
+        >
         <div className="relative inline-block">
           <canvas ref={canvasRef} style={{ visibility: hidden ? "hidden" : "visible" }} />
           {hidden && (
@@ -188,8 +201,76 @@ export default function SecurePdfViewer({ url, data }: Props) {
             className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed bg-transparent"
           />
         </div>
+        </div>
       </div>
 
     </div>
+  );
+}
+
+function ThumbnailSidebar({
+  pdf,
+  current,
+  onSelect,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  current: number;
+  onSelect: (p: number) => void;
+}) {
+  return (
+    <div className="w-32 max-h-[80vh] overflow-y-auto border-2 border-primary/60 rounded-md bg-card p-2 space-y-2 shrink-0">
+      {Array.from({ length: pdf.numPages }, (_, i) => i + 1).map((p) => (
+        <Thumbnail
+          key={p}
+          pdf={pdf}
+          pageNum={p}
+          active={p === current}
+          onClick={() => onSelect(p)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Thumbnail({
+  pdf,
+  pageNum,
+  active,
+  onClick,
+}: {
+  pdf: pdfjsLib.PDFDocumentProxy;
+  pageNum: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const page = await pdf.getPage(pageNum);
+      if (cancelled || !ref.current) return;
+      const viewport = page.getViewport({ scale: 0.2 });
+      const canvas = ref.current;
+      const ctx = canvas.getContext("2d")!;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.width = "100%";
+      canvas.style.height = "auto";
+      await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+    })();
+    return () => { cancelled = true; };
+  }, [pdf, pageNum]);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`block w-full rounded border-2 transition ${active ? "border-primary" : "border-transparent hover:border-primary/40"}`}
+      aria-label={`Ga naar pagina ${pageNum}`}
+    >
+      <canvas ref={ref} className="block w-full bg-white" />
+      <span className="block text-[10px] text-center tabular-nums py-0.5 text-muted-foreground">
+        {pageNum}
+      </span>
+    </button>
   );
 }
