@@ -25,6 +25,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [showThumbs, setShowThumbs] = useState(false);
   const [showOutline, setShowOutline] = useState(false);
   const [outline, setOutline] = useState<any[] | null>(null);
+  const [links, setLinks] = useState<{ x: number; y: number; w: number; h: number; dest: any }[]>([]);
+  const [pageSize, setPageSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +71,29 @@ export default function SecurePdfViewer({ url, data }: Props) {
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
       await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+      if (cancelled) return;
+      // Collect internal link annotations
+      try {
+        const annots = await page.getAnnotations();
+        if (cancelled) return;
+        const linkAnnots: { x: number; y: number; w: number; h: number; dest: any }[] = [];
+        for (const a of annots as any[]) {
+          if (a.subtype !== "Link") continue;
+          const dest = a.dest ?? a.action;
+          if (!dest) continue;
+          // a.rect is [x1,y1,x2,y2] in PDF coordinates; convert with viewport
+          const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(a.rect);
+          const x = Math.min(x1, x2);
+          const y = Math.min(y1, y2);
+          const w = Math.abs(x2 - x1);
+          const h = Math.abs(y2 - y1);
+          linkAnnots.push({ x, y, w, h, dest });
+        }
+        setLinks(linkAnnots);
+        setPageSize({ w: viewport.width, h: viewport.height });
+      } catch {
+        setLinks([]);
+      }
     })();
     return () => { cancelled = true; };
   }, [pdf, pageNum, scale, canvasEl]);
