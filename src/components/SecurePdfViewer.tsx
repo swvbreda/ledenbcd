@@ -190,7 +190,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
     const onFocus = () => setBlurred(false);
     const onVis = () => setBlurred(document.hidden);
     const onKeyUp = (e: KeyboardEvent) => {
-      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !hidden) {
+      if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
         setProtectiveBlur(false);
       }
     };
@@ -219,7 +219,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
       el?.removeEventListener("auxclick", blockAux);
       el?.removeEventListener("mousedown", blockAux);
     };
-  }, [numPages, hidden]);
+  }, [numPages]);
 
   // Wheel / touch: scroll past the bottom -> next page, past the top -> previous page
   useEffect(() => {
