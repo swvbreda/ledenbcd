@@ -83,6 +83,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         setHidden(true);
         setTimeout(() => setHidden(false), 1500);
       }
+      if (k === "arrowright" || k === "pagedown") {
+        setPageNum((p) => Math.min(numPages, p + 1));
+      }
+      if (k === "arrowleft" || k === "pageup") {
+        setPageNum((p) => Math.max(1, p - 1));
+      }
     };
     const onBlur = () => setHidden(true);
     const onFocus = () => setHidden(false);
@@ -111,7 +117,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
       el?.removeEventListener("auxclick", blockAux);
       el?.removeEventListener("mousedown", blockAux);
     };
-  }, []);
+  }, [numPages]);
 
   if (loading) {
     return (
@@ -166,6 +172,21 @@ export default function SecurePdfViewer({ url, data }: Props) {
               Beeld tijdelijk geblokkeerd
             </div>
           )}
+          {/* Click zones for prev/next page */}
+          <button
+            type="button"
+            aria-label="Vorige pagina"
+            onClick={() => setPageNum((p) => Math.max(1, p - 1))}
+            disabled={pageNum <= 1}
+            className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize disabled:cursor-not-allowed bg-transparent"
+          />
+          <button
+            type="button"
+            aria-label="Volgende pagina"
+            onClick={() => setPageNum((p) => Math.min(numPages, p + 1))}
+            disabled={pageNum >= numPages}
+            className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed bg-transparent"
+          />
         </div>
       </div>
 
