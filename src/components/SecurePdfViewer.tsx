@@ -177,6 +177,69 @@ export default function SecurePdfViewer({ url, data }: Props) {
     };
   }, [numPages]);
 
+  // Wheel / touch: scroll past the bottom -> next page, past the top -> previous page
+  useEffect(() => {
+    const c = containerRef.current;
+    if (!c) return;
+    let cooldown = false;
+    const trigger = (dir: 1 | -1) => {
+      if (cooldown) return;
+      if (dir === 1 && pageNum < numPages) {
+        cooldown = true;
+        pendingScrollY.current = null; // top of next page
+        setPageNum((p) => Math.min(numPages, p + 1));
+        setTimeout(() => { cooldown = false; }, 700);
+      } else if (dir === -1 && pageNum > 1) {
+        cooldown = true;
+        pendingScrollY.current = 0; // bottom of previous page
+        setPageNum((p) => Math.max(1, p - 1));
+        setTimeout(() => { cooldown = false; }, 700);
+      }
+    };
+    const atTop = () => c.scrollTop <= 0;
+    const atBottom = () => c.scrollTop + c.clientHeight >= c.scrollHeight - 1;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0 && atBottom()) {
+        e.preventDefault();
+        trigger(1);
+      } else if (e.deltaY < 0 && atTop()) {
+        e.preventDefault();
+        trigger(-1);
+      }
+    };
+
+    let touchY: number | null = null;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchY == null) return;
+      const cy = e.touches[0]?.clientY ?? touchY;
+      const dy = touchY - cy; // >0 swipe up (scroll down)
+      if (Math.abs(dy) < 40) return;
+      if (dy > 0 && atBottom()) {
+        touchY = cy;
+        trigger(1);
+      } else if (dy < 0 && atTop()) {
+        touchY = cy;
+        trigger(-1);
+      }
+    };
+    const onTouchEnd = () => { touchY = null; };
+
+    c.addEventListener("wheel", onWheel, { passive: false });
+    c.addEventListener("touchstart", onTouchStart, { passive: true });
+    c.addEventListener("touchmove", onTouchMove, { passive: true });
+    c.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      c.removeEventListener("wheel", onWheel as any);
+      c.removeEventListener("touchstart", onTouchStart as any);
+      c.removeEventListener("touchmove", onTouchMove as any);
+      c.removeEventListener("touchend", onTouchEnd as any);
+    };
+  }, [pageNum, numPages]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
