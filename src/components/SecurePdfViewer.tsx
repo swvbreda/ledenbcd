@@ -436,12 +436,12 @@ function OutlineSidebar({
   pdf,
   items,
   currentPage,
-  onSelect,
+  onSelectDest,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   items: any[];
   currentPage: number;
-  onSelect: (p: number) => void;
+  onSelectDest: (dest: any) => void;
 }) {
   // Resolve every outline entry to a page number once
   const [pageMap, setPageMap] = useState<Map<any, number>>(new Map());
@@ -485,7 +485,7 @@ function OutlineSidebar({
       <OutlineList
         pdf={pdf}
         items={items}
-        onSelect={onSelect}
+        onSelectDest={onSelectDest}
         depth={0}
         activeEntry={activeEntry}
         activeRef={activeRef}
@@ -497,14 +497,14 @@ function OutlineSidebar({
 function OutlineList({
   pdf,
   items,
-  onSelect,
+  onSelectDest,
   depth,
   activeEntry,
   activeRef,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   items: any[];
-  onSelect: (p: number) => void;
+  onSelectDest: (dest: any) => void;
   depth: number;
   activeEntry: any;
   activeRef: React.RefObject<HTMLLIElement>;
@@ -516,7 +516,7 @@ function OutlineList({
           key={i}
           pdf={pdf}
           item={item}
-          onSelect={onSelect}
+          onSelectDest={onSelectDest}
           depth={depth}
           activeEntry={activeEntry}
           activeRef={activeRef}
@@ -529,14 +529,14 @@ function OutlineList({
 function OutlineItem({
   pdf,
   item,
-  onSelect,
+  onSelectDest,
   depth,
   activeEntry,
   activeRef,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   item: any;
-  onSelect: (p: number) => void;
+  onSelectDest: (dest: any) => void;
   depth: number;
   activeEntry: any;
   activeRef: React.RefObject<HTMLLIElement>;
@@ -544,10 +544,7 @@ function OutlineItem({
   const [open, setOpen] = useState(true);
   const hasChildren = Array.isArray(item.items) && item.items.length > 0;
   const isActive = item === activeEntry;
-  const handleClick = async () => {
-    const p = await destToPage(pdf, item.dest);
-    if (p) onSelect(p);
-  };
+  const handleClick = () => onSelectDest(item.dest);
   return (
     <li ref={isActive ? activeRef : undefined}>
       <div
@@ -580,7 +577,7 @@ function OutlineItem({
         <OutlineList
           pdf={pdf}
           items={item.items}
-          onSelect={onSelect}
+          onSelectDest={onSelectDest}
           depth={depth + 1}
           activeEntry={activeEntry}
           activeRef={activeRef}
