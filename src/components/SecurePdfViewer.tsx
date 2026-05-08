@@ -296,14 +296,50 @@ function Thumbnail({
 
 async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<number | null> {
   try {
-    let resolved = dest;
+    if (dest == null) return null;
+
+    // Named destination → resolve to explicit dest array
     if (typeof dest === "string") {
-      resolved = await pdf.getDestination(dest);
+      const resolved = await pdf.getDestination(dest);
+      return destToPage(pdf, resolved);
     }
-    if (!resolved) return null;
-    const ref = resolved[0];
-    const idx = await pdf.getPageIndex(ref);
-    return idx + 1;
+
+    // Object form: { num, gen } page reference, or { dest: ... } wrapper
+    if (!Array.isArray(dest)) {
+      if (typeof dest === "object") {
+        if ("num" in dest && "gen" in dest) {
+          const idx = await pdf.getPageIndex(dest as any);
+          return idx + 1;
+        }
+        if ("dest" in dest) return destToPage(pdf, (dest as any).dest);
+      }
+      return null;
+    }
+
+    // Array form: try each entry until one resolves to a page
+    for (const entry of dest) {
+      if (entry == null) continue;
+
+      // Direct page index (number)
+      if (typeof entry === "number" && Number.isFinite(entry)) {
+        return entry + 1;
+      }
+      // Page reference object
+      if (typeof entry === "object" && "num" in entry && "gen" in entry) {
+        try {
+          const idx = await pdf.getPageIndex(entry as any);
+          return idx + 1;
+        } catch {
+          // try next entry
+        }
+      }
+      // Nested array or named dest
+      if (Array.isArray(entry) || typeof entry === "string") {
+        const p = await destToPage(pdf, entry);
+        if (p) return p;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
