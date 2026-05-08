@@ -278,10 +278,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
                 key={i}
                 type="button"
                 aria-label="Ga naar hoofdstuk"
-                onClick={async () => {
-                  const p = await destToPage(pdf, lnk.dest);
-                  if (p) setPageNum(p);
-                }}
+                onClick={() => goToDest(lnk.dest)}
                 className="absolute cursor-pointer touch-manipulation flex items-center justify-center group"
                 style={{
                   left: lnk.x - padX,
