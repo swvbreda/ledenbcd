@@ -345,55 +345,65 @@ function Thumbnail({
   );
 }
 
-async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<number | null> {
+/**
+ * Resolves any PDF destination to { page, y } where y is the PDF-space Y
+ * coordinate of the target (top of page = highest Y). Returns null if no
+ * page reference can be resolved.
+ */
+async function resolveDest(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  dest: any,
+): Promise<{ page: number; y: number | null } | null> {
   try {
     if (dest == null) return null;
-
-    // Named destination → resolve to explicit dest array
     if (typeof dest === "string") {
       const resolved = await pdf.getDestination(dest);
-      return destToPage(pdf, resolved);
+      return resolveDest(pdf, resolved);
     }
-
-    // Object form: { num, gen } page reference, or { dest: ... } wrapper
     if (!Array.isArray(dest)) {
       if (typeof dest === "object") {
         if ("num" in dest && "gen" in dest) {
           const idx = await pdf.getPageIndex(dest as any);
-          return idx + 1;
+          return { page: idx + 1, y: null };
         }
-        if ("dest" in dest) return destToPage(pdf, (dest as any).dest);
+        if ("dest" in dest) return resolveDest(pdf, (dest as any).dest);
       }
       return null;
     }
-
-    // Array form: try each entry until one resolves to a page
-    for (const entry of dest) {
-      if (entry == null) continue;
-
-      // Direct page index (number)
-      if (typeof entry === "number" && Number.isFinite(entry)) {
-        return entry + 1;
-      }
-      // Page reference object
-      if (typeof entry === "object" && "num" in entry && "gen" in entry) {
-        try {
-          const idx = await pdf.getPageIndex(entry as any);
-          return idx + 1;
-        } catch {
-          // try next entry
-        }
-      }
-      // Nested array or named dest
-      if (Array.isArray(entry) || typeof entry === "string") {
-        const p = await destToPage(pdf, entry);
-        if (p) return p;
-      }
+    // Explicit dest array: [pageRef, fitType, ...args]
+    const ref = dest[0];
+    let page: number | null = null;
+    if (typeof ref === "number" && Number.isFinite(ref)) {
+      page = ref + 1;
+    } else if (ref && typeof ref === "object" && "num" in ref && "gen" in ref) {
+      try {
+        page = (await pdf.getPageIndex(ref as any)) + 1;
+      } catch { /* ignore */ }
+    } else if (Array.isArray(ref) || typeof ref === "string") {
+      const inner = await resolveDest(pdf, ref);
+      if (inner) return inner;
     }
-    return null;
+    if (!page) return null;
+
+    // Try to extract a Y coordinate. Common fit types:
+    //   [page, /XYZ, x, y, zoom]   → dest[3] = y
+    //   [page, /FitH, y]           → dest[2] = y
+    //   [page, /FitBH, y]          → dest[2] = y
+    let y: number | null = null;
+    const fit = dest[1];
+    const fitName = fit && typeof fit === "object" && "name" in fit ? (fit as any).name : fit;
+    if (fitName === "XYZ" && typeof dest[3] === "number") y = dest[3];
+    else if ((fitName === "FitH" || fitName === "FitBH") && typeof dest[2] === "number") y = dest[2];
+
+    return { page, y };
   } catch {
     return null;
   }
+}
+
+async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<number | null> {
+  const r = await resolveDest(pdf, dest);
+  return r ? r.page : null;
 }
 
 function OutlineSidebar({
