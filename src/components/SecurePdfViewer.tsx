@@ -56,8 +56,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
       c.scrollTo({ top: 0, left: 0 });
     } else {
       // Convert PDF-space y (origin bottom-left) to canvas-space pixels
-      const pageHeightPdf = canvasEl.height / scale;
-      const offsetPx = (pageHeightPdf - yPdf) * scale;
+      const renderScale = fitScale * scale;
+      const pageHeightPdf = canvasEl.height / renderScale;
+      const offsetPx = (pageHeightPdf - yPdf) * renderScale;
       c.scrollTo({ top: Math.max(0, offsetPx - 8), left: 0 });
     }
     c.scrollIntoView({ block: "start", behavior: "smooth" });
