@@ -23,7 +23,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
-  const [showThumbs, setShowThumbs] = useState(false);
+  const [showThumbs, setShowThumbs] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
+  );
   const [showOutline, setShowOutline] = useState(false);
   const [outline, setOutline] = useState<any[] | null>(null);
   const [links, setLinks] = useState<{ x: number; y: number; w: number; h: number; dest: any }[]>([]);
