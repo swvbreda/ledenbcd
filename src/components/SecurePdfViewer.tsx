@@ -235,6 +235,25 @@ export default function SecurePdfViewer({ url, data }: Props) {
             disabled={pageNum >= numPages}
             className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed bg-transparent"
           />
+          {/* Internal link hotspots (rendered above page-flip zones) */}
+          {!hidden && pdf && links.map((lnk, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label="Ga naar hoofdstuk"
+              onClick={async () => {
+                const p = await destToPage(pdf, lnk.dest);
+                if (p) setPageNum(p);
+              }}
+              className="absolute cursor-pointer hover:bg-primary/10 rounded-sm transition-colors"
+              style={{
+                left: lnk.x,
+                top: lnk.y,
+                width: lnk.w,
+                height: lnk.h,
+              }}
+            />
+          ))}
         </div>
         </div>
       </div>
