@@ -154,11 +154,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
       if (cancelled) return;
       const base = page.getViewport({ scale: 1 });
       const availW = Math.max(100, c.clientWidth - 4);
-      // Use the viewer's max-height budget so the page fills the screen vertically too
       const availH = Math.max(200, c.clientHeight - 4);
       const fitW = availW / base.width;
       const fitH = availH / base.height;
-      const fit = Math.min(fitW, fitH);
+      // On mobile: fit to width (vertical scroll) for max readability.
+      // On desktop: fit fully in view (no scroll).
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const fit = isMobile ? fitW : Math.min(fitW, fitH);
       setFitScale((prev) => (Math.abs(prev - fit) < 0.001 ? prev : fit));
     };
     recompute();
