@@ -345,8 +345,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
         )}
         <div
           ref={containerRef}
-          className="relative mx-auto max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1"
-          style={{ display: "block", maxHeight: "calc(100vh - 140px)" }}
+          className="relative mx-auto max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1 flex justify-center"
+          style={{ maxHeight: "calc(100vh - 140px)" }}
         >
         <div className="relative inline-block">
           <canvas
