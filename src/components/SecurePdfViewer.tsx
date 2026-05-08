@@ -20,7 +20,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.2);
+  const [scale, setScale] = useState(1); // user zoom multiplier (1 = fit width)
+  const [fitScale, setFitScale] = useState(1); // auto-computed to fit container width
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
