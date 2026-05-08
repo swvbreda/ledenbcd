@@ -188,6 +188,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
           <OutlineSidebar
             pdf={pdf}
             items={outline}
+            currentPage={pageNum}
             onSelect={(p) => setPageNum(p)}
           />
         )}
@@ -311,16 +312,61 @@ async function destToPage(pdf: pdfjsLib.PDFDocumentProxy, dest: any): Promise<nu
 function OutlineSidebar({
   pdf,
   items,
+  currentPage,
   onSelect,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   items: any[];
+  currentPage: number;
   onSelect: (p: number) => void;
 }) {
+  // Resolve every outline entry to a page number once
+  const [pageMap, setPageMap] = useState<Map<any, number>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const map = new Map<any, number>();
+      const walk = async (entries: any[]) => {
+        for (const entry of entries) {
+          const p = await destToPage(pdf, entry.dest);
+          if (p) map.set(entry, p);
+          if (Array.isArray(entry.items) && entry.items.length > 0) {
+            await walk(entry.items);
+          }
+        }
+      };
+      await walk(items);
+      if (!cancelled) setPageMap(map);
+    })();
+    return () => { cancelled = true; };
+  }, [pdf, items]);
+
+  // Active = entry with the highest page <= currentPage
+  let activeEntry: any = null;
+  let activePage = -1;
+  pageMap.forEach((p, entry) => {
+    if (p <= currentPage && p > activePage) {
+      activePage = p;
+      activeEntry = entry;
+    }
+  });
+
+  const activeRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest" });
+  }, [activeEntry]);
+
   return (
     <div className="w-64 max-h-[80vh] overflow-y-auto border-2 border-primary/60 rounded-md bg-card p-2 shrink-0 text-sm">
       <p className="text-xs font-semibold text-muted-foreground px-1 pb-2">Inhoudsopgave</p>
-      <OutlineList pdf={pdf} items={items} onSelect={onSelect} depth={0} />
+      <OutlineList
+        pdf={pdf}
+        items={items}
+        onSelect={onSelect}
+        depth={0}
+        activeEntry={activeEntry}
+        activeRef={activeRef}
+      />
     </div>
   );
 }
@@ -330,16 +376,28 @@ function OutlineList({
   items,
   onSelect,
   depth,
+  activeEntry,
+  activeRef,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   items: any[];
   onSelect: (p: number) => void;
   depth: number;
+  activeEntry: any;
+  activeRef: React.RefObject<HTMLLIElement>;
 }) {
   return (
     <ul className="space-y-0.5">
       {items.map((item, i) => (
-        <OutlineItem key={i} pdf={pdf} item={item} onSelect={onSelect} depth={depth} />
+        <OutlineItem
+          key={i}
+          pdf={pdf}
+          item={item}
+          onSelect={onSelect}
+          depth={depth}
+          activeEntry={activeEntry}
+          activeRef={activeRef}
+        />
       ))}
     </ul>
   );
@@ -350,20 +408,25 @@ function OutlineItem({
   item,
   onSelect,
   depth,
+  activeEntry,
+  activeRef,
 }: {
   pdf: pdfjsLib.PDFDocumentProxy;
   item: any;
   onSelect: (p: number) => void;
   depth: number;
+  activeEntry: any;
+  activeRef: React.RefObject<HTMLLIElement>;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = Array.isArray(item.items) && item.items.length > 0;
+  const isActive = item === activeEntry;
   const handleClick = async () => {
     const p = await destToPage(pdf, item.dest);
     if (p) onSelect(p);
   };
   return (
-    <li>
+    <li ref={isActive ? activeRef : undefined}>
       <div className="flex items-start gap-1" style={{ paddingLeft: depth * 8 }}>
         {hasChildren ? (
           <button
@@ -380,13 +443,20 @@ function OutlineItem({
         <button
           type="button"
           onClick={handleClick}
-          className="text-left text-xs leading-snug py-0.5 hover:text-primary flex-1"
+          className={`text-left text-xs leading-snug py-0.5 hover:text-primary flex-1 rounded px-1 ${isActive ? "bg-primary/10 text-primary font-semibold" : ""}`}
         >
           {item.title}
         </button>
       </div>
       {hasChildren && open && (
-        <OutlineList pdf={pdf} items={item.items} onSelect={onSelect} depth={depth + 1} />
+        <OutlineList
+          pdf={pdf}
+          items={item.items}
+          onSelect={onSelect}
+          depth={depth + 1}
+          activeEntry={activeEntry}
+          activeRef={activeRef}
+        />
       )}
     </li>
   );
