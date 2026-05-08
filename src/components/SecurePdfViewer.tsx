@@ -20,7 +20,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.2);
+  const [scale, setScale] = useState(1); // user zoom multiplier (1 = fit width)
+  const [fitScale, setFitScale] = useState(1); // auto-computed to fit container width
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -55,8 +56,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
       c.scrollTo({ top: 0, left: 0 });
     } else {
       // Convert PDF-space y (origin bottom-left) to canvas-space pixels
-      const pageHeightPdf = canvasEl.height / scale;
-      const offsetPx = (pageHeightPdf - yPdf) * scale;
+      const renderScale = fitScale * scale;
+      const pageHeightPdf = canvasEl.height / renderScale;
+      const offsetPx = (pageHeightPdf - yPdf) * renderScale;
       c.scrollTo({ top: Math.max(0, offsetPx - 8), left: 0 });
     }
     c.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -98,7 +100,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
     (async () => {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
-      const viewport = page.getViewport({ scale });
+      const renderScale = fitScale * scale;
+      const viewport = page.getViewport({ scale: renderScale });
       const canvas = canvasEl;
       const ctx = canvas.getContext("2d")!;
       canvas.width = viewport.width;
@@ -134,7 +137,31 @@ export default function SecurePdfViewer({ url, data }: Props) {
       }
     })();
     return () => { cancelled = true; };
-  }, [pdf, pageNum, scale, canvasEl]);
+  }, [pdf, pageNum, scale, fitScale, canvasEl]);
+
+  // Compute fit-to-width scale based on container width and current page's intrinsic size.
+  useEffect(() => {
+    if (!pdf) return;
+    const c = containerRef.current;
+    if (!c) return;
+    let cancelled = false;
+    let raf = 0;
+    const recompute = async () => {
+      const page = await pdf.getPage(pageNum);
+      if (cancelled) return;
+      const base = page.getViewport({ scale: 1 });
+      const avail = Math.max(100, c.clientWidth - 4);
+      const fit = avail / base.width;
+      setFitScale((prev) => (Math.abs(prev - fit) < 0.001 ? prev : fit));
+    };
+    recompute();
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(recompute);
+    });
+    ro.observe(c);
+    return () => { cancelled = true; ro.disconnect(); cancelAnimationFrame(raf); };
+  }, [pdf, pageNum, showThumbs, showOutline]);
 
   useEffect(() => {
     let blockTimeout: number | undefined;
