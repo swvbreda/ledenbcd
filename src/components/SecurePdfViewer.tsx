@@ -332,6 +332,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         .secure-pdf-wrap { user-select: none; -webkit-user-select: none; }
         .secure-pdf-wrap canvas { -webkit-user-drag: none; pointer-events: none; }
         .secure-pdf-wrap[data-protected] canvas { filter: blur(34px) !important; }
+        @media (max-width: 767px) {
+          .secure-pdf-wrap canvas {
+            filter: contrast(1.12) saturate(1.05);
+          }
+          .secure-pdf-wrap[data-protected] canvas { filter: blur(34px) !important; }
+        }
       `}</style>
 
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
