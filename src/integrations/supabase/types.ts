@@ -1144,6 +1144,71 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_document_views: {
+        Row: {
+          document_id: string
+          id: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          document_id: string
+          id?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          document_id?: string
+          id?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_document_views_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "secure_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secure_documents: {
+        Row: {
+          file_size_bytes: number | null
+          id: string
+          slug: string
+          storage_path: string
+          title: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          file_size_bytes?: number | null
+          id?: string
+          slug: string
+          storage_path: string
+          title: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          file_size_bytes?: number | null
+          id?: string
+          slug?: string
+          storage_path?: string
+          title?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
