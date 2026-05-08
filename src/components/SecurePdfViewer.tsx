@@ -463,7 +463,10 @@ function OutlineItem({
   };
   return (
     <li ref={isActive ? activeRef : undefined}>
-      <div className="flex items-start gap-1" style={{ paddingLeft: depth * 8 }}>
+      <div
+        className={`flex items-start gap-1 rounded ${isActive ? "border-l-4 border-primary bg-primary/10" : "border-l-4 border-transparent"}`}
+        style={{ paddingLeft: depth * 8 + 4 }}
+      >
         {hasChildren ? (
           <button
             type="button"
@@ -479,9 +482,11 @@ function OutlineItem({
         <button
           type="button"
           onClick={handleClick}
-          className={`text-left text-xs leading-snug py-0.5 hover:text-primary flex-1 rounded px-1 ${isActive ? "bg-primary/10 text-primary font-semibold" : ""}`}
+          aria-current={isActive ? "true" : undefined}
+          className={`text-left text-xs leading-snug py-1 hover:text-primary flex-1 px-1 ${isActive ? "text-primary font-semibold" : ""}`}
         >
           {item.title}
+          {isActive && <span className="ml-1 text-[10px] uppercase tracking-wide">• huidig</span>}
         </button>
       </div>
       {hasChildren && open && (
