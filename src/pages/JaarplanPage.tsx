@@ -13,7 +13,7 @@ const SLUG = "jaarplan";
 
 export default function JaarplanPage() {
   const { user, isAdmin } = useAuth();
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
   const [title, setTitle] = useState<string>("Jaarplan");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -23,7 +23,7 @@ export default function JaarplanPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setSignedUrl(null);
+    setPdfData(null);
     (async () => {
       // Fetch metadata first to know if a doc exists
       const { data: docRow } = await supabase
@@ -49,8 +49,18 @@ export default function JaarplanPage() {
       if (cancelled) return;
       if (error || !data?.url) {
         toast.error(error?.message ?? "Kon document niet laden");
-      } else {
-        setSignedUrl(data.url);
+        setLoading(false);
+        return;
+      }
+      // Fetch the PDF bytes ourselves so the signed URL never reaches the DOM
+      try {
+        const res = await fetch(data.url);
+        if (!res.ok) throw new Error("Kon document niet ophalen");
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        setPdfData(new Uint8Array(buf));
+      } catch (e: any) {
+        if (!cancelled) toast.error(e?.message ?? "Kon document niet ophalen");
       }
       setLoading(false);
     })();
@@ -131,8 +141,6 @@ export default function JaarplanPage() {
     }
   };
 
-  const watermarkText = user?.email ?? "vertrouwelijk";
-
   return (
     <div className="space-y-4">
       <BcdHeroBanner title={title} subtitle="Vertrouwelijk – alleen ter inzage" />
@@ -174,12 +182,12 @@ export default function JaarplanPage() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="animate-spin text-primary" size={32} />
         </div>
-      ) : !signedUrl ? (
+      ) : !pdfData ? (
         <div className="text-center py-12 text-sm text-muted-foreground">
           Er is nog geen jaarplan beschikbaar.
         </div>
       ) : (
-        <SecurePdfViewer url={signedUrl} watermarkText={watermarkText} />
+        <SecurePdfViewer data={pdfData} />
       )}
     </div>
   );
