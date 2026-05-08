@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid, List, ChevronDown, ChevronRight as ChevronRightSm } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createEdgeScrollDetector } from "./edgeScrollDetector";
 
 // Use CDN worker matching installed version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -181,52 +182,44 @@ export default function SecurePdfViewer({ url, data }: Props) {
   useEffect(() => {
     const c = containerRef.current;
     if (!c) return;
-    let cooldown = false;
+    const detector = createEdgeScrollDetector({ threshold: 80, cooldown: 600 });
     const trigger = (dir: 1 | -1) => {
-      if (cooldown) return;
       if (dir === 1 && pageNum < numPages) {
-        cooldown = true;
         pendingScrollY.current = null; // top of next page
         setPageNum((p) => Math.min(numPages, p + 1));
-        setTimeout(() => { cooldown = false; }, 700);
       } else if (dir === -1 && pageNum > 1) {
-        cooldown = true;
         pendingScrollY.current = 0; // bottom of previous page
         setPageNum((p) => Math.max(1, p - 1));
-        setTimeout(() => { cooldown = false; }, 700);
       }
     };
     const atTop = () => c.scrollTop <= 0;
     const atBottom = () => c.scrollTop + c.clientHeight >= c.scrollHeight - 1;
 
     const onWheel = (e: WheelEvent) => {
-      if (e.deltaY > 0 && atBottom()) {
+      const r = detector.feed(e.deltaY, atTop(), atBottom());
+      if (r === "next") { e.preventDefault(); trigger(1); }
+      else if (r === "prev") { e.preventDefault(); trigger(-1); }
+      else if ((e.deltaY > 0 && atBottom()) || (e.deltaY < 0 && atTop())) {
+        // Prevent the page itself from scrolling while we're collecting intent
         e.preventDefault();
-        trigger(1);
-      } else if (e.deltaY < 0 && atTop()) {
-        e.preventDefault();
-        trigger(-1);
       }
     };
 
     let touchY: number | null = null;
     const onTouchStart = (e: TouchEvent) => {
       touchY = e.touches[0]?.clientY ?? null;
+      detector.reset();
     };
     const onTouchMove = (e: TouchEvent) => {
       if (touchY == null) return;
       const cy = e.touches[0]?.clientY ?? touchY;
       const dy = touchY - cy; // >0 swipe up (scroll down)
-      if (Math.abs(dy) < 40) return;
-      if (dy > 0 && atBottom()) {
-        touchY = cy;
-        trigger(1);
-      } else if (dy < 0 && atTop()) {
-        touchY = cy;
-        trigger(-1);
-      }
+      touchY = cy;
+      const r = detector.feed(dy, atTop(), atBottom());
+      if (r === "next") trigger(1);
+      else if (r === "prev") trigger(-1);
     };
-    const onTouchEnd = () => { touchY = null; };
+    const onTouchEnd = () => { touchY = null; detector.reset(); };
 
     c.addEventListener("wheel", onWheel, { passive: false });
     c.addEventListener("touchstart", onTouchStart, { passive: true });
