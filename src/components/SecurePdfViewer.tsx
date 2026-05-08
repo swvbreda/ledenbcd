@@ -27,6 +27,36 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [outline, setOutline] = useState<any[] | null>(null);
   const [links, setLinks] = useState<{ x: number; y: number; w: number; h: number; dest: any }[]>([]);
   const [pageSize, setPageSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const pendingScrollY = useRef<number | null>(null);
+
+  const goToDest = async (dest: any) => {
+    if (!pdf) return;
+    const r = await resolveDest(pdf, dest);
+    if (!r) return;
+    pendingScrollY.current = r.y; // PDF-space Y (top = high), null = top
+    if (r.page === pageNum) {
+      // Same page: scroll immediately
+      applyPendingScroll();
+    } else {
+      setPageNum(r.page);
+    }
+  };
+
+  const applyPendingScroll = () => {
+    const c = containerRef.current;
+    if (!c) return;
+    const yPdf = pendingScrollY.current;
+    if (yPdf == null || !canvasEl) {
+      c.scrollTo({ top: 0, left: 0 });
+    } else {
+      // Convert PDF-space y (origin bottom-left) to canvas-space pixels
+      const pageHeightPdf = canvasEl.height / scale;
+      const offsetPx = (pageHeightPdf - yPdf) * scale;
+      c.scrollTo({ top: Math.max(0, offsetPx - 8), left: 0 });
+    }
+    c.scrollIntoView({ block: "start", behavior: "smooth" });
+    pendingScrollY.current = null;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -72,9 +102,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
       canvas.style.height = `${viewport.height}px`;
       await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
       if (cancelled) return;
-      // Scroll viewer back to top of new page
-      containerRef.current?.scrollTo({ top: 0, left: 0 });
-      containerRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      // Scroll to pending sub-target (or top of page) after render
+      applyPendingScroll();
       if (cancelled) return;
       // Collect internal link annotations
       try {
