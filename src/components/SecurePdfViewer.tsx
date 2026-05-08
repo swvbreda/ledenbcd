@@ -8,10 +8,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface Props {
   url: string;
-  watermarkText: string;
+  watermarkText?: string;
 }
 
-export default function SecurePdfViewer({ url, watermarkText }: Props) {
+export default function SecurePdfViewer({ url }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -20,6 +20,7 @@ export default function SecurePdfViewer({ url, watermarkText }: Props) {
   const [scale, setScale] = useState(1.2);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,18 +67,36 @@ export default function SecurePdfViewer({ url, watermarkText }: Props) {
       const k = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "u")) {
         e.preventDefault();
+        setHidden(true);
+        setTimeout(() => setHidden(false), 1500);
       }
       if (k === "printscreen") {
         e.preventDefault();
+        setHidden(true);
+        setTimeout(() => setHidden(false), 1500);
+      }
+      // macOS screenshot shortcuts: Cmd+Shift+3/4/5/6
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && ["3","4","5","6"].includes(k)) {
+        setHidden(true);
+        setTimeout(() => setHidden(false), 1500);
       }
     };
+    const onBlur = () => setHidden(true);
+    const onFocus = () => setHidden(false);
+    const onVis = () => setHidden(document.visibilityState !== "visible");
     const blockCtx = (e: Event) => e.preventDefault();
     window.addEventListener("keydown", blockKeys);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
     const el = containerRef.current;
     el?.addEventListener("contextmenu", blockCtx);
     el?.addEventListener("dragstart", blockCtx);
     return () => {
       window.removeEventListener("keydown", blockKeys);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
       el?.removeEventListener("contextmenu", blockCtx);
       el?.removeEventListener("dragstart", blockCtx);
     };
@@ -93,10 +112,6 @@ export default function SecurePdfViewer({ url, watermarkText }: Props) {
   if (error) {
     return <div className="text-center py-12 text-destructive text-sm">{error}</div>;
   }
-
-  // Watermark grid
-  const watermarkRows = Array.from({ length: 12 });
-  const watermarkCols = Array.from({ length: 4 });
 
   return (
     <div className="secure-pdf-wrap">
@@ -134,38 +149,17 @@ export default function SecurePdfViewer({ url, watermarkText }: Props) {
         style={{ display: "block" }}
       >
         <div className="relative inline-block">
-          <canvas ref={canvasRef} />
-          {/* Watermark overlay */}
-          <div
-            aria-hidden
-            className="absolute inset-0 pointer-events-none overflow-hidden"
-            style={{ mixBlendMode: "multiply" }}
-          >
-            <div
-              className="absolute inset-0 flex flex-col justify-around"
-              style={{ transform: "rotate(-30deg) scale(1.4)", transformOrigin: "center" }}
-            >
-              {watermarkRows.map((_, r) => (
-                <div key={r} className="flex justify-around whitespace-nowrap">
-                  {watermarkCols.map((_, c) => (
-                    <span
-                      key={c}
-                      className="text-xs font-medium"
-                      style={{ color: "rgba(163, 22, 33, 0.18)" }}
-                    >
-                      {watermarkText}
-                    </span>
-                  ))}
-                </div>
-              ))}
+          <canvas ref={canvasRef} style={{ visibility: hidden ? "hidden" : "visible" }} />
+          {hidden && (
+            <div className="absolute inset-0 bg-black flex items-center justify-center text-white text-sm">
+              Beeld tijdelijk geblokkeerd
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground text-center mt-3 max-w-md mx-auto">
-        Dit document is vertrouwelijk en alleen ter inzage. Downloaden, printen en delen is niet toegestaan.
-        Elke inzage wordt gelogd.
+        Dit document is vertrouwelijk en alleen ter inzage. Bij een poging tot screenshot of printen wordt het beeld geblokkeerd. Elke inzage wordt gelogd.
       </p>
     </div>
   );
