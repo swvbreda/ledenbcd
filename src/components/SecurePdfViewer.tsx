@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid, List, ChevronDown, ChevronRight as ChevronRightSm } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Use CDN worker matching installed version
@@ -23,6 +23,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
   const [showThumbs, setShowThumbs] = useState(false);
+  const [showOutline, setShowOutline] = useState(false);
+  const [outline, setOutline] = useState<any[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         setPdf(doc);
         setNumPages(doc.numPages);
         setPageNum(1);
+        try {
+          const ol = await doc.getOutline();
+          if (!cancelled) setOutline(ol ?? []);
+        } catch {
+          if (!cancelled) setOutline([]);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Kon PDF niet laden");
       } finally {
@@ -145,6 +153,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
+        <Button size="sm" variant={showOutline ? "default" : "outline"} onClick={() => setShowOutline((v) => !v)} aria-label="Inhoudsopgave" disabled={!outline || outline.length === 0}>
+          <List size={16} />
+        </Button>
         <span className="w-2" />
         <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
           <ChevronLeft size={16} />
@@ -170,6 +181,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
           <ThumbnailSidebar
             pdf={pdf}
             current={pageNum}
+            onSelect={(p) => setPageNum(p)}
+          />
+        )}
+        {showOutline && pdf && outline && outline.length > 0 && (
+          <OutlineSidebar
+            pdf={pdf}
+            items={outline}
             onSelect={(p) => setPageNum(p)}
           />
         )}
