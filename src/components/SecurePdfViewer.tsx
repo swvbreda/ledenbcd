@@ -99,18 +99,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         setPageNum((p) => Math.max(1, p - 1));
       }
     };
-    const onBlur = () => setHidden(true);
-    const onFocus = () => setHidden(false);
-    const onVis = () => setHidden(document.visibilityState !== "visible");
     const blockCtx = (e: Event) => e.preventDefault();
     const blockAux = (e: MouseEvent) => {
       // Middle-click / aux-click would open links in a new tab
       if (e.button !== 0) e.preventDefault();
     };
     window.addEventListener("keydown", blockKeys);
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVis);
     const el = containerRef.current;
     el?.addEventListener("contextmenu", blockCtx);
     el?.addEventListener("dragstart", blockCtx);
@@ -118,9 +112,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
     el?.addEventListener("mousedown", blockAux);
     return () => {
       window.removeEventListener("keydown", blockKeys);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVis);
       el?.removeEventListener("contextmenu", blockCtx);
       el?.removeEventListener("dragstart", blockCtx);
       el?.removeEventListener("auxclick", blockAux);
