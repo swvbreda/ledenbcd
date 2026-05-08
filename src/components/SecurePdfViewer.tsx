@@ -169,9 +169,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground text-center mt-3 max-w-md mx-auto">
-        Dit document is vertrouwelijk en alleen ter inzage. Bij een poging tot screenshot of printen wordt het beeld geblokkeerd. Elke inzage wordt gelogd.
-      </p>
     </div>
   );
 }
