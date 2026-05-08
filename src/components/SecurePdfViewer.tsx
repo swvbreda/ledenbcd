@@ -14,7 +14,7 @@ interface Props {
 
 export default function SecurePdfViewer({ url, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
@@ -56,13 +56,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
   }, [url, data]);
 
   useEffect(() => {
-    if (!pdf || !canvasRef.current) return;
+    if (!pdf || !canvasEl) return;
     let cancelled = false;
     (async () => {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
       const viewport = page.getViewport({ scale });
-      const canvas = canvasRef.current!;
+      const canvas = canvasEl;
       const ctx = canvas.getContext("2d")!;
       canvas.width = viewport.width;
       canvas.height = viewport.height;
@@ -71,7 +71,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
       await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
     })();
     return () => { cancelled = true; };
-  }, [pdf, pageNum, scale]);
+  }, [pdf, pageNum, scale, canvasEl]);
 
   // Block right-click, drag, save/print shortcuts
   useEffect(() => {
@@ -99,18 +99,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
         setPageNum((p) => Math.max(1, p - 1));
       }
     };
-    const onBlur = () => setHidden(true);
-    const onFocus = () => setHidden(false);
-    const onVis = () => setHidden(document.visibilityState !== "visible");
     const blockCtx = (e: Event) => e.preventDefault();
     const blockAux = (e: MouseEvent) => {
       // Middle-click / aux-click would open links in a new tab
       if (e.button !== 0) e.preventDefault();
     };
     window.addEventListener("keydown", blockKeys);
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVis);
     const el = containerRef.current;
     el?.addEventListener("contextmenu", blockCtx);
     el?.addEventListener("dragstart", blockCtx);
@@ -118,9 +112,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
     el?.addEventListener("mousedown", blockAux);
     return () => {
       window.removeEventListener("keydown", blockKeys);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVis);
       el?.removeEventListener("contextmenu", blockCtx);
       el?.removeEventListener("dragstart", blockCtx);
       el?.removeEventListener("auxclick", blockAux);
@@ -198,7 +189,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
           style={{ display: "block" }}
         >
         <div className="relative inline-block">
-          <canvas ref={canvasRef} style={{ visibility: hidden ? "hidden" : "visible" }} />
+          <canvas ref={setCanvasEl} style={{ visibility: hidden ? "hidden" : "visible" }} />
           {hidden && (
             <div className="absolute inset-0 bg-black flex items-center justify-center text-white text-sm">
               Beeld tijdelijk geblokkeerd
