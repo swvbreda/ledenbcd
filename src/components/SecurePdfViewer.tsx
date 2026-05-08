@@ -20,10 +20,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? 1.6 : 1,
-  ); // user zoom multiplier (1 = fit width)
-  const [fitScale, setFitScale] = useState(1); // auto-computed to fit container width
+  const [scale, setScale] = useState(1); // user zoom multiplier (1 = fit screen)
+  const [fitScale, setFitScale] = useState(1); // auto-computed to fill container (width & height)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -155,8 +153,12 @@ export default function SecurePdfViewer({ url, data }: Props) {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
       const base = page.getViewport({ scale: 1 });
-      const avail = Math.max(100, c.clientWidth - 4);
-      const fit = avail / base.width;
+      const availW = Math.max(100, c.clientWidth - 4);
+      // Use the viewer's max-height budget so the page fills the screen vertically too
+      const availH = Math.max(200, c.clientHeight - 4);
+      const fitW = availW / base.width;
+      const fitH = availH / base.height;
+      const fit = Math.min(fitW, fitH);
       setFitScale((prev) => (Math.abs(prev - fit) < 0.001 ? prev : fit));
     };
     recompute();
