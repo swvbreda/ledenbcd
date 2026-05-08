@@ -23,6 +23,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
+  const [blurred, setBlurred] = useState(false);
   const [showThumbs, setShowThumbs] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
   );
@@ -134,24 +135,24 @@ export default function SecurePdfViewer({ url, data }: Props) {
     return () => { cancelled = true; };
   }, [pdf, pageNum, scale, canvasEl]);
 
-  // Block right-click, drag, save/print shortcuts
   useEffect(() => {
+    const triggerBlock = () => {
+      setHidden(true);
+      setTimeout(() => setHidden(false), 1800);
+    };
     const blockKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "u")) {
+      if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "u" || k === "c")) {
         e.preventDefault();
-        setHidden(true);
-        setTimeout(() => setHidden(false), 1500);
+        triggerBlock();
       }
       if (k === "printscreen") {
         e.preventDefault();
-        setHidden(true);
-        setTimeout(() => setHidden(false), 1500);
+        triggerBlock();
       }
       // macOS screenshot shortcuts: Cmd+Shift+3/4/5/6
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && ["3","4","5","6"].includes(k)) {
-        setHidden(true);
-        setTimeout(() => setHidden(false), 1500);
+        triggerBlock();
       }
       if (k === "arrowright" || k === "pagedown") {
         setPageNum((p) => Math.min(numPages, p + 1));
@@ -165,7 +166,18 @@ export default function SecurePdfViewer({ url, data }: Props) {
       // Middle-click / aux-click would open links in a new tab
       if (e.button !== 0) e.preventDefault();
     };
+    const blockCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerBlock();
+    };
+    const onBlur = () => setBlurred(true);
+    const onFocus = () => setBlurred(false);
+    const onVis = () => setBlurred(document.hidden);
     window.addEventListener("keydown", blockKeys);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    document.addEventListener("copy", blockCopy);
     const el = containerRef.current;
     el?.addEventListener("contextmenu", blockCtx);
     el?.addEventListener("dragstart", blockCtx);
@@ -173,6 +185,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
     el?.addEventListener("mousedown", blockAux);
     return () => {
       window.removeEventListener("keydown", blockKeys);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+      document.removeEventListener("copy", blockCopy);
       el?.removeEventListener("contextmenu", blockCtx);
       el?.removeEventListener("dragstart", blockCtx);
       el?.removeEventListener("auxclick", blockAux);
@@ -307,10 +323,23 @@ export default function SecurePdfViewer({ url, data }: Props) {
           style={{ display: "block", maxHeight: "calc(100vh - 140px)" }}
         >
         <div className="relative inline-block">
-          <canvas ref={setCanvasEl} style={{ visibility: hidden ? "hidden" : "visible" }} />
-          {hidden && (
-            <div className="absolute inset-0 bg-black flex items-center justify-center text-white text-sm">
-              Beeld tijdelijk geblokkeerd
+          <canvas
+            ref={setCanvasEl}
+            style={{
+              filter: hidden || blurred ? "blur(28px)" : "none",
+              transition: "filter 120ms ease-out",
+            }}
+          />
+          {(hidden || blurred) && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-background/95 border-2 border-primary/60 rounded-md px-4 py-3 max-w-[90%] text-center shadow-lg">
+                <p className="text-sm font-semibold text-foreground">
+                  Beeld tijdelijk geblokkeerd
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Het maken van schermafbeeldingen en kopieën van dit document is niet toegestaan.
+                </p>
+              </div>
             </div>
           )}
           {/* Click zones for prev/next page */}
