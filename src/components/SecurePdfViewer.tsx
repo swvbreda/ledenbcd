@@ -238,7 +238,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
             pdf={pdf}
             items={outline}
             currentPage={pageNum}
-            onSelect={(p) => setPageNum(p)}
+            onSelectDest={(d) => goToDest(d)}
           />
         )}
         <div
