@@ -260,9 +260,11 @@ export default function SecurePdfViewer({ url, data }: Props) {
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
-        <Button size="sm" variant={showOutline ? "default" : "outline"} onClick={() => setShowOutline((v) => !v)} aria-label="Inhoudsopgave" disabled={!outline || outline.length === 0}>
-          <List size={16} />
-        </Button>
+        {outline && outline.length > 0 && (
+          <Button size="sm" variant={showOutline ? "default" : "outline"} onClick={() => setShowOutline((v) => !v)} aria-label="Inhoudsopgave">
+            <List size={16} />
+          </Button>
+        )}
         <span className="w-2" />
         <Button size="sm" variant="outline" onClick={() => setPageNum((p) => Math.max(1, p - 1))} disabled={pageNum <= 1}>
           <ChevronLeft size={16} />
