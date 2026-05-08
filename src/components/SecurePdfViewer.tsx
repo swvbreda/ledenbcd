@@ -354,7 +354,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         </Button>
       </div>
 
-      <div className="flex gap-3 items-start">
+      <div className="flex gap-3 items-start justify-center">
         {showThumbs && pdf && (
           <ThumbnailSidebar
             pdf={pdf}
@@ -372,7 +372,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         )}
         <div
           ref={containerRef}
-          className="relative mx-auto max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1 flex justify-center"
+          className="relative mx-auto overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex justify-center w-full max-w-4xl"
           style={{ maxHeight: "calc(100vh - 140px)" }}
         >
         <div className="relative inline-block">
