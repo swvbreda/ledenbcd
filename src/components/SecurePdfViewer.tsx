@@ -14,6 +14,7 @@ interface Props {
 }
 
 export default function SecurePdfViewer({ url, data }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -136,12 +137,26 @@ export default function SecurePdfViewer({ url, data }: Props) {
   }, [pdf, pageNum, scale, canvasEl]);
 
   useEffect(() => {
+    let blockTimeout: number | undefined;
+    const setProtectiveBlur = (active: boolean) => {
+      wrapperRef.current?.toggleAttribute("data-protected", active);
+      setBlurred(active);
+    };
     const triggerBlock = () => {
+      window.clearTimeout(blockTimeout);
+      setProtectiveBlur(true);
       setHidden(true);
-      setTimeout(() => setHidden(false), 1800);
+      blockTimeout = window.setTimeout(() => {
+        setHidden(false);
+        setProtectiveBlur(false);
+      }, 2200);
     };
     const blockKeys = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
+      const screenshotModifierChord = (e.metaKey || e.ctrlKey) && e.shiftKey;
+      if (screenshotModifierChord) {
+        setProtectiveBlur(true);
+      }
       if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "u" || k === "c")) {
         e.preventDefault();
         triggerBlock();
@@ -152,6 +167,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
       }
       // macOS screenshot shortcuts: Cmd+Shift+3/4/5/6
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && ["3","4","5","6"].includes(k)) {
+        e.preventDefault();
         triggerBlock();
       }
       if (k === "arrowright" || k === "pagedown") {
@@ -173,7 +189,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
     const onBlur = () => setBlurred(true);
     const onFocus = () => setBlurred(false);
     const onVis = () => setBlurred(document.hidden);
-    window.addEventListener("keydown", blockKeys);
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !hidden) {
+        setProtectiveBlur(false);
+      }
+    };
+    window.addEventListener("keydown", blockKeys, true);
+    window.addEventListener("keyup", onKeyUp, true);
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
@@ -184,7 +206,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
     el?.addEventListener("auxclick", blockAux);
     el?.addEventListener("mousedown", blockAux);
     return () => {
-      window.removeEventListener("keydown", blockKeys);
+      window.clearTimeout(blockTimeout);
+      wrapperRef.current?.removeAttribute("data-protected");
+      window.removeEventListener("keydown", blockKeys, true);
+      window.removeEventListener("keyup", onKeyUp, true);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
@@ -194,7 +219,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
       el?.removeEventListener("auxclick", blockAux);
       el?.removeEventListener("mousedown", blockAux);
     };
-  }, [numPages]);
+  }, [numPages, hidden]);
 
   // Wheel / touch: scroll past the bottom -> next page, past the top -> previous page
   useEffect(() => {
@@ -263,13 +288,14 @@ export default function SecurePdfViewer({ url, data }: Props) {
   }
 
   return (
-    <div className="secure-pdf-wrap">
+    <div ref={wrapperRef} className="secure-pdf-wrap">
       <style>{`
         @media print {
           .secure-pdf-wrap { display: none !important; }
         }
         .secure-pdf-wrap { user-select: none; -webkit-user-select: none; }
         .secure-pdf-wrap canvas { -webkit-user-drag: none; pointer-events: none; }
+        .secure-pdf-wrap[data-protected] canvas { filter: blur(34px) !important; }
       `}</style>
 
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
@@ -327,7 +353,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
             ref={setCanvasEl}
             style={{
               filter: hidden || blurred ? "blur(28px)" : "none",
-              transition: "filter 120ms ease-out",
+              transition: "none",
             }}
           />
           {(hidden || blurred) && (
