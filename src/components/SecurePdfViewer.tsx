@@ -235,25 +235,37 @@ export default function SecurePdfViewer({ url, data }: Props) {
             disabled={pageNum >= numPages}
             className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize disabled:cursor-not-allowed bg-transparent"
           />
-          {/* Internal link hotspots (rendered above page-flip zones) */}
-          {!hidden && pdf && links.map((lnk, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label="Ga naar hoofdstuk"
-              onClick={async () => {
-                const p = await destToPage(pdf, lnk.dest);
-                if (p) setPageNum(p);
-              }}
-              className="absolute cursor-pointer hover:bg-primary/10 rounded-sm transition-colors"
-              style={{
-                left: lnk.x,
-                top: lnk.y,
-                width: lnk.w,
-                height: lnk.h,
-              }}
-            />
-          ))}
+          {/* Internal link hotspots — enlarged for touch (min 44px) */}
+          {!hidden && pdf && links.map((lnk, i) => {
+            const MIN = 44;
+            const padX = Math.max(0, (MIN - lnk.w) / 2);
+            const padY = Math.max(0, (MIN - lnk.h) / 2);
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-label="Ga naar hoofdstuk"
+                onClick={async () => {
+                  const p = await destToPage(pdf, lnk.dest);
+                  if (p) setPageNum(p);
+                }}
+                className="absolute cursor-pointer touch-manipulation flex items-center justify-center group"
+                style={{
+                  left: lnk.x - padX,
+                  top: lnk.y - padY,
+                  width: lnk.w + padX * 2,
+                  height: lnk.h + padY * 2,
+                  padding: 0,
+                  background: "transparent",
+                }}
+              >
+                <span
+                  className="rounded-sm group-hover:bg-primary/15 group-active:bg-primary/25 transition-colors"
+                  style={{ width: lnk.w, height: lnk.h }}
+                />
+              </button>
+            );
+          })}
         </div>
         </div>
       </div>
