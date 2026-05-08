@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { supabase } from "@/integrations/supabase/client";
 import SecurePdfViewer from "@/components/SecurePdfViewer";
-import { BcdHeroBanner } from "@/components/BcdHeroBanner";
+import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload, FileLock2 } from "lucide-react";
