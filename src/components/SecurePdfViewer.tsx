@@ -26,6 +26,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
   const [blurred, setBlurred] = useState(false);
+  const [isMobileBlocked, setIsMobileBlocked] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px), (hover: none) and (pointer: coarse)").matches
+  );
   const [showThumbs, setShowThumbs] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
   );
@@ -65,6 +68,14 @@ export default function SecurePdfViewer({ url, data }: Props) {
     c.scrollIntoView({ block: "start", behavior: "smooth" });
     pendingScrollY.current = null;
   };
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 767px), (hover: none) and (pointer: coarse)");
+    const updateMobileBlock = () => setIsMobileBlocked(mobileQuery.matches);
+    updateMobileBlock();
+    mobileQuery.addEventListener("change", updateMobileBlock);
+    return () => mobileQuery.removeEventListener("change", updateMobileBlock);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -321,6 +332,17 @@ export default function SecurePdfViewer({ url, data }: Props) {
   }
   if (error) {
     return <div className="text-center py-12 text-destructive text-sm">{error}</div>;
+  }
+
+  if (isMobileBlocked) {
+    return (
+      <div className="border-2 border-primary/60 rounded-md bg-card p-5 text-center">
+        <p className="text-sm font-semibold text-foreground">Document geblokkeerd op mobiel</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Open dit vertrouwelijke document op een desktop of laptop. Zo voorkomen we dat de inhoud via mobiele screenshots wordt vastgelegd.
+        </p>
+      </div>
+    );
   }
 
   return (
