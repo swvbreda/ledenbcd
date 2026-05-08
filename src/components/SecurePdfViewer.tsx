@@ -254,7 +254,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         .secure-pdf-wrap canvas { -webkit-user-drag: none; pointer-events: none; }
       `}</style>
 
-      <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
@@ -299,8 +299,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
         )}
         <div
           ref={containerRef}
-          className="relative mx-auto inline-block max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1"
-          style={{ display: "block" }}
+          className="relative mx-auto max-w-full overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex-1"
+          style={{ display: "block", maxHeight: "calc(100vh - 140px)" }}
         >
         <div className="relative inline-block">
           <canvas ref={setCanvasEl} style={{ visibility: hidden ? "hidden" : "visible" }} />
