@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface Props {
-  url: string;
+  url?: string;
+  data?: ArrayBuffer | Uint8Array;
   watermarkText?: string;
 }
 
-export default function SecurePdfViewer({ url }: Props) {
+export default function SecurePdfViewer({ url, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -28,7 +29,9 @@ export default function SecurePdfViewer({ url }: Props) {
     setError(null);
     (async () => {
       try {
-        const loadingTask = pdfjsLib.getDocument({ url });
+        const loadingTask = data
+          ? pdfjsLib.getDocument({ data: data instanceof Uint8Array ? data : new Uint8Array(data) })
+          : pdfjsLib.getDocument({ url: url! });
         const doc = await loadingTask.promise;
         if (cancelled) return;
         setPdf(doc);
@@ -41,7 +44,7 @@ export default function SecurePdfViewer({ url }: Props) {
       }
     })();
     return () => { cancelled = true; };
-  }, [url]);
+  }, [url, data]);
 
   useEffect(() => {
     if (!pdf || !canvasRef.current) return;
@@ -85,6 +88,10 @@ export default function SecurePdfViewer({ url }: Props) {
     const onFocus = () => setHidden(false);
     const onVis = () => setHidden(document.visibilityState !== "visible");
     const blockCtx = (e: Event) => e.preventDefault();
+    const blockAux = (e: MouseEvent) => {
+      // Middle-click / aux-click would open links in a new tab
+      if (e.button !== 0) e.preventDefault();
+    };
     window.addEventListener("keydown", blockKeys);
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
@@ -92,6 +99,8 @@ export default function SecurePdfViewer({ url }: Props) {
     const el = containerRef.current;
     el?.addEventListener("contextmenu", blockCtx);
     el?.addEventListener("dragstart", blockCtx);
+    el?.addEventListener("auxclick", blockAux);
+    el?.addEventListener("mousedown", blockAux);
     return () => {
       window.removeEventListener("keydown", blockKeys);
       window.removeEventListener("blur", onBlur);
@@ -99,6 +108,8 @@ export default function SecurePdfViewer({ url }: Props) {
       document.removeEventListener("visibilitychange", onVis);
       el?.removeEventListener("contextmenu", blockCtx);
       el?.removeEventListener("dragstart", blockCtx);
+      el?.removeEventListener("auxclick", blockAux);
+      el?.removeEventListener("mousedown", blockAux);
     };
   }, []);
 
