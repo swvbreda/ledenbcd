@@ -53,8 +53,20 @@ export default function NewMemberDialog({ type }: Props) {
         oprichtingJaar: null,
         jarenLid: null,
         lidSinds: type === "member" && lidSinds ? Number(lidSinds) : null,
-        aantalLocaties: 0,
-        locaties: [],
+        aantalLocaties: 1,
+        locaties: [
+          {
+            naam: naam.trim(),
+            plaats: plaats.trim(),
+            adres: "",
+            postcode: "",
+          },
+        ],
+        // Factuurgegevens automatisch overnemen van basisgegevens
+        factuurBedrijfsnaam: bedrijfsnaam.trim() || naam.trim(),
+        factuurPlaats: plaats.trim(),
+        factuurEmail: email.trim(),
+        factuurTelefoon: telefoon.trim(),
         contacten: contactNaam.trim() || email.trim() || telefoon.trim()
           ? [{ naam: contactNaam.trim(), functie: "", email: email.trim(), telefoon: telefoon.trim() }]
           : [],
