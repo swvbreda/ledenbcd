@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
@@ -26,11 +27,13 @@ export default function NewMemberDialog({ type }: Props) {
   const [email, setEmail] = useState("");
   const [telefoon, setTelefoon] = useState("");
   const [lidSinds, setLidSinds] = useState<string>(String(new Date().getFullYear()));
+  const [autoFill, setAutoFill] = useState(true);
 
   const reset = () => {
     setNaam(""); setBedrijfsnaam(""); setPlaats("");
     setContactNaam(""); setEmail(""); setTelefoon("");
     setLidSinds(String(new Date().getFullYear()));
+    setAutoFill(true);
   };
 
   const handleSave = async () => {
@@ -53,20 +56,18 @@ export default function NewMemberDialog({ type }: Props) {
         oprichtingJaar: null,
         jarenLid: null,
         lidSinds: type === "member" && lidSinds ? Number(lidSinds) : null,
-        aantalLocaties: 1,
-        locaties: [
-          {
-            naam: naam.trim(),
-            plaats: plaats.trim(),
-            adres: "",
-            postcode: "",
-          },
-        ],
-        // Factuurgegevens automatisch overnemen van basisgegevens
-        factuurBedrijfsnaam: bedrijfsnaam.trim() || naam.trim(),
-        factuurPlaats: plaats.trim(),
-        factuurEmail: email.trim(),
-        factuurTelefoon: telefoon.trim(),
+        aantalLocaties: autoFill ? 1 : 0,
+        locaties: autoFill
+          ? [{ naam: naam.trim(), plaats: plaats.trim(), adres: "", postcode: "" }]
+          : [],
+        ...(autoFill
+          ? {
+              factuurBedrijfsnaam: bedrijfsnaam.trim() || naam.trim(),
+              factuurPlaats: plaats.trim(),
+              factuurEmail: email.trim(),
+              factuurTelefoon: telefoon.trim(),
+            }
+          : {}),
         contacten: contactNaam.trim() || email.trim() || telefoon.trim()
           ? [{ naam: contactNaam.trim(), functie: "", email: email.trim(), telefoon: telefoon.trim() }]
           : [],
@@ -138,6 +139,15 @@ export default function NewMemberDialog({ type }: Props) {
               <Input type="number" value={lidSinds} onChange={(e) => setLidSinds(e.target.value)} />
             </div>
           )}
+          <div className="flex items-start justify-between gap-3 border-t pt-3">
+            <div className="space-y-0.5">
+              <Label className="text-xs">Factuur- en locatiegegevens automatisch overnemen</Label>
+              <p className="text-[11px] text-muted-foreground">
+                Vult factuurgegevens en eerste locatie met de basisgegevens. Uitschakelen om later handmatig in te vullen.
+              </p>
+            </div>
+            <Switch checked={autoFill} onCheckedChange={setAutoFill} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Annuleren</Button>
