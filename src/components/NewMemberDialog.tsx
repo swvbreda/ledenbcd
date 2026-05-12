@@ -93,9 +93,9 @@ export default function NewMemberDialog({ type }: Props) {
         if (tpl) {
           const fill = (s: string) =>
             s
-              .replaceAll("{{contactpersoon}}", contactNaam.trim() || "lid")
-              .replaceAll("{{coffeeshop}}", naam.trim())
-              .replaceAll("{{plaats}}", plaats.trim());
+              .split("{{contactpersoon}}").join(contactNaam.trim() || "lid")
+              .split("{{coffeeshop}}").join(naam.trim())
+              .split("{{plaats}}").join(plaats.trim());
           const { error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
             body: {
               templateName: "member-welcome",
