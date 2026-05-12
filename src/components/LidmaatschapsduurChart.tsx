@@ -67,6 +67,8 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
       const minStart = min.member.lidSinds ?? 0;
       if (xStart > minStart) return x;
       if (xStart === minStart && x.years < min.years) return x;
+      // Tiebreaker: highest id is most recently added
+      if (xStart === minStart && x.years === min.years && x.member.id > min.member.id) return x;
       return min;
     },
     null
