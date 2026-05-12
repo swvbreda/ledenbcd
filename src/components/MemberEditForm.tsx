@@ -175,7 +175,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       <div className="bg-card rounded-lg border border-border p-5 space-y-3">
         <h3 className="text-sm font-semibold font-display mb-2">Basisgegevens</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <EditableField label="Naam" value={naam} onChange={setNaam} />
+          <EditableField label="Naam coffeeshop" value={naam} onChange={setNaam} />
           <EditableField label="Plaats" value={plaats} onChange={setPlaats} />
           <EditableField label="KVK" value={kvk} onChange={setKvk} />
           <EditableField label="Oprichtingsjaar" value={oprichtingJaar} onChange={setOprichtingJaar} type="number" />
