@@ -41,6 +41,8 @@ import ExternGemeenteDetailPage from "./pages/ExternGemeenteDetailPage";
 import MfaSetupPage from "./pages/MfaSetupPage";
 import MfaVerifyPage from "./pages/MfaVerifyPage";
 import ExternProtectedRoute from "@/components/ExternProtectedRoute";
+import EmailTemplatesPage from "./pages/EmailTemplatesPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 
 import NotFound from "./pages/NotFound";
 
@@ -93,9 +95,11 @@ const App = () => (
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                   <Route path="/financien" element={<FinancienPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
+                  <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />
+                <Route path="/unsubscribe" element={<UnsubscribePage />} />
                 <Route
                   path="/enquetes/:id/review"
                   element={

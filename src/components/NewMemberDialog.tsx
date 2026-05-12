@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
@@ -28,12 +29,14 @@ export default function NewMemberDialog({ type }: Props) {
   const [telefoon, setTelefoon] = useState("");
   const [lidSinds, setLidSinds] = useState<string>(String(new Date().getFullYear()));
   const [autoFill, setAutoFill] = useState(true);
+  const [sendWelcome, setSendWelcome] = useState(true);
 
   const reset = () => {
     setNaam(""); setBedrijfsnaam(""); setPlaats("");
     setContactNaam(""); setEmail(""); setTelefoon("");
     setLidSinds(String(new Date().getFullYear()));
     setAutoFill(true);
+    setSendWelcome(true);
   };
 
   const handleSave = async () => {
@@ -79,6 +82,33 @@ export default function NewMemberDialog({ type }: Props) {
       if (error) throw error;
 
       toast.success(type === "member" ? "Nieuw lid toegevoegd" : "Nieuwe lead toegevoegd");
+
+      if (sendWelcome && email.trim()) {
+        const tplKey = type === "member" ? "member_welcome" : "lead_welcome";
+        const { data: tpl } = await supabase
+          .from("email_templates")
+          .select("subject, body")
+          .eq("key", tplKey)
+          .maybeSingle();
+        if (tpl) {
+          const fill = (s: string) =>
+            s
+              .split("{{contactpersoon}}").join(contactNaam.trim() || "lid")
+              .split("{{coffeeshop}}").join(naam.trim())
+              .split("{{plaats}}").join(plaats.trim());
+          const { error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "member-welcome",
+              recipientEmail: email.trim(),
+              idempotencyKey: `welcome-${type}-${nextId}`,
+              templateData: { subject: fill(tpl.subject), body: fill(tpl.body) },
+            },
+          });
+          if (mailErr) toast.error("Welkomstmail mislukt: " + mailErr.message);
+          else toast.success("Welkomstmail verstuurd");
+        }
+      }
+
       refetch();
       setOpen(false);
       reset();
@@ -147,6 +177,22 @@ export default function NewMemberDialog({ type }: Props) {
               </p>
             </div>
             <Switch checked={autoFill} onCheckedChange={setAutoFill} />
+          </div>
+          <div className="flex items-start gap-2 border-t pt-3">
+            <Checkbox
+              id="send-welcome"
+              checked={sendWelcome}
+              onCheckedChange={(v) => setSendWelcome(!!v)}
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="send-welcome" className="text-xs cursor-pointer">
+                Welkomstmail versturen
+              </Label>
+              <p className="text-[11px] text-muted-foreground">
+                Stuurt automatisch de {type === "member" ? "welkomstmail" : "uitnodigingsmail"} naar het opgegeven e-mailadres.
+                Templates beheer je via E-mailtemplates.
+              </p>
+            </div>
           </div>
         </div>
         <DialogFooter>
