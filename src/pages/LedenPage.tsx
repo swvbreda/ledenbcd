@@ -8,6 +8,7 @@ import MemberTable from "@/components/MemberTable";
 import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
+import NewMemberDialog from "@/components/NewMemberDialog";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
@@ -111,6 +112,7 @@ const LedenPage = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <ExportButton members={mergedSearched} />
             <MailingExportButton members={mergedSearched} />
+            <NewMemberDialog type={activeTab === "leads" ? "lead" : "member"} />
           </div>
         )}
       </div>
