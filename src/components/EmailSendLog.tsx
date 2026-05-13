@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,9 @@ export function EmailSendLog() {
   const [template, setTemplate] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const PAGE_SIZE = 50;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -122,6 +125,27 @@ export function EmailSendLog() {
       return true;
     });
   }, [dedup, template, status, search]);
+
+  // Reset paginatie wanneer filters of data wijzigen
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [template, status, search, range, rows.length]);
+
+  // Infinite scroll sentinel
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [filtered.length]);
 
   const stats = useMemo(() => {
     const total = filtered.length;
@@ -270,7 +294,9 @@ export function EmailSendLog() {
 
       <Card className="border-2 border-primary/60">
         <CardHeader>
-          <CardTitle className="text-base">Alle verzendingen ({filtered.length})</CardTitle>
+          <CardTitle className="text-base">
+            Alle verzendingen ({Math.min(visibleCount, filtered.length)} van {filtered.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto p-0">
           <Table>
@@ -284,7 +310,7 @@ export function EmailSendLog() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.slice(0, 500).map((r) => (
+              {filtered.slice(0, visibleCount).map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="text-xs whitespace-nowrap">
                     {new Date(r.created_at).toLocaleString("nl-NL")}
@@ -299,11 +325,27 @@ export function EmailSendLog() {
                   </TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                    Geen verzendingen gevonden voor deze filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
-          {filtered.length > 500 && (
-            <p className="text-xs text-muted-foreground p-3">Eerste 500 van {filtered.length} getoond — verfijn filters voor meer.</p>
-          )}
+          <div ref={sentinelRef} className="h-8 flex items-center justify-center">
+            {visibleCount < filtered.length ? (
+              <button
+                onClick={() => setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length))}
+                className="text-xs text-muted-foreground hover:text-foreground py-2"
+              >
+                Meer laden ({filtered.length - visibleCount} resterend)
+              </button>
+            ) : filtered.length > PAGE_SIZE ? (
+              <p className="text-xs text-muted-foreground py-2">Einde van de lijst</p>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>
