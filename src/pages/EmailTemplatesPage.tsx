@@ -285,17 +285,21 @@ export default function EmailTemplatesPage() {
                       {saving === tpl.key ? "Opslaan..." : "Opslaan"}
                     </Button>
                   </div>
-                  <BulkEmailSend
-                    templateKey={tpl.key}
-                    template={{ subject: tpl.subject, body: tpl.body }}
-                    defaultAudience={
-                      tpl.key === "account_reminder"
-                        ? "members_no_account"
-                        : tpl.key === "lead_welcome"
-                          ? "leads"
-                          : "members_all"
-                    }
-                  />
+                  {tpl.key === "member_welcome" || tpl.key === "lead_welcome" ? (
+                    <div className="rounded-md border-2 border-primary/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+                      Deze mail wordt automatisch verstuurd zodra je een{" "}
+                      {tpl.key === "member_welcome" ? "nieuw lid" : "nieuwe lead"} toevoegt.
+                      Bulkverzending is hier niet beschikbaar — je hebt geen 105 nieuwe leden tegelijk.
+                    </div>
+                  ) : (
+                    <BulkEmailSend
+                      templateKey={tpl.key}
+                      template={{ subject: tpl.subject, body: tpl.body }}
+                      defaultAudience={
+                        tpl.key === "account_reminder" ? "members_no_account" : "members_all"
+                      }
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
