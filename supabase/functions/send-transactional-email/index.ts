@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
       template_name: templateName,
       recipient_email: effectiveRecipient,
       status: 'sent',
-      provider_message_id: data?.id ?? null,
+      metadata: { provider: 'resend', resend_id: data?.id ?? null },
     })
 
     console.log('Transactional email sent via Resend', { templateName, effectiveRecipient, id: data?.id })
