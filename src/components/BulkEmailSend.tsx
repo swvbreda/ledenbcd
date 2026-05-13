@@ -1,7 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Send, Users, Loader2, Download, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +23,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+type Audience =
+  | "members_no_account"
+  | "members_with_account"
+  | "members_all"
+  | "leads"
+  | "old";
+
+const AUDIENCE_LABELS: Record<Audience, string> = {
+  members_no_account: "Leden zonder account",
+  members_with_account: "Leden met account",
+  members_all: "Alle leden",
+  leads: "Leads",
+  old: "Oud-leden",
+};
 
 type Recipient = {
   memberId: number;
@@ -59,9 +82,20 @@ function pickContactNaam(data: any): string {
   return "lid";
 }
 
-export function AccountReminderBulkSend({ template }: { template: Tpl }) {
+export function BulkEmailSend({
+  templateKey,
+  template,
+  defaultAudience = "members_no_account",
+}: {
+  templateKey: string;
+  template: Tpl;
+  defaultAudience?: Audience;
+}) {
+  const [audience, setAudience] = useState<Audience>(defaultAudience);
   const [loading, setLoading] = useState(true);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [allMembers, setAllMembers] = useState<
+    { id: number; member_type: string; merged: any; hasAccount: boolean }[]
+  >([]);
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -71,7 +105,7 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
       setLoading(true);
       try {
         const [mdRes, meRes, mpRes] = await Promise.all([
-          supabase.from("members_data").select("id, data").eq("member_type", "member"),
+          supabase.from("members_data").select("id, member_type, data"),
           supabase.from("member_edits").select("member_id, data"),
           supabase.from("member_profiles").select("member_id"),
         ]);
@@ -85,27 +119,13 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
           (mpRes.data || []).map((p: any) => p.member_id),
         );
 
-        const list: Recipient[] = [];
-        const seenEmails = new Set<string>();
-        for (const m of mdRes.data || []) {
-          if (withAccount.has(m.id)) continue;
-          const baseData = (m.data || {}) as Record<string, any>;
-          const editData = (editsMap.get(m.id) || {}) as Record<string, any>;
-          const merged: Record<string, any> = { ...baseData, ...editData };
-          const email = pickEmail(merged);
-          if (!email) continue;
-          if (seenEmails.has(email)) continue;
-          seenEmails.add(email);
-          list.push({
-            memberId: m.id,
-            email,
-            contactpersoon: pickContactNaam(merged),
-            coffeeshop: (merged.naam || merged.bedrijfsnaam || "").toString(),
-            plaats: (merged.plaats || "").toString(),
-          });
-        }
-        list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
-        setRecipients(list);
+        const list = (mdRes.data || []).map((m: any) => ({
+          id: m.id,
+          member_type: m.member_type,
+          merged: { ...(m.data || {}), ...(editsMap.get(m.id) || {}) },
+          hasAccount: withAccount.has(m.id),
+        }));
+        setAllMembers(list);
       } catch (err: any) {
         toast.error("Laden mislukt: " + err.message);
       } finally {
@@ -113,6 +133,39 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
       }
     })();
   }, []);
+
+  const recipients = useMemo<Recipient[]>(() => {
+    const filtered = allMembers.filter((m) => {
+      switch (audience) {
+        case "members_no_account":
+          return m.member_type === "member" && !m.hasAccount;
+        case "members_with_account":
+          return m.member_type === "member" && m.hasAccount;
+        case "members_all":
+          return m.member_type === "member";
+        case "leads":
+          return m.member_type === "lead";
+        case "old":
+          return m.member_type === "old";
+      }
+    });
+    const list: Recipient[] = [];
+    const seen = new Set<string>();
+    for (const m of filtered) {
+      const email = pickEmail(m.merged);
+      if (!email || seen.has(email)) continue;
+      seen.add(email);
+      list.push({
+        memberId: m.id,
+        email,
+        contactpersoon: pickContactNaam(m.merged),
+        coffeeshop: (m.merged.naam || m.merged.bedrijfsnaam || "").toString(),
+        plaats: (m.merged.plaats || "").toString(),
+      });
+    }
+    list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
+    return list;
+  }, [allMembers, audience]);
 
   const fill = (s: string, r: Recipient) =>
     s
@@ -128,6 +181,7 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
     let fail = 0;
     let refused = 0;
     const entries: LogEntry[] = [];
+    const stamp = Date.now();
     for (const r of recipients) {
       let status: LogStatus = "verzonden";
       let message = "";
@@ -136,7 +190,7 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
           body: {
             templateName: "member-welcome",
             recipientEmail: r.email,
-            idempotencyKey: `account-reminder-${r.memberId}`,
+            idempotencyKey: `${templateKey}-${audience}-${stamp}-${r.memberId}`,
             templateData: {
               subject: fill(template.subject, r),
               body: fill(template.body, r),
@@ -193,7 +247,7 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
     const a = document.createElement("a");
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
     a.href = url;
-    a.download = `account-reminder-log-${stamp}.csv`;
+    a.download = `${templateKey}-log-${stamp}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -220,10 +274,29 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
         </div>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground tabular-nums">{recipients.length}</strong>{" "}
-            {recipients.length === 1 ? "lid" : "leden"} zonder account met een bekend e-mailadres.
-            Eerst opslaan om de meest recente tekst te gebruiken.
+          <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+            <div>
+              <Label className="text-xs">Doelgroep</Label>
+              <Select value={audience} onValueChange={(v) => setAudience(v as Audience)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {AUDIENCE_LABELS[a]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-muted-foreground pb-2">
+              <strong className="text-foreground tabular-nums">{recipients.length}</strong>{" "}
+              ontvanger{recipients.length === 1 ? "" : "s"} met e-mailadres
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sla eerst op om de meest recente tekst te gebruiken. Eén mail per uniek e-mailadres.
           </p>
           {sending && (
             <div className="space-y-1">
@@ -241,16 +314,16 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
                 className="gap-1.5"
               >
                 <Send size={14} />
-                {sending ? "Versturen..." : `Verstuur naar ${recipients.length} leden`}
+                {sending ? "Versturen..." : `Verstuur naar ${recipients.length} ontvangers`}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Bulkverzending bevestigen</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Je staat op het punt om de huidige "Herinnering account aanmaken" mail te
-                  versturen naar {recipients.length} leden zonder account. Dit kan niet
-                  ongedaan worden gemaakt.
+                  Je staat op het punt om deze mail te versturen naar{" "}
+                  {recipients.length} ontvangers ({AUDIENCE_LABELS[audience].toLowerCase()}).
+                  Dit kan niet ongedaan worden gemaakt.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
