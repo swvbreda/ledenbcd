@@ -77,7 +77,9 @@ export function AccountReminderBulkSend({ template }: { template: Tpl }) {
         const seenEmails = new Set<string>();
         for (const m of mdRes.data || []) {
           if (withAccount.has(m.id)) continue;
-          const merged = { ...(m.data || {}), ...(editsMap.get(m.id) || {}) };
+          const baseData = (m.data || {}) as Record<string, any>;
+          const editData = (editsMap.get(m.id) || {}) as Record<string, any>;
+          const merged: Record<string, any> = { ...baseData, ...editData };
           const email = pickEmail(merged);
           if (!email) continue;
           if (seenEmails.has(email)) continue;
