@@ -60,13 +60,19 @@ type LogEntry = {
   at: string;
 };
 
+// Strikte e-mailvalidatie: voorkomt dat Resend 422 geeft op rommelige adressen
+// (spaties, ontbrekend domein, dubbele @, etc.).
+const EMAIL_RE = /^[^\s@"'<>,;:]+@[^\s@"'<>,;:]+\.[^\s@"'<>,;:]{2,}$/;
+function isValidEmail(s: string): boolean {
+  return EMAIL_RE.test(s);
+}
 function pickEmail(data: any): string | null {
-  const direct = (data?.email || "").toString().trim();
-  if (direct && direct.includes("@")) return direct.toLowerCase();
+  const direct = (data?.email || "").toString().trim().toLowerCase();
+  if (direct && isValidEmail(direct)) return direct;
   const contacten = Array.isArray(data?.contacten) ? data.contacten : [];
   for (const c of contacten) {
-    const e = (c?.email || "").toString().trim();
-    if (e && e.includes("@")) return e.toLowerCase();
+    const e = (c?.email || "").toString().trim().toLowerCase();
+    if (e && isValidEmail(e)) return e;
   }
   return null;
 }
