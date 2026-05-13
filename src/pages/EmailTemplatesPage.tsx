@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { AccountReminderBulkSend } from "@/components/AccountReminderBulkSend";
+import { BulkEmailSend } from "@/components/BulkEmailSend";
 
 type Tpl = { key: string; subject: string; body: string };
 
@@ -285,9 +285,17 @@ export default function EmailTemplatesPage() {
                       {saving === tpl.key ? "Opslaan..." : "Opslaan"}
                     </Button>
                   </div>
-                  {tpl.key === "account_reminder" && (
-                    <AccountReminderBulkSend template={{ subject: tpl.subject, body: tpl.body }} />
-                  )}
+                  <BulkEmailSend
+                    templateKey={tpl.key}
+                    template={{ subject: tpl.subject, body: tpl.body }}
+                    defaultAudience={
+                      tpl.key === "account_reminder"
+                        ? "members_no_account"
+                        : tpl.key === "lead_welcome"
+                          ? "leads"
+                          : "members_all"
+                    }
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
