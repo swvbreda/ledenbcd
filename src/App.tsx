@@ -42,7 +42,6 @@ import MfaSetupPage from "./pages/MfaSetupPage";
 import MfaVerifyPage from "./pages/MfaVerifyPage";
 import ExternProtectedRoute from "@/components/ExternProtectedRoute";
 import EmailTemplatesPage from "./pages/EmailTemplatesPage";
-import EmailLogPage from "./pages/EmailLogPage";
 import UnsubscribePage from "./pages/UnsubscribePage";
 
 import NotFound from "./pages/NotFound";
@@ -97,7 +96,6 @@ const App = () => (
                   <Route path="/financien" element={<FinancienPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
-                  <Route path="/email-log" element={<EmailLogPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />
