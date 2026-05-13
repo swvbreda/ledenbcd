@@ -1,0 +1,5 @@
+UPDATE public.email_templates
+SET subject = 'Maak je account aan voor het ledenportaal',
+    body = E'Beste {{contactpersoon}} van {{coffeeshop}},\n\nWe zien dat er voor jullie nog geen account is aangemaakt op het ledenportaal van de Bond van Cannabis Detaillisten. Via het portaal kun je de eigen gegevens wijzigen, contactgegevens van het bestuur vinden, ledenvoordelen bekijken en aansluiten bij de WhatsApp-community.\n\nZo maak je in een paar stappen je account aan:\n\n1. Ga naar https://leden.coffeeshopbond.nl\n2. Klik onderaan op "Nog geen account? Registreren".\n3. Vul het e-mailadres in waarop je deze mail hebt ontvangen en kies zelf een wachtwoord.\n4. Bevestig je e-mailadres via de link die je toegestuurd krijgt.\n5. Log in en stel direct tweestapsverificatie (MFA) in — dit is verplicht voor alle leden.\n\nLukt het registreren niet, of gebruik je liever een ander e-mailadres? Neem dan gerust contact op, dan helpen we je verder.\n\nMet vriendelijke groet namens bestuur,\n\nSimone van Breda\nVoorzitter',
+    updated_at = now()
+WHERE key = 'account_reminder';
