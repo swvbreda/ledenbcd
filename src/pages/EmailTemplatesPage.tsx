@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AccountReminderBulkSend } from "@/components/AccountReminderBulkSend";
 
 type Tpl = { key: string; subject: string; body: string };
 
@@ -128,6 +129,9 @@ export default function EmailTemplatesPage() {
                       {saving === tpl.key ? "Opslaan..." : "Opslaan"}
                     </Button>
                   </div>
+                  {tpl.key === "account_reminder" && (
+                    <AccountReminderBulkSend template={{ subject: tpl.subject, body: tpl.body }} />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
