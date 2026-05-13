@@ -197,19 +197,6 @@ export function AppSidebar() {
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to="/email-log"
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                          onClick={closeMobile}
-                        >
-                          <Mail className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>Verzendlog e-mail</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
                   </>
                 )}
               </SidebarMenu>

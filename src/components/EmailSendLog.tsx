@@ -60,7 +60,7 @@ function statusLabel(status: string) {
   return map[status] || status;
 }
 
-export default function EmailLogPage() {
+export function EmailSendLog() {
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,14 +150,14 @@ export default function EmailLogPage() {
       .sort((a, b) => (a.last.created_at < b.last.created_at ? 1 : -1));
   }, [filtered]);
 
-  if (!isAdmin) return <div className="p-6">Geen toegang.</div>;
+  if (!isAdmin) return null;
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Mail className="text-primary" />
-          <h1 className="text-xl sm:text-2xl font-bold">Verzendlog e-mail</h1>
+          <h2 className="text-lg sm:text-xl font-bold">Verzendlog e-mail</h2>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading} className="gap-1.5">
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Vernieuwen
