@@ -21,6 +21,10 @@ const TEMPLATE_LABELS: Record<string, { title: string; description: string }> = 
     title: "Uitnodigingsmail lead",
     description: "Wordt verstuurd wanneer een nieuwe lead wordt toegevoegd.",
   },
+  account_reminder: {
+    title: "Herinnering account aanmaken",
+    description: "Voor leden die nog geen account hebben aangemaakt op het ledenportaal.",
+  },
 };
 
 const PLACEHOLDERS = ["{{contactpersoon}}", "{{coffeeshop}}", "{{plaats}}"];
