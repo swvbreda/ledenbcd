@@ -1,11 +1,31 @@
 import { useEffect, useState } from "react";
-import { Mail } from "lucide-react";
+import { Mail, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +48,8 @@ const TEMPLATE_LABELS: Record<string, { title: string; description: string }> = 
   },
 };
 
+const SYSTEM_KEYS = new Set(["member_welcome", "lead_welcome", "account_reminder"]);
+
 const PLACEHOLDERS = ["{{contactpersoon}}", "{{coffeeshop}}", "{{plaats}}"];
 
 export default function EmailTemplatesPage() {
@@ -35,6 +57,10 @@ export default function EmailTemplatesPage() {
   const [templates, setTemplates] = useState<Tpl[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [activeKey, setActiveKey] = useState<string>("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newTpl, setNewTpl] = useState({ key: "", title: "", subject: "", body: "" });
 
   useEffect(() => {
     (async () => {
@@ -43,7 +69,10 @@ export default function EmailTemplatesPage() {
         .select("*")
         .order("key");
       if (error) toast.error("Laden mislukt: " + error.message);
-      else setTemplates(data || []);
+      else {
+        setTemplates(data || []);
+        if ((data || []).length > 0) setActiveKey((data as Tpl[])[0].key);
+      }
       setLoading(false);
     })();
   }, []);
@@ -69,11 +98,109 @@ export default function EmailTemplatesPage() {
     else toast.success("Template opgeslagen");
   };
 
+  const createTemplate = async () => {
+    const key = newTpl.key.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_");
+    if (!key) return toast.error("Sleutel is verplicht");
+    if (templates.some((t) => t.key === key)) return toast.error("Sleutel bestaat al");
+    if (!newTpl.subject.trim() || !newTpl.body.trim())
+      return toast.error("Onderwerp en bericht zijn verplicht");
+    setCreating(true);
+    const { error } = await supabase.from("email_templates").insert({
+      key,
+      subject: newTpl.subject,
+      body: newTpl.body,
+    });
+    setCreating(false);
+    if (error) return toast.error("Aanmaken mislukt: " + error.message);
+    if (newTpl.title.trim()) {
+      TEMPLATE_LABELS[key] = { title: newTpl.title.trim(), description: "" };
+    }
+    const tpl: Tpl = { key, subject: newTpl.subject, body: newTpl.body };
+    setTemplates((prev) => [...prev, tpl].sort((a, b) => a.key.localeCompare(b.key)));
+    setActiveKey(key);
+    setCreateOpen(false);
+    setNewTpl({ key: "", title: "", subject: "", body: "" });
+    toast.success("Template aangemaakt");
+  };
+
+  const deleteTemplate = async (key: string) => {
+    const { error } = await supabase.from("email_templates").delete().eq("key", key);
+    if (error) return toast.error("Verwijderen mislukt: " + error.message);
+    setTemplates((prev) => {
+      const next = prev.filter((t) => t.key !== key);
+      if (activeKey === key && next.length > 0) setActiveKey(next[0].key);
+      return next;
+    });
+    toast.success("Template verwijderd");
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2">
-        <Mail className="text-primary" />
-        <h1 className="text-xl sm:text-2xl font-bold">E-mailtemplates</h1>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Mail className="text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold">E-mailtemplates</h1>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <Plus size={14} /> Nieuwe template
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Nieuwe e-mailtemplate</DialogTitle>
+              <DialogDescription>
+                Geef een unieke sleutel (gebruikt in code en logs) en de inhoud van de mail.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Sleutel</Label>
+                <Input
+                  placeholder="bv. nieuwsbrief_juni"
+                  value={newTpl.key}
+                  onChange={(e) => setNewTpl((p) => ({ ...p, key: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Alleen kleine letters, cijfers en _.
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs">Naam (optioneel)</Label>
+                <Input
+                  placeholder="bv. Nieuwsbrief juni"
+                  value={newTpl.title}
+                  onChange={(e) => setNewTpl((p) => ({ ...p, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Onderwerp</Label>
+                <Input
+                  value={newTpl.subject}
+                  onChange={(e) => setNewTpl((p) => ({ ...p, subject: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Bericht</Label>
+                <Textarea
+                  rows={10}
+                  className="font-mono text-sm"
+                  value={newTpl.body}
+                  onChange={(e) => setNewTpl((p) => ({ ...p, body: e.target.value }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                Annuleren
+              </Button>
+              <Button onClick={createTemplate} disabled={creating}>
+                {creating ? "Aanmaken..." : "Aanmaken"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <p className="text-sm text-muted-foreground">
         Pas onderwerp en bericht aan. Beschikbare placeholders:{" "}
@@ -84,10 +211,10 @@ export default function EmailTemplatesPage() {
       {loading ? (
         <p>Laden...</p>
       ) : templates.length === 0 ? (
-        <p>Geen templates gevonden.</p>
+        <p>Nog geen templates. Maak er één aan om te beginnen.</p>
       ) : (
-        <Tabs defaultValue={templates[0].key}>
-          <TabsList>
+        <Tabs value={activeKey} onValueChange={setActiveKey}>
+          <TabsList className="flex-wrap h-auto">
             {templates.map((t) => (
               <TabsTrigger key={t.key} value={t.key}>
                 {TEMPLATE_LABELS[t.key]?.title || t.key}
@@ -98,9 +225,38 @@ export default function EmailTemplatesPage() {
             <TabsContent key={tpl.key} value={tpl.key}>
               <Card className="border-2 border-primary/60">
                 <CardHeader>
-                  <CardTitle className="text-base">
-                    {TEMPLATE_LABELS[tpl.key]?.title || tpl.key}
-                  </CardTitle>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">
+                        {TEMPLATE_LABELS[tpl.key]?.title || tpl.key}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1 font-mono">{tpl.key}</p>
+                    </div>
+                    {!SYSTEM_KEYS.has(tpl.key) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="text-destructive gap-1.5">
+                            <Trash2 size={14} /> Verwijderen
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Template verwijderen?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              "{TEMPLATE_LABELS[tpl.key]?.title || tpl.key}" wordt definitief
+                              verwijderd. Dit kan niet ongedaan worden gemaakt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteTemplate(tpl.key)}>
+                              Verwijderen
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                   {TEMPLATE_LABELS[tpl.key]?.description && (
                     <p className="text-xs text-muted-foreground">
                       {TEMPLATE_LABELS[tpl.key].description}
