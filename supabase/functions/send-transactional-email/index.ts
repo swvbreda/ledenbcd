@@ -7,8 +7,8 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
 const SITE_NAME = "Coffeeshopbond"
-// We send via Resend (gateway) from the verified domain mail.coffeeshopbond.nl.
-const FROM_DOMAIN = "mail.coffeeshopbond.nl"
+// We send via Resend (gateway) from het in Resend geverifieerde domein.
+const FROM_DOMAIN = "leden.coffeeshopbond.nl"
 const FROM_ADDRESS = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
 const RESEND_GATEWAY_URL = 'https://connector-gateway.lovable.dev/resend'
 
