@@ -185,32 +185,60 @@ export function useBudgetMutations(year: number) {
 
   const addExpense = useMutation({
     mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null; direction?: "out" }) => {
-      // Per-rij dedup VOOR schrijven: check of een identieke boeking al bestaat
-      // op basis van (line_item_id, direction, expense_date, amount, creditor_name, invoice_reference).
-      // Dit voorkomt dat dezelfde rij dubbel wordt aangemaakt bij her-uploads,
-      // zonder te vertrouwen op de DB unique-index als enige vangnet.
       const direction = expense.direction ?? "out";
-      let dupQuery = supabase
+      const normalizeText = (value?: string | null) =>
+        (value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+      const normalizedCreditor = normalizeText(expense.creditor_name || expense.description);
+      const normalizedInvoice = normalizeText(expense.invoice_reference);
+      const amountCents = Math.round((Number(expense.amount) || 0) * 100);
+      const hasSharedToken = (a: string, b: string) => {
+        if (!a || !b) return false;
+        if (a === b || a.includes(b) || b.includes(a)) return true;
+        const tokens = new Set(a.split(" ").filter((t) => t.length >= 4));
+        return b.split(" ").some((t) => t.length >= 4 && tokens.has(t));
+      };
+
+      // Per-rij dedup vóór schrijven. Bij her-upload moet een bestaande boeking
+      // worden overschreven/bijgewerkt, niet nogmaals aangemaakt. Daarom matchen we
+      // niet alleen exact op bedrag, maar ook op dezelfde factuur op dezelfde datum.
+      let candidateQuery = supabase
         .from("budget_expenses")
-        .select("id")
+        .select("id, amount, creditor_name, description, invoice_reference, dossier")
         .eq("line_item_id", expense.line_item_id)
         .eq("direction", direction)
-        .eq("amount", expense.amount)
-        .limit(1);
-      dupQuery = expense.expense_date
-        ? dupQuery.eq("expense_date", expense.expense_date)
-        : dupQuery.is("expense_date", null);
-      dupQuery = expense.creditor_name
-        ? dupQuery.eq("creditor_name", expense.creditor_name)
-        : dupQuery.is("creditor_name", null);
-      dupQuery = expense.invoice_reference
-        ? dupQuery.eq("invoice_reference", expense.invoice_reference)
-        : dupQuery.is("invoice_reference", null);
+        .limit(50);
+      candidateQuery = expense.expense_date
+        ? candidateQuery.eq("expense_date", expense.expense_date)
+        : candidateQuery.is("expense_date", null);
 
-      const { data: existing } = await dupQuery;
-      if (existing && existing.length > 0) return; // duplicaat — overslaan
+      const { data: candidates, error: candidateError } = await candidateQuery;
+      if (candidateError) throw candidateError;
 
-      const { error } = await supabase.from("budget_expenses").insert(expense);
+      const duplicate = (candidates || []).find((row: any) => {
+        const rowCreditor = normalizeText(row.creditor_name || row.description);
+        const rowInvoice = normalizeText(row.invoice_reference);
+        const sameInvoice = !!normalizedInvoice && normalizedInvoice === rowInvoice;
+        const sameAmount = Math.round((Number(row.amount) || 0) * 100) === amountCents;
+        const sameCreditor = hasSharedToken(normalizedCreditor, rowCreditor);
+        return (sameInvoice && (sameCreditor || !rowCreditor || !normalizedCreditor)) || (sameAmount && sameCreditor);
+      });
+
+      if (duplicate) {
+        const { error: updateError } = await supabase
+          .from("budget_expenses")
+          .update({
+            ...expense,
+            direction,
+            // Handmatige koppelingen blijven leidend: bestaand dossier niet leegmaken
+            // als de nieuwe import geen dossier bevat.
+            dossier: expense.dossier ?? duplicate.dossier ?? null,
+          })
+          .eq("id", duplicate.id);
+        if (updateError) throw updateError;
+        return;
+      }
+
+      const { error } = await supabase.from("budget_expenses").insert({ ...expense, direction });
       // DB unique-index als laatste vangnet (race conditions bij parallelle imports)
       if (error?.code === "23505" && error.message?.includes("budget_expenses_payment_dedup_idx")) return;
       if (error) throw error;
