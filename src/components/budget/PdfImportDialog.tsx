@@ -191,35 +191,37 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   ) => {
     if (!entry.expense_date) return null;
     const signed = entry.direction === "in" ? Math.abs(entry.amount) : -Math.abs(entry.amount);
-    // First pass: strict match including creditor key (when both sides have one)
-    if (creditorKey) {
-      for (let i = 0; i < dashboardRows.length; i++) {
-        const d = dashboardRows[i];
-        const key = `${i}`;
-        if (usedKeys.has(key)) continue;
-        if (
-          d.date === entry.expense_date &&
-          Math.abs(d.amount - signed) <= tolerance + 1e-9 &&
-          d.creditorKey &&
-          (d.creditorKey === creditorKey ||
-            (creditorKey.length >= 4 &&
-              (d.creditorKey.includes(creditorKey) || creditorKey.includes(d.creditorKey))))
-        ) {
-          usedKeys.add(key);
-          return d;
-        }
-      }
-    }
-    // Fallback: when no creditor on either side, allow date+amount match only if creditor info missing
+    const amountOk = (a: number) => Math.abs(a - signed) <= tolerance + 1e-9;
+    const creditorOk = (dk: string) => {
+      if (!creditorKey || !dk) return true; // missing on either side → don't block
+      if (dk === creditorKey) return true;
+      // token overlap: at least one shared word of 3+ chars
+      const aTok = new Set(creditorKey.split(" ").filter((t) => t.length >= 3));
+      const bTok = dk.split(" ").filter((t) => t.length >= 3);
+      if (bTok.some((t) => aTok.has(t))) return true;
+      // substring fallback
+      if (creditorKey.length >= 4 && (dk.includes(creditorKey) || creditorKey.includes(dk))) return true;
+      return false;
+    };
+
+    // Pass 1: prefer rows where creditor matches (or one side is missing)
     for (let i = 0; i < dashboardRows.length; i++) {
       const d = dashboardRows[i];
       const key = `${i}`;
       if (usedKeys.has(key)) continue;
-      if (
-        d.date === entry.expense_date &&
-        Math.abs(d.amount - signed) <= tolerance + 1e-9 &&
-        (!creditorKey || !d.creditorKey)
-      ) {
+      if (d.date === entry.expense_date && amountOk(d.amount) && creditorOk(d.creditorKey)) {
+        usedKeys.add(key);
+        return d;
+      }
+    }
+    // Pass 2: pure date + amount fallback — catches cases where the PDF or dashboard
+    // has a different / missing creditor description. Same amount on same day is
+    // overwhelmingly likely to be the same booking.
+    for (let i = 0; i < dashboardRows.length; i++) {
+      const d = dashboardRows[i];
+      const key = `${i}`;
+      if (usedKeys.has(key)) continue;
+      if (d.date === entry.expense_date && amountOk(d.amount)) {
         usedKeys.add(key);
         return d;
       }
