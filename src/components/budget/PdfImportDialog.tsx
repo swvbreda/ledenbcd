@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Loader2, Check, ArrowUpDown } from "lucide-react";
+import { Upload, FileText, Loader2, Check, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { toast } from "sonner";
 import type { BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface ExtractedEntry {
   expense_date?: string;
+  direction: "in" | "out";
   category?: string;
   line_item?: string;
   dossier?: string;
@@ -19,19 +20,24 @@ interface ExtractedEntry {
   amount: number;
   selected: boolean;
   assigned_line_item_id?: string;
+  assigned_member_id?: number;
   wrong_year?: boolean;
 }
+
+interface MemberOption { id: number; naam: string }
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: BudgetCategory[];
+  members: MemberOption[];
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null }[]) => Promise<void>;
+  onImportIncome: (incomes: { member_id: number; amount: number; paid_date: string }[]) => Promise<void>;
   userId: string;
   year: number;
 }
 
-export default function PdfImportDialog({ open, onOpenChange, categories, onImport, userId, year }: Props) {
+export default function PdfImportDialog({ open, onOpenChange, categories, members, onImport, onImportIncome, userId, year }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
@@ -41,6 +47,32 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
   );
+
+  const sortedMembers = useMemo(
+    () => [...members].sort((a, b) => (a.naam || "").localeCompare(b.naam || "")),
+    [members]
+  );
+
+  const normaliseName = (s: string) =>
+    s.toLowerCase().replace(/\b(b\.?v\.?|v\.?o\.?f\.?|holding|coffeeshop|stichting)\b/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+
+  const matchMember = (name: string): number | undefined => {
+    if (!name) return undefined;
+    const n = normaliseName(name);
+    if (!n) return undefined;
+    // exact normalised match
+    let m = sortedMembers.find((mm) => normaliseName(mm.naam) === n);
+    if (m) return m.id;
+    // substring either way (min 4 chars)
+    if (n.length >= 4) {
+      m = sortedMembers.find((mm) => {
+        const mn = normaliseName(mm.naam);
+        return mn.length >= 4 && (mn.includes(n) || n.includes(mn));
+      });
+      if (m) return m.id;
+    }
+    return undefined;
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,43 +110,54 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
 
       const data = await resp.json();
       if (!data.entries?.length) {
-        toast.warning("Geen crediteurenregels gevonden in de PDF");
+        toast.warning("Geen regels gevonden in de PDF");
         return;
       }
 
-      // Try to auto-match line items
+      // Try to auto-match line items / members
       const enriched: ExtractedEntry[] = data.entries.map((entry: any) => {
+        const direction: "in" | "out" = entry.direction === "in" ? "in" : "out";
         let matchedId = entry.matched_line_item_id || "";
         if (matchedId && !allLineItems.find((li) => li.id === matchedId)) {
           matchedId = "";
         }
-        if (!matchedId && entry.line_item) {
+        if (direction === "out" && !matchedId && entry.line_item) {
           const match = allLineItems.find(
             (li) => li.label.toLowerCase().includes(entry.line_item.toLowerCase()) ||
               entry.line_item.toLowerCase().includes(li.label.split(" → ")[1]?.toLowerCase() ?? "")
           );
           if (match) matchedId = match.id;
         }
-        if (!matchedId && entry.category) {
+        if (direction === "out" && !matchedId && entry.category) {
           const match = allLineItems.find(
             (li) => li.label.toLowerCase().includes(entry.category.toLowerCase())
           );
           if (match) matchedId = match.id;
         }
+        const assignedMember = direction === "in" ? matchMember(entry.creditor_name || "") : undefined;
         // Year validation: check if expense_date belongs to the selected year
         const entryYear = entry.expense_date ? new Date(entry.expense_date).getFullYear() : null;
         const wrongYear = entryYear !== null && entryYear !== year;
-        return { ...entry, selected: !wrongYear, assigned_line_item_id: matchedId, wrong_year: wrongYear };
+        return {
+          ...entry,
+          direction,
+          selected: !wrongYear,
+          assigned_line_item_id: matchedId,
+          assigned_member_id: assignedMember,
+          wrong_year: wrongYear,
+        };
       });
 
       const wrongYearCount = enriched.filter(e => e.wrong_year).length;
       if (wrongYearCount > 0) {
         toast.warning(`${wrongYearCount} regels uit een ander jaar dan ${year} (automatisch uitgevinkt)`);
       }
+      const inCount = enriched.filter((e) => e.direction === "in").length;
+      const outCount = enriched.length - inCount;
 
       setEntries(enriched);
       setStep("review");
-      toast.success(`${data.count} regels geëxtraheerd`);
+      toast.success(`${data.count} regels geëxtraheerd (${inCount} bij, ${outCount} af)`);
     } catch (err: any) {
       toast.error(err.message || "Fout bij PDF-extractie");
     } finally {
@@ -134,41 +177,76 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
     setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, assigned_line_item_id: lineItemId } : e)));
   };
 
+  const setMember = (idx: number, memberId: number | undefined) => {
+    setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, assigned_member_id: memberId } : e)));
+  };
+
+  const flipDirection = (idx: number) => {
+    setEntries((prev) =>
+      prev.map((e, i) =>
+        i === idx
+          ? {
+              ...e,
+              direction: e.direction === "in" ? "out" : "in",
+              assigned_line_item_id: e.direction === "in" ? e.assigned_line_item_id : "",
+              assigned_member_id: e.direction === "out" ? matchMember(e.creditor_name) : undefined,
+            }
+          : e
+      )
+    );
+  };
+
   const applyDefaultToUnassigned = () => {
     if (!defaultLineItemId) return;
     setEntries((prev) =>
       prev.map((e) =>
-        e.selected && !e.assigned_line_item_id ? { ...e, assigned_line_item_id: defaultLineItemId } : e
+        e.selected && e.direction === "out" && !e.assigned_line_item_id
+          ? { ...e, assigned_line_item_id: defaultLineItemId }
+          : e
       )
     );
   };
 
   const selectedEntries = entries.filter((e) => e.selected);
-  const readyEntries = selectedEntries.filter((e) => e.assigned_line_item_id);
-  const total = selectedEntries.reduce((s, e) => s + e.amount, 0);
+  const readyExpenses = selectedEntries.filter((e) => e.direction === "out" && e.assigned_line_item_id);
+  const readyIncomes = selectedEntries.filter((e) => e.direction === "in" && e.assigned_member_id);
+  const readyCount = readyExpenses.length + readyIncomes.length;
+  const totalOut = selectedEntries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
+  const totalIn = selectedEntries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
 
   const handleImport = async () => {
-    if (readyEntries.length === 0) {
-      toast.error("Geen regels klaar voor import (wijs begrotingsposten toe)");
+    if (readyCount === 0) {
+      toast.error("Geen regels klaar voor import (wijs begrotingsposten of leden toe)");
       return;
     }
     setStep("importing");
     try {
-      await onImport(
-        readyEntries.map((e) => ({
-          line_item_id: e.assigned_line_item_id!,
-          description: e.creditor_name,
-          amount: e.amount,
-          expense_date: e.expense_date || undefined,
-          creditor_name: e.creditor_name,
-          invoice_reference: e.invoice_reference || undefined,
-          dossier: e.dossier || undefined,
-          created_by: userId,
-          paid: markAsPaid,
-          paid_date: markAsPaid ? (e.expense_date || new Date().toISOString().slice(0, 10)) : null,
-        }))
-      );
-      toast.success(`${readyEntries.length} uitgaven geïmporteerd`);
+      if (readyExpenses.length > 0) {
+        await onImport(
+          readyExpenses.map((e) => ({
+            line_item_id: e.assigned_line_item_id!,
+            description: e.creditor_name,
+            amount: e.amount,
+            expense_date: e.expense_date || undefined,
+            creditor_name: e.creditor_name,
+            invoice_reference: e.invoice_reference || undefined,
+            dossier: e.dossier || undefined,
+            created_by: userId,
+            paid: markAsPaid,
+            paid_date: markAsPaid ? (e.expense_date || new Date().toISOString().slice(0, 10)) : null,
+          }))
+        );
+      }
+      if (readyIncomes.length > 0) {
+        await onImportIncome(
+          readyIncomes.map((e) => ({
+            member_id: e.assigned_member_id!,
+            amount: e.amount,
+            paid_date: e.expense_date || new Date().toISOString().slice(0, 10),
+          }))
+        );
+      }
+      toast.success(`${readyExpenses.length} uitgaven + ${readyIncomes.length} bijschrijvingen geïmporteerd`);
       onOpenChange(false);
       setStep("upload");
       setEntries([]);
@@ -192,15 +270,14 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText size={18} />
-            {step === "upload" ? `Visionplanner PDF importeren (${year})` : `Geëxtraheerde crediteurenregels (${year})`}
+            {step === "upload" ? `Bank- of crediteuren-PDF importeren (${year})` : `Geëxtraheerde regels (${year})`}
           </DialogTitle>
         </DialogHeader>
 
         {step === "upload" && (
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Upload een crediteurenlijst uit Visionplanner (PDF). De AI extraheert automatisch alle
-              regels zodat je ze kunt toewijzen aan begrotingsposten.
+              Upload een bankafschrift of crediteurenlijst (PDF). De AI extraheert alle regels en bepaalt per regel of het een bijschrijving (inkomst) of afschrijving (uitgave) is. Bijschrijvingen worden gekoppeld aan een lid en geboekt als contributiebetaling.
             </p>
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
               {extracting ? (
@@ -229,7 +306,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
           <div className="flex-1 overflow-hidden flex flex-col gap-3">
             {/* Bulk assign */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground">Standaardpost voor niet-toegewezen:</span>
+              <span className="text-xs text-muted-foreground">Standaardpost voor niet-toegewezen uitgaven:</span>
               <Select value={defaultLineItemId} onValueChange={setDefaultLineItemId}>
                 <SelectTrigger className="h-7 text-xs w-[250px]">
                   <SelectValue placeholder="Kies begrotingspost..." />
@@ -248,10 +325,10 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                   checked={markAsPaid}
                   onCheckedChange={(c) => setMarkAsPaid(!!c)}
                 />
-                <span>Al betaald (bankafschrift) — boekdatum = betaaldatum</span>
+                <span>Uitgaven al betaald — boekdatum = betaaldatum</span>
               </label>
               <span className="ml-auto text-xs text-muted-foreground">
-                {readyEntries.length}/{selectedEntries.length} klaar • <CurrencyText value={total} />
+                {readyCount}/{selectedEntries.length} klaar • <span className="text-green-600">+<CurrencyText value={totalIn} /></span> / <span className="text-destructive">−<CurrencyText value={totalOut} /></span>
               </span>
             </div>
 
@@ -266,12 +343,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                         onCheckedChange={(c) => toggleAll(!!c)}
                       />
                     </th>
+                    <th className="px-2 py-1.5 text-left font-medium w-[60px]">Type</th>
                     <th className="px-2 py-1.5 text-left font-medium">Datum</th>
-                    <th className="px-2 py-1.5 text-left font-medium">Leverancier</th>
+                    <th className="px-2 py-1.5 text-left font-medium">Tegenpartij</th>
                     <th className="px-2 py-1.5 text-left font-medium">Dossier</th>
                     <th className="px-2 py-1.5 text-left font-medium">Factuurnr</th>
                     <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>
-                    <th className="px-2 py-1.5 text-left font-medium min-w-[200px]">Begrotingspost</th>
+                    <th className="px-2 py-1.5 text-left font-medium min-w-[220px]">Begrotingspost / Lid</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -279,6 +357,21 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                     <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"} ${entry.wrong_year ? "bg-destructive/5" : ""}`}>
                       <td className="px-2 py-1">
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
+                      </td>
+                      <td className="px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => flipDirection(idx)}
+                          title="Klik om om te keren tussen Bij en Af"
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                            entry.direction === "in"
+                              ? "bg-green-600/10 text-green-700 border-green-600/40"
+                              : "bg-destructive/10 text-destructive border-destructive/40"
+                          }`}
+                        >
+                          {entry.direction === "in" ? <ArrowDownToLine size={10} /> : <ArrowUpFromLine size={10} />}
+                          {entry.direction === "in" ? "Bij" : "Af"}
+                        </button>
                       </td>
                       <td className="px-2 py-1 whitespace-nowrap tabular-nums">
                         {entry.expense_date || ""}
@@ -289,22 +382,44 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
                       <td className="px-2 py-1">{entry.creditor_name}</td>
                       <td className="px-2 py-1">{entry.dossier || ""}</td>
                       <td className="px-2 py-1 tabular-nums">{entry.invoice_reference || ""}</td>
-                      <td className="px-2 py-1 text-right"><CurrencyCell value={entry.amount} /></td>
+                      <td className={`px-2 py-1 text-right tabular-nums ${entry.direction === "in" ? "text-green-600" : ""}`}>
+                        {entry.direction === "in" ? "+" : "−"}
+                        <CurrencyCell value={entry.amount} />
+                      </td>
                       <td className="px-2 py-1">
-                        <Select
-                          value={entry.assigned_line_item_id || ""}
-                          onValueChange={(v) => setLineItem(idx, v)}
-                          disabled={!entry.selected}
-                        >
-                          <SelectTrigger className="h-6 text-xs">
-                            <SelectValue placeholder="Toewijzen..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {allLineItems.map((li) => (
-                              <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {entry.direction === "out" ? (
+                          <Select
+                            value={entry.assigned_line_item_id || ""}
+                            onValueChange={(v) => setLineItem(idx, v)}
+                            disabled={!entry.selected}
+                          >
+                            <SelectTrigger className="h-6 text-xs">
+                              <SelectValue placeholder="Toewijzen aan begrotingspost..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {allLineItems.map((li) => (
+                                <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Select
+                            value={entry.assigned_member_id ? String(entry.assigned_member_id) : ""}
+                            onValueChange={(v) => setMember(idx, v ? Number(v) : undefined)}
+                            disabled={!entry.selected}
+                          >
+                            <SelectTrigger className="h-6 text-xs">
+                              <SelectValue placeholder="Koppel aan lid..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sortedMembers.map((m) => (
+                                <SelectItem key={m.id} value={String(m.id)} className="text-xs">
+                                  #{m.id} — {m.naam}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -317,9 +432,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
               <Button variant="outline" size="sm" onClick={() => { setStep("upload"); setEntries([]); }}>
                 Andere PDF
               </Button>
-              <Button size="sm" onClick={handleImport} disabled={readyEntries.length === 0}>
+              <Button size="sm" onClick={handleImport} disabled={readyCount === 0}>
                 <Check size={14} className="mr-1" />
-                {readyEntries.length} regels importeren
+                {readyCount} regels importeren
               </Button>
             </div>
           </div>
