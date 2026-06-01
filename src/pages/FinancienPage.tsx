@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +50,80 @@ export default function FinancienPage() {
     () => [...effectiveMembers, ...rawOldMembers],
     [effectiveMembers, rawOldMembers]
   );
+
+  // Auto-categoriseer inkomende banktransacties als contributie wanneer de
+  // tegenpartij overeenkomt met een lid (bedrijfsnaam of naam). Werkt ook het
+  // ledenbestand (member_contributions) bij naar "betaald".
+  const autoMatchedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    if (!bankStatement?.transactions?.length) return;
+    if (!allMembersForLookup.length) return;
+
+    const normalize = (s: string) =>
+      (s || "")
+        .toLowerCase()
+        .replace(/\b(b\.?v\.?|v\.?o\.?f\.?|n\.?v\.?|c\.?v\.?|coffeeshop|coffeshop|the)\b/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const memberIndex = allMembersForLookup
+      .map((m) => ({
+        id: m.id,
+        naam: m.naam,
+        keys: [m.bedrijfsnaam, m.naam, m.factuurBedrijfsnaam]
+          .map((v) => normalize(v || ""))
+          .filter((v) => v.length >= 3),
+      }))
+      .filter((m) => m.keys.length > 0);
+
+    const findMember = (counterparty: string | null) => {
+      const n = normalize(counterparty || "");
+      if (!n) return null;
+      // Exact / contained match op één van de keys
+      for (const m of memberIndex) {
+        if (m.keys.some((k) => n === k || n.includes(k) || k.includes(n))) {
+          return m;
+        }
+      }
+      return null;
+    };
+
+    const contribByMember = new Map<number, boolean>();
+    for (const c of contributions || []) contribByMember.set(c.member_id, c.paid);
+
+    for (const tx of bankStatement.transactions) {
+      if (tx.direction !== "in") continue;
+      if (tx.line_item_id) continue;
+      if ((tx.dossier || "").toLowerCase().startsWith("contributie")) continue;
+      if (autoMatchedRef.current.has(tx.id)) continue;
+
+      const match = findMember(tx.counterparty);
+      if (!match) continue;
+
+      autoMatchedRef.current.add(tx.id);
+
+      const dossier = `Contributie · ${match.naam} (#${match.id})`;
+      mutations.updateBankTransaction.mutate({
+        id: tx.id,
+        dossier,
+        line_item_id: null,
+        applyToSimilar: false,
+      });
+
+      if (!contribByMember.get(match.id)) {
+        upsertContribution.mutate({
+          member_id: match.id,
+          year,
+          amount: tx.amount || contributionAmount,
+          paid: true,
+          paid_date: tx.transaction_date || new Date().toISOString().slice(0, 10),
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bankStatement?.transactions, allMembersForLookup, contributions, user, year]);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
