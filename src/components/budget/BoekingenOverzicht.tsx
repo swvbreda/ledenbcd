@@ -284,7 +284,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
             className="h-8 text-sm pl-8"
           />
         </div>
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+        <Select value={filterType} onValueChange={handleFilterTypeChange}>
           <SelectTrigger className="h-8 w-[120px] text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -294,7 +294,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
+        <Select value={filterPaid} onValueChange={handleFilterPaidChange}>
           <SelectTrigger className="h-8 w-[120px] text-xs">
             <SelectValue />
           </SelectTrigger>
