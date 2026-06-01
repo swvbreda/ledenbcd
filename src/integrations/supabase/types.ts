@@ -182,6 +182,7 @@ export type Database = {
           created_by: string
           creditor_name: string | null
           description: string | null
+          direction: string
           dossier: string | null
           expense_date: string | null
           id: string
@@ -198,6 +199,7 @@ export type Database = {
           created_by: string
           creditor_name?: string | null
           description?: string | null
+          direction?: string
           dossier?: string | null
           expense_date?: string | null
           id?: string
@@ -214,6 +216,7 @@ export type Database = {
           created_by?: string
           creditor_name?: string | null
           description?: string | null
+          direction?: string
           dossier?: string | null
           expense_date?: string | null
           id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_expenses ADD COLUMN IF NOT EXISTS direction TEXT NOT NULL DEFAULT 'out' CHECK (direction IN ('in','out'));
