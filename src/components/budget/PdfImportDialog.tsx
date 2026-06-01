@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import type { BudgetCategory } from "@/hooks/useBudget";
+import type { Contribution } from "@/hooks/useContributions";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface ExtractedEntry {
@@ -24,6 +25,8 @@ interface ExtractedEntry {
   assigned_line_item_id?: string;
   assigned_member_id?: number;
   wrong_year?: boolean;
+  already_present?: boolean;
+  existing_description?: string;
 }
 
 interface MemberOption { id: number; naam: string }
@@ -119,18 +122,20 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   categories: BudgetCategory[];
   members: MemberOption[];
+  contributions?: Contribution[];
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null }[]) => Promise<void>;
   onImportIncome: (incomes: { member_id: number; amount: number; paid_date: string }[]) => Promise<void>;
   userId: string;
   year: number;
 }
 
-export default function PdfImportDialog({ open, onOpenChange, categories, members, onImport, onImportIncome, userId, year }: Props) {
+export default function PdfImportDialog({ open, onOpenChange, categories, members, contributions = [], onImport, onImportIncome, userId, year }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
   const [defaultLineItemId, setDefaultLineItemId] = useState<string>("");
   const [markAsPaid, setMarkAsPaid] = useState(true);
+  const [hideExisting, setHideExisting] = useState(false);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -140,6 +145,51 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     () => [...members].sort((a, b) => (a.naam || "").localeCompare(b.naam || "")),
     [members]
   );
+
+  // Dashboard rows for matching (signed: + income, - expense)
+  const dashboardRows = useMemo(() => {
+    const rows: { date: string; amount: number; description: string }[] = [];
+    for (const cat of categories) {
+      for (const li of cat.line_items) {
+        for (const exp of li.expenses) {
+          const d = exp.paid_date || exp.expense_date;
+          if (!d) continue;
+          rows.push({
+            date: d,
+            amount: -Math.abs(exp.amount),
+            description: [exp.creditor_name, `${cat.name} → ${li.name}`].filter(Boolean).join(" — "),
+          });
+        }
+      }
+    }
+    for (const c of contributions) {
+      if (!c.paid) continue;
+      const d = c.paid_date || c.invoice_date;
+      if (!d) continue;
+      const memberName = members.find((m) => m.id === c.member_id)?.naam || `Lid #${c.member_id}`;
+      rows.push({
+        date: d,
+        amount: Math.abs(c.amount),
+        description: `Contributie — ${memberName}`,
+      });
+    }
+    return rows;
+  }, [categories, contributions, members]);
+
+  const findExistingMatch = (entry: { expense_date?: string; direction: "in" | "out"; amount: number }, usedKeys: Set<string>) => {
+    if (!entry.expense_date) return null;
+    const signed = entry.direction === "in" ? Math.abs(entry.amount) : -Math.abs(entry.amount);
+    for (let i = 0; i < dashboardRows.length; i++) {
+      const d = dashboardRows[i];
+      const key = `${i}`;
+      if (usedKeys.has(key)) continue;
+      if (d.date === entry.expense_date && Math.abs(d.amount - signed) < 0.01) {
+        usedKeys.add(key);
+        return d;
+      }
+    }
+    return null;
+  };
 
   const normaliseName = (s: string) =>
     s.toLowerCase().replace(/\b(b\.?v\.?|v\.?o\.?f\.?|holding|coffeeshop|stichting)\b/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
@@ -241,9 +291,24 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
         };
       });
 
+      // Detect duplicates against the dashboard (date + amount + direction)
+      const usedKeys = new Set<string>();
+      for (const e of enriched) {
+        const match = findExistingMatch(e, usedKeys);
+        if (match) {
+          e.already_present = true;
+          e.existing_description = match.description;
+          e.selected = false; // auto-deselect duplicates
+        }
+      }
+
       const wrongYearCount = enriched.filter(e => e.wrong_year).length;
       if (wrongYearCount > 0) {
         toast.warning(`${wrongYearCount} regels uit een ander jaar dan ${year} (automatisch uitgevinkt)`);
+      }
+      const dupCount = enriched.filter(e => e.already_present).length;
+      if (dupCount > 0) {
+        toast.info(`${dupCount} regels staan al in het dashboard (automatisch uitgevinkt)`);
       }
       const inCount = enriched.filter((e) => e.direction === "in").length;
       const outCount = enriched.length - inCount;
@@ -259,7 +324,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   };
 
   const toggleAll = (checked: boolean) => {
-    setEntries((prev) => prev.map((e) => ({ ...e, selected: checked })));
+    setEntries((prev) => prev.map((e) => ({ ...e, selected: checked && !e.already_present })));
   };
 
   const toggleEntry = (idx: number) => {
@@ -431,6 +496,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                 />
                 <span>Uitgaven al betaald — boekdatum = betaaldatum</span>
               </label>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                <Checkbox
+                  checked={hideExisting}
+                  onCheckedChange={(c) => setHideExisting(!!c)}
+                />
+                <span>Verberg al-aanwezige regels</span>
+              </label>
               <span className="ml-auto text-xs text-muted-foreground">
                 {readyCount}/{selectedEntries.length} klaar • <span className="text-green-600">+<CurrencyText value={totalIn} /></span> / <span className="text-destructive">−<CurrencyText value={totalOut} /></span>
               </span>
@@ -453,12 +525,20 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                     <th className="px-2 py-1.5 text-left font-medium">Dossier</th>
                     <th className="px-2 py-1.5 text-left font-medium">Factuurnr</th>
                     <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>
+                    <th className="px-2 py-1.5 text-left font-medium w-[110px]">Status</th>
                     <th className="px-2 py-1.5 text-left font-medium min-w-[220px]">Begrotingspost / Lid</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry, idx) => (
-                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"} ${entry.wrong_year ? "bg-destructive/5" : ""}`}>
+                  {entries.map((entry, idx) => {
+                    if (hideExisting && entry.already_present) return null;
+                    const rowBg = entry.already_present
+                      ? "bg-green-500/5"
+                      : entry.wrong_year
+                        ? "bg-destructive/5"
+                        : "bg-amber-500/5";
+                    return (
+                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-50"} ${rowBg}`}>
                       <td className="px-2 py-1">
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
@@ -491,6 +571,20 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         <CurrencyCell value={entry.amount} />
                       </td>
                       <td className="px-2 py-1">
+                        {entry.already_present ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-600/15 text-green-700 border-green-600/40"
+                            title={entry.existing_description || "Komt overeen met een bestaande dashboardregel"}
+                          >
+                            <Check size={10} /> Al aanwezig
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-amber-500/15 text-amber-700 border-amber-500/40">
+                            Nieuw
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1">
                         {entry.direction === "out" ? (
                           <Select
                             value={entry.assigned_line_item_id || ""}
@@ -516,7 +610,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
