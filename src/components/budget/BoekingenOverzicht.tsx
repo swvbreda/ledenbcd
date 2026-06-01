@@ -94,7 +94,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     }
 
     for (const d of declarations || []) {
-      if (d.status === "approved") {
+      if (d.status === "approved" && Number(d.amount) > 0) {
         result.push({ type: "declaration", data: d });
       }
     }
