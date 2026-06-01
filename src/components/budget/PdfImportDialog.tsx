@@ -136,6 +136,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [defaultLineItemId, setDefaultLineItemId] = useState<string>("");
   const [markAsPaid, setMarkAsPaid] = useState(true);
   const [hideExisting, setHideExisting] = useState(false);
+  const [matchTolerance, setMatchTolerance] = useState(0.01);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
