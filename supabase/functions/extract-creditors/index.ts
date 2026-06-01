@@ -69,6 +69,8 @@ Dit kan zijn:
 
 Extraheer ELKE individuele transactieregel. Sla subtotalen, saldo-, openings- en eindregels over.
 
+SALDO-EXTRACTIE (bankafschriften): zoek expliciet naar het BEGIN- en EINDSALDO (ook wel "Saldo per ...", "Beginsaldo", "Eindsaldo", "Saldo vorig overzicht", "Nieuw saldo"). Geef deze terug in opening_balance en closing_balance als getal in EUR (negatief bij debet/rood). Laat ze leeg (null) als de PDF geen saldo vermeldt.
+
 BELANGRIJK — bepaal voor elke regel de richting van het geld:
 - "in"  = bijschrijving / Bij / credit / "+" / geld dat de rekening binnenkomt
 - "out" = afschrijving / Af / debit / "-" / geld dat van de rekening gaat
@@ -140,6 +142,8 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
                        required: ["creditor_name", "amount", "direction"],
                     },
                   },
+                  opening_balance: { type: ["number", "null"], description: "Beginsaldo in EUR (negatief = debet). Null als niet aanwezig." },
+                  closing_balance: { type: ["number", "null"], description: "Eindsaldo in EUR (negatief = debet). Null als niet aanwezig." },
                 },
                 required: ["entries"],
               },
@@ -187,7 +191,12 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
     const parsed = JSON.parse(toolCall.function.arguments);
     const entries = parsed.entries || [];
 
-    return new Response(JSON.stringify({ entries, count: entries.length }), {
+    return new Response(JSON.stringify({
+      entries,
+      count: entries.length,
+      opening_balance: parsed.opening_balance ?? null,
+      closing_balance: parsed.closing_balance ?? null,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
