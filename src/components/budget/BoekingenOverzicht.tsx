@@ -49,6 +49,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
   const [filterType, setFilterType] = useState<"all" | "out" | "income">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
   const sortedMembers = useMemo(
@@ -239,11 +240,15 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       setEditingId(e.id);
       setEditDossier(e.dossier || "");
       setEditLineItemId(e.line_item_id);
+      const cat = categories.find((c) => c.line_items.some((li) => li.id === e.line_item_id));
+      setEditCategoryId(cat?.id || "");
     } else if (row.type === "bank") {
       const b = row.data;
       setEditingId(b.id);
       setEditDossier(b.dossier || "");
       setEditLineItemId(b.line_item_id || "");
+      const cat = b.line_item_id ? categories.find((c) => c.line_items.some((li) => li.id === b.line_item_id)) : null;
+      setEditCategoryId(cat?.id || "");
     }
   };
 
