@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, ArrowDownToLine } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
@@ -15,7 +15,7 @@ interface Props {
   expenses: BudgetExpense[];
   onAddExpense: (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }) => void;
   onDeleteExpense: (id: string) => void;
-  onUpdateExpense?: (id: string, fields: { line_item_id?: string; dossier?: string | null }) => void;
+  onUpdateExpense?: (id: string, fields: { line_item_id?: string; dossier?: string | null; direction?: "in" | "out" }) => void;
   categories?: BudgetCategory[];
   userId: string;
 }
@@ -111,6 +111,19 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                       <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
+                          {onUpdateExpense && (
+                            <button
+                              onClick={() => {
+                                if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgavenlijst.")) {
+                                  onUpdateExpense(e.id, { direction: "in" });
+                                }
+                              }}
+                              className="p-1 text-muted-foreground hover:text-green-600"
+                              title="Markeer als bijschrijving (geen uitgave)"
+                            >
+                              <ArrowDownToLine size={12} />
+                            </button>
+                          )}
                           <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                             <Trash2 size={12} />
                           </button>
