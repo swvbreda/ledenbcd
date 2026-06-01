@@ -496,6 +496,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                 />
                 <span>Uitgaven al betaald — boekdatum = betaaldatum</span>
               </label>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                <Checkbox
+                  checked={hideExisting}
+                  onCheckedChange={(c) => setHideExisting(!!c)}
+                />
+                <span>Verberg al-aanwezige regels</span>
+              </label>
               <span className="ml-auto text-xs text-muted-foreground">
                 {readyCount}/{selectedEntries.length} klaar • <span className="text-green-600">+<CurrencyText value={totalIn} /></span> / <span className="text-destructive">−<CurrencyText value={totalOut} /></span>
               </span>
@@ -518,12 +525,20 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                     <th className="px-2 py-1.5 text-left font-medium">Dossier</th>
                     <th className="px-2 py-1.5 text-left font-medium">Factuurnr</th>
                     <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>
+                    <th className="px-2 py-1.5 text-left font-medium w-[110px]">Status</th>
                     <th className="px-2 py-1.5 text-left font-medium min-w-[220px]">Begrotingspost / Lid</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry, idx) => (
-                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-40"} ${entry.wrong_year ? "bg-destructive/5" : ""}`}>
+                  {entries.map((entry, idx) => {
+                    if (hideExisting && entry.already_present) return null;
+                    const rowBg = entry.already_present
+                      ? "bg-green-500/5"
+                      : entry.wrong_year
+                        ? "bg-destructive/5"
+                        : "bg-amber-500/5";
+                    return (
+                    <tr key={idx} className={`border-b border-border/50 ${entry.selected ? "" : "opacity-50"} ${rowBg}`}>
                       <td className="px-2 py-1">
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
@@ -556,6 +571,20 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         <CurrencyCell value={entry.amount} />
                       </td>
                       <td className="px-2 py-1">
+                        {entry.already_present ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-600/15 text-green-700 border-green-600/40"
+                            title={entry.existing_description || "Komt overeen met een bestaande dashboardregel"}
+                          >
+                            <Check size={10} /> Al aanwezig
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-amber-500/15 text-amber-700 border-amber-500/40">
+                            Nieuw
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1">
                         {entry.direction === "out" ? (
                           <Select
                             value={entry.assigned_line_item_id || ""}
@@ -581,7 +610,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
