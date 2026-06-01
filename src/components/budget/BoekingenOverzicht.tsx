@@ -49,6 +49,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
   const [filterType, setFilterType] = useState<"all" | "out" | "income">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
   const sortedMembers = useMemo(
@@ -239,11 +240,15 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       setEditingId(e.id);
       setEditDossier(e.dossier || "");
       setEditLineItemId(e.line_item_id);
+      const cat = categories.find((c) => c.line_items.some((li) => li.id === e.line_item_id));
+      setEditCategoryId(cat?.id || "");
     } else if (row.type === "bank") {
       const b = row.data;
       setEditingId(b.id);
       setEditDossier(b.dossier || "");
       setEditLineItemId(b.line_item_id || "");
+      const cat = b.line_item_id ? categories.find((c) => c.line_items.some((li) => li.id === b.line_item_id)) : null;
+      setEditCategoryId(cat?.id || "");
     }
   };
 
@@ -398,21 +403,40 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                   </td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
-                    <span className="text-muted-foreground">
-                      {isEditing && row.type === "bank" && !editLineItemId
-                        ? "—"
-                        : v.category}
-                    </span>
+                    {isEditing ? (
+                      <Select
+                        value={editCategoryId}
+                        onValueChange={(val) => {
+                          setEditCategoryId(val);
+                          // Reset begrotingspost als die niet bij de nieuwe categorie hoort
+                          const cat = categories.find((c) => c.id === val);
+                          if (!cat?.line_items.some((li) => li.id === editLineItemId)) {
+                            setEditLineItemId("");
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-6 text-xs">
+                          <SelectValue placeholder="Categorie..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-muted-foreground">{v.category}</span>
+                    )}
                   </td>
                   <td className="px-2 py-1">
                     {isEditing ? (
-                      <Select value={editLineItemId} onValueChange={setEditLineItemId}>
+                      <Select value={editLineItemId} onValueChange={setEditLineItemId} disabled={!editCategoryId}>
                         <SelectTrigger className="h-6 text-xs">
-                          <SelectValue placeholder="Kies..." />
+                          <SelectValue placeholder="Begrotingspost..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {allLineItems.map((li) => (
-                            <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
+                          {(categories.find((c) => c.id === editCategoryId)?.line_items || []).map((li) => (
+                            <SelectItem key={li.id} value={li.id} className="text-xs">{li.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
