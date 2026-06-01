@@ -243,6 +243,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={applyDefaultToUnassigned}>
                 Toepassen
               </Button>
+              <label className="flex items-center gap-1.5 text-xs ml-2 cursor-pointer">
+                <Checkbox
+                  checked={markAsPaid}
+                  onCheckedChange={(c) => setMarkAsPaid(!!c)}
+                />
+                <span>Al betaald (bankafschrift) — boekdatum = betaaldatum</span>
+              </label>
               <span className="ml-auto text-xs text-muted-foreground">
                 {readyEntries.length}/{selectedEntries.length} klaar • <CurrencyText value={total} />
               </span>
