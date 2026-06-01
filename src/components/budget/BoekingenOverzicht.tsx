@@ -28,6 +28,7 @@ interface Props {
   year: number;
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null; direction?: "in" | "out" }) => void;
+  onUpdateBankTransaction?: (id: string, fields: { line_item_id?: string | null; dossier?: string | null }) => void;
   onOpenPdfImport: () => void;
   onOpenDuplicates?: () => void;
 }
@@ -41,7 +42,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid" | "description";
 
-export default function BoekingenOverzicht({ categories, contributions, bankStatement, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, bankStatement, members, year, onDeleteExpense, onUpdateExpense, onUpdateBankTransaction, onOpenPdfImport, onOpenDuplicates }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
