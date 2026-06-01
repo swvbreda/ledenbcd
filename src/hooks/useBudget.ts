@@ -32,6 +32,7 @@ export interface BudgetExpense {
   paid: boolean;
   paid_date: string | null;
   created_at: string;
+  direction?: "in" | "out";
 }
 
 export interface BudgetBalanceItem {
