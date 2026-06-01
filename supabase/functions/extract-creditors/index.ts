@@ -75,6 +75,8 @@ BELANGRIJK — bepaal voor elke regel de richting van het geld:
 - "in"  = bijschrijving / Bij / credit / "+" / geld dat de rekening binnenkomt
 - "out" = afschrijving / Af / debit / "-" / geld dat van de rekening gaat
 Bij bankafschriften staat dit vaak als kolom "Bij/Af", als plus/min-teken, of als aparte kolommen "Bij" en "Af". Bij Visionplanner crediteurenlijsten is direction altijd "out".
+Regels met een contributiefactuurnummer, lidnaam of omschrijving zoals contributie/lidmaatschap zijn meestal inkomsten: markeer deze als direction "in" en zet NOOIT matched_line_item_id.
+Een regel mag alleen direction "out" krijgen wanneer het bankafschrift duidelijk toont dat het bedrag is afgeschreven.
 
 Velden per regel:
 - expense_date: datum in YYYY-MM-DD formaat
@@ -137,7 +139,7 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
                          creditor_name: { type: "string", description: "Counter-party name (supplier for out, payer for in)" },
                          invoice_reference: { type: "string", description: "Invoice number or payment reference" },
                          amount: { type: "number", description: "Amount in EUR (always positive)" },
-                         matched_line_item_id: { type: "string", description: "ID of the matched budget line item (only for direction=out)" },
+                          matched_line_item_id: { type: "string", description: "ID of the matched budget line item. Alleen invullen bij direction=out; bij direction=in altijd leeg laten." },
                        },
                        required: ["creditor_name", "amount", "direction"],
                     },
@@ -189,7 +191,15 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
-    const entries = parsed.entries || [];
+    const entries = (parsed.entries || []).map((entry: Record<string, unknown>) => {
+      const direction = entry.direction === "in" ? "in" : "out";
+      return {
+        ...entry,
+        direction,
+        matched_line_item_id: direction === "out" ? entry.matched_line_item_id : "",
+        amount: Math.abs(Number(entry.amount) || 0),
+      };
+    });
 
     return new Response(JSON.stringify({
       entries,
