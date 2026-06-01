@@ -398,7 +398,11 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                   </td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
-                    <span className="text-muted-foreground">{v.category}</span>
+                    <span className="text-muted-foreground">
+                      {isEditing && row.type === "bank" && !editLineItemId
+                        ? "—"
+                        : v.category}
+                    </span>
                   </td>
                   <td className="px-2 py-1">
                     {isEditing ? (
@@ -438,7 +442,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                   </td>
                   <td className="px-2 py-1 text-muted-foreground">{v.description || ""}</td>
                   <td className="px-1 flex items-center gap-0.5 py-1">
-                    {isExpense && !isEditing && (
+                    {(isExpense || row.type === "bank") && !isEditing && (
                       <>
                         <button
                           onClick={() => startEdit(row)}
@@ -447,20 +451,24 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                         >
                           <Pencil size={10} /> Bewerk
                         </button>
-                        <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
-                          <Trash2 size={12} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgaven.")) {
-                              onUpdateExpense(v.id, { direction: "in" });
-                            }
-                          }}
-                          className="p-1 text-muted-foreground hover:text-green-600"
-                          title="Markeer als bijschrijving (geen uitgave)"
-                        >
-                          <ArrowDownToLine size={12} />
-                        </button>
+                        {isExpense && (
+                          <>
+                            <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
+                              <Trash2 size={12} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgaven.")) {
+                                  onUpdateExpense(v.id, { direction: "in" });
+                                }
+                              }}
+                              className="p-1 text-muted-foreground hover:text-green-600"
+                              title="Markeer als bijschrijving (geen uitgave)"
+                            >
+                              <ArrowDownToLine size={12} />
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                     {isEditing && (
