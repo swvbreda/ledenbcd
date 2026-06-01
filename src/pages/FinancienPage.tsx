@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions } from "@/hooks/useContributions";
+import { useContributions, useUpsertContribution } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
@@ -37,6 +37,7 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
+  const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
@@ -231,6 +232,17 @@ export default function FinancienPage() {
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}
+              onConvertExpenseToIncome={async (expenseId, memberId, amount, paidDate) => {
+                await upsertContribution.mutateAsync({
+                  member_id: memberId,
+                  year,
+                  amount,
+                  paid: true,
+                  paid_date: paidDate,
+                });
+                await mutations.deleteExpense.mutateAsync(expenseId);
+                toast.success("Omgezet naar contributiebetaling");
+              }}
             />
           </TabsContent>
 
@@ -282,9 +294,21 @@ export default function FinancienPage() {
           open={pdfImportOpen}
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
+          members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync(exp);
+            }
+          }}
+          onImportIncome={async (incomes) => {
+            for (const inc of incomes) {
+              await upsertContribution.mutateAsync({
+                member_id: inc.member_id,
+                year,
+                amount: inc.amount,
+                paid: true,
+                paid_date: inc.paid_date,
+              });
             }
           }}
           userId={user.id}

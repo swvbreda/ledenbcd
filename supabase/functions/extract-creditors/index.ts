@@ -62,28 +62,30 @@ Als je geen match vindt, laat matched_line_item_id leeg.`;
     }
     const base64 = btoa(binary);
 
-    const systemPrompt = `Je bent een financiële data-extractor. Je analyseert crediteurenlijsten uit Visionplanner PDF-exports en extraheert gestructureerde data.
+    const systemPrompt = `Je bent een financiële data-extractor. Je analyseert PDF-exports met financiële regels.
+Dit kan zijn:
+  (a) een crediteurenlijst uit Visionplanner (alleen uitgaven), of
+  (b) een bankafschrift / mutatieoverzicht met zowel BIJSCHRIJVINGEN (Bij/credit/+, geld dat binnenkomt) als AFSCHRIJVINGEN (Af/debit/-, geld dat uitgaat).
 
-Extraheer ALLE regels uit de crediteurenlijst. Elke regel bevat typisch:
-- Betaaldatum (payment date)
-- Categorie (cost category)
-- Onderdeel (sub-category or line item)
-- Dossier (project/dossier name)
-- Leverancier/Crediteur (creditor/supplier name)
-- Factuurnummer (invoice reference number)
-- Bedrag (amount in EUR)
+Extraheer ELKE individuele transactieregel. Sla subtotalen, saldo-, openings- en eindregels over.
 
-Geef het resultaat als JSON array met objecten. Gebruik deze exacte velden:
+BELANGRIJK — bepaal voor elke regel de richting van het geld:
+- "in"  = bijschrijving / Bij / credit / "+" / geld dat de rekening binnenkomt
+- "out" = afschrijving / Af / debit / "-" / geld dat van de rekening gaat
+Bij bankafschriften staat dit vaak als kolom "Bij/Af", als plus/min-teken, of als aparte kolommen "Bij" en "Af". Bij Visionplanner crediteurenlijsten is direction altijd "out".
+
+Velden per regel:
 - expense_date: datum in YYYY-MM-DD formaat
-- category: de hoofdcategorie
-- line_item: het onderdeel/de begrotingspost
+- direction: "in" of "out" (verplicht)
+- category: de hoofdcategorie (alleen Visionplanner)
+- line_item: het onderdeel/de begrotingspost (alleen Visionplanner)
 - dossier: het dossier of project (kan leeg zijn)
-- creditor_name: naam van de leverancier/crediteur
-- invoice_reference: factuurnummer
-- amount: bedrag als getal (positief)
-- matched_line_item_id: het id van de best passende begrotingspost (indien beschikbaar)
+- creditor_name: naam van de tegenpartij (leverancier bij uitgave, betaler bij inkomst). Bij bankafschriften: de naam van de tegenrekeninghouder, NIET een omschrijving.
+- invoice_reference: factuurnummer of betalingskenmerk
+- amount: bedrag als POSITIEF getal in EUR (richting staat al in direction)
+- matched_line_item_id: alleen invullen voor direction "out", id van de best passende begrotingspost (indien beschikbaar)
 
-Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele transactieregels op.${lineItemsContext}`;
+De import moet exact overeenkomen met wat er op het bankafschrift staat: laat geen regels weg en verander geen bedragen of richting.${lineItemsContext}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -124,17 +126,18 @@ Als er subtotalen of totaalregels zijn, sla die over. Neem alleen individuele tr
                     type: "array",
                     items: {
                       type: "object",
-                      properties: {
-                        expense_date: { type: "string", description: "Date in YYYY-MM-DD format" },
-                        category: { type: "string", description: "Cost category" },
-                        line_item: { type: "string", description: "Budget line item / onderdeel" },
-                        dossier: { type: "string", description: "Project or dossier name" },
-                        creditor_name: { type: "string", description: "Creditor/supplier name" },
-                        invoice_reference: { type: "string", description: "Invoice number" },
-                        amount: { type: "number", description: "Amount in EUR (positive)" },
-                        matched_line_item_id: { type: "string", description: "ID of the matched budget line item" },
-                      },
-                      required: ["creditor_name", "amount"],
+                       properties: {
+                         expense_date: { type: "string", description: "Date in YYYY-MM-DD format" },
+                         direction: { type: "string", enum: ["in", "out"], description: "in = bijschrijving (credit), out = afschrijving (debit)" },
+                         category: { type: "string", description: "Cost category" },
+                         line_item: { type: "string", description: "Budget line item / onderdeel" },
+                         dossier: { type: "string", description: "Project or dossier name" },
+                         creditor_name: { type: "string", description: "Counter-party name (supplier for out, payer for in)" },
+                         invoice_reference: { type: "string", description: "Invoice number or payment reference" },
+                         amount: { type: "number", description: "Amount in EUR (always positive)" },
+                         matched_line_item_id: { type: "string", description: "ID of the matched budget line item (only for direction=out)" },
+                       },
+                       required: ["creditor_name", "amount", "direction"],
                     },
                   },
                 },
