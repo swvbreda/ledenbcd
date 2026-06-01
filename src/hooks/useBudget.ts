@@ -513,6 +513,7 @@ export function useBudgetMutations(year: number) {
     addNote,
     deleteNote,
     replaceBankStatement,
+    updateBankTransaction,
   };
 }
 
