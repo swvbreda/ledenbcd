@@ -104,6 +104,9 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
     }
 
     for (const c of contributions || []) {
+      // Alleen daadwerkelijk betaalde contributies tonen als boeking.
+      // Niet-betaalde contributies horen niet in het boekingenoverzicht.
+      if (!c.paid) continue;
       result.push({
         type: "income",
         data: {
