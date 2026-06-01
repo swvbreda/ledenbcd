@@ -1,13 +1,11 @@
 import { useState, useMemo } from "react";
 import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
-import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import type { Contribution } from "@/hooks/useContributions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
+import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import { Badge } from "@/components/ui/badge";
 
 interface MemberOption { id: number; naam: string }
@@ -19,13 +17,11 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } }
-  | { type: "declaration"; data: InternalDeclaration };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
 
 interface Props {
   categories: BudgetCategory[];
   contributions: Contribution[];
-  declarations: InternalDeclaration[];
   members: MemberOption[];
   year: number;
   contributionAmount: number;
@@ -43,7 +39,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, declarations, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -106,14 +102,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
       });
     }
 
-    for (const d of declarations || []) {
-      if (d.status === "approved" && Number(d.amount) > 0) {
-        result.push({ type: "declaration", data: d });
-      }
-    }
-
     return result;
-  }, [categories, contributions, declarations, memberMap, contributionAmount]);
+  }, [categories, contributions, memberMap, contributionAmount]);
 
   const getRowValues = (row: LedgerRow) => {
     if (row.type === "expense") {
@@ -146,21 +136,6 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
         paid: c.paid,
         id: c.id,
       };
-    } else {
-      const d = row.data;
-      return {
-        date: d.expense_date || "",
-        type: "Uit",
-        name: d.board_member_name,
-        dossier: d.appointment || "",
-        category: "Declaratie",
-        subcategory: d.declaration_type === "reiskosten" ? "Reiskosten" : d.declaration_type === "woordvoering" ? "Woordvoering" : d.declaration_type === "penningmeester" ? "Penningmeester" : d.declaration_type,
-        invoice: "",
-        amount: d.amount,
-        isExpense: true,
-        paid: d.status === "approved",
-        id: d.id,
-      };
     }
   };
 
@@ -171,7 +146,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     if (filterType === "income") {
       list = list.filter((r) => r.type === "income");
     } else if (filterType === "out") {
-      list = list.filter((r) => r.type === "expense" || r.type === "declaration");
+      list = list.filter((r) => r.type === "expense");
     }
     if (filterPaid !== "all") {
       list = list.filter((r) => {
