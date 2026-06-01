@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,6 +136,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [defaultLineItemId, setDefaultLineItemId] = useState<string>("");
   const [markAsPaid, setMarkAsPaid] = useState(true);
   const [hideExisting, setHideExisting] = useState(false);
+  const [matchTolerance, setMatchTolerance] = useState(0.01);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -176,19 +177,34 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     return rows;
   }, [categories, contributions, members]);
 
-  const findExistingMatch = (entry: { expense_date?: string; direction: "in" | "out"; amount: number }, usedKeys: Set<string>) => {
+  const findExistingMatch = (
+    entry: { expense_date?: string; direction: "in" | "out"; amount: number },
+    usedKeys: Set<string>,
+    tolerance: number
+  ) => {
     if (!entry.expense_date) return null;
     const signed = entry.direction === "in" ? Math.abs(entry.amount) : -Math.abs(entry.amount);
     for (let i = 0; i < dashboardRows.length; i++) {
       const d = dashboardRows[i];
       const key = `${i}`;
       if (usedKeys.has(key)) continue;
-      if (d.date === entry.expense_date && Math.abs(d.amount - signed) < 0.01) {
+      if (d.date === entry.expense_date && Math.abs(d.amount - signed) <= tolerance + 1e-9) {
         usedKeys.add(key);
         return d;
       }
     }
     return null;
+  };
+
+  const applyDuplicateDetection = (list: ExtractedEntry[], tolerance: number) => {
+    const usedKeys = new Set<string>();
+    return list.map((e) => {
+      const match = findExistingMatch(e, usedKeys, tolerance);
+      if (match) {
+        return { ...e, already_present: true, existing_description: match.description };
+      }
+      return { ...e, already_present: false, existing_description: undefined };
+    });
   };
 
   const normaliseName = (s: string) =>
@@ -216,6 +232,14 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     }
     return undefined;
   };
+
+  // Recompute duplicates when tolerance changes
+  useEffect(() => {
+    if (entries.length > 0) {
+      setEntries((prev) => applyDuplicateDetection(prev, matchTolerance));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchTolerance]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -292,15 +316,11 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       });
 
       // Detect duplicates against the dashboard (date + amount + direction)
-      const usedKeys = new Set<string>();
-      for (const e of enriched) {
-        const match = findExistingMatch(e, usedKeys);
-        if (match) {
-          e.already_present = true;
-          e.existing_description = match.description;
-          e.selected = false; // auto-deselect duplicates
-        }
+      const detected = applyDuplicateDetection(enriched, matchTolerance);
+      for (const e of detected) {
+        if (e.already_present) e.selected = false;
       }
+      enriched.splice(0, enriched.length, ...detected);
 
       const wrongYearCount = enriched.filter(e => e.wrong_year).length;
       if (wrongYearCount > 0) {
@@ -503,6 +523,21 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                 />
                 <span>Verberg al-aanwezige regels</span>
               </label>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground">Tolerantie (€):</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={matchTolerance}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setMatchTolerance(Number.isFinite(val) ? Math.max(0, Math.min(1, val)) : 0.01);
+                  }}
+                  className="h-7 w-20 text-xs"
+                />
+              </div>
               <span className="ml-auto text-xs text-muted-foreground">
                 {readyCount}/{selectedEntries.length} klaar • <span className="text-green-600">+<CurrencyText value={totalIn} /></span> / <span className="text-destructive">−<CurrencyText value={totalOut} /></span>
               </span>
