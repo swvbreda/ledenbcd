@@ -325,9 +325,9 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
               <SortHeader label="Type" field="type" className="text-left w-[70px]" />
               <SortHeader label="Datum" field="date" className="text-left" />
               <SortHeader label="Naam" field="name" className="text-left" />
-              <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Categorie" field="category" className="text-left" />
               <SortHeader label="Begrotingspost" field="subcategory" className="text-left" />
+              <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Factuurnr" field="invoice" className="text-left" />
               <SortHeader label="Bedrag" field="amount" className="text-right" />
               <SortHeader label="Status" field="paid" className="text-center w-[80px]" />
@@ -353,6 +353,25 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || ""}</td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
+                    <span className="text-muted-foreground">{v.category}</span>
+                  </td>
+                  <td className="px-2 py-1">
+                    {isEditing ? (
+                      <Select value={editLineItemId} onValueChange={setEditLineItemId}>
+                        <SelectTrigger className="h-6 text-xs">
+                          <SelectValue placeholder="Kies..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allLineItems.map((li) => (
+                            <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-muted-foreground">{v.subcategory || ""}</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-1">
                     {isEditing ? (
                       <>
                         <Input
@@ -370,25 +389,6 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                       </>
                     ) : (
                       v.dossier || ""
-                    )}
-                  </td>
-                  <td className="px-2 py-1">
-                    <span className="text-muted-foreground">{v.category}</span>
-                  </td>
-                  <td className="px-2 py-1">
-                    {isEditing ? (
-                      <Select value={editLineItemId} onValueChange={setEditLineItemId}>
-                        <SelectTrigger className="h-6 text-xs">
-                          <SelectValue placeholder="Kies..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allLineItems.map((li) => (
-                            <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-muted-foreground">{v.subcategory || ""}</span>
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || ""}</td>
