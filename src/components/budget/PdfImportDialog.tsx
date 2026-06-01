@@ -137,6 +137,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [markAsPaid, setMarkAsPaid] = useState(true);
   const [hideExisting, setHideExisting] = useState(false);
   const [matchTolerance, setMatchTolerance] = useState(0.01);
+  const [pdfOpening, setPdfOpening] = useState<number | null>(null);
+  const [pdfClosing, setPdfClosing] = useState<number | null>(null);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -307,6 +309,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       }
 
       const data = await resp.json();
+      setPdfOpening(typeof data.opening_balance === "number" ? data.opening_balance : null);
+      setPdfClosing(typeof data.closing_balance === "number" ? data.closing_balance : null);
       if (!data.entries?.length) {
         toast.warning("Geen regels gevonden in de PDF");
         return;
@@ -480,6 +484,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     if (!open) {
       setStep("upload");
       setEntries([]);
+      setPdfOpening(null);
+      setPdfClosing(null);
     }
     onOpenChange(open);
   };
@@ -524,6 +530,27 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
         {step === "review" && (
           <div className="flex-1 overflow-hidden flex flex-col gap-3">
+            {(pdfOpening !== null || pdfClosing !== null) && (() => {
+              const sumIn = entries.filter(e => e.direction === "in").reduce((s, e) => s + e.amount, 0);
+              const sumOut = entries.filter(e => e.direction === "out").reduce((s, e) => s + e.amount, 0);
+              const net = sumIn - sumOut;
+              const expectedNet = pdfOpening !== null && pdfClosing !== null ? (pdfClosing - pdfOpening) : null;
+              const diff = expectedNet !== null ? (net - expectedNet) : null;
+              const ok = diff !== null && Math.abs(diff) <= 0.01;
+              return (
+                <div className={`rounded-md border px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1 ${ok ? "border-green-600/40 bg-green-600/5" : "border-amber-500/40 bg-amber-500/10"}`}>
+                  <span className="font-semibold">Saldocontrole PDF:</span>
+                  {pdfOpening !== null && <span>Beginsaldo <span className="tabular-nums">€{pdfOpening.toFixed(2)}</span></span>}
+                  {pdfClosing !== null && <span>Eindsaldo <span className="tabular-nums">€{pdfClosing.toFixed(2)}</span></span>}
+                  <span>Mutaties: <span className="text-green-700 tabular-nums">+€{sumIn.toFixed(2)}</span> / <span className="text-destructive tabular-nums">−€{sumOut.toFixed(2)}</span> = <span className="tabular-nums">{net >= 0 ? "+" : "−"}€{Math.abs(net).toFixed(2)}</span></span>
+                  {expectedNet !== null && (
+                    <span className={`font-semibold ${ok ? "text-green-700" : "text-amber-700"}`}>
+                      {ok ? "✓ klopt met PDF" : `⚠ verschil €${Math.abs(diff!).toFixed(2)} — controleer of alle regels gelezen zijn`}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
             {/* Bulk assign */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground">Standaardpost voor niet-toegewezen uitgaven:</span>
