@@ -32,7 +32,10 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 export default function FinancienPage() {
   const [year, setYear] = useState(currentYear);
   const { user, isAdmin } = useAuth();
-  const { data: categories, isLoading } = useBudgetCategories(year);
+  const { data: yearSettings } = useBudgetYearSettings(year);
+  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
+  const expenseSourcePreference = (yearSettings?.expense_source_preference ?? "both") as "manual" | "pdf_import" | "both";
+  const { data: categories, isLoading } = useBudgetCategories(year, expenseSourcePreference);
   const { data: balanceItems } = useBudgetBalance(year);
   const { data: bankStatement } = useBankStatement(year);
   const { data: budgetNotes } = useBudgetNotes(year);
@@ -47,8 +50,6 @@ export default function FinancienPage() {
     () => [...effectiveMembers, ...rawOldMembers],
     [effectiveMembers, rawOldMembers]
   );
-  const { data: yearSettings } = useBudgetYearSettings(year);
-  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
@@ -103,16 +104,39 @@ export default function FinancienPage() {
 
       {/* Year selector */}
       <div className="flex items-center justify-between gap-3">
-        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-          <SelectTrigger className="w-[140px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Uitgaven bron:</span>
+            <Select
+              value={expenseSourcePreference}
+              onValueChange={(v) =>
+                yearSettingsMutation.mutate(
+                  { expense_source_preference: v as "manual" | "pdf_import" | "both" },
+                  { onSuccess: () => toast.success("Bronvoorkeur opgeslagen") }
+                )
+              }
+            >
+              <SelectTrigger className="w-[220px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Beide (handmatig + PDF)</SelectItem>
+                <SelectItem value="manual">Alleen handmatig</SelectItem>
+                <SelectItem value="pdf_import">Alleen PDF-import</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {isLoading ? (

@@ -78,9 +78,11 @@ export interface BankStatementData {
   netMutation: number;
 }
 
-export function useBudgetCategories(year: number) {
+export type ExpenseSourcePreference = "manual" | "pdf_import" | "both";
+
+export function useBudgetCategories(year: number, sourcePreference: ExpenseSourcePreference = "both") {
   return useQuery({
-    queryKey: ["budget-categories", year],
+    queryKey: ["budget-categories", year, sourcePreference],
     queryFn: async () => {
       const { data: categories, error } = await supabase
         .from("budget_categories")
@@ -99,11 +101,15 @@ export function useBudgetCategories(year: number) {
       const lineItemIds = (lineItems || []).map((li: any) => li.id);
       let expenses: any[] = [];
       if (lineItemIds.length > 0) {
-        const { data: exp, error: expError } = await supabase
+        let q = supabase
           .from("budget_expenses")
           .select("*")
           .in("line_item_id", lineItemIds)
           .eq("direction", "out");
+        if (sourcePreference !== "both") {
+          q = q.eq("source", sourcePreference);
+        }
+        const { data: exp, error: expError } = await q;
         if (expError) throw expError;
         expenses = exp || [];
       }
@@ -521,6 +527,7 @@ export interface BudgetYearSettings {
   year: number;
   budgeted_member_count: number;
   contribution_amount: number;
+  expense_source_preference: ExpenseSourcePreference;
 }
 
 export function useBudgetYearSettings(year: number) {
@@ -541,20 +548,28 @@ export function useBudgetYearSettings(year: number) {
 export function useBudgetYearSettingsMutation(year: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ budgeted_member_count, contribution_amount }: { budgeted_member_count: number; contribution_amount: number }) => {
+    mutationFn: async (input: { budgeted_member_count?: number; contribution_amount?: number; expense_source_preference?: ExpenseSourcePreference }) => {
       const { data: existing } = await supabase
         .from("budget_year_settings")
-        .select("id")
+        .select("*")
         .eq("year", year)
         .maybeSingle();
+      const merged = {
+        budgeted_member_count: input.budgeted_member_count ?? (existing as any)?.budgeted_member_count ?? 0,
+        contribution_amount: input.contribution_amount ?? (existing as any)?.contribution_amount ?? 3000,
+        expense_source_preference: input.expense_source_preference ?? (existing as any)?.expense_source_preference ?? "both",
+      };
       if (existing) {
-        const { error } = await supabase.from("budget_year_settings").update({ budgeted_member_count, contribution_amount, updated_at: new Date().toISOString() }).eq("id", existing.id);
+        const { error } = await supabase.from("budget_year_settings").update({ ...merged, updated_at: new Date().toISOString() }).eq("id", (existing as any).id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("budget_year_settings").insert({ year, budgeted_member_count, contribution_amount });
+        const { error } = await supabase.from("budget_year_settings").insert({ year, ...merged });
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-year-settings", year] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budget-year-settings", year] });
+      qc.invalidateQueries({ queryKey: ["budget-categories", year] });
+    },
   });
 }
