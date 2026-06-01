@@ -381,7 +381,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     </span>
                   </td>
                   <td className="px-1 flex items-center gap-0.5 py-1">
-                    {isExpense && !isEditing && convertingId !== v.id && (
+                    {isExpense && !isEditing && (
                       <>
                         <button
                           onClick={() => startEdit(row)}
@@ -390,39 +390,10 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                         >
                           <Pencil size={10} /> Bewerk
                         </button>
-                        <button
-                          onClick={() => startConvert(row)}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-green-600/40 bg-green-600/5 text-green-700 text-[10px] font-medium hover:bg-green-600/10"
-                          title="Omzetten naar inkomst (contributiebetaling van een lid)"
-                        >
-                          <ArrowDownToLine size={10} /> Naar inkomst
-                        </button>
                         <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                           <Trash2 size={12} />
                         </button>
                       </>
-                    )}
-                    {convertingId === v.id && row.type === "expense" && (
-                      <div className="flex items-center gap-1">
-                        <Select value={convertMemberId} onValueChange={setConvertMemberId}>
-                          <SelectTrigger className="h-6 text-[10px] w-[160px]">
-                            <SelectValue placeholder="Kies lid..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {sortedMembers.map((m) => (
-                              <SelectItem key={m.id} value={String(m.id)} className="text-xs">
-                                #{m.id} — {m.naam}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <button onClick={() => saveConvert(row)} disabled={!convertMemberId} className="p-1 text-green-600 hover:text-green-700 disabled:opacity-30" title="Bevestig">
-                          <Check size={12} />
-                        </button>
-                        <button onClick={() => { setConvertingId(null); setConvertMemberId(""); }} className="p-1 text-muted-foreground hover:text-destructive" title="Annuleer">
-                          <X size={12} />
-                        </button>
-                      </div>
                     )}
                     {isEditing && (
                       <>
