@@ -199,7 +199,7 @@ export function useBudgetMutations(year: number) {
   });
 
   const updateExpense = useMutation({
-    mutationFn: async ({ id, ...fields }: { id: string; dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => {
+    mutationFn: async ({ id, ...fields }: { id: string; dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null; direction?: "in" | "out" }) => {
       const { error } = await supabase.from("budget_expenses").update(fields).eq("id", id);
       if (error) throw error;
     },
