@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Loader2, Check, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Upload, FileText, Loader2, Check, ArrowDownToLine, ArrowUpFromLine, ChevronsUpDown, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import type { BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
@@ -25,6 +27,92 @@ interface ExtractedEntry {
 }
 
 interface MemberOption { id: number; naam: string }
+
+const LINK_MEMORY_KEY = "bcd-pdf-member-link-memory-v1";
+
+const loadLinkMemory = (): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(LINK_MEMORY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveLinkMemory = (memory: Record<string, number>) => {
+  try {
+    localStorage.setItem(LINK_MEMORY_KEY, JSON.stringify(memory));
+  } catch {
+    // ignore
+  }
+};
+
+interface MemberComboboxProps {
+  value: number | undefined;
+  onChange: (id: number | undefined) => void;
+  members: MemberOption[];
+  disabled?: boolean;
+}
+
+function MemberCombobox({ value, onChange, members, disabled }: MemberComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = value ? members.find((m) => m.id === value) : undefined;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className="flex h-6 w-full items-center justify-between rounded-md border border-input bg-background px-2 text-xs disabled:opacity-50"
+        >
+          <span className={selected ? "" : "text-muted-foreground"}>
+            {selected ? `#${selected.id} — ${selected.naam}` : "Koppel aan lid..."}
+          </span>
+          <span className="flex items-center gap-1">
+            {selected && (
+              <X
+                size={12}
+                className="text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(undefined);
+                }}
+              />
+            )}
+            <ChevronsUpDown size={12} className="text-muted-foreground" />
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command
+          filter={(val, search) => {
+            return val.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Zoek lid..." className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty>Geen lid gevonden.</CommandEmpty>
+            <CommandGroup>
+              {members.map((m) => (
+                <CommandItem
+                  key={m.id}
+                  value={`#${m.id} ${m.naam}`}
+                  onSelect={() => {
+                    onChange(m.id);
+                    setOpen(false);
+                  }}
+                  className="text-xs"
+                >
+                  #{m.id} — {m.naam}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -60,6 +148,11 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     if (!name) return undefined;
     const n = normaliseName(name);
     if (!n) return undefined;
+    // 1) previous user corrections (highest priority)
+    const memory = loadLinkMemory();
+    if (memory[n] && sortedMembers.find((mm) => mm.id === memory[n])) {
+      return memory[n];
+    }
     // exact normalised match
     let m = sortedMembers.find((mm) => normaliseName(mm.naam) === n);
     if (m) return m.id;
@@ -178,7 +271,18 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   };
 
   const setMember = (idx: number, memberId: number | undefined) => {
-    setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, assigned_member_id: memberId } : e)));
+    setEntries((prev) => {
+      const target = prev[idx];
+      if (target && memberId) {
+        const key = normaliseName(target.creditor_name || "");
+        if (key) {
+          const memory = loadLinkMemory();
+          memory[key] = memberId;
+          saveLinkMemory(memory);
+        }
+      }
+      return prev.map((e, i) => (i === idx ? { ...e, assigned_member_id: memberId } : e));
+    });
   };
 
   const flipDirection = (idx: number) => {
