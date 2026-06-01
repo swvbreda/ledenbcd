@@ -54,6 +54,7 @@ export type Database = {
           id: string
           invoice_reference: string | null
           row_hash: string
+          row_index: number
           transaction_date: string | null
           upload_id: string
           year: number
@@ -67,6 +68,7 @@ export type Database = {
           id?: string
           invoice_reference?: string | null
           row_hash: string
+          row_index?: number
           transaction_date?: string | null
           upload_id: string
           year: number
@@ -80,6 +82,7 @@ export type Database = {
           id?: string
           invoice_reference?: string | null
           row_hash?: string
+          row_index?: number
           transaction_date?: string | null
           upload_id?: string
           year?: number
