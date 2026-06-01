@@ -34,7 +34,10 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
 
   const getLineItemLabel = (id: string) => allLineItems.find((li) => li.id === id)?.label || lineItemName;
 
-  const total = expenses.reduce((s, e) => s + e.amount, 0);
+  // Bijschrijvingen (direction='in') horen nooit in de uitgavenlijst, ook niet
+  // als ze per ongeluk aan een begrotingspost zijn gehangen.
+  const visibleExpenses = expenses.filter((e) => e.direction !== "in");
+  const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
 
   const handleAdd = () => {
     if (!amount) return;
@@ -63,7 +66,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
           <DialogTitle>Uitgaven – {lineItemName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {expenses.length > 0 ? (
+          {visibleExpenses.length > 0 ? (
             <div className="overflow-auto max-h-[400px]">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background">
@@ -79,7 +82,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   </tr>
                 </thead>
                 <tbody>
-                  {expenses.map((e) => (
+                  {visibleExpenses.map((e) => (
                     <tr key={e.id} className="border-b border-border/50">
                       <td className="px-2 py-1 whitespace-nowrap">{e.expense_date || ""}</td>
                       <td className="px-2 py-1">{e.description || ""}</td>
