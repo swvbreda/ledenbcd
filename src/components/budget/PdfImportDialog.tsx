@@ -407,16 +407,22 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
   const flipDirection = (idx: number) => {
     setEntries((prev) =>
-      prev.map((e, i) =>
-        i === idx
-          ? {
-              ...e,
-              direction: e.direction === "in" ? "out" : "in",
-              assigned_line_item_id: e.direction === "in" ? e.assigned_line_item_id : "",
-              assigned_member_id: e.direction === "out" ? matchMember(e.creditor_name) : undefined,
-            }
-          : e
-      )
+      prev.map((e, i) => {
+        if (i !== idx) return e;
+        // Een bijschrijving (geld dat binnenkomt) kan NOOIT een uitgave zijn.
+        // We staan alleen toe om een "Af" om te zetten naar "Bij" (om een ten onrechte
+        // als uitgave geclassificeerde bijschrijving te corrigeren), niet andersom.
+        if (e.direction === "in") {
+          toast.error("Een bijschrijving kan niet als uitgave worden geboekt");
+          return e;
+        }
+        return {
+          ...e,
+          direction: "in",
+          assigned_line_item_id: "",
+          assigned_member_id: matchMember(e.creditor_name),
+        };
+      })
     );
   };
 
