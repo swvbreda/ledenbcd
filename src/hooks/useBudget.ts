@@ -58,6 +58,8 @@ export interface BankTransaction {
   amount: number;
   row_hash: string;
   created_at: string;
+  line_item_id: string | null;
+  dossier: string | null;
 }
 
 export interface BankStatementUpload {
