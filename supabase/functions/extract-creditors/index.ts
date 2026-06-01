@@ -79,7 +79,7 @@ Velden per regel:
 - direction: "in" of "out" (verplicht)
 - category: de hoofdcategorie (alleen Visionplanner)
 - line_item: het onderdeel/de begrotingspost (alleen Visionplanner)
-- dossier: het dossier of project (kan leeg zijn)
+- dossier: ALLEEN een expliciet dossier- of projectnaam zoals die door de boekhouder is toegekend (bv. "Verkiezingen", "Amsterdam i-criterium", "Samenwerking PCN"). LAAT LEEG bij bankafschriften en in alle andere gevallen waar je het niet zeker weet. Vul NOOIT een plaatsnaam, stadsnaam, kolomheader, leveranciersnaam, betaalprovider (zoals "Worldline", "Buckaroo"), categorie of "Banken" in als dossier.
 - creditor_name: naam van de tegenpartij (leverancier bij uitgave, betaler bij inkomst). Bij bankafschriften: de naam van de tegenrekeninghouder, NIET een omschrijving.
 - invoice_reference: factuurnummer of betalingskenmerk
 - amount: bedrag als POSITIEF getal in EUR (richting staat al in direction)
