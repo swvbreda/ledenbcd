@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import { useContributions, useUpsertContribution } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
+import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
