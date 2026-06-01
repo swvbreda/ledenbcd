@@ -37,7 +37,7 @@ const fmtDate = (d: string | null) => {
   return d;
 };
 
-type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
+type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid" | "description";
 
 export default function BoekingenOverzicht({ categories, contributions, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
   const [search, setSearch] = useState("");
@@ -122,6 +122,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         isExpense: true,
         paid: e.paid,
         id: e.id,
+        description: e.description || "",
       };
     } else if (row.type === "income") {
       const c = row.data;
@@ -137,6 +138,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         isExpense: false,
         paid: c.paid,
         id: c.id,
+        description: "",
       };
     }
   };
@@ -219,10 +221,10 @@ export default function BoekingenOverzicht({ categories, contributions, members,
   };
 
   const handleExport = () => {
-    const headers = ["Type", "Datum", "Naam", "Dossier", "Categorie", "Begrotingspost", "Factuurnummer", "Bedrag", "Betaald"];
+    const headers = ["Type", "Datum", "Bedrag", "Naam", "Categorie", "Begrotingspost", "Dossier", "Omschrijving", "Factuurnummer", "Betaald"];
     const csvRows = filtered.map((r) => {
       const v = getRowValues(r);
-      return [v.type, v.date, v.name, v.dossier, v.category, v.subcategory, v.invoice, v.amount, v.paid ? "Ja" : "Nee"];
+      return [v.type, v.date, v.amount, v.name, v.category, v.subcategory, v.dossier, v.description, v.invoice, v.paid ? "Ja" : "Nee"];
     });
     const csv = [headers, ...csvRows]
       .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
@@ -314,12 +316,13 @@ export default function BoekingenOverzicht({ categories, contributions, members,
             <tr className="border-b border-border">
               <SortHeader label="Type" field="type" className="text-left w-[70px]" />
               <SortHeader label="Datum" field="date" className="text-left" />
+              <SortHeader label="Bedrag" field="amount" className="text-right" />
               <SortHeader label="Naam" field="name" className="text-left" />
               <SortHeader label="Categorie" field="category" className="text-left" />
               <SortHeader label="Begrotingspost" field="subcategory" className="text-left" />
               <SortHeader label="Dossier" field="dossier" className="text-left" />
+              <SortHeader label="Omschrijving" field="description" className="text-left" />
               <SortHeader label="Factuurnr" field="invoice" className="text-left" />
-              <SortHeader label="Bedrag" field="amount" className="text-right" />
               <SortHeader label="Status" field="paid" className="text-center w-[80px]" />
               <th className="w-16" />
             </tr>
@@ -341,6 +344,13 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || ""}</td>
+                  <td className="px-2 py-1 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
+                    <CurrencyText
+                      value={v.amount}
+                      className="justify-end whitespace-nowrap"
+                      symbolClassName={v.isExpense ? "before:content-['−'] before:mr-1" : undefined}
+                    />
+                  </td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
                     <span className="text-muted-foreground">{v.category}</span>
@@ -381,14 +391,8 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                       v.dossier || ""
                     )}
                   </td>
+                  <td className="px-2 py-1 text-muted-foreground">{v.description || ""}</td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || ""}</td>
-                  <td className="px-2 py-1 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
-                    <CurrencyText
-                      value={v.amount}
-                      className="justify-end whitespace-nowrap"
-                      symbolClassName={v.isExpense ? "before:content-['−'] before:mr-1" : undefined}
-                    />
-                  </td>
                   <td className="px-2 py-1 text-center">
                     <span className={`text-[10px] font-medium ${v.paid ? "text-green-600" : "text-amber-500"}`}>
                       {v.paid ? "Betaald" : "Open"}
@@ -436,7 +440,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
+                <td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
               </tr>
             )}
           </tbody>
