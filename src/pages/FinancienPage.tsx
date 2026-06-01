@@ -16,7 +16,6 @@ import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
-import ControleTab from "@/components/budget/ControleTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,9 +128,6 @@ export default function FinancienPage() {
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
-            <TabsTrigger value="controle" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Controle
-            </TabsTrigger>
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dossiers
             </TabsTrigger>
@@ -243,15 +239,6 @@ export default function FinancienPage() {
             />
           </TabsContent>
 
-          <TabsContent value="controle">
-            <ControleTab
-              categories={categories || []}
-              contributions={contributions || []}
-              members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
-              year={year}
-            />
-          </TabsContent>
-
           <TabsContent value="intern">
             <div className="mt-4">
               <InternalDeclarationsView
@@ -303,6 +290,7 @@ export default function FinancienPage() {
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
           members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
+          contributions={contributions || []}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync(exp);
