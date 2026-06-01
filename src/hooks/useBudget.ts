@@ -113,8 +113,39 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         expenses = exp || [];
       }
 
+      // Inkomende/uitgaande banktransacties die handmatig aan een begrotingspost
+      // zijn gekoppeld tellen óók mee in het budget. Inkomend = refund/storting
+      // → wordt straks afgetrokken van het bestede bedrag.
+      let bankAsExpenses: any[] = [];
+      if (lineItemIds.length > 0) {
+        const client = supabase as any;
+        const { data: bankRows, error: bankErr } = await client
+          .from("bank_transactions")
+          .select("*")
+          .eq("year", year)
+          .in("line_item_id", lineItemIds);
+        if (bankErr) throw bankErr;
+        bankAsExpenses = (bankRows || []).map((b: any) => ({
+          id: `bank:${b.id}`,
+          line_item_id: b.line_item_id,
+          description: b.description,
+          amount: Number(b.amount) || 0,
+          expense_date: b.transaction_date,
+          creditor_name: b.counterparty,
+          invoice_reference: b.invoice_reference,
+          dossier: b.dossier,
+          source: "bank",
+          pdf_file_path: null,
+          paid: true,
+          paid_date: b.transaction_date,
+          created_at: b.created_at,
+          direction: b.direction,
+          _fromBank: true,
+        }));
+      }
+
       const expensesByLineItem: Record<string, any[]> = {};
-      for (const e of expenses) {
+      for (const e of [...expenses, ...bankAsExpenses]) {
         if (!expensesByLineItem[e.line_item_id]) expensesByLineItem[e.line_item_id] = [];
         expensesByLineItem[e.line_item_id].push(e);
       }
