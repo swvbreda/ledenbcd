@@ -308,15 +308,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       });
 
       // Detect duplicates against the dashboard (date + amount + direction)
-      const usedKeys = new Set<string>();
-      for (const e of enriched) {
-        const match = findExistingMatch(e, usedKeys);
-        if (match) {
-          e.already_present = true;
-          e.existing_description = match.description;
-          e.selected = false; // auto-deselect duplicates
-        }
-      }
+      const detected = applyDuplicateDetection(enriched, matchTolerance);
+      enriched.splice(0, enriched.length, ...detected);
 
       const wrongYearCount = enriched.filter(e => e.wrong_year).length;
       if (wrongYearCount > 0) {
