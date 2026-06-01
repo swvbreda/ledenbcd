@@ -160,7 +160,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   };
 
   const grouped = useMemo(() => {
-    const categoryOrder = ["contributie", "crediteur", "declaratie", "overig"];
+    const categoryOrder = ["betaling", "contributie", "crediteur", "declaratie", "overig"];
     const groups: Record<string, FinanceTodo[]> = {};
     for (const t of pending) {
       const key = getTypeCategory(t.todo_type);
