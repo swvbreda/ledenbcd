@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Check, X, StickyNote } from "lucide-react";
-import type { BudgetBalanceItem } from "@/hooks/useBudget";
+import type { BankStatementData, BudgetBalanceItem } from "@/hooks/useBudget";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ interface Props {
   items: BudgetBalanceItem[];
   totalBudgeted: number;
   totalSpent: number;
+  bankStatement?: BankStatementData;
   contributionStats?: ContributionStats;
   notes?: { id: string; note: string; created_at: string }[];
   onAdd: (name: string, amount: number, section: string, side?: string) => void;
@@ -31,7 +32,7 @@ interface Props {
 }
 
 export default function BalancePanel({
-  items, totalBudgeted, totalSpent, contributionStats, notes,
+  items, totalBudgeted, totalSpent, bankStatement, contributionStats, notes,
   onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, onUpdateYearSettings, year,
 }: Props) {
   const [adding, setAdding] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function BalancePanel({
 
   const leftTotal = middelenLeft.reduce((s, i) => s + i.amount, 0);
   const rightTotal = middelenRight.reduce((s, i) => s + i.amount, 0);
+  const hasBankStatement = !!bankStatement?.upload;
 
   const handleAdd = (section: string) => {
     if (!newName.trim()) return;
@@ -200,7 +202,31 @@ export default function BalancePanel({
                 <td />
               </tr>
             ))}
-            {contributionStats && (
+            {hasBankStatement && (
+              <>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1.5">Beginsaldo bank</td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.upload!.opening_balance ?? 0} /></td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap text-xs text-muted-foreground">{bankStatement.upload!.file_name}</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1.5">Bijschrijvingen bank</td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.totalIn} /></td>
+                  <td />
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="px-3 py-1.5">Afschrijvingen bank</td>
+                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.totalOut} /></td>
+                  <td />
+                </tr>
+                <tr className="bg-primary/5 font-semibold border-t border-border">
+                  <td className="px-3 py-2">Eindsaldo bank</td>
+                  <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.upload!.closing_balance ?? ((bankStatement.upload!.opening_balance ?? 0) + bankStatement.netMutation)} /></td>
+                  <td className="text-right px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">Mutatie <CurrencyCell value={bankStatement.netMutation} /></td>
+                </tr>
+              </>
+            )}
+            {!hasBankStatement && contributionStats && (
               <tr className="border-b border-border/50">
                 <td className="px-3 py-1.5">Ontvangen contributie</td>
                 <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={contributionStats.totalReceived} /></td>
@@ -209,7 +235,7 @@ export default function BalancePanel({
                 </td>
               </tr>
             )}
-            <tr className="border-b border-border/50">
+            {!hasBankStatement && <tr className="border-b border-border/50">
               <td className="px-3 py-1.5">Uitgaven {year}</td>
               <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5">
@@ -220,8 +246,8 @@ export default function BalancePanel({
                   </div>
                 )}
               </td>
-            </tr>
-            <tr className="bg-primary/5 font-semibold border-t border-border">
+            </tr>}
+            {!hasBankStatement && <tr className="bg-primary/5 font-semibold border-t border-border">
               <td className="px-3 py-2">Totaal</td>
               <td className="text-right px-3 py-2 whitespace-nowrap pr-7">
                 <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
@@ -229,7 +255,7 @@ export default function BalancePanel({
               <td className="text-right px-3 py-2 whitespace-nowrap">
                 {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
               </td>
-            </tr>
+            </tr>}
           </tbody>
         </table>
         {renderAddForm("resultaat")}
