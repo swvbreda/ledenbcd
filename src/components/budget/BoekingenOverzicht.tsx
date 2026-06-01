@@ -170,9 +170,9 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
     let list = rows;
 
     if (filterType === "income") {
-      list = list.filter((r) => r.type === "income");
+      list = list.filter((r) => !getRowValues(r).isExpense);
     } else if (filterType === "out") {
-      list = list.filter((r) => r.type === "expense");
+      list = list.filter((r) => getRowValues(r).isExpense);
     }
     if (filterPaid !== "all") {
       list = list.filter((r) => {
@@ -367,10 +367,10 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                 <tr key={`${row.type}-${v.id}`} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-1">
                     <Badge
-                      variant={row.type === "income" ? "default" : "destructive"}
-                      className={`text-[10px] px-1.5 py-0 ${row.type === "income" ? "bg-green-600" : ""}`}
+                      variant={v.isExpense ? "destructive" : "default"}
+                      className={`text-[10px] px-1.5 py-0 ${!v.isExpense ? "bg-green-600" : ""}`}
                     >
-                      {row.type === "income" ? "In" : "Uit"}
+                      {v.type}
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || ""}</td>
