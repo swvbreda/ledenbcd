@@ -149,7 +149,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
   // Dashboard rows for matching (signed: + income, - expense)
   const dashboardRows = useMemo(() => {
-    const rows: { date: string; amount: number; description: string }[] = [];
+    const rows: { date: string; amount: number; description: string; creditorKey: string }[] = [];
     for (const cat of categories) {
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
@@ -159,6 +159,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
             date: d,
             amount: -Math.abs(exp.amount),
             description: [exp.creditor_name, `${cat.name} → ${li.name}`].filter(Boolean).join(" — "),
+            creditorKey: normaliseName(exp.creditor_name || exp.description || ""),
           });
         }
       }
@@ -172,23 +173,50 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
         date: d,
         amount: Math.abs(c.amount),
         description: `Contributie — ${memberName}`,
+        creditorKey: normaliseName(memberName),
       });
     }
     return rows;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, contributions, members]);
 
   const findExistingMatch = (
     entry: { expense_date?: string; direction: "in" | "out"; amount: number },
     usedKeys: Set<string>,
-    tolerance: number
+    tolerance: number,
+    creditorKey?: string
   ) => {
     if (!entry.expense_date) return null;
     const signed = entry.direction === "in" ? Math.abs(entry.amount) : -Math.abs(entry.amount);
+    // First pass: strict match including creditor key (when both sides have one)
+    if (creditorKey) {
+      for (let i = 0; i < dashboardRows.length; i++) {
+        const d = dashboardRows[i];
+        const key = `${i}`;
+        if (usedKeys.has(key)) continue;
+        if (
+          d.date === entry.expense_date &&
+          Math.abs(d.amount - signed) <= tolerance + 1e-9 &&
+          d.creditorKey &&
+          (d.creditorKey === creditorKey ||
+            (creditorKey.length >= 4 &&
+              (d.creditorKey.includes(creditorKey) || creditorKey.includes(d.creditorKey))))
+        ) {
+          usedKeys.add(key);
+          return d;
+        }
+      }
+    }
+    // Fallback: when no creditor on either side, allow date+amount match only if creditor info missing
     for (let i = 0; i < dashboardRows.length; i++) {
       const d = dashboardRows[i];
       const key = `${i}`;
       if (usedKeys.has(key)) continue;
-      if (d.date === entry.expense_date && Math.abs(d.amount - signed) <= tolerance + 1e-9) {
+      if (
+        d.date === entry.expense_date &&
+        Math.abs(d.amount - signed) <= tolerance + 1e-9 &&
+        (!creditorKey || !d.creditorKey)
+      ) {
         usedKeys.add(key);
         return d;
       }
@@ -199,7 +227,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const applyDuplicateDetection = (list: ExtractedEntry[], tolerance: number) => {
     const usedKeys = new Set<string>();
     return list.map((e) => {
-      const match = findExistingMatch(e, usedKeys, tolerance);
+      const ck = normaliseName(e.creditor_name || "");
+      const match = findExistingMatch(e, usedKeys, tolerance, ck || undefined);
       if (match) {
         return { ...e, already_present: true, existing_description: match.description };
       }
