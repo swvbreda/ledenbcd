@@ -45,6 +45,39 @@ export interface BudgetBalanceItem {
   side: string;
 }
 
+export interface BankTransaction {
+  id: string;
+  upload_id: string;
+  year: number;
+  row_index: number;
+  transaction_date: string | null;
+  direction: "in" | "out";
+  counterparty: string | null;
+  description: string | null;
+  invoice_reference: string | null;
+  amount: number;
+  row_hash: string;
+  created_at: string;
+}
+
+export interface BankStatementUpload {
+  id: string;
+  year: number;
+  file_name: string;
+  opening_balance: number | null;
+  closing_balance: number | null;
+  imported_by: string;
+  created_at: string;
+}
+
+export interface BankStatementData {
+  upload: BankStatementUpload | null;
+  transactions: BankTransaction[];
+  totalIn: number;
+  totalOut: number;
+  netMutation: number;
+}
+
 export function useBudgetCategories(year: number) {
   return useQuery({
     queryKey: ["budget-categories", year],
@@ -110,6 +143,50 @@ export function useBudgetBalance(year: number) {
         .order("sort_order");
       if (error) throw error;
       return (data || []).map((b: any) => ({ ...b, amount: Number(b.amount) })) as BudgetBalanceItem[];
+    },
+  });
+}
+
+export function useBankStatement(year: number) {
+  return useQuery({
+    queryKey: ["bank-statement", year],
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data: uploads, error: uploadError } = await client
+        .from("bank_statement_uploads")
+        .select("*")
+        .eq("year", year)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (uploadError) throw uploadError;
+
+      const upload = uploads?.[0] ?? null;
+      if (!upload) {
+        return { upload: null, transactions: [], totalIn: 0, totalOut: 0, netMutation: 0 } as BankStatementData;
+      }
+
+      const { data, error } = await client
+        .from("bank_transactions")
+        .select("*")
+        .eq("upload_id", upload.id)
+        .order("row_index", { ascending: true });
+      if (error) throw error;
+
+      const transactions = (data || []).map((t: any) => ({ ...t, amount: Number(t.amount) })) as BankTransaction[];
+      const totalIn = transactions.filter((t) => t.direction === "in").reduce((s, t) => s + t.amount, 0);
+      const totalOut = transactions.filter((t) => t.direction === "out").reduce((s, t) => s + t.amount, 0);
+
+      return {
+        upload: {
+          ...upload,
+          opening_balance: upload.opening_balance === null ? null : Number(upload.opening_balance),
+          closing_balance: upload.closing_balance === null ? null : Number(upload.closing_balance),
+        },
+        transactions,
+        totalIn,
+        totalOut,
+        netMutation: totalIn - totalOut,
+      } as BankStatementData;
     },
   });
 }
