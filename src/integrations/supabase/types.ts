@@ -387,6 +387,7 @@ export type Database = {
           budgeted_member_count: number
           contribution_amount: number
           created_at: string
+          expense_source_preference: string
           id: string
           updated_at: string
           year: number
@@ -395,6 +396,7 @@ export type Database = {
           budgeted_member_count?: number
           contribution_amount?: number
           created_at?: string
+          expense_source_preference?: string
           id?: string
           updated_at?: string
           year: number
@@ -403,6 +405,7 @@ export type Database = {
           budgeted_member_count?: number
           contribution_amount?: number
           created_at?: string
+          expense_source_preference?: string
           id?: string
           updated_at?: string
           year?: number

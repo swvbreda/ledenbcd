@@ -1,0 +1,1 @@
+ALTER TABLE public.budget_year_settings ADD COLUMN IF NOT EXISTS expense_source_preference text NOT NULL DEFAULT 'both' CHECK (expense_source_preference IN ('manual','pdf_import','both'));
