@@ -507,22 +507,12 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Select
-                            value={entry.assigned_member_id ? String(entry.assigned_member_id) : ""}
-                            onValueChange={(v) => setMember(idx, v ? Number(v) : undefined)}
+                          <MemberCombobox
+                            value={entry.assigned_member_id}
+                            onChange={(id) => setMember(idx, id)}
+                            members={sortedMembers}
                             disabled={!entry.selected}
-                          >
-                            <SelectTrigger className="h-6 text-xs">
-                              <SelectValue placeholder="Koppel aan lid..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sortedMembers.map((m) => (
-                                <SelectItem key={m.id} value={String(m.id)} className="text-xs">
-                                  #{m.id} — {m.naam}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                         )}
                       </td>
                     </tr>
