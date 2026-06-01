@@ -177,19 +177,34 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     return rows;
   }, [categories, contributions, members]);
 
-  const findExistingMatch = (entry: { expense_date?: string; direction: "in" | "out"; amount: number }, usedKeys: Set<string>) => {
+  const findExistingMatch = (
+    entry: { expense_date?: string; direction: "in" | "out"; amount: number },
+    usedKeys: Set<string>,
+    tolerance: number
+  ) => {
     if (!entry.expense_date) return null;
     const signed = entry.direction === "in" ? Math.abs(entry.amount) : -Math.abs(entry.amount);
     for (let i = 0; i < dashboardRows.length; i++) {
       const d = dashboardRows[i];
       const key = `${i}`;
       if (usedKeys.has(key)) continue;
-      if (d.date === entry.expense_date && Math.abs(d.amount - signed) < 0.01) {
+      if (d.date === entry.expense_date && Math.abs(d.amount - signed) <= tolerance + 1e-9) {
         usedKeys.add(key);
         return d;
       }
     }
     return null;
+  };
+
+  const applyDuplicateDetection = (list: ExtractedEntry[], tolerance: number) => {
+    const usedKeys = new Set<string>();
+    return list.map((e) => {
+      const match = findExistingMatch(e, usedKeys, tolerance);
+      if (match) {
+        return { ...e, already_present: true, existing_description: match.description, selected: false };
+      }
+      return { ...e, already_present: false, existing_description: undefined };
+    });
   };
 
   const normaliseName = (s: string) =>
