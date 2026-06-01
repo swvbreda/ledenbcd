@@ -438,8 +438,14 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   };
 
   const selectedEntries = entries.filter((e) => e.selected);
-  const readyExpenses = selectedEntries.filter((e) => e.direction === "out" && e.assigned_line_item_id);
-  const readyIncomes = selectedEntries.filter((e) => e.direction === "in" && e.assigned_member_id);
+  // Veiligheidsnet: een bijschrijving ("in") mag NOOIT als uitgave worden geboekt,
+  // ook niet wanneer er per ongeluk een begrotingspost aan is gehangen.
+  const readyExpenses = selectedEntries.filter(
+    (e) => e.direction === "out" && !!e.assigned_line_item_id
+  );
+  const readyIncomes = selectedEntries.filter(
+    (e) => e.direction === "in" && !!e.assigned_member_id
+  );
   const readyCount = readyExpenses.length + readyIncomes.length;
   const totalOut = selectedEntries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
   const totalIn = selectedEntries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
