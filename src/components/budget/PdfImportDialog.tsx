@@ -137,6 +137,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [markAsPaid, setMarkAsPaid] = useState(true);
   const [hideExisting, setHideExisting] = useState(false);
   const [matchTolerance, setMatchTolerance] = useState(0.01);
+  const [pdfOpening, setPdfOpening] = useState<number | null>(null);
+  const [pdfClosing, setPdfClosing] = useState<number | null>(null);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -307,6 +309,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       }
 
       const data = await resp.json();
+      setPdfOpening(typeof data.opening_balance === "number" ? data.opening_balance : null);
+      setPdfClosing(typeof data.closing_balance === "number" ? data.closing_balance : null);
       if (!data.entries?.length) {
         toast.warning("Geen regels gevonden in de PDF");
         return;
@@ -480,6 +484,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     if (!open) {
       setStep("upload");
       setEntries([]);
+      setPdfOpening(null);
+      setPdfClosing(null);
     }
     onOpenChange(open);
   };
