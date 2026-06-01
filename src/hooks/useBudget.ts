@@ -196,6 +196,7 @@ export function useBudgetMutations(year: number) {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["budget-categories", year] });
     qc.invalidateQueries({ queryKey: ["budget-balance", year] });
+    qc.invalidateQueries({ queryKey: ["bank-statement", year] });
   };
 
   const addCategory = useMutation({
@@ -400,6 +401,87 @@ export function useBudgetMutations(year: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budget-notes", year] }),
   });
 
+  const replaceBankStatement = useMutation({
+    mutationFn: async ({
+      fileName,
+      openingBalance,
+      closingBalance,
+      transactions,
+      userId,
+    }: {
+      fileName: string;
+      openingBalance: number | null;
+      closingBalance: number | null;
+      transactions: {
+        transaction_date?: string | null;
+        direction: "in" | "out";
+        counterparty?: string | null;
+        description?: string | null;
+        invoice_reference?: string | null;
+        amount: number;
+      }[];
+      userId: string;
+    }) => {
+      const client = supabase as any;
+      const { data: oldUploads, error: oldError } = await client
+        .from("bank_statement_uploads")
+        .select("id")
+        .eq("year", year);
+      if (oldError) throw oldError;
+
+      const { data: upload, error: uploadError } = await client
+        .from("bank_statement_uploads")
+        .insert({
+          year,
+          file_name: fileName,
+          opening_balance: openingBalance,
+          closing_balance: closingBalance,
+          imported_by: userId,
+        })
+        .select("id")
+        .single();
+      if (uploadError) throw uploadError;
+
+      const normalize = (value?: string | null) => (value || "").toLowerCase().replace(/\s+/g, " ").trim();
+      const rows = transactions.map((t, index) => {
+        const amount = Math.abs(Number(t.amount) || 0);
+        const rawHash = [
+          index,
+          t.transaction_date || "",
+          t.direction,
+          amount.toFixed(2),
+          normalize(t.counterparty),
+          normalize(t.description),
+          normalize(t.invoice_reference),
+        ].join("|");
+        return {
+          upload_id: upload.id,
+          year,
+          row_index: index,
+          transaction_date: t.transaction_date || null,
+          direction: t.direction,
+          counterparty: t.counterparty || null,
+          description: t.description || null,
+          invoice_reference: t.invoice_reference || null,
+          amount,
+          row_hash: rawHash,
+        };
+      });
+
+      if (rows.length > 0) {
+        const { error: txError } = await client.from("bank_transactions").insert(rows);
+        if (txError) throw txError;
+      }
+
+      const oldIds = (oldUploads || []).map((u: any) => u.id).filter((id: string) => id !== upload.id);
+      if (oldIds.length > 0) {
+        const { error: deleteError } = await client.from("bank_statement_uploads").delete().in("id", oldIds);
+        if (deleteError) throw deleteError;
+      }
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     addCategory,
     addLineItem,
@@ -415,6 +497,7 @@ export function useBudgetMutations(year: number) {
     deleteBalanceItem,
     addNote,
     deleteNote,
+    replaceBankStatement,
   };
 }
 
