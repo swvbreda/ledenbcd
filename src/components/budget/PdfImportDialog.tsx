@@ -19,6 +19,7 @@ interface ExtractedEntry {
   line_item?: string;
   dossier?: string;
   creditor_name: string;
+  description?: string;
   invoice_reference?: string;
   amount: number;
   selected: boolean;
@@ -125,11 +126,12 @@ interface Props {
   contributions?: Contribution[];
   onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null }[]) => Promise<void>;
   onImportIncome: (incomes: { member_id: number; amount: number; paid_date: string }[]) => Promise<void>;
+  onReplaceBankStatement: (statement: { fileName: string; openingBalance: number | null; closingBalance: number | null; transactions: { transaction_date?: string | null; direction: "in" | "out"; counterparty?: string | null; description?: string | null; invoice_reference?: string | null; amount: number }[] }) => Promise<void>;
   userId: string;
   year: number;
 }
 
-export default function PdfImportDialog({ open, onOpenChange, categories, members, contributions = [], onImport, onImportIncome, userId, year }: Props) {
+export default function PdfImportDialog({ open, onOpenChange, categories, members, contributions = [], onImport, onImportIncome, onReplaceBankStatement, userId, year }: Props) {
   const [step, setStep] = useState<"upload" | "review" | "importing">("upload");
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
@@ -139,6 +141,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [matchTolerance, setMatchTolerance] = useState(0.01);
   const [pdfOpening, setPdfOpening] = useState<number | null>(null);
   const [pdfClosing, setPdfClosing] = useState<number | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -287,6 +290,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     }
 
     setExtracting(true);
+    setUploadedFileName(file.name);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -451,12 +455,26 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const totalIn = selectedEntries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
 
   const handleImport = async () => {
-    if (readyCount === 0) {
-      toast.error("Geen regels klaar voor import (wijs begrotingsposten of leden toe)");
+    if (entries.length === 0) {
+      toast.error("Geen bankregels om op te slaan");
       return;
     }
     setStep("importing");
     try {
+      await onReplaceBankStatement({
+        fileName: uploadedFileName || `Bankafschrift ${year}`,
+        openingBalance: pdfOpening,
+        closingBalance: pdfClosing,
+        transactions: entries.map((e) => ({
+          transaction_date: e.expense_date || null,
+          direction: e.direction,
+          counterparty: e.creditor_name || null,
+          description: e.description || e.creditor_name || null,
+          invoice_reference: e.invoice_reference || null,
+          amount: e.amount,
+        })),
+      });
+
       if (readyExpenses.length > 0) {
         await onImport(
           readyExpenses.map((e) => ({
@@ -482,10 +500,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
           }))
         );
       }
-      toast.success(`${readyExpenses.length} uitgaven + ${readyIncomes.length} bijschrijvingen geïmporteerd`);
+      toast.success(`Bankgegevens opgeslagen; ${readyExpenses.length} uitgaven + ${readyIncomes.length} bijschrijvingen gekoppeld`);
       onOpenChange(false);
       setStep("upload");
       setEntries([]);
+      setPdfOpening(null);
+      setPdfClosing(null);
+      setUploadedFileName("");
     } catch (err: any) {
       toast.error("Fout bij importeren: " + (err.message || "onbekend"));
       setStep("review");
@@ -498,6 +519,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setEntries([]);
       setPdfOpening(null);
       setPdfClosing(null);
+      setUploadedFileName("");
     }
     onOpenChange(open);
   };
@@ -728,9 +750,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
               <Button variant="outline" size="sm" onClick={() => { setStep("upload"); setEntries([]); }}>
                 Andere PDF
               </Button>
-              <Button size="sm" onClick={handleImport} disabled={readyCount === 0}>
+              <Button size="sm" onClick={handleImport} disabled={entries.length === 0}>
                 <Check size={14} className="mr-1" />
-                {readyCount} regels importeren
+                Bank opslaan • {readyCount} koppelingen importeren
               </Button>
             </div>
           </div>

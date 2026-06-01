@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X, ArrowDownToLine } from "lucide-react";
-import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
+import type { BankStatementData, BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
 import type { Contribution } from "@/hooks/useContributions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,13 @@ interface FlatExpense extends BudgetExpense {
 
 type LedgerRow =
   | { type: "expense"; data: FlatExpense }
-  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } };
+  | { type: "income"; data: { id: string; memberName: string; amount: number; paid: boolean; paid_date: string | null; invoice_number: string | null; invoice_date: string | null } }
+  | { type: "bank"; data: BankStatementData["transactions"][number] };
 
 interface Props {
   categories: BudgetCategory[];
   contributions: Contribution[];
+  bankStatement?: BankStatementData;
   members: MemberOption[];
   year: number;
   onDeleteExpense: (id: string) => void;
@@ -39,7 +41,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid" | "description";
 
-export default function BoekingenOverzicht({ categories, contributions, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, bankStatement, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -76,6 +78,10 @@ export default function BoekingenOverzicht({ categories, contributions, members,
   const rows: LedgerRow[] = useMemo(() => {
     const result: LedgerRow[] = [];
 
+    if (bankStatement?.upload) {
+      return bankStatement.transactions.map((transaction) => ({ type: "bank", data: transaction }));
+    }
+
     for (const cat of categories) {
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
@@ -105,7 +111,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     }
 
     return result;
-  }, [categories, contributions, memberMap]);
+  }, [bankStatement, categories, contributions, memberMap]);
 
   const getRowValues = (row: LedgerRow) => {
     if (row.type === "expense") {
@@ -140,6 +146,22 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         id: c.id,
         description: "",
       };
+    } else {
+      const b = row.data;
+      return {
+        date: b.transaction_date || "",
+        type: b.direction === "in" ? "In" : "Uit",
+        name: b.counterparty || b.description || "",
+        dossier: "",
+        category: "Bank",
+        subcategory: "",
+        invoice: b.invoice_reference || "",
+        amount: b.amount,
+        isExpense: b.direction === "out",
+        paid: true,
+        id: b.id,
+        description: b.description || "",
+      };
     }
   };
 
@@ -148,9 +170,9 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     let list = rows;
 
     if (filterType === "income") {
-      list = list.filter((r) => r.type === "income");
+      list = list.filter((r) => !getRowValues(r).isExpense);
     } else if (filterType === "out") {
-      list = list.filter((r) => r.type === "expense");
+      list = list.filter((r) => getRowValues(r).isExpense);
     }
     if (filterPaid !== "all") {
       list = list.filter((r) => {
@@ -304,9 +326,17 @@ export default function BoekingenOverzicht({ categories, contributions, members,
       <div className="flex gap-4 text-xs">
         <span className="text-green-600 font-medium">Inkomsten: <CurrencyText value={totals.income} /></span>
         <span className="text-destructive font-medium">Uitgaven: <CurrencyText value={totals.expense} /></span>
-        <span className={`font-semibold ${totals.net >= 0 ? "text-green-600" : "text-destructive"}`}>
-          Saldo: <CurrencyText value={totals.net} />
-        </span>
+        {bankStatement?.upload ? (
+          <>
+            <span className="font-medium">Beginsaldo bank: <CurrencyText value={bankStatement.upload.opening_balance ?? 0} /></span>
+            <span className="font-semibold">Eindsaldo bank: <CurrencyText value={bankStatement.upload.closing_balance ?? ((bankStatement.upload.opening_balance ?? 0) + bankStatement.netMutation)} /></span>
+            <span className={`font-medium ${bankStatement.netMutation >= 0 ? "text-green-600" : "text-destructive"}`}>Mutatie: <CurrencyText value={bankStatement.netMutation} /></span>
+          </>
+        ) : (
+          <span className={`font-semibold ${totals.net >= 0 ? "text-green-600" : "text-destructive"}`}>
+            Resultaat: <CurrencyText value={totals.net} />
+          </span>
+        )}
       </div>
 
       {/* Table */}
@@ -337,10 +367,10 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                 <tr key={`${row.type}-${v.id}`} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="px-2 py-1">
                     <Badge
-                      variant={row.type === "income" ? "default" : "destructive"}
-                      className={`text-[10px] px-1.5 py-0 ${row.type === "income" ? "bg-green-600" : ""}`}
+                      variant={v.isExpense ? "destructive" : "default"}
+                      className={`text-[10px] px-1.5 py-0 ${!v.isExpense ? "bg-green-600" : ""}`}
                     >
-                      {row.type === "income" ? "In" : "Uit"}
+                      {v.type}
                     </Badge>
                   </td>
                   <td className="px-2 py-1 tabular-nums whitespace-nowrap">{fmtDate(v.date) || ""}</td>

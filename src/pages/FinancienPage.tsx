@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
+import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import { useContributions, useUpsertContribution } from "@/hooks/useContributions";
@@ -34,6 +34,7 @@ export default function FinancienPage() {
   const { user, isAdmin } = useAuth();
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
+  const { data: bankStatement } = useBankStatement(year);
   const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
@@ -212,6 +213,7 @@ export default function FinancienPage() {
                   items={balanceItems || []}
                   totalBudgeted={totalBudgeted}
                   totalSpent={totalSpent}
+                  bankStatement={bankStatement}
                   contributionStats={contributionStats}
                   notes={budgetNotes}
                   year={year}
@@ -236,6 +238,7 @@ export default function FinancienPage() {
             <BoekingenOverzicht
               categories={categories || []}
               contributions={contributions || []}
+              bankStatement={bankStatement}
               members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
               year={year}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
@@ -312,6 +315,15 @@ export default function FinancienPage() {
                 paid_date: inc.paid_date,
               });
             }
+          }}
+          onReplaceBankStatement={async ({ fileName, openingBalance, closingBalance, transactions }) => {
+            await mutations.replaceBankStatement.mutateAsync({
+              fileName,
+              openingBalance,
+              closingBalance,
+              transactions,
+              userId: user.id,
+            });
           }}
           userId={user.id}
           year={year}

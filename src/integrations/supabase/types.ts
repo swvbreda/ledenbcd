@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_statement_uploads: {
+        Row: {
+          closing_balance: number | null
+          created_at: string
+          file_name: string
+          id: string
+          imported_by: string
+          opening_balance: number | null
+          year: number
+        }
+        Insert: {
+          closing_balance?: number | null
+          created_at?: string
+          file_name: string
+          id?: string
+          imported_by: string
+          opening_balance?: number | null
+          year: number
+        }
+        Update: {
+          closing_balance?: number | null
+          created_at?: string
+          file_name?: string
+          id?: string
+          imported_by?: string
+          opening_balance?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          counterparty: string | null
+          created_at: string
+          description: string | null
+          direction: string
+          id: string
+          invoice_reference: string | null
+          row_hash: string
+          row_index: number
+          transaction_date: string | null
+          upload_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          counterparty?: string | null
+          created_at?: string
+          description?: string | null
+          direction: string
+          id?: string
+          invoice_reference?: string | null
+          row_hash: string
+          row_index?: number
+          transaction_date?: string | null
+          upload_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          counterparty?: string | null
+          created_at?: string
+          description?: string | null
+          direction?: string
+          id?: string
+          invoice_reference?: string | null
+          row_hash?: string
+          row_index?: number
+          transaction_date?: string | null
+          upload_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "bank_statement_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       benefit_images: {
         Row: {
           benefit_id: string

@@ -85,6 +85,7 @@ Velden per regel:
 - line_item: het onderdeel/de begrotingspost (alleen Visionplanner)
 - dossier: ALLEEN een expliciet dossier- of projectnaam zoals die door de boekhouder is toegekend (bv. "Verkiezingen", "Amsterdam i-criterium", "Samenwerking PCN"). LAAT LEEG bij bankafschriften en in alle andere gevallen waar je het niet zeker weet. Vul NOOIT een plaatsnaam, stadsnaam, kolomheader, leveranciersnaam, betaalprovider (zoals "Worldline", "Buckaroo"), categorie of "Banken" in als dossier.
 - creditor_name: naam van de tegenpartij (leverancier bij uitgave, betaler bij inkomst). Bij bankafschriften: de naam van de tegenrekeninghouder, NIET een omschrijving.
+- description: de volledige omschrijving/mededeling zoals die op de bankregel staat.
 - invoice_reference: factuurnummer of betalingskenmerk
 - amount: bedrag als POSITIEF getal in EUR (richting staat al in direction)
 - matched_line_item_id: alleen invullen voor direction "out", id van de best passende begrotingspost (indien beschikbaar)
@@ -137,6 +138,7 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
                          line_item: { type: "string", description: "Budget line item / onderdeel" },
                          dossier: { type: "string", description: "Project or dossier name" },
                          creditor_name: { type: "string", description: "Counter-party name (supplier for out, payer for in)" },
+                          description: { type: "string", description: "Volledige omschrijving/mededeling exact zoals op de bankregel" },
                          invoice_reference: { type: "string", description: "Invoice number or payment reference" },
                          amount: { type: "number", description: "Amount in EUR (always positive)" },
                           matched_line_item_id: { type: "string", description: "ID of the matched budget line item. Alleen invullen bij direction=out; bij direction=in altijd leeg laten." },
