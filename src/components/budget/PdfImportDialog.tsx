@@ -317,6 +317,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
       // Detect duplicates against the dashboard (date + amount + direction)
       const detected = applyDuplicateDetection(enriched, matchTolerance);
+      for (const e of detected) {
+        if (e.already_present) e.selected = false;
+      }
       enriched.splice(0, enriched.length, ...detected);
 
       const wrongYearCount = enriched.filter(e => e.wrong_year).length;
