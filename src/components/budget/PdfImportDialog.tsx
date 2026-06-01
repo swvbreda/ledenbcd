@@ -19,6 +19,7 @@ interface ExtractedEntry {
   line_item?: string;
   dossier?: string;
   creditor_name: string;
+  description?: string;
   invoice_reference?: string;
   amount: number;
   selected: boolean;
@@ -468,7 +469,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
           transaction_date: e.expense_date || null,
           direction: e.direction,
           counterparty: e.creditor_name || null,
-          description: e.creditor_name || null,
+          description: e.description || e.creditor_name || null,
           invoice_reference: e.invoice_reference || null,
           amount: e.amount,
         })),
