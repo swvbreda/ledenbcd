@@ -189,8 +189,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     list.sort((a, b) => {
       const va = getRowValues(a);
       const vb = getRowValues(b);
-      let valA: any = va[sortKey] ?? "";
-      let valB: any = vb[sortKey] ?? "";
+      let valA: string | number = String(va[sortKey] ?? "");
+      let valB: string | number = String(vb[sortKey] ?? "");
       if (sortKey === "amount") { valA = va.amount; valB = vb.amount; }
       if (sortKey === "paid") { valA = va.paid ? 1 : 0; valB = vb.paid ? 1 : 0; }
       if (valA < valB) return sortAsc ? -1 : 1;
@@ -214,6 +214,14 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const handleFilterTypeChange = (value: string) => {
+    if (value === "all" || value === "out" || value === "income") setFilterType(value);
+  };
+
+  const handleFilterPaidChange = (value: string) => {
+    if (value === "all" || value === "paid" || value === "unpaid") setFilterPaid(value);
   };
 
   const startEdit = (row: LedgerRow) => {
@@ -276,7 +284,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
             className="h-8 text-sm pl-8"
           />
         </div>
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+        <Select value={filterType} onValueChange={handleFilterTypeChange}>
           <SelectTrigger className="h-8 w-[120px] text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -286,7 +294,7 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterPaid} onValueChange={(v) => setFilterPaid(v as any)}>
+        <Select value={filterPaid} onValueChange={handleFilterPaidChange}>
           <SelectTrigger className="h-8 w-[120px] text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -392,9 +400,12 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                     )}
                   </td>
                   <td className="px-2 py-1 tabular-nums">{v.invoice || ""}</td>
-                  <td className="px-2 py-1 text-right tabular-nums font-medium text-foreground">
-                    {v.isExpense && <span>−</span>}
-                    <CurrencyCell value={v.amount} />
+                  <td className="px-2 py-1 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
+                    <CurrencyText
+                      value={v.amount}
+                      className="justify-end whitespace-nowrap"
+                      symbolClassName={v.isExpense ? "before:content-['−'] before:mr-1" : undefined}
+                    />
                   </td>
                   <td className="px-2 py-1 text-center">
                     <span className={`text-[10px] font-medium ${v.paid ? "text-green-600" : "text-amber-500"}`}>
