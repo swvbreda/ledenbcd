@@ -147,6 +147,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     [members]
   );
 
+  const normaliseName = (s: string) =>
+    s.toLowerCase().replace(/\b(b\.?v\.?|v\.?o\.?f\.?|holding|coffeeshop|stichting)\b/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+
   // Dashboard rows for matching (signed: + income, - expense)
   const dashboardRows = useMemo(() => {
     const rows: { date: string; amount: number; description: string; creditorKey: string }[] = [];
