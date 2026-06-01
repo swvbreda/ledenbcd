@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
@@ -27,12 +27,12 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
   const [creditor, setCreditor] = useState("");
   const [invoiceRef, setInvoiceRef] = useState("");
   const [dossier, setDossier] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editLineItemId, setEditLineItemId] = useState<string>("");
 
   const allLineItems = (categories || []).flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
   );
+
+  const getLineItemLabel = (id: string) => allLineItems.find((li) => li.id === id)?.label || lineItemName;
 
   const total = expenses.reduce((s, e) => s + e.amount, 0);
 
@@ -71,21 +71,27 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Datum</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Omschrijving</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Dossier</th>
+                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Begrotingspost</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Leverancier</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Factuurnr.</th>
                     <th className="text-right px-2 py-1 text-muted-foreground font-medium">Bedrag</th>
-                    <th className="w-20" />
+                    <th className="w-10" />
                   </tr>
                 </thead>
                 <tbody>
                   {expenses.map((e) => (
                     <tr key={e.id} className="border-b border-border/50">
                       <td className="px-2 py-1 whitespace-nowrap">{e.expense_date || ""}</td>
-                      <td className="px-2 py-1">
-                        {editingId === e.id && onUpdateExpense ? (
-                          <Select value={editLineItemId} onValueChange={setEditLineItemId}>
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue placeholder="Kies post..." />
+                      <td className="px-2 py-1">{e.description || ""}</td>
+                      <td className="px-2 py-1">{e.dossier || ""}</td>
+                      <td className="px-2 py-1 min-w-[220px]">
+                        {onUpdateExpense ? (
+                          <Select
+                            value={e.line_item_id}
+                            onValueChange={(value) => value !== e.line_item_id && onUpdateExpense(e.id, { line_item_id: value })}
+                          >
+                            <SelectTrigger className="h-8 text-xs bg-background border-primary/40">
+                              <SelectValue>{getLineItemLabel(e.line_item_id)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {allLineItems.map((li) => (
@@ -94,43 +100,14 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                             </SelectContent>
                           </Select>
                         ) : (
-                          e.description || ""
+                          getLineItemLabel(e.line_item_id)
                         )}
                       </td>
-                      <td className="px-2 py-1">{e.dossier || ""}</td>
                       <td className="px-2 py-1">{e.creditor_name || ""}</td>
                       <td className="px-2 py-1 tabular-nums">{e.invoice_reference || ""}</td>
                       <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
-                          {onUpdateExpense && editingId !== e.id && (
-                            <button
-                              onClick={() => { setEditingId(e.id); setEditLineItemId(e.line_item_id); }}
-                              className="p-1 text-muted-foreground hover:text-foreground"
-                              title="Verplaats naar andere post"
-                            >
-                              <Pencil size={12} />
-                            </button>
-                          )}
-                          {editingId === e.id && onUpdateExpense && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  if (editLineItemId && editLineItemId !== e.line_item_id) {
-                                    onUpdateExpense(e.id, { line_item_id: editLineItemId });
-                                  }
-                                  setEditingId(null);
-                                }}
-                                className="p-1 text-green-600 hover:text-green-700"
-                                title="Opslaan"
-                              >
-                                <Check size={12} />
-                              </button>
-                              <button onClick={() => setEditingId(null)} className="p-1 text-muted-foreground hover:text-destructive" title="Annuleren">
-                                <X size={12} />
-                              </button>
-                            </>
-                          )}
                           <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                             <Trash2 size={12} />
                           </button>
@@ -139,7 +116,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                     </tr>
                   ))}
                   <tr className="font-medium bg-muted/30">
-                    <td className="px-2 py-1" colSpan={5}>Totaal</td>
+                    <td className="px-2 py-1" colSpan={6}>Totaal</td>
                     <td className="text-right px-2 py-1"><CurrencyCell value={total} /></td>
                     <td />
                   </tr>
