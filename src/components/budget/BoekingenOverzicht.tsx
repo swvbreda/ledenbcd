@@ -88,12 +88,13 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     }
 
     for (const c of contributions || []) {
+      if (!c.paid) continue;
       result.push({
         type: "income",
         data: {
           id: c.id,
           memberName: memberMap.get(c.member_id) || `Lid #${c.member_id}`,
-          amount: c.amount || contributionAmount,
+          amount: c.amount,
           paid: c.paid,
           paid_date: c.paid_date,
           invoice_number: c.invoice_number,
