@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X, ArrowDownToLine } from "lucide-react";
+import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
 import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import type { Contribution } from "@/hooks/useContributions";
@@ -32,7 +32,6 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => void;
   onOpenPdfImport: () => void;
-  onConvertExpenseToIncome: (expenseId: string, memberId: number, amount: number, paidDate: string) => Promise<void>;
 }
 
 const fmtDate = (d: string | null) => {
@@ -44,44 +43,19 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, declarations, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onConvertExpenseToIncome }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, declarations, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDossier, setEditDossier] = useState("");
   const [editLineItemId, setEditLineItemId] = useState("");
-  const [convertingId, setConvertingId] = useState<string | null>(null);
-  const [convertMemberId, setConvertMemberId] = useState<string>("");
   const [filterType, setFilterType] = useState<"all" | "out" | "income">("all");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "unpaid">("all");
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => (a.naam || "").localeCompare(b.naam || "")),
     [members]
   );
-
-  const startConvert = (row: LedgerRow) => {
-    if (row.type !== "expense") return;
-    setConvertingId(row.data.id);
-    // Try to pre-match a member by creditor name
-    const name = (row.data.creditor_name || "").toLowerCase();
-    const match = members.find((m) => name && (m.naam.toLowerCase().includes(name) || name.includes(m.naam.toLowerCase())));
-    setConvertMemberId(match ? String(match.id) : "");
-  };
-
-  const saveConvert = async (row: LedgerRow) => {
-    if (row.type !== "expense" || !convertingId || !convertMemberId) return;
-    const e = row.data;
-    await onConvertExpenseToIncome(
-      e.id,
-      Number(convertMemberId),
-      e.amount,
-      e.expense_date || new Date().toISOString().slice(0, 10)
-    );
-    setConvertingId(null);
-    setConvertMemberId("");
-  };
-
 
   const allLineItems = useMemo(() =>
     categories.flatMap((c) => c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}`, catName: c.name, liName: li.name }))),
