@@ -357,9 +357,53 @@ export function useBudgetMutations(year: number) {
   });
 
   const updateBankTransaction = useMutation({
-    mutationFn: async ({ id, ...fields }: { id: string; line_item_id?: string | null; dossier?: string | null }) => {
-      const { error } = await (supabase as any).from("bank_transactions").update(fields).eq("id", id);
+    mutationFn: async ({
+      id,
+      applyToSimilar,
+      ...fields
+    }: {
+      id: string;
+      line_item_id?: string | null;
+      dossier?: string | null;
+      applyToSimilar?: boolean;
+    }) => {
+      const client = supabase as any;
+      const { error } = await client.from("bank_transactions").update(fields).eq("id", id);
       if (error) throw error;
+
+      let similarUpdated = 0;
+      if (applyToSimilar) {
+        const { data: current } = await client
+          .from("bank_transactions")
+          .select("counterparty")
+          .eq("id", id)
+          .maybeSingle();
+        const counterparty = (current?.counterparty || "").trim();
+        if (counterparty) {
+          const { data: similar } = await client
+            .from("bank_transactions")
+            .select("id, line_item_id, dossier")
+            .eq("year", year)
+            .ilike("counterparty", counterparty)
+            .neq("id", id);
+          const toUpdate = (similar || []).filter((row: any) => {
+            // Alleen overschrijven als nog niet handmatig gekoppeld
+            const noLi = !row.line_item_id;
+            const noDossier = !row.dossier;
+            return noLi && noDossier;
+          });
+          if (toUpdate.length > 0) {
+            const ids = toUpdate.map((r: any) => r.id);
+            const { error: bulkErr } = await client
+              .from("bank_transactions")
+              .update(fields)
+              .in("id", ids);
+            if (bulkErr) throw bulkErr;
+            similarUpdated = ids.length;
+          }
+        }
+      }
+      return { similarUpdated };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bank-statement", year] });
