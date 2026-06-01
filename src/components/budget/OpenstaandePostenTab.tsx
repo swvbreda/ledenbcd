@@ -24,7 +24,7 @@ export default function OpenstaandePostenTab({ categories, contributions, member
     const all = categories.flatMap((cat) =>
       cat.line_items.flatMap((li) =>
         li.expenses
-          .filter((exp) => !exp.paid)
+          .filter((exp) => !exp.paid && exp.direction !== "in")
           .map((exp) => ({
             id: exp.id,
             date: exp.expense_date || "",
