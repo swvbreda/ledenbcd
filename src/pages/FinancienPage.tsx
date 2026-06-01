@@ -16,6 +16,7 @@ import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
+import ControleTab from "@/components/budget/ControleTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,6 +129,9 @@ export default function FinancienPage() {
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
+            <TabsTrigger value="controle" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Controle
+            </TabsTrigger>
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Dossiers
             </TabsTrigger>
@@ -236,6 +240,15 @@ export default function FinancienPage() {
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}
+            />
+          </TabsContent>
+
+          <TabsContent value="controle">
+            <ControleTab
+              categories={categories || []}
+              contributions={contributions || []}
+              members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
+              year={year}
             />
           </TabsContent>
 
