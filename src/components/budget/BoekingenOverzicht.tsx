@@ -28,6 +28,7 @@ interface Props {
   year: number;
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null; direction?: "in" | "out" }) => void;
+  onUpdateBankTransaction?: (id: string, fields: { line_item_id?: string | null; dossier?: string | null }) => void;
   onOpenPdfImport: () => void;
   onOpenDuplicates?: () => void;
 }
@@ -41,7 +42,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid" | "description";
 
-export default function BoekingenOverzicht({ categories, contributions, bankStatement, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, bankStatement, members, year, onDeleteExpense, onUpdateExpense, onUpdateBankTransaction, onOpenPdfImport, onOpenDuplicates }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -59,6 +60,12 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
     categories.flatMap((c) => c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}`, catName: c.name, liName: li.name }))),
     [categories]
   );
+
+  const lineItemMap = useMemo(() => {
+    const m = new Map<string, { catName: string; liName: string }>();
+    for (const li of allLineItems) m.set(li.id, { catName: li.catName, liName: li.liName });
+    return m;
+  }, [allLineItems]);
 
   const existingDossiers = useMemo(() => {
     const set = new Set<string>();
@@ -148,13 +155,14 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       };
     } else {
       const b = row.data;
+      const li = b.line_item_id ? lineItemMap.get(b.line_item_id) : null;
       return {
         date: b.transaction_date || "",
         type: b.direction === "in" ? "In" : "Uit",
         name: b.counterparty || b.description || "",
-        dossier: "",
-        category: "Bank",
-        subcategory: "",
+        dossier: b.dossier || "",
+        category: li ? li.catName : "Bank",
+        subcategory: li ? li.liName : "",
         invoice: b.invoice_reference || "",
         amount: b.amount,
         isExpense: b.direction === "out",
@@ -226,19 +234,33 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
   };
 
   const startEdit = (row: LedgerRow) => {
-    if (row.type !== "expense") return;
-    const e = row.data;
-    setEditingId(e.id);
-    setEditDossier(e.dossier || "");
-    setEditLineItemId(e.line_item_id);
+    if (row.type === "expense") {
+      const e = row.data;
+      setEditingId(e.id);
+      setEditDossier(e.dossier || "");
+      setEditLineItemId(e.line_item_id);
+    } else if (row.type === "bank") {
+      const b = row.data;
+      setEditingId(b.id);
+      setEditDossier(b.dossier || "");
+      setEditLineItemId(b.line_item_id || "");
+    }
   };
 
   const saveEdit = () => {
     if (!editingId) return;
-    onUpdateExpense(editingId, {
-      dossier: editDossier || null,
-      line_item_id: editLineItemId,
-    });
+    const row = rows.find((r) => (r as any).data.id === editingId);
+    if (row?.type === "bank") {
+      onUpdateBankTransaction?.(editingId, {
+        dossier: editDossier || null,
+        line_item_id: editLineItemId || null,
+      });
+    } else {
+      onUpdateExpense(editingId, {
+        dossier: editDossier || null,
+        line_item_id: editLineItemId,
+      });
+    }
     setEditingId(null);
   };
 
@@ -376,7 +398,11 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                   </td>
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
-                    <span className="text-muted-foreground">{v.category}</span>
+                    <span className="text-muted-foreground">
+                      {isEditing && row.type === "bank" && !editLineItemId
+                        ? "—"
+                        : v.category}
+                    </span>
                   </td>
                   <td className="px-2 py-1">
                     {isEditing ? (
@@ -416,7 +442,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                   </td>
                   <td className="px-2 py-1 text-muted-foreground">{v.description || ""}</td>
                   <td className="px-1 flex items-center gap-0.5 py-1">
-                    {isExpense && !isEditing && (
+                    {(isExpense || row.type === "bank") && !isEditing && (
                       <>
                         <button
                           onClick={() => startEdit(row)}
@@ -425,20 +451,24 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                         >
                           <Pencil size={10} /> Bewerk
                         </button>
-                        <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
-                          <Trash2 size={12} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgaven.")) {
-                              onUpdateExpense(v.id, { direction: "in" });
-                            }
-                          }}
-                          className="p-1 text-muted-foreground hover:text-green-600"
-                          title="Markeer als bijschrijving (geen uitgave)"
-                        >
-                          <ArrowDownToLine size={12} />
-                        </button>
+                        {isExpense && (
+                          <>
+                            <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
+                              <Trash2 size={12} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgaven.")) {
+                                  onUpdateExpense(v.id, { direction: "in" });
+                                }
+                              }}
+                              className="p-1 text-muted-foreground hover:text-green-600"
+                              title="Markeer als bijschrijving (geen uitgave)"
+                            >
+                              <ArrowDownToLine size={12} />
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                     {isEditing && (

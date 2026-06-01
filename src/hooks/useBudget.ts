@@ -58,6 +58,8 @@ export interface BankTransaction {
   amount: number;
   row_hash: string;
   created_at: string;
+  line_item_id: string | null;
+  dossier: string | null;
 }
 
 export interface BankStatementUpload {
@@ -354,6 +356,16 @@ export function useBudgetMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  const updateBankTransaction = useMutation({
+    mutationFn: async ({ id, ...fields }: { id: string; line_item_id?: string | null; dossier?: string | null }) => {
+      const { error } = await (supabase as any).from("bank_transactions").update(fields).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bank-statement", year] });
+    },
+  });
+
   const addBalanceItem = useMutation({
     mutationFn: async ({ name, amount, section, side = 'right' }: { name: string; amount: number; section: string; side?: string }) => {
       const { data: existing } = await supabase
@@ -501,6 +513,7 @@ export function useBudgetMutations(year: number) {
     addNote,
     deleteNote,
     replaceBankStatement,
+    updateBankTransaction,
   };
 }
 

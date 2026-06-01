@@ -266,6 +266,7 @@ export default function FinancienPage() {
               year={year}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
+              onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Banktransactie bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}
               onOpenDuplicates={() => setDuplicatesOpen(true)}
             />
