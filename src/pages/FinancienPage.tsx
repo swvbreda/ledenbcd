@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions, useUpsertContribution } from "@/hooks/useContributions";
+import { useContributions, useUpsertContribution, useContributionInvoices } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -43,6 +43,7 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
+  const { data: contributionInvoices } = useContributionInvoices(year);
   const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
@@ -51,14 +52,15 @@ export default function FinancienPage() {
     [effectiveMembers, rawOldMembers]
   );
 
-  // Auto-categoriseer inkomende banktransacties als contributie wanneer de
-  // tegenpartij overeenkomt met een lid (bedrijfsnaam of naam). Werkt ook het
-  // ledenbestand (member_contributions) bij naar "betaald".
+  // Auto-categoriseer inkomende banktransacties als contributie. Match volgorde:
+  // 1) Factuurnummer in omschrijving/REMI → contribution_invoices → lid
+  // 2) Tegenpartij matcht bedrijfsnaam/naam van een lid
+  // 3) Bedrag = contributiebedrag → markeer als Contributie (zonder lid)
+  // Bij match op lid wordt member_contributions bijgewerkt naar "betaald".
   const autoMatchedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!user) return;
     if (!bankStatement?.transactions?.length) return;
-    if (!allMembersForLookup.length) return;
 
     const normalize = (s: string) =>
       (s || "")
@@ -78,10 +80,33 @@ export default function FinancienPage() {
       }))
       .filter((m) => m.keys.length > 0);
 
+    const memberById = new Map(allMembersForLookup.map((m) => [m.id, m]));
+    const invoiceByNumber = new Map<string, number>();
+    for (const inv of contributionInvoices || []) {
+      const num = (inv.invoice_number || "").trim();
+      if (num) invoiceByNumber.set(num, inv.member_id);
+    }
+
+    const extractInvoiceNumbers = (text: string): string[] => {
+      const out = new Set<string>();
+      const t = text || "";
+      // Expliciet na REMI/Factuurnummer/EREF
+      const re = /(?:REMI|Factuurnummer|EREF)[/:]+([A-Za-z0-9-]+)/gi;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(t)) !== null) {
+        if (m[1] && m[1].toUpperCase() !== "NOTPROVIDED") out.add(m[1]);
+      }
+      // Losse nummers die op factuur kunnen lijken (bv. 2026012)
+      const yearPrefix = String(year);
+      const reYear = new RegExp(`\\b${yearPrefix}\\d{2,4}\\b`, "g");
+      let m2: RegExpExecArray | null;
+      while ((m2 = reYear.exec(t)) !== null) out.add(m2[0]);
+      return Array.from(out);
+    };
+
     const findMember = (counterparty: string | null) => {
       const n = normalize(counterparty || "");
       if (!n) return null;
-      // Exact / contained match op één van de keys
       for (const m of memberIndex) {
         if (m.keys.some((k) => n === k || n.includes(k) || k.includes(n))) {
           return m;
@@ -99,12 +124,38 @@ export default function FinancienPage() {
       if ((tx.dossier || "").toLowerCase().startsWith("contributie")) continue;
       if (autoMatchedRef.current.has(tx.id)) continue;
 
-      const match = findMember(tx.counterparty);
-      if (!match) continue;
+      // 1) Invoice-number match via REMI/EREF/description
+      let matchedMemberId: number | null = null;
+      let matchedName: string | null = null;
+      const haystack = `${tx.description || ""} ${tx.invoice_reference || ""}`;
+      const invNumbers = extractInvoiceNumbers(haystack);
+      for (const num of invNumbers) {
+        const mid = invoiceByNumber.get(num);
+        if (mid) {
+          matchedMemberId = mid;
+          matchedName = memberById.get(mid)?.naam || `Lid #${mid}`;
+          break;
+        }
+      }
+
+      // 2) Counterparty match op bedrijfsnaam/naam
+      if (!matchedMemberId) {
+        const m = findMember(tx.counterparty);
+        if (m) {
+          matchedMemberId = m.id;
+          matchedName = m.naam;
+        }
+      }
+
+      // 3) Fallback: bedrag = contributiebedrag → categoriseer als Contributie zonder lid
+      const isContribAmount = Math.abs(tx.amount - contributionAmount) < 0.005;
+      if (!matchedMemberId && !isContribAmount) continue;
 
       autoMatchedRef.current.add(tx.id);
 
-      const dossier = `Contributie · ${match.naam} (#${match.id})`;
+      const dossier = matchedMemberId
+        ? `Contributie · ${matchedName} (#${matchedMemberId})`
+        : `Contributie · ${tx.counterparty || "onbekend"}`;
       mutations.updateBankTransaction.mutate({
         id: tx.id,
         dossier,
@@ -112,9 +163,9 @@ export default function FinancienPage() {
         applyToSimilar: false,
       });
 
-      if (!contribByMember.get(match.id)) {
+      if (matchedMemberId && !contribByMember.get(matchedMemberId)) {
         upsertContribution.mutate({
-          member_id: match.id,
+          member_id: matchedMemberId,
           year,
           amount: tx.amount || contributionAmount,
           paid: true,
@@ -123,7 +174,7 @@ export default function FinancienPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bankStatement?.transactions, allMembersForLookup, contributions, user, year]);
+  }, [bankStatement?.transactions, allMembersForLookup, contributions, contributionInvoices, user, year]);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
