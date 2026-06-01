@@ -642,10 +642,12 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
                       <td className="px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => flipDirection(idx)}
-                          title="Klik om om te keren tussen Bij en Af"
+                         <button
+                           type="button"
+                           onClick={() => flipDirection(idx)}
+                           title={entry.direction === "in"
+                             ? "Bijschrijvingen kunnen niet als uitgave worden geboekt"
+                             : "Klik om deze afschrijving om te zetten naar een bijschrijving"}
                           className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
                             entry.direction === "in"
                               ? "bg-green-600/10 text-green-700 border-green-600/40"
