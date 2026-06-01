@@ -74,7 +74,10 @@ export default function FinancienPage() {
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
   );
   const totalSpent = (categories || []).reduce(
-    (s, c) => s + c.line_items.reduce((ls, li) => ls + li.expenses.reduce((es, e) => es + e.amount, 0), 0), 0
+    (s, c) => s + c.line_items.reduce(
+      (ls, li) => ls + li.expenses.reduce((es, e) => es + (e.direction === "in" ? 0 : e.amount), 0),
+      0
+    ), 0
   );
 
   const handleAddCategory = () => {
