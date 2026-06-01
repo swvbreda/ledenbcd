@@ -34,6 +34,18 @@ Deno.serve(async (req) => {
 
     if (!file) throw new Error("No file provided");
 
+    // Re-upload-veilig: wis alleen de nog OPENSTAANDE 'unmatched_payment' todos
+    // voor dit jaar, zodat verouderde voorstellen verdwijnen. Afgeronde,
+    // genegeerde of on-hold todos blijven staan (historisch besluit blijft),
+    // en bestaande koppelingen (paid contributies/uitgaven, dossiers) worden
+    // nooit aangeraakt — auto-apply kan paid=false alleen naar true zetten.
+    await supabase
+      .from("finance_todos")
+      .delete()
+      .eq("year", year)
+      .eq("todo_type", "unmatched_payment")
+      .eq("status", "pending");
+
     // Read file content
     const arrayBuffer = await file.arrayBuffer();
     const fileBytes = new Uint8Array(arrayBuffer);
