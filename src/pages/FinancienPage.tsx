@@ -232,17 +232,6 @@ export default function FinancienPage() {
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}
-              onConvertExpenseToIncome={async (expenseId, memberId, amount, paidDate) => {
-                await upsertContribution.mutateAsync({
-                  member_id: memberId,
-                  year,
-                  amount,
-                  paid: true,
-                  paid_date: paidDate,
-                });
-                await mutations.deleteExpense.mutateAsync(expenseId);
-                toast.success("Omgezet naar contributiebetaling");
-              }}
             />
           </TabsContent>
 
