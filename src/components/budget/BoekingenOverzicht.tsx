@@ -27,6 +27,7 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => void;
   onOpenPdfImport: () => void;
+  onOpenDuplicates?: () => void;
 }
 
 const fmtDate = (d: string | null) => {
