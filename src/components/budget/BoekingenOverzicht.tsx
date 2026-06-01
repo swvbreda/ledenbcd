@@ -61,6 +61,12 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
     [categories]
   );
 
+  const lineItemMap = useMemo(() => {
+    const m = new Map<string, { catName: string; liName: string }>();
+    for (const li of allLineItems) m.set(li.id, { catName: li.catName, liName: li.liName });
+    return m;
+  }, [allLineItems]);
+
   const existingDossiers = useMemo(() => {
     const set = new Set<string>();
     for (const cat of categories) {
@@ -149,13 +155,14 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       };
     } else {
       const b = row.data;
+      const li = b.line_item_id ? lineItemMap.get(b.line_item_id) : null;
       return {
         date: b.transaction_date || "",
         type: b.direction === "in" ? "In" : "Uit",
         name: b.counterparty || b.description || "",
-        dossier: "",
-        category: "Bank",
-        subcategory: "",
+        dossier: b.dossier || "",
+        category: li ? li.catName : "Bank",
+        subcategory: li ? li.liName : "",
         invoice: b.invoice_reference || "",
         amount: b.amount,
         isExpense: b.direction === "out",
@@ -227,19 +234,33 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
   };
 
   const startEdit = (row: LedgerRow) => {
-    if (row.type !== "expense") return;
-    const e = row.data;
-    setEditingId(e.id);
-    setEditDossier(e.dossier || "");
-    setEditLineItemId(e.line_item_id);
+    if (row.type === "expense") {
+      const e = row.data;
+      setEditingId(e.id);
+      setEditDossier(e.dossier || "");
+      setEditLineItemId(e.line_item_id);
+    } else if (row.type === "bank") {
+      const b = row.data;
+      setEditingId(b.id);
+      setEditDossier(b.dossier || "");
+      setEditLineItemId(b.line_item_id || "");
+    }
   };
 
   const saveEdit = () => {
     if (!editingId) return;
-    onUpdateExpense(editingId, {
-      dossier: editDossier || null,
-      line_item_id: editLineItemId,
-    });
+    const row = rows.find((r) => (r as any).data.id === editingId);
+    if (row?.type === "bank") {
+      onUpdateBankTransaction?.(editingId, {
+        dossier: editDossier || null,
+        line_item_id: editLineItemId || null,
+      });
+    } else {
+      onUpdateExpense(editingId, {
+        dossier: editDossier || null,
+        line_item_id: editLineItemId,
+      });
+    }
     setEditingId(null);
   };
 
