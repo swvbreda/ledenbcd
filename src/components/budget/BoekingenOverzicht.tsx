@@ -62,6 +62,19 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     [categories]
   );
 
+  const existingDossiers = useMemo(() => {
+    const set = new Set<string>();
+    for (const cat of categories) {
+      for (const li of cat.line_items) {
+        for (const exp of li.expenses) {
+          const d = (exp.dossier || "").trim();
+          if (d) set.add(d);
+        }
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [categories]);
+
   const memberMap = useMemo(() => new Map(members.map((m) => [m.id, m.naam])), [members]);
 
   const rows: LedgerRow[] = useMemo(() => {
@@ -341,12 +354,20 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
                   <td className="px-2 py-1">{v.name}</td>
                   <td className="px-2 py-1">
                     {isEditing ? (
-                      <Input
-                        value={editDossier}
-                        onChange={(e) => setEditDossier(e.target.value)}
-                        className="h-6 text-xs"
-                        placeholder="Dossier..."
-                      />
+                      <>
+                        <Input
+                          list="dossier-options"
+                          value={editDossier}
+                          onChange={(e) => setEditDossier(e.target.value)}
+                          className="h-6 text-xs"
+                          placeholder="Kies of typ dossier..."
+                        />
+                        <datalist id="dossier-options">
+                          {existingDossiers.map((d) => (
+                            <option key={d} value={d} />
+                          ))}
+                        </datalist>
+                      </>
                     ) : (
                       v.dossier || ""
                     )}
