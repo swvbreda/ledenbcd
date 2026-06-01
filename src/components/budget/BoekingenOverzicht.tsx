@@ -189,8 +189,8 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
     list.sort((a, b) => {
       const va = getRowValues(a);
       const vb = getRowValues(b);
-      let valA: any = va[sortKey] ?? "";
-      let valB: any = vb[sortKey] ?? "";
+      let valA: string | number = String(va[sortKey] ?? "");
+      let valB: string | number = String(vb[sortKey] ?? "");
       if (sortKey === "amount") { valA = va.amount; valB = vb.amount; }
       if (sortKey === "paid") { valA = va.paid ? 1 : 0; valB = vb.paid ? 1 : 0; }
       if (valA < valB) return sortAsc ? -1 : 1;
@@ -214,6 +214,14 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const handleFilterTypeChange = (value: string) => {
+    if (value === "all" || value === "out" || value === "income") setFilterType(value);
+  };
+
+  const handleFilterPaidChange = (value: string) => {
+    if (value === "all" || value === "paid" || value === "unpaid") setFilterPaid(value);
   };
 
   const startEdit = (row: LedgerRow) => {
