@@ -201,7 +201,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     return list.map((e) => {
       const match = findExistingMatch(e, usedKeys, tolerance);
       if (match) {
-        return { ...e, already_present: true, existing_description: match.description, selected: false };
+        return { ...e, already_present: true, existing_description: match.description };
       }
       return { ...e, already_present: false, existing_description: undefined };
     });
