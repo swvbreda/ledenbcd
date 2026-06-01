@@ -231,7 +231,7 @@ export default function FinancienPage() {
             <BoekingenOverzicht
               categories={categories || []}
               contributions={contributions || []}
-              members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
               year={year}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
@@ -289,7 +289,7 @@ export default function FinancienPage() {
           open={pdfImportOpen}
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
-          members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
+          members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync(exp);
