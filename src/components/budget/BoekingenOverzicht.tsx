@@ -88,7 +88,6 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     }
 
     for (const c of contributions || []) {
-      if (!c.paid) continue;
       result.push({
         type: "income",
         data: {
