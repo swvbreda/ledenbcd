@@ -231,7 +231,6 @@ export default function FinancienPage() {
             <BoekingenOverzicht
               categories={categories || []}
               contributions={contributions || []}
-              declarations={internalDeclarations || []}
               members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
               contributionAmount={contributionAmount}
