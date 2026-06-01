@@ -142,6 +142,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [pdfOpening, setPdfOpening] = useState<number | null>(null);
   const [pdfClosing, setPdfClosing] = useState<number | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState("");
+  const [expectedCounts, setExpectedCounts] = useState<{ in: number | null; out: number | null; totalIn: number | null; totalOut: number | null }>({ in: null, out: null, totalIn: null, totalOut: null });
+  const [bankSaved, setBankSaved] = useState(false);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -315,6 +317,12 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       const data = await resp.json();
       setPdfOpening(typeof data.opening_balance === "number" ? data.opening_balance : null);
       setPdfClosing(typeof data.closing_balance === "number" ? data.closing_balance : null);
+      setExpectedCounts({
+        in: typeof data.expected_in_count === "number" ? data.expected_in_count : null,
+        out: typeof data.expected_out_count === "number" ? data.expected_out_count : null,
+        totalIn: typeof data.expected_total_in === "number" ? data.expected_total_in : null,
+        totalOut: typeof data.expected_total_out === "number" ? data.expected_total_out : null,
+      });
       if (!data.entries?.length) {
         toast.warning("Geen regels gevonden in de PDF");
         return;
@@ -375,6 +383,29 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setEntries(enriched);
       setStep("review");
       toast.success(`${data.count} regels geëxtraheerd (${inCount} bij, ${outCount} af)`);
+
+      // Direct het bankafschrift opslaan, zodat het overzicht/dashboard
+      // meteen de echte bankcijfers toont — onafhankelijk van of de gebruiker
+      // daarna nog op "Importeer" klikt voor het koppelen aan begrotingsposten.
+      try {
+        await onReplaceBankStatement({
+          fileName: file.name,
+          openingBalance: typeof data.opening_balance === "number" ? data.opening_balance : null,
+          closingBalance: typeof data.closing_balance === "number" ? data.closing_balance : null,
+          transactions: enriched.map((e) => ({
+            transaction_date: e.expense_date || null,
+            direction: e.direction,
+            counterparty: e.creditor_name || null,
+            description: e.description || e.creditor_name || null,
+            invoice_reference: e.invoice_reference || null,
+            amount: e.amount,
+          })),
+        });
+        setBankSaved(true);
+        toast.success("Bankafschrift opgeslagen in het overzicht");
+      } catch (saveErr: any) {
+        toast.error("Bankafschrift kon niet worden opgeslagen: " + (saveErr.message || "onbekend"));
+      }
     } catch (err: any) {
       toast.error(err.message || "Fout bij PDF-extractie");
     } finally {
@@ -461,19 +492,24 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     }
     setStep("importing");
     try {
-      await onReplaceBankStatement({
-        fileName: uploadedFileName || `Bankafschrift ${year}`,
-        openingBalance: pdfOpening,
-        closingBalance: pdfClosing,
-        transactions: entries.map((e) => ({
-          transaction_date: e.expense_date || null,
-          direction: e.direction,
-          counterparty: e.creditor_name || null,
-          description: e.description || e.creditor_name || null,
-          invoice_reference: e.invoice_reference || null,
-          amount: e.amount,
-        })),
-      });
+      // Bankafschrift is al opgeslagen in handleFileUpload; alleen opnieuw opslaan
+      // wanneer de gebruiker handmatig richtingen heeft gewijzigd (flipDirection)
+      // en dus de bank-data nog niet de laatste staat weerspiegelt.
+      if (!bankSaved) {
+        await onReplaceBankStatement({
+          fileName: uploadedFileName || `Bankafschrift ${year}`,
+          openingBalance: pdfOpening,
+          closingBalance: pdfClosing,
+          transactions: entries.map((e) => ({
+            transaction_date: e.expense_date || null,
+            direction: e.direction,
+            counterparty: e.creditor_name || null,
+            description: e.description || e.creditor_name || null,
+            invoice_reference: e.invoice_reference || null,
+            amount: e.amount,
+          })),
+        });
+      }
 
       if (readyExpenses.length > 0) {
         await onImport(
@@ -507,6 +543,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setPdfOpening(null);
       setPdfClosing(null);
       setUploadedFileName("");
+      setBankSaved(false);
+      setExpectedCounts({ in: null, out: null, totalIn: null, totalOut: null });
     } catch (err: any) {
       toast.error("Fout bij importeren: " + (err.message || "onbekend"));
       setStep("review");
@@ -520,6 +558,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setPdfOpening(null);
       setPdfClosing(null);
       setUploadedFileName("");
+      setBankSaved(false);
+      setExpectedCounts({ in: null, out: null, totalIn: null, totalOut: null });
     }
     onOpenChange(open);
   };
