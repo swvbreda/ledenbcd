@@ -27,6 +27,7 @@ interface Props {
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => void;
   onOpenPdfImport: () => void;
+  onOpenDuplicates?: () => void;
 }
 
 const fmtDate = (d: string | null) => {
@@ -38,7 +39,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport, onOpenDuplicates }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -282,6 +283,11 @@ export default function BoekingenOverzicht({ categories, contributions, members,
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onOpenPdfImport}>
           <Upload size={12} className="mr-1" /> PDF importeren
         </Button>
+        {onOpenDuplicates && (
+          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onOpenDuplicates}>
+            Duplicaten opruimen
+          </Button>
+        )}
         <button
           onClick={handleExport}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium hover:bg-accent transition-colors"
