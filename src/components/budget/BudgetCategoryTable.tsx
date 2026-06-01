@@ -29,7 +29,7 @@ export default function BudgetCategoryTable({
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
   const totalSpent = category.line_items.reduce(
-    (s, li) => s + li.expenses.reduce((es, e) => es + e.amount, 0),
+    (s, li) => s + li.expenses.reduce((es, e) => es + (e.direction === "in" ? 0 : e.amount), 0),
     0
   );
   const totalRemaining = totalBudgeted - totalSpent;
@@ -85,7 +85,7 @@ export default function BudgetCategoryTable({
               <th />
             </tr>
             {category.line_items.map((li) => {
-              const spent = li.expenses.reduce((s, e) => s + e.amount, 0);
+              const spent = li.expenses.reduce((s, e) => s + (e.direction === "in" ? 0 : e.amount), 0);
               const remaining = li.budgeted_amount - spent;
               return (
                 <tr

@@ -33,6 +33,7 @@ export default function ExpenseListView({ categories, onDeleteExpense }: Props) 
     for (const cat of categories) {
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
+          if (exp.direction === "in") continue;
           result.push({
             ...exp,
             categoryName: cat.name,
