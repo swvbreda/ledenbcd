@@ -78,9 +78,9 @@ export interface BankStatementData {
   netMutation: number;
 }
 
-export type ExpenseSourcePreference = "manual" | "pdf_import" | "both";
+export type ExpenseSourcePreference = "manual" | "pdf_import";
 
-export function useBudgetCategories(year: number, sourcePreference: ExpenseSourcePreference = "both") {
+export function useBudgetCategories(year: number, sourcePreference: ExpenseSourcePreference = "manual") {
   return useQuery({
     queryKey: ["budget-categories", year, sourcePreference],
     queryFn: async () => {
@@ -101,15 +101,12 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
       const lineItemIds = (lineItems || []).map((li: any) => li.id);
       let expenses: any[] = [];
       if (lineItemIds.length > 0) {
-        let q = supabase
+        const { data: exp, error: expError } = await supabase
           .from("budget_expenses")
           .select("*")
           .in("line_item_id", lineItemIds)
-          .eq("direction", "out");
-        if (sourcePreference !== "both") {
-          q = q.eq("source", sourcePreference);
-        }
-        const { data: exp, error: expError } = await q;
+          .eq("direction", "out")
+          .eq("source", sourcePreference);
         if (expError) throw expError;
         expenses = exp || [];
       }
@@ -557,7 +554,7 @@ export function useBudgetYearSettingsMutation(year: number) {
       const merged = {
         budgeted_member_count: input.budgeted_member_count ?? (existing as any)?.budgeted_member_count ?? 0,
         contribution_amount: input.contribution_amount ?? (existing as any)?.contribution_amount ?? 3000,
-        expense_source_preference: input.expense_source_preference ?? (existing as any)?.expense_source_preference ?? "both",
+        expense_source_preference: input.expense_source_preference ?? ((existing as any)?.expense_source_preference === "pdf_import" ? "pdf_import" : "manual"),
       };
       if (existing) {
         const { error } = await supabase.from("budget_year_settings").update({ ...merged, updated_at: new Date().toISOString() }).eq("id", (existing as any).id);

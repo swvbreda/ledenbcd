@@ -34,7 +34,7 @@ export default function FinancienPage() {
   const { user, isAdmin } = useAuth();
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
-  const expenseSourcePreference = (yearSettings?.expense_source_preference ?? "both") as "manual" | "pdf_import" | "both";
+  const expenseSourcePreference = yearSettings?.expense_source_preference === "pdf_import" ? "pdf_import" : "manual";
   const { data: categories, isLoading } = useBudgetCategories(year, expenseSourcePreference);
   const { data: balanceItems } = useBudgetBalance(year);
   const { data: bankStatement } = useBankStatement(year);
@@ -121,7 +121,7 @@ export default function FinancienPage() {
               value={expenseSourcePreference}
               onValueChange={(v) =>
                 yearSettingsMutation.mutate(
-                  { expense_source_preference: v as "manual" | "pdf_import" | "both" },
+                  { expense_source_preference: v as "manual" | "pdf_import" },
                   { onSuccess: () => toast.success("Bronvoorkeur opgeslagen") }
                 )
               }
@@ -130,7 +130,6 @@ export default function FinancienPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="both">Beide (handmatig + PDF)</SelectItem>
                 <SelectItem value="manual">Alleen handmatig</SelectItem>
                 <SelectItem value="pdf_import">Alleen PDF-import</SelectItem>
               </SelectContent>
