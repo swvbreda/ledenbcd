@@ -274,6 +274,8 @@ export default function FinancienPage() {
           expenses={selectedLineItemExpenses}
           onAddExpense={(expense) => mutations.addExpense.mutate(expense, { onSuccess: () => toast.success("Uitgave toegevoegd") })}
           onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
+          onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking verplaatst") })}
+          categories={categories || []}
           userId={user.id}
         />
       )}
