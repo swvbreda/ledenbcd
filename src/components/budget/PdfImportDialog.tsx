@@ -142,6 +142,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   const [pdfOpening, setPdfOpening] = useState<number | null>(null);
   const [pdfClosing, setPdfClosing] = useState<number | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState("");
+  const [expectedCounts, setExpectedCounts] = useState<{ in: number | null; out: number | null; totalIn: number | null; totalOut: number | null }>({ in: null, out: null, totalIn: null, totalOut: null });
+  const [bankSaved, setBankSaved] = useState(false);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -315,6 +317,12 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       const data = await resp.json();
       setPdfOpening(typeof data.opening_balance === "number" ? data.opening_balance : null);
       setPdfClosing(typeof data.closing_balance === "number" ? data.closing_balance : null);
+      setExpectedCounts({
+        in: typeof data.expected_in_count === "number" ? data.expected_in_count : null,
+        out: typeof data.expected_out_count === "number" ? data.expected_out_count : null,
+        totalIn: typeof data.expected_total_in === "number" ? data.expected_total_in : null,
+        totalOut: typeof data.expected_total_out === "number" ? data.expected_total_out : null,
+      });
       if (!data.entries?.length) {
         toast.warning("Geen regels gevonden in de PDF");
         return;
@@ -375,6 +383,29 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setEntries(enriched);
       setStep("review");
       toast.success(`${data.count} regels geëxtraheerd (${inCount} bij, ${outCount} af)`);
+
+      // Direct het bankafschrift opslaan, zodat het overzicht/dashboard
+      // meteen de echte bankcijfers toont — onafhankelijk van of de gebruiker
+      // daarna nog op "Importeer" klikt voor het koppelen aan begrotingsposten.
+      try {
+        await onReplaceBankStatement({
+          fileName: file.name,
+          openingBalance: typeof data.opening_balance === "number" ? data.opening_balance : null,
+          closingBalance: typeof data.closing_balance === "number" ? data.closing_balance : null,
+          transactions: enriched.map((e) => ({
+            transaction_date: e.expense_date || null,
+            direction: e.direction,
+            counterparty: e.creditor_name || null,
+            description: e.description || e.creditor_name || null,
+            invoice_reference: e.invoice_reference || null,
+            amount: e.amount,
+          })),
+        });
+        setBankSaved(true);
+        toast.success("Bankafschrift opgeslagen in het overzicht");
+      } catch (saveErr: any) {
+        toast.error("Bankafschrift kon niet worden opgeslagen: " + (saveErr.message || "onbekend"));
+      }
     } catch (err: any) {
       toast.error(err.message || "Fout bij PDF-extractie");
     } finally {
@@ -461,19 +492,24 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     }
     setStep("importing");
     try {
-      await onReplaceBankStatement({
-        fileName: uploadedFileName || `Bankafschrift ${year}`,
-        openingBalance: pdfOpening,
-        closingBalance: pdfClosing,
-        transactions: entries.map((e) => ({
-          transaction_date: e.expense_date || null,
-          direction: e.direction,
-          counterparty: e.creditor_name || null,
-          description: e.description || e.creditor_name || null,
-          invoice_reference: e.invoice_reference || null,
-          amount: e.amount,
-        })),
-      });
+      // Bankafschrift is al opgeslagen in handleFileUpload; alleen opnieuw opslaan
+      // wanneer de gebruiker handmatig richtingen heeft gewijzigd (flipDirection)
+      // en dus de bank-data nog niet de laatste staat weerspiegelt.
+      if (!bankSaved) {
+        await onReplaceBankStatement({
+          fileName: uploadedFileName || `Bankafschrift ${year}`,
+          openingBalance: pdfOpening,
+          closingBalance: pdfClosing,
+          transactions: entries.map((e) => ({
+            transaction_date: e.expense_date || null,
+            direction: e.direction,
+            counterparty: e.creditor_name || null,
+            description: e.description || e.creditor_name || null,
+            invoice_reference: e.invoice_reference || null,
+            amount: e.amount,
+          })),
+        });
+      }
 
       if (readyExpenses.length > 0) {
         await onImport(
@@ -507,6 +543,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setPdfOpening(null);
       setPdfClosing(null);
       setUploadedFileName("");
+      setBankSaved(false);
+      setExpectedCounts({ in: null, out: null, totalIn: null, totalOut: null });
     } catch (err: any) {
       toast.error("Fout bij importeren: " + (err.message || "onbekend"));
       setStep("review");
@@ -520,6 +558,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       setPdfOpening(null);
       setPdfClosing(null);
       setUploadedFileName("");
+      setBankSaved(false);
+      setExpectedCounts({ in: null, out: null, totalIn: null, totalOut: null });
     }
     onOpenChange(open);
   };
@@ -571,8 +611,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
               const expectedNet = pdfOpening !== null && pdfClosing !== null ? (pdfClosing - pdfOpening) : null;
               const diff = expectedNet !== null ? (net - expectedNet) : null;
               const ok = diff !== null && Math.abs(diff) <= 0.01;
+              const countIn = entries.filter(e => e.direction === "in").length;
+              const countOut = entries.filter(e => e.direction === "out").length;
+              const countOk = expectedCounts.in !== null && expectedCounts.out !== null
+                ? (countIn === expectedCounts.in && countOut === expectedCounts.out)
+                : null;
               return (
-                <div className={`rounded-md border px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1 ${ok ? "border-green-600/40 bg-green-600/5" : "border-amber-500/40 bg-amber-500/10"}`}>
+                <div className={`rounded-md border px-3 py-2 text-xs flex flex-wrap items-center gap-x-4 gap-y-1 ${ok && countOk !== false ? "border-green-600/40 bg-green-600/5" : "border-amber-500/40 bg-amber-500/10"}`}>
                   <span className="font-semibold">Saldocontrole PDF:</span>
                   {pdfOpening !== null && <span>Beginsaldo <span className="tabular-nums">€{pdfOpening.toFixed(2)}</span></span>}
                   {pdfClosing !== null && <span>Eindsaldo <span className="tabular-nums">€{pdfClosing.toFixed(2)}</span></span>}
@@ -581,6 +626,15 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                     <span className={`font-semibold ${ok ? "text-green-700" : "text-amber-700"}`}>
                       {ok ? "✓ klopt met PDF" : `⚠ verschil €${Math.abs(diff!).toFixed(2)} — controleer of alle regels gelezen zijn`}
                     </span>
+                  )}
+                  {expectedCounts.in !== null && expectedCounts.out !== null && (
+                    <span className={`font-semibold ${countOk ? "text-green-700" : "text-destructive"}`}>
+                      Aantal: {countIn}/{expectedCounts.in} bij • {countOut}/{expectedCounts.out} af
+                      {!countOk && " ⚠ ontbrekende regels — herupload de PDF"}
+                    </span>
+                  )}
+                  {bankSaved && (
+                    <span className="font-semibold text-green-700">✓ Bankafschrift opgeslagen in overzicht</span>
                   )}
                 </div>
               );
