@@ -39,6 +39,11 @@ export default function FinancienPage() {
   const { data: contributions } = useContributions(year);
   const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
+  const { rawOldMembers } = useMembersData();
+  const allMembersForLookup = useMemo(
+    () => [...effectiveMembers, ...rawOldMembers],
+    [effectiveMembers, rawOldMembers]
+  );
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
 
@@ -226,7 +231,7 @@ export default function FinancienPage() {
               categories={categories || []}
               contributions={contributions || []}
               declarations={internalDeclarations || []}
-              members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+              members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
               contributionAmount={contributionAmount}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
@@ -285,7 +290,7 @@ export default function FinancienPage() {
           open={pdfImportOpen}
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
-          members={effectiveMembers.map((m: any) => ({ id: m.id, naam: m.naam }))}
+          members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync(exp);
