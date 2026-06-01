@@ -36,7 +36,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
 
   // Bijschrijvingen (direction='in') horen nooit in de uitgavenlijst, ook niet
   // als ze per ongeluk aan een begrotingspost zijn gehangen.
-  const visibleExpenses = expenses.filter((e) => e.direction !== "in");
+  const visibleExpenses = expenses.filter((e) => e.direction !== "in" && !(e as any)._fromBank);
   const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
 
   const handleAdd = () => {
