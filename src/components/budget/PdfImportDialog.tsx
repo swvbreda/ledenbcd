@@ -233,6 +233,14 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
     return undefined;
   };
 
+  // Recompute duplicates when tolerance changes
+  useEffect(() => {
+    if (entries.length > 0) {
+      setEntries((prev) => applyDuplicateDetection(prev, matchTolerance));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchTolerance]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
