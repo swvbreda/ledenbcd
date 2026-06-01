@@ -233,7 +233,6 @@ export default function FinancienPage() {
               contributions={contributions || []}
               members={allMembersForLookup.map((m: any) => ({ id: m.id, naam: m.naam }))}
               year={year}
-              contributionAmount={contributionAmount}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}

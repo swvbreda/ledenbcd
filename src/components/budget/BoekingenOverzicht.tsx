@@ -24,7 +24,6 @@ interface Props {
   contributions: Contribution[];
   members: MemberOption[];
   year: number;
-  contributionAmount: number;
   onDeleteExpense: (id: string) => void;
   onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => void;
   onOpenPdfImport: () => void;
@@ -39,7 +38,7 @@ const fmtDate = (d: string | null) => {
 
 type SortKey = "date" | "type" | "name" | "dossier" | "category" | "subcategory" | "invoice" | "amount" | "paid";
 
-export default function BoekingenOverzicht({ categories, contributions, members, year, contributionAmount, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
+export default function BoekingenOverzicht({ categories, contributions, members, year, onDeleteExpense, onUpdateExpense, onOpenPdfImport }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
@@ -104,7 +103,7 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     }
 
     return result;
-  }, [categories, contributions, memberMap, contributionAmount]);
+  }, [categories, contributions, memberMap]);
 
   const getRowValues = (row: LedgerRow) => {
     if (row.type === "expense") {
