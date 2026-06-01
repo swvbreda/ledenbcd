@@ -407,16 +407,22 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
   const flipDirection = (idx: number) => {
     setEntries((prev) =>
-      prev.map((e, i) =>
-        i === idx
-          ? {
-              ...e,
-              direction: e.direction === "in" ? "out" : "in",
-              assigned_line_item_id: e.direction === "in" ? e.assigned_line_item_id : "",
-              assigned_member_id: e.direction === "out" ? matchMember(e.creditor_name) : undefined,
-            }
-          : e
-      )
+      prev.map((e, i) => {
+        if (i !== idx) return e;
+        // Een bijschrijving (geld dat binnenkomt) kan NOOIT een uitgave zijn.
+        // We staan alleen toe om een "Af" om te zetten naar "Bij" (om een ten onrechte
+        // als uitgave geclassificeerde bijschrijving te corrigeren), niet andersom.
+        if (e.direction === "in") {
+          toast.error("Een bijschrijving kan niet als uitgave worden geboekt");
+          return e;
+        }
+        return {
+          ...e,
+          direction: "in",
+          assigned_line_item_id: "",
+          assigned_member_id: matchMember(e.creditor_name),
+        };
+      })
     );
   };
 
@@ -432,8 +438,14 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
   };
 
   const selectedEntries = entries.filter((e) => e.selected);
-  const readyExpenses = selectedEntries.filter((e) => e.direction === "out" && e.assigned_line_item_id);
-  const readyIncomes = selectedEntries.filter((e) => e.direction === "in" && e.assigned_member_id);
+  // Veiligheidsnet: een bijschrijving ("in") mag NOOIT als uitgave worden geboekt,
+  // ook niet wanneer er per ongeluk een begrotingspost aan is gehangen.
+  const readyExpenses = selectedEntries.filter(
+    (e) => e.direction === "out" && !!e.assigned_line_item_id
+  );
+  const readyIncomes = selectedEntries.filter(
+    (e) => e.direction === "in" && !!e.assigned_member_id
+  );
   const readyCount = readyExpenses.length + readyIncomes.length;
   const totalOut = selectedEntries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
   const totalIn = selectedEntries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
@@ -636,10 +648,12 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                         <Checkbox checked={entry.selected} onCheckedChange={() => toggleEntry(idx)} />
                       </td>
                       <td className="px-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => flipDirection(idx)}
-                          title="Klik om om te keren tussen Bij en Af"
+                         <button
+                           type="button"
+                           onClick={() => flipDirection(idx)}
+                           title={entry.direction === "in"
+                             ? "Bijschrijvingen kunnen niet als uitgave worden geboekt"
+                             : "Klik om deze afschrijving om te zetten naar een bijschrijving"}
                           className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
                             entry.direction === "in"
                               ? "bg-green-600/10 text-green-700 border-green-600/40"
