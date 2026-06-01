@@ -241,7 +241,7 @@ export default function FinancienPage() {
   );
   const totalSpent = (categories || []).reduce(
     (s, c) => s + c.line_items.reduce(
-      (ls, li) => ls + li.expenses.reduce((es, e) => es + (e.direction === "in" ? 0 : e.amount), 0),
+      (ls, li) => ls + li.expenses.reduce((es, e) => es + (e.direction === "in" ? -e.amount : e.amount), 0),
       0
     ), 0
   );

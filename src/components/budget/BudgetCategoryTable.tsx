@@ -85,7 +85,7 @@ export default function BudgetCategoryTable({
               <th />
             </tr>
             {category.line_items.map((li) => {
-              const spent = li.expenses.reduce((s, e) => s + (e.direction === "in" ? 0 : e.amount), 0);
+              const spent = li.expenses.reduce((s, e) => s + (e.direction === "in" ? -e.amount : e.amount), 0);
               const remaining = li.budgeted_amount - spent;
               return (
                 <tr

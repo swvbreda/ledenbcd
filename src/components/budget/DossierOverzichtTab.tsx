@@ -64,6 +64,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
           if (exp.direction === "in") continue;
+          if ((exp as any)._fromBank) continue;
           list.push({
             id: exp.id,
             date: exp.expense_date || "",
