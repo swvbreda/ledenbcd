@@ -523,6 +523,21 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                 />
                 <span>Verberg al-aanwezige regels</span>
               </label>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground">Tolerantie (€):</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={matchTolerance}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setMatchTolerance(Number.isFinite(val) ? Math.max(0, Math.min(1, val)) : 0.01);
+                  }}
+                  className="h-7 w-20 text-xs"
+                />
+              </div>
               <span className="ml-auto text-xs text-muted-foreground">
                 {readyCount}/{selectedEntries.length} klaar • <span className="text-green-600">+<CurrencyText value={totalIn} /></span> / <span className="text-destructive">−<CurrencyText value={totalOut} /></span>
               </span>
