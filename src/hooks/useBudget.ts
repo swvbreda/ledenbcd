@@ -186,6 +186,7 @@ export function useBudgetMutations(year: number) {
   const addExpense = useMutation({
     mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null; direction?: "out" }) => {
       const { error } = await supabase.from("budget_expenses").insert(expense);
+      if (error?.code === "23505" && error.message?.includes("budget_expenses_payment_dedup_idx")) return;
       if (error) throw error;
     },
     onSuccess: invalidate,
