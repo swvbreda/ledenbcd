@@ -266,7 +266,19 @@ export default function FinancienPage() {
               year={year}
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
-              onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Banktransactie bijgewerkt") })}
+              onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate(
+                { id, applyToSimilar: true, ...fields },
+                {
+                  onSuccess: (result) => {
+                    const extra = result?.similarUpdated ?? 0;
+                    toast.success(
+                      extra > 0
+                        ? `Banktransactie bijgewerkt — ook ${extra} vergelijkbare boeking${extra === 1 ? "" : "en"} aangepast`
+                        : "Banktransactie bijgewerkt"
+                    );
+                  },
+                }
+              )}
               onOpenPdfImport={() => setPdfImportOpen(true)}
               onOpenDuplicates={() => setDuplicatesOpen(true)}
             />
