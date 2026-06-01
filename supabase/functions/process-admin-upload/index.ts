@@ -219,10 +219,54 @@ Alleen JSON array, geen andere tekst.`;
       proposals.push(match);
     }
 
+    // Persist unmatched proposals as finance todos so the secretariaat
+    // can later koppelen aan een categorie/begrotingspost.
+    const unmatched = proposals.filter(
+      (p: any) => !p.applied && (!p.match_id || p.type === "unknown")
+    );
+    let unmatchedTodosCreated = 0;
+    if (unmatched.length > 0) {
+      // Fetch existing reference_ids voor dit jaar om dubbele todos te voorkomen
+      const { data: existing } = await supabase
+        .from("finance_todos")
+        .select("reference_id")
+        .eq("year", year)
+        .eq("todo_type", "unmatched_payment");
+      const existingRefs = new Set(
+        (existing ?? []).map((t: any) => t.reference_id).filter(Boolean)
+      );
+      const fmtEur = (n: number) =>
+        new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
+      for (const p of unmatched) {
+        const amount = Number(p.amount) || 0;
+        const name = (p.name || "Onbekend").toString().slice(0, 80);
+        const date = p.date || "";
+        // Stabiele ref: datum + bedrag + naam (lower)
+        const ref = `unmatched:${date}|${amount.toFixed(2)}|${name.toLowerCase()}`;
+        if (existingRefs.has(ref)) continue;
+        const { error: insErr } = await supabase.from("finance_todos").insert({
+          todo_type: "unmatched_payment",
+          title: `Betaling toewijzen: ${name} — ${fmtEur(amount)}`,
+          description:
+            `Bankafschrift (${file.name}) bevat een betaling die niet automatisch ` +
+            `gekoppeld kon worden aan een contributie of crediteur.\n` +
+            (date ? `Datum: ${date}\n` : "") +
+            `Bedrag: ${fmtEur(amount)}\n` +
+            (p.invoice_number ? `Factuurnr: ${p.invoice_number}\n` : "") +
+            (p.description ? `AI: ${p.description}` : ""),
+          assigned_to: "penningmeester",
+          reference_id: ref,
+          year,
+        });
+        if (!insErr) unmatchedTodosCreated++;
+      }
+    }
+
     return new Response(
       JSON.stringify({
         proposals,
         autoApplied: autoApplied.length,
+        unmatchedTodosCreated,
         total: matches.length,
         fileName: file.name,
       }),
