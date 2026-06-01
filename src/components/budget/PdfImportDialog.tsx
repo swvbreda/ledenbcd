@@ -26,7 +26,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: BudgetCategory[];
-  onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }[]) => Promise<void>;
+  onImport: (expenses: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null }[]) => Promise<void>;
   userId: string;
   year: number;
 }
@@ -36,6 +36,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
   const [entries, setEntries] = useState<ExtractedEntry[]>([]);
   const [extracting, setExtracting] = useState(false);
   const [defaultLineItemId, setDefaultLineItemId] = useState<string>("");
+  const [markAsPaid, setMarkAsPaid] = useState(true);
 
   const allLineItems = categories.flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
@@ -163,6 +164,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, onImpo
           invoice_reference: e.invoice_reference || undefined,
           dossier: e.dossier || undefined,
           created_by: userId,
+          paid: markAsPaid,
+          paid_date: markAsPaid ? (e.expense_date || new Date().toISOString().slice(0, 10)) : null,
         }))
       );
       toast.success(`${readyEntries.length} uitgaven geïmporteerd`);
