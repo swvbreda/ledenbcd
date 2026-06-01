@@ -747,9 +747,9 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
               <Button variant="outline" size="sm" onClick={() => { setStep("upload"); setEntries([]); }}>
                 Andere PDF
               </Button>
-              <Button size="sm" onClick={handleImport} disabled={readyCount === 0}>
+              <Button size="sm" onClick={handleImport} disabled={entries.length === 0}>
                 <Check size={14} className="mr-1" />
-                {readyCount} regels importeren
+                Bank opslaan • {readyCount} koppelingen importeren
               </Button>
             </div>
           </div>
