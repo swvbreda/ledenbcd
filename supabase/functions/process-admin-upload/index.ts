@@ -220,6 +220,7 @@ Alleen JSON array, geen andere tekst.`;
             .from("budget_expenses")
             .update({ paid: true, paid_date: today })
             .eq("id", match.match_id)
+            .eq("direction", "out")
             .eq("paid", false);
           if (!error) {
             autoApplied.push(match.match_id);
