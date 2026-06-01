@@ -157,12 +157,14 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
     } else {
       const b = row.data;
       const li = b.line_item_id ? lineItemMap.get(b.line_item_id) : null;
+      const dossier = b.dossier || "";
+      const isContributie = !li && b.direction === "in" && /^contributie/i.test(dossier);
       return {
         date: b.transaction_date || "",
         type: b.direction === "in" ? "In" : "Uit",
         name: b.counterparty || b.description || "",
-        dossier: b.dossier || "",
-        category: li ? li.catName : "Bank",
+        dossier,
+        category: li ? li.catName : isContributie ? "Contributie" : "Bank",
         subcategory: li ? li.liName : "",
         invoice: b.invoice_reference || "",
         amount: b.amount,
