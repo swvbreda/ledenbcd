@@ -325,9 +325,9 @@ export default function BoekingenOverzicht({ categories, contributions, declarat
               <SortHeader label="Type" field="type" className="text-left w-[70px]" />
               <SortHeader label="Datum" field="date" className="text-left" />
               <SortHeader label="Naam" field="name" className="text-left" />
-              <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Categorie" field="category" className="text-left" />
               <SortHeader label="Begrotingspost" field="subcategory" className="text-left" />
+              <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Factuurnr" field="invoice" className="text-left" />
               <SortHeader label="Bedrag" field="amount" className="text-right" />
               <SortHeader label="Status" field="paid" className="text-center w-[80px]" />
