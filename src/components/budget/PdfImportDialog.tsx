@@ -504,6 +504,8 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
       onOpenChange(false);
       setStep("upload");
       setEntries([]);
+      setPdfOpening(null);
+      setPdfClosing(null);
       setUploadedFileName("");
     } catch (err: any) {
       toast.error("Fout bij importeren: " + (err.message || "onbekend"));
