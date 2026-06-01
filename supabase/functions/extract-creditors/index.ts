@@ -71,6 +71,8 @@ Extraheer ELKE individuele transactieregel. Sla subtotalen, saldo-, openings- en
 
 SALDO-EXTRACTIE (bankafschriften): zoek expliciet naar het BEGIN- en EINDSALDO (ook wel "Saldo per ...", "Beginsaldo", "Eindsaldo", "Saldo vorig overzicht", "Nieuw saldo"). Geef deze terug in opening_balance en closing_balance als getal in EUR (negatief bij debet/rood). Laat ze leeg (null) als de PDF geen saldo vermeldt.
 
+TELLINGEN (bankafschriften): zoek in de header naar "Aantal afschrijvingen", "Aantal bijschrijvingen", "Totaal afgeschreven" en "Totaal bijgeschreven". Geef die exact mee in expected_out_count, expected_in_count, expected_total_out, expected_total_in. Deze worden gebruikt om te controleren of je ALLE regels hebt geëxtraheerd. Het is CRUCIAAL dat het aantal entries met direction="out" exact gelijk is aan expected_out_count en met direction="in" exact aan expected_in_count. Als de PDF meerdere pagina's heeft, lees ze ALLEMAAL.
+
 BELANGRIJK — bepaal voor elke regel de richting van het geld:
 - "in"  = bijschrijving / Bij / credit / "+" / geld dat de rekening binnenkomt
 - "out" = afschrijving / Af / debit / "-" / geld dat van de rekening gaat
@@ -148,6 +150,10 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
                   },
                   opening_balance: { type: ["number", "null"], description: "Beginsaldo in EUR (negatief = debet). Null als niet aanwezig." },
                   closing_balance: { type: ["number", "null"], description: "Eindsaldo in EUR (negatief = debet). Null als niet aanwezig." },
+                  expected_in_count: { type: ["number", "null"], description: "Aantal bijschrijvingen volgens de header van het bankafschrift." },
+                  expected_out_count: { type: ["number", "null"], description: "Aantal afschrijvingen volgens de header van het bankafschrift." },
+                  expected_total_in: { type: ["number", "null"], description: "Totaal bijgeschreven in EUR volgens de header." },
+                  expected_total_out: { type: ["number", "null"], description: "Totaal afgeschreven in EUR volgens de header." },
                 },
                 required: ["entries"],
               },
@@ -208,6 +214,10 @@ De import moet exact overeenkomen met wat er op het bankafschrift staat: laat ge
       count: entries.length,
       opening_balance: parsed.opening_balance ?? null,
       closing_balance: parsed.closing_balance ?? null,
+      expected_in_count: parsed.expected_in_count ?? null,
+      expected_out_count: parsed.expected_out_count ?? null,
+      expected_total_in: parsed.expected_total_in ?? null,
+      expected_total_out: parsed.expected_total_out ?? null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
