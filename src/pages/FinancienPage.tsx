@@ -70,14 +70,33 @@ export default function FinancienPage() {
         .replace(/\s+/g, " ")
         .trim();
 
+    const stopwords = new Set([
+      "van", "de", "der", "den", "het", "en", "the", "of", "aan", "bij",
+      "voor", "met", "in", "op", "tot", "uit",
+    ]);
+    const distinctiveTokens = (s: string) =>
+      normalize(s)
+        .split(" ")
+        .filter((t) => t.length >= 4 && !stopwords.has(t));
+
     const memberIndex = allMembersForLookup
-      .map((m) => ({
-        id: m.id,
-        naam: m.naam,
-        keys: [m.bedrijfsnaam, m.naam, m.factuurBedrijfsnaam]
-          .map((v) => normalize(v || ""))
-          .filter((v) => v.length >= 3),
-      }))
+      .map((m) => {
+        const contactNames = [
+          (m as any).contactpersoon,
+          (m as any).contactpersoon2,
+          ...((m as any).contacten || []).map((c: any) => c?.naam),
+        ].filter(Boolean) as string[];
+        const rawKeys = [
+          m.bedrijfsnaam,
+          m.naam,
+          (m as any).factuurBedrijfsnaam,
+          ...contactNames,
+        ];
+        const keys = rawKeys.map((v) => normalize(v || "")).filter((v) => v.length >= 3);
+        const tokenSet = new Set<string>();
+        for (const v of rawKeys) for (const t of distinctiveTokens(v || "")) tokenSet.add(t);
+        return { id: m.id, naam: m.naam, keys, tokens: tokenSet };
+      })
       .filter((m) => m.keys.length > 0);
 
     const memberById = new Map(allMembersForLookup.map((m) => [m.id, m]));
@@ -107,10 +126,30 @@ export default function FinancienPage() {
     const findMember = (counterparty: string | null) => {
       const n = normalize(counterparty || "");
       if (!n) return null;
+      // 1) Exact / contained match op één van de keys
       for (const m of memberIndex) {
         if (m.keys.some((k) => n === k || n.includes(k) || k.includes(n))) {
           return m;
         }
+      }
+      // 2) Token-overlap match op onderscheidende tokens (achternaam, bedrijfsnaam)
+      const cpTokens = distinctiveTokens(counterparty || "");
+      if (cpTokens.length === 0) return null;
+      let best: { m: typeof memberIndex[number]; score: number } | null = null;
+      for (const m of memberIndex) {
+        let score = 0;
+        for (const t of cpTokens) if (m.tokens.has(t)) score++;
+        if (score > 0 && (!best || score > best.score)) best = { m, score };
+      }
+      // Vereis minstens 1 onderscheidende match, en uniek (geen tie met andere leden)
+      if (best && best.score >= 1) {
+        const ties = memberIndex.filter((m) => {
+          if (m.id === best!.m.id) return false;
+          let s = 0;
+          for (const t of cpTokens) if (m.tokens.has(t)) s++;
+          return s >= best!.score;
+        });
+        if (ties.length === 0) return best.m;
       }
       return null;
     };
