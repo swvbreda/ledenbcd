@@ -32,7 +32,10 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 export default function FinancienPage() {
   const [year, setYear] = useState(currentYear);
   const { user, isAdmin } = useAuth();
-  const { data: categories, isLoading } = useBudgetCategories(year);
+  const { data: yearSettings } = useBudgetYearSettings(year);
+  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
+  const expenseSourcePreference = (yearSettings?.expense_source_preference ?? "both") as "manual" | "pdf_import" | "both";
+  const { data: categories, isLoading } = useBudgetCategories(year, expenseSourcePreference);
   const { data: balanceItems } = useBudgetBalance(year);
   const { data: bankStatement } = useBankStatement(year);
   const { data: budgetNotes } = useBudgetNotes(year);
@@ -47,8 +50,6 @@ export default function FinancienPage() {
     () => [...effectiveMembers, ...rawOldMembers],
     [effectiveMembers, rawOldMembers]
   );
-  const { data: yearSettings } = useBudgetYearSettings(year);
-  const yearSettingsMutation = useBudgetYearSettingsMutation(year);
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
