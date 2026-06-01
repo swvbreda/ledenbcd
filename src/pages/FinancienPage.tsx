@@ -14,6 +14,7 @@ import InternalDeclarationsView from "@/components/budget/InternalDeclarationsVi
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
+import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
@@ -52,6 +53,7 @@ export default function FinancienPage() {
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
@@ -236,6 +238,7 @@ export default function FinancienPage() {
               onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking bijgewerkt") })}
               onOpenPdfImport={() => setPdfImportOpen(true)}
+              onOpenDuplicates={() => setDuplicatesOpen(true)}
             />
           </TabsContent>
 
@@ -311,6 +314,13 @@ export default function FinancienPage() {
           year={year}
         />
       )}
+
+      <DuplicatesDialog
+        open={duplicatesOpen}
+        onOpenChange={setDuplicatesOpen}
+        categories={categories || []}
+        onDeleteExpense={(id) => mutations.deleteExpense.mutateAsync(id)}
+      />
     </div>
   );
 }
