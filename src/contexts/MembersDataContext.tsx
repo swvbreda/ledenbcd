@@ -34,7 +34,7 @@ const toMember = (row: MembersDataRow): Member => {
   const payload = (row.data ?? {}) as Partial<Member>;
   return {
     ...payload,
-    id: typeof payload.id === "number" ? payload.id : row.id,
+    id: row.id,
   } as Member;
 };
 
