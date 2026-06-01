@@ -299,7 +299,7 @@ export default function FinancienPage() {
           contributions={contributions || []}
           onImport={async (expenses) => {
             for (const exp of expenses) {
-              await mutations.addExpense.mutateAsync(exp);
+              await mutations.addExpense.mutateAsync({ ...exp, direction: "out" });
             }
           }}
           onImportIncome={async (incomes) => {

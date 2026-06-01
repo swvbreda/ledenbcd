@@ -69,7 +69,8 @@ export function useBudgetCategories(year: number) {
         const { data: exp, error: expError } = await supabase
           .from("budget_expenses")
           .select("*")
-          .in("line_item_id", lineItemIds);
+          .in("line_item_id", lineItemIds)
+          .eq("direction", "out");
         if (expError) throw expError;
         expenses = exp || [];
       }
@@ -183,7 +184,7 @@ export function useBudgetMutations(year: number) {
   });
 
   const addExpense = useMutation({
-    mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null }) => {
+    mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null; direction?: "out" }) => {
       const { error } = await supabase.from("budget_expenses").insert(expense);
       if (error) throw error;
     },
