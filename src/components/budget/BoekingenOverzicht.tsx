@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X } from "lucide-react";
+import { Trash2, ArrowUpDown, Search, Download, Upload, Pencil, Check, X, ArrowDownToLine } from "lucide-react";
 import type { BudgetCategory, BudgetExpense } from "@/hooks/useBudget";
 import type { Contribution } from "@/hooks/useContributions";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ interface Props {
   members: MemberOption[];
   year: number;
   onDeleteExpense: (id: string) => void;
-  onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null }) => void;
+  onUpdateExpense: (id: string, fields: { dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null; direction?: "in" | "out" }) => void;
   onOpenPdfImport: () => void;
   onOpenDuplicates?: () => void;
 }
@@ -79,6 +79,8 @@ export default function BoekingenOverzicht({ categories, contributions, members,
     for (const cat of categories) {
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
+          // Bijschrijvingen (direction='in') horen niet in de uitgavenboekingen.
+          if (exp.direction === "in") continue;
           result.push({
             type: "expense",
             data: { ...exp, categoryName: cat.name, lineItemName: li.name },
@@ -404,6 +406,17 @@ export default function BoekingenOverzicht({ categories, contributions, members,
                         </button>
                         <button onClick={() => onDeleteExpense(v.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                           <Trash2 size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgaven.")) {
+                              onUpdateExpense(v.id, { direction: "in" });
+                            }
+                          }}
+                          className="p-1 text-muted-foreground hover:text-green-600"
+                          title="Markeer als bijschrijving (geen uitgave)"
+                        >
+                          <ArrowDownToLine size={12} />
                         </button>
                       </>
                     )}
