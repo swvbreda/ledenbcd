@@ -51,8 +51,10 @@ export type Database = {
           created_at: string
           description: string | null
           direction: string
+          dossier: string | null
           id: string
           invoice_reference: string | null
+          line_item_id: string | null
           row_hash: string
           row_index: number
           transaction_date: string | null
@@ -65,8 +67,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           direction: string
+          dossier?: string | null
           id?: string
           invoice_reference?: string | null
+          line_item_id?: string | null
           row_hash: string
           row_index?: number
           transaction_date?: string | null
@@ -79,8 +83,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           direction?: string
+          dossier?: string | null
           id?: string
           invoice_reference?: string | null
+          line_item_id?: string | null
           row_hash?: string
           row_index?: number
           transaction_date?: string | null
