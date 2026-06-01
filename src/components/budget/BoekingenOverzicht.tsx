@@ -295,16 +295,6 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
             <SelectItem value="income" className="text-xs">Inkomsten</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterPaid} onValueChange={handleFilterPaidChange}>
-          <SelectTrigger className="h-8 w-[120px] text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-xs">Alle status</SelectItem>
-            <SelectItem value="paid" className="text-xs">Betaald</SelectItem>
-            <SelectItem value="unpaid" className="text-xs">Openstaand</SelectItem>
-          </SelectContent>
-        </Select>
         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onOpenPdfImport}>
           <Upload size={12} className="mr-1" /> PDF importeren
         </Button>
@@ -357,8 +347,6 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
               <SortHeader label="Begrotingspost" field="subcategory" className="text-left" />
               <SortHeader label="Dossier" field="dossier" className="text-left" />
               <SortHeader label="Omschrijving" field="description" className="text-left" />
-              <SortHeader label="Factuurnr" field="invoice" className="text-left" />
-              <SortHeader label="Status" field="paid" className="text-center w-[80px]" />
               <th className="w-16" />
             </tr>
           </thead>
@@ -427,12 +415,6 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                     )}
                   </td>
                   <td className="px-2 py-1 text-muted-foreground">{v.description || ""}</td>
-                  <td className="px-2 py-1 tabular-nums">{v.invoice || ""}</td>
-                  <td className="px-2 py-1 text-center">
-                    <span className={`text-[10px] font-medium ${v.paid ? "text-green-600" : "text-amber-500"}`}>
-                      {v.paid ? "Betaald" : "Open"}
-                    </span>
-                  </td>
                   <td className="px-1 flex items-center gap-0.5 py-1">
                     {isExpense && !isEditing && (
                       <>
@@ -475,7 +457,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
+                <td colSpan={9} className="px-2 py-4 text-center text-muted-foreground">Geen boekingen gevonden</td>
               </tr>
             )}
           </tbody>
