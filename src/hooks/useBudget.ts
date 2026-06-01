@@ -185,7 +185,33 @@ export function useBudgetMutations(year: number) {
 
   const addExpense = useMutation({
     mutationFn: async (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string; paid?: boolean; paid_date?: string | null; direction?: "out" }) => {
+      // Per-rij dedup VOOR schrijven: check of een identieke boeking al bestaat
+      // op basis van (line_item_id, direction, expense_date, amount, creditor_name, invoice_reference).
+      // Dit voorkomt dat dezelfde rij dubbel wordt aangemaakt bij her-uploads,
+      // zonder te vertrouwen op de DB unique-index als enige vangnet.
+      const direction = expense.direction ?? "out";
+      let dupQuery = supabase
+        .from("budget_expenses")
+        .select("id")
+        .eq("line_item_id", expense.line_item_id)
+        .eq("direction", direction)
+        .eq("amount", expense.amount)
+        .limit(1);
+      dupQuery = expense.expense_date
+        ? dupQuery.eq("expense_date", expense.expense_date)
+        : dupQuery.is("expense_date", null);
+      dupQuery = expense.creditor_name
+        ? dupQuery.eq("creditor_name", expense.creditor_name)
+        : dupQuery.is("creditor_name", null);
+      dupQuery = expense.invoice_reference
+        ? dupQuery.eq("invoice_reference", expense.invoice_reference)
+        : dupQuery.is("invoice_reference", null);
+
+      const { data: existing } = await dupQuery;
+      if (existing && existing.length > 0) return; // duplicaat — overslaan
+
       const { error } = await supabase.from("budget_expenses").insert(expense);
+      // DB unique-index als laatste vangnet (race conditions bij parallelle imports)
       if (error?.code === "23505" && error.message?.includes("budget_expenses_payment_dedup_idx")) return;
       if (error) throw error;
     },
