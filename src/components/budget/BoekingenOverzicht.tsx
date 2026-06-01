@@ -333,9 +333,14 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
             <span className={`font-medium ${bankStatement.netMutation >= 0 ? "text-green-600" : "text-destructive"}`}>Mutatie: <CurrencyText value={bankStatement.netMutation} /></span>
           </>
         ) : (
-          <span className={`font-semibold ${totals.net >= 0 ? "text-green-600" : "text-destructive"}`}>
-            Resultaat: <CurrencyText value={totals.net} />
-          </span>
+          <>
+            <span className={`font-semibold ${totals.net >= 0 ? "text-green-600" : "text-destructive"}`}>
+              Resultaat: <CurrencyText value={totals.net} />
+            </span>
+            <span className="text-amber-700 font-medium">
+              ⚠ Geen bankafschrift geïmporteerd — dit zijn de administratieve totalen, niet het banksaldo. Upload de PDF om het echte banksaldo te tonen.
+            </span>
+          </>
         )}
       </div>
 
