@@ -43,6 +43,7 @@ import MfaVerifyPage from "./pages/MfaVerifyPage";
 import ExternProtectedRoute from "@/components/ExternProtectedRoute";
 import EmailTemplatesPage from "./pages/EmailTemplatesPage";
 import UnsubscribePage from "./pages/UnsubscribePage";
+import CheckoutReturn from "./pages/CheckoutReturn";
 
 import NotFound from "./pages/NotFound";
 
@@ -99,6 +100,7 @@ const App = () => (
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
                 <Route path="/unsubscribe" element={<UnsubscribePage />} />
+                <Route path="/checkout/return" element={<CheckoutReturn />} />
                 <Route
                   path="/enquetes/:id/review"
                   element={
