@@ -48,10 +48,11 @@ const StatCards = ({ members }: StatCardsProps) => {
   const localRepresentedLocations = allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties), 0);
 
   // Fetch authoritative count from public-stats edge function so de UI altijd matcht.
+  // Refreshes every 5 minutes while the dashboard is open.
   const [publicStatsCount, setPublicStatsCount] = useState<number | null>(null);
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const fetchStats = async () => {
       try {
         const { data, error } = await supabase.functions.invoke("public-stats", { method: "GET" });
         if (cancelled || error) return;
@@ -60,8 +61,13 @@ const StatCards = ({ members }: StatCardsProps) => {
       } catch {
         /* fallback to local berekening */
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   const representedLocations = publicStatsCount ?? localRepresentedLocations;
