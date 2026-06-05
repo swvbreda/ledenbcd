@@ -323,17 +323,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
     return <div className="text-center py-12 text-destructive text-sm">{error}</div>;
   }
 
-  if (isMobileBlocked) {
-    return (
-      <div className="border-2 border-primary/60 rounded-md bg-card p-5 text-center">
-        <p className="text-sm font-semibold text-foreground">Document geblokkeerd op mobiel</p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Open dit vertrouwelijke document op een desktop of laptop. Zo voorkomen we dat de inhoud via mobiele screenshots wordt vastgelegd.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div ref={wrapperRef} className="secure-pdf-wrap">
       <style>{`
