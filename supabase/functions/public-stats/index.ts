@@ -46,15 +46,27 @@ Deno.serve(async (req) => {
 
     const { data: members, error: mErr } = await supabase
       .from("members_data")
-      .select("data")
+      .select("id, data")
       .in("member_type", ["member", "lead"]);
     if (mErr) throw mErr;
+
+    // Merge pending member_edits (matches dashboard logic)
+    const { data: edits, error: eErr } = await supabase
+      .from("member_edits")
+      .select("member_id, data");
+    if (eErr) throw eErr;
+    const editsMap = new Map<number, any>();
+    for (const e of edits ?? []) editsMap.set(e.member_id, e.data);
 
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
     let aantalCoffeeshops = 0;
     for (const m of members ?? []) {
-      const d = m.data as any;
+      const base = (m.data ?? {}) as any;
+      const edit = editsMap.get((m as any).id) ?? {};
+      const d = { ...base, ...edit };
+      // Arrays merge: prefer edit.locaties when present, else base.locaties
+      d.locaties = Array.isArray(edit?.locaties) ? edit.locaties : base?.locaties;
       const plaats = d?.plaats as string | undefined;
       // Match dashboard logic: locaties.length, fallback to aantalLocaties
       const locLen = Array.isArray(d?.locaties) ? d.locaties.length : 0;
