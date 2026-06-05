@@ -28,6 +28,10 @@ export default {
           foreground: "hsl(var(--brand-navy-foreground))",
           glow: "hsl(var(--brand-navy-glow))",
         },
+        "brand-red": {
+          DEFAULT: "hsl(var(--brand-red))",
+          foreground: "hsl(var(--brand-red-foreground))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
