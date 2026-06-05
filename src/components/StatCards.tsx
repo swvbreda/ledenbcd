@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
@@ -8,6 +9,7 @@ import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StatCardsProps {
   members: Member[];
@@ -43,7 +45,26 @@ const StatCards = ({ members }: StatCardsProps) => {
   const matchedCities = representedGemeenten.size;
   const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
-  const representedLocations = allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties), 0);
+  const localRepresentedLocations = allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties), 0);
+
+  // Fetch authoritative count from public-stats edge function so de UI altijd matcht.
+  const [publicStatsCount, setPublicStatsCount] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("public-stats", { method: "GET" });
+        if (cancelled || error) return;
+        const n = Number((data as any)?.aantal_coffeeshops);
+        if (Number.isFinite(n) && n > 0) setPublicStatsCount(n);
+      } catch {
+        /* fallback to local berekening */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const representedLocations = publicStatsCount ?? localRepresentedLocations;
   const marketPct = Math.round((representedLocations / totalNL) * 100);
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
