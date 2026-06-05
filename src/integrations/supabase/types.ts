@@ -683,6 +683,39 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_items: {
+        Row: {
+          answer: string
+          audience: Database["public"]["Enums"]["faq_audience"]
+          created_at: string
+          id: string
+          is_published: boolean
+          question: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          audience?: Database["public"]["Enums"]["faq_audience"]
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          audience?: Database["public"]["Enums"]["faq_audience"]
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_todos: {
         Row: {
           assigned_to: string
@@ -1173,6 +1206,42 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_requests: {
+        Row: {
+          city: string
+          coffeeshop_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          city: string
+          coffeeshop_name: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          city?: string
+          coffeeshop_name?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       mfa_email_codes: {
         Row: {
           code: string
@@ -1197,6 +1266,90 @@ export type Database = {
           id?: string
           used?: boolean
           user_id?: string
+        }
+        Relationships: []
+      }
+      news_articles: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string
+          id: string
+          is_published: boolean
+          members_only_content: string | null
+          public_content: string
+          published_at: string
+          slug: string
+          source_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          is_published?: boolean
+          members_only_content?: string | null
+          public_content?: string
+          published_at?: string
+          slug: string
+          source_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          is_published?: boolean
+          members_only_content?: string | null
+          public_content?: string
+          published_at?: string
+          slug?: string
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pages: {
+        Row: {
+          content_markdown: string
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_markdown?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_markdown?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1230,6 +1383,51 @@ export type Database = {
           public_key?: string
           transports?: string[] | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      publications: {
+        Row: {
+          attachment_url: string | null
+          cover_image_url: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          members_only_content: string | null
+          public_content: string
+          published_at: string
+          slug: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          members_only_content?: string | null
+          public_content?: string
+          published_at?: string
+          slug: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          members_only_content?: string | null
+          public_content?: string
+          published_at?: string
+          slug?: string
+          summary?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1573,6 +1771,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user" | "extern" | "inhuur"
       edit_request_status: "pending" | "approved" | "rejected"
+      faq_audience: "public" | "members"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1702,6 +1901,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user", "extern", "inhuur"],
       edit_request_status: ["pending", "approved", "rejected"],
+      faq_audience: ["public", "members"],
     },
   },
 } as const
