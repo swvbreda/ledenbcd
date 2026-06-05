@@ -26,9 +26,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
   const [blurred, setBlurred] = useState(false);
-  const [isMobileBlocked, setIsMobileBlocked] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(max-width: 767px), (hover: none) and (pointer: coarse)").matches
-  );
   const [showThumbs, setShowThumbs] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
   );
@@ -68,14 +65,6 @@ export default function SecurePdfViewer({ url, data }: Props) {
     c.scrollIntoView({ block: "start", behavior: "smooth" });
     pendingScrollY.current = null;
   };
-
-  useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 767px), (hover: none) and (pointer: coarse)");
-    const updateMobileBlock = () => setIsMobileBlocked(mobileQuery.matches);
-    updateMobileBlock();
-    mobileQuery.addEventListener("change", updateMobileBlock);
-    return () => mobileQuery.removeEventListener("change", updateMobileBlock);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
