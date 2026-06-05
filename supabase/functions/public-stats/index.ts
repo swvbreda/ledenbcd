@@ -52,26 +52,14 @@ Deno.serve(async (req) => {
 
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
-    const uniekeLocaties = new Set<string>();
+    let aantalCoffeeshops = 0;
     for (const m of members ?? []) {
       const d = m.data as any;
       const plaats = d?.plaats as string | undefined;
-      if (Array.isArray(d?.locaties) && d.locaties.length > 0) {
-        for (const loc of d.locaties) {
-          const key = [
-            String(loc?.naam ?? "").trim().toLowerCase(),
-            String(loc?.adres ?? "").trim().toLowerCase(),
-            String(loc?.plaats ?? plaats ?? "").trim().toLowerCase(),
-          ].join("|");
-          uniekeLocaties.add(key || `member-${m.id}-${uniekeLocaties.size}`);
-        }
-      } else {
-        // Fallback: member without locaties array — use aantalLocaties field
-        const n = Number(d?.aantalLocaties);
-        for (let i = 0; i < (Number.isFinite(n) && n > 0 ? n : 0); i++) {
-          uniekeLocaties.add(`member-${m.id}-fallback-${i}`);
-        }
-      }
+      // Match dashboard logic: locaties.length, fallback to aantalLocaties
+      const locLen = Array.isArray(d?.locaties) ? d.locaties.length : 0;
+      const fallback = Number(d?.aantalLocaties);
+      aantalCoffeeshops += locLen > 0 ? locLen : (Number.isFinite(fallback) && fallback > 0 ? fallback : 0);
       if (plaats) {
         gemeenten.add(plaats);
         const prov = PLAATS_TO_PROVINCIE[plaats];
@@ -101,7 +89,7 @@ Deno.serve(async (req) => {
     }));
 
     const payload = {
-      aantal_coffeeshops: uniekeLocaties.size,
+      aantal_coffeeshops: aantalCoffeeshops,
       aantal_gemeenten: gemeenten.size,
       aantal_provincies: provincies.size,
       aantal_bestuursleden: board?.length ?? 0,
