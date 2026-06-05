@@ -43,8 +43,8 @@ function checkEmailMfaFlag(userId: string): boolean {
     const stored = localStorage.getItem(`${EMAIL_MFA_KEY_PREFIX}${userId}`);
     if (!stored) return false;
     const timestamp = parseInt(stored, 10);
-    // Valid for 24 hours
-    return Date.now() - timestamp < 24 * 60 * 60 * 1000;
+    // Valid for 30 days — keeps leden ingelogd zonder telkens opnieuw MFA
+    return Date.now() - timestamp < 30 * 24 * 60 * 60 * 1000;
   } catch {
     return false;
   }
