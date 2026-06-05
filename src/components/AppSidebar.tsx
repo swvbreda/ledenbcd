@@ -77,7 +77,7 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-border px-3 py-3 bg-white pt-[max(0.75rem,env(safe-area-inset-top))] cursor-pointer" onClick={() => { navigate("/"); closeMobile(); }}>
+        <SidebarHeader className="border-b border-border px-3 py-0 bg-white h-[calc(5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex flex-row items-center cursor-pointer" onClick={() => { navigate("/"); closeMobile(); }}>
           {!collapsed ? (
             <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-14 w-auto object-contain" />
           ) : (
