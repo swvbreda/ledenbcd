@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import CsvImportDialog from "@/components/CsvImportDialog";
 import ContributionPdfUploadDialog from "@/components/budget/ContributionPdfUploadDialog";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
+import { useBankStatement } from "@/hooks/useBudget";
 
 const FIXED_AMOUNT = 3000;
 
@@ -40,6 +41,7 @@ export default function ContributieTab({ year }: Props) {
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(year);
   const upsert = useUpsertContribution();
   const createInvoice = useCreateContributionInvoice();
+  const { data: bankData } = useBankStatement(year);
 
   const contribMap = useMemo(() => {
     const map = new Map<number, Contribution>();
@@ -57,6 +59,82 @@ export default function ContributieTab({ year }: Props) {
     return map;
   }, [invoicesData]);
 
+  // Bank is leidend: match incoming bank transactions to members via
+  // invoice number reference or counterparty/description containing the
+  // member's name or company name. Yields a derived "paid" status that
+  // reflects what's actually on the bank.
+  const bankPaidMap = useMemo(() => {
+    const map = new Map<number, { date: string | null; amount: number; ref: string }>();
+    const txs = (bankData?.transactions ?? []).filter((t) => t.direction === "in");
+    if (txs.length === 0) return map;
+
+    const norm = (s: string | null | undefined) =>
+      (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+
+    // Index invoices by normalized number for quick lookup
+    const invByNumber = new Map<string, number>();
+    (invoicesData ?? []).forEach((inv) => {
+      if (inv.invoice_number) invByNumber.set(norm(inv.invoice_number), inv.member_id);
+    });
+
+    for (const tx of txs) {
+      const haystack = `${norm(tx.invoice_reference)} ${norm(tx.description)} ${norm(tx.counterparty)}`;
+      let matchedMember: number | null = null;
+
+      // 1) Invoice number match
+      for (const [num, mid] of invByNumber) {
+        if (num && haystack.includes(num)) {
+          matchedMember = mid;
+          break;
+        }
+      }
+
+      // 2) Fallback: member name / bedrijfsnaam match in counterparty
+      if (matchedMember === null) {
+        const cp = norm(tx.counterparty);
+        if (cp) {
+          for (const m of effectiveMembers) {
+            const candidates = [m.bedrijfsnaam, m.naam].map(norm).filter((x) => x && x.length >= 4);
+            if (candidates.some((c) => cp.includes(c) || c.includes(cp))) {
+              matchedMember = m.id;
+              break;
+            }
+          }
+        }
+      }
+
+      if (matchedMember !== null) {
+        const existing = map.get(matchedMember);
+        // Prefer earliest payment date
+        if (!existing || (tx.transaction_date && (!existing.date || tx.transaction_date < existing.date))) {
+          map.set(matchedMember, {
+            date: tx.transaction_date,
+            amount: tx.amount,
+            ref: tx.invoice_reference || tx.description || tx.counterparty || "",
+          });
+        }
+      }
+    }
+    return map;
+  }, [bankData, invoicesData, effectiveMembers]);
+
+  // Effective paid: bank-leidend, falls back to manual contribution.paid
+  const isPaidEffective = useCallback(
+    (memberId: number) => {
+      if (bankPaidMap.has(memberId)) return true;
+      return contribMap.get(memberId)?.paid ?? false;
+    },
+    [bankPaidMap, contribMap]
+  );
+  const paidDateEffective = useCallback(
+    (memberId: number) => {
+      const bank = bankPaidMap.get(memberId);
+      if (bank) return bank.date;
+      return contribMap.get(memberId)?.paid_date ?? null;
+    },
+    [bankPaidMap, contribMap]
+  );
+
   const filteredMembers = useMemo(() => {
     let list = [...effectiveMembers].sort((a, b) => a.id - b.id);
     if (search) {
@@ -70,26 +148,26 @@ export default function ContributieTab({ year }: Props) {
       );
     }
     if (statusFilter === "paid") {
-      list = list.filter((m) => contribMap.get(m.id)?.paid);
+      list = list.filter((m) => isPaidEffective(m.id));
     } else if (statusFilter === "unpaid") {
-      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0 && !contribMap.get(m.id)?.paid);
+      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0 && !isPaidEffective(m.id));
     } else if (statusFilter === "no_invoice") {
       list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length === 0);
     }
     return list;
-  }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
+  }, [effectiveMembers, search, statusFilter, isPaidEffective, invoicesMap]);
 
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
     const invoiced = effectiveMembers.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0).length;
     let paid = 0;
     effectiveMembers.forEach((m) => {
-      if (contribMap.get(m.id)?.paid) paid++;
+      if (isPaidEffective(m.id)) paid++;
     });
     const expectedAmount = invoiced * FIXED_AMOUNT;
     const paidAmount = paid * FIXED_AMOUNT;
     return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
-  }, [effectiveMembers, contribMap, invoicesMap]);
+  }, [effectiveMembers, isPaidEffective, invoicesMap]);
 
   const membersWithoutInvoice = useMemo(() => {
     return effectiveMembers
@@ -292,7 +370,9 @@ export default function ContributieTab({ year }: Props) {
             <TableBody>
               {filteredMembers.map((m) => {
                 const c = contribMap.get(m.id);
-                const isPaid = c?.paid ?? false;
+                const bankHit = bankPaidMap.get(m.id);
+                const isPaid = isPaidEffective(m.id);
+                const paidDate = paidDateEffective(m.id);
                 const memberInvoices = invoicesMap.get(m.id) ?? [];
                 return (
                   <TableRow key={m.id} className={`${isPaid ? "bg-emerald-50/50" : ""} cursor-pointer hover:bg-muted/70`} onClick={() => navigate(`/leden/${m.id}`)}>
@@ -342,11 +422,16 @@ export default function ContributieTab({ year }: Props) {
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isPaid}
-                        onCheckedChange={() => handleTogglePaid(m.id, isPaid)}
+                        onCheckedChange={() => handleTogglePaid(m.id, c?.paid ?? false)}
+                        disabled={!!bankHit}
                         className="mx-auto"
+                        title={bankHit ? "Automatisch betaald via bank" : undefined}
                       />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{c?.paid_date ?? "—"}</TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                      {paidDate ?? "—"}
+                      {bankHit && <span className="ml-1 text-[10px] uppercase tracking-wide text-emerald-600">bank</span>}
+                    </TableCell>
                   </TableRow>
                 );
               })}
