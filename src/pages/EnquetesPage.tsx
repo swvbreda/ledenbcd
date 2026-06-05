@@ -111,7 +111,7 @@ export default function EnquetesPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 w-full">
+    <div className="p-4 sm:p-6 space-y-6">
       <BcdHeroBanner title="Enquêtes" subtitle="Anonieme enquêtes voor leden">
         {canManage && (
           <Button onClick={() => setCreateOpen(true)} size="sm" variant="secondary">

@@ -266,7 +266,7 @@ export default function BestuurBeheerPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 w-full space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <BcdHeroBanner title="Bestuur beheren" subtitle="Beheer bestuursleden en aspiranten">
         <Button size="sm" variant="secondary" onClick={openNew} className="gap-1.5">
           <Plus size={14} /> Toevoegen

@@ -142,7 +142,7 @@ export default function JaarplanPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <BcdHeroBanner title={title} subtitle="Vertrouwelijk – alleen ter inzage" />
 
       {isAdmin && (
