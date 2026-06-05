@@ -190,7 +190,7 @@ export default function AdminUploadDialog({ year, open, onOpenChange, onComplete
         {/* Processing */}
         {processing && (
           <div className="flex flex-col items-center py-8 gap-3">
-            <Loader2 size={32} className="animate-spin text-primary" />
+            <Loader2 size={32} className="animate-spin text-brand-red" />
             <p className="text-sm font-medium">Bestand verwerken...</p>
             <p className="text-xs text-muted-foreground">{fileName} wordt geanalyseerd met AI</p>
           </div>

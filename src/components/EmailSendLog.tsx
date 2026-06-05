@@ -180,7 +180,7 @@ export function EmailSendLog() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Mail className="text-primary" />
+          <Mail className="text-brand-red" />
           <h2 className="text-lg sm:text-xl font-bold">Verzendlog e-mail</h2>
         </div>
         <Button size="sm" variant="outline" onClick={load} disabled={loading} className="gap-1.5">

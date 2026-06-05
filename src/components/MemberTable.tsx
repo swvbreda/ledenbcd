@@ -130,7 +130,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 if (!boardMatch) return null;
                 return (
                   <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                    <span><Shield size={11} className="text-primary" /></span>
+                    <span><Shield size={11} className="text-brand-red" /></span>
                   </TooltipTrigger><TooltipContent><p>{boardMatch.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                 );
               })()}
@@ -160,7 +160,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
       {isAdmin && (
         <div className="hidden md:flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-b border-border text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>
-          <span className="flex items-center gap-1"><Shield size={10} className="text-primary" /> Bestuurslid</span>
+          <span className="flex items-center gap-1"><Shield size={10} className="text-brand-red" /> Bestuurslid</span>
           <span className="text-border">|</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-lime-100 border border-lime-300" /> 1+ jr</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-300" /> 5+ jr</span>
@@ -275,7 +275,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                             )}
                             {(member.bestuursfunctie || eigenaarMatch) && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
+                                <span className="cursor-default"><Shield size={12} className="text-brand-red" /></span>
                               </TooltipTrigger><TooltipContent><p>{eigenaarMatch?.functie || member.bestuursfunctie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>
@@ -285,7 +285,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                             {contactpersoon || "—"}
                             {showCpIcon && (
                               <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                                <span className="cursor-default"><Shield size={12} className="text-primary" /></span>
+                                <span className="cursor-default"><Shield size={12} className="text-brand-red" /></span>
                               </TooltipTrigger><TooltipContent><p>{cpMatch?.functie || "Bestuurslid"}</p></TooltipContent></Tooltip></TooltipProvider>
                             )}
                           </span>

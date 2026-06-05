@@ -6,7 +6,7 @@ interface LoadingSpinnerProps {
 
 const LoadingSpinner = ({ message = "Data laden..." }: LoadingSpinnerProps) => (
   <div className="flex flex-col items-center justify-center py-24 gap-3">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <Loader2 className="h-8 w-8 animate-spin text-brand-red" />
     <p className="text-sm text-muted-foreground">{message}</p>
   </div>
 );

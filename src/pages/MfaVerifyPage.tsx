@@ -149,7 +149,7 @@ export default function MfaVerifyPage() {
           <div className="text-center mb-6">
             <img src={bcdLogo} alt="BCD" className="h-12 w-auto mx-auto mb-4" />
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Shield className="h-5 w-5 text-primary" />
+              <Shield className="h-5 w-5 text-brand-red" />
               <h1 className="text-xl font-bold font-display">Verificatie vereist</h1>
             </div>
           </div>

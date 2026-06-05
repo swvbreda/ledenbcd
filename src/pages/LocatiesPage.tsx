@@ -245,7 +245,7 @@ const LocatiesPage = () => {
                   >
                     <td className="px-3 py-2">
                       <span className="inline-flex items-center gap-1.5 font-medium font-display text-sm">
-                        <MapPin size={12} className="text-primary shrink-0" />
+                        <MapPin size={12} className="text-brand-red shrink-0" />
                         {city.naam}
                       </span>
                     </td>

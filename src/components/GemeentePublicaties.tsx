@@ -102,7 +102,7 @@ export default function GemeentePublicaties({ gemeentenaam }: GemeentePublicatie
         className="w-full flex items-center justify-between p-5 text-left"
       >
         <h3 className="text-sm font-semibold font-display flex items-center gap-2">
-          <Notebook size={16} className="text-primary" />
+          <Notebook size={16} className="text-brand-red" />
           Beleid- &amp; raadsdocumenten
           {isSearching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
         </h3>

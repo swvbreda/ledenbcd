@@ -180,7 +180,7 @@ export default function JaarplanPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-primary" size={32} />
+          <Loader2 className="animate-spin text-brand-red" size={32} />
         </div>
       ) : !pdfData ? (
         <div className="text-center py-12 text-sm text-muted-foreground">

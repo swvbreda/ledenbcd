@@ -245,7 +245,7 @@ export default function BenefitDetailPage() {
               />
             ) : (
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Building2 className="h-5 w-5 text-primary" />
+                <Building2 className="h-5 w-5 text-brand-red" />
               </div>
             )}
             <div>

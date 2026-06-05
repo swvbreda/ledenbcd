@@ -246,7 +246,7 @@ export function AppSidebar() {
         <SidebarFooter className="border-t border-sidebar-border px-4 py-3 space-y-2">
           {!collapsed && user && (
             <div className="flex items-center gap-1.5">
-              {isAdmin && <Shield size={12} className="text-primary shrink-0" />}
+              {isAdmin && <Shield size={12} className="text-brand-red shrink-0" />}
               <p className="text-xs text-sidebar-foreground/50 truncate">{user.email}</p>
             </div>
           )}

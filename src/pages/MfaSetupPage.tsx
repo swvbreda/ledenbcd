@@ -176,7 +176,7 @@ export default function MfaSetupPage() {
           <div className="text-center mb-6">
             <img src={bcdLogo} alt="BCD" className="h-10 w-auto mx-auto mb-3" />
             <div className="flex items-center justify-center gap-2 mb-1">
-              <Shield className="h-5 w-5 text-primary" />
+              <Shield className="h-5 w-5 text-brand-red" />
               <h1 className="text-lg font-bold font-display">Extra beveiliging instellen</h1>
             </div>
           </div>
@@ -248,7 +248,7 @@ export default function MfaSetupPage() {
               {!emailSent ? (
                 <>
                   <div className="text-center">
-                    <Mail className="h-10 w-10 text-primary mx-auto mb-2" />
+                    <Mail className="h-10 w-10 text-brand-red mx-auto mb-2" />
                     <h2 className="font-semibold text-base mb-1">E-mail verificatie</h2>
                     <p className="text-sm text-muted-foreground">
                       Bij elke login sturen we een 6-cijferige code naar{" "}
@@ -271,7 +271,7 @@ export default function MfaSetupPage() {
               ) : (
                 <>
                   <div className="text-center">
-                    <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-2" />
+                    <CheckCircle2 className="h-10 w-10 text-brand-red mx-auto mb-2" />
                     <h2 className="font-semibold text-base mb-1">Voer de code in</h2>
                     <p className="text-sm text-muted-foreground">
                       Vul de 6-cijferige code in die we naar je e-mail hebben gestuurd.
@@ -336,7 +336,7 @@ export default function MfaSetupPage() {
               {totpStep === 1 && (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <Smartphone className="h-10 w-10 text-primary mx-auto mb-2" />
+                    <Smartphone className="h-10 w-10 text-brand-red mx-auto mb-2" />
                     <h2 className="font-semibold text-base mb-1">Stap 1: Download een authenticator app</h2>
                     <p className="text-sm text-muted-foreground">
                       Kies een van onderstaande apps en installeer deze op je telefoon.
@@ -404,7 +404,7 @@ export default function MfaSetupPage() {
                             </code>
                             <button type="button" onClick={handleCopySecret}
                               className="text-muted-foreground hover:text-primary transition-colors p-1" title="Kopieer code">
-                              {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                              {copied ? <Check className="h-3.5 w-3.5 text-brand-red" /> : <Copy className="h-3.5 w-3.5" />}
                             </button>
                           </div>
                         </div>
@@ -421,7 +421,7 @@ export default function MfaSetupPage() {
               {totpStep === 3 && (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-2" />
+                    <CheckCircle2 className="h-10 w-10 text-brand-red mx-auto mb-2" />
                     <h2 className="font-semibold text-base mb-1">Stap 3: Bevestig de koppeling</h2>
                     <p className="text-sm text-muted-foreground">
                       Vul de 6-cijferige code in die nu in je authenticator app staat.

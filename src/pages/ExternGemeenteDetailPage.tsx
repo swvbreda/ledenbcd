@@ -25,7 +25,7 @@ const ExternGemeenteDetailPage = () => {
           <ArrowLeft size={18} />
         </button>
         <h2 className="text-xl sm:text-2xl font-bold font-display flex items-center gap-2">
-          <MapPin size={20} className="text-primary" />
+          <MapPin size={20} className="text-brand-red" />
           {decodedGemeente}
         </h2>
       </div>

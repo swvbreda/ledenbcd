@@ -188,7 +188,7 @@ export default function EnqueteExternPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-sm w-full">
           <CardContent className="py-12 text-center space-y-3">
-            <CheckCircle className="mx-auto text-primary" size={48} />
+            <CheckCircle className="mx-auto text-brand-red" size={48} />
             <p className="text-lg font-medium">Bedankt!</p>
             <p className="text-sm text-muted-foreground">
               Je antwoorden zijn opgeslagen en worden door PCN gecontroleerd voordat ze worden meegeteld. Je kunt dit venster sluiten.

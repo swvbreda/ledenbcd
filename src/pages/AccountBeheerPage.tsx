@@ -420,7 +420,7 @@ const AccountBeheerPage = () => {
                         <div className="flex flex-col gap-1">
                           {isBoard ? (
                             <span className="inline-flex items-center gap-1">
-                              <Shield size={10} className="text-primary sm:hidden" /><Shield size={12} className="text-primary hidden sm:inline" />
+                              <Shield size={10} className="text-brand-red sm:hidden" /><Shield size={12} className="text-brand-red hidden sm:inline" />
                               {label}
                             </span>
                           ) : memberIds.length > 0 ? (
@@ -781,7 +781,7 @@ const AccountBeheerPage = () => {
                         const m = memberMap.get(parseInt(linkMemberId));
                         return (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/5 border border-primary/20 text-sm">
-                            <Link size={12} className="text-primary" />
+                            <Link size={12} className="text-brand-red" />
                             <span className="text-muted-foreground">Wordt gekoppeld bij opslaan:</span>
                             <span className="font-medium">#{linkMemberId} {m?.naam}</span>
                             <button

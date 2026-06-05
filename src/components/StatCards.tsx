@@ -90,7 +90,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       >
         <div className="flex items-center justify-between">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordigde Coffeeshops</p>
-          <Users size={18} className="text-primary" />
+          <Users size={18} className="text-brand-red" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -105,7 +105,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       >
         <div className="flex items-center justify-between">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
-          <Building2 size={18} className="text-primary" />
+          <Building2 size={18} className="text-brand-red" />
         </div>
         <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{cityPct}%</p>
         <p className="text-xs text-muted-foreground mt-0.5">in {matchedCities} van {totalNLCities} gemeenten</p>
@@ -118,7 +118,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       >
         <div className="flex items-center justify-between">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordiging</p>
-          <PieChart size={18} className="text-primary" />
+          <PieChart size={18} className="text-brand-red" />
         </div>
         <div className="mt-1">
           <MiniGauge pct={marketPct} />
@@ -147,7 +147,7 @@ const StatCards = ({ members }: StatCardsProps) => {
       <div className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
-          <BarChart3 size={18} className="text-primary" />
+          <BarChart3 size={18} className="text-brand-red" />
         </div>
         <div className="space-y-1.5">
           {[

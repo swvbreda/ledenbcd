@@ -582,7 +582,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
               {extracting ? (
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="animate-spin text-primary" size={32} />
+                  <Loader2 className="animate-spin text-brand-red" size={32} />
                   <p className="text-sm text-muted-foreground">PDF wordt geanalyseerd door AI...</p>
                 </div>
               ) : (
@@ -814,7 +814,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
 
         {step === "importing" && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <Loader2 className="animate-spin text-primary" size={32} />
+            <Loader2 className="animate-spin text-brand-red" size={32} />
             <p className="text-sm text-muted-foreground">Uitgaven worden geïmporteerd...</p>
           </div>
         )}

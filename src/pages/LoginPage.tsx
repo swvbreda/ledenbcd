@@ -182,7 +182,7 @@ const LoginPage = () => {
           {showBiometricPrompt ? (
             <div className="text-center space-y-4">
               <div className="p-4 bg-muted rounded-lg">
-                <Fingerprint className="h-10 w-10 mx-auto mb-3 text-primary" />
+                <Fingerprint className="h-10 w-10 mx-auto mb-3 text-brand-red" />
                 <p className="text-sm font-medium">
                   Wil je voortaan inloggen met {biometric.biometryLabel}?
                 </p>

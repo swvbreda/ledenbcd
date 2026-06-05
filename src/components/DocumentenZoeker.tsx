@@ -68,7 +68,7 @@ export default function DocumentenZoeker() {
     <div className="bg-card rounded-lg border border-border">
       <div className="p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <Notebook size={16} className="text-primary" />
+          <Notebook size={16} className="text-brand-red" />
           <h3 className="text-sm font-semibold font-display">Zoeken in beleidsdocumenten</h3>
         </div>
 
