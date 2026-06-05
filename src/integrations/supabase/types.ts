@@ -445,6 +445,60 @@ export type Database = {
         }
         Relationships: []
       }
+      contribution_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          installment_count: number
+          installment_number: number
+          member_id: number
+          paid_at: string | null
+          payment_method: string
+          status: string
+          stripe_environment: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_count?: number
+          installment_number?: number
+          member_id: number
+          paid_at?: string | null
+          payment_method?: string
+          status?: string
+          stripe_environment?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_count?: number
+          installment_number?: number
+          member_id?: number
+          paid_at?: string | null
+          payment_method?: string
+          status?: string
+          stripe_environment?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
