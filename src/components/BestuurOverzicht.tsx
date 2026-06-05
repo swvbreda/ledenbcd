@@ -178,7 +178,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                       <p className="text-[11px] font-medium leading-tight whitespace-nowrap">{member.naam}</p>
                       {locations.length > 0 && (
                         <p className="text-[10px] text-muted-foreground leading-tight whitespace-nowrap">
-                          <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
+                          <MapPin size={8} className="inline shrink-0 text-brand-red/60 mr-0.5" />
                           {locations.join(" · ")}
                         </p>
                       )}
@@ -192,7 +192,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                   )}
                   {bl.coffeeshop_plaats && (
                     <p className="text-[10px] text-muted-foreground leading-tight">
-                      <MapPin size={8} className="inline shrink-0 text-primary/60 mr-0.5" />
+                      <MapPin size={8} className="inline shrink-0 text-brand-red/60 mr-0.5" />
                       {bl.coffeeshop_plaats}
                     </p>
                   )}
@@ -256,7 +256,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
       >
         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap">
           <h3 className="text-sm font-semibold font-display flex items-center gap-2">
-            <Shield size={16} className="text-primary" />
+            <Shield size={16} className="text-brand-red" />
             Bestuur
           </h3>
           <span className="hidden sm:inline-flex">

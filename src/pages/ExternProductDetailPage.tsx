@@ -106,7 +106,7 @@ export default function ExternProductDetailPage() {
 
               {benefit.discount_info && (
                 <div className="inline-flex items-center gap-2 rounded-lg border-2 border-primary/20 bg-primary/5 px-4 py-2">
-                  <ShoppingCart className="h-4 w-4 text-primary" />
+                  <ShoppingCart className="h-4 w-4 text-brand-red" />
                   <span className="font-semibold text-primary">{benefit.discount_info}</span>
                 </div>
               )}

@@ -44,7 +44,7 @@ export default function FinancieelTodoOverzicht({ declarations, year }: Props) {
   return (
     <div className="mb-4 border-2 border-primary/60 rounded-lg overflow-hidden">
       <div className="bg-primary/5 px-4 py-2.5 border-b border-border flex items-center gap-2">
-        <Clock size={16} className="text-primary" />
+        <Clock size={16} className="text-brand-red" />
         <h2 className="text-sm font-semibold">Openstaande taken ({totalTodos})</h2>
       </div>
 

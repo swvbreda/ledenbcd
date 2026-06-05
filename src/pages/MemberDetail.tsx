@@ -367,7 +367,7 @@ const MemberDetail = () => {
               {/* Contactpersonen */}
               <div className="bg-card rounded-lg border border-border p-5">
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-                  <Users size={16} className="text-primary" /> Contactpersonen ({member.contacten.length})
+                  <Users size={16} className="text-brand-red" /> Contactpersonen ({member.contacten.length})
                 </h3>
                 <div className="space-y-4">
                   {member.contacten.length > 0 ? (
@@ -464,7 +464,7 @@ const MemberDetail = () => {
               {canSeeFinance && (
                 <div className="bg-card rounded-lg border border-border p-5">
                   <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-                    <FileText size={16} className="text-primary" /> Factuurgegevens
+                    <FileText size={16} className="text-brand-red" /> Factuurgegevens
                   </h3>
                   <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
                     <span className="text-muted-foreground">Bedrijfsnaam</span>
@@ -512,7 +512,7 @@ const MemberDetail = () => {
             <div className="bg-card rounded-lg border border-border p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold font-display flex items-center gap-2">
-                  <Euro size={16} className="text-primary" /> Contributie & facturen
+                  <Euro size={16} className="text-brand-red" /> Contributie & facturen
                 </h3>
                 <span className="text-xs text-muted-foreground">
                   {(memberInvoices ?? []).length} factuur{(memberInvoices ?? []).length === 1 ? "" : "en"}
@@ -629,7 +629,7 @@ const MemberDetail = () => {
           {/* Locaties */}
           <div className="bg-card rounded-lg border border-border p-5">
             <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-              <MapPin size={16} className="text-primary" /> Locaties ({member.aantalLocaties})
+              <MapPin size={16} className="text-brand-red" /> Locaties ({member.aantalLocaties})
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {member.locaties.map((loc, i) => (
@@ -665,7 +665,7 @@ const MemberDetail = () => {
           {member.aanverwant && member.aanverwant.length > 0 && (
             <div className="bg-card rounded-lg border border-border p-5">
               <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-                <Link2 size={16} className="text-primary" /> Aanverwant
+                <Link2 size={16} className="text-brand-red" /> Aanverwant
               </h3>
               <div className="space-y-2">
                 {member.aanverwant.map((relId) => {
@@ -699,7 +699,7 @@ const MemberDetail = () => {
           {isAdmin && (
             <div className="bg-card rounded-lg border border-border p-5">
               <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
-                <MessageSquare size={16} className="text-primary" /> Opmerkingen
+                <MessageSquare size={16} className="text-brand-red" /> Opmerkingen
               </h3>
               <div className="flex gap-2 mb-4">
                 <Textarea

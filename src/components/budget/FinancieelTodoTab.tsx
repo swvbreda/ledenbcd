@@ -309,7 +309,7 @@ export default function FinancieelTodoTab({ year }: Props) {
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-start gap-2">
-              <Sparkles size={16} className="text-primary shrink-0 mt-1" />
+              <Sparkles size={16} className="text-brand-red shrink-0 mt-1" />
               <div className="text-sm prose prose-sm max-w-none">
                 <ReactMarkdown>{aiSummary}</ReactMarkdown>
               </div>

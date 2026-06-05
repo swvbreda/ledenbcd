@@ -139,7 +139,7 @@ export default function EmailTemplatesPage() {
     <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Mail className="text-primary" />
+          <Mail className="text-brand-red" />
           <h1 className="text-xl sm:text-2xl font-bold">E-mailtemplates</h1>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>

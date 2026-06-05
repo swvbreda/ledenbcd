@@ -134,7 +134,7 @@ const GemeenteDetailPage = () => {
         </button>
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display flex items-center gap-2">
-            <MapPin size={20} className="text-primary" />
+            <MapPin size={20} className="text-brand-red" />
             {decodedGemeente}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -173,7 +173,7 @@ const GemeenteDetailPage = () => {
       {/* Coffeeshops */}
       <div className="bg-card rounded-lg border border-border p-5">
         <h3 className="text-sm font-semibold font-display mb-3 flex items-center gap-2">
-          <Users size={16} className="text-primary" />
+          <Users size={16} className="text-brand-red" />
           Aangesloten coffeeshops
         </h3>
 
@@ -230,7 +230,7 @@ const GemeenteDetailPage = () => {
                   to={`/leden/${loc.memberId}`}
                   className="flex items-start gap-3 px-3 py-2 rounded-md hover:bg-muted/30 transition-colors group"
                 >
-                  <MapPin size={14} className="text-primary shrink-0 mt-0.5" />
+                  <MapPin size={14} className="text-brand-red shrink-0 mt-0.5" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium font-display group-hover:text-primary transition-colors">
                       {loc.naam}

@@ -326,7 +326,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-primary" size={32} />
+        <Loader2 className="animate-spin text-brand-red" size={32} />
       </div>
     );
   }

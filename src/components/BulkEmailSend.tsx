@@ -271,7 +271,7 @@ export function BulkEmailSend({
   return (
     <div className="rounded-md border-2 border-primary/60 bg-muted/30 p-4 space-y-3">
       <div className="flex items-center gap-2 text-sm">
-        <Users size={16} className="text-primary" />
+        <Users size={16} className="text-brand-red" />
         <span className="font-medium">Bulk verzenden</span>
       </div>
       {loading ? (

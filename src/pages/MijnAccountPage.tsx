@@ -83,7 +83,7 @@ function MfaSection() {
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
-        {hasTotp ? <ShieldCheck size={16} className="text-primary" /> : <ShieldAlert size={16} className="text-destructive" />}
+        {hasTotp ? <ShieldCheck size={16} className="text-brand-red" /> : <ShieldAlert size={16} className="text-destructive" />}
         <h3 className="text-sm font-semibold font-display">Dubbele verificatie (2FA)</h3>
       </div>
       <div className="space-y-3 max-w-sm">
@@ -547,7 +547,7 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground w-28 shrink-0">Rol:</span>
             <span className="font-medium flex items-center gap-1.5">
-              {isAdmin && <Shield size={12} className="text-primary" />}
+              {isAdmin && <Shield size={12} className="text-brand-red" />}
               {isAdmin ? "Beheerder" : "Lid"}
             </span>
           </div>

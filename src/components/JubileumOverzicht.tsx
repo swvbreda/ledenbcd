@@ -108,7 +108,7 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
   return (
     <div className="bg-card rounded-lg border border-border p-5">
       <div className="flex items-center gap-2 mb-1">
-        <Award size={18} className="text-primary" />
+        <Award size={18} className="text-brand-red" />
         <h3 className="text-sm font-semibold font-display">Jubilea in {CURRENT_YEAR}</h3>
       </div>
       <p className="text-xs text-muted-foreground mb-4">
