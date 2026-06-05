@@ -468,6 +468,7 @@ export default function FinancienPage() {
               categories={categories || []}
               year={year}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
+              onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
             />
           </TabsContent>
 
