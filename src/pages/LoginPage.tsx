@@ -6,9 +6,10 @@ import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
 import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
+import { captureRedirectFromQuery, hasPendingRedirect, maybeRedirectAfterLogin } from "@/lib/ssoRedirect";
 
 const LoginPage = () => {
-  const { user, loading: authLoading, isExtern } = useAuth();
+  const { user, loading: authLoading, isExtern, mfaStatus } = useAuth();
   const biometric = useBiometricAuth();
   const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
@@ -31,6 +32,18 @@ const LoginPage = () => {
     isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
   }, []);
 
+  // SSO: capture redirect_to vroeg, zodat hij ook na MFA nog beschikbaar is
+  useEffect(() => {
+    captureRedirectFromQuery();
+  }, []);
+
+  // Zodra de gebruiker volledig is ingelogd + MFA geverifieerd → terug naar publieke site
+  useEffect(() => {
+    if (user && mfaStatus === "verified" && hasPendingRedirect()) {
+      void maybeRedirectAfterLogin();
+    }
+  }, [user, mfaStatus]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -40,6 +53,14 @@ const LoginPage = () => {
   }
 
   if (user) {
+    // Wacht met interne navigate als er een SSO-redirect gepland staat
+    if (hasPendingRedirect()) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-muted-foreground text-sm">Doorsturen...</p>
+        </div>
+      );
+    }
     if (isExtern) return <Navigate to="/extern" replace />;
     return <Navigate to="/" replace />;
   }

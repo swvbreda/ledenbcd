@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import bcdLogo from "@/assets/bcd-logo.png";
+import { hasPendingRedirect, maybeRedirectAfterLogin } from "@/lib/ssoRedirect";
 
 type MfaMethod = "totp" | "email";
 
@@ -25,7 +26,11 @@ export default function MfaVerifyPage() {
 
   useEffect(() => {
     if (!authLoading && user && mfaStatus === "verified") {
-      navigate(isExtern ? "/extern" : "/", { replace: true });
+      if (hasPendingRedirect()) {
+        void maybeRedirectAfterLogin();
+      } else {
+        navigate(isExtern ? "/extern" : "/", { replace: true });
+      }
     }
   }, [authLoading, isExtern, mfaStatus, navigate, user]);
 
@@ -73,6 +78,7 @@ export default function MfaVerifyPage() {
       setLoading(false);
       return;
     }
+    if (await maybeRedirectAfterLogin()) return;
     navigate("/", { replace: true });
   };
 
@@ -119,6 +125,7 @@ export default function MfaVerifyPage() {
     }
 
     toast.success("Verificatie geslaagd!");
+    if (await maybeRedirectAfterLogin()) return;
     navigate("/", { replace: true });
   };
 
