@@ -98,7 +98,6 @@ const App = () => (
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>
                 <Route path="/enquete-extern/:id" element={<EnqueteExternPage />} />
-                <Route path="/enquetes/pcnleden" element={<EnqueteExternPage />} />
                 <Route path="/unsubscribe" element={<UnsubscribePage />} />
                 <Route
                   path="/enquetes/:id/review"
