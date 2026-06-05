@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const { data: members, error: mErr } = await supabase
       .from("members_data")
       .select("data")
-      .eq("member_type", "member");
+      .in("member_type", ["member", "lead"]);
     if (mErr) throw mErr;
 
     const gemeenten = new Set<string>();
