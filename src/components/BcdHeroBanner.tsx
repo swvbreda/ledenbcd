@@ -1,5 +1,3 @@
-import bcdLogo from "@/assets/bcd_logo_element.png";
-
 interface BcdHeroBannerProps {
   title: string;
   subtitle?: string;
@@ -12,38 +10,50 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       className="relative w-full max-w-full overflow-hidden rounded-xl"
       style={{
         background:
-          "linear-gradient(135deg, hsl(0 85% 34%), hsl(0 85% 40%))",
+          "linear-gradient(135deg, hsl(var(--brand-navy)) 0%, hsl(var(--brand-navy-glow)) 100%)",
       }}
     >
-      {/* BCD beeldmerk – echte PNG, tone-on-tone via mix-blend-mode */}
-      <img
-        src={bcdLogo}
-        alt=""
+      {/* Decoratieve blauwe stralen rechtsonder — refereert publieke site */}
+      <svg
         aria-hidden="true"
+        viewBox="0 0 600 600"
         className="absolute pointer-events-none select-none"
         style={{
-          right: "-52px",
-          bottom: "-148px",
-          width: "min(520px, 92vw)",
-          height: "min(520px, 92vw)",
-          objectFit: "contain",
-          mixBlendMode: "multiply",
-          opacity: 0.6,
-          filter: "brightness(1.4)",
+          right: "-120px",
+          bottom: "-220px",
+          width: "min(680px, 110vw)",
+          height: "min(680px, 110vw)",
+          opacity: 0.55,
         }}
-      />
+      >
+        <defs>
+          <linearGradient id="rayGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="hsl(225 80% 32%)" />
+            <stop offset="100%" stopColor="hsl(225 70% 18%)" />
+          </linearGradient>
+        </defs>
+        <g fill="url(#rayGrad)" transform="translate(300 600)">
+          {[-65, -45, -25, -5, 15].map((deg) => (
+            <polygon
+              key={deg}
+              points="0,0 -60,-620 60,-620"
+              transform={`rotate(${deg})`}
+            />
+          ))}
+        </g>
+      </svg>
 
       {/* Content */}
       <div className="relative z-10 min-w-0 px-5 py-8 sm:px-6 sm:py-10 md:px-10 md:py-14">
-        <h1 className="text-2xl font-bold font-display tracking-tight text-primary-foreground sm:text-3xl lg:text-4xl">
+        <h1 className="font-display tracking-tight text-white uppercase leading-[0.95] text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 max-w-xl text-sm text-primary-foreground/80 sm:text-base">
+          <p className="mt-3 max-w-xl text-sm font-medium text-white/80 sm:text-base">
             {subtitle}
           </p>
         )}
-        {children && <div className="mt-4">{children}</div>}
+        {children && <div className="mt-5">{children}</div>}
       </div>
     </div>
   );
