@@ -46,32 +46,32 @@ Deno.serve(async (req) => {
 
     const { data: members, error: mErr } = await supabase
       .from("members_data")
-      .select("data")
-      .eq("member_type", "member");
+      .select("id, data")
+      .in("member_type", ["member", "lead"]);
     if (mErr) throw mErr;
+
+    // Merge pending member_edits (matches dashboard logic)
+    const { data: edits, error: eErr } = await supabase
+      .from("member_edits")
+      .select("member_id, data");
+    if (eErr) throw eErr;
+    const editsMap = new Map<number, any>();
+    for (const e of edits ?? []) editsMap.set(e.member_id, e.data);
 
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
-    const uniekeLocaties = new Set<string>();
+    let aantalCoffeeshops = 0;
     for (const m of members ?? []) {
-      const d = m.data as any;
+      const base = (m.data ?? {}) as any;
+      const edit = editsMap.get((m as any).id) ?? {};
+      const d = { ...base, ...edit };
+      // Arrays merge: prefer edit.locaties when present, else base.locaties
+      d.locaties = Array.isArray(edit?.locaties) ? edit.locaties : base?.locaties;
       const plaats = d?.plaats as string | undefined;
-      if (Array.isArray(d?.locaties) && d.locaties.length > 0) {
-        for (const loc of d.locaties) {
-          const key = [
-            String(loc?.naam ?? "").trim().toLowerCase(),
-            String(loc?.adres ?? "").trim().toLowerCase(),
-            String(loc?.plaats ?? plaats ?? "").trim().toLowerCase(),
-          ].join("|");
-          uniekeLocaties.add(key || `member-${m.id}-${uniekeLocaties.size}`);
-        }
-      } else {
-        // Fallback: member without locaties array — use aantalLocaties field
-        const n = Number(d?.aantalLocaties);
-        for (let i = 0; i < (Number.isFinite(n) && n > 0 ? n : 0); i++) {
-          uniekeLocaties.add(`member-${m.id}-fallback-${i}`);
-        }
-      }
+      // Match dashboard logic: locaties.length, fallback to aantalLocaties
+      const locLen = Array.isArray(d?.locaties) ? d.locaties.length : 0;
+      const fallback = Number(d?.aantalLocaties);
+      aantalCoffeeshops += locLen > 0 ? locLen : (Number.isFinite(fallback) && fallback > 0 ? fallback : 0);
       if (plaats) {
         gemeenten.add(plaats);
         const prov = PLAATS_TO_PROVINCIE[plaats];
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     }));
 
     const payload = {
-      aantal_coffeeshops: uniekeLocaties.size,
+      aantal_coffeeshops: aantalCoffeeshops,
       aantal_gemeenten: gemeenten.size,
       aantal_provincies: provincies.size,
       aantal_bestuursleden: board?.length ?? 0,
