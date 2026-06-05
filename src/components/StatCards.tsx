@@ -85,71 +85,75 @@ const StatCards = ({ members }: StatCardsProps) => {
     <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
       {/* Aangesloten Coffeeshops */}
       <div
-        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
+        className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/leden?tab=coffeeshops")}
       >
-        <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordigde Coffeeshops</p>
-          <Users size={18} className="text-brand-red" />
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Vertegenwoordigde Coffeeshops</p>
+          <Users size={18} className="text-brand-red shrink-0" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{representedLocations}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
-        </p>
+        <div className="mt-auto pt-3 text-center">
+          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{representedLocations}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
+          </p>
+        </div>
       </div>
 
       {/* Gemeenten */}
       <div
-        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
+        className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Gemeenten</p>
-          <Building2 size={18} className="text-brand-red" />
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Gemeenten</p>
+          <Building2 size={18} className="text-brand-red shrink-0" />
         </div>
-        <p className="text-xl sm:text-2xl font-bold font-display mt-1.5">{cityPct}%</p>
-        <p className="text-xs text-muted-foreground mt-0.5">in {matchedCities} van {totalNLCities} gemeenten</p>
+        <div className="mt-auto pt-3 text-center">
+          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{cityPct}%</p>
+          <p className="text-xs text-muted-foreground mt-1">in {matchedCities} van {totalNLCities} gemeenten</p>
+        </div>
       </div>
 
       {/* Marktaandeel gauge */}
       <div
-        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
+        className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Vertegenwoordiging</p>
-          <PieChart size={18} className="text-brand-red" />
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Vertegenwoordiging</p>
+          <PieChart size={18} className="text-brand-red shrink-0" />
         </div>
-        <div className="mt-1">
+        <div className="mt-auto pt-2">
           <MiniGauge pct={marketPct} />
-          <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{marketPct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{representedLocations}/{totalNL} coffeeshops</p>
+          <p className="text-center text-xl sm:text-2xl font-bold font-display tabular-nums -mt-1">{marketPct}%</p>
+          <p className="text-xs text-muted-foreground text-center mt-0.5">{representedLocations}/{totalNL} coffeeshops</p>
         </div>
       </div>
 
       {/* G4 dekking */}
       <div
-        className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
+        className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-center justify-between">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">G4 dekking</p>
-          <MapPin size={18} className="text-success" />
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">G4 dekking</p>
+          <MapPin size={18} className="text-success shrink-0" />
         </div>
-        <div className="mt-1">
+        <div className="mt-auto pt-2">
           <MiniGauge pct={g4Pct} />
-          <p className="text-center text-lg sm:text-xl font-bold font-display -mt-1">{g4Pct}%</p>
-          <p className="text-xs text-muted-foreground text-center">{g4Bcd}/{g4Total} coffeeshops</p>
+          <p className="text-center text-xl sm:text-2xl font-bold font-display tabular-nums -mt-1">{g4Pct}%</p>
+          <p className="text-xs text-muted-foreground text-center mt-0.5">{g4Bcd}/{g4Total} coffeeshops</p>
         </div>
       </div>
 
       {/* Benchmark */}
-      <div className="min-w-0 overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Benchmark</p>
-          <BarChart3 size={18} className="text-brand-red" />
+      <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Benchmark</p>
+          <BarChart3 size={18} className="text-brand-red shrink-0" />
         </div>
-        <div className="space-y-1.5">
+        <div className="mt-auto space-y-1.5">
           {[
             { name: "BCD", pct: marketPct },
             { name: "KHN", pct: 21 },
