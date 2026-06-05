@@ -136,7 +136,7 @@ export default function EmailTemplatesPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-4 w-full">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Mail className="text-brand-red" />
