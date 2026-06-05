@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        body: ['Source Sans 3', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['"Archivo Black"', 'Barlow', 'system-ui', 'sans-serif'],
+        body: ['Barlow', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -23,6 +23,11 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "brand-navy": {
+          DEFAULT: "hsl(var(--brand-navy))",
+          foreground: "hsl(var(--brand-navy-foreground))",
+          glow: "hsl(var(--brand-navy-glow))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
