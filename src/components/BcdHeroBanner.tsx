@@ -43,8 +43,8 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
         </g>
       </svg>
 
-      {/* Content */}
-      <div className="relative z-10 min-w-0 px-5 py-8 sm:px-6 sm:py-10 md:px-10 md:py-14">
+      {/* Content — vaste hoogte zodat alle pagina-banners identiek zijn */}
+      <div className="relative z-10 min-w-0 px-5 sm:px-6 md:px-10 py-8 sm:py-10 md:py-12 flex flex-col justify-center min-h-[220px] sm:min-h-[260px] md:min-h-[300px]">
         <h1 className="font-display tracking-tight text-white uppercase leading-[0.95] text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
           {title}
         </h1>
