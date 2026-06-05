@@ -16,6 +16,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import MailingPreferences from "@/components/MailingPreferences";
 import MemberEditForm from "@/components/MemberEditForm";
 import ExternToestemmingBeheer from "@/components/ExternToestemmingBeheer";
+import { ContributiePaymentCard } from "@/components/ContributiePaymentCard";
 import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
 
@@ -644,6 +645,9 @@ export default function MijnAccountPage() {
       {!editingMember && (
         <>
           <ProfileCard linkedMember={linkedMember} />
+
+          {/* Contributie betalen */}
+          {linkedMember && <ContributiePaymentCard />}
 
           {/* Board member section */}
           {!boardLoading && boardMember && (
