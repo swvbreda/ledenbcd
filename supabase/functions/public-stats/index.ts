@@ -50,13 +50,16 @@ Deno.serve(async (req) => {
       .eq("member_type", "member");
     if (mErr) throw mErr;
 
-    const plaatsen = new Set<string>();
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
+    let aantalCoffeeshops = 0;
     for (const m of members ?? []) {
-      const plaats = (m.data as any)?.plaats as string | undefined;
+      const d = m.data as any;
+      const plaats = d?.plaats as string | undefined;
+      const locaties = Array.isArray(d?.locaties) ? d.locaties.length : 0;
+      const aantal = locaties || Number(d?.aantalLocaties) || 1;
+      aantalCoffeeshops += aantal;
       if (!plaats) continue;
-      plaatsen.add(plaats);
       gemeenten.add(plaats);
       const prov = PLAATS_TO_PROVINCIE[plaats];
       if (prov) provincies.add(prov);
@@ -84,7 +87,7 @@ Deno.serve(async (req) => {
     }));
 
     const payload = {
-      aantal_coffeeshops: members?.length ?? 0,
+      aantal_coffeeshops: aantalCoffeeshops,
       aantal_gemeenten: gemeenten.size,
       aantal_provincies: provincies.size,
       aantal_bestuursleden: board?.length ?? 0,
