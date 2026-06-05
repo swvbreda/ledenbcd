@@ -63,7 +63,7 @@ export default function LedenvoordelenPage() {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 space-y-6">
       <BcdHeroBanner
         title="Ledenvoordelen"
         subtitle="Relevante producten, diensten en kortingen voor coffeeshopondernemers"
