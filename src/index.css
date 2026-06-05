@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 20%;
 
-    --primary: 225 60% 18%;
+    --primary: 0 85% 48%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 95%;
@@ -33,18 +33,18 @@
 
     --border: 0 0% 88%;
     --input: 0 0% 88%;
-    --ring: 225 60% 18%;
+    --ring: 0 85% 48%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 15%;
     --sidebar-foreground: 0 0% 93%;
-    --sidebar-primary: 225 60% 28%;
+    --sidebar-primary: 0 85% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 22%;
     --sidebar-accent-foreground: 0 0% 93%;
     --sidebar-border: 0 0% 25%;
-    --sidebar-ring: 225 60% 28%;
+    --sidebar-ring: 0 85% 48%;
     --sidebar-muted: 0 0% 55%;
 
     --font-display: 'Archivo Black', 'Barlow', system-ui, sans-serif;
