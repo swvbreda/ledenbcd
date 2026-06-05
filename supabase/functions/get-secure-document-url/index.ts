@@ -34,10 +34,19 @@ serve(async (req) => {
       });
     }
 
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    const { data: isUser } = await admin.rpc("has_role", { _user_id: user.id, _role: "user" });
+    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    if (!isUser && !isAdmin) {
+      return new Response(JSON.stringify({ error: "Geen toegang" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json().catch(() => ({}));
     const slug = typeof body?.slug === "string" ? body.slug : "jaarplan";
-
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: doc, error: docErr } = await admin
       .from("secure_documents")
