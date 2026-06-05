@@ -144,10 +144,25 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         }));
       }
 
+      // Bank is leidend: per begrotingspost gebruiken we de gekoppelde
+      // banktransacties als die er zijn. Alleen wanneer er geen enkele bankregel
+      // aan een post hangt, vallen we terug op handmatige / PDF-boekingen.
+      // Zo voorkomen we dat dezelfde betaling dubbel meetelt (handmatig + bank).
+      const bankByLineItem: Record<string, any[]> = {};
+      for (const e of bankAsExpenses) {
+        if (!bankByLineItem[e.line_item_id]) bankByLineItem[e.line_item_id] = [];
+        bankByLineItem[e.line_item_id].push(e);
+      }
+      const manualByLineItem: Record<string, any[]> = {};
+      for (const e of expenses) {
+        if (!manualByLineItem[e.line_item_id]) manualByLineItem[e.line_item_id] = [];
+        manualByLineItem[e.line_item_id].push(e);
+      }
       const expensesByLineItem: Record<string, any[]> = {};
-      for (const e of [...expenses, ...bankAsExpenses]) {
-        if (!expensesByLineItem[e.line_item_id]) expensesByLineItem[e.line_item_id] = [];
-        expensesByLineItem[e.line_item_id].push(e);
+      for (const liId of new Set([...Object.keys(bankByLineItem), ...Object.keys(manualByLineItem)])) {
+        expensesByLineItem[liId] = bankByLineItem[liId]?.length
+          ? bankByLineItem[liId]
+          : (manualByLineItem[liId] || []);
       }
 
       const lineItemsByCategory: Record<string, any[]> = {};
