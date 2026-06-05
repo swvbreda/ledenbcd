@@ -82,15 +82,15 @@ const StatCards = ({ members }: StatCardsProps) => {
   };
 
   return (
-    <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+    <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
       {/* Aangesloten Coffeeshops */}
       <div
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/leden?tab=coffeeshops")}
       >
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Vertegenwoordigde Coffeeshops</p>
-          <Users size={18} className="text-brand-red shrink-0" />
+        <div className="grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
+          <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">Vertegenwoordigde Coffeeshops</p>
+          <Users size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto pt-3 text-center">
           <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{representedLocations}</p>
@@ -105,9 +105,9 @@ const StatCards = ({ members }: StatCardsProps) => {
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Gemeenten</p>
-          <Building2 size={18} className="text-brand-red shrink-0" />
+        <div className="grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
+          <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">Gemeenten</p>
+          <Building2 size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto pt-3 text-center">
           <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{cityPct}%</p>
@@ -120,9 +120,9 @@ const StatCards = ({ members }: StatCardsProps) => {
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Vertegenwoordiging</p>
-          <PieChart size={18} className="text-brand-red shrink-0" />
+        <div className="grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
+          <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">Vertegenwoordiging</p>
+          <PieChart size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto pt-2">
           <MiniGauge pct={marketPct} />
@@ -136,9 +136,9 @@ const StatCards = ({ members }: StatCardsProps) => {
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">G4 dekking</p>
-          <MapPin size={18} className="text-success shrink-0" />
+        <div className="grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
+          <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">G4 dekking</p>
+          <MapPin size={18} className="text-success justify-self-end" />
         </div>
         <div className="mt-auto pt-2">
           <MiniGauge pct={g4Pct} />
@@ -149,9 +149,9 @@ const StatCards = ({ members }: StatCardsProps) => {
 
       {/* Benchmark */}
       <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight min-w-0">Benchmark</p>
-          <BarChart3 size={18} className="text-brand-red shrink-0" />
+        <div className="mb-2 grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
+          <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">Benchmark</p>
+          <BarChart3 size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto space-y-1.5">
           {[
