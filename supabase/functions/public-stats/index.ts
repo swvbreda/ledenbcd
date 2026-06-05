@@ -52,17 +52,31 @@ Deno.serve(async (req) => {
 
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
-    let aantalCoffeeshops = 0;
+    const uniekeLocaties = new Set<string>();
     for (const m of members ?? []) {
       const d = m.data as any;
       const plaats = d?.plaats as string | undefined;
-      const locaties = Array.isArray(d?.locaties) ? d.locaties.length : 0;
-      const aantal = locaties || Number(d?.aantalLocaties) || 1;
-      aantalCoffeeshops += aantal;
-      if (!plaats) continue;
-      gemeenten.add(plaats);
-      const prov = PLAATS_TO_PROVINCIE[plaats];
-      if (prov) provincies.add(prov);
+      if (Array.isArray(d?.locaties) && d.locaties.length > 0) {
+        for (const loc of d.locaties) {
+          const key = [
+            String(loc?.naam ?? "").trim().toLowerCase(),
+            String(loc?.adres ?? "").trim().toLowerCase(),
+            String(loc?.plaats ?? plaats ?? "").trim().toLowerCase(),
+          ].join("|");
+          uniekeLocaties.add(key || `member-${m.id}-${uniekeLocaties.size}`);
+        }
+      } else {
+        // Fallback: member without locaties array — use aantalLocaties field
+        const n = Number(d?.aantalLocaties);
+        for (let i = 0; i < (Number.isFinite(n) && n > 0 ? n : 0); i++) {
+          uniekeLocaties.add(`member-${m.id}-fallback-${i}`);
+        }
+      }
+      if (plaats) {
+        gemeenten.add(plaats);
+        const prov = PLAATS_TO_PROVINCIE[plaats];
+        if (prov) provincies.add(prov);
+      }
     }
 
     const { data: board, error: bErr } = await supabase
@@ -87,7 +101,7 @@ Deno.serve(async (req) => {
     }));
 
     const payload = {
-      aantal_coffeeshops: aantalCoffeeshops,
+      aantal_coffeeshops: uniekeLocaties.size,
       aantal_gemeenten: gemeenten.size,
       aantal_provincies: provincies.size,
       aantal_bestuursleden: board?.length ?? 0,
