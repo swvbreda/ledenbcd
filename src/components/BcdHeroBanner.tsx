@@ -7,7 +7,7 @@ interface BcdHeroBannerProps {
 const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
   return (
     <div
-      className="relative w-full max-w-full overflow-hidden rounded-b-xl -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-4 sm:mb-6"
+      className="relative w-full max-w-full overflow-hidden rounded-b-xl -mx-4 sm:-mx-6 -mt-4 sm:-mt-6"
       style={{
         background:
           "linear-gradient(135deg, hsl(var(--brand-navy)) 0%, hsl(var(--brand-navy-glow)) 100%)",
