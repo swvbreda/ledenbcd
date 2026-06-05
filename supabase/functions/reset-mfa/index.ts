@@ -24,30 +24,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Extract user ID from the JWT payload (base64 decode the payload part)
     const token = authHeader.replace("Bearer ", "");
-    const payloadPart = token.split(".")[1];
-    if (!payloadPart) {
-      return new Response(JSON.stringify({ error: "Invalid token format" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    let userId: string;
-    try {
-      const payload = JSON.parse(atob(payloadPart));
-      userId = payload.sub;
-      if (!userId) throw new Error("No sub in token");
-    } catch {
-      return new Response(JSON.stringify({ error: "Cannot decode token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Use admin client to get user and unenroll all TOTP factors
+    // Verify JWT via Supabase (JWKS-backed)
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: verified, error: verifyErr } = await adminClient.auth.getUser(token);
+    if (verifyErr || !verified?.user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = verified.user.id;
+
     const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
     
     if (adminError || !adminUser?.user) {
