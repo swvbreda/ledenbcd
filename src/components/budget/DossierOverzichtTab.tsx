@@ -29,6 +29,7 @@ interface Props {
   categories: BudgetCategory[];
   year: number;
   onUpdateExpense?: (id: string, fields: { dossier?: string | null }) => void;
+  onUpdateBankTransaction?: (id: string, fields: { dossier?: string | null }) => void;
 }
 
 interface DossierEntry {
@@ -40,6 +41,7 @@ interface DossierEntry {
   categoryName: string;
   lineItemName: string;
   currentDossier: string;
+  isBank: boolean;
 }
 
 interface DossierRow {
@@ -48,7 +50,7 @@ interface DossierRow {
   total: number;
 }
 
-export default function DossierOverzichtTab({ categories, year, onUpdateExpense }: Props) {
+export default function DossierOverzichtTab({ categories, year, onUpdateExpense, onUpdateBankTransaction }: Props) {
   const [editingDossier, setEditingDossier] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
@@ -64,7 +66,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
       for (const li of cat.line_items) {
         for (const exp of li.expenses) {
           if (exp.direction === "in") continue;
-          if ((exp as any)._fromBank) continue;
+          const isBank = !!(exp as any)._fromBank;
           list.push({
             id: exp.id,
             date: exp.expense_date || "",
@@ -74,6 +76,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
             categoryName: cat.name,
             lineItemName: li.name,
             currentDossier: exp.dossier?.trim() || "",
+            isBank,
           });
         }
       }
@@ -114,35 +117,44 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
     });
   }, [allExpenses, searchFilter]);
 
+  const updateEntry = (entry: DossierEntry, dossier: string | null) => {
+    if (entry.isBank) {
+      if (!onUpdateBankTransaction) return;
+      const realId = entry.id.replace(/^bank:/, "");
+      onUpdateBankTransaction(realId, { dossier });
+    } else {
+      if (!onUpdateExpense) return;
+      onUpdateExpense(entry.id, { dossier });
+    }
+  };
+
   const startRename = (dossier: string) => {
     setEditingDossier(dossier);
     setEditValue(dossier);
   };
 
   const saveRename = (row: DossierRow) => {
-    if (!onUpdateExpense) return;
     const newVal = editValue.trim();
     if (!newVal || newVal === row.dossier) {
       setEditingDossier(null);
       return;
     }
     for (const entry of row.entries) {
-      onUpdateExpense(entry.id, { dossier: newVal });
+      updateEntry(entry, newVal);
     }
     setEditingDossier(null);
   };
 
   const confirmDelete = () => {
-    if (!deletingDossier || !onUpdateExpense) return;
+    if (!deletingDossier) return;
     for (const entry of deletingDossier.entries) {
-      onUpdateExpense(entry.id, { dossier: null });
+      updateEntry(entry, null);
     }
     setDeletingDossier(null);
   };
 
-  const removeEntry = (entryId: string) => {
-    if (!onUpdateExpense) return;
-    onUpdateExpense(entryId, { dossier: null });
+  const removeEntry = (entry: DossierEntry) => {
+    updateEntry(entry, null);
   };
 
   const openNewDialog = () => {
@@ -162,9 +174,10 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
   };
 
   const createDossier = () => {
-    if (!onUpdateExpense || !newDossierName.trim() || selectedExpenseIds.size === 0) return;
+    if (!newDossierName.trim() || selectedExpenseIds.size === 0) return;
     for (const id of selectedExpenseIds) {
-      onUpdateExpense(id, { dossier: newDossierName.trim() });
+      const entry = allExpenses.find((e) => e.id === id);
+      if (entry) updateEntry(entry, newDossierName.trim());
     }
     setShowNewDialog(false);
   };
@@ -259,7 +272,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense 
                           variant="ghost"
                           size="icon"
                           className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeEntry(e.id)}
+                          onClick={() => removeEntry(e)}
                           title="Verwijder uit dossier"
                         >
                           <X className="h-3 w-3 text-muted-foreground" />
