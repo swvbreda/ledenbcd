@@ -167,7 +167,7 @@ export default function EnqueteReviewPage() {
   const reviewedGroups = groups.filter((g) => g.responses[0]?.status !== "pending");
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         {isAdmin ? (
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
