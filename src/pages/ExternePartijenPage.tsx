@@ -190,7 +190,7 @@ export default function ExternePartijenPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
+    <div className="p-4 sm:p-6 space-y-6 w-full">
       <BcdHeroBanner title="Externe Partijen" subtitle="Beheer toegang voor banken, overheden en leveranciers" />
 
       {pending.length > 0 && (

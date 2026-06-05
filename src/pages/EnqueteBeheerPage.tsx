@@ -176,7 +176,7 @@ export default function EnqueteBeheerPage() {
   if (!survey) return <div className="p-6 text-destructive">Enquête niet gevonden.</div>;
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 w-full space-y-4">
       <Button variant="ghost" size="sm" onClick={() => navigate("/enquetes")}>
         <ArrowLeft size={16} className="mr-1" /> Terug
       </Button>

@@ -147,7 +147,7 @@ const MemberDetail = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-5xl">
+    <div className="p-4 sm:p-6 space-y-6 w-full">
       {/* Terug-knop */}
       <button
         onClick={() => navigate(-1)}

@@ -121,7 +121,7 @@ export default function ExternePartijDetailPage() {
     : null;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-4xl">
+    <div className="p-4 sm:p-6 space-y-6 w-full">
       <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/externe-partijen")}>
         <ArrowLeft className="h-4 w-4" /> Terug
       </Button>
