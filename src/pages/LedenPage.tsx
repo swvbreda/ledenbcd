@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus, MessageSquare } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -9,6 +9,7 @@ import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
 import NewMemberDialog from "@/components/NewMemberDialog";
+import WhatsAppMatcher from "@/components/WhatsAppMatcher";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
@@ -18,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-type ViewTab = "leden" | "leads" | "coffeeshops";
+type ViewTab = "leden" | "leads" | "coffeeshops" | "whatsapp";
 
 const LedenPage = () => {
   const { isAdmin, isInhuur } = useAuth();
@@ -28,12 +29,19 @@ const LedenPage = () => {
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
   const [activeTab, setActiveTab] = useState<ViewTab>(
-    tabParam === "coffeeshops" ? "coffeeshops" : tabParam === "leads" ? "leads" : "leden"
+    tabParam === "coffeeshops"
+      ? "coffeeshops"
+      : tabParam === "leads"
+      ? "leads"
+      : tabParam === "whatsapp"
+      ? "whatsapp"
+      : "leden"
   );
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
     else if (tabParam === "leads") setActiveTab("leads");
+    else if (tabParam === "whatsapp") setActiveTab("whatsapp");
     else if (tabParam === "leden") setActiveTab("leden");
   }, [tabParam]);
   const {
@@ -74,6 +82,8 @@ const LedenPage = () => {
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "coffeeshops"
     ? `${totalLocations} coffeeshops`
+    : activeTab === "whatsapp"
+    ? `WhatsApp-community matcher`
     : canSeeLeads
     ? `${mergedSearched.length} leden + leads`
     : `${ledenOnly.length} leden`;
@@ -89,7 +99,17 @@ const LedenPage = () => {
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <BcdHeroBanner
-        title={showArchived ? "Oud-leden" : activeTab === "leden" ? "Ledenbestand" : activeTab === "leads" ? "Leads" : "Coffeeshopbestand"}
+        title={
+          showArchived
+            ? "Oud-leden"
+            : activeTab === "leden"
+            ? "Ledenbestand"
+            : activeTab === "leads"
+            ? "Leads"
+            : activeTab === "whatsapp"
+            ? "WhatsApp-match"
+            : "Coffeeshopbestand"
+        }
         subtitle={subtitle}
       />
       <div className="flex flex-col gap-3">
@@ -135,24 +155,32 @@ const LedenPage = () => {
                 <Store size={14} />
                 Coffeeshops ({totalLocations})
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="whatsapp" className="gap-1.5">
+                  <MessageSquare size={14} />
+                  WhatsApp
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            <MemberFilters
-              cities={cities}
-              stadsdelen={stadsdelen}
-              selectedCity={filterCity}
-              selectedStadsdeel={filterStadsdeel}
-              selectedJaren={filterJaren}
-              onCityChange={setFilterCity}
-              onStadsdeelChange={setFilterStadsdeel}
-              onJarenChange={setFilterJaren}
-              onClear={clearFilters}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </div>
+          {activeTab !== "whatsapp" && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              <MemberFilters
+                cities={cities}
+                stadsdelen={stadsdelen}
+                selectedCity={filterCity}
+                selectedStadsdeel={filterStadsdeel}
+                selectedJaren={filterJaren}
+                onCityChange={setFilterCity}
+                onStadsdeelChange={setFilterStadsdeel}
+                onJarenChange={setFilterJaren}
+                onClear={clearFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -172,8 +200,10 @@ const LedenPage = () => {
         <MemberTable members={ledenOnly} />
       ) : activeTab === "leads" ? (
         <MemberTable members={leadsOnly} />
-      ) : (
+      ) : activeTab === "coffeeshops" ? (
         <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
+      ) : (
+        <WhatsAppMatcher />
       )}
     </div>
   );
