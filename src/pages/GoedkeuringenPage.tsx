@@ -1,6 +1,6 @@
 import { useState } from "react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { Check, X, Clock, ChevronDown, ChevronUp, User } from "lucide-react";
+import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,11 @@ import {
   useRejectEditRequest,
   type EditRequest,
 } from "@/hooks/useMemberEdits";
+import {
+  useMembershipRequests,
+  useUpdateMembershipRequest,
+  type MembershipRequest,
+} from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import type { Member } from "@/data/types";
 
