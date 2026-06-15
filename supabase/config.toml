@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.payments-webhook]
 verify_jwt = false
+
+[functions.notify-membership-request]
+verify_jwt = false
