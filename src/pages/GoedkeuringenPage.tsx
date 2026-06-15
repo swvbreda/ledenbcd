@@ -1,6 +1,6 @@
 import { useState } from "react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { Check, X, Clock, ChevronDown, ChevronUp, User } from "lucide-react";
+import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,11 @@ import {
   useRejectEditRequest,
   type EditRequest,
 } from "@/hooks/useMemberEdits";
+import {
+  useMembershipRequests,
+  useUpdateMembershipRequest,
+  type MembershipRequest,
+} from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import type { Member } from "@/data/types";
 
@@ -228,6 +233,8 @@ export default function GoedkeuringenPage() {
   const { isAdmin } = useAuth();
   const [showAll, setShowAll] = useState(false);
   const { data: requests, isLoading } = useEditRequests(showAll ? "all" : "pending");
+  const { data: signups, isLoading: signupsLoading } = useMembershipRequests(showAll ? "all" : "pending");
+  const updateSignup = useUpdateMembershipRequest();
 
   if (!isAdmin) {
     return (
@@ -238,20 +245,87 @@ export default function GoedkeuringenPage() {
   }
 
   const pendingCount = requests?.filter((r) => r.status === "pending").length ?? 0;
+  const pendingSignups = signups?.filter((s) => s.status === "new").length ?? 0;
+  const totalPending = pendingCount + pendingSignups;
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
       <BcdHeroBanner
         title="Goedkeuringen"
-        subtitle={pendingCount > 0
-          ? `${pendingCount} wijziging${pendingCount === 1 ? "" : "en"} wacht${pendingCount === 1 ? "" : "en"} op goedkeuring`
-          : "Geen openstaande wijzigingen"}
+        subtitle={totalPending > 0
+          ? `${totalPending} item${totalPending === 1 ? "" : "s"} wacht${totalPending === 1 ? "" : "en"} op goedkeuring`
+          : "Geen openstaande zaken"}
       >
         <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
           {showAll ? "Alleen openstaand" : "Toon alles"}
         </Button>
       </BcdHeroBanner>
 
+      {/* Nieuwe aanmeldingen via publieke site */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+          <UserPlus size={14} /> Nieuwe aanmeldingen
+          {pendingSignups > 0 && <Badge variant="secondary">{pendingSignups}</Badge>}
+        </h2>
+        {signupsLoading ? (
+          <div className="text-sm text-muted-foreground py-4">Laden...</div>
+        ) : signups && signups.length > 0 ? (
+          <div className="space-y-3">
+            {signups.map((s) => (
+              <Card key={s.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold font-display">{s.coffeeshop_name}</span>
+                      <Badge variant={s.status === "new" ? "secondary" : s.status === "approved" ? "default" : "destructive"}>
+                        {s.status === "new" ? "Nieuw" : s.status === "approved" ? "Verwerkt" : "Afgewezen"}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(s.created_at).toLocaleString("nl-NL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-sm grid sm:grid-cols-2 gap-x-4 gap-y-1">
+                  <div className="flex items-center gap-1.5"><User size={12} className="text-muted-foreground" />{s.full_name}</div>
+                  <div className="flex items-center gap-1.5"><MapPin size={12} className="text-muted-foreground" />{s.city}</div>
+                  <div className="flex items-center gap-1.5"><Mail size={12} className="text-muted-foreground" /><a href={`mailto:${s.email}`} className="hover:underline">{s.email}</a></div>
+                  {s.phone && <div className="flex items-center gap-1.5"><Phone size={12} className="text-muted-foreground" /><a href={`tel:${s.phone}`} className="hover:underline">{s.phone}</a></div>}
+                </div>
+                {s.message && (
+                  <p className="text-sm bg-muted/50 rounded p-2 whitespace-pre-wrap">{s.message}</p>
+                )}
+                {s.status === "new" && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-border">
+                    <Button size="sm" className="gap-1.5" disabled={updateSignup.isPending}
+                      onClick={() => updateSignup.mutate({ id: s.id, status: "approved" }, {
+                        onSuccess: () => toast.success("Aanmelding gemarkeerd als verwerkt"),
+                        onError: (e) => toast.error("Fout: " + (e as Error).message),
+                      })}>
+                      <Check size={14} /> Verwerkt
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive" disabled={updateSignup.isPending}
+                      onClick={() => updateSignup.mutate({ id: s.id, status: "rejected" }, {
+                        onSuccess: () => toast.success("Aanmelding afgewezen"),
+                        onError: (e) => toast.error("Fout: " + (e as Error).message),
+                      })}>
+                      <X size={14} /> Afwijzen
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-card rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
+            {showAll ? "Nog geen aanmeldingen" : "Geen nieuwe aanmeldingen"}
+          </div>
+        )}
+      </section>
+
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground pt-2">
+        Wijzigingsverzoeken leden
+      </h2>
       {isLoading ? (
         <div className="text-center text-muted-foreground py-12">Laden...</div>
       ) : requests && requests.length > 0 ? (
