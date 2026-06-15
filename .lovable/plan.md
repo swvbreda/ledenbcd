@@ -1,66 +1,56 @@
 
-## Doel
+# WhatsApp-nummer matcher
 
-Leden kunnen de jaarcontributie van €3.000 zelf online betalen via Stripe — **ineens** of in **2 termijnen** — naast de bestaande mogelijkheid van handmatige overschrijving. Zodra Stripe een betaling bevestigt, wordt de contributie automatisch op "betaald" gezet in de administratie.
+Een tool voor admins op de Ledenbestand-pagina om te controleren welk telefoonnummer bij welk lid hoort, en om een hele WhatsApp-deelnemerslijst in één keer te matchen tegen de ledenadministratie.
 
-## Verwachte kosten
+## Waar het komt
 
-Per geslaagde betaling via Stripe (NL):
-- **iDEAL:** ~1,4% + €0,25 → ~€42 bij €3.000 ineens, ~€21 per termijn bij 2× €1.500
-- **Creditcard EU:** ~1,5% + €0,25
-- Geen vaste maandkosten. Geen Lovable-extra's; gewone Stripe-tarieven.
+Een extra tab **"WhatsApp-match"** op `LedenPage` (naast Leden / Leads / Coffeeshops). Alleen zichtbaar voor admins. Geen database-wijzigingen nodig — alles draait op de bestaande `members_data` die de pagina al inlaadt.
 
-Voor ~30 leden die ineens betalen: ~€1.260 transactiekosten per jaar. Bij 2 termijnen verdubbelt dat naar ~€2.520.
+## Wat het doet
 
-## Wat we bouwen
+### 1. Single lookup
+- Inputveld waar je één telefoonnummer plakt (in elk formaat: `+31 6 12345678`, `0612345678`, `06-12345678`, etc.).
+- Direct resultaat: welk lid (coffeeshop + plaats), welke contactpersoon, welke rol (hoofdcontact of contactpersoon uit `contacten[]`). Klik door naar het lid.
+- Als geen match: duidelijke "onbekend nummer" melding.
 
-### 1. Stripe inschakelen
-- Lovable's ingebouwde Stripe-integratie activeren (geen eigen Stripe-account nodig om te starten; testomgeving werkt direct, live na verificatie).
-- Tax handling: **uit** (contributie is een vrijgestelde verenigingsbijdrage, geen btw nodig).
+### 2. Bulk-match
+- Groot tekstveld waarin je de WhatsApp-deelnemerslijst plakt (één nummer per regel, of de ruwe export waar de tool zelf nummers uit pikt via regex).
+- Output in drie groepen:
+  - **✅ Gematcht** — nummer → lid + contactpersoon (klikbaar naar lidpagina).
+  - **❓ Onbekend** — nummer staat in WhatsApp maar niet in ledenadministratie. Kopieerbaar lijstje zodat je ze kunt onderzoeken of verwijderen.
+  - **⚠️ Ontbreekt in WhatsApp** — leden waarvan geen enkel telefoonnummer in de geplakte lijst voorkomt. Zo zie je wie nog uitgenodigd moet worden.
+- Knop "Exporteer als CSV" voor het hele rapport.
 
-### 2. Producten in Stripe
-- Eén product "Jaarcontributie BCD" met twee prijzen:
-  - €3.000 ineens
-  - €1.500 (gebruikt voor termijn 1 én termijn 2)
+## Matching-logica
 
-### 3. Betaalpagina voor het lid
-- Nieuwe pagina **"Contributie betalen"** binnen het ledenportaal (zichtbaar op `MijnAccountPage` of `ContributiePage`).
-- Toont: openstaande contributie voor het lopende jaar + drie knoppen:
-  - **Betaal €3.000 ineens** (iDEAL/creditcard)
-  - **Betaal in 2 termijnen** (eerste €1.500 nu, herinnering voor tweede over 6 maanden)
-  - **Ik maak het zelf over** (huidige flow, geen Stripe)
-- Knop opent Stripe Checkout in een nieuw tabblad.
+Bron-nummers per lid:
+- `member.telefoon` (hoofdnummer) → gelabeld als "hoofdcontact"
+- Alle `member.contacten[].telefoon` → gelabeld met `contact.naam` + `contact.functie`
 
-### 4. Automatische verwerking na betaling
-- Webhook van Stripe → Edge Function `stripe-webhook` die:
-  - lid identificeert (via `metadata.member_id` op de Checkout sessie)
-  - contributie van dat jaar in `contributions` tabel op `betaald` zet
-  - bij 2-termijnen-flow: registreert dat termijn 1 of 2 is voldaan; pas bij beide → volledig betaald
-  - boeking aanmaakt in de financiële administratie zodat het overzicht klopt
-- Resultaat: bestuur hoeft niets meer handmatig in te boeken voor Stripe-betalingen.
+Normalisatie (zelfde functie voor beide kanten van de match):
+- Alle niet-cijfers strippen
+- Nederlandse normalisatie: `06...` → `316...`, `+31 6...` → `316...`, leading `0031` → `31`
+- Vergelijk op laatste 9 cijfers (vangt verschillen in landcode/spaties op)
 
-### 5. Herinnering tweede termijn
-- 6 maanden na termijn 1: lid krijgt automatisch een e-mail met betaallink voor termijn 2.
-- Zichtbaar in bestuurspagina: welke leden in welke termijn-status zitten.
+Een lid kan dus meerdere nummers hebben; één nummer matcht maximaal één (lid, contact)-combinatie.
 
-### 6. Bestuur overzicht
-- In de financiële module nieuwe sectie **"Online betalingen (Stripe)"** met overzicht van: lid, bedrag, datum, status (geslaagd/openstaand termijn 2/mislukt), Stripe-transactiekosten.
+## Toegang
 
-## Wat we niet doen
-- Geen maandelijkse incasso (12×) — viel buiten je keuze.
-- Geen SEPA automatische incasso (zou bij maandelijks de goedkoopste zijn, maar je koos voor 1× of 2×).
-- Geen verplichting; handmatige overschrijving blijft naast Stripe bestaan.
-
-## Volgorde van uitvoering
-1. Stripe inschakelen via Lovable (jij vult in het formulier je gegevens in).
-2. Producten + prijzen aanmaken in Stripe via Lovable tool.
-3. Edge function `stripe-webhook` + database velden voor `payment_status`, `stripe_session_id`, `installment_number` toevoegen aan `contributions`.
-4. Betaalpagina + knoppen bouwen op `ContributiePage`/`MijnAccountPage`.
-5. Bestuursoverzicht + e-mailherinnering termijn 2.
-6. Eerst testen in Stripe testmodus met fake iDEAL, daarna live zetten.
+Tab en functionaliteit alleen tonen als `useAuth().isAdmin === true`. Geen backend-wijziging nodig: de matching gebeurt client-side op de data die admins al mogen zien.
 
 ## Technische details
-- Stripe Checkout Session in `payment` mode (geen subscription — past niet bij "2 keer").
-- Tweede termijn = nieuwe Checkout Session, niet automatisch afgeschreven (lid moet zelf klikken op herinnering). Echt automatisch incasseren vereist SEPA mandaat — bewust niet gekozen.
-- Webhook signature verificatie via `STRIPE_WEBHOOK_SECRET`.
-- Idempotency: `member_id + jaar + termijn` voorkomt dubbele boekingen bij retries.
+
+Nieuwe bestanden:
+- `src/lib/phoneMatch.ts` — `normalizePhone(raw: string): string | null` en `extractPhones(text: string): string[]` (regex die `(\+?\d[\d\s\-()]{7,}\d)` matcht en daarna normaliseert). Plus `buildPhoneIndex(members)` die een `Map<normalized, {memberId, contactNaam, contactRol}[]>` opbouwt.
+- `src/components/WhatsAppMatcher.tsx` — UI-component met twee subviews (single / bulk) via een interne tab of segmented control. Gebruikt `useMembersData()` voor `rawMembers` en `rawLeads`. Hergebruikt bestaande shadcn `Tabs`, `Input`, `Textarea`, `Button`, `Card`.
+
+Gewijzigde bestanden:
+- `src/pages/LedenPage.tsx` — extra `TabsTrigger value="whatsapp"` (alleen als `isAdmin`), rendert `<WhatsAppMatcher />`. `ViewTab` type uitgebreid met `"whatsapp"`.
+
+Geen migraties, geen edge functions, geen RLS-wijzigingen. Geen persistente opslag van geplakte nummers — alles blijft in browsergeheugen voor de sessie.
+
+## Niet in scope (kunnen later)
+
+- Automatisch synchroniseren met de WhatsApp Business API (kan in vervolg-iteratie als je een WhatsApp Business-account hebt).
+- Permanente opslag van "WhatsApp lid: ja/nee" per lid (vraagt schemawijziging — eerst ervaring opdoen met de matcher).
