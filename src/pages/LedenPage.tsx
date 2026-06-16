@@ -218,9 +218,12 @@ const LedenPage = () => {
           <TabsList>
             {isBoard && (
               <TabsTrigger value="deelnemers" className="gap-1.5">
-                <ListChecks size={14} /> Community deelnemers
+                <ListChecks size={14} /> Community beheer
               </TabsTrigger>
             )}
+            <TabsTrigger value="lijst" className="gap-1.5">
+              <List size={14} /> Deelnemerslijst
+            </TabsTrigger>
             <TabsTrigger value="matcher" className="gap-1.5">
               <Search size={14} /> Matcher
             </TabsTrigger>
@@ -230,6 +233,9 @@ const LedenPage = () => {
               <CommunityDeelnemersTable />
             </TabsContent>
           )}
+          <TabsContent value="lijst">
+            <CommunityDeelnemersLijst />
+          </TabsContent>
           <TabsContent value="matcher">
             <WhatsAppMatcher />
           </TabsContent>
