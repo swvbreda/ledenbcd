@@ -91,10 +91,10 @@ const CommunityDeelnemersLijst = () => {
           <table className="w-full text-sm">
             <thead className="bg-muted/40">
               <tr className="text-left text-xs uppercase text-muted-foreground">
+                <th className="px-3 py-2 font-medium">Naam</th>
+                <th className="px-3 py-2 font-medium">Nummer</th>
                 <th className="px-3 py-2 font-medium">Coffeeshop</th>
                 <th className="px-3 py-2 font-medium hidden sm:table-cell">Plaats</th>
-                <th className="px-3 py-2 font-medium">WhatsApp-naam</th>
-                <th className="px-3 py-2 font-medium">Nummer</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -110,6 +110,18 @@ const CommunityDeelnemersLijst = () => {
                   return (
                     <tr key={p.id} className="hover:bg-muted/20">
                       <td className="px-3 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <User size={12} className="text-muted-foreground/60" />
+                          <span>{p.display_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <Phone size={12} className="text-muted-foreground/60" />
+                          <span className="font-mono text-xs">{p.phone || "—"}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
                         {m ? (
                           <Link to={`/leden/${m.id}`} className="font-medium hover:text-brand-red">
                             {m.naam || m.bedrijfsnaam || `Lid #${m.id}`}
@@ -123,18 +135,6 @@ const CommunityDeelnemersLijst = () => {
                       </td>
                       <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">
                         {m?.plaats || "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <User size={12} className="text-muted-foreground/60" />
-                          <span>{p.display_name}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <Phone size={12} className="text-muted-foreground/60" />
-                          <span className="font-mono text-xs">{p.phone || "—"}</span>
-                        </div>
                       </td>
                     </tr>
                   );
