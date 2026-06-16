@@ -157,7 +157,14 @@ export function useSetWhatsAppPreference() {
   return useMutation({
     mutationFn: async (input: { member_id: number; opted_in?: boolean; blocked?: boolean }) => {
       const now = new Date().toISOString();
-      const payload: Record<string, unknown> = {
+      const payload: {
+        member_id: number;
+        updated_by: string | null;
+        opted_in?: boolean;
+        opted_in_at?: string;
+        opted_out_at?: string;
+        blocked?: boolean;
+      } = {
         member_id: input.member_id,
         updated_by: user?.id ?? null,
       };
@@ -167,7 +174,9 @@ export function useSetWhatsAppPreference() {
         else payload.opted_out_at = now;
       }
       if (input.blocked !== undefined) payload.blocked = input.blocked;
-      const { error } = await supabase.from("whatsapp_preferences").upsert(payload, { onConflict: "member_id" });
+      const { error } = await supabase
+        .from("whatsapp_preferences")
+        .upsert(payload, { onConflict: "member_id" });
       if (error) throw error;
     },
     onSuccess: () => {
