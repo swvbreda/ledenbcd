@@ -27,6 +27,7 @@ type Participant = {
   phone: string | null;
   member_id: number | null;
   sort_key: string | null;
+  note: string | null;
 };
 
 const CommunityTodoList = () => {
