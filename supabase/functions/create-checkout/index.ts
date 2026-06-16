@@ -34,7 +34,30 @@ Deno.serve(async (req) => {
     const installmentNumber: number = plan === "installment" ? (Number(body.installmentNumber) === 2 ? 2 : 1) : 1;
     const environment: StripeEnv = body.environment === "live" ? "live" : "sandbox";
     const returnUrl: string = String(body.returnUrl || "");
-    if (!returnUrl.startsWith("http")) throw new Error("Invalid returnUrl");
+    // Restrict returnUrl to our own application origins to prevent open-redirect
+    // attacks via Stripe's hosted checkout return flow.
+    const ALLOWED_RETURN_ORIGINS: ReadonlyArray<string> = [
+      "https://leden.coffeeshopbond.nl",
+      "https://ledenbcd.lovable.app",
+    ];
+    // Lovable preview/sandbox hostnames look like *.lovable.app or *.lovableproject.com
+    const ALLOWED_HOST_SUFFIXES = [".lovable.app", ".lovableproject.com"];
+    let parsedReturn: URL;
+    try {
+      parsedReturn = new URL(returnUrl);
+    } catch {
+      throw new Error("Invalid returnUrl");
+    }
+    if (parsedReturn.protocol !== "https:" && parsedReturn.hostname !== "localhost") {
+      throw new Error("Invalid returnUrl");
+    }
+    const originOk =
+      ALLOWED_RETURN_ORIGINS.includes(parsedReturn.origin) ||
+      ALLOWED_HOST_SUFFIXES.some((suffix) => parsedReturn.hostname.endsWith(suffix)) ||
+      parsedReturn.hostname === "localhost";
+    if (!originOk) {
+      throw new Error("Invalid returnUrl");
+    }
 
     // Verify user is linked to a member
     const adminClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
