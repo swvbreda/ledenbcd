@@ -83,15 +83,18 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
+    // Server-side verification: getUser validates the token against the auth server
+    // so revoked/expired tokens are rejected immediately (unlike getClaims which only
+    // decodes the JWT locally). This is the highest-privilege endpoint in the system.
+    const { data: userData, error: userError } = await callerClient.auth.getUser(token);
+    if (userError || !userData?.user?.id) {
       return new Response(JSON.stringify({ error: "Niet ingelogd" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerId = claimsData.claims.sub as string;
+    const callerId = userData.user.id;
 
     const { data: roleData } = await adminClient
       .from("user_roles")
