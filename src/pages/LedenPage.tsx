@@ -11,6 +11,7 @@ import MailingExportButton from "@/components/MailingExportButton";
 import NewMemberDialog from "@/components/NewMemberDialog";
 import WhatsAppMatcher from "@/components/WhatsAppMatcher";
 import CommunityDeelnemersTable from "@/components/CommunityDeelnemersTable";
+import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
