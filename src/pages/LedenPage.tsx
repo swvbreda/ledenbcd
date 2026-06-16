@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks, List } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
