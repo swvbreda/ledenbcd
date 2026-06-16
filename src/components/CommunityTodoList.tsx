@@ -253,6 +253,28 @@ const CommunityTodoList = () => {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {isNotified(p.note) ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-emerald-600 gap-1.5"
+                    disabled
+                  >
+                    <MailCheck size={14} />
+                    <span className="hidden sm:inline">Geïnformeerd</span>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => markNotified(p.id)}
+                    disabled={busyId === p.id}
+                  >
+                    <Mail size={14} />
+                    <span className="hidden sm:inline">Geïnformeerd</span>
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
