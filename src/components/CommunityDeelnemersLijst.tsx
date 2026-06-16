@@ -14,12 +14,14 @@ type Participant = {
 };
 
 const CommunityDeelnemersLijst = () => {
-  const { rawMembers, rawLeads } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
   const memberById = useMemo(() => {
-    const map = new Map<number, (typeof rawMembers)[number]>();
-    [...rawMembers, ...rawLeads].forEach((m) => map.set(m.id, m));
+    const map = new Map<number, { m: (typeof rawMembers)[number]; type: "member" | "lead" | "old" }>();
+    rawMembers.forEach((m) => map.set(m.id, { m, type: "member" }));
+    rawLeads.forEach((m) => map.set(m.id, { m, type: "lead" }));
+    rawOldMembers.forEach((m) => map.set(m.id, { m, type: "old" }));
     return map;
-  }, [rawMembers, rawLeads]);
+  }, [rawMembers, rawLeads, rawOldMembers]);
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,7 +108,9 @@ const CommunityDeelnemersLijst = () => {
                 </tr>
               ) : (
                 filtered.map((p) => {
-                  const m = p.member_id ? memberById.get(p.member_id) : null;
+                  const entry = p.member_id ? memberById.get(p.member_id) : null;
+                  const m = entry?.m || null;
+                  const type = entry?.type;
                   const memberPhone =
                     m?.telefoon ||
                     m?.contacten?.find((c) => c.telefoon)?.telefoon ||
@@ -128,9 +132,26 @@ const CommunityDeelnemersLijst = () => {
                       </td>
                       <td className="px-3 py-2">
                         {m ? (
-                          <Link to={`/leden/${m.id}`} className="font-medium hover:text-brand-red">
-                            {m.naam || m.bedrijfsnaam || `Lid #${m.id}`}
-                          </Link>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Link to={`/leden/${m.id}`} className="font-medium hover:text-brand-red">
+                              {m.naam || m.bedrijfsnaam || `Lid #${m.id}`}
+                            </Link>
+                            {type === "member" && (
+                              <span className="text-xs font-mono text-muted-foreground">
+                                #{m.id}
+                              </span>
+                            )}
+                            {type === "lead" && (
+                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                                Lead
+                              </span>
+                            )}
+                            {type === "old" && (
+                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
+                                Oud-lid
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-muted-foreground italic">
                             <AlertCircle size={12} className="text-amber-500" />
