@@ -12,6 +12,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index";
 import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
+import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
 import LocatiesPage from "./pages/LocatiesPage";
@@ -79,6 +80,7 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/leden" element={<LedenPage />} />
                   <Route path="/leden/:id" element={<MemberDetail />} />
+                  <Route path="/community" element={<CommunityPage />} />
                   <Route path="/locaties" element={<LocatiesPage />} />
                   <Route path="/locaties/:gemeente" element={<GemeenteDetailPage />} />
                   

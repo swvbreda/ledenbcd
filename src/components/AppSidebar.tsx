@@ -242,7 +242,7 @@ export function AppSidebar() {
                 {(isAdmin || isBoard) && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
-                      <NavLink to="/leden?tab=community" onClick={closeMobile}>
+                      <NavLink to="/community" onClick={closeMobile}>
                         <ListChecks className="mr-2 h-4 w-4" />
                         {!collapsed && <span>Community deelnemers</span>}
                       </NavLink>

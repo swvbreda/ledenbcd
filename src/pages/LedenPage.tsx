@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks, List } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -9,25 +9,20 @@ import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
 import NewMemberDialog from "@/components/NewMemberDialog";
-import WhatsAppMatcher from "@/components/WhatsAppMatcher";
-import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
-import CommunityTodoList from "@/components/CommunityTodoList";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-type ViewTab = "leden" | "leads" | "coffeeshops" | "community";
-type CommunitySubTab = "matcher" | "todo" | "lijst";
+type ViewTab = "leden" | "leads" | "coffeeshops";
 
 const LedenPage = () => {
-  const { isAdmin, isInhuur, isBoard } = useAuth();
+  const { isAdmin, isInhuur } = useAuth();
   const canSeeLeads = isAdmin || isInhuur;
-  const canSeeCommunity = isAdmin || isBoard;
   const { allMembersAndLeads, isLoading: dataLoading } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -37,16 +32,12 @@ const LedenPage = () => {
       ? "coffeeshops"
       : tabParam === "leads"
       ? "leads"
-      : tabParam === "whatsapp" || tabParam === "community"
-      ? "community"
       : "leden"
   );
-  const [communitySub, setCommunitySub] = useState<CommunitySubTab>("lijst");
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
     else if (tabParam === "leads") setActiveTab("leads");
-    else if (tabParam === "whatsapp" || tabParam === "community") setActiveTab("community");
     else if (tabParam === "leden") setActiveTab("leden");
   }, [tabParam]);
   const {
@@ -87,8 +78,6 @@ const LedenPage = () => {
     ? `${archivedMembers.length} oud-leden`
     : activeTab === "coffeeshops"
     ? `${totalLocations} coffeeshops`
-    : activeTab === "community"
-    ? `WhatsApp-community beheer`
     : canSeeLeads
     ? `${mergedSearched.length} leden + leads`
     : `${ledenOnly.length} leden`;
@@ -111,8 +100,6 @@ const LedenPage = () => {
             ? "Ledenbestand"
             : activeTab === "leads"
             ? "Leads"
-            : activeTab === "community"
-            ? "Community"
             : "Coffeeshopbestand"
         }
         subtitle={subtitle}
@@ -133,7 +120,7 @@ const LedenPage = () => {
             )}
           </Button>
         </div>
-        {!showArchived && isAdmin && activeTab !== "community" && (
+        {!showArchived && isAdmin && (
           <div className="flex items-center gap-2 flex-wrap">
             <ExportButton members={mergedSearched} />
             <MailingExportButton members={mergedSearched} />
@@ -160,17 +147,10 @@ const LedenPage = () => {
                 <Store size={14} />
                 Coffeeshops ({totalLocations})
               </TabsTrigger>
-              {canSeeCommunity && (
-                <TabsTrigger value="community" className="gap-1.5">
-                  <MessageSquare size={14} />
-                  Community
-                </TabsTrigger>
-              )}
             </TabsList>
           </Tabs>
 
-          {activeTab !== "community" && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
               <MemberFilters
                 cities={cities}
@@ -184,8 +164,7 @@ const LedenPage = () => {
                 onClear={clearFilters}
                 hasActiveFilters={hasActiveFilters}
               />
-            </div>
-          )}
+          </div>
         </>
       )}
 
@@ -205,35 +184,8 @@ const LedenPage = () => {
         <MemberTable members={ledenOnly} />
       ) : activeTab === "leads" ? (
         <MemberTable members={leadsOnly} />
-      ) : activeTab === "coffeeshops" ? (
-        <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       ) : (
-        <Tabs
-          value={communitySub}
-          onValueChange={(v) => setCommunitySub(v as CommunitySubTab)}
-          className="space-y-4"
-        >
-          <TabsList>
-            <TabsTrigger value="lijst" className="gap-1.5">
-              <List size={14} /> Deelnemerslijst
-            </TabsTrigger>
-            <TabsTrigger value="matcher" className="gap-1.5">
-              <Search size={14} /> Matcher
-            </TabsTrigger>
-            <TabsTrigger value="todo" className="gap-1.5">
-              <ListChecks size={14} /> Te doen
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="lijst">
-            <CommunityDeelnemersLijst />
-          </TabsContent>
-          <TabsContent value="matcher">
-            <WhatsAppMatcher />
-          </TabsContent>
-          <TabsContent value="todo">
-            <CommunityTodoList />
-          </TabsContent>
-        </Tabs>
+        <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       )}
     </div>
   );
