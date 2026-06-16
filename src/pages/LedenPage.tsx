@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus, MessageSquare, ListChecks } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus, MessageSquare } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -39,7 +39,7 @@ const LedenPage = () => {
       ? "community"
       : "leden"
   );
-  const [communitySub] = useState<CommunitySubTab>("deelnemers");
+  
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
