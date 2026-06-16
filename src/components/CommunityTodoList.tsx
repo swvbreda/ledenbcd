@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, Check, ChevronsUpDown, Phone, Trash2, User } from "lucide-react";
+import { AlertCircle, Check, ChevronsUpDown, Phone, Trash2, User, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,11 +30,16 @@ type Participant = {
 };
 
 const CommunityTodoList = () => {
-  const { rawMembers, rawLeads } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
   const allMembers = useMemo(
     () => [...rawMembers, ...rawLeads],
     [rawMembers, rawLeads],
   );
+  const oldMemberById = useMemo(() => {
+    const map = new Map<number, (typeof rawOldMembers)[number]>();
+    rawOldMembers.forEach((m) => map.set(m.id, m));
+    return map;
+  }, [rawOldMembers]);
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +51,6 @@ const CommunityTodoList = () => {
     const { data } = await supabase
       .from("whatsapp_participants")
       .select("id, display_name, phone, member_id, sort_key")
-      .is("member_id", null)
       .order("sort_key");
     setParticipants((data || []) as Participant[]);
     setIsLoading(false);
@@ -56,15 +60,22 @@ const CommunityTodoList = () => {
     load();
   }, []);
 
+  // Alleen tonen: niet gekoppeld OF gekoppeld aan oud-lid
+  const todoParticipants = useMemo(() => {
+    return participants.filter(
+      (p) => !p.member_id || oldMemberById.has(p.member_id),
+    );
+  }, [participants, oldMemberById]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return participants;
-    return participants.filter(
+    if (!q) return todoParticipants;
+    return todoParticipants.filter(
       (p) =>
         p.display_name.toLowerCase().includes(q) ||
         (p.phone || "").toLowerCase().includes(q),
     );
-  }, [participants, query]);
+  }, [todoParticipants, query]);
 
   const linkToMember = async (participantId: string, memberId: number) => {
     setBusyId(participantId);
@@ -112,11 +123,11 @@ const CommunityTodoList = () => {
         <AlertCircle className="text-brand-red shrink-0 mt-0.5" size={18} />
         <div className="text-sm">
           <p className="font-semibold">
-            {participants.length} deelnemers nog niet gekoppeld
+            {todoParticipants.length} deelnemers vereisen actie
           </p>
           <p className="text-muted-foreground">
-            Koppel elke deelnemer aan de juiste coffeeshop, of verwijder uit de lijst
-            als ze geen lid meer zijn.
+            Koppel deelnemers aan de juiste coffeeshop, of verwijder ze uit de groep
+            als ze geen lid (meer) zijn — die hebben geen rechten meer.
           </p>
         </div>
       </div>
@@ -130,13 +141,15 @@ const CommunityTodoList = () => {
 
       {filtered.length === 0 ? (
         <div className="border border-border rounded-md p-8 text-center text-sm text-muted-foreground">
-          {participants.length === 0
-            ? "Alle deelnemers zijn gekoppeld 🎉"
+          {todoParticipants.length === 0
+            ? "Alles in orde — geen openstaande acties 🎉"
             : "Geen deelnemers gevonden."}
         </div>
       ) : (
         <ul className="border border-border rounded-md divide-y divide-border">
-          {filtered.map((p) => (
+          {filtered.map((p) => {
+            const oldMember = p.member_id ? oldMemberById.get(p.member_id) : null;
+            return (
             <li
               key={p.id}
               className="p-3 flex flex-col sm:flex-row sm:items-center gap-3"
@@ -145,11 +158,24 @@ const CommunityTodoList = () => {
                 <div className="flex items-center gap-1.5 font-medium">
                   <User size={13} className="text-muted-foreground/60" />
                   <span className="truncate">{p.display_name}</span>
+                  {oldMember && (
+                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
+                      Oud-lid
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                   <Phone size={12} />
                   <span className="font-mono">{p.phone || "—"}</span>
                 </div>
+                {oldMember && (
+                  <div className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                    <UserX size={12} />
+                    <span>
+                      Was gekoppeld aan <strong>{oldMember.naam || oldMember.bedrijfsnaam || `Lid #${oldMember.id}`}</strong> — verwijder uit de WhatsApp-groep.
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Popover
@@ -163,7 +189,7 @@ const CommunityTodoList = () => {
                       className="gap-1.5"
                       disabled={busyId === p.id}
                     >
-                      Koppel aan lid
+                      {oldMember ? "Herkoppel" : "Koppel aan lid"}
                       <ChevronsUpDown size={12} />
                     </Button>
                   </PopoverTrigger>
@@ -210,7 +236,8 @@ const CommunityTodoList = () => {
                 </Button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
