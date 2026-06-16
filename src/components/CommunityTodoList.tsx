@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, Check, ChevronsUpDown, Info, Mail, MailCheck, Phone, Trash2, User, UserX } from "lucide-react";
+import { AlertCircle, Check, ChevronsUpDown, Mail, MailCheck, Phone, Trash2, User, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
