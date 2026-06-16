@@ -1,73 +1,65 @@
+## Context
+De gebruiker is bezig met het koppelen van de WhatsApp Cloud API, maar raakt verdwaald tussen Meta Business Suite, Business Manager en Meta for Developers. Er zijn nog geen WhatsApp-secrets geconfigureerd. De huidige WhatsApp Instellingen-tab toont alleen leden-voorkeuren, maar geen setup-status.
 
-# Plan: WhatsApp Business koppelen (officiële Meta Cloud API)
+## Doel
+Een self-service opstapwizard toevoegen bovenaan de WhatsApp Instellingen-tab, zodat de gebruiker exact ziet wat er ontbreekt, welke URL's in Meta geplakt moeten worden, en in welke volgorde.
 
-## Wat dit wel/niet doet
-**Wel:**
-- Notificaties sturen naar leden (factuur klaar, herinnering contributie, nieuwsbrief-achtige updates op individueel niveau, jubileum, etc.) via goedgekeurde templates.
-- Inkomende WhatsApp-berichten van leden ontvangen en in het portaal beantwoorden (een eenvoudige inbox/chat-view).
-- Per lid bijhouden of we mogen WhatsAppen + opt-out respecteren.
+## Wat we bouwen
 
-**Niet (Meta-beperking, geen workaround):**
-- Community-groepen beheren / deelnemers toevoegen of verwijderen — die endpoints bestaan simpelweg niet. Dat blijft gaan via de huidige **Matcher** en **Te doen** tabs.
+### 1. WhatsAppSetupStatus component
+- Een card bovenaan de tab die de 4 vereiste secrets checkt:
+  - WHATSAPP_VERIFY_TOKEN
+  - WHATSAPP_APP_SECRET
+  - WHATSAPP_ACCESS_TOKEN
+  - WHATSAPP_PHONE_NUMBER_ID
+- Per secret: "Ontbreekt" / "Ingesteld" badge
+- Totale status: "Niet gekoppeld", "Gedeeltelijk", "Klaar voor test"
 
-## Wat jij eerst regelt bij Meta (eenmalig, ~30–60 min)
-Ik kan dit niet voor je doen — Meta vereist persoonlijke verificatie. Pas als deze 4 dingen klaar zijn kan ik de koppeling activeren:
+### 2. Webhook URL tonen
+- De publieke webhook-URL (Supabase functions/v1/whatsapp-webhook) wordt getoond in een kopieerbaar veld, zodat de gebruiker deze direct in Meta kan plakken.
 
-1. **Meta Business Manager** account aanmaken op business.facebook.com.
-2. **WhatsApp Business Account (WABA)** toevoegen + bedrijf verifiëren (KvK-uittreksel uploaden — duurt 1–3 dagen review).
-3. **Telefoonnummer registreren** (het aparte nummer dat je hebt). LET OP: zodra geregistreerd kun je het niet meer in de gewone WhatsApp app gebruiken.
-4. **App aanmaken** in developers.facebook.com → product "WhatsApp" toevoegen → genereer:
-   - `WHATSAPP_ACCESS_TOKEN` (permanent System User token, niet de 24-uurs test-token)
-   - `WHATSAPP_PHONE_NUMBER_ID`
-   - `WHATSAPP_BUSINESS_ACCOUNT_ID`
-   - `WHATSAPP_VERIFY_TOKEN` (vrij te kiezen string voor webhook-verificatie)
-   - `WHATSAPP_APP_SECRET` (voor signature-verificatie)
+### 3. Stap-voor-stap routekaart
+Een genummerde lijst met exact wat waar gedaan moet worden:
 
-Ik geef je een korte checklist met screenshots-instructies als we starten.
+```text
+1. Meta Business Manager (business.facebook.com)
+   - Business verificatie voltooien (KvK)
+   - WhatsApp Business Account (WABA) aanmaken
+   - Telefoonnummer toevoegen aan WABA
 
-## Wat ik bouw in het portaal
+2. Meta for Developers (developers.facebook.com)
+   - Nieuwe Business-app aanmaken
+   - Product "WhatsApp" toevoegen
+   - App Secret noteren
 
-### Backend (Supabase)
-- **Tabel `whatsapp_messages`**: alle in/uitgaande berichten met `member_id`, `phone`, `direction`, `body`, `template_name`, `status` (queued/sent/delivered/read/failed), `wa_message_id`, `timestamp`, `error`.
-- **Tabel `whatsapp_templates`**: registreert welke templates we bij Meta hebben ingediend + goedkeuringsstatus + variabelen.
-- **Tabel `whatsapp_preferences`**: per lid opt-in/opt-out, vergelijkbaar met `member_mailing_preferences`.
-- **Tabel `whatsapp_conversations`**: laatste contactmoment per lid (voor 24-uurs venster regel — buiten dat venster mag alleen een template).
-- RLS: alleen admin/bestuur lezen, alleen edge functions schrijven (service role).
+3. Webhook configureren (in de app zelf)
+   - Callback URL: <supabase functions url>/v1/whatsapp-webhook
+   - Verify token: kies zelf een willekeurige string (20+ tekens)
 
-### Edge functions
-- **`whatsapp-webhook`** (`verify_jwt = false`): ontvangt Meta webhooks — GET voor verificatie, POST voor inkomende berichten + delivery statuses. Verifieert `X-Hub-Signature-256` met app secret. Mapt nummer → `member_id` via `member_edits.contacten[].phone` en `whatsapp_participants.phone`.
-- **`whatsapp-send`**: stuurt bericht via Meta Graph API. Kiest automatisch tussen vrije tekst (binnen 24u na inkomend bericht) of template. Logt in `whatsapp_messages`.
-- **`whatsapp-sync-templates`**: haalt huidige template-status op bij Meta en synct naar `whatsapp_templates`.
+4. Meta for Developers → System User
+   - System User aanmaken in Business Manager
+   - Rechten: whatsapp_business_messaging + whatsapp_business_management
+   - Token genereren en noteren
 
-### Frontend — uitbreiding `/community`
-Nieuwe sub-tabs naast Deelnemerslijst / Matcher / Te doen:
-- **Inbox**: lijst conversaties (laatste bericht + ongelezen badge), klik = chat-view met lid. Knop "stuur template" als 24u-venster verlopen is.
-- **Templates**: overzicht van templates + status (approved/pending/rejected) + knop "verstuur naar selectie leden".
-- **Instellingen**: opt-in beheer per lid, blokkeerlijst.
+5. Secrets invullen in Lovable
+   - Vul de 4 waarden in via Instellingen → Secrets
+```
 
-Op `/leden/:id` MemberDetail: extra blok met WhatsApp-historie + "stuur bericht" knop (alleen zichtbaar voor admin/bestuur).
+### 4. Secrets-invoer dialoog
+- Een knop "Secrets invullen" opent een dialoog met 4 velden
+- Bij opslaan: secrets worden via de secrets-tool toegevoegd
+- Geen hardcoded secrets in code
 
-### Notificatie-koppelingen (later, na basis werkt)
-Naar analogie met `notify-edit-request` / `notify-membership-request` edge functions:
-- Factuur klaar → WhatsApp notificatie (template).
-- Edit-request goedgekeurd → notificatie.
-- Contributie-herinnering.
+### 5. Test-verbinding knop
+- Alleen zichtbaar als alle 4 secrets aanwezig zijn
+- Stuurt een test-bericht naar een eigen nummer (met telefoonnummer-invoer)
+- Toont succes/fout terugkoppeling
 
-## Secrets die ik via `add_secret` vraag (pas nadat je de Meta-setup klaar hebt)
-`WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`.
+## Technische details
+- Nieuw component: `src/components/WhatsAppSetupWizard.tsx`
+- Integreren in `WhatsAppInstellingen.tsx` bovenaan de pagina
+- Backend: geen wijzigingen nodig; bestaande edge functions `whatsapp-webhook` en `whatsapp-send` werken al
+- Geen nieuwe database-tabellen nodig
 
-## Volgorde van uitvoering
-1. Database-migratie voor de 4 tabellen + RLS + grants.
-2. Edge function `whatsapp-webhook` + URL geef ik je om in Meta Developer Console te plakken.
-3. Edge function `whatsapp-send`.
-4. UI Inbox + Templates + Instellingen in `/community`.
-5. WhatsApp-blok op MemberDetail.
-6. Pas in een vervolg-iteratie: 1–2 templates registreren bij Meta en koppelen aan bestaande events.
-
-## Kosten (Meta, niet Lovable)
-Vanaf 1 juli 2025 rekent Meta per bericht (€0,01–€0,08 afhankelijk van categorie/land). Service-conversaties geïnitieerd door het lid binnen 24u zijn gratis. Voor jullie volume verwacht ik <€10/maand.
-
-## Wat NIET in dit plan zit
-- Group/community deelnemerssync (kan niet via Meta — blijft Matcher-flow).
-- Bulk-marketing campagnes (mag niet via WhatsApp regels).
-- Migratie van het huidige community-nummer (apart nummer wordt gebruikt).
+## Wat de gebruiker daarna zelf doet
+De gebruiker doorloopt de routekaart in Meta, genereert de 4 secrets, en vult ze in via de dialoog in de app. Daarna test de verbinding.
