@@ -22,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ViewTab = "leden" | "leads" | "coffeeshops" | "community";
-type CommunitySubTab = "matcher" | "deelnemers";
+type CommunitySubTab = "matcher" | "deelnemers" | "lijst";
 
 const LedenPage = () => {
   const { isAdmin, isInhuur, isBoard } = useAuth();
