@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -44,7 +44,7 @@ export function AppSidebar() {
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const closeMobile = () => setOpenMobile(false);
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isBoard, signOut } = useAuth();
   const { data: pendingRequests } = useEditRequests("pending");
   const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
   const [pwOpen, setPwOpen] = useState(false);
@@ -239,6 +239,16 @@ export function AppSidebar() {
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                {(isAdmin || isBoard) && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/leden?tab=community" onClick={closeMobile}>
+                        <ListChecks className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>Community deelnemers</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
