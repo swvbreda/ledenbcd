@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus, MessageSquare } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks, List } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -9,7 +9,9 @@ import CoffeeshopTable from "@/components/CoffeeshopTable";
 import ExportButton from "@/components/ExportButton";
 import MailingExportButton from "@/components/MailingExportButton";
 import NewMemberDialog from "@/components/NewMemberDialog";
+import WhatsAppMatcher from "@/components/WhatsAppMatcher";
 import CommunityDeelnemersTable from "@/components/CommunityDeelnemersTable";
+import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
@@ -20,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ViewTab = "leden" | "leads" | "coffeeshops" | "community";
-type CommunitySubTab = "deelnemers";
+type CommunitySubTab = "matcher" | "deelnemers" | "lijst";
 
 const LedenPage = () => {
   const { isAdmin, isInhuur, isBoard } = useAuth();
@@ -39,7 +41,9 @@ const LedenPage = () => {
       ? "community"
       : "leden"
   );
-  
+  const [communitySub, setCommunitySub] = useState<CommunitySubTab>(
+    isBoard ? "deelnemers" : "matcher",
+  );
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
@@ -206,7 +210,36 @@ const LedenPage = () => {
       ) : activeTab === "coffeeshops" ? (
         <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
       ) : (
-        <CommunityDeelnemersTable />
+        <Tabs
+          value={communitySub}
+          onValueChange={(v) => setCommunitySub(v as CommunitySubTab)}
+          className="space-y-4"
+        >
+          <TabsList>
+            {isBoard && (
+              <TabsTrigger value="deelnemers" className="gap-1.5">
+                <ListChecks size={14} /> Community beheer
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="lijst" className="gap-1.5">
+              <List size={14} /> Deelnemerslijst
+            </TabsTrigger>
+            <TabsTrigger value="matcher" className="gap-1.5">
+              <Search size={14} /> Matcher
+            </TabsTrigger>
+          </TabsList>
+          {isBoard && (
+            <TabsContent value="deelnemers">
+              <CommunityDeelnemersTable />
+            </TabsContent>
+          )}
+          <TabsContent value="lijst">
+            <CommunityDeelnemersLijst />
+          </TabsContent>
+          <TabsContent value="matcher">
+            <WhatsAppMatcher />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
