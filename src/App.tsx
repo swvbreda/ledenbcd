@@ -12,6 +12,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index";
 import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
+import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
 import LocatiesPage from "./pages/LocatiesPage";
