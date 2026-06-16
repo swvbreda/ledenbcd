@@ -241,40 +241,96 @@ const WhatsAppMatcher = () => {
                   )}
                 </section>
 
-                {/* Unknown */}
-                <section className="border border-border rounded-md">
-                  <header className="px-3 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+                {/* Te verwijderen uit WhatsApp — onbekende nummers */}
+                <section className="border-2 border-brand-red/40 rounded-md">
+                  <header className="px-3 py-2 border-b border-brand-red/30 flex items-center justify-between gap-2 bg-brand-red/5">
                     <div className="flex items-center gap-2">
-                      <HelpCircle className="text-muted-foreground" size={16} />
-                      <h3 className="font-medium text-sm">
-                        Onbekend in ledenadministratie ({bulkResult.unknown.length})
+                      <UserX className="text-brand-red" size={16} />
+                      <h3 className="font-semibold text-sm">
+                        Te verwijderen uit WhatsApp ({bulkResult.unknown.length})
                       </h3>
                     </div>
                     {bulkResult.unknown.length > 0 && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         className="gap-1.5 h-7"
-                        onClick={() => copyList(bulkResult.unknown.map((u) => u.raw))}
+                        onClick={() =>
+                          copyList(bulkResult.unknown.map((u) => `${u.label} — ${u.raw}`))
+                        }
                       >
-                        <Copy size={12} /> Kopieer
+                        <Copy size={12} /> Kopieer lijst
                       </Button>
                     )}
                   </header>
                   {bulkResult.unknown.length === 0 ? (
                     <p className="px-3 py-3 text-sm text-muted-foreground">
-                      Alle nummers in de input zijn herkend.
+                      Geen onbekende deelnemers — iedereen met een nummer is lid. 🎉
                     </p>
                   ) : (
+                    <>
+                      <p className="px-3 pt-2 text-xs text-muted-foreground">
+                        Deze WhatsApp-deelnemers komen niet voor in de ledenadministratie. Zoek ze
+                        op naam of nummer in WhatsApp en verwijder ze uit de groep.
+                      </p>
+                      <ul className="divide-y divide-border max-h-80 overflow-auto">
+                        {bulkResult.unknown.map((u, i) => (
+                          <li
+                            key={i}
+                            className="px-3 py-2 text-sm flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{u.label}</p>
+                              <p className="text-muted-foreground font-mono text-xs">{u.raw}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 shrink-0"
+                              onClick={() => copyList([u.raw])}
+                              title="Kopieer nummer"
+                            >
+                              <Copy size={12} />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </section>
+
+                {/* Geen nummer zichtbaar — handmatig checken */}
+                {bulkResult.noNumber.length > 0 && (
+                  <section className="border border-border rounded-md">
+                    <header className="px-3 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <HelpCircle className="text-muted-foreground" size={16} />
+                        <h3 className="font-medium text-sm">
+                          Geen nummer zichtbaar — handmatig checken ({bulkResult.noNumber.length})
+                        </h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 h-7"
+                        onClick={() => copyList(bulkResult.noNumber.map((n) => n.line))}
+                      >
+                        <Copy size={12} /> Kopieer
+                      </Button>
+                    </header>
+                    <p className="px-3 pt-2 text-xs text-muted-foreground">
+                      Deze regels uit WhatsApp tonen alleen een naam (nummer verborgen). Open ze in
+                      WhatsApp om het nummer te zien en controleer of ze lid zijn.
+                    </p>
                     <ul className="divide-y divide-border max-h-60 overflow-auto">
-                      {bulkResult.unknown.map((u, i) => (
-                        <li key={i} className="px-3 py-2 text-sm font-mono">
-                          {u.raw}
+                      {bulkResult.noNumber.map((n, i) => (
+                        <li key={i} className="px-3 py-2 text-sm">
+                          {n.line}
                         </li>
                       ))}
                     </ul>
-                  )}
-                </section>
+                  </section>
+                )}
 
                 {/* Missing in WhatsApp */}
                 <section className="border border-border rounded-md">
