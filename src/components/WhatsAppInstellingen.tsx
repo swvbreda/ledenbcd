@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useWhatsAppPreferences, useSetWhatsAppPreference } from "@/hooks/useWhatsApp";
+import WhatsAppSetupWizard from "@/components/WhatsAppSetupWizard";
 
 const WhatsAppInstellingen = () => {
   const { rawMembers } = useMembersData();
@@ -28,6 +29,7 @@ const WhatsAppInstellingen = () => {
 
   return (
     <div className="space-y-4">
+      <WhatsAppSetupWizard />
       <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
         <div className="flex items-start gap-3 mb-4">
           <div className="rounded-full bg-brand-red/10 p-2 shrink-0">
