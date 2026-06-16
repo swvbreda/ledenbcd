@@ -1,56 +1,73 @@
 
-# WhatsApp-nummer matcher
+# Plan: WhatsApp Business koppelen (officiële Meta Cloud API)
 
-Een tool voor admins op de Ledenbestand-pagina om te controleren welk telefoonnummer bij welk lid hoort, en om een hele WhatsApp-deelnemerslijst in één keer te matchen tegen de ledenadministratie.
+## Wat dit wel/niet doet
+**Wel:**
+- Notificaties sturen naar leden (factuur klaar, herinnering contributie, nieuwsbrief-achtige updates op individueel niveau, jubileum, etc.) via goedgekeurde templates.
+- Inkomende WhatsApp-berichten van leden ontvangen en in het portaal beantwoorden (een eenvoudige inbox/chat-view).
+- Per lid bijhouden of we mogen WhatsAppen + opt-out respecteren.
 
-## Waar het komt
+**Niet (Meta-beperking, geen workaround):**
+- Community-groepen beheren / deelnemers toevoegen of verwijderen — die endpoints bestaan simpelweg niet. Dat blijft gaan via de huidige **Matcher** en **Te doen** tabs.
 
-Een extra tab **"WhatsApp-match"** op `LedenPage` (naast Leden / Leads / Coffeeshops). Alleen zichtbaar voor admins. Geen database-wijzigingen nodig — alles draait op de bestaande `members_data` die de pagina al inlaadt.
+## Wat jij eerst regelt bij Meta (eenmalig, ~30–60 min)
+Ik kan dit niet voor je doen — Meta vereist persoonlijke verificatie. Pas als deze 4 dingen klaar zijn kan ik de koppeling activeren:
 
-## Wat het doet
+1. **Meta Business Manager** account aanmaken op business.facebook.com.
+2. **WhatsApp Business Account (WABA)** toevoegen + bedrijf verifiëren (KvK-uittreksel uploaden — duurt 1–3 dagen review).
+3. **Telefoonnummer registreren** (het aparte nummer dat je hebt). LET OP: zodra geregistreerd kun je het niet meer in de gewone WhatsApp app gebruiken.
+4. **App aanmaken** in developers.facebook.com → product "WhatsApp" toevoegen → genereer:
+   - `WHATSAPP_ACCESS_TOKEN` (permanent System User token, niet de 24-uurs test-token)
+   - `WHATSAPP_PHONE_NUMBER_ID`
+   - `WHATSAPP_BUSINESS_ACCOUNT_ID`
+   - `WHATSAPP_VERIFY_TOKEN` (vrij te kiezen string voor webhook-verificatie)
+   - `WHATSAPP_APP_SECRET` (voor signature-verificatie)
 
-### 1. Single lookup
-- Inputveld waar je één telefoonnummer plakt (in elk formaat: `+31 6 12345678`, `0612345678`, `06-12345678`, etc.).
-- Direct resultaat: welk lid (coffeeshop + plaats), welke contactpersoon, welke rol (hoofdcontact of contactpersoon uit `contacten[]`). Klik door naar het lid.
-- Als geen match: duidelijke "onbekend nummer" melding.
+Ik geef je een korte checklist met screenshots-instructies als we starten.
 
-### 2. Bulk-match
-- Groot tekstveld waarin je de WhatsApp-deelnemerslijst plakt (één nummer per regel, of de ruwe export waar de tool zelf nummers uit pikt via regex).
-- Output in drie groepen:
-  - **✅ Gematcht** — nummer → lid + contactpersoon (klikbaar naar lidpagina).
-  - **❓ Onbekend** — nummer staat in WhatsApp maar niet in ledenadministratie. Kopieerbaar lijstje zodat je ze kunt onderzoeken of verwijderen.
-  - **⚠️ Ontbreekt in WhatsApp** — leden waarvan geen enkel telefoonnummer in de geplakte lijst voorkomt. Zo zie je wie nog uitgenodigd moet worden.
-- Knop "Exporteer als CSV" voor het hele rapport.
+## Wat ik bouw in het portaal
 
-## Matching-logica
+### Backend (Supabase)
+- **Tabel `whatsapp_messages`**: alle in/uitgaande berichten met `member_id`, `phone`, `direction`, `body`, `template_name`, `status` (queued/sent/delivered/read/failed), `wa_message_id`, `timestamp`, `error`.
+- **Tabel `whatsapp_templates`**: registreert welke templates we bij Meta hebben ingediend + goedkeuringsstatus + variabelen.
+- **Tabel `whatsapp_preferences`**: per lid opt-in/opt-out, vergelijkbaar met `member_mailing_preferences`.
+- **Tabel `whatsapp_conversations`**: laatste contactmoment per lid (voor 24-uurs venster regel — buiten dat venster mag alleen een template).
+- RLS: alleen admin/bestuur lezen, alleen edge functions schrijven (service role).
 
-Bron-nummers per lid:
-- `member.telefoon` (hoofdnummer) → gelabeld als "hoofdcontact"
-- Alle `member.contacten[].telefoon` → gelabeld met `contact.naam` + `contact.functie`
+### Edge functions
+- **`whatsapp-webhook`** (`verify_jwt = false`): ontvangt Meta webhooks — GET voor verificatie, POST voor inkomende berichten + delivery statuses. Verifieert `X-Hub-Signature-256` met app secret. Mapt nummer → `member_id` via `member_edits.contacten[].phone` en `whatsapp_participants.phone`.
+- **`whatsapp-send`**: stuurt bericht via Meta Graph API. Kiest automatisch tussen vrije tekst (binnen 24u na inkomend bericht) of template. Logt in `whatsapp_messages`.
+- **`whatsapp-sync-templates`**: haalt huidige template-status op bij Meta en synct naar `whatsapp_templates`.
 
-Normalisatie (zelfde functie voor beide kanten van de match):
-- Alle niet-cijfers strippen
-- Nederlandse normalisatie: `06...` → `316...`, `+31 6...` → `316...`, leading `0031` → `31`
-- Vergelijk op laatste 9 cijfers (vangt verschillen in landcode/spaties op)
+### Frontend — uitbreiding `/community`
+Nieuwe sub-tabs naast Deelnemerslijst / Matcher / Te doen:
+- **Inbox**: lijst conversaties (laatste bericht + ongelezen badge), klik = chat-view met lid. Knop "stuur template" als 24u-venster verlopen is.
+- **Templates**: overzicht van templates + status (approved/pending/rejected) + knop "verstuur naar selectie leden".
+- **Instellingen**: opt-in beheer per lid, blokkeerlijst.
 
-Een lid kan dus meerdere nummers hebben; één nummer matcht maximaal één (lid, contact)-combinatie.
+Op `/leden/:id` MemberDetail: extra blok met WhatsApp-historie + "stuur bericht" knop (alleen zichtbaar voor admin/bestuur).
 
-## Toegang
+### Notificatie-koppelingen (later, na basis werkt)
+Naar analogie met `notify-edit-request` / `notify-membership-request` edge functions:
+- Factuur klaar → WhatsApp notificatie (template).
+- Edit-request goedgekeurd → notificatie.
+- Contributie-herinnering.
 
-Tab en functionaliteit alleen tonen als `useAuth().isAdmin === true`. Geen backend-wijziging nodig: de matching gebeurt client-side op de data die admins al mogen zien.
+## Secrets die ik via `add_secret` vraag (pas nadat je de Meta-setup klaar hebt)
+`WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`.
 
-## Technische details
+## Volgorde van uitvoering
+1. Database-migratie voor de 4 tabellen + RLS + grants.
+2. Edge function `whatsapp-webhook` + URL geef ik je om in Meta Developer Console te plakken.
+3. Edge function `whatsapp-send`.
+4. UI Inbox + Templates + Instellingen in `/community`.
+5. WhatsApp-blok op MemberDetail.
+6. Pas in een vervolg-iteratie: 1–2 templates registreren bij Meta en koppelen aan bestaande events.
 
-Nieuwe bestanden:
-- `src/lib/phoneMatch.ts` — `normalizePhone(raw: string): string | null` en `extractPhones(text: string): string[]` (regex die `(\+?\d[\d\s\-()]{7,}\d)` matcht en daarna normaliseert). Plus `buildPhoneIndex(members)` die een `Map<normalized, {memberId, contactNaam, contactRol}[]>` opbouwt.
-- `src/components/WhatsAppMatcher.tsx` — UI-component met twee subviews (single / bulk) via een interne tab of segmented control. Gebruikt `useMembersData()` voor `rawMembers` en `rawLeads`. Hergebruikt bestaande shadcn `Tabs`, `Input`, `Textarea`, `Button`, `Card`.
+## Kosten (Meta, niet Lovable)
+Vanaf 1 juli 2025 rekent Meta per bericht (€0,01–€0,08 afhankelijk van categorie/land). Service-conversaties geïnitieerd door het lid binnen 24u zijn gratis. Voor jullie volume verwacht ik <€10/maand.
 
-Gewijzigde bestanden:
-- `src/pages/LedenPage.tsx` — extra `TabsTrigger value="whatsapp"` (alleen als `isAdmin`), rendert `<WhatsAppMatcher />`. `ViewTab` type uitgebreid met `"whatsapp"`.
-
-Geen migraties, geen edge functions, geen RLS-wijzigingen. Geen persistente opslag van geplakte nummers — alles blijft in browsergeheugen voor de sessie.
-
-## Niet in scope (kunnen later)
-
-- Automatisch synchroniseren met de WhatsApp Business API (kan in vervolg-iteratie als je een WhatsApp Business-account hebt).
-- Permanente opslag van "WhatsApp lid: ja/nee" per lid (vraagt schemawijziging — eerst ervaring opdoen met de matcher).
+## Wat NIET in dit plan zit
+- Group/community deelnemerssync (kan niet via Meta — blijft Matcher-flow).
+- Bulk-marketing campagnes (mag niet via WhatsApp regels).
+- Migratie van het huidige community-nummer (apart nummer wordt gebruikt).
