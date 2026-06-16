@@ -51,10 +51,32 @@ const CommunityTodoList = () => {
   const load = async () => {
     const { data } = await supabase
       .from("whatsapp_participants")
-      .select("id, display_name, phone, member_id, sort_key")
+      .select("id, display_name, phone, member_id, sort_key, note")
       .order("sort_key");
     setParticipants((data || []) as Participant[]);
     setIsLoading(false);
+  };
+
+  const isNotified = (note: string | null) =>
+    note?.startsWith("Geïnformeerd:") ?? false;
+
+  const markNotified = async (participantId: string) => {
+    const today = new Date().toLocaleDateString("nl-NL");
+    const note = `Geïnformeerd: ${today}`;
+    setBusyId(participantId);
+    const { error } = await supabase
+      .from("whatsapp_participants")
+      .update({ note })
+      .eq("id", participantId);
+    setBusyId(null);
+    if (error) {
+      toast({ title: "Markeren mislukt", description: error.message, variant: "destructive" });
+      return;
+    }
+    setParticipants((prev) =>
+      prev.map((p) => (p.id === participantId ? { ...p, note } : p))
+    );
+    toast({ title: "Gemarkeerd als geïnformeerd" });
   };
 
   useEffect(() => {
