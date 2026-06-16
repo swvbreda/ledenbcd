@@ -133,7 +133,7 @@ const LedenPage = () => {
             )}
           </Button>
         </div>
-        {!showArchived && isAdmin && (
+        {!showArchived && isAdmin && activeTab !== "community" && (
           <div className="flex items-center gap-2 flex-wrap">
             <ExportButton members={mergedSearched} />
             <MailingExportButton members={mergedSearched} />
