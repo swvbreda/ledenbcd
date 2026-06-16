@@ -1794,6 +1794,47 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_participants: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          member_id: number | null
+          note: string | null
+          phone: string | null
+          sort_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          member_id?: number | null
+          note?: string | null
+          phone?: string | null
+          sort_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          member_id?: number | null
+          note?: string | null
+          phone?: string | null
+          sort_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_participants_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
