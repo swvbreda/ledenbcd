@@ -41,9 +41,7 @@ const LedenPage = () => {
       ? "community"
       : "leden"
   );
-  const [communitySub, setCommunitySub] = useState<CommunitySubTab>(
-    isBoard ? "deelnemers" : "matcher",
-  );
+  const [communitySub, setCommunitySub] = useState<CommunitySubTab>("lijst");
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
