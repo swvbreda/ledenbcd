@@ -1242,6 +1242,39 @@ export type Database = {
         }
         Relationships: []
       }
+      member_whatsapp_status: {
+        Row: {
+          created_at: string
+          in_community: boolean
+          last_checked_at: string
+          matched_name: string | null
+          matched_phone: string | null
+          member_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          in_community?: boolean
+          last_checked_at?: string
+          matched_name?: string | null
+          matched_phone?: string | null
+          member_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          in_community?: boolean
+          last_checked_at?: string
+          matched_name?: string | null
+          matched_phone?: string | null
+          member_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       members_data: {
         Row: {
           data: Json
@@ -1803,6 +1836,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_board_member: { Args: { _user_id: string }; Returns: boolean }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
