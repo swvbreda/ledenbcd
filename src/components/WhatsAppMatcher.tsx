@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, MessageSquare, CheckCircle2, HelpCircle, AlertTriangle, Download, Copy } from "lucide-react";
+import { Search, MessageSquare, CheckCircle2, HelpCircle, AlertTriangle, Download, Copy, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,29 +30,40 @@ const WhatsAppMatcher = () => {
 
   const bulkResult = useMemo(() => {
     if (!bulkInput.trim()) return null;
-    const raws = extractPhones(bulkInput);
+    // Parse line-by-line so we can keep the WhatsApp display name with the number.
+    const lines = bulkInput.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const seen = new Set<string>();
-    const matched: { raw: string; normalized: string; entries: MemberPhoneEntry[] }[] = [];
-    const unknown: { raw: string; normalized: string }[] = [];
+    const matched: { line: string; label: string; raw: string; normalized: string; entries: MemberPhoneEntry[] }[] = [];
+    const unknown: { line: string; label: string; raw: string; normalized: string }[] = [];
+    const noNumber: { line: string }[] = [];
     const matchedMemberIds = new Set<number>();
 
-    for (const raw of raws) {
-      const n = normalizePhone(raw);
-      if (!n) continue;
-      if (seen.has(n)) continue;
-      seen.add(n);
-      const entries = index.byNormalized.get(n);
-      if (entries && entries.length > 0) {
-        matched.push({ raw, normalized: n, entries });
-        entries.forEach((e) => matchedMemberIds.add(e.memberId));
-      } else {
-        unknown.push({ raw, normalized: n });
+    for (const line of lines) {
+      const raws = extractPhones(line);
+      if (raws.length === 0) {
+        noNumber.push({ line });
+        continue;
+      }
+      for (const raw of raws) {
+        const n = normalizePhone(raw);
+        if (!n) continue;
+        if (seen.has(n)) continue;
+        seen.add(n);
+        // Strip the number from the line to get a display label (the WhatsApp contact name).
+        const label = line.replace(raw, "").replace(/\s{2,}/g, " ").trim() || "(geen naam)";
+        const entries = index.byNormalized.get(n);
+        if (entries && entries.length > 0) {
+          matched.push({ line, label, raw, normalized: n, entries });
+          entries.forEach((e) => matchedMemberIds.add(e.memberId));
+        } else {
+          unknown.push({ line, label, raw, normalized: n });
+        }
       }
     }
 
     const missingMembers = allMembers.filter((m) => !matchedMemberIds.has(m.id));
 
-    return { matched, unknown, missingMembers, totalParsed: seen.size };
+    return { matched, unknown, noNumber, missingMembers, totalParsed: seen.size };
   }, [bulkInput, index, allMembers]);
 
   const copyList = async (lines: string[]) => {
@@ -73,7 +84,10 @@ const WhatsAppMatcher = () => {
       }
     }
     for (const u of bulkResult.unknown) {
-      rows.push(["Onbekend", u.raw, "", "", "", ""]);
+      rows.push(["Verwijderen uit WhatsApp", u.raw, u.label, "", "", ""]);
+    }
+    for (const nn of bulkResult.noNumber) {
+      rows.push(["Geen nummer zichtbaar", "", nn.line, "", "", ""]);
     }
     for (const mm of bulkResult.missingMembers) {
       rows.push([
@@ -227,40 +241,96 @@ const WhatsAppMatcher = () => {
                   )}
                 </section>
 
-                {/* Unknown */}
-                <section className="border border-border rounded-md">
-                  <header className="px-3 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+                {/* Te verwijderen uit WhatsApp — onbekende nummers */}
+                <section className="border-2 border-brand-red/40 rounded-md">
+                  <header className="px-3 py-2 border-b border-brand-red/30 flex items-center justify-between gap-2 bg-brand-red/5">
                     <div className="flex items-center gap-2">
-                      <HelpCircle className="text-muted-foreground" size={16} />
-                      <h3 className="font-medium text-sm">
-                        Onbekend in ledenadministratie ({bulkResult.unknown.length})
+                      <UserX className="text-brand-red" size={16} />
+                      <h3 className="font-semibold text-sm">
+                        Te verwijderen uit WhatsApp ({bulkResult.unknown.length})
                       </h3>
                     </div>
                     {bulkResult.unknown.length > 0 && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         className="gap-1.5 h-7"
-                        onClick={() => copyList(bulkResult.unknown.map((u) => u.raw))}
+                        onClick={() =>
+                          copyList(bulkResult.unknown.map((u) => `${u.label} — ${u.raw}`))
+                        }
                       >
-                        <Copy size={12} /> Kopieer
+                        <Copy size={12} /> Kopieer lijst
                       </Button>
                     )}
                   </header>
                   {bulkResult.unknown.length === 0 ? (
                     <p className="px-3 py-3 text-sm text-muted-foreground">
-                      Alle nummers in de input zijn herkend.
+                      Geen onbekende deelnemers — iedereen met een nummer is lid. 🎉
                     </p>
                   ) : (
+                    <>
+                      <p className="px-3 pt-2 text-xs text-muted-foreground">
+                        Deze WhatsApp-deelnemers komen niet voor in de ledenadministratie. Zoek ze
+                        op naam of nummer in WhatsApp en verwijder ze uit de groep.
+                      </p>
+                      <ul className="divide-y divide-border max-h-80 overflow-auto">
+                        {bulkResult.unknown.map((u, i) => (
+                          <li
+                            key={i}
+                            className="px-3 py-2 text-sm flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{u.label}</p>
+                              <p className="text-muted-foreground font-mono text-xs">{u.raw}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 shrink-0"
+                              onClick={() => copyList([u.raw])}
+                              title="Kopieer nummer"
+                            >
+                              <Copy size={12} />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </section>
+
+                {/* Geen nummer zichtbaar — handmatig checken */}
+                {bulkResult.noNumber.length > 0 && (
+                  <section className="border border-border rounded-md">
+                    <header className="px-3 py-2 border-b border-border flex items-center justify-between gap-2 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <HelpCircle className="text-muted-foreground" size={16} />
+                        <h3 className="font-medium text-sm">
+                          Geen nummer zichtbaar — handmatig checken ({bulkResult.noNumber.length})
+                        </h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 h-7"
+                        onClick={() => copyList(bulkResult.noNumber.map((n) => n.line))}
+                      >
+                        <Copy size={12} /> Kopieer
+                      </Button>
+                    </header>
+                    <p className="px-3 pt-2 text-xs text-muted-foreground">
+                      Deze regels uit WhatsApp tonen alleen een naam (nummer verborgen). Open ze in
+                      WhatsApp om het nummer te zien en controleer of ze lid zijn.
+                    </p>
                     <ul className="divide-y divide-border max-h-60 overflow-auto">
-                      {bulkResult.unknown.map((u, i) => (
-                        <li key={i} className="px-3 py-2 text-sm font-mono">
-                          {u.raw}
+                      {bulkResult.noNumber.map((n, i) => (
+                        <li key={i} className="px-3 py-2 text-sm">
+                          {n.line}
                         </li>
                       ))}
                     </ul>
-                  )}
-                </section>
+                  </section>
+                )}
 
                 {/* Missing in WhatsApp */}
                 <section className="border border-border rounded-md">
