@@ -107,6 +107,11 @@ const CommunityDeelnemersLijst = () => {
               ) : (
                 filtered.map((p) => {
                   const m = p.member_id ? memberById.get(p.member_id) : null;
+                  const memberPhone =
+                    m?.telefoon ||
+                    m?.contacten?.find((c) => c.telefoon)?.telefoon ||
+                    "";
+                  const phone = p.phone || memberPhone;
                   return (
                     <tr key={p.id} className="hover:bg-muted/20">
                       <td className="px-3 py-2">
@@ -118,7 +123,7 @@ const CommunityDeelnemersLijst = () => {
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1.5">
                           <Phone size={12} className="text-muted-foreground/60" />
-                          <span className="font-mono text-xs">{p.phone || "—"}</span>
+                          <span className="font-mono text-xs">{phone || "—"}</span>
                         </div>
                       </td>
                       <td className="px-3 py-2">
