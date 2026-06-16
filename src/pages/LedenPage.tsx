@@ -1,7 +1,7 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks } from "lucide-react";
+import { Users, UserMinus, Store, UserPlus, MessageSquare, Search, ListChecks, List } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import MemberFilters from "@/components/MemberFilters";
 import MemberTable from "@/components/MemberTable";
@@ -11,6 +11,7 @@ import MailingExportButton from "@/components/MailingExportButton";
 import NewMemberDialog from "@/components/NewMemberDialog";
 import WhatsAppMatcher from "@/components/WhatsAppMatcher";
 import CommunityDeelnemersTable from "@/components/CommunityDeelnemersTable";
+import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 
@@ -21,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 type ViewTab = "leden" | "leads" | "coffeeshops" | "community";
-type CommunitySubTab = "matcher" | "deelnemers";
+type CommunitySubTab = "matcher" | "deelnemers" | "lijst";
 
 const LedenPage = () => {
   const { isAdmin, isInhuur, isBoard } = useAuth();
@@ -217,9 +218,12 @@ const LedenPage = () => {
           <TabsList>
             {isBoard && (
               <TabsTrigger value="deelnemers" className="gap-1.5">
-                <ListChecks size={14} /> Community deelnemers
+                <ListChecks size={14} /> Community beheer
               </TabsTrigger>
             )}
+            <TabsTrigger value="lijst" className="gap-1.5">
+              <List size={14} /> Deelnemerslijst
+            </TabsTrigger>
             <TabsTrigger value="matcher" className="gap-1.5">
               <Search size={14} /> Matcher
             </TabsTrigger>
@@ -229,6 +233,9 @@ const LedenPage = () => {
               <CommunityDeelnemersTable />
             </TabsContent>
           )}
+          <TabsContent value="lijst">
+            <CommunityDeelnemersLijst />
+          </TabsContent>
           <TabsContent value="matcher">
             <WhatsAppMatcher />
           </TabsContent>
