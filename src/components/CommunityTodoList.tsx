@@ -199,6 +199,12 @@ const CommunityTodoList = () => {
                     </span>
                   </div>
                 )}
+                {isNotified(p.note) && (
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 mt-1">
+                    <MailCheck size={12} />
+                    <span>{p.note}</span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Popover
