@@ -47,7 +47,7 @@ const CommunityDeelnemersLijst = () => {
     const q = query.trim().toLowerCase();
     return participants.filter((p) => {
       if (!q) return true;
-      const m = p.member_id ? memberById.get(p.member_id) : null;
+      const m = p.member_id ? memberById.get(p.member_id)?.m : null;
       return (
         p.display_name.toLowerCase().includes(q) ||
         (p.phone || "").toLowerCase().includes(q) ||
