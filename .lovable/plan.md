@@ -1,65 +1,40 @@
-## Context
-De gebruiker is bezig met het koppelen van de WhatsApp Cloud API, maar raakt verdwaald tussen Meta Business Suite, Business Manager en Meta for Developers. Er zijn nog geen WhatsApp-secrets geconfigureerd. De huidige WhatsApp Instellingen-tab toont alleen leden-voorkeuren, maar geen setup-status.
+# WhatsApp-integratie verwijderen
 
-## Doel
-Een self-service opstapwizard toevoegen bovenaan de WhatsApp Instellingen-tab, zodat de gebruiker exact ziet wat er ontbreekt, welke URL's in Meta geplakt moeten worden, en in welke volgorde.
+Je hebt aangegeven dat de WhatsApp-koppeling te ingewikkeld is. Ik haal de hele integratie eruit zodat de app weer overzichtelijk is. Community-functionaliteit (deelnemerslijst, todo) blijft behouden, alleen de WhatsApp-stukken gaan weg.
 
-## Wat we bouwen
+## Wat ik verwijder
 
-### 1. WhatsAppSetupStatus component
-- Een card bovenaan de tab die de 4 vereiste secrets checkt:
-  - WHATSAPP_VERIFY_TOKEN
-  - WHATSAPP_APP_SECRET
-  - WHATSAPP_ACCESS_TOKEN
-  - WHATSAPP_PHONE_NUMBER_ID
-- Per secret: "Ontbreekt" / "Ingesteld" badge
-- Totale status: "Niet gekoppeld", "Gedeeltelijk", "Klaar voor test"
+**Pagina-tabs in `CommunityPage.tsx`:**
+- Tab "Matcher" (WhatsAppMatcher)
+- Tab "Inbox" (WhatsAppInbox)
+- Tab "Templates" (WhatsAppTemplates)
+- Tab "Instellingen" (WhatsAppInstellingen) — bevat de setup-wizard
 
-### 2. Webhook URL tonen
-- De publieke webhook-URL (Supabase functions/v1/whatsapp-webhook) wordt getoond in een kopieerbaar veld, zodat de gebruiker deze direct in Meta kan plakken.
+Overblijvend: **Deelnemerslijst** en **Te doen**.
 
-### 3. Stap-voor-stap routekaart
-Een genummerde lijst met exact wat waar gedaan moet worden:
+**Frontend bestanden:**
+- `src/components/WhatsAppMatcher.tsx`
+- `src/components/WhatsAppInbox.tsx`
+- `src/components/WhatsAppTemplates.tsx`
+- `src/components/WhatsAppInstellingen.tsx`
+- `src/components/WhatsAppSetupWizard.tsx`
+- `src/hooks/useWhatsApp.ts`
+- `src/hooks/useWhatsAppStatus.ts`
 
-```text
-1. Meta Business Manager (business.facebook.com)
-   - Business verificatie voltooien (KvK)
-   - WhatsApp Business Account (WABA) aanmaken
-   - Telefoonnummer toevoegen aan WABA
+**Edge functions (Lovable Cloud):**
+- `whatsapp-send`
+- `whatsapp-webhook`
+- `whatsapp-status`
 
-2. Meta for Developers (developers.facebook.com)
-   - Nieuwe Business-app aanmaken
-   - Product "WhatsApp" toevoegen
-   - App Secret noteren
+**Secrets** (indien aanwezig):
+- `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
 
-3. Webhook configureren (in de app zelf)
-   - Callback URL: <supabase functions url>/v1/whatsapp-webhook
-   - Verify token: kies zelf een willekeurige string (20+ tekens)
+## Wat ik laat staan
 
-4. Meta for Developers → System User
-   - System User aanmaken in Business Manager
-   - Rechten: whatsapp_business_messaging + whatsapp_business_management
-   - Token genereren en noteren
+- Telefoonnummers op leden (voor bellen/SMS)
+- `CommunityDeelnemersLijst` en `CommunityTodoList` — die hangen niet vast aan de WhatsApp-API
+- Eventuele bestaande database-tabellen `whatsapp_messages` / `whatsapp_conversations` — die laat ik staan zodat geen data verloren gaat. Als je ze ook weg wilt, zeg het dan, dan voeg ik een migratie toe.
 
-5. Secrets invullen in Lovable
-   - Vul de 4 waarden in via Instellingen → Secrets
-```
+## Wat je daarna hebt
 
-### 4. Secrets-invoer dialoog
-- Een knop "Secrets invullen" opent een dialoog met 4 velden
-- Bij opslaan: secrets worden via de secrets-tool toegevoegd
-- Geen hardcoded secrets in code
-
-### 5. Test-verbinding knop
-- Alleen zichtbaar als alle 4 secrets aanwezig zijn
-- Stuurt een test-bericht naar een eigen nummer (met telefoonnummer-invoer)
-- Toont succes/fout terugkoppeling
-
-## Technische details
-- Nieuw component: `src/components/WhatsAppSetupWizard.tsx`
-- Integreren in `WhatsAppInstellingen.tsx` bovenaan de pagina
-- Backend: geen wijzigingen nodig; bestaande edge functions `whatsapp-webhook` en `whatsapp-send` werken al
-- Geen nieuwe database-tabellen nodig
-
-## Wat de gebruiker daarna zelf doet
-De gebruiker doorloopt de routekaart in Meta, genereert de 4 secrets, en vult ze in via de dialoog in de app. Daarna test de verbinding.
+Een Community-pagina met alleen de bruikbare onderdelen, geen Meta-setup meer, geen verwarrende tabs. Als je later een eenvoudiger alternatief wilt (wa.me link of e-mail), kunnen we dat los toevoegen.
