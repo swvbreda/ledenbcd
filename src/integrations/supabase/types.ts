@@ -1794,6 +1794,127 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_conversations: {
+        Row: {
+          archived: boolean
+          created_at: string
+          display_name: string | null
+          id: string
+          last_inbound_at: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
+          last_outbound_at: string | null
+          member_id: number | null
+          phone: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          last_outbound_at?: string | null
+          member_id?: number | null
+          phone: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          last_outbound_at?: string | null
+          member_id?: number | null
+          phone?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          member_id: number | null
+          phone: string
+          read_by_us_at: string | null
+          sent_by: string | null
+          status: string
+          template_name: string | null
+          template_variables: Json | null
+          timestamp: string
+          updated_at: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          direction: string
+          error?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          member_id?: number | null
+          phone: string
+          read_by_us_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          template_variables?: Json | null
+          timestamp?: string
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          member_id?: number | null
+          phone?: string
+          read_by_us_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          template_variables?: Json | null
+          timestamp?: string
+          updated_at?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_participants: {
         Row: {
           created_at: string
@@ -1834,6 +1955,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_preferences: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          member_id: number
+          opted_in: boolean
+          opted_in_at: string | null
+          opted_out_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          member_id: number
+          opted_in?: boolean
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          member_id?: number
+          opted_in?: boolean
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_preferences_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_templates: {
+        Row: {
+          body_text: string | null
+          category: string
+          created_at: string
+          display_name: string | null
+          id: string
+          language: string
+          last_synced_at: string | null
+          meta_template_id: string | null
+          name: string
+          status: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          body_text?: string | null
+          category?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          language?: string
+          last_synced_at?: string | null
+          meta_template_id?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          body_text?: string | null
+          category?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          language?: string
+          last_synced_at?: string | null
+          meta_template_id?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
       }
     }
     Views: {
