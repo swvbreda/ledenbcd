@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, MessageSquare, CheckCircle2, HelpCircle, AlertTriangle, Download, Copy } from "lucide-react";
+import { Search, MessageSquare, CheckCircle2, HelpCircle, AlertTriangle, Download, Copy, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,29 +30,40 @@ const WhatsAppMatcher = () => {
 
   const bulkResult = useMemo(() => {
     if (!bulkInput.trim()) return null;
-    const raws = extractPhones(bulkInput);
+    // Parse line-by-line so we can keep the WhatsApp display name with the number.
+    const lines = bulkInput.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     const seen = new Set<string>();
-    const matched: { raw: string; normalized: string; entries: MemberPhoneEntry[] }[] = [];
-    const unknown: { raw: string; normalized: string }[] = [];
+    const matched: { line: string; label: string; raw: string; normalized: string; entries: MemberPhoneEntry[] }[] = [];
+    const unknown: { line: string; label: string; raw: string; normalized: string }[] = [];
+    const noNumber: { line: string }[] = [];
     const matchedMemberIds = new Set<number>();
 
-    for (const raw of raws) {
-      const n = normalizePhone(raw);
-      if (!n) continue;
-      if (seen.has(n)) continue;
-      seen.add(n);
-      const entries = index.byNormalized.get(n);
-      if (entries && entries.length > 0) {
-        matched.push({ raw, normalized: n, entries });
-        entries.forEach((e) => matchedMemberIds.add(e.memberId));
-      } else {
-        unknown.push({ raw, normalized: n });
+    for (const line of lines) {
+      const raws = extractPhones(line);
+      if (raws.length === 0) {
+        noNumber.push({ line });
+        continue;
+      }
+      for (const raw of raws) {
+        const n = normalizePhone(raw);
+        if (!n) continue;
+        if (seen.has(n)) continue;
+        seen.add(n);
+        // Strip the number from the line to get a display label (the WhatsApp contact name).
+        const label = line.replace(raw, "").replace(/\s{2,}/g, " ").trim() || "(geen naam)";
+        const entries = index.byNormalized.get(n);
+        if (entries && entries.length > 0) {
+          matched.push({ line, label, raw, normalized: n, entries });
+          entries.forEach((e) => matchedMemberIds.add(e.memberId));
+        } else {
+          unknown.push({ line, label, raw, normalized: n });
+        }
       }
     }
 
     const missingMembers = allMembers.filter((m) => !matchedMemberIds.has(m.id));
 
-    return { matched, unknown, missingMembers, totalParsed: seen.size };
+    return { matched, unknown, noNumber, missingMembers, totalParsed: seen.size };
   }, [bulkInput, index, allMembers]);
 
   const copyList = async (lines: string[]) => {
@@ -73,7 +84,10 @@ const WhatsAppMatcher = () => {
       }
     }
     for (const u of bulkResult.unknown) {
-      rows.push(["Onbekend", u.raw, "", "", "", ""]);
+      rows.push(["Verwijderen uit WhatsApp", u.raw, u.label, "", "", ""]);
+    }
+    for (const nn of bulkResult.noNumber) {
+      rows.push(["Geen nummer zichtbaar", "", nn.line, "", "", ""]);
     }
     for (const mm of bulkResult.missingMembers) {
       rows.push([
