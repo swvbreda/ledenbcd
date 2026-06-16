@@ -110,7 +110,6 @@ const CommunityDeelnemersLijst = () => {
                   const memberPhone =
                     m?.telefoon ||
                     m?.contacten?.find((c) => c.telefoon)?.telefoon ||
-                    m?.locaties?.find((l) => l.telefoon)?.telefoon ||
                     "";
                   const phone = p.phone || memberPhone;
                   return (
