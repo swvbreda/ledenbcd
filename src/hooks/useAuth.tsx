@@ -11,6 +11,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isExtern: boolean;
   isInhuur: boolean;
+  isBoard: boolean;
   linkedMemberId: number | null;
   linkedMemberIds: number[];
   mfaStatus: "verified" | "needs_verify" | "needs_setup" | "loading";
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isExtern: false,
   isInhuur: false,
+  isBoard: false,
   linkedMemberId: null,
   linkedMemberIds: [],
   mfaStatus: "loading",
@@ -79,6 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isExtern, setIsExtern] = useState(false);
+  const [isBoard, setIsBoard] = useState(false);
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
 
@@ -131,7 +134,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from("member_profiles")
       .select("member_id")
       .eq("user_id", userId);
-    setLinkedMemberIds(profileData?.map((p) => p.member_id) ?? []);
+    const memberIds = profileData?.map((p) => p.member_id) ?? [];
+    setLinkedMemberIds(memberIds);
+
+    if (memberIds.length > 0) {
+      const { data: boardRows } = await supabase
+        .from("board_members")
+        .select("lid_id, lid_ids");
+      const isBoardMember = (boardRows ?? []).some((row: any) => {
+        if (row?.lid_id && memberIds.includes(row.lid_id)) return true;
+        const ids: number[] = Array.isArray(row?.lid_ids) ? row.lid_ids : [];
+        return ids.some((id) => memberIds.includes(id));
+      });
+      setIsBoard(isBoardMember);
+    } else {
+      setIsBoard(false);
+    }
   };
 
   useEffect(() => {
@@ -157,6 +175,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setIsAdmin(false);
         setIsExtern(false);
+        setIsBoard(false);
         setLinkedMemberIds([]);
         setMfaStatus("loading");
         setLoading(false);
@@ -234,7 +253,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isInhuur = !isAdmin && !isExtern && !!user && linkedMemberIds.length === 0;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, isBoard, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
       {children}
     </AuthContext.Provider>
   );
