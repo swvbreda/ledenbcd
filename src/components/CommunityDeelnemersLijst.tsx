@@ -4,6 +4,7 @@ import { Search, Phone, User, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhone } from "@/lib/phoneMatch";
 
 type Participant = {
   id: string;
@@ -127,7 +128,7 @@ const CommunityDeelnemersLijst = () => {
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1.5">
                           <Phone size={12} className="text-muted-foreground/60" />
-                          <span className="font-mono text-xs">{phone || "—"}</span>
+                          <span className="font-mono text-xs">{phone ? formatPhone(phone) : "—"}</span>
                         </div>
                       </td>
                       <td className="px-3 py-2">
