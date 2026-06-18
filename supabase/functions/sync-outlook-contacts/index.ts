@@ -5,9 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TENANT_ID = Deno.env.get("MS_GRAPH_TENANT_ID")!;
-const CLIENT_ID = Deno.env.get("MS_GRAPH_CLIENT_ID")!;
-const CLIENT_SECRET = Deno.env.get("MS_GRAPH_CLIENT_SECRET")!;
+const TENANT_ID = Deno.env.get("MS_GRAPH_TENANT_ID")?.trim()!;
+const CLIENT_ID = Deno.env.get("MS_GRAPH_CLIENT_ID")?.trim()!;
+const CLIENT_SECRET = Deno.env.get("MS_GRAPH_CLIENT_SECRET")?.trim()!;
 
 const FOLDER_NAME = "BCD Leden";
 const NOTE_MARKER_RE = /\[bcd:(\d+)\]/;
