@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.notify-membership-request]
 verify_jwt = false
+
+[functions.sync-outlook-contacts]
+verify_jwt = false
