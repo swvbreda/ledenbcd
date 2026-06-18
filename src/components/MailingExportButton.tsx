@@ -15,6 +15,15 @@ interface Props {
   members: Member[];
 }
 
+const MAIL_SEPARATOR = ";";
+
+const getUniqueEmails = (data: { email: string | null }[]) =>
+  [...new Set(
+    data
+      .map((r) => (r.email || "").trim().replace(/^[,;\s]+|[,;\s]+$/g, ""))
+      .filter(Boolean)
+  )];
+
 export default function MailingExportButton({ members }: Props) {
   const [loading, setLoading] = useState(false);
 
@@ -53,8 +62,8 @@ export default function MailingExportButton({ members }: Props) {
       return;
     }
 
-    const emails = [...new Set(data.map((r) => r.email))];
-    const joined = emails.join("; ");
+    const emails = getUniqueEmails(data);
+    const joined = emails.join(MAIL_SEPARATOR);
     try {
       await navigator.clipboard.writeText(joined);
       toast.success(`${emails.length} e-mailadressen gekopieerd. Plak ze in het BCC-veld van Outlook.`);
@@ -122,7 +131,7 @@ export default function MailingExportButton({ members }: Props) {
     });
 
     const csv = [headers, ...rows]
-      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(MAIL_SEPARATOR))
       .join("\n");
 
     const today = new Date().toISOString().slice(0, 10);
