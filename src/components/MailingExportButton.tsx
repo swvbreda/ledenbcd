@@ -54,8 +54,14 @@ export default function MailingExportButton({ members }: Props) {
     }
 
     const emails = [...new Set(data.map((r) => r.email))];
-    const bcc = encodeURIComponent(emails.join(";"));
-    const url = `https://outlook.office.com/mail/deeplink/compose?bcc=${bcc}`;
+    const joined = emails.join("; ");
+    try {
+      await navigator.clipboard.writeText(joined);
+      toast.success(`${emails.length} e-mailadressen gekopieerd. Plak ze in het BCC-veld van Outlook.`);
+    } catch {
+      toast.info("Kopieer de adressen handmatig: " + joined);
+    }
+    const url = `https://outlook.office.com/mail/deeplink/compose`;
     window.open(url, "_blank", "noopener,noreferrer");
     setLoading(false);
   };
