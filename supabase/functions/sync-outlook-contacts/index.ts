@@ -308,7 +308,11 @@ Deno.serve(async (req) => {
     logRow.status = "error";
     logRow.details = { error: (e as Error).message };
     logRow.finished_at = new Date().toISOString();
-    await supabase.from("outlook_sync_log").insert(logRow).catch(() => {});
+    try {
+      await supabase.from("outlook_sync_log").insert(logRow);
+    } catch (_) {
+      // ignore log insert failures
+    }
     return new Response(JSON.stringify({ ok: false, error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
