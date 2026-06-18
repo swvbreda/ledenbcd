@@ -134,7 +134,7 @@ export default function MailingExportButton({ members }: Props) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleMailto}>
-          Open in mailprogramma
+          Open in Outlook
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSimpleExport}>
           Exporteer mailinglijst (CSV)
