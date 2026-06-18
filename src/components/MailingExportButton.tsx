@@ -54,8 +54,9 @@ export default function MailingExportButton({ members }: Props) {
     }
 
     const emails = [...new Set(data.map((r) => r.email))];
-    const mailto = `mailto:?bcc=${encodeURIComponent(emails.join(","))}`;
-    window.location.href = mailto;
+    const bcc = encodeURIComponent(emails.join(";"));
+    const url = `https://outlook.office.com/mail/deeplink/compose?bcc=${bcc}`;
+    window.open(url, "_blank", "noopener,noreferrer");
     setLoading(false);
   };
 
