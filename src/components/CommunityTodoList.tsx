@@ -30,7 +30,7 @@ type Participant = {
 };
 
 const CommunityTodoList = () => {
-  const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const allMembers = useMemo(
     () => [...rawMembers, ...rawLeads],
     [rawMembers, rawLeads],
@@ -46,6 +46,7 @@ const CommunityTodoList = () => {
   const [query, setQuery] = useState("");
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [searchFor, setSearchFor] = useState<Record<string, string>>({});
 
   const load = async () => {
     const { data } = await supabase
@@ -208,7 +209,16 @@ const CommunityTodoList = () => {
               <div className="flex items-center gap-2 shrink-0">
                 <Popover
                   open={openFor === p.id}
-                  onOpenChange={(o) => setOpenFor(o ? p.id : null)}
+                  onOpenChange={(o) => {
+                    setOpenFor(o ? p.id : null);
+                    if (o) {
+                      refetchMembers();
+                      setSearchFor((s) => ({
+                        ...s,
+                        [p.id]: s[p.id] ?? p.display_name,
+                      }));
+                    }
+                  }}
                 >
                   <PopoverTrigger asChild>
                     <Button
@@ -223,7 +233,13 @@ const CommunityTodoList = () => {
                   </PopoverTrigger>
                   <PopoverContent className="w-[320px] p-0" align="end">
                     <Command>
-                      <CommandInput placeholder="Zoek coffeeshop…" />
+                      <CommandInput
+                        placeholder="Zoek coffeeshop…"
+                        value={searchFor[p.id] ?? ""}
+                        onValueChange={(v) =>
+                          setSearchFor((s) => ({ ...s, [p.id]: v }))
+                        }
+                      />
                       <CommandList>
                         <CommandEmpty>Geen resultaten.</CommandEmpty>
                         <CommandGroup>
