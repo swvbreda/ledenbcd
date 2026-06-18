@@ -1401,6 +1401,33 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_sync_log: {
+        Row: {
+          details: Json | null
+          finished_at: string | null
+          id: string
+          started_at: string
+          status: string
+          trigger: string | null
+        }
+        Insert: {
+          details?: Json | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status: string
+          trigger?: string | null
+        }
+        Update: {
+          details?: Json | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          trigger?: string | null
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           content_markdown: string
