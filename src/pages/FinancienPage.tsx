@@ -17,6 +17,7 @@ import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
+import InformerSyncTab from "@/components/budget/InformerSyncTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -327,6 +328,9 @@ export default function FinancienPage() {
             <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               To Do
             </TabsTrigger>
+            <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Informer
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -474,6 +478,10 @@ export default function FinancienPage() {
 
           <TabsContent value="todo">
             <FinancieelTodoTab year={year} />
+          </TabsContent>
+
+          <TabsContent value="informer">
+            <InformerSyncTab />
           </TabsContent>
         </Tabs>
         </>
