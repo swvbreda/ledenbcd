@@ -81,9 +81,9 @@ export default function NewMemberDialog({ type }: Props) {
         .insert({ id: nextId, member_type: type, data });
       if (error) throw error;
 
-      // Registreer e-mail in member_allowed_emails zodat het lid een account kan aanmaken.
+      // Registreer e-mail in member_allowed_emails zodat het lid/lead een account kan aanmaken.
       // Zonder deze regel weigert de signup-functie de registratie ("e-mailadres niet geregistreerd").
-      if (type === "member" && email.trim()) {
+      if (email.trim()) {
         const { error: allowErr } = await supabase
           .from("member_allowed_emails")
           .insert({ member_id: nextId, email: email.trim().toLowerCase() });
