@@ -1666,6 +1666,7 @@ export type Database = {
       }
       secure_documents: {
         Row: {
+          audience: string
           file_size_bytes: number | null
           id: string
           slug: string
@@ -1675,6 +1676,7 @@ export type Database = {
           uploaded_by: string
         }
         Insert: {
+          audience?: string
           file_size_bytes?: number | null
           id?: string
           slug: string
@@ -1684,6 +1686,7 @@ export type Database = {
           uploaded_by: string
         }
         Update: {
+          audience?: string
           file_size_bytes?: number | null
           id?: string
           slug?: string
