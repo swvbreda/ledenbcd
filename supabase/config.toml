@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.sync-outlook-contacts]
 verify_jwt = false
+
+[functions.informer-sync]
+verify_jwt = false
