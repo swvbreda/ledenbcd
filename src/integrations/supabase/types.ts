@@ -274,6 +274,7 @@ export type Database = {
           direction: string
           dossier: string | null
           expense_date: string | null
+          external_id: string | null
           id: string
           invoice_reference: string | null
           line_item_id: string
@@ -291,6 +292,7 @@ export type Database = {
           direction?: string
           dossier?: string | null
           expense_date?: string | null
+          external_id?: string | null
           id?: string
           invoice_reference?: string | null
           line_item_id: string
@@ -308,6 +310,7 @@ export type Database = {
           direction?: string
           dossier?: string | null
           expense_date?: string | null
+          external_id?: string | null
           id?: string
           invoice_reference?: string | null
           line_item_id?: string
@@ -827,6 +830,57 @@ export type Database = {
         }
         Relationships: []
       }
+      informer_sync_log: {
+        Row: {
+          action: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          items_processed: number
+          run_at: string
+          success: boolean
+        }
+        Insert: {
+          action: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          items_processed?: number
+          run_at?: string
+          success: boolean
+        }
+        Update: {
+          action?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          items_processed?: number
+          run_at?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
+      informer_sync_state: {
+        Row: {
+          id: number
+          last_creditor_sync_at: string | null
+          last_payment_sync_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_creditor_sync_at?: string | null
+          last_payment_sync_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_creditor_sync_at?: string | null
+          last_payment_sync_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       internal_declarations: {
         Row: {
           account_holder: string | null
@@ -1038,6 +1092,7 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string
+          external_invoice_id: string | null
           id: string
           invoice_date: string | null
           invoice_file_path: string | null
@@ -1053,6 +1108,7 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by: string
+          external_invoice_id?: string | null
           id?: string
           invoice_date?: string | null
           invoice_file_path?: string | null
@@ -1068,6 +1124,7 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string
+          external_invoice_id?: string | null
           id?: string
           invoice_date?: string | null
           invoice_file_path?: string | null
