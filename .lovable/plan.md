@@ -1,40 +1,44 @@
-# WhatsApp-integratie verwijderen
 
-Je hebt aangegeven dat de WhatsApp-koppeling te ingewikkeld is. Ik haal de hele integratie eruit zodat de app weer overzichtelijk is. Community-functionaliteit (deelnemerslijst, todo) blijft behouden, alleen de WhatsApp-stukken gaan weg.
+## Doel
+Twee-richtingsverbinding tussen het ledenportaal en Informer (REST API), elk uur automatisch + handmatige "Synchroniseer nu" knop.
 
-## Wat ik verwijder
+## Onderdelen
 
-**Pagina-tabs in `CommunityPage.tsx`:**
-- Tab "Matcher" (WhatsAppMatcher)
-- Tab "Inbox" (WhatsAppInbox)
-- Tab "Templates" (WhatsAppTemplates)
-- Tab "Instellingen" (WhatsAppInstellingen) — bevat de setup-wizard
+**1. Secrets (beveiligd formulier)**
+- `INFORMER_API_TOKEN` — het token uit Informer
+- `INFORMER_ADMINISTRATION_ID` — administratie-ID/subscription
+- `INFORMER_BASE_URL` — meestal `https://api.informer.eu/v1` (default als leeg)
 
-Overblijvend: **Deelnemerslijst** en **Te doen**.
+**2. Edge function: `informer-sync`**
+Eén orkestratie-functie die drie acties draait, met `?action=push_invoices|pull_payments|pull_creditors|all`:
 
-**Frontend bestanden:**
-- `src/components/WhatsAppMatcher.tsx`
-- `src/components/WhatsAppInbox.tsx`
-- `src/components/WhatsAppTemplates.tsx`
-- `src/components/WhatsAppInstellingen.tsx`
-- `src/components/WhatsAppSetupWizard.tsx`
-- `src/hooks/useWhatsApp.ts`
-- `src/hooks/useWhatsAppStatus.ts`
+- **push_invoices** — Loop over `member_contributions` waar `invoice_number IS NULL` en `paid = false`. Maak verkoopfactuur in Informer (POST `/sales_invoices`), schrijf het Informer-factuurnummer + `external_ref` terug naar `member_contributions.invoice_number` en nieuwe kolom `external_invoice_id`.
+- **pull_payments** — GET facturen met status `paid` sinds `last_sync_at`. Match op `external_invoice_id` → markeer `paid = true`, `paid_date`.
+- **pull_creditors** — GET inkoopfacturen sinds laatste sync. Upsert naar `budget_expenses` met `source = 'informer'` en `external_id`. Skip duplicates op `external_id`.
 
-**Edge functions (Lovable Cloud):**
-- `whatsapp-send`
-- `whatsapp-webhook`
-- `whatsapp-status`
+**3. Database-migratie**
+- `member_contributions`: kolom `external_invoice_id text` toevoegen
+- `budget_expenses`: kolommen `source text default 'manual'`, `external_id text unique` toevoegen
+- Nieuwe tabel `informer_sync_log` (run_at, action, success, items_processed, error_message) voor monitoring
+- Nieuwe tabel `informer_sync_state` (id=1, last_payment_sync_at, last_creditor_sync_at)
 
-**Secrets** (indien aanwezig):
-- `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
+**4. Cron job (elk uur)**
+`pg_cron` job die `informer-sync?action=all` aanroept met service role auth.
 
-## Wat ik laat staan
+**5. UI**
+- `src/pages/FinancienPage.tsx`: knop **"Synchroniseer met Informer"** (admin-only) in de header → toont laatste sync-tijd + spinner
+- Nieuwe component `InformerSyncStatus.tsx`: toont laatste 10 sync-logs (succes/fout, aantal items) onder een nieuw tabblad **"Informer"** in Financiën
+- Bij elke crediteur uit Informer een klein badge "Informer" in `ExpenseListView.tsx`
 
-- Telefoonnummers op leden (voor bellen/SMS)
-- `CommunityDeelnemersLijst` en `CommunityTodoList` — die hangen niet vast aan de WhatsApp-API
-- Eventuele bestaande database-tabellen `whatsapp_messages` / `whatsapp_conversations` — die laat ik staan zodat geen data verloren gaat. Als je ze ook weg wilt, zeg het dan, dan voeg ik een migratie toe.
+**6. Foutafhandeling**
+- API-fouten → log naar `informer_sync_log` met error message
+- Bij 401 → toast "Informer-token verlopen, controleer secrets"
+- Geen retries in dezelfde run; volgende uur probeert opnieuw
 
-## Wat je daarna hebt
-
-Een Community-pagina met alleen de bruikbare onderdelen, geen Meta-setup meer, geen verwarrende tabs. Als je later een eenvoudiger alternatief wilt (wa.me link of e-mail), kunnen we dat los toevoegen.
+## Volgorde
+1. Migratie (kolommen + tabellen)
+2. Secrets-formulier voor token + admin-ID
+3. Edge function `informer-sync` schrijven
+4. UI-knop + tabblad
+5. Cron arm op elk uur
+6. Eerste handmatige run om te testen
