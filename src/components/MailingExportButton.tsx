@@ -8,6 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { Member } from "@/data/types";
 
@@ -26,6 +34,9 @@ const getUniqueEmails = (data: { email: string | null }[]) =>
 
 export default function MailingExportButton({ members }: Props) {
   const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogEmails, setDialogEmails] = useState("");
+  const [dialogCount, setDialogCount] = useState(0);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -92,18 +103,28 @@ export default function MailingExportButton({ members }: Props) {
 
     const emails = getUniqueEmails(data);
     const joined = emails.join(MAIL_SEPARATOR);
-    const copied = await copyToClipboard(joined);
-    const today = new Date().toISOString().slice(0, 10);
-    // Always download as fallback so the user reliably has the ;-separated list.
-    downloadCsv(joined, `bcd-outlook-bcc-${today}.txt`);
-    if (copied) {
-      toast.success(`${emails.length} e-mailadressen gekopieerd (gescheiden met ;) en als bestand gedownload. Plak in BCC van Outlook.`);
-    } else {
-      toast.info(`${emails.length} e-mailadressen gedownload als tekstbestand (gescheiden met ;). Open en kopieer naar BCC in Outlook.`);
-    }
-    const url = `https://outlook.office.com/mail/deeplink/compose`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    setDialogEmails(joined);
+    setDialogCount(emails.length);
+    setDialogOpen(true);
     setLoading(false);
+  };
+
+  const handleDialogCopy = async () => {
+    const copied = await copyToClipboard(dialogEmails);
+    if (copied) {
+      toast.success(`${dialogCount} e-mailadressen gekopieerd. Plak ze in het BCC-veld van Outlook.`);
+    } else {
+      toast.error("Kopiëren mislukt. Selecteer de tekst handmatig (Cmd/Ctrl+A) en kopieer met Cmd/Ctrl+C.");
+    }
+  };
+
+  const handleDialogDownload = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsv(dialogEmails, `bcd-outlook-bcc-${today}.txt`);
+  };
+
+  const handleDialogOpenOutlook = () => {
+    window.open("https://outlook.office.com/mail/deeplink/compose", "_blank", "noopener,noreferrer");
   };
 
   const handleSimpleExport = async () => {
@@ -171,6 +192,7 @@ export default function MailingExportButton({ members }: Props) {
   };
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5" disabled={loading}>
@@ -191,5 +213,27 @@ export default function MailingExportButton({ members }: Props) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{dialogCount} e-mailadressen</DialogTitle>
+          <DialogDescription>
+            Klik op “Kopieer” en plak in het BCC-veld van Outlook. Adressen zijn gescheiden met een puntkomma (;).
+          </DialogDescription>
+        </DialogHeader>
+        <textarea
+          readOnly
+          value={dialogEmails}
+          onFocus={(e) => e.currentTarget.select()}
+          className="w-full h-64 p-3 text-sm font-mono border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-brand-red"
+        />
+        <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleDialogDownload}>Download .txt</Button>
+          <Button variant="outline" onClick={handleDialogOpenOutlook}>Open Outlook</Button>
+          <Button onClick={handleDialogCopy}>Kopieer alles</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
