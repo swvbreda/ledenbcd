@@ -93,12 +93,13 @@ export default function MailingExportButton({ members }: Props) {
     const emails = getUniqueEmails(data);
     const joined = emails.join(MAIL_SEPARATOR);
     const copied = await copyToClipboard(joined);
+    const today = new Date().toISOString().slice(0, 10);
+    // Always download as fallback so the user reliably has the ;-separated list.
+    downloadCsv(joined, `bcd-outlook-bcc-${today}.txt`);
     if (copied) {
-      toast.success(`${emails.length} e-mailadressen gekopieerd. Plak ze in het BCC-veld van Outlook.`);
+      toast.success(`${emails.length} e-mailadressen gekopieerd (gescheiden met ;) en als bestand gedownload. Plak in BCC van Outlook.`);
     } else {
-      const today = new Date().toISOString().slice(0, 10);
-      downloadCsv(joined, `bcd-outlook-bcc-${today}.txt`);
-      toast.info(`${emails.length} e-mailadressen als tekstbestand gedownload. Kopieer ze naar het BCC-veld van Outlook.`);
+      toast.info(`${emails.length} e-mailadressen gedownload als tekstbestand (gescheiden met ;). Open en kopieer naar BCC in Outlook.`);
     }
     const url = `https://outlook.office.com/mail/deeplink/compose`;
     window.open(url, "_blank", "noopener,noreferrer");
