@@ -27,6 +27,34 @@ const getUniqueEmails = (data: { email: string | null }[]) =>
 export default function MailingExportButton({ members }: Props) {
   const [loading, setLoading] = useState(false);
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // Fall back to the textarea copy method below.
+    }
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return copied;
+    } catch {
+      return false;
+    }
+  };
+
   const fetchMailingData = async () => {
     const memberIds = members.map((m) => m.id);
     const { data, error } = await supabase
@@ -64,11 +92,13 @@ export default function MailingExportButton({ members }: Props) {
 
     const emails = getUniqueEmails(data);
     const joined = emails.join(MAIL_SEPARATOR);
-    try {
-      await navigator.clipboard.writeText(joined);
+    const copied = await copyToClipboard(joined);
+    if (copied) {
       toast.success(`${emails.length} e-mailadressen gekopieerd. Plak ze in het BCC-veld van Outlook.`);
-    } catch {
-      toast.info("Kopieer de adressen handmatig: " + joined);
+    } else {
+      const today = new Date().toISOString().slice(0, 10);
+      downloadCsv(joined, `bcd-outlook-bcc-${today}.txt`);
+      toast.info(`${emails.length} e-mailadressen als tekstbestand gedownload. Kopieer ze naar het BCC-veld van Outlook.`);
     }
     const url = `https://outlook.office.com/mail/deeplink/compose`;
     window.open(url, "_blank", "noopener,noreferrer");
