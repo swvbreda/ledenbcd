@@ -77,7 +77,13 @@ export default function MailingExportButton({ members }: Props) {
       toast.error("Fout bij ophalen mailingvoorkeuren: " + error.message);
       return null;
     }
-    return data || [];
+    const prefs = data || [];
+    // Fallback: members without an explicit preference get their primary email included.
+    const withPref = new Set(prefs.map((r) => r.member_id));
+    const fallback = members
+      .filter((m) => !withPref.has(m.id) && (m.email || "").trim())
+      .map((m) => ({ member_id: m.id, email: (m.email as string).trim() }));
+    return [...prefs, ...fallback];
   };
 
   const downloadCsv = (content: string, filename: string) => {
