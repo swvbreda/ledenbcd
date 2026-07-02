@@ -90,6 +90,14 @@ export default function NewMemberDialog({ type }: Props) {
         if (allowErr && !String(allowErr.message || "").toLowerCase().includes("duplicate")) {
           console.error("Allowed email insert failed", allowErr);
         }
+
+        // Standaard opnemen in mailinglijst (kan later per lid uitgezet worden).
+        const { error: prefErr } = await supabase
+          .from("member_mailing_preferences")
+          .insert({ member_id: nextId, email: email.trim() });
+        if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
+          console.error("Mailing preference insert failed", prefErr);
+        }
       }
 
       toast.success(type === "member" ? "Nieuw lid toegevoegd" : "Nieuwe lead toegevoegd");
