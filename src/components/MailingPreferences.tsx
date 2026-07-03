@@ -56,7 +56,24 @@ export default function MailingPreferences({ member, canEdit }: Props) {
         return;
       }
       newSet.delete(email);
+      // If this was the last selected email, insert a sentinel row so the
+      // export knows this member is explicitly opted out (rather than never
+      // configured). getUniqueEmails filters empty strings out of the export.
+      if (newSet.size === 0) {
+        const { error: sentinelError } = await supabase
+          .from("member_mailing_preferences")
+          .insert({ member_id: member.id, email: "" });
+        if (sentinelError && sentinelError.code !== "23505") {
+          toast.error("Fout bij opslaan: " + sentinelError.message);
+        }
+      }
     } else {
+      // Remove any opt-out sentinel before adding a real address.
+      await supabase
+        .from("member_mailing_preferences")
+        .delete()
+        .eq("member_id", member.id)
+        .eq("email", "");
       // Add
       const { error } = await supabase
         .from("member_mailing_preferences")
