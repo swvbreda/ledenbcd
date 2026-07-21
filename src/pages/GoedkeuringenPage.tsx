@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus } from "lucide-react";
+import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useEditRequests,
@@ -231,10 +233,80 @@ function RequestCard({ request }: { request: EditRequest }) {
 
 export default function GoedkeuringenPage() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { rawMembers, rawLeads, rawOldMembers, refetch } = useMembersData();
   const [showAll, setShowAll] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
   const { data: requests, isLoading } = useEditRequests(showAll ? "all" : "pending");
   const { data: signups, isLoading: signupsLoading } = useMembershipRequests(showAll ? "all" : "pending");
   const updateSignup = useUpdateMembershipRequest();
+
+  const handleAddAsMember = async (s: MembershipRequest) => {
+    setAddingId(s.id);
+    try {
+      const allIds = [...rawMembers, ...rawLeads, ...rawOldMembers].map((m) => m.id);
+      const nextId = allIds.length ? Math.max(...allIds) + 1 : 1;
+      const naam = s.coffeeshop_name.trim();
+      const plaats = s.city.trim();
+      const contactNaam = s.full_name.trim();
+      const emailAddr = s.email.trim();
+      const telefoon = (s.phone || "").trim();
+      const jaar = new Date().getFullYear();
+
+      const data = {
+        id: nextId,
+        naam,
+        bedrijfsnaam: naam,
+        plaats,
+        stadsdeel: "",
+        contactpersoon: contactNaam,
+        functie: "",
+        telefoon,
+        email: emailAddr,
+        oprichtingJaar: null,
+        jarenLid: null,
+        lidSinds: jaar,
+        aantalLocaties: 1,
+        locaties: [{ naam, plaats, adres: "", postcode: "" }],
+        factuurBedrijfsnaam: naam,
+        factuurPlaats: plaats,
+        factuurEmail: emailAddr,
+        factuurTelefoon: telefoon,
+        contacten: (contactNaam || emailAddr || telefoon)
+          ? [{ naam: contactNaam, functie: "", email: emailAddr, telefoon }]
+          : [],
+      };
+
+      const { error } = await supabase
+        .from("members_data")
+        .insert({ id: nextId, member_type: "member", data });
+      if (error) throw error;
+
+      if (emailAddr) {
+        const { error: allowErr } = await supabase
+          .from("member_allowed_emails")
+          .insert({ member_id: nextId, email: emailAddr.toLowerCase() });
+        if (allowErr && !String(allowErr.message || "").toLowerCase().includes("duplicate")) {
+          console.error("Allowed email insert failed", allowErr);
+        }
+        const { error: prefErr } = await supabase
+          .from("member_mailing_preferences")
+          .insert({ member_id: nextId, email: emailAddr });
+        if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
+          console.error("Mailing preference insert failed", prefErr);
+        }
+      }
+
+      await updateSignup.mutateAsync({ id: s.id, status: "approved" });
+      refetch();
+      toast.success(`${naam} toegevoegd als lid`);
+      navigate(`/leden/${nextId}`);
+    } catch (err) {
+      toast.error("Toevoegen mislukt: " + (err as Error).message);
+    } finally {
+      setAddingId(null);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -297,12 +369,16 @@ export default function GoedkeuringenPage() {
                 )}
                 {s.status === "new" && (
                   <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button size="sm" className="gap-1.5" disabled={updateSignup.isPending}
+                    <Button size="sm" className="gap-1.5" disabled={addingId === s.id || updateSignup.isPending}
+                      onClick={() => handleAddAsMember(s)}>
+                      <Plus size={14} /> {addingId === s.id ? "Toevoegen..." : "Voeg toe als lid"}
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1.5" disabled={updateSignup.isPending}
                       onClick={() => updateSignup.mutate({ id: s.id, status: "approved" }, {
                         onSuccess: () => toast.success("Aanmelding gemarkeerd als verwerkt"),
                         onError: (e) => toast.error("Fout: " + (e as Error).message),
                       })}>
-                      <Check size={14} /> Verwerkt
+                      <Check size={14} /> Alleen markeren
                     </Button>
                     <Button variant="outline" size="sm" className="gap-1.5 text-destructive" disabled={updateSignup.isPending}
                       onClick={() => updateSignup.mutate({ id: s.id, status: "rejected" }, {
