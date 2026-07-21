@@ -96,6 +96,49 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Templates that accept fully free-form subject/body must not be callable
+  // by anyone holding the public anon key — that would allow relaying spam or
+  // phishing from our verified sending domain. Require either the service_role
+  // bearer (used by DB triggers / server-to-server) or an authenticated admin
+  // JWT before rendering such a template.
+  const FREE_FORM_TEMPLATES = new Set(['member-welcome'])
+  if (FREE_FORM_TEMPLATES.has(templateName)) {
+    const authHeader = req.headers.get('authorization') ?? ''
+    const isServiceRole =
+      supabaseServiceKey && authHeader === `Bearer ${supabaseServiceKey}`
+    let allowed = isServiceRole
+    if (!allowed && authHeader.startsWith('Bearer ')) {
+      try {
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+        if (anonKey) {
+          const userClient = createClient(supabaseUrl, anonKey, {
+            global: { headers: { Authorization: authHeader } },
+          })
+          const { data: userRes } = await userClient.auth.getUser()
+          if (userRes?.user) {
+            const admin = createClient(supabaseUrl, supabaseServiceKey)
+            const { data: isAdmin } = await admin.rpc('has_role', {
+              _user_id: userRes.user.id,
+              _role: 'admin',
+            })
+            allowed = Boolean(isAdmin)
+          }
+        }
+      } catch (e) {
+        console.error('Admin check failed for free-form template', e)
+      }
+    }
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: admin role required for this template' }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+  }
+
   // Resolve effective recipient: template-level `to` takes precedence over
   // the caller-provided recipientEmail. This allows notification templates
   // to always send to a fixed address (e.g., site owner from env var).
