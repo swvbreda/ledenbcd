@@ -38,6 +38,15 @@ serve(async (req) => {
 
     const { data: isUser } = await admin.rpc("has_role", { _user_id: user.id, _role: "user" });
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    const { data: isExtern } = await admin.rpc("has_role", { _user_id: user.id, _role: "extern" });
+    // Mirror the RLS policy: external users must never receive members-only docs,
+    // even if they also hold a 'user' role.
+    if (isExtern && !isAdmin) {
+      return new Response(JSON.stringify({ error: "Geen toegang" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!isUser && !isAdmin) {
       return new Response(JSON.stringify({ error: "Geen toegang" }), {
         status: 403,
@@ -48,11 +57,17 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const slug = typeof body?.slug === "string" ? body.slug : "jaarplan";
 
-    const { data: doc, error: docErr } = await admin
+    // Enforce the same audience filter as the underlying RLS policy: only
+    // documents scoped to 'members' (or unrestricted) are accessible via
+    // this endpoint. Admins keep full access.
+    let docQuery = admin
       .from("secure_documents")
-      .select("id, storage_path, title")
-      .eq("slug", slug)
-      .maybeSingle();
+      .select("id, storage_path, title, audience")
+      .eq("slug", slug);
+    if (!isAdmin) {
+      docQuery = docQuery.in("audience", ["members", "all"]);
+    }
+    const { data: doc, error: docErr } = await docQuery.maybeSingle();
 
     if (docErr || !doc) {
       return new Response(JSON.stringify({ error: "Document niet gevonden" }), {
