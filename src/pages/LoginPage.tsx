@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
-import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace } from "lucide-react";
+import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace, HelpCircle } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { captureRedirectFromQuery, hasPendingRedirect, maybeRedirectAfterLogin } from "@/lib/ssoRedirect";
 
@@ -27,6 +27,13 @@ const LoginPage = () => {
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+  const [statusInfo, setStatusInfo] = useState<
+    | null
+    | { state: "checking" }
+    | { state: "none" }
+    | { state: "found"; status: string; created_at: string; has_login: boolean }
+    | { state: "error"; message: string }
+  >(null);
 
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
@@ -181,6 +188,78 @@ const LoginPage = () => {
     setRegisterMode(mode === "register");
     setResetSent(false);
     setRegisterSuccess(false);
+    setStatusInfo(null);
+  };
+
+  const handleCheckStatus = async () => {
+    if (!email.trim()) {
+      setStatusInfo({ state: "error", message: "Vul je e-mailadres in" });
+      return;
+    }
+    setStatusInfo({ state: "checking" });
+    const { data, error: rpcError } = await supabase.rpc("get_membership_request_status", {
+      _email: email.trim(),
+    });
+    if (rpcError) {
+      setStatusInfo({ state: "error", message: "Kon status niet ophalen" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!row) {
+      setStatusInfo({ state: "none" });
+    } else {
+      setStatusInfo({
+        state: "found",
+        status: row.status,
+        created_at: row.created_at,
+        has_login: row.has_login,
+      });
+    }
+  };
+
+  const renderStatusMessage = () => {
+    if (!statusInfo) return null;
+    if (statusInfo.state === "checking") {
+      return <p className="text-sm text-muted-foreground">Bezig met controleren...</p>;
+    }
+    if (statusInfo.state === "error") {
+      return <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{statusInfo.message}</p>;
+    }
+    if (statusInfo.state === "none") {
+      return (
+        <div className="text-sm bg-muted rounded-md px-3 py-3 space-y-1">
+          <p className="font-medium">Geen aanmelding gevonden</p>
+          <p className="text-muted-foreground text-xs">
+            We konden geen aanmelding vinden op dit e-mailadres. Meld je aan via{" "}
+            <a href="https://coffeeshopbond.nl/aanmelden" className="text-primary hover:underline">
+              coffeeshopbond.nl/aanmelden
+            </a>
+            .
+          </p>
+        </div>
+      );
+    }
+    const datum = new Date(statusInfo.created_at).toLocaleDateString("nl-NL", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+    let title = "Aanmelding ontvangen";
+    let next = "Het secretariaat controleert je aanvraag en neemt binnen enkele werkdagen contact op.";
+    if (statusInfo.status === "approved" || statusInfo.has_login) {
+      title = "Aanmelding goedgekeurd";
+      next = statusInfo.has_login
+        ? "Je account is klaar. Registreer hierboven met dit e-mailadres om je wachtwoord in te stellen en in te loggen."
+        : "Je aanvraag is goedgekeurd. Je ontvangt binnenkort een mail met je inloggegevens.";
+    } else if (statusInfo.status === "rejected") {
+      title = "Aanmelding afgewezen";
+      next = "Neem contact op via info@coffeeshopbond.nl voor meer informatie.";
+    }
+    return (
+      <div className="text-sm bg-muted rounded-md px-3 py-3 space-y-1">
+        <p className="font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">Ontvangen op {datum}</p>
+        <p className="text-xs text-muted-foreground pt-1">{next}</p>
+      </div>
+    );
   };
 
   const getSubtitle = () => {
@@ -396,6 +475,14 @@ const LoginPage = () => {
                 >
                   Inloggen als externe partij →
                 </a>
+                <button
+                  type="button"
+                  onClick={handleCheckStatus}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1 w-full"
+                >
+                  <HelpCircle size={14} /> Status van mijn aanmelding checken
+                </button>
+                {renderStatusMessage()}
               </div>
             </form>
           )}
