@@ -208,6 +208,47 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Require an authenticated admin user OR the internal webhook secret.
+  // Called from InformerSyncTab.tsx (admin UI) and can also be triggered
+  // server-side; anonymous callers are rejected.
+  const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET") ?? "";
+  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const authHeader = req.headers.get("authorization") ?? "";
+  const internalSecret = req.headers.get("x-internal-secret") ?? "";
+  const isServiceRole = SERVICE_ROLE && authHeader === `Bearer ${SERVICE_ROLE}`;
+  const isInternal = INTERNAL_WEBHOOK_SECRET && internalSecret === INTERNAL_WEBHOOK_SECRET;
+  let authorized = isServiceRole || isInternal;
+  if (!authorized) {
+    if (!authHeader.startsWith("Bearer ") || !ANON_KEY) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    try {
+      const userClient = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userRes, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userRes?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const { data: isAdmin } = await admin.rpc("has_role", { _user_id: userRes.user.id, _role: "admin" });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      authorized = true;
+    } catch (_e) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   if (!INFORMER_TOKEN || !INFORMER_ADMIN) {
     return new Response(JSON.stringify({ error: "Informer secrets niet geconfigureerd" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
