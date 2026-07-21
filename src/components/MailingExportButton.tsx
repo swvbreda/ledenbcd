@@ -78,12 +78,18 @@ export default function MailingExportButton({ members }: Props) {
       return null;
     }
     const prefs = data || [];
+    // Filter out sentinel opt-out rows (empty email) but keep the member_id
+    // recorded as opted-out so the fallback below does NOT re-add their primary email.
+    const optedOut = new Set(
+      prefs.filter((r) => !(r.email || "").trim()).map((r) => r.member_id)
+    );
+    const realPrefs = prefs.filter((r) => (r.email || "").trim());
     // Fallback: members without an explicit preference get their primary email included.
     const withPref = new Set(prefs.map((r) => r.member_id));
     const fallback = members
       .filter((m) => !withPref.has(m.id) && (m.email || "").trim())
       .map((m) => ({ member_id: m.id, email: (m.email as string).trim() }));
-    return [...prefs, ...fallback];
+    return [...realPrefs, ...fallback];
   };
 
   const downloadCsv = (content: string, filename: string) => {
