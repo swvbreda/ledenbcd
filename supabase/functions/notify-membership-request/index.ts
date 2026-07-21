@@ -54,7 +54,42 @@ Deno.serve(async (req) => {
     const emailJson = await emailRes.json().catch(() => ({}));
     console.log("email result", emailRes.status, emailJson);
 
-    // 2) Push to admins
+    // 2) Bevestigingsmail naar de aanmelder zelf
+    if (r.email) {
+      const naam = (r.full_name || "").trim().split(/\s+/)[0] || "";
+      const shop = r.coffeeshop_name || "je coffeeshop";
+      const body = [
+        `Beste ${naam || "aanmelder"},`,
+        `Bedankt voor je aanmelding bij de Bond van Cannabis Detaillisten namens ${shop}. We hebben je aanvraag goed ontvangen.`,
+        `Wat gebeurt er nu?\n• Je account is automatisch aangemaakt en je toegang tot het ledenportaal wordt geregeld.\n• Het secretariaat controleert je gegevens en neemt binnen enkele werkdagen contact met je op voor de laatste stappen (contributie en bevestiging).\n• Zodra alles rond is, ontvang je een aparte mail met je inloggegevens voor leden.coffeeshopbond.nl.`,
+        `Heb je in de tussentijd vragen? Mail gerust naar info@coffeeshopbond.nl.`,
+        `Met vriendelijke groet,\nBestuur BCD`,
+      ].join("\n\n");
+
+      try {
+        const confirmRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_KEY}`,
+          },
+          body: JSON.stringify({
+            templateName: "member-welcome",
+            recipientEmail: r.email,
+            idempotencyKey: `membership-request-confirm-${r.id}`,
+            templateData: {
+              subject: "Aanmelding ontvangen — Bond van Cannabis Detaillisten",
+              body,
+            },
+          }),
+        });
+        console.log("confirmation email result", confirmRes.status);
+      } catch (e) {
+        console.error("confirmation email failed", e);
+      }
+    }
+
+    // 3) Push to admins
     if (INTERNAL_SECRET) {
       try {
         await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
