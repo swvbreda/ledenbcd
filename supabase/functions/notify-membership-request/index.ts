@@ -15,6 +15,19 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
 
+    // Only accept calls from trusted sources: DB trigger with service_role bearer
+    // (sent via Vault) or an internal caller with the internal webhook secret.
+    const authHeader = req.headers.get("authorization") ?? "";
+    const internalSecret = req.headers.get("x-internal-secret") ?? "";
+    const isServiceRole = SERVICE_KEY && authHeader === `Bearer ${SERVICE_KEY}`;
+    const isInternal = INTERNAL_SECRET && internalSecret === INTERNAL_SECRET;
+    if (!isServiceRole && !isInternal) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { type, record } = await req.json();
     if (type !== "INSERT" || !record?.id) {
       return new Response(JSON.stringify({ skipped: true }), {
