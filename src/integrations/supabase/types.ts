@@ -2165,6 +2165,14 @@ export type Database = {
       }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
       get_members_for_extern: { Args: { _org_id: string }; Returns: Json }
+      get_membership_request_status: {
+        Args: { _email: string }
+        Returns: {
+          created_at: string
+          has_login: boolean
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
