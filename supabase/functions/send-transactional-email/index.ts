@@ -6,7 +6,7 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
-const SITE_NAME = "Coffeeshopbond"
+const SITE_NAME = "Bond van Cannabisdetaillisten (BCD)"
 // We send via Resend (gateway) from het in Resend geverifieerde domein.
 const FROM_DOMAIN = "leden.coffeeshopbond.nl"
 const FROM_ADDRESS = `${SITE_NAME} <noreply@${FROM_DOMAIN}>`
