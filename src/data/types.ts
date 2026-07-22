@@ -46,6 +46,7 @@ export interface Member {
   email2?: string;
   lidSinds?: number | null;
   lidJaren?: number[];
+  contactpersonen?: string[];
   website?: string;
   instagram?: string;
   facebook?: string;
