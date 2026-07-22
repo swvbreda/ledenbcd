@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { useMemo, useState } from "react";
+import { RefreshCw, CheckCircle2, AlertCircle, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,10 @@ import { invokeWithAuth } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { useMembersData } from "@/contexts/MembersDataContext";
 
 interface SyncLog {
   id: string;
@@ -18,15 +22,24 @@ interface SyncLog {
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  push_invoices: "Facturen → Informer",
-  pull_payments: "Betaalstatus ← Informer",
+  pull_debtors: "Debiteuren ← Informer",
+  pull_invoices: "Facturen ← Informer",
   pull_creditors: "Crediteuren ← Informer",
   all: "Volledige sync",
 };
 
+interface InformerDebtor {
+  id: string;
+  name: string;
+  email: string | null;
+  kvk: string | null;
+  city: string | null;
+}
+
 export default function InformerSyncTab() {
   const [syncing, setSyncing] = useState(false);
   const qc = useQueryClient();
+  const [linkOpen, setLinkOpen] = useState(false);
 
   const { data: logs } = useQuery({
     queryKey: ["informer_sync_log"],
@@ -73,6 +86,8 @@ export default function InformerSyncTab() {
     }
   };
 
+  const openLinker = () => setLinkOpen(true);
+
   return (
     <div className="mt-4 space-y-4">
       <div className="border border-border rounded-lg p-4 bg-card">
@@ -80,11 +95,17 @@ export default function InformerSyncTab() {
           <div>
             <h3 className="text-base font-semibold mb-1">Informer-koppeling</h3>
             <p className="text-sm text-muted-foreground">
-              Synchroniseert elk uur automatisch. Push contributiefacturen, haal betaalstatus en crediteuren op.
+              Haalt debiteuren, factuurstatus en crediteuren uit Informer. Het ledenbestand is leidend; nieuwe debiteuren in Informer worden niet automatisch aangemaakt.
             </p>
             <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
               <div>
-                Laatste betaalstatus-sync:{" "}
+                Laatste debiteur-sync:{" "}
+                {(state as any)?.last_debtor_sync_at
+                  ? formatDistanceToNow(new Date((state as any).last_debtor_sync_at), { addSuffix: true, locale: nl })
+                  : "nog niet gedraaid"}
+              </div>
+              <div>
+                Laatste factuur-sync:{" "}
                 {state?.last_payment_sync_at
                   ? formatDistanceToNow(new Date(state.last_payment_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
@@ -97,12 +118,19 @@ export default function InformerSyncTab() {
               </div>
             </div>
           </div>
-          <Button onClick={runSync} disabled={syncing}>
-            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
-            {syncing ? "Bezig…" : "Synchroniseer nu"}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={openLinker}>
+              <Link2 size={14} /> Debiteuren koppelen
+            </Button>
+            <Button onClick={runSync} disabled={syncing}>
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+              {syncing ? "Bezig…" : "Synchroniseer nu"}
+            </Button>
+          </div>
         </div>
       </div>
+
+      <DebtorLinkDialog open={linkOpen} onOpenChange={setLinkOpen} onLinked={() => qc.invalidateQueries({ queryKey: ["informer_sync_log"] })} />
 
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         <div className="px-4 py-2 border-b border-border bg-muted/30">
