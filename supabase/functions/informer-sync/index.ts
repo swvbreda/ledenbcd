@@ -28,6 +28,7 @@ type ApiCall = {
   response_headers: Record<string, string>;
   response_body: unknown;
   error?: string;
+  auth_mode?: string;
 };
 
 type ActionResult = {
@@ -39,13 +40,15 @@ type ActionResult = {
   api_calls?: ApiCall[];
 };
 
-function informerHeaders() {
+function informerHeaders(swapped = false) {
+  const apiKey = swapped ? INFORMER_ADMIN : INFORMER_TOKEN;
+  const securityCode = swapped ? INFORMER_TOKEN : INFORMER_ADMIN;
   return {
     // Informer v1 expects these exact documented header names.
     // The previous ApiKey/SecurityCode casing was accepted inconsistently and
     // produced misleading 200 responses with an error body.
-    "Apikey": INFORMER_TOKEN,
-    "Securitycode": INFORMER_ADMIN,
+    "Apikey": apiKey,
+    "Securitycode": securityCode,
     "Content-Type": "application/json",
     "Accept": "application/json",
   };
@@ -134,6 +137,7 @@ async function informerCall(
   path: string,
   init: RequestInit = {},
   sink?: ApiCall[],
+  swappedAuth = false,
 ): Promise<ApiCall> {
   const method = (init.method ?? "GET").toUpperCase();
   const url = `${INFORMER_BASE}${path}`;
@@ -152,7 +156,7 @@ async function informerCall(
   try {
     const res = await fetch(url, {
       ...init,
-      headers: { ...informerHeaders(), ...(init.headers || {}) },
+      headers: { ...informerHeaders(swappedAuth), ...(init.headers || {}) },
     });
     status = res.status;
     ok = res.ok;
@@ -181,7 +185,14 @@ async function informerCall(
     response_headers,
     response_body,
     error,
+    auth_mode: swappedAuth ? "swapped_secrets" : "configured_secrets",
   };
+  const apiError = hasInformerError(call.response_body);
+  if (!swappedAuth && apiError && /security code|api key/i.test(apiError)) {
+    const retry = await informerCall(path, init, undefined, true);
+    sink?.push(retry);
+    return retry;
+  }
   sink?.push(call);
   return call;
 }
