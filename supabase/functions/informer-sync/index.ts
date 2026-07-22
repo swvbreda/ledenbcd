@@ -65,6 +65,7 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
 
     let processed = 0;
     const errors: string[] = [];
+    const debug: any[] = [];
     for (const c of contribs) {
       const m = memberById.get(c.member_id) ?? {};
       const payload = {
@@ -86,13 +87,21 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
         }],
       };
       const res = await informerFetch("/sales_invoices", { method: "POST", body: JSON.stringify(payload) });
+      const rawBody = await res.text().catch(() => "");
       if (!res.ok) {
-        errors.push(`member #${c.member_id}: ${res.status} ${await res.text().catch(() => "")}`.slice(0, 300));
+        errors.push(`member #${c.member_id}: ${res.status} ${rawBody}`.slice(0, 400));
+        debug.push({ member_id: c.member_id, status: res.status, body: rawBody.slice(0, 500) });
         continue;
       }
-      const body = await res.json().catch(() => ({}));
+      let body: any = {};
+      try { body = JSON.parse(rawBody); } catch { /* not JSON */ }
+      debug.push({ member_id: c.member_id, status: res.status, body: rawBody.slice(0, 500) });
       const externalId = String(body?.id ?? body?.invoice_id ?? body?.data?.id ?? "");
       const invoiceNumber = body?.invoice_number ?? body?.number ?? body?.data?.invoice_number ?? null;
+      if (!externalId) {
+        errors.push(`member #${c.member_id}: 2xx zonder factuur-ID — body: ${rawBody.slice(0, 200)}`);
+        continue;
+      }
       await supabase.from("member_contributions").update({
         external_invoice_id: externalId || null,
         invoice_number: invoiceNumber,
@@ -100,7 +109,7 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
       }).eq("id", c.id);
       processed++;
     }
-    return { action, success: errors.length === 0, items_processed: processed, error_message: errors.join(" | ") || undefined };
+    return { action, success: errors.length === 0, items_processed: processed, error_message: errors.join(" | ") || undefined, details: debug };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message };
   }
