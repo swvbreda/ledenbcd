@@ -148,12 +148,14 @@ function invoicePaidAmount(inv: any): number {
 
 async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
   const all: any[] = [];
-  for (let page = 1; page <= 50; page++) {
+  for (let page = 0; page < 50; page++) {
     const separator = path.includes("?") ? "&" : "?";
     const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
     if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
     const apiError = hasInformerError(call.response_body);
+    if (!call.ok && apiError && /no records found/i.test(apiError)) break;
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    if (apiError && /no records found/i.test(apiError)) break;
     if (apiError) throw new Error(`Informer fout: ${apiError}`);
     const batch = normalizeInformerList(call.response_body, keys);
     all.push(...batch);
@@ -164,6 +166,15 @@ async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall
 
 async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
   return await fetchAllInformerPages("/relations", ["relation", "relations", "data"], api_calls);
+}
+
+async function fetchInformerRelationByNumber(relationNumber: string, api_calls: ApiCall[]): Promise<any | null> {
+  const call = await informerCall(`/relations?records=20&page=0&search=${encodeURIComponent(relationNumber)}`, {}, api_calls);
+  if (call.error || !call.ok) return null;
+  const apiError = hasInformerError(call.response_body);
+  if (apiError) return null;
+  const candidates = normalizeInformerList(call.response_body, ["relation", "relations", "data"]);
+  return candidates.find((relation) => informerRelationNumber(relation) === relationNumber) ?? null;
 }
 
 async function ensureInternalRelationMappings(supabase: any, relations: any[]): Promise<{ remapped: number }> {
@@ -216,6 +227,42 @@ async function ensureInternalRelationMappings(supabase: any, relations: any[]): 
   }
 
   return { remapped: upserts.length };
+}
+
+async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Promise<any[]> {
+  const relations = await fetchInformerRelations(api_calls);
+  const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+  const { data: mapRows, error } = await supabase
+    .from("informer_debtor_map")
+    .select("member_id, informer_debtor_id, matched_by");
+  if (error) throw error;
+
+  const knownInternalIds = new Set(relations.map(informerRelationId).filter(Boolean));
+  const extraUpserts: any[] = [];
+  for (const row of mapRows ?? []) {
+    const current = String(row.informer_debtor_id ?? "").trim();
+    if (!current || knownInternalIds.has(current)) continue;
+
+    const relation = await fetchInformerRelationByNumber(String(row.member_id), api_calls);
+    const internalId = informerRelationId(relation);
+    if (!internalId || internalId === current) continue;
+    extraUpserts.push({
+      member_id: row.member_id,
+      informer_debtor_id: internalId,
+      matched_by: "auto_relation_number",
+      updated_at: new Date().toISOString(),
+    });
+    knownInternalIds.add(internalId);
+  }
+
+  if (extraUpserts.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("informer_debtor_map")
+      .upsert(extraUpserts, { onConflict: "member_id" });
+    if (upsertError) throw upsertError;
+  }
+
+  return [{ remapped_relation_numbers: remapped + extraUpserts.length }];
 }
 
 // Wraps every Informer API call and returns a structured record with status,
