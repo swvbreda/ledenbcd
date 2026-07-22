@@ -1,5 +1,5 @@
-// Informer two-way sync: push contribution invoices, pull payment status and creditors.
-// Uses the Informer REST API. Endpoints assume the public v1 spec; can be overridden
+// Informer sync: pull relation, invoice and creditor data into the members/finance dashboard.
+// Uses the Informer REST API. Endpoints assume the public v2 spec; can be overridden
 // via INFORMER_BASE_URL secret if Informer uses a different host for this account.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -114,20 +114,176 @@ function firstInformerItem(body: unknown, keys: string[]): any | null {
   return normalizeInformerList(body, keys)[0] ?? null;
 }
 
+function informerRelationId(relation: any): string {
+  return String(relation?.id ?? relation?.relation_id ?? "").trim();
+}
+
+function informerRelationNumber(relation: any): string {
+  return String(relation?.relation_number ?? relation?.number ?? "").trim();
+}
+
+function invoiceRelationId(inv: any): string {
+  return String(inv?.relation_id ?? inv?.relation?.id ?? inv?.debtor_id ?? inv?.customer_id ?? "").trim();
+}
+
+function invoiceStatus(inv: any): string {
+  const raw = inv?.status?.status ?? inv?.status ?? "";
+  return String(raw).toLowerCase();
+}
+
+function invoiceAmount(inv: any): number {
+  return toAmount(
+    inv?.totals?.incl_vat ??
+    inv?.totals?.incl_vat_default ??
+    inv?.total_price_incl_tax ??
+    inv?.total ??
+    inv?.amount ??
+    0,
+  );
+}
+
+function invoicePaidAmount(inv: any): number {
+  return toAmount(inv?.totals?.paid ?? inv?.paid ?? 0);
+}
+
 async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
   const all: any[] = [];
   for (let page = 0; page < 50; page++) {
     const separator = path.includes("?") ? "&" : "?";
     const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
     if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
     const apiError = hasInformerError(call.response_body);
+    if (!call.ok && apiError && /no records found/i.test(apiError)) break;
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    if (apiError && /no records found/i.test(apiError)) break;
     if (apiError) throw new Error(`Informer fout: ${apiError}`);
     const batch = normalizeInformerList(call.response_body, keys);
     all.push(...batch);
     if (batch.length < records) break;
   }
   return all;
+}
+
+async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
+  return await fetchAllInformerPages("/relations", ["relation", "relations", "data"], api_calls);
+}
+
+async function fetchInformerRelationByNumber(relationNumber: string, api_calls: ApiCall[]): Promise<any | null> {
+  const call = await informerCall(`/relations?records=20&page=0&search=${encodeURIComponent(relationNumber)}`, {}, api_calls);
+  if (call.error || !call.ok) return null;
+  const apiError = hasInformerError(call.response_body);
+  if (apiError) return null;
+  const candidates = normalizeInformerList(call.response_body, ["relation", "relations", "data"]);
+  return candidates.find((relation) => informerRelationNumber(relation) === relationNumber) ?? null;
+}
+
+async function fetchInformerRelationById(relationId: string, api_calls: ApiCall[]): Promise<any | null> {
+  const call = await informerCall(`/relations/${encodeURIComponent(relationId)}`, {}, api_calls);
+  if (call.error || !call.ok) return null;
+  const apiError = hasInformerError(call.response_body);
+  if (apiError) return null;
+  return firstInformerItem(call.response_body, ["relation", "relations", "data"]);
+}
+
+async function ensureInternalRelationMappings(supabase: any, relations: any[]): Promise<{ remapped: number }> {
+  const relationByNumber = new Map<string, string>();
+  for (const relation of relations) {
+    const id = informerRelationId(relation);
+    const number = informerRelationNumber(relation);
+    if (id && number) relationByNumber.set(number, id);
+  }
+  if (relationByNumber.size === 0) return { remapped: 0 };
+
+  const { data: members, error: membersError } = await supabase
+    .from("members_data")
+    .select("id");
+  if (membersError) throw membersError;
+
+  const memberIds = new Set((members ?? []).map((m: any) => Number(m.id)));
+  const { data: existing, error: mapError } = await supabase
+    .from("informer_debtor_map")
+    .select("member_id, informer_debtor_id, matched_by");
+  if (mapError) throw mapError;
+
+  const existingByMember = new Map((existing ?? []).map((row: any) => [Number(row.member_id), row]));
+  const upserts: any[] = [];
+  const now = new Date().toISOString();
+
+  for (const [relationNumber, internalRelationId] of relationByNumber) {
+    const memberId = Number(relationNumber);
+    if (!Number.isInteger(memberId) || !memberIds.has(memberId)) continue;
+
+    const current = existingByMember.get(memberId);
+    const currentDebtorId = String(current?.informer_debtor_id ?? "");
+    const currentMatchedBy = String(current?.matched_by ?? "");
+    const canAutoUpdate = !current || currentDebtorId === relationNumber || currentMatchedBy.startsWith("auto");
+    if (!canAutoUpdate || currentDebtorId === internalRelationId) continue;
+
+    upserts.push({
+      member_id: memberId,
+      informer_debtor_id: internalRelationId,
+      matched_by: "auto_relation_number",
+      updated_at: now,
+    });
+  }
+
+  if (upserts.length > 0) {
+    const { error } = await supabase
+      .from("informer_debtor_map")
+      .upsert(upserts, { onConflict: "member_id" });
+    if (error) throw error;
+  }
+
+  return { remapped: upserts.length };
+}
+
+async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Promise<{ remapped: number }> {
+  const relations = await fetchInformerRelations(api_calls);
+  return await ensureInternalRelationMappings(supabase, relations);
+}
+
+async function ensureInvoiceRelationMappings(
+  supabase: any,
+  invoiceRelationIds: string[],
+  existingMapRows: any[],
+  api_calls: ApiCall[],
+): Promise<{ remapped: number }> {
+  const existingRelationIds = new Set((existingMapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
+  const { data: mapRows, error } = await supabase
+    .from("informer_debtor_map")
+    .select("member_id, informer_debtor_id, matched_by");
+  if (error) throw error;
+
+  const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
+  const extraUpserts: any[] = [];
+  const seen = new Set<string>();
+  for (const relationId of invoiceRelationIds) {
+    if (!relationId || existingRelationIds.has(relationId) || seen.has(relationId)) continue;
+    seen.add(relationId);
+
+    const relation = await fetchInformerRelationById(relationId, api_calls);
+    const internalId = informerRelationId(relation);
+    const relationNumber = informerRelationNumber(relation);
+    const memberId = Number(relationNumber);
+    if (!internalId || !Number.isInteger(memberId)) continue;
+    if (knownInternalIds.has(internalId)) continue;
+    extraUpserts.push({
+      member_id: memberId,
+      informer_debtor_id: internalId,
+      matched_by: "auto_relation_number",
+      updated_at: new Date().toISOString(),
+    });
+    knownInternalIds.add(internalId);
+  }
+
+  if (extraUpserts.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("informer_debtor_map")
+      .upsert(extraUpserts, { onConflict: "member_id" });
+    if (upsertError) throw upsertError;
+  }
+
+  return { remapped: extraUpserts.length };
 }
 
 // Wraps every Informer API call and returns a structured record with status,
@@ -238,6 +394,8 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
   const action = "pull_debtors";
   const api_calls: ApiCall[] = [];
   try {
+    const { remapped } = await resolveMappedRelations(supabase, api_calls);
+
     const { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
       .select("member_id, informer_debtor_id");
@@ -276,8 +434,14 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
       last_debtor_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    return { action, success: errors.length === 0, items_processed: processed,
-      error_message: errors.join(" | ") || undefined, api_calls };
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      details: { remapped_relation_numbers: remapped },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
@@ -296,7 +460,9 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
   const action = "pull_invoices";
   const api_calls: ApiCall[] = [];
   try {
-    const { data: mapRows, error } = await supabase
+    let { remapped } = await resolveMappedRelations(supabase, api_calls);
+
+    let { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
       .select("member_id, informer_debtor_id");
     if (error) throw error;
@@ -305,26 +471,42 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
     }
 
+    const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
+    const invoiceRemap = await ensureInvoiceRelationMappings(
+      supabase,
+      invoices.map(invoiceRelationId).filter(Boolean),
+      mapRows,
+      api_calls,
+    );
+    remapped += invoiceRemap.remapped;
+    if (invoiceRemap.remapped > 0) {
+      const refreshed = await supabase
+        .from("informer_debtor_map")
+        .select("member_id, informer_debtor_id");
+      if (refreshed.error) throw refreshed.error;
+      mapRows = refreshed.data ?? [];
+    }
+
     const mappedRelationIds = new Set(mapRows.map((row: any) => String(row.informer_debtor_id)));
     const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
-    const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
 
     let processed = 0;
     const errors: string[] = [];
     for (const inv of invoices) {
-        const relationId = String(inv.relation_id ?? inv.debtor_id ?? inv.customer_id ?? "");
+        const relationId = invoiceRelationId(inv);
         if (relationId && !mappedRelationIds.has(relationId)) continue;
         const memberId = relationToMember.get(relationId);
         if (!memberId) continue;
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
         const year = detectYear(inv);
         if (!externalId || !year) continue;
-        const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
+        const amount = invoiceAmount(inv);
         const invoiceNumber = inv.invoice_number ?? inv.number ?? null;
         const invoiceDate = inv.invoice_date ?? inv.date ?? null;
-        const paidAmount = toAmount(inv.paid ?? 0);
-        const isPaid = paidAmount >= amount || String(inv.status ?? "").toLowerCase() === "paid";
-        const paidDate = inv.paid_date ?? inv.payment_date ?? null;
+        const paidAmount = invoicePaidAmount(inv);
+        const status = invoiceStatus(inv);
+        const isPaid = paidAmount >= amount || status === "paid" || status === "betaald";
+        const paidDate = inv.payment_date ?? inv.paid_date ?? null;
 
         // Try match by external_invoice_id first, otherwise by (member_id, year)
         const { data: existing } = await supabase
@@ -353,8 +535,14 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       last_payment_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    return { action, success: errors.length === 0, items_processed: processed,
-      error_message: errors.join(" | ") || undefined, api_calls };
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      details: { remapped_relation_numbers: remapped },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
@@ -496,7 +684,7 @@ Deno.serve(async (req) => {
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
-      const call = await informerCall("/relations?records=100&page=0", {}, api_calls);
+      const call = await informerCall("/relations?records=100&page=1", {}, api_calls);
       if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
       if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
       const apiError = hasInformerError(call.response_body);
