@@ -2237,6 +2237,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      set_vault_secret: {
+        Args: { _name: string; _value: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "extern" | "inhuur"
