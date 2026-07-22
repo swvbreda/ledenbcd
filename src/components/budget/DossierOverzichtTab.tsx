@@ -102,6 +102,35 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
 
   const grandTotal = dossiers.reduce((s, d) => s + d.total, 0);
 
+  // Budget-vs-actual totals across all categories
+  const budgetTotals = useMemo(() => {
+    let budgeted = 0;
+    let spent = 0;
+    const perCat: { id: string; name: string; budgeted: number; spent: number }[] = [];
+    for (const cat of categories) {
+      let catBudget = 0;
+      let catSpent = 0;
+      for (const li of cat.line_items) {
+        catBudget += Number(li.budgeted_amount || 0);
+        for (const exp of li.expenses) {
+          if (exp.direction === "in") continue;
+          catSpent += Number(exp.amount || 0);
+        }
+      }
+      budgeted += catBudget;
+      spent += catSpent;
+      perCat.push({ id: cat.id, name: cat.name, budgeted: catBudget, spent: catSpent });
+    }
+    perCat.sort((a, b) => b.spent - a.spent);
+    return { budgeted, spent, perCat };
+  }, [categories]);
+
+  const unassignedCount = allExpenses.filter((e) => !e.currentDossier).length;
+  const pct = budgetTotals.budgeted > 0
+    ? Math.min(100, Math.round((budgetTotals.spent / budgetTotals.budgeted) * 100))
+    : 0;
+  const over = budgetTotals.spent > budgetTotals.budgeted && budgetTotals.budgeted > 0;
+
   // Expenses available for the new dossier dialog (no dossier yet)
   const unassignedExpenses = useMemo(() => {
     const lowerFilter = searchFilter.toLowerCase();
@@ -188,6 +217,73 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
 
   return (
     <div className="mt-4 space-y-3">
+      {/* Begroting vs Werkelijk */}
+      {categories.length > 0 && (
+        <div className="border border-border rounded-lg bg-card p-3 space-y-3">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <h3 className="text-sm font-semibold">Begroting vs Werkelijk — {year}</h3>
+            <div className="text-xs text-muted-foreground">
+              <span className="tabular-nums"><CurrencyText value={budgetTotals.spent} /></span>
+              {" uitgegeven van "}
+              <span className="tabular-nums"><CurrencyText value={budgetTotals.budgeted} /></span>
+              {" · resterend "}
+              <span className={`tabular-nums font-medium ${over ? "text-destructive" : "text-green-600"}`}>
+                <CurrencyText value={budgetTotals.budgeted - budgetTotals.spent} />
+              </span>
+            </div>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full ${over ? "bg-destructive" : "bg-brand-red"}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-muted-foreground border-b border-border/40">
+                <th className="text-left font-medium py-1">Categorie</th>
+                <th className="text-right font-medium py-1">Begroot</th>
+                <th className="text-right font-medium py-1">Uitgegeven</th>
+                <th className="text-right font-medium py-1 w-16">%</th>
+                <th className="text-right font-medium py-1">Resterend</th>
+              </tr>
+            </thead>
+            <tbody>
+              {budgetTotals.perCat.map((c) => {
+                const catPct = c.budgeted > 0 ? Math.round((c.spent / c.budgeted) * 100) : 0;
+                const catOver = c.spent > c.budgeted && c.budgeted > 0;
+                return (
+                  <tr key={c.id} className="border-b border-border/20">
+                    <td className="py-1">{c.name}</td>
+                    <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.budgeted} /></td>
+                    <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.spent} /></td>
+                    <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                      {c.budgeted > 0 ? `${catPct}%` : "—"}
+                    </td>
+                    <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive" : ""}`}>
+                      <CurrencyCell value={c.budgeted - c.spent} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {unassignedCount > 0 && (
+        <div className="border border-brand-red/40 bg-brand-red/5 rounded-lg px-3 py-2 flex items-center justify-between gap-3 text-sm">
+          <span>
+            <strong className="tabular-nums">{unassignedCount}</strong> uitgave{unassignedCount === 1 ? "" : "n"} nog niet aan een dossier gekoppeld.
+          </span>
+          {onUpdateExpense && (
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={openNewDialog}>
+              Toewijzen
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">{dossiers.length} dossiers</h3>
         <div className="flex items-center gap-2">
