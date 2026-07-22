@@ -326,6 +326,9 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
   const action = "pull_debtors";
   const api_calls: ApiCall[] = [];
   try {
+    const relations = await fetchInformerRelations(api_calls);
+    const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+
     const { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
       .select("member_id, informer_debtor_id");
@@ -364,8 +367,14 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
       last_debtor_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    return { action, success: errors.length === 0, items_processed: processed,
-      error_message: errors.join(" | ") || undefined, api_calls };
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      details: { remapped_relation_numbers: remapped },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
@@ -384,6 +393,9 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
   const action = "pull_invoices";
   const api_calls: ApiCall[] = [];
   try {
+    const relations = await fetchInformerRelations(api_calls);
+    const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+
     const { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
       .select("member_id, informer_debtor_id");
@@ -400,19 +412,20 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
     let processed = 0;
     const errors: string[] = [];
     for (const inv of invoices) {
-        const relationId = String(inv.relation_id ?? inv.debtor_id ?? inv.customer_id ?? "");
+        const relationId = invoiceRelationId(inv);
         if (relationId && !mappedRelationIds.has(relationId)) continue;
         const memberId = relationToMember.get(relationId);
         if (!memberId) continue;
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
         const year = detectYear(inv);
         if (!externalId || !year) continue;
-        const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
+        const amount = invoiceAmount(inv);
         const invoiceNumber = inv.invoice_number ?? inv.number ?? null;
         const invoiceDate = inv.invoice_date ?? inv.date ?? null;
-        const paidAmount = toAmount(inv.paid ?? 0);
-        const isPaid = paidAmount >= amount || String(inv.status ?? "").toLowerCase() === "paid";
-        const paidDate = inv.paid_date ?? inv.payment_date ?? null;
+        const paidAmount = invoicePaidAmount(inv);
+        const status = invoiceStatus(inv);
+        const isPaid = paidAmount >= amount || status === "paid" || status === "betaald";
+        const paidDate = inv.payment_date ?? inv.paid_date ?? null;
 
         // Try match by external_invoice_id first, otherwise by (member_id, year)
         const { data: existing } = await supabase
@@ -441,8 +454,14 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       last_payment_sync_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-    return { action, success: errors.length === 0, items_processed: processed,
-      error_message: errors.join(" | ") || undefined, api_calls };
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      details: { remapped_relation_numbers: remapped },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
