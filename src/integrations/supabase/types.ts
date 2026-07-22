@@ -1398,6 +1398,7 @@ export type Database = {
           id: string
           message: string | null
           phone: string | null
+          request_type: string
           status: string
         }
         Insert: {
@@ -1409,6 +1410,7 @@ export type Database = {
           id?: string
           message?: string | null
           phone?: string | null
+          request_type?: string
           status?: string
         }
         Update: {
@@ -1420,6 +1422,7 @@ export type Database = {
           id?: string
           message?: string | null
           phone?: string | null
+          request_type?: string
           status?: string
         }
         Relationships: []

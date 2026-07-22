@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
       .eq("id", record.id)
       .maybeSingle();
     const r = row ?? record;
+    const isLead = r.request_type === "lead";
 
     // 1) Email to info@coffeeshopbond.nl via send-transactional-email
     const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
@@ -61,6 +62,7 @@ Deno.serve(async (req) => {
           city: r.city,
           phone: r.phone,
           message: r.message,
+          request_type: r.request_type ?? "member",
         },
       }),
     });
@@ -71,13 +73,21 @@ Deno.serve(async (req) => {
     if (r.email) {
       const naam = (r.full_name || "").trim().split(/\s+/)[0] || "";
       const shop = r.coffeeshop_name || "je coffeeshop";
-      const body = [
-        `Beste ${naam || "aanmelder"},`,
-        `Bedankt voor je aanmelding bij de Bond van Cannabis Detaillisten namens ${shop}. We hebben je aanvraag goed ontvangen.`,
-        `Wat gebeurt er nu?\n• Je account is automatisch aangemaakt en je toegang tot het ledenportaal wordt geregeld.\n• Het secretariaat controleert je gegevens en neemt binnen enkele werkdagen contact met je op voor de laatste stappen (contributie en bevestiging).\n• Zodra alles rond is, ontvang je een aparte mail met je inloggegevens voor leden.coffeeshopbond.nl.`,
-        `Heb je in de tussentijd vragen? Mail gerust naar info@coffeeshopbond.nl.`,
-        `Met vriendelijke groet,\nBestuur BCD`,
-      ].join("\n\n");
+      const body = isLead
+        ? [
+            `Beste ${naam || "aanmelder"},`,
+            `Bedankt voor je interesse in de Bond van Cannabis Detaillisten namens ${shop}. We hebben je kennismakingsverzoek goed ontvangen.`,
+            `Wat gebeurt er nu?\n• Het secretariaat neemt binnen enkele werkdagen contact met je op voor een vrijblijvend kennismakingsgesprek.\n• Er zijn nog geen verplichtingen — we lichten graag toe wat lidmaatschap voor jouw coffeeshop kan betekenen.`,
+            `Heb je in de tussentijd vragen? Mail gerust naar info@coffeeshopbond.nl.`,
+            `Met vriendelijke groet,\nBestuur BCD`,
+          ].join("\n\n")
+        : [
+            `Beste ${naam || "aanmelder"},`,
+            `Bedankt voor je aanmelding bij de Bond van Cannabis Detaillisten namens ${shop}. We hebben je aanvraag goed ontvangen.`,
+            `Wat gebeurt er nu?\n• Je account is automatisch aangemaakt en je toegang tot het ledenportaal wordt geregeld.\n• Het secretariaat controleert je gegevens en neemt binnen enkele werkdagen contact met je op voor de laatste stappen (contributie en bevestiging).\n• Zodra alles rond is, ontvang je een aparte mail met je inloggegevens voor leden.coffeeshopbond.nl.`,
+            `Heb je in de tussentijd vragen? Mail gerust naar info@coffeeshopbond.nl.`,
+            `Met vriendelijke groet,\nBestuur BCD`,
+          ].join("\n\n");
 
       try {
         const confirmRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
@@ -91,7 +101,9 @@ Deno.serve(async (req) => {
             recipientEmail: r.email,
             idempotencyKey: `membership-request-confirm-${r.id}`,
             templateData: {
-              subject: "Aanmelding ontvangen — Bond van Cannabis Detaillisten",
+              subject: isLead
+                ? "Kennismakingsverzoek ontvangen — Bond van Cannabis Detaillisten"
+                : "Aanmelding ontvangen — Bond van Cannabis Detaillisten",
               body,
             },
           }),
@@ -109,8 +121,10 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-internal-secret": INTERNAL_SECRET },
           body: JSON.stringify({
-            title: "Nieuwe aanmelding",
-            body: `${r.coffeeshop_name || r.full_name} uit ${r.city || "?"} meldt zich aan.`,
+            title: isLead ? "Nieuwe lead" : "Nieuwe aanmelding",
+            body: `${r.coffeeshop_name || r.full_name} uit ${r.city || "?"} ${
+              isLead ? "wil kennismaken" : "meldt zich aan"
+            }.`,
             target_role: "admin",
           }),
         });
