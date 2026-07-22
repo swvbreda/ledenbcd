@@ -833,6 +833,7 @@ export type Database = {
       informer_sync_log: {
         Row: {
           action: string
+          api_calls: Json | null
           details: Json | null
           error_message: string | null
           id: string
@@ -842,6 +843,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          api_calls?: Json | null
           details?: Json | null
           error_message?: string | null
           id?: string
@@ -851,6 +853,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          api_calls?: Json | null
           details?: Json | null
           error_message?: string | null
           id?: string
