@@ -684,13 +684,7 @@ Deno.serve(async (req) => {
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
-      const call = await informerCall("/relations?records=100&page=1", {}, api_calls);
-      if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-      if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
-      const apiError = hasInformerError(call.response_body);
-      if (apiError) throw new Error(`Informer fout: ${apiError}`);
-      const body: any = call.response_body ?? {};
-      const raw = normalizeInformerList(body, ["relation", "relations", "data"]);
+      const raw = await fetchInformerRelations(api_calls);
       const debtors = raw.map((d: any) => ({
         id: String(d.id ?? d.relation_number ?? ""),
         name: d.name ?? d.company_name ?? d.debtor_name ?? "",
