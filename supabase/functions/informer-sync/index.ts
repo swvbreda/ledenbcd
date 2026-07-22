@@ -41,11 +41,90 @@ type ActionResult = {
 
 function informerHeaders() {
   return {
-    "ApiKey": INFORMER_TOKEN,
-    "SecurityCode": INFORMER_ADMIN,
+    // Informer v1 expects these exact documented header names.
+    // The previous ApiKey/SecurityCode casing was accepted inconsistently and
+    // produced misleading 200 responses with an error body.
+    "Apikey": INFORMER_TOKEN,
+    "Securitycode": INFORMER_ADMIN,
     "Content-Type": "application/json",
     "Accept": "application/json",
   };
+}
+
+function hasInformerError(body: unknown): string | null {
+  const value = body as any;
+  if (!value || typeof value !== "object") return null;
+  const err = value.error ?? value.errors;
+  if (Array.isArray(err) && err.length) return err.map(String).join("; ");
+  if (typeof err === "string" && err.trim()) return err;
+  return null;
+}
+
+function looksLikeInformerRecord(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const obj = value as Record<string, unknown>;
+  return [
+    "relation_number", "company_name", "relation_id", "number", "date",
+    "total_price_incl_tax", "total_price_excl_tax", "email", "email_invoice",
+  ].some((key) => key in obj);
+}
+
+function normalizeInformerContainer(value: unknown): any[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.flatMap(normalizeInformerContainer);
+  if (typeof value !== "object") return [];
+  if (looksLikeInformerRecord(value)) return [value];
+
+  const obj = value as Record<string, unknown>;
+  return Object.entries(obj).flatMap(([key, nested]) => {
+    if (!nested || typeof nested !== "object") return [];
+    if (looksLikeInformerRecord(nested)) {
+      const record = nested as Record<string, unknown>;
+      return [{ id: record.id ?? key, ...record }];
+    }
+    return normalizeInformerContainer(nested);
+  });
+}
+
+function normalizeInformerList(body: unknown, keys: string[]): any[] {
+  if (!body) return [];
+  if (Array.isArray(body)) return body.flatMap((item) => normalizeInformerList(item, keys));
+  if (typeof body !== "object") return [];
+  const obj = body as Record<string, unknown>;
+  for (const key of keys) {
+    if (obj[key]) return normalizeInformerContainer(obj[key]);
+  }
+  return normalizeInformerContainer(obj);
+}
+
+function toAmount(value: unknown): number {
+  if (typeof value === "number") return value;
+  const normalized = String(value ?? "0")
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function firstInformerItem(body: unknown, keys: string[]): any | null {
+  return normalizeInformerList(body, keys)[0] ?? null;
+}
+
+async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
+  const all: any[] = [];
+  for (let page = 0; page < 50; page++) {
+    const separator = path.includes("?") ? "&" : "?";
+    const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
+    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    const apiError = hasInformerError(call.response_body);
+    if (apiError) throw new Error(`Informer fout: ${apiError}`);
+    const batch = normalizeInformerList(call.response_body, keys);
+    all.push(...batch);
+    if (batch.length < records) break;
+  }
+  return all;
 }
 
 // Wraps every Informer API call and returns a structured record with status,
@@ -160,20 +239,17 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
     let processed = 0;
     const errors: string[] = [];
     for (const row of mapRows) {
-      const call = await informerCall(`/debtors/${encodeURIComponent(row.informer_debtor_id)}`, {}, api_calls);
+      const call = await informerCall(`/relation/${encodeURIComponent(row.informer_debtor_id)}/`, {}, api_calls);
       (call as any).context = { member_id: row.member_id };
       if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
       if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
+      const apiError = hasInformerError(call.response_body);
+      if (apiError) { errors.push(`lid #${row.member_id}: Informer fout: ${apiError}`); continue; }
       const body: any = call.response_body ?? {};
-      const debtor = body?.data ?? body?.debtor ?? body;
+      const debtor = firstInformerItem(body, ["relation", "relations", "data"]);
       if (!debtor || typeof debtor !== "object") { errors.push(`lid #${row.member_id}: lege debiteur-body`); continue; }
-      if (Array.isArray((body as any)?.error) || (debtor as any)?.error) {
-        const msg = Array.isArray((body as any).error) ? (body as any).error.join("; ") : String((debtor as any).error);
-        errors.push(`lid #${row.member_id}: Informer fout: ${msg}`);
-        continue;
-      }
       // Debiteur moet minimaal een identificatie of naam bevatten om als geldig te tellen.
-      if (!(debtor as any).id && !(debtor as any).debtor_id && !(debtor as any).name && !(debtor as any).company_name) {
+      if (!(debtor as any).id && !(debtor as any).relation_number && !(debtor as any).name && !(debtor as any).company_name) {
         errors.push(`lid #${row.member_id}: onverwachte debiteur-body (geen id/naam)`);
         continue;
       }
@@ -218,37 +294,32 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
     }
 
+    const mappedRelationIds = new Set(mapRows.map((row: any) => String(row.informer_debtor_id)));
+    const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
+    const invoices = await fetchAllInformerPages("/invoices/sales/", ["sales", "invoices", "data"], api_calls);
+
     let processed = 0;
     const errors: string[] = [];
-    for (const row of mapRows) {
-      const call = await informerCall(
-        `/sales_invoices?debtor_id=${encodeURIComponent(row.informer_debtor_id)}`,
-        {}, api_calls,
-      );
-      (call as any).context = { member_id: row.member_id };
-      if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
-      if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
-      const body: any = call.response_body ?? {};
-      if (Array.isArray((body as any)?.error)) {
-        errors.push(`lid #${row.member_id}: Informer fout: ${(body as any).error.join("; ")}`);
-        continue;
-      }
-      const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
-      for (const inv of invoices) {
+    for (const inv of invoices) {
+        const relationId = String(inv.relation_id ?? inv.debtor_id ?? inv.customer_id ?? "");
+        if (relationId && !mappedRelationIds.has(relationId)) continue;
+        const memberId = relationToMember.get(relationId);
+        if (!memberId) continue;
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
         const year = detectYear(inv);
         if (!externalId || !year) continue;
-        const amount = Number(inv.total ?? inv.amount ?? 0);
+        const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
         const invoiceNumber = inv.invoice_number ?? inv.number ?? null;
         const invoiceDate = inv.invoice_date ?? inv.date ?? null;
-        const isPaid = !!(inv.paid ?? (String(inv.status ?? "").toLowerCase() === "paid"));
+        const paidAmount = toAmount(inv.paid ?? 0);
+        const isPaid = paidAmount >= amount || String(inv.status ?? "").toLowerCase() === "paid";
         const paidDate = inv.paid_date ?? inv.payment_date ?? null;
 
         // Try match by external_invoice_id first, otherwise by (member_id, year)
         const { data: existing } = await supabase
           .from("member_contributions")
           .select("id")
-          .or(`external_invoice_id.eq.${externalId},and(member_id.eq.${row.member_id},year.eq.${year})`)
+          .or(`external_invoice_id.eq.${externalId},and(member_id.eq.${memberId},year.eq.${year})`)
           .maybeSingle();
         const patch: any = {
           external_invoice_id: externalId,
@@ -262,11 +333,10 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
           await supabase.from("member_contributions").update(patch).eq("id", existing.id);
         } else {
           await supabase.from("member_contributions").insert({
-            member_id: row.member_id, year, ...patch,
+            member_id: memberId, year, ...patch,
           });
         }
         processed++;
-      }
     }
     await supabase.from("informer_sync_state").update({
       last_payment_sync_at: new Date().toISOString(),
@@ -286,15 +356,17 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
     const { data: state } = await supabase.from("informer_sync_state").select("*").eq("id", 1).single();
     const since = state?.last_creditor_sync_at ?? new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
 
+    const lastEdit = String(since).slice(0, 10);
     const call = await informerCall(
-      `/purchase_invoices?updated_since=${encodeURIComponent(since)}`,
+      `/invoices/purchase/?last_edit=${encodeURIComponent(lastEdit)}`,
       {},
       api_calls,
     );
     if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
     if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
-    const body: any = call.response_body ?? {};
-    const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
+    const apiError = hasInformerError(call.response_body);
+    if (apiError) throw new Error(`Informer fout: ${apiError}`);
+    const invoices = normalizeInformerList(call.response_body, ["purchase", "invoices", "data"]);
 
     // Find or create a default "Informer-import" line item to attach expenses to
     const year = new Date().getFullYear();
@@ -318,7 +390,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
       if (!externalId) continue;
-      const amount = Number(inv.total ?? inv.amount ?? 0);
+      const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
       const creditor = inv.supplier?.name ?? inv.creditor_name ?? inv.creditor ?? "Onbekend";
       const expenseDate = inv.invoice_date ?? inv.date ?? new Date().toISOString().slice(0, 10);
       const description = inv.description ?? inv.reference ?? `Informer ${inv.invoice_number ?? externalId}`;
@@ -328,7 +400,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       if (existing?.id) {
         await supabase.from("budget_expenses").update({
           amount, creditor_name: creditor, expense_date: expenseDate, description,
-          paid: !!inv.paid, paid_date: inv.paid_date ?? null,
+          paid: toAmount(inv.paid ?? 0) >= amount, paid_date: inv.payment_date ?? inv.paid_date ?? null,
         }).eq("id", existing.id);
       } else {
         await supabase.from("budget_expenses").insert({
@@ -341,8 +413,8 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
           source: "informer",
           external_id: externalId,
           invoice_reference: inv.invoice_number ?? null,
-          paid: !!inv.paid,
-          paid_date: inv.paid_date ?? null,
+          paid: toAmount(inv.paid ?? 0) >= amount,
+          paid_date: inv.payment_date ?? inv.paid_date ?? null,
           created_by: "00000000-0000-0000-0000-000000000000",
         });
       }
@@ -413,16 +485,18 @@ Deno.serve(async (req) => {
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
-      const call = await informerCall("/debtors", {}, api_calls);
+      const call = await informerCall("/relations/?records=100&page=0", {}, api_calls);
       if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
       if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+      const apiError = hasInformerError(call.response_body);
+      if (apiError) throw new Error(`Informer fout: ${apiError}`);
       const body: any = call.response_body ?? {};
-      const raw: any[] = Array.isArray(body) ? body : (body?.data ?? body?.debtors ?? []);
+      const raw = normalizeInformerList(body, ["relation", "relations", "data"]);
       const debtors = raw.map((d: any) => ({
-        id: String(d.id ?? d.debtor_id ?? ""),
+        id: String(d.id ?? d.relation_number ?? ""),
         name: d.name ?? d.company_name ?? d.debtor_name ?? "",
-        email: d.email ?? null,
-        kvk: d.kvk_number ?? d.chamber_of_commerce ?? d.coc_number ?? null,
+        email: d.email_invoice ?? d.email ?? null,
+        kvk: d.coc ?? d.kvk_number ?? d.chamber_of_commerce ?? d.coc_number ?? null,
         city: d.city ?? null,
       })).filter((d) => d.id);
       const { data: mapping } = await supabase
