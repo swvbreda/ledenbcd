@@ -22,16 +22,21 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
-const getStoredContactpersoon = (memberId: number): string | null => {
+const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
+
+const getStoredContactpersonen = (memberId: number): string[] | null => {
   try {
-    return localStorage.getItem(`bcd-contactpersoon-${memberId}`);
+    const raw = localStorage.getItem(STORAGE_KEY(memberId));
+    if (!raw) return null;
+    if (raw.startsWith("[")) return JSON.parse(raw) as string[];
+    return [raw];
   } catch { return null; }
 };
 
-const setStoredContactpersoon = (memberId: number, naam: string | null) => {
+const setStoredContactpersonen = (memberId: number, namen: string[]) => {
   try {
-    if (naam) localStorage.setItem(`bcd-contactpersoon-${memberId}`, naam);
-    else localStorage.removeItem(`bcd-contactpersoon-${memberId}`);
+    if (namen.length > 0) localStorage.setItem(STORAGE_KEY(memberId), JSON.stringify(namen));
+    else localStorage.removeItem(STORAGE_KEY(memberId));
   } catch {}
 };
 
@@ -63,8 +68,12 @@ const MemberDetail = () => {
     return (memberContributions ?? []).find((c) => c.year === cy);
   }, [memberContributions]);
 
-  const defaultCp = member ? (getStoredContactpersoon(member.id) ?? member.contactpersoon) : "";
-  const [contactpersoon, setContactpersoon] = useState(defaultCp);
+  const initialCps: string[] = member
+    ? (member.contactpersonen && member.contactpersonen.length > 0
+        ? member.contactpersonen
+        : getStoredContactpersonen(member.id) ?? (member.contactpersoon ? [member.contactpersoon] : []))
+    : [];
+  const [contactpersonen, setContactpersonen] = useState<string[]>(initialCps);
   const [archived, setArchived] = useState(() => rawOldMembers.some((m) => m.id === memberId));
   const [editing, setEditing] = useState(false);
   const [notes, setNotes] = useState<{ id: string; note: string; created_at: string }[]>([]);
@@ -372,7 +381,7 @@ const MemberDetail = () => {
                 <div className="space-y-4">
                   {member.contacten.length > 0 ? (
                     member.contacten.map((c, i) => {
-                      const isSelected = contactpersoon === c.naam;
+                      const isSelected = contactpersonen.includes(c.naam);
                       return (
                         <div key={i} className={`${i > 0 ? "pt-3 border-t border-border" : ""} flex items-start gap-3`}>
                           {isAdmin && (
@@ -383,15 +392,22 @@ const MemberDetail = () => {
                                     <Checkbox
                                       checked={isSelected}
                                       onCheckedChange={(checked) => {
-                                        const newVal = checked ? c.naam : "";
-                                        setContactpersoon(newVal);
-                                        setStoredContactpersoon(member.id, newVal || null);
-                                        // Persist to database
+                                        const next = checked
+                                          ? Array.from(new Set([...contactpersonen, c.naam]))
+                                          : contactpersonen.filter((n) => n !== c.naam);
+                                        setContactpersonen(next);
+                                        setStoredContactpersonen(member.id, next);
                                         saveContactpersoonMutation.mutate(
-                                          { member_id: member.id, data: { contactpersoon: newVal || member.contactpersoon } },
                                           {
-                                            onSuccess: () => toast.success("Contactpersoon opgeslagen"),
-                                            onError: () => toast.error("Contactpersoon opslaan mislukt"),
+                                            member_id: member.id,
+                                            data: {
+                                              contactpersonen: next,
+                                              contactpersoon: next[0] || member.contactpersoon,
+                                            },
+                                          },
+                                          {
+                                            onSuccess: () => toast.success("Contactpersonen opgeslagen"),
+                                            onError: () => toast.error("Opslaan mislukt"),
                                           }
                                         );
                                       }}
