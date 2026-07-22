@@ -395,6 +395,35 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action") ?? "all";
 
+  // Read-only helper: haalt debiteuren op uit Informer, met bestaande koppelingen.
+  if (action === "list_debtors") {
+    const api_calls: ApiCall[] = [];
+    try {
+      const call = await informerCall("/debtors", {}, api_calls);
+      if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+      if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+      const body: any = call.response_body ?? {};
+      const raw: any[] = Array.isArray(body) ? body : (body?.data ?? body?.debtors ?? []);
+      const debtors = raw.map((d: any) => ({
+        id: String(d.id ?? d.debtor_id ?? ""),
+        name: d.name ?? d.company_name ?? d.debtor_name ?? "",
+        email: d.email ?? null,
+        kvk: d.kvk_number ?? d.chamber_of_commerce ?? d.coc_number ?? null,
+        city: d.city ?? null,
+      })).filter((d) => d.id);
+      const { data: mapping } = await supabase
+        .from("informer_debtor_map")
+        .select("member_id, informer_debtor_id");
+      return new Response(JSON.stringify({ success: true, debtors, mapping: mapping ?? [] }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message, api_calls }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const results: ActionResult[] = [];
   try {
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
