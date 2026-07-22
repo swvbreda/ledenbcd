@@ -2240,6 +2240,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      replay_membership_notify: { Args: { _id: string }; Returns: number }
       set_vault_secret: {
         Args: { _name: string; _value: string }
         Returns: undefined
