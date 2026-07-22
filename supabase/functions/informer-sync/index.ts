@@ -626,6 +626,89 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
   }
 }
 
+async function pullBankBalances(supabase: any): Promise<ActionResult> {
+  const action = "pull_bank_balances";
+  const api_calls: ApiCall[] = [];
+  try {
+    // Informer v2 kent geen uniform bank-endpoint per administratie; we proberen
+    // een aantal varianten en gebruiken de eerste die records teruggeeft.
+    const candidates = [
+      "/bank_accounts",
+      "/ledger_accounts?type=bank",
+      "/journals?type=bank",
+      "/journals",
+    ];
+    let items: any[] = [];
+    let usedEndpoint = "";
+    for (const path of candidates) {
+      const sep = path.includes("?") ? "&" : "?";
+      const call = await informerCall(`${path}${sep}records=100&page=0`, {}, api_calls);
+      if (call.error) continue;
+      const apiError = hasInformerError(call.response_body);
+      if (!call.ok || apiError) continue;
+      const batch = normalizeInformerList(call.response_body, [
+        "bank_account", "bank_accounts", "ledger_account", "ledger_accounts",
+        "journal", "journals", "data",
+      ]);
+      const banks = batch.filter((r: any) => {
+        const t = String(r.type ?? r.journal_type ?? r.kind ?? "").toLowerCase();
+        // Behoud alles bij bank_accounts; filter op 'bank' voor generieke lijsten.
+        return path.startsWith("/bank_accounts") || t.includes("bank") || r.iban || r.bic;
+      });
+      if (banks.length > 0) {
+        items = banks;
+        usedEndpoint = path;
+        break;
+      }
+    }
+
+    if (items.length === 0) {
+      return {
+        action, success: true, items_processed: 0, api_calls,
+        error_message: "Geen bank­rekeningen gevonden in Informer — controleer of het account bank­administraties bevat.",
+      };
+    }
+
+    let processed = 0;
+    const today = new Date().toISOString().slice(0, 10);
+    for (const b of items) {
+      const accountId = String(b.id ?? b.account_id ?? b.journal_id ?? b.number ?? b.iban ?? "").trim();
+      if (!accountId) continue;
+      const name = b.name ?? b.description ?? b.account_name ?? b.journal_name ?? "Bankrekening";
+      const iban = b.iban ?? b.bank_account?.iban ?? null;
+      const balance = toAmount(
+        b.balance ?? b.current_balance ?? b.saldo ?? b.actual_balance ?? b.book_balance ?? 0,
+      );
+      const currency = b.currency ?? b.currency_code ?? "EUR";
+      const asOf = b.balance_date ?? b.as_of_date ?? b.last_mutation_date ?? today;
+
+      await supabase.from("informer_bank_balances").upsert({
+        account_id: accountId,
+        name,
+        iban,
+        balance,
+        currency,
+        as_of_date: asOf,
+        raw: b,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "account_id" });
+      processed++;
+    }
+
+    await supabase.from("informer_sync_state").update({
+      last_bank_sync_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+
+    return {
+      action, success: true, items_processed: processed, api_calls,
+      details: { endpoint: usedEndpoint },
+    };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -710,6 +793,7 @@ Deno.serve(async (req) => {
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
     if (action === "pull_invoices" || action === "all") results.push(await pullInvoices(supabase));
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
+    if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
 
     for (const r of results) await logResult(supabase, r);
 

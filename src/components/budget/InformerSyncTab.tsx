@@ -25,6 +25,7 @@ const ACTION_LABELS: Record<string, string> = {
   pull_debtors: "Debiteuren ← Informer",
   pull_invoices: "Facturen ← Informer",
   pull_creditors: "Crediteuren ← Informer",
+  pull_bank_balances: "Banksaldi ← Informer",
   all: "Volledige sync",
 };
 
@@ -79,8 +80,27 @@ export default function InformerSyncTab() {
       qc.invalidateQueries({ queryKey: ["informer_sync_log"] });
       qc.invalidateQueries({ queryKey: ["informer_sync_state"] });
       qc.invalidateQueries({ queryKey: ["contributions"] });
+      qc.invalidateQueries({ queryKey: ["informer_bank_balances"] });
     } catch (e) {
       toast.error(`Sync mislukt: ${(e as Error).message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const runBankSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await invokeWithAuth("informer-sync?action=pull_bank_balances", { method: "POST" });
+      if (error) throw new Error(error.message);
+      const r = ((data as any)?.results ?? [])[0];
+      if (r?.success) toast.success(`Banksaldi opgehaald — ${r.items_processed} rekening${r.items_processed === 1 ? "" : "en"}`);
+      else toast.error(`Bank-sync mislukt: ${r?.error_message ?? "onbekende fout"}`);
+      qc.invalidateQueries({ queryKey: ["informer_sync_log"] });
+      qc.invalidateQueries({ queryKey: ["informer_sync_state"] });
+      qc.invalidateQueries({ queryKey: ["informer_bank_balances"] });
+    } catch (e) {
+      toast.error(`Bank-sync mislukt: ${(e as Error).message}`);
     } finally {
       setSyncing(false);
     }
@@ -116,11 +136,20 @@ export default function InformerSyncTab() {
                   ? formatDistanceToNow(new Date(state.last_creditor_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
               </div>
+              <div>
+                Laatste bank-sync:{" "}
+                {(state as any)?.last_bank_sync_at
+                  ? formatDistanceToNow(new Date((state as any).last_bank_sync_at), { addSuffix: true, locale: nl })
+                  : "nog niet gedraaid"}
+              </div>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={openLinker}>
               <Link2 size={14} /> Debiteuren koppelen
+            </Button>
+            <Button variant="outline" onClick={runBankSync} disabled={syncing}>
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Banksaldi
             </Button>
             <Button onClick={runSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />

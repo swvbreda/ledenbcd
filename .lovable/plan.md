@@ -1,42 +1,66 @@
-# Aanmeldflow verifiëren en opschonen
+# Informer-uitbreiding: bankstatus + uitgaven per dossier + begroting-vs-werkelijk
 
-## Wat ik vond bij het nakijken
+Goed nieuws: veel bouwstenen zijn er al. `budget_expenses` heeft een `dossier`-kolom, `DossierOverzichtTab` kan al handmatig uitgaven aan dossiers koppelen, en `pull_creditors` importeert al inkoopfacturen uit Informer. Ik breid dat gericht uit met drie dingen.
 
-- Trigger `before_insert_membership_request_autocreate` staat aan → maakt automatisch een lid in `members_data` aan bij een nieuwe aanvraag.
-- Anonieme bezoekers mogen `INSERT` doen op `membership_requests` (RLS-policy "Anyone can submit a request" — actief).
-- Laatste lid in `members_data` is **#138 Huzur 33**. Eerder was er ook een #139 na een testaanmelding; die staat er nu niet meer. Kan handmatig verwijderd zijn.
-- `membership_requests` is momenteel leeg (0 rijen). Dat is normaal als je aanvragen na verwerking opschoont, maar het betekent ook dat ik uit de tabel alleen niet kan bewijzen dat het nu nog werkt.
-- **Twee identieke notificatie-triggers** staan op `membership_requests`:
-  - `after_insert_membership_request_notify`
-  - `trg_notify_on_membership_request`
-  
-  Beide roepen dezelfde functie `notify_on_membership_request()` aan. Elke nieuwe aanmelding stuurt dus nu **twee** mails naar het secretariaat en twee bevestigingen naar de aanmelder.
-- Twee dubbele INSERT-policies ("Anyone can submit a request" + "Anyone can submit membership request"): functioneel geen probleem, maar rommelig.
+## 1. Bankstatus ophalen uit Informer
 
-## Wat ik ga doen
+**Backend:**
+- Nieuwe tabel `informer_bank_balances` (bank-rekening-id, naam, saldo, valuta, `as_of_date`).
+- Extra kolom `last_bank_sync_at` op `informer_sync_state`.
+- Nieuwe actie `pull_bank_balances` in de edge function `informer-sync`. Deze probeert de Informer bank-journalen op te halen (`/journals?type=bank` met fallback naar `/ledger_accounts?type=bank`), normaliseert het resultaat en upsert per rekening.
+- De volledige sync (`action=all`) draait deze nieuwe actie automatisch mee.
 
-### 1. Live end-to-end test uitvoeren
-Ik dien via de publieke URL `https://coffeeshopbond.nl/aanmelden` (of het formulier dat daar staat) een testaanvraag in met een duidelijk zichtbaar testadres (bijv. `Testshop AAN-CHECK` / `test+aanmelden@leden.coffeeshopbond.nl`) en controleer daarna:
-- rij in `membership_requests` met `status = 'approved'`;
-- nieuw record in `members_data` met `member_type = 'member'`;
-- record in `member_allowed_emails` en `member_mailing_preferences`;
-- bevestigingsmail aan aanmelder + notificatie aan secretariaat verstuurd (via `email_send_log`).
+**UI:**
+- Bovenaan het financieel dashboard een nieuwe kaart **"Banksaldi (Informer)"** met per rekening: naam, saldo, laatst bijgewerkt.
+- In de Informer-tab: een regel "Laatste bank-sync: …" plus een aparte knop "Alleen banksaldi ophalen".
 
-Zo weten we zeker dat de volledige keten werkt.
+## 2. Uitgaven per dossier (blijft handmatig toewijzen)
 
-### 2. Dubbele mail-trigger opruimen
-Migratie: verwijder de duplicaat trigger `trg_notify_on_membership_request`, houd `after_insert_membership_request_notify`. Ook de dubbele INSERT-policy "Anyone can submit membership request" opruimen.
+Zoals afgesproken: importeren gebeurt zonder categorie, jij wijst ze toe.
 
-### 3. Testrecord opruimen
-Na de test verwijder ik de testrij netjes uit `membership_requests`, `members_data`, `member_allowed_emails` en `member_mailing_preferences`.
+- Kleine verbetering in `DossierOverzichtTab`: bovenaan een filter/tel-regel "X ongekoppelde uitgaven — wijs toe" die je direct naar het "Nieuw dossier"-dialog brengt, zodat nieuwe Informer-imports niet uit beeld raken.
+- Uitgaven die al via `pull_creditors` in `budget_expenses` staan verschijnen automatisch mee (dat werkt vandaag al).
 
-### 4. Rapportage
-Ik lever daarna een korte samenvatting: aanmelding → lid → mailing → mail-notificatie, elk met een OK/fout.
+## 3. Begroting-vs-werkelijk
 
-## Wat ik NIET aanraak
-- De aanmeldflow-code en het publieke formulier zelf (die werken).
-- De autoconvert-logica in `auto_create_member_from_request` (draait naar behoren).
-- Overige mailtemplates.
+Nieuw paneel bovenaan de Dossiers-tab:
 
-## Vraag ter bevestiging
-Wil je dat ik een echt formulier op de publieke site invul via Playwright, of geef je de voorkeur aan een directe database-insert die dezelfde trigger-flow aanroept? Beide bewijzen de keten, maar het formulier test ook de RLS/anon-permissies van buitenaf.
+- **Totaal begroot** (som van `budget_line_items.budgeted_amount` voor het jaar) vs **totaal uitgegeven** (som van alle uitgaande `budget_expenses` + `bank_transactions` van dat jaar) met progress-bar en "resterend".
+- Daaronder een tabel per **begrotingscategorie**: begroot / uitgegeven / % gebruikt / resterend.
+- En een tabel per **dossier**: dezelfde kolommen, waarbij "begroot" leeg blijft voor dossiers zonder begroting-koppeling (dossiers zijn vrijetekst; ze horen bij de categorie waar hun uitgaven onder staan).
+
+## Technische details
+
+**Migratie**
+```sql
+CREATE TABLE public.informer_bank_balances (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id text UNIQUE NOT NULL,
+  name text,
+  balance numeric NOT NULL DEFAULT 0,
+  currency text DEFAULT 'EUR',
+  as_of_date date,
+  raw jsonb,
+  updated_at timestamptz DEFAULT now()
+);
+GRANT SELECT ON public.informer_bank_balances TO authenticated;
+GRANT ALL ON public.informer_bank_balances TO service_role;
+ALTER TABLE public.informer_bank_balances ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/board can view bank balances"
+  ON public.informer_bank_balances FOR SELECT TO authenticated
+  USING (public.has_role(auth.uid(),'admin') OR public.is_board_member(auth.uid()));
+
+ALTER TABLE public.informer_sync_state ADD COLUMN IF NOT EXISTS last_bank_sync_at timestamptz;
+```
+
+**Edge function**: `pullBankBalances(supabase)` in `informer-sync/index.ts`, met dezelfde `informerCall`/`normalizeInformerList`-helpers en fout-tolerantie als de bestaande acties. Endpoint-keuze wordt volgorde-gewijs geprobeerd; alle API-calls worden in `api_calls` gelogd zodat je bij twijfel in de sync-log kunt zien welke Informer-response terugkwam.
+
+**Front-end**
+- Nieuwe component `src/components/budget/BankBalancesCard.tsx` (leest `informer_bank_balances`).
+- `FinancienPage.tsx`: kaart toegevoegd bovenaan het dashboard-tab.
+- `DossierOverzichtTab.tsx`: nieuw paneel "Begroting vs Werkelijk" bovenaan; totalen berekend uit de al aanwezige `categories` prop (geen extra query nodig).
+- `InformerSyncTab.tsx`: extra knop + `last_bank_sync_at` regel.
+
+## Onzekerheid
+
+Ik weet niet 100% welk Informer-endpoint jullie account gebruikt voor bank­saldi (v2 kan `/journals`, `/ledger_accounts` of `/bank_accounts` zijn). De function probeert een paar varianten en logt de responses in `informer_sync_log`; als de eerste run 0 rekeningen geeft, kijk ik in de log en pas ik het endpoint aan.
