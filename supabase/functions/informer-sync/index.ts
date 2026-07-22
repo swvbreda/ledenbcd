@@ -60,19 +60,30 @@ function hasInformerError(body: unknown): string | null {
   return null;
 }
 
-function objectValuesDeep(value: unknown): any[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.flatMap(objectValuesDeep);
-  if (typeof value !== "object") return [];
+function looksLikeInformerRecord(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const obj = value as Record<string, unknown>;
-  const values = Object.values(obj);
-  if (values.some((v) => v && typeof v === "object")) {
-    return values.flatMap((v) => {
-      if (v && typeof v === "object") return objectValuesDeep(v);
-      return [];
-    });
-  }
-  return [obj];
+  return [
+    "relation_number", "company_name", "relation_id", "number", "date",
+    "total_price_incl_tax", "total_price_excl_tax", "email", "email_invoice",
+  ].some((key) => key in obj);
+}
+
+function normalizeInformerContainer(value: unknown): any[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.flatMap(normalizeInformerContainer);
+  if (typeof value !== "object") return [];
+  if (looksLikeInformerRecord(value)) return [value];
+
+  const obj = value as Record<string, unknown>;
+  return Object.entries(obj).flatMap(([key, nested]) => {
+    if (!nested || typeof nested !== "object") return [];
+    if (looksLikeInformerRecord(nested)) {
+      const record = nested as Record<string, unknown>;
+      return [{ id: record.id ?? key, ...record }];
+    }
+    return normalizeInformerContainer(nested);
+  });
 }
 
 function normalizeInformerList(body: unknown, keys: string[]): any[] {
@@ -81,9 +92,19 @@ function normalizeInformerList(body: unknown, keys: string[]): any[] {
   if (typeof body !== "object") return [];
   const obj = body as Record<string, unknown>;
   for (const key of keys) {
-    if (obj[key]) return objectValuesDeep(obj[key]);
+    if (obj[key]) return normalizeInformerContainer(obj[key]);
   }
-  return objectValuesDeep(obj);
+  return normalizeInformerContainer(obj);
+}
+
+function toAmount(value: unknown): number {
+  if (typeof value === "number") return value;
+  const normalized = String(value ?? "0")
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function firstInformerItem(body: unknown, keys: string[]): any | null {
@@ -287,10 +308,10 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
         const year = detectYear(inv);
         if (!externalId || !year) continue;
-        const amount = Number(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
+        const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
         const invoiceNumber = inv.invoice_number ?? inv.number ?? null;
         const invoiceDate = inv.invoice_date ?? inv.date ?? null;
-        const paidAmount = Number(inv.paid ?? 0);
+        const paidAmount = toAmount(inv.paid ?? 0);
         const isPaid = paidAmount >= amount || String(inv.status ?? "").toLowerCase() === "paid";
         const paidDate = inv.paid_date ?? inv.payment_date ?? null;
 
@@ -369,7 +390,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
       if (!externalId) continue;
-      const amount = Number(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
+      const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
       const creditor = inv.supplier?.name ?? inv.creditor_name ?? inv.creditor ?? "Onbekend";
       const expenseDate = inv.invoice_date ?? inv.date ?? new Date().toISOString().slice(0, 10);
       const description = inv.description ?? inv.reference ?? `Informer ${inv.invoice_number ?? externalId}`;
@@ -379,7 +400,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       if (existing?.id) {
         await supabase.from("budget_expenses").update({
           amount, creditor_name: creditor, expense_date: expenseDate, description,
-          paid: Number(inv.paid ?? 0) >= amount, paid_date: inv.payment_date ?? inv.paid_date ?? null,
+          paid: toAmount(inv.paid ?? 0) >= amount, paid_date: inv.payment_date ?? inv.paid_date ?? null,
         }).eq("id", existing.id);
       } else {
         await supabase.from("budget_expenses").insert({
@@ -392,7 +413,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
           source: "informer",
           external_id: externalId,
           invoice_reference: inv.invoice_number ?? null,
-          paid: Number(inv.paid ?? 0) >= amount,
+          paid: toAmount(inv.paid ?? 0) >= amount,
           paid_date: inv.payment_date ?? inv.paid_date ?? null,
           created_by: "00000000-0000-0000-0000-000000000000",
         });
