@@ -229,7 +229,7 @@ async function ensureInternalRelationMappings(supabase: any, relations: any[]): 
   return { remapped: upserts.length };
 }
 
-async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Promise<any[]> {
+async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Promise<{ remapped: number }> {
   const relations = await fetchInformerRelations(api_calls);
   const { remapped } = await ensureInternalRelationMappings(supabase, relations);
   const { data: mapRows, error } = await supabase
@@ -262,7 +262,7 @@ async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Prom
     if (upsertError) throw upsertError;
   }
 
-  return [{ remapped_relation_numbers: remapped + extraUpserts.length }];
+  return { remapped: remapped + extraUpserts.length };
 }
 
 // Wraps every Informer API call and returns a structured record with status,
@@ -373,8 +373,7 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
   const action = "pull_debtors";
   const api_calls: ApiCall[] = [];
   try {
-    const relations = await fetchInformerRelations(api_calls);
-    const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+    const { remapped } = await resolveMappedRelations(supabase, api_calls);
 
     const { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
@@ -440,8 +439,7 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
   const action = "pull_invoices";
   const api_calls: ApiCall[] = [];
   try {
-    const relations = await fetchInformerRelations(api_calls);
-    const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+    const { remapped } = await resolveMappedRelations(supabase, api_calls);
 
     const { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
