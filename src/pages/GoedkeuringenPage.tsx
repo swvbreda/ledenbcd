@@ -345,8 +345,12 @@ export default function GoedkeuringenPage() {
           <div className="space-y-3">
             {signups.map((s) => (
               (() => {
-              const existing = [...rawMembers, ...rawLeads].find(
-                (m) =>
+              const tagged = [
+                ...rawMembers.map((m) => ({ m, type: "member" as const })),
+                ...rawLeads.map((m) => ({ m, type: "lead" as const })),
+              ];
+              const existing = tagged.find(
+                ({ m }) =>
                   (m.email || "").toLowerCase().trim() === s.email.toLowerCase().trim() ||
                   (m.naam || "").toLowerCase().trim() === s.coffeeshop_name.toLowerCase().trim()
               );
@@ -361,7 +365,7 @@ export default function GoedkeuringenPage() {
                       </Badge>
                       {existing && (
                         <Badge variant="outline" className="text-xs">
-                          Auto-aangemaakt als {existing.member_type === "lead" ? "lead" : "lid"} #{existing.id}
+                          Auto-aangemaakt als {existing.type === "lead" ? "lead" : "lid"} #{existing.m.id}
                         </Badge>
                       )}
                     </div>
@@ -383,8 +387,8 @@ export default function GoedkeuringenPage() {
                   <div className="flex items-center gap-2 pt-2 border-t border-border">
                     {existing ? (
                       <Button size="sm" variant="outline" className="gap-1.5"
-                        onClick={() => navigate(`/leden/${existing.id}`)}>
-                        <User size={14} /> Bekijk {existing.member_type === "lead" ? "lead" : "lid"}
+                        onClick={() => navigate(`/leden/${existing.m.id}`)}>
+                        <User size={14} /> Bekijk {existing.type === "lead" ? "lead" : "lid"}
                       </Button>
                     ) : (
                       <Button size="sm" className="gap-1.5" disabled={addingId === s.id || updateSignup.isPending}
