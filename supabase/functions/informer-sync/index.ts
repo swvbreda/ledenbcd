@@ -11,7 +11,7 @@ const corsHeaders = {
 
 const INFORMER_TOKEN = Deno.env.get("INFORMER_API_TOKEN") ?? "";
 const INFORMER_ADMIN = Deno.env.get("INFORMER_ADMINISTRATION_ID") ?? "";
-const INFORMER_BASE = (Deno.env.get("INFORMER_BASE_URL") ?? "https://api.informer.eu/v1").replace(/\/$/, "");
+const INFORMER_BASE = (Deno.env.get("INFORMER_BASE_URL") ?? "https://api.informer.eu/v2").replace(/\/$/, "");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
