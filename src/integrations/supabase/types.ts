@@ -830,6 +830,38 @@ export type Database = {
         }
         Relationships: []
       }
+      informer_debtor_map: {
+        Row: {
+          created_at: string
+          informer_debtor_id: string
+          matched_by: string
+          member_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          informer_debtor_id: string
+          matched_by?: string
+          member_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          informer_debtor_id?: string
+          matched_by?: string
+          member_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "informer_debtor_map_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       informer_sync_log: {
         Row: {
           action: string
@@ -867,18 +899,21 @@ export type Database = {
         Row: {
           id: number
           last_creditor_sync_at: string | null
+          last_debtor_sync_at: string | null
           last_payment_sync_at: string | null
           updated_at: string
         }
         Insert: {
           id?: number
           last_creditor_sync_at?: string | null
+          last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
           updated_at?: string
         }
         Update: {
           id?: number
           last_creditor_sync_at?: string | null
+          last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
           updated_at?: string
         }
