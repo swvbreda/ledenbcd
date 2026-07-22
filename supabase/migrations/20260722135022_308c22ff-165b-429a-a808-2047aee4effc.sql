@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.replay_membership_notify(uuid) TO anon, authenticated;
