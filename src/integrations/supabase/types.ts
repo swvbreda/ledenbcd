@@ -830,6 +830,42 @@ export type Database = {
         }
         Relationships: []
       }
+      informer_bank_balances: {
+        Row: {
+          account_id: string
+          as_of_date: string | null
+          balance: number
+          currency: string | null
+          iban: string | null
+          id: string
+          name: string | null
+          raw: Json | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          as_of_date?: string | null
+          balance?: number
+          currency?: string | null
+          iban?: string | null
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          as_of_date?: string | null
+          balance?: number
+          currency?: string | null
+          iban?: string | null
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       informer_debtor_map: {
         Row: {
           created_at: string
@@ -898,6 +934,7 @@ export type Database = {
       informer_sync_state: {
         Row: {
           id: number
+          last_bank_sync_at: string | null
           last_creditor_sync_at: string | null
           last_debtor_sync_at: string | null
           last_payment_sync_at: string | null
@@ -905,6 +942,7 @@ export type Database = {
         }
         Insert: {
           id?: number
+          last_bank_sync_at?: string | null
           last_creditor_sync_at?: string | null
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
@@ -912,6 +950,7 @@ export type Database = {
         }
         Update: {
           id?: number
+          last_bank_sync_at?: string | null
           last_creditor_sync_at?: string | null
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
