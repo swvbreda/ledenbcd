@@ -148,7 +148,7 @@ function invoicePaidAmount(inv: any): number {
 
 async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
   const all: any[] = [];
-  for (let page = 0; page < 50; page++) {
+  for (let page = 1; page <= 50; page++) {
     const separator = path.includes("?") ? "&" : "?";
     const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
     if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
@@ -603,7 +603,7 @@ Deno.serve(async (req) => {
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
-      const call = await informerCall("/relations?records=100&page=0", {}, api_calls);
+      const call = await informerCall("/relations?records=100&page=1", {}, api_calls);
       if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
       if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
       const apiError = hasInformerError(call.response_body);
