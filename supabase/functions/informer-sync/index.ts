@@ -167,6 +167,16 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
       const body: any = call.response_body ?? {};
       const debtor = body?.data ?? body?.debtor ?? body;
       if (!debtor || typeof debtor !== "object") { errors.push(`lid #${row.member_id}: lege debiteur-body`); continue; }
+      if (Array.isArray((body as any)?.error) || (debtor as any)?.error) {
+        const msg = Array.isArray((body as any).error) ? (body as any).error.join("; ") : String((debtor as any).error);
+        errors.push(`lid #${row.member_id}: Informer fout: ${msg}`);
+        continue;
+      }
+      // Debiteur moet minimaal een identificatie of naam bevatten om als geldig te tellen.
+      if (!(debtor as any).id && !(debtor as any).debtor_id && !(debtor as any).name && !(debtor as any).company_name) {
+        errors.push(`lid #${row.member_id}: onverwachte debiteur-body (geen id/naam)`);
+        continue;
+      }
 
       const { data: existing } = await supabase.from("members_data").select("data").eq("id", row.member_id).maybeSingle();
       if (!existing) { errors.push(`lid #${row.member_id}: niet meer aanwezig`); continue; }
@@ -219,6 +229,10 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
       if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
       const body: any = call.response_body ?? {};
+      if (Array.isArray((body as any)?.error)) {
+        errors.push(`lid #${row.member_id}: Informer fout: ${(body as any).error.join("; ")}`);
+        continue;
+      }
       const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
       for (const inv of invoices) {
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
