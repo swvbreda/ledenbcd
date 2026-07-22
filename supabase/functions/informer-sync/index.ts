@@ -41,8 +41,8 @@ type ActionResult = {
 
 function informerHeaders() {
   return {
-    "Authorization": `Bearer ${INFORMER_TOKEN}`,
-    "X-Administration-Id": INFORMER_ADMIN,
+    "ApiKey": INFORMER_TOKEN,
+    "SecurityCode": INFORMER_ADMIN,
     "Content-Type": "application/json",
     "Accept": "application/json",
   };
