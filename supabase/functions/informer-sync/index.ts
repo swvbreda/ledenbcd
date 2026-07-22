@@ -283,7 +283,7 @@ async function ensureInvoiceRelationMappings(
     if (upsertError) throw upsertError;
   }
 
-  return { remapped: remapped + extraUpserts.length };
+  return { remapped: extraUpserts.length };
 }
 
 // Wraps every Informer API call and returns a structured record with status,
