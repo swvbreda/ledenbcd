@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_membership_request_status(text) FROM anon, PUBLIC;
