@@ -10,8 +10,8 @@ const corsHeaders = {
 };
 
 const INFORMER_TOKEN = Deno.env.get("INFORMER_API_TOKEN") ?? "";
-const INFORMER_ADMIN = Deno.env.get("INFORMER_ADMINISTRATION_ID") ?? "";
-const INFORMER_BASE = (Deno.env.get("INFORMER_BASE_URL") ?? "https://api.informer.eu/v1").replace(/\/$/, "");
+const INFORMER_ADMIN = Deno.env.get("INFORMER_SECURITY_CODE") ?? Deno.env.get("INFORMER_ADMINISTRATION_ID") ?? "";
+const INFORMER_BASE = (Deno.env.get("INFORMER_BASE_URL") ?? "https://api.informer.eu/v2").replace(/\/$/, "");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,6 +28,7 @@ type ApiCall = {
   response_headers: Record<string, string>;
   response_body: unknown;
   error?: string;
+  auth_mode?: string;
 };
 
 type ActionResult = {
@@ -39,13 +40,15 @@ type ActionResult = {
   api_calls?: ApiCall[];
 };
 
-function informerHeaders() {
+function informerHeaders(swapped = false) {
+  const apiKey = swapped ? INFORMER_ADMIN : INFORMER_TOKEN;
+  const securityCode = swapped ? INFORMER_TOKEN : INFORMER_ADMIN;
   return {
     // Informer v1 expects these exact documented header names.
     // The previous ApiKey/SecurityCode casing was accepted inconsistently and
     // produced misleading 200 responses with an error body.
-    "Apikey": INFORMER_TOKEN,
-    "Securitycode": INFORMER_ADMIN,
+    "Apikey": apiKey,
+    "Securitycode": securityCode,
     "Content-Type": "application/json",
     "Accept": "application/json",
   };
@@ -134,6 +137,7 @@ async function informerCall(
   path: string,
   init: RequestInit = {},
   sink?: ApiCall[],
+  swappedAuth = false,
 ): Promise<ApiCall> {
   const method = (init.method ?? "GET").toUpperCase();
   const url = `${INFORMER_BASE}${path}`;
@@ -152,7 +156,7 @@ async function informerCall(
   try {
     const res = await fetch(url, {
       ...init,
-      headers: { ...informerHeaders(), ...(init.headers || {}) },
+      headers: { ...informerHeaders(swappedAuth), ...(init.headers || {}) },
     });
     status = res.status;
     ok = res.ok;
@@ -181,7 +185,14 @@ async function informerCall(
     response_headers,
     response_body,
     error,
+    auth_mode: swappedAuth ? "swapped_secrets" : "configured_secrets",
   };
+  const apiError = hasInformerError(call.response_body);
+  if (!swappedAuth && apiError && /security code|api key/i.test(apiError)) {
+    const retry = await informerCall(path, init, undefined, true);
+    sink?.push(retry);
+    return retry;
+  }
   sink?.push(call);
   return call;
 }
@@ -239,7 +250,7 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
     let processed = 0;
     const errors: string[] = [];
     for (const row of mapRows) {
-      const call = await informerCall(`/relation/${encodeURIComponent(row.informer_debtor_id)}/`, {}, api_calls);
+      const call = await informerCall(`/relations/${encodeURIComponent(row.informer_debtor_id)}`, {}, api_calls);
       (call as any).context = { member_id: row.member_id };
       if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
       if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
@@ -296,7 +307,7 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
 
     const mappedRelationIds = new Set(mapRows.map((row: any) => String(row.informer_debtor_id)));
     const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
-    const invoices = await fetchAllInformerPages("/invoices/sales/", ["sales", "invoices", "data"], api_calls);
+    const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
 
     let processed = 0;
     const errors: string[] = [];
@@ -358,7 +369,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 
     const lastEdit = String(since).slice(0, 10);
     const call = await informerCall(
-      `/invoices/purchase/?last_edit=${encodeURIComponent(lastEdit)}`,
+      `/invoices/purchase?last_edit=${encodeURIComponent(lastEdit)}`,
       {},
       api_calls,
     );
@@ -485,7 +496,7 @@ Deno.serve(async (req) => {
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
-      const call = await informerCall("/relations/?records=100&page=0", {}, api_calls);
+      const call = await informerCall("/relations?records=100&page=0", {}, api_calls);
       if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
       if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
       const apiError = hasInformerError(call.response_body);
