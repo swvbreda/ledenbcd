@@ -305,9 +305,9 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       processed++;
     }
     await supabase.from("informer_sync_state").update({ last_creditor_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed };
+    return { action, success: true, items_processed: processed, api_calls };
   } catch (e) {
-    return { action, success: false, items_processed: 0, error_message: (e as Error).message };
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
 }
 
