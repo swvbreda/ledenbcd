@@ -381,7 +381,7 @@ const MemberDetail = () => {
                 <div className="space-y-4">
                   {member.contacten.length > 0 ? (
                     member.contacten.map((c, i) => {
-                      const isSelected = contactpersoon === c.naam;
+                      const isSelected = contactpersonen.includes(c.naam);
                       return (
                         <div key={i} className={`${i > 0 ? "pt-3 border-t border-border" : ""} flex items-start gap-3`}>
                           {isAdmin && (
@@ -392,15 +392,22 @@ const MemberDetail = () => {
                                     <Checkbox
                                       checked={isSelected}
                                       onCheckedChange={(checked) => {
-                                        const newVal = checked ? c.naam : "";
-                                        setContactpersoon(newVal);
-                                        setStoredContactpersoon(member.id, newVal || null);
-                                        // Persist to database
+                                        const next = checked
+                                          ? Array.from(new Set([...contactpersonen, c.naam]))
+                                          : contactpersonen.filter((n) => n !== c.naam);
+                                        setContactpersonen(next);
+                                        setStoredContactpersonen(member.id, next);
                                         saveContactpersoonMutation.mutate(
-                                          { member_id: member.id, data: { contactpersoon: newVal || member.contactpersoon } },
                                           {
-                                            onSuccess: () => toast.success("Contactpersoon opgeslagen"),
-                                            onError: () => toast.error("Contactpersoon opslaan mislukt"),
+                                            member_id: member.id,
+                                            data: {
+                                              contactpersonen: next,
+                                              contactpersoon: next[0] || member.contactpersoon,
+                                            },
+                                          },
+                                          {
+                                            onSuccess: () => toast.success("Contactpersonen opgeslagen"),
+                                            onError: () => toast.error("Opslaan mislukt"),
                                           }
                                         );
                                       }}
