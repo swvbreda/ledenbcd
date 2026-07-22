@@ -177,6 +177,14 @@ async function fetchInformerRelationByNumber(relationNumber: string, api_calls: 
   return candidates.find((relation) => informerRelationNumber(relation) === relationNumber) ?? null;
 }
 
+async function fetchInformerRelationById(relationId: string, api_calls: ApiCall[]): Promise<any | null> {
+  const call = await informerCall(`/relations/${encodeURIComponent(relationId)}`, {}, api_calls);
+  if (call.error || !call.ok) return null;
+  const apiError = hasInformerError(call.response_body);
+  if (apiError) return null;
+  return firstInformerItem(call.response_body, ["relation", "relations", "data"]);
+}
+
 async function ensureInternalRelationMappings(supabase: any, relations: any[]): Promise<{ remapped: number }> {
   const relationByNumber = new Map<string, string>();
   for (const relation of relations) {
@@ -231,23 +239,36 @@ async function ensureInternalRelationMappings(supabase: any, relations: any[]): 
 
 async function resolveMappedRelations(supabase: any, api_calls: ApiCall[]): Promise<{ remapped: number }> {
   const relations = await fetchInformerRelations(api_calls);
-  const { remapped } = await ensureInternalRelationMappings(supabase, relations);
+  return await ensureInternalRelationMappings(supabase, relations);
+}
+
+async function ensureInvoiceRelationMappings(
+  supabase: any,
+  invoiceRelationIds: string[],
+  existingMapRows: any[],
+  api_calls: ApiCall[],
+): Promise<{ remapped: number }> {
+  const existingRelationIds = new Set((existingMapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
   const { data: mapRows, error } = await supabase
     .from("informer_debtor_map")
     .select("member_id, informer_debtor_id, matched_by");
   if (error) throw error;
 
-  const knownInternalIds = new Set(relations.map(informerRelationId).filter(Boolean));
+  const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
   const extraUpserts: any[] = [];
-  for (const row of mapRows ?? []) {
-    const current = String(row.informer_debtor_id ?? "").trim();
-    if (!current || knownInternalIds.has(current)) continue;
+  const seen = new Set<string>();
+  for (const relationId of invoiceRelationIds) {
+    if (!relationId || existingRelationIds.has(relationId) || seen.has(relationId)) continue;
+    seen.add(relationId);
 
-    const relation = await fetchInformerRelationByNumber(String(row.member_id), api_calls);
+    const relation = await fetchInformerRelationById(relationId, api_calls);
     const internalId = informerRelationId(relation);
-    if (!internalId || internalId === current) continue;
+    const relationNumber = informerRelationNumber(relation);
+    const memberId = Number(relationNumber);
+    if (!internalId || !Number.isInteger(memberId)) continue;
+    if (knownInternalIds.has(internalId)) continue;
     extraUpserts.push({
-      member_id: row.member_id,
+      member_id: memberId,
       informer_debtor_id: internalId,
       matched_by: "auto_relation_number",
       updated_at: new Date().toISOString(),
