@@ -344,6 +344,13 @@ export default function GoedkeuringenPage() {
         ) : signups && signups.length > 0 ? (
           <div className="space-y-3">
             {signups.map((s) => (
+              (() => {
+              const existing = [...rawMembers, ...rawLeads].find(
+                (m) =>
+                  (m.email || "").toLowerCase().trim() === s.email.toLowerCase().trim() ||
+                  (m.naam || "").toLowerCase().trim() === s.coffeeshop_name.toLowerCase().trim()
+              );
+              return (
               <Card key={s.id} className="p-4 space-y-2">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -352,6 +359,11 @@ export default function GoedkeuringenPage() {
                       <Badge variant={s.status === "new" ? "secondary" : s.status === "approved" ? "default" : "destructive"}>
                         {s.status === "new" ? "Nieuw" : s.status === "approved" ? "Verwerkt" : "Afgewezen"}
                       </Badge>
+                      {existing && (
+                        <Badge variant="outline" className="text-xs">
+                          Auto-aangemaakt als {existing.member_type === "lead" ? "lead" : "lid"} #{existing.id}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {new Date(s.created_at).toLocaleString("nl-NL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -369,10 +381,17 @@ export default function GoedkeuringenPage() {
                 )}
                 {s.status === "new" && (
                   <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button size="sm" className="gap-1.5" disabled={addingId === s.id || updateSignup.isPending}
-                      onClick={() => handleAddAsMember(s)}>
-                      <Plus size={14} /> {addingId === s.id ? "Toevoegen..." : "Voeg toe als lid"}
-                    </Button>
+                    {existing ? (
+                      <Button size="sm" variant="outline" className="gap-1.5"
+                        onClick={() => navigate(`/leden/${existing.id}`)}>
+                        <User size={14} /> Bekijk {existing.member_type === "lead" ? "lead" : "lid"}
+                      </Button>
+                    ) : (
+                      <Button size="sm" className="gap-1.5" disabled={addingId === s.id || updateSignup.isPending}
+                        onClick={() => handleAddAsMember(s)}>
+                        <Plus size={14} /> {addingId === s.id ? "Toevoegen..." : "Voeg toe als lid"}
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" className="gap-1.5" disabled={updateSignup.isPending}
                       onClick={() => updateSignup.mutate({ id: s.id, status: "approved" }, {
                         onSuccess: () => toast.success("Aanmelding gemarkeerd als verwerkt"),
@@ -390,6 +409,8 @@ export default function GoedkeuringenPage() {
                   </div>
                 )}
               </Card>
+              );
+              })()
             ))}
           </div>
         ) : (
