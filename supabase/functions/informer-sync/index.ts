@@ -460,9 +460,9 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
   const action = "pull_invoices";
   const api_calls: ApiCall[] = [];
   try {
-    const { remapped } = await resolveMappedRelations(supabase, api_calls);
+    let { remapped } = await resolveMappedRelations(supabase, api_calls);
 
-    const { data: mapRows, error } = await supabase
+    let { data: mapRows, error } = await supabase
       .from("informer_debtor_map")
       .select("member_id, informer_debtor_id");
     if (error) throw error;
@@ -471,9 +471,24 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
     }
 
+    const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
+    const invoiceRemap = await ensureInvoiceRelationMappings(
+      supabase,
+      invoices.map(invoiceRelationId).filter(Boolean),
+      mapRows,
+      api_calls,
+    );
+    remapped += invoiceRemap.remapped;
+    if (invoiceRemap.remapped > 0) {
+      const refreshed = await supabase
+        .from("informer_debtor_map")
+        .select("member_id, informer_debtor_id");
+      if (refreshed.error) throw refreshed.error;
+      mapRows = refreshed.data ?? [];
+    }
+
     const mappedRelationIds = new Set(mapRows.map((row: any) => String(row.informer_debtor_id)));
     const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
-    const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
 
     let processed = 0;
     const errors: string[] = [];
