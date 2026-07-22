@@ -268,6 +268,42 @@ export default function ContributieTab({ year }: Props) {
         </Card>
       </div>
 
+      {membersWithoutInvoice.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50/60">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={14} className="text-amber-600" />
+                <h3 className="text-sm font-semibold text-amber-900">
+                  Nog geen factuur verstuurd ({membersWithoutInvoice.length})
+                </h3>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setStatusFilter("no_invoice")}
+              >
+                Toon in lijst
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {membersWithoutInvoice.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => navigate(`/leden/${m.id}`)}
+                  className="text-xs px-2 py-1 rounded border border-amber-300 bg-white hover:bg-amber-100 transition-colors"
+                  title={`${m.naam} — ${m.plaats}`}
+                >
+                  <span className="text-muted-foreground mr-1">#{m.id}</span>
+                  {m.naam}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
