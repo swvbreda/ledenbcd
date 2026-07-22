@@ -176,3 +176,132 @@ export default function InformerSyncTab() {
     </div>
   );
 }
+
+function DebtorLinkDialog({
+  open, onOpenChange, onLinked,
+}: { open: boolean; onOpenChange: (o: boolean) => void; onLinked: () => void }) {
+  const { allMembersAndLeads } = useMembersData();
+  const [loading, setLoading] = useState(false);
+  const [debtors, setDebtors] = useState<InformerDebtor[]>([]);
+  const [mapping, setMapping] = useState<Record<string, number>>({});
+  const [filter, setFilter] = useState("");
+
+  const memberOptions = useMemo(
+    () => [...allMembersAndLeads].sort((a, b) => (a.bedrijfsnaam || a.naam || "").localeCompare(b.bedrijfsnaam || b.naam || "")),
+    [allMembersAndLeads],
+  );
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await invokeWithAuth<{ debtors: InformerDebtor[]; mapping: { member_id: number; informer_debtor_id: string }[] }>(
+        "informer-sync?action=list_debtors", { method: "POST" },
+      );
+      if (error) throw new Error(error.message);
+      setDebtors(data?.debtors ?? []);
+      const m: Record<string, number> = {};
+      for (const row of data?.mapping ?? []) m[row.informer_debtor_id] = row.member_id;
+      setMapping(m);
+    } catch (e) {
+      toast.error(`Kan debiteuren niet laden: ${(e as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setLink = async (debtorId: string, memberIdRaw: string) => {
+    const prev = mapping[debtorId];
+    if (!memberIdRaw) {
+      const { error } = await supabase.from("informer_debtor_map").delete().eq("informer_debtor_id", debtorId);
+      if (error) return toast.error(error.message);
+      const next = { ...mapping }; delete next[debtorId]; setMapping(next);
+      onLinked();
+      return;
+    }
+    const memberId = Number(memberIdRaw);
+    const { error } = await supabase.from("informer_debtor_map").upsert(
+      { member_id: memberId, informer_debtor_id: debtorId, matched_by: "manual" },
+      { onConflict: "member_id" },
+    );
+    if (error) { toast.error(error.message); return; }
+    setMapping({ ...mapping, [debtorId]: memberId });
+    onLinked();
+    if (prev !== memberId) toast.success("Gekoppeld");
+  };
+
+  const filtered = useMemo(() => {
+    const q = filter.toLowerCase().trim();
+    if (!q) return debtors;
+    return debtors.filter((d) =>
+      (d.name || "").toLowerCase().includes(q) ||
+      (d.email || "").toLowerCase().includes(q) ||
+      (d.kvk || "").toLowerCase().includes(q) ||
+      (d.city || "").toLowerCase().includes(q),
+    );
+  }, [debtors, filter]);
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (o) load(); }}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Informer-debiteuren koppelen aan leden</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center gap-2 py-2">
+          <input
+            className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background"
+            placeholder="Zoek op naam, e-mail, KvK of plaats…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <Button variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Vernieuwen
+          </Button>
+        </div>
+        <div className="overflow-auto flex-1 border border-border rounded-lg">
+          {loading ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">Laden…</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">Geen debiteuren.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 sticky top-0">
+                <tr className="text-left text-xs text-muted-foreground">
+                  <th className="px-3 py-2 font-medium">Informer-debiteur</th>
+                  <th className="px-3 py-2 font-medium">KvK</th>
+                  <th className="px-3 py-2 font-medium">Plaats</th>
+                  <th className="px-3 py-2 font-medium">Gekoppeld aan lid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((d) => (
+                  <tr key={d.id} className="border-t border-border">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{d.name || "—"}</div>
+                      {d.email && <div className="text-xs text-muted-foreground">{d.email}</div>}
+                    </td>
+                    <td className="px-3 py-2 text-xs">{d.kvk ?? "—"}</td>
+                    <td className="px-3 py-2 text-xs">{d.city ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      <select
+                        className="border border-border rounded px-2 py-1 text-sm bg-background w-full max-w-xs"
+                        value={mapping[d.id] ?? ""}
+                        onChange={(e) => setLink(d.id, e.target.value)}
+                      >
+                        <option value="">— niet gekoppeld —</option>
+                        {memberOptions.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            #{m.id} · {m.bedrijfsnaam || m.naam}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
