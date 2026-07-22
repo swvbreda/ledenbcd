@@ -118,118 +118,148 @@ async function logResult(supabase: any, r: ActionResult) {
   });
 }
 
-async function pushInvoices(supabase: any): Promise<ActionResult> {
-  const action = "push_invoices";
+// Fetch-and-merge: overschrijf nooit de volledige data-JSON van een lid.
+function mergeMemberDataFromDebtor(existing: any, debtor: any): any {
+  const merged = { ...(existing ?? {}) };
+  const set = (key: string, value: unknown) => {
+    if (value === undefined || value === null) return;
+    const s = typeof value === "string" ? value.trim() : value;
+    if (s === "" ) return;
+    merged[key] = s;
+  };
+  set("bedrijfsnaam", debtor.name ?? debtor.company_name ?? debtor.debtor_name);
+  set("email", debtor.email);
+  set("telefoon", debtor.phone ?? debtor.telephone);
+  set("kvk", debtor.kvk_number ?? debtor.chamber_of_commerce ?? debtor.coc_number);
+  set("adres", debtor.address ?? debtor.street);
+  set("postcode", debtor.postcode ?? debtor.postal_code ?? debtor.zip);
+  set("plaats", debtor.city);
+  merged.factuurBedrijfsnaam = merged.factuurBedrijfsnaam || merged.bedrijfsnaam;
+  merged.factuurEmail = merged.factuurEmail || merged.email;
+  merged.factuurKvk = merged.factuurKvk || merged.kvk;
+  merged.factuurAdres = merged.factuurAdres || merged.adres;
+  merged.factuurPostcode = merged.factuurPostcode || merged.postcode;
+  merged.factuurPlaats = merged.factuurPlaats || merged.plaats;
+  merged.factuurTelefoon = merged.factuurTelefoon || merged.telefoon;
+  return merged;
+}
+
+async function pullDebtors(supabase: any): Promise<ActionResult> {
+  const action = "pull_debtors";
   const api_calls: ApiCall[] = [];
   try {
-    const { data: contribs, error } = await supabase
-      .from("member_contributions")
-      .select("id, member_id, year, amount, external_invoice_id, invoice_number")
-      .is("external_invoice_id", null)
-      .eq("paid", false)
-      .limit(50);
+    const { data: mapRows, error } = await supabase
+      .from("informer_debtor_map")
+      .select("member_id, informer_debtor_id");
     if (error) throw error;
-    if (!contribs?.length) return { action, success: true, items_processed: 0, api_calls };
-
-    const { data: membersData } = await supabase
-      .from("members_data")
-      .select("id, data")
-      .in("id", contribs.map((c: any) => c.member_id));
-    const memberById = new Map<number, any>((membersData ?? []).map((m: any) => [m.id, m.data]));
+    if (!mapRows?.length) {
+      return { action, success: true, items_processed: 0, api_calls,
+        error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
+    }
 
     let processed = 0;
     const errors: string[] = [];
-    for (const c of contribs) {
-      const m = memberById.get(c.member_id) ?? {};
-      const payload = {
-        debtor: {
-          name: m.bedrijfsnaam || m.naam || `Lid #${c.member_id}`,
-          email: m.email ?? null,
-          kvk_number: m.kvk ?? null,
-          address: m.adres ?? null,
-          postcode: m.postcode ?? null,
-          city: m.plaats ?? null,
-        },
-        invoice_date: new Date().toISOString().slice(0, 10),
-        reference: `Contributie ${c.year} — lid #${c.member_id}`,
-        lines: [{
-          description: `BCD-contributie ${c.year}`,
-          quantity: 1,
-          unit_price: Number(c.amount ?? 3000),
-          vat_rate: 0,
-        }],
-      };
-      const call = await informerCall(
-        "/sales_invoices",
-        { method: "POST", body: JSON.stringify(payload) },
-        api_calls,
-      );
-      // Correlate this call with the source member for later debugging.
-      (call as any).context = { member_id: c.member_id, year: c.year };
-      if (call.error) {
-        errors.push(`member #${c.member_id}: netwerkfout ${call.error}`.slice(0, 400));
-        continue;
-      }
-      if (!call.ok) {
-        errors.push(`member #${c.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`.slice(0, 400));
-        continue;
-      }
+    for (const row of mapRows) {
+      const call = await informerCall(`/debtors/${encodeURIComponent(row.informer_debtor_id)}`, {}, api_calls);
+      (call as any).context = { member_id: row.member_id };
+      if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
+      if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
       const body: any = call.response_body ?? {};
-      const externalId = String(body?.id ?? body?.invoice_id ?? body?.data?.id ?? "");
-      const invoiceNumber = body?.invoice_number ?? body?.number ?? body?.data?.invoice_number ?? null;
-      if (!externalId) {
-        errors.push(`member #${c.member_id}: 2xx zonder factuur-ID (req_id=${call.request_id ?? "-"})`);
-        continue;
-      }
-      await supabase.from("member_contributions").update({
-        external_invoice_id: externalId || null,
-        invoice_number: invoiceNumber,
-        invoice_date: new Date().toISOString().slice(0, 10),
-      }).eq("id", c.id);
+      const debtor = body?.data ?? body?.debtor ?? body;
+      if (!debtor || typeof debtor !== "object") { errors.push(`lid #${row.member_id}: lege debiteur-body`); continue; }
+
+      const { data: existing } = await supabase.from("members_data").select("data").eq("id", row.member_id).maybeSingle();
+      if (!existing) { errors.push(`lid #${row.member_id}: niet meer aanwezig`); continue; }
+      const merged = mergeMemberDataFromDebtor(existing.data, debtor);
+      const { error: upErr } = await supabase.from("members_data").update({ data: merged }).eq("id", row.member_id);
+      if (upErr) { errors.push(`lid #${row.member_id}: ${upErr.message}`); continue; }
       processed++;
     }
-    return {
-      action,
-      success: errors.length === 0,
-      items_processed: processed,
-      error_message: errors.join(" | ") || undefined,
-      api_calls,
-    };
+    await supabase.from("informer_sync_state").update({
+      last_debtor_sync_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+    return { action, success: errors.length === 0, items_processed: processed,
+      error_message: errors.join(" | ") || undefined, api_calls };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
 }
 
-async function pullPayments(supabase: any): Promise<ActionResult> {
-  const action = "pull_payments";
+function detectYear(inv: any): number | null {
+  const ref: string = String(inv.reference ?? inv.description ?? "");
+  const m = ref.match(/(20\d{2})/);
+  if (m) return Number(m[1]);
+  const d = inv.invoice_date ?? inv.date;
+  if (d) { const y = Number(String(d).slice(0, 4)); if (y >= 2000 && y < 3000) return y; }
+  return null;
+}
+
+async function pullInvoices(supabase: any): Promise<ActionResult> {
+  const action = "pull_invoices";
   const api_calls: ApiCall[] = [];
   try {
-    const { data: state } = await supabase.from("informer_sync_state").select("*").eq("id", 1).single();
-    const since = state?.last_payment_sync_at ?? new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-
-    const call = await informerCall(
-      `/sales_invoices?status=paid&updated_since=${encodeURIComponent(since)}`,
-      {},
-      api_calls,
-    );
-    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
-    const body: any = call.response_body ?? {};
-    const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
+    const { data: mapRows, error } = await supabase
+      .from("informer_debtor_map")
+      .select("member_id, informer_debtor_id");
+    if (error) throw error;
+    if (!mapRows?.length) {
+      return { action, success: true, items_processed: 0, api_calls,
+        error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
+    }
 
     let processed = 0;
-    for (const inv of invoices) {
-      const externalId = String(inv.id ?? inv.invoice_id ?? "");
-      if (!externalId) continue;
-      const paidDate = inv.paid_date ?? inv.payment_date ?? new Date().toISOString().slice(0, 10);
-      const { error } = await supabase
-        .from("member_contributions")
-        .update({ paid: true, paid_date: paidDate })
-        .eq("external_invoice_id", externalId);
-      if (!error) processed++;
+    const errors: string[] = [];
+    for (const row of mapRows) {
+      const call = await informerCall(
+        `/sales_invoices?debtor_id=${encodeURIComponent(row.informer_debtor_id)}`,
+        {}, api_calls,
+      );
+      (call as any).context = { member_id: row.member_id };
+      if (call.error) { errors.push(`lid #${row.member_id}: netwerkfout ${call.error}`); continue; }
+      if (!call.ok)  { errors.push(`lid #${row.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`); continue; }
+      const body: any = call.response_body ?? {};
+      const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
+      for (const inv of invoices) {
+        const externalId = String(inv.id ?? inv.invoice_id ?? "");
+        const year = detectYear(inv);
+        if (!externalId || !year) continue;
+        const amount = Number(inv.total ?? inv.amount ?? 0);
+        const invoiceNumber = inv.invoice_number ?? inv.number ?? null;
+        const invoiceDate = inv.invoice_date ?? inv.date ?? null;
+        const isPaid = !!(inv.paid ?? (String(inv.status ?? "").toLowerCase() === "paid"));
+        const paidDate = inv.paid_date ?? inv.payment_date ?? null;
+
+        // Try match by external_invoice_id first, otherwise by (member_id, year)
+        const { data: existing } = await supabase
+          .from("member_contributions")
+          .select("id")
+          .or(`external_invoice_id.eq.${externalId},and(member_id.eq.${row.member_id},year.eq.${year})`)
+          .maybeSingle();
+        const patch: any = {
+          external_invoice_id: externalId,
+          amount,
+          invoice_number: invoiceNumber,
+          invoice_date: invoiceDate,
+          paid: isPaid,
+          paid_date: isPaid ? (paidDate ?? new Date().toISOString().slice(0, 10)) : null,
+        };
+        if (existing?.id) {
+          await supabase.from("member_contributions").update(patch).eq("id", existing.id);
+        } else {
+          await supabase.from("member_contributions").insert({
+            member_id: row.member_id, year, ...patch,
+          });
+        }
+        processed++;
+      }
     }
-    await supabase.from("informer_sync_state").update({ last_payment_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed, api_calls };
+    await supabase.from("informer_sync_state").update({
+      last_payment_sync_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+    return { action, success: errors.length === 0, items_processed: processed,
+      error_message: errors.join(" | ") || undefined, api_calls };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
@@ -365,11 +395,40 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action") ?? "all";
 
+  // Read-only helper: haalt debiteuren op uit Informer, met bestaande koppelingen.
+  if (action === "list_debtors") {
+    const api_calls: ApiCall[] = [];
+    try {
+      const call = await informerCall("/debtors", {}, api_calls);
+      if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+      if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+      const body: any = call.response_body ?? {};
+      const raw: any[] = Array.isArray(body) ? body : (body?.data ?? body?.debtors ?? []);
+      const debtors = raw.map((d: any) => ({
+        id: String(d.id ?? d.debtor_id ?? ""),
+        name: d.name ?? d.company_name ?? d.debtor_name ?? "",
+        email: d.email ?? null,
+        kvk: d.kvk_number ?? d.chamber_of_commerce ?? d.coc_number ?? null,
+        city: d.city ?? null,
+      })).filter((d) => d.id);
+      const { data: mapping } = await supabase
+        .from("informer_debtor_map")
+        .select("member_id, informer_debtor_id");
+      return new Response(JSON.stringify({ success: true, debtors, mapping: mapping ?? [] }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message, api_calls }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const results: ActionResult[] = [];
   try {
-    if (action === "push_invoices" || action === "all") results.push(await pushInvoices(supabase));
-    if (action === "pull_payments" || action === "all") results.push(await pullPayments(supabase));
-    if (action === "pull_creditors" || action === "all") results.push(await pullCreditors(supabase));
+    if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
+    if (action === "pull_invoices" || action === "all") results.push(await pullInvoices(supabase));
+    if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
 
     for (const r of results) await logResult(supabase, r);
 
