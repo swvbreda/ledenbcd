@@ -1,5 +1,5 @@
-// Informer two-way sync: push contribution invoices, pull payment status and creditors.
-// Uses the Informer REST API. Endpoints assume the public v1 spec; can be overridden
+// Informer sync: pull relation, invoice and creditor data into the members/finance dashboard.
+// Uses the Informer REST API. Endpoints assume the public v2 spec; can be overridden
 // via INFORMER_BASE_URL secret if Informer uses a different host for this account.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -114,6 +114,38 @@ function firstInformerItem(body: unknown, keys: string[]): any | null {
   return normalizeInformerList(body, keys)[0] ?? null;
 }
 
+function informerRelationId(relation: any): string {
+  return String(relation?.id ?? relation?.relation_id ?? "").trim();
+}
+
+function informerRelationNumber(relation: any): string {
+  return String(relation?.relation_number ?? relation?.number ?? "").trim();
+}
+
+function invoiceRelationId(inv: any): string {
+  return String(inv?.relation_id ?? inv?.relation?.id ?? inv?.debtor_id ?? inv?.customer_id ?? "").trim();
+}
+
+function invoiceStatus(inv: any): string {
+  const raw = inv?.status?.status ?? inv?.status ?? "";
+  return String(raw).toLowerCase();
+}
+
+function invoiceAmount(inv: any): number {
+  return toAmount(
+    inv?.totals?.incl_vat ??
+    inv?.totals?.incl_vat_default ??
+    inv?.total_price_incl_tax ??
+    inv?.total ??
+    inv?.amount ??
+    0,
+  );
+}
+
+function invoicePaidAmount(inv: any): number {
+  return toAmount(inv?.totals?.paid ?? inv?.paid ?? 0);
+}
+
 async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
   const all: any[] = [];
   for (let page = 0; page < 50; page++) {
@@ -128,6 +160,62 @@ async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall
     if (batch.length < records) break;
   }
   return all;
+}
+
+async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
+  return await fetchAllInformerPages("/relations", ["relation", "relations", "data"], api_calls);
+}
+
+async function ensureInternalRelationMappings(supabase: any, relations: any[]): Promise<{ remapped: number }> {
+  const relationByNumber = new Map<string, string>();
+  for (const relation of relations) {
+    const id = informerRelationId(relation);
+    const number = informerRelationNumber(relation);
+    if (id && number) relationByNumber.set(number, id);
+  }
+  if (relationByNumber.size === 0) return { remapped: 0 };
+
+  const { data: members, error: membersError } = await supabase
+    .from("members_data")
+    .select("id");
+  if (membersError) throw membersError;
+
+  const memberIds = new Set((members ?? []).map((m: any) => Number(m.id)));
+  const { data: existing, error: mapError } = await supabase
+    .from("informer_debtor_map")
+    .select("member_id, informer_debtor_id, matched_by");
+  if (mapError) throw mapError;
+
+  const existingByMember = new Map((existing ?? []).map((row: any) => [Number(row.member_id), row]));
+  const upserts: any[] = [];
+  const now = new Date().toISOString();
+
+  for (const [relationNumber, internalRelationId] of relationByNumber) {
+    const memberId = Number(relationNumber);
+    if (!Number.isInteger(memberId) || !memberIds.has(memberId)) continue;
+
+    const current = existingByMember.get(memberId);
+    const currentDebtorId = String(current?.informer_debtor_id ?? "");
+    const currentMatchedBy = String(current?.matched_by ?? "");
+    const canAutoUpdate = !current || currentDebtorId === relationNumber || currentMatchedBy.startsWith("auto");
+    if (!canAutoUpdate || currentDebtorId === internalRelationId) continue;
+
+    upserts.push({
+      member_id: memberId,
+      informer_debtor_id: internalRelationId,
+      matched_by: "auto_relation_number",
+      updated_at: now,
+    });
+  }
+
+  if (upserts.length > 0) {
+    const { error } = await supabase
+      .from("informer_debtor_map")
+      .upsert(upserts, { onConflict: "member_id" });
+    if (error) throw error;
+  }
+
+  return { remapped: upserts.length };
 }
 
 // Wraps every Informer API call and returns a structured record with status,
