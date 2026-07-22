@@ -202,13 +202,19 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
 
 async function pullPayments(supabase: any): Promise<ActionResult> {
   const action = "pull_payments";
+  const api_calls: ApiCall[] = [];
   try {
     const { data: state } = await supabase.from("informer_sync_state").select("*").eq("id", 1).single();
     const since = state?.last_payment_sync_at ?? new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
 
-    const res = await informerFetch(`/sales_invoices?status=paid&updated_since=${encodeURIComponent(since)}`);
-    if (!res.ok) throw new Error(`Informer ${res.status}: ${await res.text().catch(() => "")}`.slice(0, 300));
-    const body = await res.json().catch(() => ({}));
+    const call = await informerCall(
+      `/sales_invoices?status=paid&updated_since=${encodeURIComponent(since)}`,
+      {},
+      api_calls,
+    );
+    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    const body: any = call.response_body ?? {};
     const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
 
     let processed = 0;
@@ -223,21 +229,27 @@ async function pullPayments(supabase: any): Promise<ActionResult> {
       if (!error) processed++;
     }
     await supabase.from("informer_sync_state").update({ last_payment_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed };
+    return { action, success: true, items_processed: processed, api_calls };
   } catch (e) {
-    return { action, success: false, items_processed: 0, error_message: (e as Error).message };
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
 }
 
 async function pullCreditors(supabase: any): Promise<ActionResult> {
   const action = "pull_creditors";
+  const api_calls: ApiCall[] = [];
   try {
     const { data: state } = await supabase.from("informer_sync_state").select("*").eq("id", 1).single();
     const since = state?.last_creditor_sync_at ?? new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
 
-    const res = await informerFetch(`/purchase_invoices?updated_since=${encodeURIComponent(since)}`);
-    if (!res.ok) throw new Error(`Informer ${res.status}: ${await res.text().catch(() => "")}`.slice(0, 300));
-    const body = await res.json().catch(() => ({}));
+    const call = await informerCall(
+      `/purchase_invoices?updated_since=${encodeURIComponent(since)}`,
+      {},
+      api_calls,
+    );
+    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    const body: any = call.response_body ?? {};
     const invoices: any[] = Array.isArray(body) ? body : (body?.data ?? body?.invoices ?? []);
 
     // Find or create a default "Informer-import" line item to attach expenses to
@@ -255,7 +267,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       lineItemId = anyLine?.id ?? null;
     }
     if (!lineItemId) {
-      return { action, success: true, items_processed: 0, error_message: "Geen budget-post gevonden om crediteur aan te koppelen — maak eerst een categorie + post aan." };
+      return { action, success: true, items_processed: 0, error_message: "Geen budget-post gevonden om crediteur aan te koppelen — maak eerst een categorie + post aan.", api_calls };
     }
 
     let processed = 0;
