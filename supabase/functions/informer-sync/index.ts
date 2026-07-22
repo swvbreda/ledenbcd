@@ -16,7 +16,28 @@ const INFORMER_BASE = (Deno.env.get("INFORMER_BASE_URL") ?? "https://api.informe
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-type ActionResult = { action: string; success: boolean; items_processed: number; error_message?: string; details?: unknown };
+type ApiCall = {
+  ts: string;
+  method: string;
+  url: string;
+  request_body?: unknown;
+  status: number;
+  ok: boolean;
+  duration_ms: number;
+  request_id: string | null;
+  response_headers: Record<string, string>;
+  response_body: unknown;
+  error?: string;
+};
+
+type ActionResult = {
+  action: string;
+  success: boolean;
+  items_processed: number;
+  error_message?: string;
+  details?: unknown;
+  api_calls?: ApiCall[];
+};
 
 function informerHeaders() {
   return {
@@ -27,12 +48,63 @@ function informerHeaders() {
   };
 }
 
-async function informerFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`${INFORMER_BASE}${path}`, {
-    ...init,
-    headers: { ...informerHeaders(), ...(init.headers || {}) },
-  });
-  return res;
+// Wraps every Informer API call and returns a structured record with status,
+// response body, correlation/request-id and timings. Callers use `call.response_body`
+// (already parsed as JSON when possible) instead of re-reading the response.
+async function informerCall(
+  path: string,
+  init: RequestInit = {},
+  sink?: ApiCall[],
+): Promise<ApiCall> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const url = `${INFORMER_BASE}${path}`;
+  const started = performance.now();
+  const ts = new Date().toISOString();
+  let requestBodyParsed: unknown = undefined;
+  if (typeof init.body === "string") {
+    try { requestBodyParsed = JSON.parse(init.body); } catch { requestBodyParsed = init.body; }
+  }
+  let status = 0;
+  let ok = false;
+  let request_id: string | null = null;
+  const response_headers: Record<string, string> = {};
+  let response_body: unknown = null;
+  let error: string | undefined;
+  try {
+    const res = await fetch(url, {
+      ...init,
+      headers: { ...informerHeaders(), ...(init.headers || {}) },
+    });
+    status = res.status;
+    ok = res.ok;
+    res.headers.forEach((v, k) => { response_headers[k] = v; });
+    request_id =
+      res.headers.get("x-request-id") ??
+      res.headers.get("request-id") ??
+      res.headers.get("x-correlation-id") ??
+      res.headers.get("cf-ray") ??
+      null;
+    const raw = await res.text().catch(() => "");
+    try { response_body = raw ? JSON.parse(raw) : null; }
+    catch { response_body = raw.slice(0, 2000); }
+  } catch (e) {
+    error = (e as Error).message;
+  }
+  const call: ApiCall = {
+    ts,
+    method,
+    url,
+    request_body: requestBodyParsed,
+    status,
+    ok,
+    duration_ms: Math.round(performance.now() - started),
+    request_id,
+    response_headers,
+    response_body,
+    error,
+  };
+  sink?.push(call);
+  return call;
 }
 
 async function logResult(supabase: any, r: ActionResult) {
@@ -42,11 +114,13 @@ async function logResult(supabase: any, r: ActionResult) {
     items_processed: r.items_processed,
     error_message: r.error_message ?? null,
     details: r.details ?? null,
+    api_calls: r.api_calls ?? null,
   });
 }
 
 async function pushInvoices(supabase: any): Promise<ActionResult> {
   const action = "push_invoices";
+  const api_calls: ApiCall[] = [];
   try {
     const { data: contribs, error } = await supabase
       .from("member_contributions")
@@ -55,7 +129,7 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
       .eq("paid", false)
       .limit(50);
     if (error) throw error;
-    if (!contribs?.length) return { action, success: true, items_processed: 0 };
+    if (!contribs?.length) return { action, success: true, items_processed: 0, api_calls };
 
     const { data: membersData } = await supabase
       .from("members_data")
@@ -65,7 +139,6 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
 
     let processed = 0;
     const errors: string[] = [];
-    const debug: any[] = [];
     for (const c of contribs) {
       const m = memberById.get(c.member_id) ?? {};
       const payload = {
@@ -86,20 +159,26 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
           vat_rate: 0,
         }],
       };
-      const res = await informerFetch("/sales_invoices", { method: "POST", body: JSON.stringify(payload) });
-      const rawBody = await res.text().catch(() => "");
-      if (!res.ok) {
-        errors.push(`member #${c.member_id}: ${res.status} ${rawBody}`.slice(0, 400));
-        debug.push({ member_id: c.member_id, status: res.status, body: rawBody.slice(0, 500) });
+      const call = await informerCall(
+        "/sales_invoices",
+        { method: "POST", body: JSON.stringify(payload) },
+        api_calls,
+      );
+      // Correlate this call with the source member for later debugging.
+      (call as any).context = { member_id: c.member_id, year: c.year };
+      if (call.error) {
+        errors.push(`member #${c.member_id}: netwerkfout ${call.error}`.slice(0, 400));
         continue;
       }
-      let body: any = {};
-      try { body = JSON.parse(rawBody); } catch { /* not JSON */ }
-      debug.push({ member_id: c.member_id, status: res.status, body: rawBody.slice(0, 500) });
+      if (!call.ok) {
+        errors.push(`member #${c.member_id}: ${call.status} req_id=${call.request_id ?? "-"}`.slice(0, 400));
+        continue;
+      }
+      const body: any = call.response_body ?? {};
       const externalId = String(body?.id ?? body?.invoice_id ?? body?.data?.id ?? "");
       const invoiceNumber = body?.invoice_number ?? body?.number ?? body?.data?.invoice_number ?? null;
       if (!externalId) {
-        errors.push(`member #${c.member_id}: 2xx zonder factuur-ID — body: ${rawBody.slice(0, 200)}`);
+        errors.push(`member #${c.member_id}: 2xx zonder factuur-ID (req_id=${call.request_id ?? "-"})`);
         continue;
       }
       await supabase.from("member_contributions").update({
@@ -109,9 +188,15 @@ async function pushInvoices(supabase: any): Promise<ActionResult> {
       }).eq("id", c.id);
       processed++;
     }
-    return { action, success: errors.length === 0, items_processed: processed, error_message: errors.join(" | ") || undefined, details: debug };
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      api_calls,
+    };
   } catch (e) {
-    return { action, success: false, items_processed: 0, error_message: (e as Error).message };
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
 }
 
