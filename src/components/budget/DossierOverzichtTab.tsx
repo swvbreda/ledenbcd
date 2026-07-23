@@ -111,36 +111,10 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
 
   const grandTotal = dossiers.reduce((s, d) => s + d.total, 0);
 
-  // Budget-vs-actual totals across all categories
-  const budgetTotals = useMemo(() => {
-    let budgeted = 0;
-    let spent = 0;
-    const perCat: { id: string; name: string; budgeted: number; spent: number }[] = [];
-    for (const cat of categories) {
-      let catBudget = 0;
-      let catSpent = 0;
-      for (const li of cat.line_items) {
-        catBudget += Number(li.budgeted_amount || 0);
-        for (const exp of li.expenses) {
-          if (exp.direction === "in") continue;
-          catSpent += Number(exp.amount || 0);
-        }
-      }
-      budgeted += catBudget;
-      spent += catSpent;
-      perCat.push({ id: cat.id, name: cat.name, budgeted: catBudget, spent: catSpent });
-    }
-    perCat.sort((a, b) => b.spent - a.spent);
-    return { budgeted, spent, perCat };
-  }, [categories]);
-
   const unassignedCount = allExpenses.filter((e) => !e.currentDossier).length;
-  const pct = budgetTotals.budgeted > 0
-    ? Math.min(100, Math.round((budgetTotals.spent / budgetTotals.budgeted) * 100))
-    : 0;
-  const over = budgetTotals.spent > budgetTotals.budgeted && budgetTotals.budgeted > 0;
 
   // Expenses available for the new dossier dialog (no dossier yet)
+
   const unassignedExpenses = useMemo(() => {
     const lowerFilter = searchFilter.toLowerCase();
     return allExpenses.filter((e) => {
