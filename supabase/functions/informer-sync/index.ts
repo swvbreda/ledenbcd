@@ -529,6 +529,26 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
             member_id: memberId, year, ...patch,
           });
         }
+
+        // Ook registreren in contribution_invoices zodat "Nog geen factuur verstuurd"
+        // klopt met wat er daadwerkelijk in Informer is verstuurd.
+        if (invoiceNumber) {
+          const { data: invExisting } = await supabase
+            .from("contribution_invoices")
+            .select("id")
+            .eq("member_id", memberId)
+            .eq("year", year)
+            .eq("invoice_number", invoiceNumber)
+            .maybeSingle();
+          if (!invExisting?.id) {
+            await supabase.from("contribution_invoices").insert({
+              member_id: memberId,
+              year,
+              invoice_number: invoiceNumber,
+              invoice_file_path: null,
+            });
+          }
+        }
         processed++;
     }
     await supabase.from("informer_sync_state").update({
