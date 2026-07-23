@@ -1177,7 +1177,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          created_by: string
+          created_by: string | null
           external_invoice_id: string | null
           id: string
           invoice_date: string | null
@@ -1193,7 +1193,7 @@ export type Database = {
         Insert: {
           amount?: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           external_invoice_id?: string | null
           id?: string
           invoice_date?: string | null
@@ -1209,7 +1209,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           external_invoice_id?: string | null
           id?: string
           invoice_date?: string | null
