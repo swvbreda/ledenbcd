@@ -117,7 +117,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Transacties – {lineItemName}</DialogTitle>
         </DialogHeader>
@@ -132,7 +132,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Leverancier</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Factuurnr.</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Dossier</th>
-                    <th className="text-right px-2 py-1 text-muted-foreground font-medium">Bedrag</th>
+                    <th className="text-right px-2 py-1 text-muted-foreground font-medium whitespace-nowrap w-32">Bedrag</th>
                     <th className="w-10" />
                   </tr>
                 </thead>
@@ -163,7 +163,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                       </td>
                       <td className="px-2 py-1 tabular-nums">{e.invoice_reference || ""}</td>
                       <td className="px-2 py-1 align-top">{e.dossier || ""}</td>
-                      <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
+                      <td className="text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
                           {onUpdateExpense && !isBank && (
@@ -191,7 +191,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   })}
                   <tr className="font-medium bg-muted/30">
                     <td className="px-2 py-1" colSpan={5}>Totaal</td>
-                    <td className="text-right px-2 py-1"><CurrencyCell value={total} /></td>
+                     <td className="text-right px-2 py-1 whitespace-nowrap tabular-nums"><CurrencyCell value={total} /></td>
                     <td />
                   </tr>
                 </tbody>
