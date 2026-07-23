@@ -65,7 +65,7 @@ export default function BankBalancesCard() {
         )}
       </div>
 
-      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Ponto (live)</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Bank (live)</div>
       <table className="w-full text-sm">
             <tbody>
               {pontoList.map((b) => (
