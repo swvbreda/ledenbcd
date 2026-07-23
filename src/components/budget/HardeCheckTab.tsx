@@ -20,6 +20,16 @@ interface ReconRow {
   dossier: string | null;
 }
 
+interface BankIncomeRow {
+  id: string;
+  value_date: string | null;
+  amount: number;
+  counterparty_name: string | null;
+  description: string | null;
+  dossier: string | null;
+  source: "ponto" | "abn";
+}
+
 function useReconciliation(year: number) {
   return useQuery({
     queryKey: ["harde-check", year],
@@ -62,31 +72,40 @@ function useReconciliation(year: number) {
           return d === String(year);
         },
       );
-      const bankTxRows = (btRes.data ?? []).map((t: any) => ({
+      const bankTxRows: BankIncomeRow[] = (btRes.data ?? []).map((t: any) => ({
         id: t.id,
         value_date: t.transaction_date,
         amount: Number(t.amount),
         counterparty_name: t.counterparty,
         description: t.description,
         dossier: t.dossier,
+        source: "abn" as const,
       }));
-      const bankRows = [
-        ...pontoRows.map((t: any) => ({ ...t, amount: Number(t.amount) })),
+      const bankRows: BankIncomeRow[] = [
+        ...pontoRows.map((t: any) => ({
+          id: t.id,
+          value_date: t.value_date ?? t.executed_at ?? null,
+          amount: Number(t.amount),
+          counterparty_name: t.counterparty_name ?? null,
+          description: t.description ?? t.remittance_info ?? null,
+          dossier: t.dossier ?? null,
+          source: "ponto" as const,
+        })),
         ...bankTxRows,
       ];
-      const dedupedBankRows = Array.from(
-        bankRows.reduce((map: Map<string, any>, row: any) => {
+      const dedupedBankRows: BankIncomeRow[] = Array.from(
+        bankRows.reduce((map: Map<string, BankIncomeRow>, row: BankIncomeRow) => {
           const date = String(row.value_date ?? "").slice(0, 10);
           const amount = Math.round((Number(row.amount) || 0) * 100);
           const counterparty = String(row.counterparty_name ?? "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
           const dossier = String(row.dossier ?? "").toLowerCase().replace(/\s+/g, " ").trim();
           const key = `${date}|${amount}|${counterparty}|${dossier}`;
           const existing = map.get(key);
-          if (!existing || String(row.id).startsWith("ponto:") || !String(existing.id).startsWith("ponto:")) {
+          if (!existing || (row.source === "ponto" && existing.source !== "ponto")) {
             map.set(key, row);
           }
           return map;
-        }, new Map<string, any>()).values(),
+        }, new Map<string, BankIncomeRow>()).values(),
       );
 
       const invoices = invRes.data ?? [];
@@ -101,13 +120,13 @@ function useReconciliation(year: number) {
 
       // Aggregate bank per member for reference (from dossier "Contributie #<id>")
       const bankByMember = new Map<number, { total: number; rows: any[] }>();
-      const orphanBank: any[] = [];
-      const nonContributionBank: any[] = [];
+      const orphanBank: BankIncomeRow[] = [];
+      const nonContributionBank: BankIncomeRow[] = [];
       for (const t of dedupedBankRows) {
         const m = (t.dossier || "").match(/Contributie\s*#(\d+)/i);
         if (m) {
           const id = Number(m[1]);
-          const entry = bankByMember.get(id) ?? { total: 0, rows: [] };
+          const entry = bankByMember.get(id) ?? { total: 0, rows: [] as BankIncomeRow[] };
           entry.total += Number(t.amount);
           entry.rows.push(t);
           bankByMember.set(id, entry);
@@ -174,12 +193,12 @@ function useReconciliation(year: number) {
       const totals = {
         bank_in: dedupedBankRows.reduce((s: number, t: any) => s + Number(t.amount), 0),
         bank_contribution: [...bankByMember.values()].reduce((s, v) => s + v.total, 0) +
-          orphanBank.reduce((s, t) => s + Number(t.amount), 0),
+          orphanBank.reduce((s: number, t: BankIncomeRow) => s + Number(t.amount), 0),
         invoices_total: invoices.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0),
         invoices_count: invoices.length,
         payments_total: payments.reduce((s: number, p: any) => s + Number(p.amount), 0),
         payments_count: payments.length,
-        non_contribution: nonContributionBank.reduce((s, t) => s + Number(t.amount), 0),
+        non_contribution: nonContributionBank.reduce((s: number, t: BankIncomeRow) => s + Number(t.amount), 0),
       };
 
       const earliestBank = dedupedBankRows.length
