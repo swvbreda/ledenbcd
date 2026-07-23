@@ -539,8 +539,13 @@ Deno.serve(async (req) => {
           .order("executed_at", { ascending: false })
           .limit(1);
         const currentYear = new Date().getFullYear();
-        const sinceIso = latest?.[0]?.executed_at
-          ?? `${currentYear}-01-01T00:00:00Z`;
+        const historical = url.searchParams.get("historical") === "1";
+        const sinceParam = url.searchParams.get("since"); // ISO date override
+        const sinceIso = historical
+          ? null // walk all pages Ponto still has
+          : (sinceParam
+            ?? latest?.[0]?.executed_at
+            ?? `${currentYear}-01-01T00:00:00Z`);
 
         const txs = await fetchTransactions(token, accountId, sinceIso, calls);
         const rows = txs.map((t: any) => {
