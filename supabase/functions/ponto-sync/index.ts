@@ -313,6 +313,8 @@ async function matchContributionPayments(supabase: any): Promise<number> {
   return matched;
 }
 
+// (contribution matcher extension marker)
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
