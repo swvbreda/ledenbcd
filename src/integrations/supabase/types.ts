@@ -1743,6 +1743,7 @@ export type Database = {
           dossier: string | null
           executed_at: string | null
           id: string
+          match_strategy: string | null
           matched_manually: boolean
           matched_rule_id: string | null
           raw: Json | null
@@ -1764,6 +1765,7 @@ export type Database = {
           dossier?: string | null
           executed_at?: string | null
           id?: string
+          match_strategy?: string | null
           matched_manually?: boolean
           matched_rule_id?: string | null
           raw?: Json | null
@@ -1785,6 +1787,7 @@ export type Database = {
           dossier?: string | null
           executed_at?: string | null
           id?: string
+          match_strategy?: string | null
           matched_manually?: boolean
           matched_rule_id?: string | null
           raw?: Json | null
