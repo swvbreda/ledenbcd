@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Send, CheckCircle2, AlertCircle, Search, Download } from "lucide-react";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
-import { useContributions, useContributionInvoices, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
+import { useContributions, useContributionInvoices, useContributionPayments, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useBudgetYearSettings } from "@/hooks/useBudget";
 
@@ -24,6 +24,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
   const { effectiveMembers } = useMembers();
   const { data: contributions, isLoading } = useContributions(year);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(year);
+  const { data: paymentsData, isLoading: paymentsLoading } = useContributionPayments(year);
   const { data: yearSettings } = useBudgetYearSettings(year);
   const defaultAmount = yearSettings?.contribution_amount ?? 3000;
 
@@ -46,21 +47,39 @@ export default function FacturenOverzichtTab({ year }: Props) {
     return map;
   }, [invoicesData]);
 
+  const paymentsMap = useMemo(() => {
+    const map = new Map<number, { amount: number; paidDate: string | null }>();
+    (paymentsData ?? []).forEach((p) => {
+      const current = map.get(p.member_id) ?? { amount: 0, paidDate: null };
+      const paidDate = p.paid_at
+        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
+        : current.paidDate;
+      map.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
+    });
+    return map;
+  }, [paymentsData]);
+
   const rows = useMemo(() => {
     const rowsBase = [...effectiveMembers].map((m) => {
       const invs = invoicesMap.get(m.id) ?? [];
       const contrib = contribMap.get(m.id);
-      const paid = !!contrib?.paid;
-      const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
+      const paidInfo = paymentsMap.get(m.id);
       const invoicedAmount = invs.length > 0
         ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
         : defaultAmount;
+      const paidAmount = paidInfo?.amount ?? (contrib?.paid ? Number(contrib.amount) || 0 : 0);
+      const openAmount = Math.max(0, invoicedAmount - paidAmount);
+      const paid = invs.length > 0 && openAmount <= 0.01;
+      const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
       return {
         member: m,
         invoices: invs,
         contrib,
         status,
         amount: invoicedAmount,
+        paidAmount,
+        openAmount,
+        paidDate: paidInfo?.paidDate ?? contrib?.paid_date ?? null,
       };
     });
 
@@ -68,14 +87,14 @@ export default function FacturenOverzichtTab({ year }: Props) {
       const dateOf = (r: typeof rowsBase[0]) => {
         if (r.status === "paid" && r.contrib?.paid_date) return new Date(r.contrib.paid_date).getTime();
         if (r.status === "sent" && r.contrib?.invoice_date) return new Date(r.contrib.invoice_date).getTime();
-        const latestInvoice = r.invoices[0]?.created_at
-          ? Math.max(...r.invoices.map((i) => new Date(i.created_at).getTime()))
+        const latestInvoice = r.invoices[0]
+          ? Math.max(...r.invoices.map((i) => new Date(i.invoice_date ?? i.created_at).getTime()))
           : 0;
         return latestInvoice || 0;
       };
       return dateOf(b) - dateOf(a);
     });
-  }, [effectiveMembers, invoicesMap, contribMap, defaultAmount]);
+  }, [effectiveMembers, invoicesMap, contribMap, paymentsMap, defaultAmount]);
 
   const filteredRows = useMemo(() => {
     let list = rows;
@@ -98,7 +117,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
     const source = filteredRows;
     const todo = source.filter((r) => r.status === "todo").length;
     const sent = source.filter((r) => r.status === "sent").length;
-    const paid = source.filter((r) => r.status === "paid").length;
+    const paid = source.filter((r) => r.paidAmount > 0).length;
     const sum = (s: RowStatus) => source.filter((r) => r.status === s).reduce((a, r) => a + r.amount, 0);
     return {
       todo,
@@ -106,14 +125,14 @@ export default function FacturenOverzichtTab({ year }: Props) {
       paid,
       todoAmount: sum("todo"),
       sentAmount: sum("sent"),
-      paidAmount: sum("paid"),
-      openAmount: sum("sent"),
+      paidAmount: source.reduce((a, r) => a + r.paidAmount, 0),
+      openAmount: source.reduce((a, r) => a + r.openAmount, 0),
       totalInvoiced: sum("sent") + sum("paid"),
     };
   }, [filteredRows]);
 
   const handleExportCSV = () => {
-    const header = ["Lidnr", "Naam", "Plaats", "Status", "Factuurnummer(s)", "Bedrag", "Betaald op"];
+    const header = ["Lidnr", "Naam", "Plaats", "Status", "Factuurnummer(s)", "Factuurdatum", "Gefactureerd", "Ontvangen", "Openstaand", "Betaald op"];
     const rowsCsv = filteredRows.map((r) => {
       const nums = r.invoices.map((i) => i.invoice_number ?? "").filter(Boolean).join("; ");
       const label = r.status === "paid" ? "Betaald" : r.status === "sent" ? "Verstuurd" : "Nog te versturen";
@@ -123,8 +142,11 @@ export default function FacturenOverzichtTab({ year }: Props) {
         `"${r.member.plaats}"`,
         label,
         `"${nums}"`,
+        r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? "",
         r.amount,
-        r.contrib?.paid_date ?? "",
+        r.paidAmount,
+        r.openAmount,
+        r.paidDate ?? "",
       ].join(",");
     });
     const csv = [header.join(","), ...rowsCsv].join("\n");
@@ -137,7 +159,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
     URL.revokeObjectURL(url);
   };
 
-  if (isLoading || invoicesLoading) {
+  if (isLoading || invoicesLoading || paymentsLoading) {
     return <p className="text-sm text-muted-foreground py-8 text-center">Facturen laden...</p>;
   }
 
@@ -175,12 +197,12 @@ export default function FacturenOverzichtTab({ year }: Props) {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
               <CheckCircle2 size={12} className="text-emerald-500" />
-              Betaald
+              Ontvangen
             </div>
             <p className="text-lg font-bold mt-1 tabular-nums text-emerald-600">
               <CurrencyText value={totals.paidAmount} />
             </p>
-            <p className="text-xs text-muted-foreground">{totals.paid} facturen</p>
+            <p className="text-xs text-muted-foreground">{totals.paid} betalende leden</p>
           </CardContent>
         </Card>
         <Card className="border-border/60">
@@ -273,7 +295,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground tabular-nums">
                     {(() => {
-                      const d = r.contrib?.invoice_date ?? r.invoices[0]?.created_at ?? null;
+                      const d = r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? r.invoices[0]?.created_at ?? null;
                       if (!d) return "—";
                       const dt = new Date(d);
                       return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -283,7 +305,10 @@ export default function FacturenOverzichtTab({ year }: Props) {
                     <CurrencyText value={r.amount} />
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                    {r.contrib?.paid_date ?? "—"}
+                    {r.paidDate ? (() => {
+                      const dt = new Date(r.paidDate);
+                      return isNaN(dt.getTime()) ? r.paidDate : dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+                    })() : "—"}
                   </TableCell>
                 </TableRow>
               ))}
