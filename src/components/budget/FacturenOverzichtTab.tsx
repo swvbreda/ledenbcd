@@ -25,7 +25,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
   const { data: contributions, isLoading } = useContributions(year);
   const { data: invoicesData, isLoading: invoicesLoading } = useContributionInvoices(year);
   const { data: yearSettings } = useBudgetYearSettings(year);
-  const amount = yearSettings?.contribution_amount ?? 3000;
+  const defaultAmount = yearSettings?.contribution_amount ?? 3000;
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -54,14 +54,18 @@ export default function FacturenOverzichtTab({ year }: Props) {
         const contrib = contribMap.get(m.id);
         const paid = !!contrib?.paid;
         const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
+        const invoicedAmount = invs.length > 0
+          ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
+          : defaultAmount;
         return {
           member: m,
           invoices: invs,
           contrib,
           status,
+          amount: invoicedAmount,
         };
       });
-  }, [effectiveMembers, invoicesMap, contribMap]);
+  }, [effectiveMembers, invoicesMap, contribMap, defaultAmount]);
 
   const filteredRows = useMemo(() => {
     let list = rows;
@@ -85,17 +89,18 @@ export default function FacturenOverzichtTab({ year }: Props) {
     const todo = source.filter((r) => r.status === "todo").length;
     const sent = source.filter((r) => r.status === "sent").length;
     const paid = source.filter((r) => r.status === "paid").length;
+    const sum = (s: RowStatus) => source.filter((r) => r.status === s).reduce((a, r) => a + r.amount, 0);
     return {
       todo,
       sent,
       paid,
-      todoAmount: todo * amount,
-      sentAmount: sent * amount,
-      paidAmount: paid * amount,
-      openAmount: sent * amount,
-      totalInvoiced: (sent + paid) * amount,
+      todoAmount: sum("todo"),
+      sentAmount: sum("sent"),
+      paidAmount: sum("paid"),
+      openAmount: sum("sent"),
+      totalInvoiced: sum("sent") + sum("paid"),
     };
-  }, [filteredRows, amount]);
+  }, [filteredRows]);
 
   const handleExportCSV = () => {
     const header = ["Lidnr", "Naam", "Plaats", "Status", "Factuurnummer(s)", "Bedrag", "Betaald op"];
@@ -108,7 +113,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
         `"${r.member.plaats}"`,
         label,
         `"${nums}"`,
-        amount,
+        r.amount,
         r.contrib?.paid_date ?? "",
       ].join(",");
     });
@@ -256,7 +261,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
                     {r.invoices.length === 0 ? "—" : r.invoices.map((i) => i.invoice_number ?? "—").join(", ")}
                   </TableCell>
                   <TableCell className="text-right text-sm tabular-nums">
-                    <CurrencyText value={amount} />
+                    <CurrencyText value={r.amount} />
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                     {r.contrib?.paid_date ?? "—"}

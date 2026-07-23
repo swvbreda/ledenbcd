@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   useContributions,
   useUpsertContribution,
@@ -55,6 +55,17 @@ export default function ContributieTab({ year }: Props) {
       const list = map.get(inv.member_id) ?? [];
       list.push(inv);
       map.set(inv.member_id, list);
+    });
+    return map;
+  }, [invoicesData]);
+
+  // Sum of invoice amounts per member (falls back to FIXED_AMOUNT per invoice
+  // when the row has no amount yet — e.g. legacy imports).
+  const invoicedAmountByMember = useMemo(() => {
+    const map = new Map<number, number>();
+    (invoicesData ?? []).forEach((inv) => {
+      const amt = Number(inv.amount ?? FIXED_AMOUNT) || 0;
+      map.set(inv.member_id, (map.get(inv.member_id) ?? 0) + amt);
     });
     return map;
   }, [invoicesData]);
@@ -135,6 +146,33 @@ export default function ContributieTab({ year }: Props) {
     [bankPaidMap, contribMap]
   );
 
+  // Auto-register an invoice row when a bank payment matched a member that
+  // doesn't have any invoice in this year yet — keeps totals in balance and
+  // removes the member from "Nog geen factuur verstuurd".
+  const autoRegistered = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!invoicesData) return;
+    bankPaidMap.forEach((hit, memberId) => {
+      const key = `${memberId}-${year}`;
+      if (autoRegistered.current.has(key)) return;
+      const hasInvoice = (invoicesMap.get(memberId) ?? []).length > 0;
+      if (hasInvoice) return;
+      autoRegistered.current.add(key);
+      const invNumber = (hit.ref || "").trim().slice(0, 60) || `AUTO-${memberId}-${year}`;
+      createInvoice
+        .mutateAsync({
+          member_id: memberId,
+          year,
+          invoice_number: invNumber,
+          invoice_file_path: null,
+          amount: Math.abs(hit.amount) || FIXED_AMOUNT,
+        })
+        .catch(() => {
+          autoRegistered.current.delete(key);
+        });
+    });
+  }, [bankPaidMap, invoicesData, invoicesMap, year, createInvoice]);
+
   const filteredMembers = useMemo(() => {
     let list = [...effectiveMembers].sort((a, b) => a.id - b.id);
     if (search) {
@@ -159,15 +197,33 @@ export default function ContributieTab({ year }: Props) {
 
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
-    const invoiced = effectiveMembers.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0).length;
-    let paid = 0;
-    effectiveMembers.forEach((m) => {
-      if (isPaidEffective(m.id)) paid++;
+    // Invoiced = sum over ALL invoice rows in the year (also from ex-members),
+    // paid = sum per member capped at what was invoiced to that member so a
+    // late/duplicate bank hit can never push "received" above "invoiced".
+    let expectedAmount = 0;
+    (invoicesData ?? []).forEach((inv) => {
+      expectedAmount += Number(inv.amount ?? FIXED_AMOUNT) || 0;
     });
-    const expectedAmount = invoiced * FIXED_AMOUNT;
-    const paidAmount = paid * FIXED_AMOUNT;
-    return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
-  }, [effectiveMembers, isPaidEffective, invoicesMap]);
+    const invoiceCount = (invoicesData ?? []).length;
+    const membersWithInvoice = new Set((invoicesData ?? []).map((i) => i.member_id));
+    const invoicedMembers = membersWithInvoice.size;
+    let paidAmount = 0;
+    let paidMembers = 0;
+    membersWithInvoice.forEach((mid) => {
+      if (!isPaidEffective(mid)) return;
+      paidMembers++;
+      paidAmount += invoicedAmountByMember.get(mid) ?? 0;
+    });
+    return {
+      total,
+      invoiced: invoicedMembers,
+      invoiceCount,
+      paid: paidMembers,
+      expectedAmount,
+      paidAmount,
+      openAmount: Math.max(0, expectedAmount - paidAmount),
+    };
+  }, [effectiveMembers, invoicesData, invoicedAmountByMember, isPaidEffective]);
 
   const membersWithoutInvoice = useMemo(() => {
     return effectiveMembers
@@ -234,7 +290,7 @@ export default function ContributieTab({ year }: Props) {
               Gefactureerd
             </div>
             <p className="text-lg font-bold mt-1 tabular-nums"><CurrencyText value={stats.expectedAmount} /></p>
-            <p className="text-xs text-muted-foreground">{stats.invoiced} / {stats.total} leden</p>
+            <p className="text-xs text-muted-foreground">{stats.invoiceCount} facturen · {stats.invoiced}/{stats.total} leden</p>
           </CardContent>
         </Card>
         <Card className="border-border/60">
