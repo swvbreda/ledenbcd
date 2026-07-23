@@ -861,6 +861,87 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action") ?? "all";
 
+  // Verify which Informer administration is active for the given security code.
+  // Optional override via query ?code=... or JSON body { code }. Returns the
+  // administration name/id when the API confirms authentication, so admins can
+  // confirm the correct administration before saving INFORMER_ADMINISTRATION_ID.
+  if (action === "whoami") {
+    const api_calls: ApiCall[] = [];
+    let overrideCode: string | undefined;
+    try {
+      const q = url.searchParams.get("code");
+      if (q && q.trim()) overrideCode = q.trim();
+      if (!overrideCode && (req.headers.get("content-type") ?? "").includes("application/json")) {
+        const body = await req.json().catch(() => null) as any;
+        if (body?.code && typeof body.code === "string") overrideCode = body.code.trim();
+      }
+    } catch (_e) { /* ignore */ }
+
+    const activeCode = overrideCode ?? INFORMER_ADMIN;
+    const candidates = [
+      "/administration",
+      "/administrations/current",
+      "/administrations",
+      "/company",
+      "/companies/current",
+    ];
+
+    let identified: { id?: string; name?: string; source: string } | null = null;
+    for (const path of candidates) {
+      const call = await informerCall(path, { method: "GET" }, api_calls, false, overrideCode);
+      if (call.ok && call.response_body && typeof call.response_body === "object") {
+        const body: any = call.response_body;
+        const pick = (obj: any): { id?: string; name?: string } | null => {
+          if (!obj || typeof obj !== "object") return null;
+          const name = obj.name ?? obj.company_name ?? obj.administration_name ?? obj.title;
+          const id = obj.id ?? obj.administration_id ?? obj.code;
+          if (name || id) return { name, id: id != null ? String(id) : undefined };
+          return null;
+        };
+        const first = pick(body)
+          ?? pick(Array.isArray(body?.data) ? body.data[0] : body?.data)
+          ?? pick(Array.isArray(body?.administration) ? body.administration[0] : body?.administration)
+          ?? pick(Array.isArray(body?.administrations) ? body.administrations[0] : body?.administrations);
+        if (first?.name || first?.id) {
+          identified = { ...first, source: path };
+          break;
+        }
+      }
+    }
+
+    // Fallback: authentication check via a lightweight relations call.
+    if (!identified) {
+      const relCall = await informerCall("/relations?limit=1", { method: "GET" }, api_calls, false, overrideCode);
+      if (!relCall.ok) {
+        const errText = hasInformerError(relCall.response_body) ?? `HTTP ${relCall.status}`;
+        return new Response(JSON.stringify({
+          success: false,
+          authenticated: false,
+          error: `Kan niet authenticeren bij Informer: ${errText}`,
+          security_code_preview: activeCode ? `${activeCode.slice(0, 4)}…${activeCode.slice(-4)}` : null,
+          api_calls,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({
+        success: true,
+        authenticated: true,
+        administration: null,
+        note: "Authenticatie geslaagd, maar Informer gaf geen administratie-naam terug. Controleer via een debiteur.",
+        security_code_preview: activeCode ? `${activeCode.slice(0, 4)}…${activeCode.slice(-4)}` : null,
+        api_calls,
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      authenticated: true,
+      administration: identified,
+      security_code_preview: activeCode ? `${activeCode.slice(0, 4)}…${activeCode.slice(-4)}` : null,
+      is_override: !!overrideCode,
+      api_calls,
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   // Read-only helper: haalt debiteuren op uit Informer, met bestaande koppelingen.
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
