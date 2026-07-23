@@ -330,6 +330,17 @@ export default function FinancieelTodoTab({ year }: Props) {
         onComplete={() => refetch()}
       />
 
+      {linkDialogTodo && (
+        <LinkBankTransactionDialog
+          todoId={linkDialogTodo.id}
+          transactionId={linkDialogTodo.reference_id}
+          year={year}
+          open={!!linkDialogTodo}
+          onOpenChange={(o) => { if (!o) setLinkDialogTodo(null); }}
+          onLinked={() => refetch()}
+        />
+      )}
+
       {/* Bulk actions */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
