@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, Stick
 import { Checkbox } from "@/components/ui/checkbox";
 import AdminUploadDialog from "./AdminUploadDialog";
 import LinkBankTransactionDialog from "./LinkBankTransactionDialog";
+import UnmatchedBankTransactionsPanel from "./UnmatchedBankTransactionsPanel";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -471,6 +472,11 @@ export default function FinancieelTodoTab({ year }: Props) {
       )}
 
       {/* Grouped tables by type category */}
+      <UnmatchedBankTransactionsPanel
+        refreshKey={pending.length}
+        onLink={(todoId, transactionId) => setLinkDialogTodo({ id: todoId, reference_id: transactionId })}
+      />
+
       {grouped.map(([category, items]) => (
         <div key={category} className="space-y-2">
           <div className="flex items-center gap-2">
