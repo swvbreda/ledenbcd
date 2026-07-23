@@ -25,12 +25,18 @@ function useReconciliation(year: number) {
   return useQuery({
     queryKey: ["harde-check", year],
     queryFn: async () => {
-      const [ptRes, invRes, payRes, memRes] = await Promise.all([
+      const [ptRes, btRes, invRes, payRes, memRes] = await Promise.all([
         supabase
           .from("ponto_transactions")
           .select("id, value_date, executed_at, amount, counterparty_name, counterparty_iban, description, remittance_info, dossier, match_strategy")
           .gt("amount", 0)
           .order("value_date", { ascending: true }),
+        supabase
+          .from("bank_transactions")
+          .select("id, transaction_date, amount, counterparty, description, invoice_reference, dossier, year")
+          .eq("direction", "in")
+          .eq("year", year)
+          .order("transaction_date", { ascending: true }),
         supabase
           .from("contribution_invoices")
           .select("id, member_id, year, invoice_number, amount")
@@ -50,24 +56,37 @@ function useReconciliation(year: number) {
         return (d.naam || d.bedrijfsnaam || `Lid #${id}`) as string;
       };
 
-      const allBank = ptRes.data ?? [];
-      const bankRows = allBank.filter(
+      const allPonto = ptRes.data ?? [];
+      const pontoRows = allPonto.filter(
         (t: any) => {
           const d = (t.value_date ?? t.executed_at ?? "").slice(0, 4);
           return d === String(year);
         },
       );
+      const bankTxRows = (btRes.data ?? []).map((t: any) => ({
+        id: t.id,
+        value_date: t.transaction_date,
+        amount: Number(t.amount),
+        counterparty_name: t.counterparty,
+        description: t.description,
+        dossier: t.dossier,
+      }));
+      const bankRows = [
+        ...pontoRows.map((t: any) => ({ ...t, amount: Number(t.amount) })),
+        ...bankTxRows,
+      ];
 
       const invoices = invRes.data ?? [];
       const payments = payRes.data ?? [];
 
-      // Aggregate marked-paid per member
+      // Aggregate marked-paid per member — this is the source of truth: bank imports,
+      // Ponto matches and manual corrections all funnel into contribution_payments.
       const paidByMember = new Map<number, number>();
       for (const p of payments) {
         paidByMember.set(p.member_id, (paidByMember.get(p.member_id) ?? 0) + Number(p.amount));
       }
 
-      // Aggregate bank per member (from dossier "Contributie #<id>")
+      // Aggregate bank per member for reference (from dossier "Contributie #<id>")
       const bankByMember = new Map<number, { total: number; rows: any[] }>();
       const orphanBank: any[] = [];
       const nonContributionBank: any[] = [];
@@ -99,17 +118,20 @@ function useReconciliation(year: number) {
         const inv = invoices.find((i: any) => i.member_id === id);
         const paid = paidByMember.get(id) ?? 0;
         const bankTotal = bank?.total ?? 0;
+        const invAmt = inv ? Number(inv.amount ?? 0) : 0;
 
+        // Reconciliatie op basis van geregistreerde betalingen (contribution_payments),
+        // niet enkel de bank-dossier-koppeling — handmatige correcties tellen zo mee.
         let category: ReconRow["category"] = "ok";
-        if (bankTotal > 0 && !inv) category = "no_invoice";
-        else if (!bank && inv && paid < Number(inv.amount ?? 0) - 5) category = "no_bank";
-        else if (bank && inv && Math.abs(bankTotal - Number(inv.amount ?? 0)) > 5) category = "amount_mismatch";
+        if (paid > 0 && !inv) category = "no_invoice";
+        else if (inv && paid < invAmt - 5) category = "no_bank";
+        else if (inv && paid > invAmt + 5) category = "amount_mismatch";
 
         rows.push({
           member_id: id,
           member_name: memberName(id),
           bank_amount: bankTotal,
-          invoice_amount: inv ? Number(inv.amount ?? 0) : null,
+          invoice_amount: inv ? invAmt : null,
           invoice_number: inv?.invoice_number ?? null,
           marked_paid: paid,
           category,
@@ -147,8 +169,12 @@ function useReconciliation(year: number) {
         non_contribution: nonContributionBank.reduce((s, t) => s + Number(t.amount), 0),
       };
 
-      const earliestBank = allBank.length
-        ? allBank[0].value_date ?? allBank[0].executed_at
+      const earliestBank = bankRows.length
+        ? bankRows.reduce((min: string | null, t: any) => {
+            const d = t.value_date ?? null;
+            if (!d) return min;
+            return !min || d < min ? d : min;
+          }, null as string | null)
         : null;
 
       return { rows, totals, nonContributionBank, earliestBank };
@@ -186,8 +212,8 @@ export default function HardeCheckTab({ year }: Props) {
         <div className="text-sm">
           <div className="font-semibold mb-1">Bank-leidende reconciliatie voor {year}</div>
           <div className="text-muted-foreground">
-            Vergelijking tussen daadwerkelijke bankboekingen (Ponto), Informer-facturen en de betaald-status per lid.
-            Bankdata beschikbaar vanaf <span className="font-medium">{bankCoverStart}</span> (PSD2-limiet ~100 transacties).
+            Vergelijking tussen daadwerkelijke bankboekingen (Ponto + ABN-import), Informer-facturen en de geregistreerde betalingen per lid.
+            Bankdata beschikbaar vanaf <span className="font-medium">{bankCoverStart}</span>.
           </div>
         </div>
       </div>
