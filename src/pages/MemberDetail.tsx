@@ -512,6 +512,17 @@ const MemberDetail = () => {
 
                     <span className="text-muted-foreground">Telefoon</span>
                     <span>{member.factuurTelefoon || "—"}</span>
+
+                    <span className="text-muted-foreground">Bankrekening(en)</span>
+                    <span>
+                      {member.ibans && member.ibans.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          {member.ibans.map((iban) => (
+                            <span key={iban} className="font-mono text-xs">{iban}</span>
+                          ))}
+                        </div>
+                      ) : "—"}
+                    </span>
                   </div>
                 </div>
               )}
