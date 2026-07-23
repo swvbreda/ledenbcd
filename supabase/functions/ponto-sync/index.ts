@@ -165,6 +165,154 @@ async function applyMatchingRules(
   return matched;
 }
 
+/**
+ * Auto-matcht inkomende bankboekingen aan openstaande contributiefacturen.
+ *
+ * Strategie (in volgorde):
+ *  1. Zoek in omschrijving/remittance naar factuurnummers uit `contribution_invoices`.
+ *     Als het factuurnummer + het bedrag (±€5) klopt → match.
+ *  2. Zoek naar lid-/relatienummers (bv. "#138" of "lid 138"). Als er voor dat lid
+ *     dit jaar een openstaande contributiefactuur is met hetzelfde bedrag → match.
+ *
+ * Bij een match:
+ *   • Voegt een `contribution_payments`-rij toe (method=bank, status=paid).
+ *     De trigger `recompute_contribution_paid` markeert de contributie als betaald.
+ *   • Categoriseert de bankboeking onder Inkomsten → Contributies van het juiste jaar.
+ */
+async function matchContributionPayments(supabase: any): Promise<number> {
+  // Alleen inkomende, nog niet gekoppelde boekingen kandidaat maken
+  const { data: pending } = await supabase
+    .from("ponto_transactions")
+    .select("id, executed_at, amount, counterparty_name, description, remittance_info")
+    .gt("amount", 0)
+    .is("budget_line_item_id", null)
+    .eq("matched_manually", false)
+    .order("executed_at", { ascending: false })
+    .limit(500);
+  const txs = pending ?? [];
+  if (txs.length === 0) return 0;
+
+  const { data: invoices } = await supabase
+    .from("contribution_invoices")
+    .select("id, member_id, year, invoice_number, amount");
+  const invoiceList = (invoices ?? []).filter((i: any) => i.invoice_number);
+
+  // Bepaal openstaande facturen: geen bijbehorende paid-payment
+  const { data: paidPayments } = await supabase
+    .from("contribution_payments")
+    .select("member_id, year, amount, status");
+  const paidByMemberYear = new Map<string, number>();
+  for (const p of paidPayments ?? []) {
+    if (p.status !== "paid") continue;
+    const k = `${p.member_id}|${p.year}`;
+    paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + Number(p.amount));
+  }
+
+  // Contributies line items per jaar
+  const { data: liRows } = await supabase
+    .from("budget_line_items")
+    .select("id, name, category_id, budget_categories:category_id(year, name)");
+  const contribLineByYear = new Map<number, string>();
+  for (const li of liRows ?? []) {
+    const cat = (li as any).budget_categories;
+    if (cat?.name === "Inkomsten" && li.name === "Contributies" && cat?.year != null) {
+      contribLineByYear.set(Number(cat.year), li.id);
+    }
+  }
+
+  let matched = 0;
+  const AMOUNT_TOL = 5; // euro
+
+  for (const t of txs) {
+    const amount = Number(t.amount);
+    const hay = `${t.counterparty_name ?? ""} ${t.description ?? ""} ${t.remittance_info ?? ""}`;
+    const hayLower = hay.toLowerCase();
+
+    let hit: { member_id: number; year: number; invoice_number: string | null } | null = null;
+
+    // 1) Factuurnummer-match
+    for (const inv of invoiceList) {
+      const num = String(inv.invoice_number).trim();
+      if (!num) continue;
+      const stripped = num.replace(/[-\s]/g, "");
+      const hayStripped = hayLower.replace(/[-\s]/g, "");
+      const numberFound = hayStripped.includes(stripped) ||
+        new RegExp(`(?<!\\d)${stripped.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\d)`).test(hayStripped);
+      if (!numberFound) continue;
+      const invAmt = inv.amount != null ? Number(inv.amount) : null;
+      if (invAmt != null && Math.abs(invAmt - amount) > AMOUNT_TOL) continue;
+      hit = { member_id: inv.member_id, year: inv.year, invoice_number: num };
+      break;
+    }
+
+    // 2) Lidnummer-match op basis van openstaande facturen met hetzelfde bedrag
+    if (!hit) {
+      const memberRefs = new Set<number>();
+      for (const m of hayLower.matchAll(/(?:#|lid\s*|relatie\s*|deb(?:iteur)?\s*)(\d{1,4})\b/g)) {
+        memberRefs.add(Number(m[1]));
+      }
+      if (memberRefs.size > 0) {
+        for (const inv of invoiceList) {
+          if (!memberRefs.has(inv.member_id)) continue;
+          const invAmt = inv.amount != null ? Number(inv.amount) : null;
+          if (invAmt == null || Math.abs(invAmt - amount) > AMOUNT_TOL) continue;
+          const paid = paidByMemberYear.get(`${inv.member_id}|${inv.year}`) ?? 0;
+          if (paid >= invAmt - AMOUNT_TOL) continue; // al voldaan
+          hit = { member_id: inv.member_id, year: inv.year, invoice_number: inv.invoice_number };
+          break;
+        }
+      }
+    }
+
+    if (!hit) continue;
+
+    const paidAt = t.executed_at ?? new Date().toISOString();
+
+    // Vermijd dubbele betaling: check of er al een bank-payment op deze dag met dit bedrag bestaat
+    const { data: existing } = await supabase
+      .from("contribution_payments")
+      .select("id")
+      .eq("member_id", hit.member_id)
+      .eq("year", hit.year)
+      .eq("payment_method", "bank")
+      .eq("status", "paid")
+      .gte("amount", amount - 0.01)
+      .lte("amount", amount + 0.01)
+      .limit(1);
+    if ((existing ?? []).length === 0) {
+      const { error: payErr } = await supabase.from("contribution_payments").insert({
+        member_id: hit.member_id,
+        year: hit.year,
+        amount,
+        status: "paid",
+        payment_method: "bank",
+        paid_at: paidAt,
+      });
+      if (payErr) {
+        console.warn("contribution_payments insert failed", payErr);
+        continue;
+      }
+    }
+
+    const lineId = contribLineByYear.get(hit.year);
+    await supabase
+      .from("ponto_transactions")
+      .update({
+        budget_line_item_id: lineId ?? null,
+        dossier: `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
+      })
+      .eq("id", t.id);
+
+    // Trigger paidByMemberYear-update zodat volgende iteraties dit meenemen
+    const k = `${hit.member_id}|${hit.year}`;
+    paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + amount);
+
+    matched++;
+  }
+
+  return matched;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -184,6 +332,7 @@ Deno.serve(async (req) => {
     let balancesProcessed = 0;
     let txProcessed = 0;
     let ruleMatches = 0;
+    let contributionMatches = 0;
 
     for (const a of accounts) {
       const attr = a.attributes ?? {};
@@ -247,6 +396,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (action === "transactions" || action === "all") {
+      try {
+        contributionMatches = await matchContributionPayments(supabase);
+      } catch (e) {
+        console.warn("matchContributionPayments failed", (e as Error).message);
+      }
+    }
+
     const patch: Record<string, string> = { updated_at: new Date().toISOString() };
     if (action === "balances" || action === "all") patch.last_ponto_sync_at = new Date().toISOString();
     if (action === "transactions" || action === "all") patch.last_ponto_tx_sync_at = new Date().toISOString();
@@ -265,7 +422,7 @@ Deno.serve(async (req) => {
         action: "pull_ponto_transactions",
         success: true,
         items_processed: txProcessed,
-        details: { api_calls: calls, rule_matches: ruleMatches },
+        details: { api_calls: calls, rule_matches: ruleMatches, contribution_matches: contributionMatches },
       });
     }
 
@@ -276,6 +433,7 @@ Deno.serve(async (req) => {
       balances_processed: balancesProcessed,
       transactions_processed: txProcessed,
       rule_matches: ruleMatches,
+      contribution_matches: contributionMatches,
       api_calls: calls,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
