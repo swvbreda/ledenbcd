@@ -384,12 +384,11 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + amount);
 
     matched++;
+    if (iban) ibanToMember.set(iban, hit.member_id);
   }
 
   return matched;
 }
-
-// (contribution matcher extension marker)
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
