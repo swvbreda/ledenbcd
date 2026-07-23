@@ -938,6 +938,7 @@ export type Database = {
           last_creditor_sync_at: string | null
           last_debtor_sync_at: string | null
           last_payment_sync_at: string | null
+          last_ponto_sync_at: string | null
           updated_at: string
         }
         Insert: {
@@ -946,6 +947,7 @@ export type Database = {
           last_creditor_sync_at?: string | null
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
+          last_ponto_sync_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -954,6 +956,7 @@ export type Database = {
           last_creditor_sync_at?: string | null
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
+          last_ponto_sync_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1634,6 +1637,45 @@ export type Database = {
           public_key?: string
           transports?: string[] | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      ponto_bank_balances: {
+        Row: {
+          account_id: string
+          as_of_date: string | null
+          available_balance: number
+          currency: string | null
+          current_balance: number
+          iban: string | null
+          id: string
+          name: string | null
+          raw: Json | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          as_of_date?: string | null
+          available_balance?: number
+          currency?: string | null
+          current_balance?: number
+          iban?: string | null
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          as_of_date?: string | null
+          available_balance?: number
+          currency?: string | null
+          current_balance?: number
+          iban?: string | null
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          updated_at?: string
         }
         Relationships: []
       }
