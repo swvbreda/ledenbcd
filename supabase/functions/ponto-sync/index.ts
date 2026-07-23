@@ -220,13 +220,68 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     }
   }
 
+  // Ledenindex voor naam-matching (bedrijfsnaam / coffeeshopnaam / contactpersoon)
+  const { data: memberRows } = await supabase
+    .from("members_data")
+    .select("id, data, member_type")
+    .in("member_type", ["member", "lead"]);
+  const normalizeName = (s: string) => (s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(bv|b\.v\.|nv|n\.v\.|vof|v\.o\.f\.|holding|coffeeshop|coffee shop)\b/g, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  type MemberIdx = { id: number; keys: string[] };
+  const memberIndex: MemberIdx[] = [];
+  for (const m of memberRows ?? []) {
+    const d = (m as any).data || {};
+    const raw: string[] = [d.naam, d.bedrijfsnaam, d.factuurBedrijfsnaam, d.contactpersoon]
+      .concat(Array.isArray(d.locaties) ? d.locaties.map((l: any) => l?.naam) : [])
+      .filter((v: any) => typeof v === "string" && v.trim().length >= 3);
+    const keys = Array.from(new Set(raw.map(normalizeName).filter((k) => k.length >= 3)));
+    if (keys.length) memberIndex.push({ id: Number((m as any).id), keys });
+  }
+
+  // IBAN → member leren uit al gekoppelde bankboekingen
+  const ibanToMember = new Map<string, number>();
+  const learnFromRows = (rows: any[] | null | undefined) => {
+    for (const r of rows ?? []) {
+      const raw = (r.counterparty_iban || "").replace(/\s+/g, "").toUpperCase();
+      const dossier: string = r.dossier || "";
+      const mm = dossier.match(/Contributie\s*#(\d+)/i);
+      if (raw && mm) ibanToMember.set(raw, Number(mm[1]));
+    }
+  };
+  const [{ data: pontoLearn }, { data: bankLearn }] = await Promise.all([
+    supabase.from("ponto_transactions").select("counterparty_iban, dossier").ilike("dossier", "Contributie #%"),
+    supabase.from("bank_transactions").select("counterparty_iban, dossier").ilike("dossier", "Contributie #%"),
+  ]);
+  learnFromRows(pontoLearn);
+  learnFromRows(bankLearn);
+
   let matched = 0;
   const AMOUNT_TOL = 5; // euro
+
+  const findOpenInvoice = (memberId: number, amount: number) => {
+    let partial: any = null;
+    for (const inv of invoiceList) {
+      if (inv.member_id !== memberId) continue;
+      const invAmt = inv.amount != null ? Number(inv.amount) : null;
+      if (invAmt == null) continue;
+      const paid = paidByMemberYear.get(`${inv.member_id}|${inv.year}`) ?? 0;
+      if (paid >= invAmt - AMOUNT_TOL) continue; // al voldaan
+      if (Math.abs(invAmt - amount) <= AMOUNT_TOL) return inv;
+      if (amount <= invAmt + AMOUNT_TOL && (!partial || inv.year > partial.year)) partial = inv;
+    }
+    return partial;
+  };
 
   for (const t of txs) {
     const amount = Number(t.amount);
     const hay = `${t.counterparty_name ?? ""} ${t.description ?? ""} ${t.remittance_info ?? ""}`;
     const hayLower = hay.toLowerCase();
+    const iban = ((t as any).counterparty_iban || "").replace(/\s+/g, "").toUpperCase();
 
     let hit: { member_id: number; year: number; invoice_number: string | null } | null = null;
 
