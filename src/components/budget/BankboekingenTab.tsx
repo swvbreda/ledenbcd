@@ -108,13 +108,19 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const runSync = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await invokeWithAuth<{ success: boolean; transactions_processed: number; rule_matches: number; error?: string }>(
+      const { data, error } = await invokeWithAuth<{ success: boolean; transactions_processed: number; rule_matches: number; contribution_matches?: number; error?: string }>(
         "ponto-sync?action=transactions", { method: "POST" },
       );
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "onbekende fout");
-      toast.success(`${data.transactions_processed} boekingen opgehaald, ${data.rule_matches} automatisch gekoppeld`);
+      const parts = [
+        `${data.transactions_processed} boekingen opgehaald`,
+        `${data.rule_matches} regel-matches`,
+      ];
+      if (data.contribution_matches != null) parts.push(`${data.contribution_matches} contributies`);
+      toast.success(parts.join(" · "));
       qc.invalidateQueries({ queryKey: ["ponto_transactions"] });
+      qc.invalidateQueries({ queryKey: ["contributions"] });
     } catch (e) {
       toast.error(`Sync mislukt: ${(e as Error).message}`);
     } finally {
