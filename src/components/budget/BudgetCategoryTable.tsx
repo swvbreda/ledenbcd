@@ -40,6 +40,16 @@ export default function BudgetCategoryTable({
   const totalSpent = category.line_items.reduce((s, li) => s + sumExpenses(li), 0);
   const totalRemaining = totalBudgeted - totalSpent;
 
+  const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
+  const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
+  const remainingClass = (v: number) =>
+    isIncome
+      ? (v <= 0 ? "text-green-600" : "")
+      : (v < 0 ? "text-destructive" : "");
+  const totalRemainingClass = isIncome
+    ? (totalRemaining <= 0 ? "text-green-600" : "text-foreground")
+    : (totalRemaining < 0 ? "text-destructive" : "text-green-600");
+
   const handleAdd = () => {
     if (!newName.trim()) return;
     onAddLineItem(category.id, newName.trim(), parseFloat(newAmount) || 0);
@@ -73,10 +83,10 @@ export default function BudgetCategoryTable({
               {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Uitgaven: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
+              {!expanded && <><span className="text-muted-foreground text-xs">{spentLabel}: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Beschikbaar: </span><strong className={totalRemaining < 0 ? "text-destructive" : "text-green-600"}><CurrencyText value={totalRemaining} className="justify-end" /></strong></>}
+              {!expanded && <><span className="text-muted-foreground text-xs">{remainingLabel}: </span><strong className={totalRemainingClass}><CurrencyText value={totalRemaining} className="justify-end" /></strong></>}
             </td>
             <td />
           </tr>
@@ -86,8 +96,8 @@ export default function BudgetCategoryTable({
             <tr className="border-b border-border bg-muted/30">
               <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Post</th>
               <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Begroot</th>
-              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Uitgaven</th>
-              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">Beschikbaar</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">{spentLabel}</th>
+              <th className="text-right px-3 py-1.5 font-medium text-muted-foreground">{remainingLabel}</th>
               <th />
             </tr>
             {category.line_items.map((li) => {
@@ -103,7 +113,7 @@ export default function BudgetCategoryTable({
                   <td className="px-3 py-1.5"><CurrencyCell value={li.budgeted_amount} /></td>
                   <td className="px-3 py-1.5">{spent !== 0 ? <CurrencyCell value={spent} /> : ""}</td>
                   <td className="px-3 py-1.5">
-                    <CurrencyCell value={remaining} className={remaining < 0 ? "text-destructive" : ""} />
+                    <CurrencyCell value={remaining} className={remainingClass(remaining)} />
                   </td>
                   <td className="px-1">
                     <button
@@ -121,7 +131,7 @@ export default function BudgetCategoryTable({
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5 font-semibold">
-                <CurrencyCell value={totalRemaining} className={totalRemaining < 0 ? "text-destructive" : "text-green-600"} />
+                <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
               </td>
               <td />
             </tr>
