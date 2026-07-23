@@ -47,8 +47,15 @@ export default function BudgetCategoryTable({
       const sign = e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
       return es + sign * e.amount;
     }, 0);
-  const totalSpent = category.line_items.reduce((s, li) => s + sumExpenses(li), 0);
-  const totalRemaining = totalBudgeted - totalSpent;
+  const totalSpent = category.line_items.reduce((s, li) => {
+    const clicks = getCellClicks ? getCellClicks(li) : null;
+    return s + (clicks?.spentValue ?? sumExpenses(li));
+  }, 0);
+  const totalRemaining = category.line_items.reduce((s, li) => {
+    const clicks = getCellClicks ? getCellClicks(li) : null;
+    const spentValue = clicks?.spentValue ?? sumExpenses(li);
+    return s + (clicks?.remainingValue ?? (li.budgeted_amount - spentValue));
+  }, 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
   const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
