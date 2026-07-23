@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface Props {
   year: number;
@@ -19,6 +23,7 @@ interface ReconRow {
   bank_date: string | null;
   counterparty: string | null;
   dossier: string | null;
+  bank_rows?: BankIncomeRow[];
 }
 
 interface BankIncomeRow {
@@ -171,6 +176,7 @@ function useReconciliation(year: number) {
           bank_date: bank?.rows[0]?.value_date ?? null,
           counterparty: bank?.rows[0]?.counterparty_name ?? null,
           dossier: bank?.rows[0]?.dossier ?? null,
+          bank_rows: bank?.rows ?? [],
         });
       }
 
@@ -187,6 +193,7 @@ function useReconciliation(year: number) {
           bank_date: t.value_date,
           counterparty: t.counterparty_name,
           dossier: t.dossier,
+          bank_rows: [t],
         });
       }
 
@@ -218,6 +225,7 @@ function useReconciliation(year: number) {
 export default function HardeCheckTab({ year }: Props) {
   const { data, isLoading } = useReconciliation(year);
   const navigate = useNavigate();
+  const [detail, setDetail] = useState<ReconRow | null>(null);
 
   if (isLoading || !data) {
     return <div className="p-8 text-sm text-muted-foreground">Bezig met controleren…</div>;
@@ -287,9 +295,9 @@ export default function HardeCheckTab({ year }: Props) {
               {problems.map((r, i) => (
                 <tr
                   key={i}
-                  className={`border-b border-border/50 hover:bg-muted/20 ${r.member_id ? "cursor-pointer" : ""}`}
-                  onClick={() => r.member_id && navigate(`/leden/${r.member_id}`)}
-                  title={r.member_id ? "Open ledendetail" : undefined}
+                  className="border-b border-border/50 hover:bg-muted/20 cursor-pointer"
+                  onClick={() => setDetail(r)}
+                  title="Bekijk details en corrigeer"
                 >
                   <td className="px-3 py-2">
                     {r.member_id ? (
@@ -303,9 +311,14 @@ export default function HardeCheckTab({ year }: Props) {
                   </td>
                   <td className="px-3 py-2">{badge(r.category)}</td>
                   <td className="text-right px-3 py-2 tabular-nums">
+                    <div className="text-[10px] text-muted-foreground uppercase">Bank</div>
                     {r.bank_amount > 0 ? <CurrencyCell value={r.bank_amount} /> : <span className="text-muted-foreground">—</span>}
+                    {r.bank_rows && r.bank_rows.length > 1 && (
+                      <div className="text-[10px] text-muted-foreground">{r.bank_rows.length} boekingen</div>
+                    )}
                   </td>
                   <td className="text-right px-3 py-2 tabular-nums">
+                    <div className="text-[10px] text-muted-foreground uppercase">Factuur</div>
                     {r.invoice_amount != null ? (
                       <div>
                         <CurrencyCell value={r.invoice_amount} />
@@ -316,6 +329,7 @@ export default function HardeCheckTab({ year }: Props) {
                     )}
                   </td>
                   <td className="text-right px-3 py-2 tabular-nums">
+                    <div className="text-[10px] text-muted-foreground uppercase">Betaald</div>
                     {r.marked_paid > 0 ? <CurrencyCell value={r.marked_paid} /> : <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
@@ -355,6 +369,73 @@ export default function HardeCheckTab({ year }: Props) {
           </table>
         )}
       </div>
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-2xl">
+          {detail && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {detail.member_name ?? "Onbekend lid"}
+                  {detail.member_id && <span className="text-muted-foreground font-normal"> · #{detail.member_id}</span>}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-3 gap-3">
+                  <SummaryBox label="Bank ontvangen" value={detail.bank_amount} />
+                  <SummaryBox label="Informer-factuur" value={detail.invoice_amount ?? 0} sub={detail.invoice_number ?? undefined} />
+                  <SummaryBox label="Gemarkeerd betaald" value={detail.marked_paid} />
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">Bankboekingen ({detail.bank_rows?.length ?? 0})</div>
+                  {detail.bank_rows && detail.bank_rows.length > 0 ? (
+                    <div className="border border-border rounded-md divide-y">
+                      {detail.bank_rows.map((b, i) => (
+                        <div key={i} className="p-2 text-xs flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium">{b.value_date} — {b.counterparty_name ?? "?"}</div>
+                            <div className="text-muted-foreground truncate">{b.description}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">Dossier: {b.dossier ?? "—"} · Bron: {b.source.toUpperCase()}</div>
+                          </div>
+                          <div className="tabular-nums font-semibold shrink-0"><CurrencyCell value={b.amount} /></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground italic">Geen bankboekingen gevonden voor dit lid.</div>
+                  )}
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  {detail.category === "amount_mismatch" && "Bank en Informer-factuurbedrag komen niet overeen. Controleer of er een extra of onterecht gekoppelde betaling is, of pas de factuur aan in Informer."}
+                  {detail.category === "no_invoice" && "Er is een bankbetaling ontvangen zonder bijbehorende Informer-factuur — maak de factuur alsnog aan."}
+                  {detail.category === "no_bank" && "Er is een factuur maar (nog) geen (volledige) bankontvangst. Wacht op betaling of stuur een herinnering."}
+                  {detail.category === "orphan" && "Deze bankboeking kon niet aan een lid worden gekoppeld — koppel handmatig via het Te doen-tabblad."}
+                </div>
+              </div>
+              <DialogFooter>
+                {detail.member_id && (
+                  <Button variant="outline" onClick={() => { navigate(`/leden/${detail.member_id}`); setDetail(null); }}>
+                    <ExternalLink size={14} className="mr-1" /> Open ledendossier
+                  </Button>
+                )}
+                <Button onClick={() => setDetail(null)}>Sluiten</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SummaryBox({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div className="border border-border rounded-md p-2">
+      <div className="text-[10px] text-muted-foreground uppercase">{label}</div>
+      <div className="text-base font-semibold tabular-nums"><CurrencyCell value={value} /></div>
+      {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
