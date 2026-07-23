@@ -126,6 +126,33 @@ function invoiceRelationId(inv: any): string {
   return String(inv?.relation_id ?? inv?.relation?.id ?? inv?.debtor_id ?? inv?.customer_id ?? "").trim();
 }
 
+// Informer geeft per factuur wisselend het interne relatie-ID of het korte
+// relatienummer terug (afhankelijk van endpoint/versie). Het relatienummer
+// komt bij BCD 1-op-1 overeen met het lidnummer. We proberen daarom een
+// bruikbaar member-id te destilleren uit meerdere mogelijke velden.
+function invoiceMemberIdCandidates(inv: any): number[] {
+  const raw = [
+    inv?.relation?.number,
+    inv?.relation?.relation_number,
+    inv?.relation_number,
+    inv?.debtor_number,
+    inv?.customer_number,
+    inv?.debtor?.number,
+    inv?.customer?.number,
+    inv?.relation?.id,
+    inv?.relation_id,
+    inv?.debtor_id,
+    inv?.customer_id,
+  ];
+  const out: number[] = [];
+  for (const c of raw) {
+    if (c == null) continue;
+    const n = Number(String(c).trim());
+    if (Number.isInteger(n) && n > 0 && n < 100000) out.push(n);
+  }
+  return out;
+}
+
 function invoiceStatus(inv: any): string {
   const raw = inv?.status?.status ?? inv?.status ?? "";
   return String(raw).toLowerCase();
