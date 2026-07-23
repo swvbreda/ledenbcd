@@ -290,7 +290,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             <strong className="tabular-nums">{unassignedCount}</strong> uitgave{unassignedCount === 1 ? "" : "n"} nog niet aan een dossier gekoppeld.
           </span>
           {onUpdateExpense && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={openNewDialog}>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("existing")}>
               Toewijzen
             </Button>
           )}
@@ -304,7 +304,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             Totaal: <CurrencyText value={grandTotal} />
           </span>
           {onUpdateExpense && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={openNewDialog}>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("new")}>
               <Plus className="h-3.5 w-3.5 mr-1" />
               Nieuw dossier
             </Button>
