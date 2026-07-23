@@ -429,6 +429,8 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="boekingen">
+            <BankBalancesCard />
+            <div className="mt-4" />
             <BankboekingenTab year={year} />
             <BoekingenOverzicht
               categories={categories || []}
