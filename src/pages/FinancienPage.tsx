@@ -19,6 +19,8 @@ import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
+import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
+
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
