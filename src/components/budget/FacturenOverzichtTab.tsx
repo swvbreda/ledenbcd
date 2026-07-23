@@ -235,6 +235,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
                 <TableHead className="hidden sm:table-cell">Plaats</TableHead>
                 <TableHead className="w-40">Status</TableHead>
                 <TableHead className="hidden md:table-cell">Factuurnummer</TableHead>
+                <TableHead className="hidden md:table-cell w-32">Factuurdatum</TableHead>
                 <TableHead className="w-28 text-right">Bedrag</TableHead>
                 <TableHead className="hidden md:table-cell w-32">Betaald op</TableHead>
               </TableRow>
@@ -270,6 +271,14 @@ export default function FacturenOverzichtTab({ year }: Props) {
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                     {r.invoices.length === 0 ? "—" : r.invoices.map((i) => i.invoice_number ?? "—").join(", ")}
                   </TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground tabular-nums">
+                    {(() => {
+                      const d = r.contrib?.invoice_date ?? r.invoices[0]?.created_at ?? null;
+                      if (!d) return "—";
+                      const dt = new Date(d);
+                      return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+                    })()}
+                  </TableCell>
                   <TableCell className="text-right text-sm tabular-nums">
                     <CurrencyText value={r.amount} />
                   </TableCell>
@@ -280,7 +289,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
               ))}
               {filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Geen facturen gevonden
                   </TableCell>
                 </TableRow>
