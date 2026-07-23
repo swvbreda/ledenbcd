@@ -35,8 +35,12 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
   const getLineItemLabel = (id: string) => allLineItems.find((li) => li.id === id)?.label || lineItemName;
 
   // Bijschrijvingen (direction='in') horen nooit in de uitgavenlijst, ook niet
-  // als ze per ongeluk aan een begrotingspost zijn gehangen.
-  const visibleExpenses = expenses.filter((e) => e.direction !== "in" && !(e as any)._fromBank);
+  // als ze per ongeluk aan een begrotingspost zijn gehangen. Bankboekingen
+  // (_fromBank) horen wél in het overzicht — het zijn de daadwerkelijke
+  // betalingen die op deze post zijn geboekt.
+  const visibleExpenses = expenses
+    .filter((e) => e.direction !== "in")
+    .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
   const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
 
   const handleAdd = () => {
@@ -84,11 +88,16 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                 <tbody>
                   {visibleExpenses.map((e) => (
                     <tr key={e.id} className="border-b border-border/50">
-                      <td className="px-2 py-1 whitespace-nowrap">{e.expense_date || ""}</td>
+                      <td className="px-2 py-1 whitespace-nowrap">
+                        {e.expense_date || ""}
+                        {(e as any)._fromBank && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</span>
+                        )}
+                      </td>
                       <td className="px-2 py-1">{e.description || ""}</td>
                       <td className="px-2 py-1">{e.dossier || ""}</td>
                       <td className="px-2 py-1 min-w-[220px]">
-                        {onUpdateExpense ? (
+                        {onUpdateExpense && !(e as any)._fromBank ? (
                           <Select
                             value={e.line_item_id}
                             onValueChange={(value) => value !== e.line_item_id && onUpdateExpense(e.id, { line_item_id: value })}
@@ -111,7 +120,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                       <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
-                          {onUpdateExpense && (
+                          {onUpdateExpense && !(e as any)._fromBank && (
                             <button
                               onClick={() => {
                                 if (confirm("Markeren als bijschrijving? De regel verdwijnt dan uit de uitgavenlijst.")) {
@@ -124,9 +133,11 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                               <ArrowDownToLine size={12} />
                             </button>
                           )}
-                          <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
-                            <Trash2 size={12} />
-                          </button>
+                          {!(e as any)._fromBank && (
+                            <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
