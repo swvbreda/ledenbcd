@@ -47,24 +47,34 @@ export default function FacturenOverzichtTab({ year }: Props) {
   }, [invoicesData]);
 
   const rows = useMemo(() => {
-    return [...effectiveMembers]
-      .sort((a, b) => a.id - b.id)
-      .map((m) => {
-        const invs = invoicesMap.get(m.id) ?? [];
-        const contrib = contribMap.get(m.id);
-        const paid = !!contrib?.paid;
-        const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
-        const invoicedAmount = invs.length > 0
-          ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
-          : defaultAmount;
-        return {
-          member: m,
-          invoices: invs,
-          contrib,
-          status,
-          amount: invoicedAmount,
-        };
-      });
+    const rowsBase = [...effectiveMembers].map((m) => {
+      const invs = invoicesMap.get(m.id) ?? [];
+      const contrib = contribMap.get(m.id);
+      const paid = !!contrib?.paid;
+      const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
+      const invoicedAmount = invs.length > 0
+        ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
+        : defaultAmount;
+      return {
+        member: m,
+        invoices: invs,
+        contrib,
+        status,
+        amount: invoicedAmount,
+      };
+    });
+
+    return rowsBase.sort((a, b) => {
+      const dateOf = (r: typeof rowsBase[0]) => {
+        if (r.status === "paid" && r.contrib?.paid_date) return new Date(r.contrib.paid_date).getTime();
+        if (r.status === "sent" && r.contrib?.invoice_date) return new Date(r.contrib.invoice_date).getTime();
+        const latestInvoice = r.invoices[0]?.created_at
+          ? Math.max(...r.invoices.map((i) => new Date(i.created_at).getTime()))
+          : 0;
+        return latestInvoice || 0;
+      };
+      return dateOf(b) - dateOf(a);
+    });
   }, [effectiveMembers, invoicesMap, contribMap, defaultAmount]);
 
   const filteredRows = useMemo(() => {
