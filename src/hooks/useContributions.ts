@@ -9,6 +9,18 @@ export interface ContributionInvoice {
   invoice_number: string | null;
   invoice_file_path: string | null;
   amount: number | null;
+  invoice_date: string | null;
+  created_at: string;
+}
+
+export interface ContributionPayment {
+  id: string;
+  member_id: number;
+  year: number;
+  amount: number;
+  status: string;
+  payment_method: string;
+  paid_at: string | null;
   created_at: string;
 }
 
@@ -118,6 +130,22 @@ export function useContributionInvoices(year?: number) {
   });
 }
 
+export function useContributionPayments(year?: number) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["contribution-payments", year, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      let q = supabase.from("contribution_payments").select("*").eq("status", "paid");
+      if (year) q = q.eq("year", year);
+      const { data, error } = await q.order("paid_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((p: any) => ({ ...p, amount: Number(p.amount) || 0 })) as ContributionPayment[];
+    },
+  });
+}
+
 export function useCreateContributionInvoice() {
   const qc = useQueryClient();
 
@@ -128,8 +156,9 @@ export function useCreateContributionInvoice() {
       invoice_number?: string | null;
       invoice_file_path?: string | null;
       amount?: number | null;
+      invoice_date?: string | null;
     }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("contribution_invoices")
         .insert({
           member_id: input.member_id,
@@ -137,6 +166,7 @@ export function useCreateContributionInvoice() {
           invoice_number: input.invoice_number ?? null,
           invoice_file_path: input.invoice_file_path ?? null,
           amount: input.amount ?? null,
+          invoice_date: input.invoice_date ?? null,
         })
         .select()
         .single();
