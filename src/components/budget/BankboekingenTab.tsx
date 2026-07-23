@@ -41,6 +41,8 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "unmatched" | "matched">("all");
   const [syncing, setSyncing] = useState(false);
+  const [newDossierFor, setNewDossierFor] = useState<string | null>(null);
+  const [newDossierValue, setNewDossierValue] = useState("");
 
   const { data: categories } = useBudgetCategories(year, "manual");
   const allLineItems = useMemo(
@@ -82,6 +84,23 @@ export default function BankboekingenTab({ year }: { year: number }) {
         .order("priority", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Rule[];
+    },
+  });
+
+  const { data: dossierList } = useQuery({
+    queryKey: ["dossiers_all"],
+    queryFn: async () => {
+      const [{ data: expRows }, { data: pontoRows }, { data: bankRows }] = await Promise.all([
+        supabase.from("budget_expenses").select("dossier").not("dossier", "is", null),
+        supabase.from("ponto_transactions").select("dossier").not("dossier", "is", null),
+        supabase.from("bank_transactions").select("dossier").not("dossier", "is", null),
+      ]);
+      const set = new Set<string>();
+      for (const r of [...(expRows ?? []), ...(pontoRows ?? []), ...(bankRows ?? [])]) {
+        const v = ((r as any).dossier || "").trim();
+        if (v) set.add(v);
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b, "nl"));
     },
   });
 
@@ -224,12 +243,58 @@ export default function BankboekingenTab({ year }: { year: number }) {
                     </select>
                   </td>
                   <td className="px-3 py-2">
-                    <input
-                      className="border border-border rounded px-2 py-1 text-xs bg-background w-full max-w-[160px]"
-                      value={t.dossier ?? ""}
-                      placeholder="—"
-                      onChange={(e) => updateTx(t.id, { dossier: e.target.value || null })}
-                    />
+                    {newDossierFor === t.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          autoFocus
+                          value={newDossierValue}
+                          onChange={(e) => setNewDossierValue(e.target.value)}
+                          placeholder="Nieuw dossier…"
+                          className="h-7 text-xs w-[140px]"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              const v = newDossierValue.trim();
+                              if (v) {
+                                updateTx(t.id, { dossier: v });
+                                qc.invalidateQueries({ queryKey: ["dossiers_all"] });
+                              }
+                              setNewDossierFor(null);
+                              setNewDossierValue("");
+                            } else if (e.key === "Escape") {
+                              setNewDossierFor(null);
+                              setNewDossierValue("");
+                            }
+                          }}
+                        />
+                        <button
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => { setNewDossierFor(null); setNewDossierValue(""); }}
+                        >×</button>
+                      </div>
+                    ) : (
+                      <select
+                        className="border border-border rounded px-2 py-1 text-xs bg-background w-full max-w-[180px]"
+                        value={t.dossier ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "__new__") {
+                            setNewDossierValue("");
+                            setNewDossierFor(t.id);
+                          } else {
+                            updateTx(t.id, { dossier: v || null });
+                          }
+                        }}
+                      >
+                        <option value="">— geen dossier —</option>
+                        {(dossierList ?? []).map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                        {t.dossier && !(dossierList ?? []).includes(t.dossier) && (
+                          <option value={t.dossier}>{t.dossier}</option>
+                        )}
+                        <option value="__new__">+ nieuw dossier…</option>
+                      </select>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right">
                     {t.budget_line_item_id && (t.counterparty_name || t.description) && (
