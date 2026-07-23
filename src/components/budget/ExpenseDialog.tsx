@@ -28,6 +28,33 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
   const [invoiceRef, setInvoiceRef] = useState("");
   const [dossier, setDossier] = useState("");
 
+  const fmtDate = (d?: string | null) => {
+    if (!d) return "";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d.slice(0, 10);
+    return dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
+  // Extract a short, human-readable description from a raw SEPA line.
+  const cleanDescription = (raw?: string | null) => {
+    if (!raw) return "";
+    const s = raw.replace(/\s+/g, " ").trim();
+    // Prefer the "Omschrijving:" segment when present
+    const om = s.match(/Omschrijving:\s*(.+?)(?:\s+(?:Kenmerk|IBAN|BIC|Machtiging|Incassant|Naam):|$)/i);
+    if (om?.[1]) return om[1].trim();
+    // Otherwise strip the noisy SEPA prefix + IBAN/BIC/Kenmerk clutter
+    return s
+      .replace(/^SEPA\s+(Incasso|Overboeking)[^:]*?(?=IBAN:|Naam:|Omschrijving:|$)/i, "")
+      .replace(/IBAN:\s*\S+/gi, "")
+      .replace(/BIC:\s*\S+/gi, "")
+      .replace(/Machtiging:\s*\S+/gi, "")
+      .replace(/Incassant:\s*\S+/gi, "")
+      .replace(/Kenmerk:\s*\S+/gi, "")
+      .replace(/Naam:\s*/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  };
+
   const allLineItems = (categories || []).flatMap((c) =>
     c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
   );
@@ -88,14 +115,18 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                 <tbody>
                   {visibleExpenses.map((e) => (
                     <tr key={e.id} className="border-b border-border/50">
-                      <td className="px-2 py-1 whitespace-nowrap">
-                        {e.expense_date || ""}
+                      <td className="px-2 py-1 whitespace-nowrap align-top">
+                        {fmtDate(e.expense_date)}
                         {(e as any)._fromBank && (
-                          <span className="ml-2 text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</span>
+                          <div className="mt-1 inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</div>
                         )}
                       </td>
-                      <td className="px-2 py-1">{e.description || ""}</td>
-                      <td className="px-2 py-1">{e.dossier || ""}</td>
+                      <td className="px-2 py-1 align-top max-w-[280px]">
+                        <div className="truncate" title={e.description || ""}>
+                          {(e as any)._fromBank ? cleanDescription(e.description) : (e.description || "")}
+                        </div>
+                      </td>
+                      <td className="px-2 py-1 align-top">{e.dossier || ""}</td>
                       <td className="px-2 py-1 min-w-[220px]">
                         {onUpdateExpense && !(e as any)._fromBank ? (
                           <Select
