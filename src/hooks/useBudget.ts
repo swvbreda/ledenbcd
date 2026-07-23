@@ -176,6 +176,30 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         bankAsExpenses = bankAsExpenses.concat(pontoAsExpenses);
       }
 
+      // Dedupliceer bankregels: ABN-import (bank_transactions) en Ponto
+      // (ponto_transactions) kunnen dezelfde betaling bevatten. We houden per
+      // (datum + bedrag + tegenpartij) één regel over, met voorkeur voor de
+      // Ponto-live regel (die is meestal completer qua omschrijving).
+      {
+        const seen = new Map<string, any>();
+        const norm = (s?: string | null) => (s || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
+        for (const e of bankAsExpenses) {
+          const dateKey = (e.expense_date || "").slice(0, 10);
+          const amtKey = Math.round((Number(e.amount) || 0) * 100);
+          const cpKey = norm(e.creditor_name);
+          const key = `${e.line_item_id}|${dateKey}|${amtKey}|${cpKey}`;
+          const existing = seen.get(key);
+          if (!existing) {
+            seen.set(key, e);
+          } else {
+            // Prefer ponto (id begins with "ponto:") over ABN-import when both aanwezig
+            const preferNew = String(e.id).startsWith("ponto:") && !String(existing.id).startsWith("ponto:");
+            if (preferNew) seen.set(key, e);
+          }
+        }
+        bankAsExpenses = Array.from(seen.values());
+      }
+
       // Voor de post "Contributies" (Inkomsten) is member_contributions leidend:
       // die tabel bevat alle als betaald geregistreerde bijdragen (inclusief
       // handmatige koppelingen en backfill), en klopt daarmee altijd met de
