@@ -167,7 +167,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
         </div>
         <Button size="sm" onClick={runSync} disabled={syncing}>
           <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
-          {syncing ? "Ophalen…" : "Ponto ophalen"}
+          {syncing ? "Ophalen…" : "Bank ophalen"}
         </Button>
       </div>
 
