@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, CheckCircle2, AlertCircle, Link2 } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertCircle, Link2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,40 @@ export default function InformerSyncTab() {
   const [syncing, setSyncing] = useState(false);
   const qc = useQueryClient();
   const [linkOpen, setLinkOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    success: boolean;
+    authenticated?: boolean;
+    administration?: { id?: string; name?: string; source?: string } | null;
+    security_code_preview?: string | null;
+    is_override?: boolean;
+    error?: string;
+    note?: string;
+  } | null>(null);
+
+  const runVerify = async (codeOverride?: string) => {
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const qs = codeOverride ? `?action=whoami&code=${encodeURIComponent(codeOverride)}` : "?action=whoami";
+      const { data, error } = await invokeWithAuth<any>(`informer-sync${qs}`, { method: "POST" });
+      if (error) throw new Error(error.message);
+      setVerifyResult(data);
+      if (data?.authenticated && data?.administration?.name) {
+        toast.success(`Actieve administratie: ${data.administration.name}`);
+      } else if (data?.authenticated) {
+        toast.success("Authenticatie geslaagd");
+      } else {
+        toast.error(data?.error ?? "Authenticatie mislukt");
+      }
+    } catch (e) {
+      toast.error(`Controle mislukt: ${(e as Error).message}`);
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const { data: logs } = useQuery({
     queryKey: ["informer_sync_log"],
@@ -175,6 +209,12 @@ export default function InformerSyncTab() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => { setVerifyOpen(true); setVerifyResult(null); setVerifyCode(""); runVerify(); }}
+            >
+              <ShieldCheck size={14} /> Administratie controleren
+            </Button>
             <Button variant="outline" onClick={openLinker}>
               <Link2 size={14} /> Debiteuren koppelen
             </Button>
@@ -193,6 +233,55 @@ export default function InformerSyncTab() {
       </div>
 
       <DebtorLinkDialog open={linkOpen} onOpenChange={setLinkOpen} onLinked={() => qc.invalidateQueries({ queryKey: ["informer_sync_log"] })} />
+
+      <Dialog open={verifyOpen} onOpenChange={setVerifyOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Informer-administratie controleren</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="text-sm text-muted-foreground">
+              Controleert bij Informer welke administratie hoort bij de opgeslagen security code.
+              Wil je een andere ID testen? Plak hem hieronder — er wordt niets opgeslagen tot je bevestigt.
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background font-mono"
+                placeholder="Optioneel: nieuwe INFORMER_ADMINISTRATION_ID"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+              />
+              <Button variant="outline" onClick={() => runVerify(verifyCode.trim() || undefined)} disabled={verifying}>
+                <RefreshCw size={14} className={verifying ? "animate-spin" : ""} /> Controleren
+              </Button>
+            </div>
+            {verifyResult && (
+              <div className={`border rounded-lg p-3 text-sm ${verifyResult.authenticated ? "border-green-600/40 bg-green-50 dark:bg-green-950/20" : "border-destructive/40 bg-destructive/5"}`}>
+                <div className="flex items-center gap-2 font-medium mb-1">
+                  {verifyResult.authenticated ? <CheckCircle2 size={16} className="text-green-600" /> : <AlertCircle size={16} className="text-destructive" />}
+                  {verifyResult.authenticated ? "Authenticatie geslaagd" : "Authenticatie mislukt"}
+                </div>
+                {verifyResult.administration?.name && (
+                  <div className="mt-1"><span className="text-muted-foreground">Administratie:</span> <strong>{verifyResult.administration.name}</strong></div>
+                )}
+                {verifyResult.administration?.id && (
+                  <div><span className="text-muted-foreground">ID:</span> <code className="text-xs">{verifyResult.administration.id}</code></div>
+                )}
+                {verifyResult.security_code_preview && (
+                  <div className="text-xs text-muted-foreground mt-1">Security code: {verifyResult.security_code_preview}{verifyResult.is_override ? " (testwaarde)" : " (opgeslagen)"}</div>
+                )}
+                {verifyResult.note && <div className="text-xs text-muted-foreground mt-1">{verifyResult.note}</div>}
+                {verifyResult.error && <div className="text-destructive text-xs mt-1">{verifyResult.error}</div>}
+                {verifyResult.is_override && verifyResult.authenticated && (
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Als dit de juiste administratie is, laat dit weten dan werk ik het secret <code>INFORMER_ADMINISTRATION_ID</code> bij.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         <div className="px-4 py-2 border-b border-border bg-muted/30">
