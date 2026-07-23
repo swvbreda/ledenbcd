@@ -142,6 +142,38 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
           direction: b.direction,
           _fromBank: true,
         }));
+
+        // Live bankboekingen (Ponto): koppel via budget_line_item_id
+        const yearStart = `${year}-01-01`;
+        const yearEnd = `${year + 1}-01-01`;
+        const { data: pontoRows, error: pontoErr } = await client
+          .from("ponto_transactions")
+          .select("id, executed_at, amount, counterparty_name, description, remittance_info, budget_line_item_id, dossier, created_at")
+          .in("budget_line_item_id", lineItemIds)
+          .gte("executed_at", yearStart)
+          .lt("executed_at", yearEnd);
+        if (pontoErr) throw pontoErr;
+        const pontoAsExpenses = (pontoRows || []).map((p: any) => {
+          const raw = Number(p.amount) || 0;
+          return {
+            id: `ponto:${p.id}`,
+            line_item_id: p.budget_line_item_id,
+            description: p.description || p.remittance_info,
+            amount: Math.abs(raw),
+            expense_date: p.executed_at,
+            creditor_name: p.counterparty_name,
+            invoice_reference: null,
+            dossier: p.dossier,
+            source: "bank",
+            pdf_file_path: null,
+            paid: true,
+            paid_date: p.executed_at,
+            created_at: p.created_at,
+            direction: raw >= 0 ? "in" : "out",
+            _fromBank: true,
+          };
+        });
+        bankAsExpenses = bankAsExpenses.concat(pontoAsExpenses);
       }
 
       // Bank is leidend: per begrotingspost gebruiken we de gekoppelde
