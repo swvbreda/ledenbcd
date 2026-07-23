@@ -379,7 +379,11 @@ export default function FinancienPage() {
                     onDeleteCategory={(id) => mutations.deleteCategory.mutate(id, { onSuccess: () => toast.success("Categorie verwijderd") })}
                     onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
                     getCellClicks={(li) => {
-                      if (li.name.toLowerCase().includes("contribut")) {
+                      // Alleen de Inkomsten-post "Contributies" krijgt de klikbare
+                      // breakdown; de uitgavenpost "Contributies & abonnementen"
+                      // moet z'n eigen banktransacties tonen, niet de ontvangen
+                      // ledencontributies.
+                      if (li.name.trim().toLowerCase() === "contributies") {
                         const invs = contributionInvoices ?? [];
                         const paidTotal = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
                         const openTotal = invs.reduce((s, i) => {
