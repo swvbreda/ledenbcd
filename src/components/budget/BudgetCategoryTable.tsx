@@ -28,10 +28,16 @@ export default function BudgetCategoryTable({
   const [newAmount, setNewAmount] = useState("");
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
-  const totalSpent = category.line_items.reduce(
-    (s, li) => s + li.expenses.reduce((es, e) => es + (e.direction === "in" ? -e.amount : e.amount), 0),
-    0
-  );
+  const isIncome = category.name.toLowerCase() === "inkomsten";
+  const sumExpenses = (li: typeof category.line_items[number]) =>
+    li.expenses.reduce((es, e) => {
+      // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
+      // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
+      // Voor kostenposten is het andersom: uit=gerealiseerd, in=refund.
+      const sign = e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
+      return es + sign * e.amount;
+    }, 0);
+  const totalSpent = category.line_items.reduce((s, li) => s + sumExpenses(li), 0);
   const totalRemaining = totalBudgeted - totalSpent;
 
   const handleAdd = () => {
@@ -85,7 +91,7 @@ export default function BudgetCategoryTable({
               <th />
             </tr>
             {category.line_items.map((li) => {
-              const spent = li.expenses.reduce((s, e) => s + (e.direction === "in" ? -e.amount : e.amount), 0);
+              const spent = sumExpenses(li);
               const remaining = li.budgeted_amount - spent;
               return (
                 <tr
@@ -95,7 +101,7 @@ export default function BudgetCategoryTable({
                 >
                   <td className="px-3 py-1.5">{li.name}</td>
                   <td className="px-3 py-1.5"><CurrencyCell value={li.budgeted_amount} /></td>
-                  <td className="px-3 py-1.5">{spent > 0 ? <CurrencyCell value={spent} /> : ""}</td>
+                  <td className="px-3 py-1.5">{spent !== 0 ? <CurrencyCell value={spent} /> : ""}</td>
                   <td className="px-3 py-1.5">
                     <CurrencyCell value={remaining} className={remaining < 0 ? "text-destructive" : ""} />
                   </td>
