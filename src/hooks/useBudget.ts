@@ -176,6 +176,52 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         bankAsExpenses = bankAsExpenses.concat(pontoAsExpenses);
       }
 
+      // Voor de post "Contributies" (Inkomsten) is member_contributions leidend:
+      // die tabel bevat alle als betaald geregistreerde bijdragen (inclusief
+      // handmatige koppelingen en backfill), en klopt daarmee altijd met de
+      // ledenadministratie en met /contributie.
+      const contribCategory = (categories || []).find(
+        (c: any) => String(c.name).toLowerCase() === "inkomsten"
+      );
+      const contribLineItem = contribCategory
+        ? (lineItems || []).find(
+            (li: any) =>
+              li.category_id === contribCategory.id &&
+              String(li.name).toLowerCase().startsWith("contribut"),
+          )
+        : null;
+      if (contribLineItem) {
+        const { data: paidContribs, error: pcErr } = await (supabase as any)
+          .from("member_contributions")
+          .select("id, member_id, amount, paid_date, updated_at")
+          .eq("year", year)
+          .eq("paid", true);
+        if (pcErr) throw pcErr;
+        const contribAsExpenses = (paidContribs || []).map((c: any) => ({
+          id: `contrib:${c.id}`,
+          line_item_id: contribLineItem.id,
+          description: `Contributie lid #${c.member_id}`,
+          amount: Number(c.amount) || 0,
+          expense_date: c.paid_date || c.updated_at,
+          creditor_name: null,
+          invoice_reference: null,
+          dossier: null,
+          source: "contribution",
+          pdf_file_path: null,
+          paid: true,
+          paid_date: c.paid_date,
+          created_at: c.updated_at,
+          direction: "in" as const,
+          _fromBank: true,
+        }));
+        // Vervang eventuele ponto-koppelingen op deze post: contributies zijn
+        // hier de bron van waarheid — we willen niet dubbel tellen.
+        bankAsExpenses = bankAsExpenses.filter(
+          (e) => e.line_item_id !== contribLineItem.id,
+        );
+        bankAsExpenses = bankAsExpenses.concat(contribAsExpenses);
+      }
+
       // Bank is leidend: per begrotingspost gebruiken we de gekoppelde
       // banktransacties als die er zijn. Alleen wanneer er geen enkele bankregel
       // aan een post hangt, vallen we terug op handmatige / PDF-boekingen.
