@@ -135,6 +135,8 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
       max_allowance_note: form.max_allowance_note || null,
       status: "pending",
       submitted_by: userId,
+      paid_at: null,
+      bank_transaction_id: null,
     });
     setForm({
       board_member_name: form.board_member_name,
