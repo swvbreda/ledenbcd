@@ -546,7 +546,13 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
               year,
               invoice_number: invoiceNumber,
               invoice_file_path: null,
+              amount,
             });
+          } else {
+            await supabase
+              .from("contribution_invoices")
+              .update({ amount })
+              .eq("id", invExisting.id);
           }
         }
         processed++;
