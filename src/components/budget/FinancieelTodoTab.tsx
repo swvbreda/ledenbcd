@@ -472,6 +472,11 @@ export default function FinancieelTodoTab({ year }: Props) {
       )}
 
       {/* Grouped tables by type category */}
+      <UnmatchedBankTransactionsPanel
+        refreshKey={pending.length}
+        onLink={(todoId, transactionId) => setLinkDialogTodo({ id: todoId, reference_id: transactionId })}
+      />
+
       {grouped.map(([category, items]) => (
         <div key={category} className="space-y-2">
           <div className="flex items-center gap-2">
