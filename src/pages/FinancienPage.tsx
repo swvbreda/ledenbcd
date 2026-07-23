@@ -565,6 +565,17 @@ export default function FinancienPage() {
         categories={categories || []}
         onDeleteExpense={(id) => mutations.deleteExpense.mutateAsync(id)}
       />
+
+      <ContributiesBreakdownDialog
+        open={contributieBreakdown !== null}
+        onOpenChange={(o) => !o && setContributieBreakdown(null)}
+        mode={contributieBreakdown ?? "invoices"}
+        year={year}
+        budgetedMemberCount={yearSettings?.budgeted_member_count ?? contributionStats.totalMembers}
+        invoices={contributionInvoices ?? []}
+        contributions={contributions ?? []}
+        members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam, bedrijfsnaam: (m as any).bedrijfsnaam }))}
+      />
     </div>
   );
 }
