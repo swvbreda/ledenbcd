@@ -1,9 +1,5 @@
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Trash2, Plus, ArrowDownToLine } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, ArrowDownToLine } from "lucide-react";
 import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 
@@ -20,14 +16,7 @@ interface Props {
   userId: string;
 }
 
-export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineItemId, expenses, onAddExpense, onDeleteExpense, onUpdateExpense, categories, userId }: Props) {
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
-  const [creditor, setCreditor] = useState("");
-  const [invoiceRef, setInvoiceRef] = useState("");
-  const [dossier, setDossier] = useState("");
-
+export default function ExpenseDialog({ open, onOpenChange, lineItemName, expenses, onDeleteExpense, onUpdateExpense, categories: _categories }: Props) {
   const fmtDate = (d?: string | null) => {
     if (!d) return "";
     const dt = new Date(d);
@@ -80,12 +69,6 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
     return { merchant: "", note: cleaned };
   };
 
-  const allLineItems = (categories || []).flatMap((c) =>
-    c.line_items.map((li) => ({ id: li.id, label: `${c.name} → ${li.name}` }))
-  );
-
-  const getLineItemLabel = (id: string) => allLineItems.find((li) => li.id === id)?.label || lineItemName;
-
   // Bijschrijvingen (direction='in') horen nooit in de uitgavenlijst, ook niet
   // als ze per ongeluk aan een begrotingspost zijn gehangen. Bankboekingen
   // (_fromBank) horen wél in het overzicht — het zijn de daadwerkelijke
@@ -94,26 +77,6 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
     .filter((e) => e.direction !== "in")
     .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
   const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
-
-  const handleAdd = () => {
-    if (!amount) return;
-    onAddExpense({
-      line_item_id: lineItemId,
-      description: description || undefined,
-      amount: parseFloat(amount),
-      expense_date: date || undefined,
-      creditor_name: creditor || undefined,
-      invoice_reference: invoiceRef || undefined,
-      dossier: dossier || undefined,
-      created_by: userId,
-    });
-    setDescription("");
-    setAmount("");
-    setDate("");
-    setCreditor("");
-    setInvoiceRef("");
-    setDossier("");
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,12 +90,10 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background">
                   <tr className="border-b border-border">
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Datum</th>
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Omschrijving</th>
+                    <th className="text-left px-2 py-1 text-muted-foreground font-medium whitespace-nowrap">Datum</th>
+                    <th className="text-right px-2 py-1 text-muted-foreground font-medium whitespace-nowrap w-36">Bedrag</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Leverancier</th>
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Factuurnr.</th>
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Dossier</th>
-                    <th className="text-right px-2 py-1 text-muted-foreground font-medium whitespace-nowrap w-32">Bedrag</th>
+                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Omschrijving / factuurnr.</th>
                     <th className="w-10" />
                   </tr>
                 </thead>
@@ -150,20 +111,18 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                           <div className="mt-1 inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</div>
                         )}
                       </td>
-                      <td className="px-2 py-1 align-top max-w-[280px]">
-                        <div className="truncate font-medium" title={e.description || ""}>
+                      <td className="text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums"><CurrencyCell value={e.amount} /></td>
+                      <td className="px-2 py-1 max-w-[200px]">
+                        <div className="truncate" title={merchant}>{merchant || "—"}</div>
+                      </td>
+                      <td className="px-2 py-1 align-top max-w-[320px]">
+                        <div className="truncate font-medium" title={note}>
                           {note || merchant || "—"}
                         </div>
-                        {isBank && merchant && note && merchant !== note && (
-                          <div className="text-[11px] text-muted-foreground truncate" title={merchant}>{merchant}</div>
+                        {e.invoice_reference && (
+                          <div className="text-[11px] text-muted-foreground truncate" title={e.invoice_reference}>Factuur: {e.invoice_reference}</div>
                         )}
                       </td>
-                      <td className="px-2 py-1 max-w-[160px]">
-                        <div className="truncate" title={merchant}>{merchant}</div>
-                      </td>
-                      <td className="px-2 py-1 tabular-nums">{e.invoice_reference || ""}</td>
-                      <td className="px-2 py-1 align-top">{e.dossier || ""}</td>
-                      <td className="text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
                           {onUpdateExpense && !isBank && (
@@ -190,9 +149,9 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   );
                   })}
                   <tr className="font-medium bg-muted/30">
-                    <td className="px-2 py-1" colSpan={5}>Totaal</td>
-                     <td className="text-right px-2 py-1 whitespace-nowrap tabular-nums"><CurrencyCell value={total} /></td>
-                    <td />
+                    <td className="px-2 py-1">Totaal</td>
+                    <td className="text-right px-2 py-1 whitespace-nowrap tabular-nums"><CurrencyCell value={total} /></td>
+                    <td colSpan={3} />
                   </tr>
                 </tbody>
               </table>
