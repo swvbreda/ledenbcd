@@ -29,18 +29,6 @@ interface PontoBankBalance {
 }
 
 export default function BankBalancesCard() {
-  const { data: informer, isLoading: loadingInformer } = useQuery({
-    queryKey: ["informer_bank_balances"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("informer_bank_balances")
-        .select("*")
-        .order("name", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as InformerBankBalance[];
-    },
-  });
-
   const { data: ponto, isLoading: loadingPonto } = useQuery({
     queryKey: ["ponto_bank_balances"],
     queryFn: async () => {
@@ -53,18 +41,15 @@ export default function BankBalancesCard() {
     },
   });
 
-  if (loadingInformer || loadingPonto) return null;
+  if (loadingPonto) return null;
   const pontoList = ponto ?? [];
-  const informerList = informer ?? [];
-  if (pontoList.length === 0 && informerList.length === 0) return null;
+  if (pontoList.length === 0) return null;
 
   const pontoTotal = pontoList.reduce((s, b) => s + Number(b.available_balance || 0), 0);
-  const lastUpdate =
-    [...pontoList, ...informerList].reduce<string | null>((acc, b) => {
-      if (!acc) return b.updated_at;
-      return b.updated_at > acc ? b.updated_at : acc;
-    }, null);
-  const informerHasBalances = informerList.some((b) => Number(b.balance) !== 0);
+  const lastUpdate = pontoList.reduce<string | null>((acc, b) => {
+    if (!acc) return b.updated_at;
+    return b.updated_at > acc ? b.updated_at : acc;
+  }, null);
 
   return (
     <div className="border border-border rounded-lg bg-card p-4 mb-4">
@@ -80,10 +65,8 @@ export default function BankBalancesCard() {
         )}
       </div>
 
-      {pontoList.length > 0 && (
-        <>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Ponto (live)</div>
-          <table className="w-full text-sm mb-3">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Ponto (live)</div>
+      <table className="w-full text-sm">
             <tbody>
               {pontoList.map((b) => (
                 <tr key={b.id} className="border-b border-border/40 last:border-0">
@@ -103,37 +86,7 @@ export default function BankBalancesCard() {
                 </tr>
               )}
             </tbody>
-          </table>
-        </>
-      )}
-
-      {informerList.length > 0 && (
-        <>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Informer (rekeningen)</div>
-          {!informerHasBalances && (
-            <p className="text-xs text-muted-foreground mb-2">
-              Informer levert geen actueel banksaldo via de API — alleen de rekening­namen worden getoond.
-            </p>
-          )}
-          <table className="w-full text-sm">
-            <tbody>
-              {informerList.map((b) => (
-                <tr key={b.id} className="border-b border-border/40 last:border-0">
-                  <td className="py-1.5">
-                    <div className="font-medium">{b.name || b.account_id}</div>
-                    {b.iban && <div className="text-xs text-muted-foreground tabular-nums">{b.iban}</div>}
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {Number(b.balance) !== 0
-                      ? <CurrencyText value={Number(b.balance)} />
-                      : <span className="text-muted-foreground">—</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
+      </table>
     </div>
   );
 }
