@@ -630,57 +630,52 @@ async function pullBankBalances(supabase: any): Promise<ActionResult> {
   const action = "pull_bank_balances";
   const api_calls: ApiCall[] = [];
   try {
-    // Informer v2 kent geen uniform bank-endpoint per administratie; we proberen
-    // een aantal varianten en gebruiken de eerste die records teruggeeft.
-    const candidates = [
-      "/bank_accounts",
-      "/ledger_accounts?type=bank",
-      "/journals?type=bank",
-      "/journals",
-    ];
-    let items: any[] = [];
-    let usedEndpoint = "";
-    for (const path of candidates) {
-      const sep = path.includes("?") ? "&" : "?";
-      const call = await informerCall(`${path}${sep}records=100&page=0`, {}, api_calls);
-      if (call.error) continue;
-      const apiError = hasInformerError(call.response_body);
-      if (!call.ok || apiError) continue;
-      const batch = normalizeInformerList(call.response_body, [
-        "bank_account", "bank_accounts", "ledger_account", "ledger_accounts",
-        "journal", "journals", "data",
-      ]);
-      const banks = batch.filter((r: any) => {
-        const t = String(r.type ?? r.journal_type ?? r.kind ?? "").toLowerCase();
-        // Behoud alles bij bank_accounts; filter op 'bank' voor generieke lijsten.
-        return path.startsWith("/bank_accounts") || t.includes("bank") || r.iban || r.bic;
-      });
-      if (banks.length > 0) {
-        items = banks;
-        usedEndpoint = path;
-        break;
-      }
+    // Informer v2: bank-rekeningen zitten in /journals als type "1"
+    // (0=Kas is null, 1=Bank, 2=Verkoop, 3=Inkoop, 4=Memoriaal). We halen alle
+    // journalen op en filteren daaruit de bankjournalen.
+    const journalsCall = await informerCall("/journals?records=200&page=0", {}, api_calls);
+    if (!journalsCall.ok || hasInformerError(journalsCall.response_body)) {
+      return {
+        action, success: false, items_processed: 0, api_calls,
+        error_message: `Kon /journals niet ophalen (status ${journalsCall.status ?? "?"})`,
+      };
+    }
+    const allJournals = normalizeInformerList(journalsCall.response_body, ["journal", "journals", "data"]);
+    const bankJournals = allJournals.filter((j: any) => String(j.type ?? "") === "1");
+    const usedEndpoint = "/journals?type=1";
+
+    // Voor het saldo halen we per bankjournaal het bijbehorende grootboek op.
+    // Informer geeft daar een `balance`/`actual_balance`-veld terug wanneer
+    // beschikbaar; anders vallen we terug op 0 en tonen we het rekening­nummer.
+    const items: any[] = [];
+    for (const j of bankJournals) {
+      const ledgerId = j.ledger_id ?? j.ledgerId;
+      // Informer v2 API biedt geen endpoint voor bank-saldi of grootboek­details;
+      // we bewaren de rekening zonder saldo en tonen dat in de UI.
+      items.push({ ...j, ledger: {}, ledger_id: ledgerId });
     }
 
     if (items.length === 0) {
       return {
         action, success: true, items_processed: 0, api_calls,
-        error_message: "Geen bank­rekeningen gevonden in Informer — controleer of het account bank­administraties bevat.",
+        error_message: "Geen bank­journalen (type 1) gevonden in Informer.",
       };
     }
 
     let processed = 0;
     const today = new Date().toISOString().slice(0, 10);
     for (const b of items) {
-      const accountId = String(b.id ?? b.account_id ?? b.journal_id ?? b.number ?? b.iban ?? "").trim();
+      const l = b.ledger ?? {};
+      const accountId = String(b.id ?? b.journal_id ?? b.number ?? "").trim();
       if (!accountId) continue;
-      const name = b.name ?? b.description ?? b.account_name ?? b.journal_name ?? "Bankrekening";
-      const iban = b.iban ?? b.bank_account?.iban ?? null;
+      const name = b.description ?? b.name ?? l.description ?? l.name ?? "Bankrekening";
+      const iban = b.iban ?? l.iban ?? b.bank_account?.iban ?? l.bank_account?.iban ?? null;
       const balance = toAmount(
-        b.balance ?? b.current_balance ?? b.saldo ?? b.actual_balance ?? b.book_balance ?? 0,
+        l.balance ?? l.actual_balance ?? l.current_balance ?? l.saldo ?? l.book_balance ??
+        b.balance ?? b.actual_balance ?? b.current_balance ?? b.saldo ?? 0,
       );
-      const currency = b.currency ?? b.currency_code ?? "EUR";
-      const asOf = b.balance_date ?? b.as_of_date ?? b.last_mutation_date ?? today;
+      const currency = l.currency ?? b.currency ?? b.currency_code ?? "EUR";
+      const asOf = l.balance_date ?? l.last_mutation_date ?? b.balance_date ?? today;
 
       await supabase.from("informer_bank_balances").upsert({
         account_id: accountId,
