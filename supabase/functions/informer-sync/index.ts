@@ -481,8 +481,9 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       contributionByYear.set(Number(r.year), Number(r.contribution_amount ?? 3000));
     }
     const defaultContribution = 3000;
-    // Contributiefactuurnummers hebben het formaat YYYYNNN (bv. 2026068), zonder streepje.
-    const CONTRIBUTION_NUMBER_RE = /^20\d{6}$/;
+    // Contributiefacturen in Informer hebben wisselende nummerformaten:
+    // korte nummers (bv. "95", "110"), met voorloopnullen ("074") en jaar-prefix
+    // ("2026-0005"). We accepteren daarom elk factuurnummer en filteren op bedrag.
 
     const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
     const invoiceRemap = await ensureInvoiceRelationMappings(
@@ -526,9 +527,10 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         // 1) Factuurnummer moet aanwezig zijn en het contributie-formaat YYYYNNN hebben.
         // 2) Bedrag moet realistisch zijn voor contributie (€500 – 2× jaarbedrag).
         const contribAmountYear = contributionByYear.get(year) ?? defaultContribution;
-        const numberOk = typeof invoiceNumber === "string" && CONTRIBUTION_NUMBER_RE.test(invoiceNumber);
+        // Alleen realistische contributiebedragen doorlaten (halve of hele contributie,
+        // maximaal 2× het jaarbedrag). Kleine bedragen zijn geen contributie.
         const amountOk = amount >= 500 && amount <= contribAmountYear * 2;
-        if (!numberOk || !amountOk) {
+        if (!invoiceNumber || !amountOk) {
           skippedNonContribution++;
           continue;
         }
