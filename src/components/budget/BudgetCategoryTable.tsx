@@ -16,6 +16,10 @@ interface Props {
     budgeted?: () => void;
     spent?: () => void;
     remaining?: () => void;
+    spentValue?: number;
+    remainingValue?: number;
+    remainingLabel?: string;
+    remainingHint?: string;
   } | null;
 }
 
@@ -108,8 +112,10 @@ export default function BudgetCategoryTable({
             </tr>
             {category.line_items.map((li) => {
               const spent = sumExpenses(li);
-              const remaining = li.budgeted_amount - spent;
               const clicks = getCellClicks ? getCellClicks(li) : null;
+              const spentValue = clicks?.spentValue ?? spent;
+              const remaining = clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
+              const rowRemainingLabel = clicks?.remainingLabel;
               const cellBtn = (fn?: () => void) =>
                 fn
                   ? (e: React.MouseEvent) => { e.stopPropagation(); fn(); }
@@ -122,15 +128,25 @@ export default function BudgetCategoryTable({
                   className="border-b border-border/50 hover:bg-muted/20 cursor-pointer transition-colors"
                   onClick={() => onOpenExpenses(li.id, li.name)}
                 >
-                  <td className="px-3 py-1.5">{li.name}</td>
+                  <td className="px-3 py-1.5">
+                    {li.name}
+                    {clicks?.remainingHint && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{clicks.remainingHint}</div>
+                    )}
+                  </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.budgeted)}>
                     <CurrencyCell value={li.budgeted_amount} className={clickableClass(clicks?.budgeted)} />
                   </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.spent)}>
-                    {spent !== 0 ? <CurrencyCell value={spent} className={clickableClass(clicks?.spent)} /> : ""}
+                    {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
                   </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.remaining)}>
-                    <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />
+                    <div className="flex flex-col items-end">
+                      <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />
+                      {rowRemainingLabel && (
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{rowRemainingLabel}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-1">
                     <button

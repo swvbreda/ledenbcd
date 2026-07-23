@@ -368,10 +368,31 @@ export default function FinancienPage() {
                     onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
                     getCellClicks={(li) => {
                       if (li.name.toLowerCase().includes("contribut")) {
+                        const invs = contributionInvoices ?? [];
+                        const paidMemberIds = new Set(
+                          (contributions ?? []).filter((c) => c.paid).map((c) => c.member_id)
+                        );
+                        const paidTotal = invs
+                          .filter((i) => paidMemberIds.has(i.member_id))
+                          .reduce((s, i) => s + (i.amount ?? 0), 0);
+                        const openTotal = invs
+                          .filter((i) => !paidMemberIds.has(i.member_id))
+                          .reduce((s, i) => s + (i.amount ?? 0), 0);
+                        const invoicedTotal = paidTotal + openTotal;
+                        const budgetedMembers = yearSettings?.budgeted_member_count ?? 0;
+                        const extra = invs.length - budgetedMembers;
+                        const hint =
+                          budgetedMembers > 0 && extra !== 0
+                            ? `${invs.length} facturen verstuurd (${extra > 0 ? "+" : ""}${extra} t.o.v. begroting) · totaal gefactureerd ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(invoicedTotal)}`
+                            : `${invs.length} facturen verstuurd · totaal gefactureerd ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(invoicedTotal)}`;
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
                           remaining: () => setContributieBreakdown("unpaid"),
+                          spentValue: paidTotal,
+                          remainingValue: openTotal,
+                          remainingLabel: "openstaand",
+                          remainingHint: hint,
                         };
                       }
                       return null;
