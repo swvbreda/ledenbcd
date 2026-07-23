@@ -315,6 +315,21 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     return partial;
   };
 
+  // Fallback: als er geen openstaande factuur meer is (bv. handmatig afgevinkt of
+  // backfill), pak dan de meest recente factuur van dit lid — dan kunnen we de
+  // bankboeking nog steeds categoriseren onder Contributies zonder een dubbele
+  // payment in te schieten.
+  const findAnyInvoice = (memberId: number) => {
+    let best: any = null;
+    for (const inv of invoiceList) {
+      if (inv.member_id !== memberId) continue;
+      if (!best || inv.year > best.year) best = inv;
+    }
+    return best;
+  };
+
+  const currentYear = new Date().getFullYear();
+
   for (const t of txs) {
     const amount = Number(t.amount);
     const hay = `${t.counterparty_name ?? ""} ${t.description ?? ""} ${t.remittance_info ?? ""}`;
@@ -322,6 +337,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     const iban = ((t as any).counterparty_iban || "").replace(/\s+/g, "").toUpperCase();
 
     let hit: { member_id: number; year: number; invoice_number: string | null; strategy: string } | null = null;
+    let memberCandidate: number | null = null;
 
     // 1) Factuurnummer-match
     for (const inv of invoiceList) {
@@ -360,6 +376,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     // 3) IBAN-match uit eerder gekoppelde boekingen van hetzelfde lid
     if (!hit && iban && ibanToMember.has(iban)) {
       const memberId = ibanToMember.get(iban)!;
+      memberCandidate = memberId;
       const inv = findOpenInvoice(memberId, amount);
       if (inv) hit = { member_id: memberId, year: inv.year, invoice_number: inv.invoice_number, strategy: "iban" };
     }
@@ -372,15 +389,39 @@ async function matchContributionPayments(supabase: any): Promise<number> {
           m.keys.some((k) => cpNorm === k || cpNorm.includes(k) || k.includes(cpNorm)),
         );
         if (matches.length === 1) {
+          if (memberCandidate == null) memberCandidate = matches[0].id;
           const inv = findOpenInvoice(matches[0].id, amount);
           if (inv) hit = { member_id: matches[0].id, year: inv.year, invoice_number: inv.invoice_number, strategy: "name" };
         }
       }
     }
 
+    // 5) Fallback: geen openstaande factuur meer (al betaald), maar we weten wél
+    //    aan welk lid dit ligt → alleen categoriseren, geen nieuwe payment.
+    if (!hit && memberCandidate != null) {
+      const inv = findAnyInvoice(memberCandidate);
+      hit = {
+        member_id: memberCandidate,
+        year: inv?.year ?? currentYear,
+        invoice_number: inv?.invoice_number ?? null,
+        strategy: iban && ibanToMember.get(iban) === memberCandidate ? "iban-paid" : "name-paid",
+      };
+    }
+
     if (!hit) continue;
 
     const paidAt = t.executed_at ?? new Date().toISOString();
+
+    // Alleen een nieuwe betaling registreren als contributie nog niet volledig
+    // is voldaan (voorkomt dubbeltelling na de handmatige/backfill markering).
+    const alreadyPaid = paidByMemberYear.get(`${hit.member_id}|${hit.year}`) ?? 0;
+    const requiredForYear = (() => {
+      for (const inv of invoiceList) {
+        if (inv.member_id === hit.member_id && inv.year === hit.year && inv.amount != null) return Number(inv.amount);
+      }
+      return 3000;
+    })();
+    const needsPayment = alreadyPaid < requiredForYear - AMOUNT_TOL;
 
     // Vermijd dubbele betaling: check of er al een bank-payment op deze dag met dit bedrag bestaat
     const { data: existing } = await supabase
@@ -393,7 +434,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       .gte("amount", amount - 0.01)
       .lte("amount", amount + 0.01)
       .limit(1);
-    if ((existing ?? []).length === 0) {
+    if (needsPayment && (existing ?? []).length === 0) {
       const { error: payErr } = await supabase.from("contribution_payments").insert({
         member_id: hit.member_id,
         year: hit.year,
