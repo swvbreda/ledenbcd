@@ -9,6 +9,7 @@ import { RefreshCw, Filter, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import { useBudgetCategories } from "@/hooks/useBudget";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface PontoTx {
   id: string;
@@ -44,6 +45,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const [syncing, setSyncing] = useState(false);
   const [newDossierFor, setNewDossierFor] = useState<string | null>(null);
   const [newDossierValue, setNewDossierValue] = useState("");
+  const [openTx, setOpenTx] = useState<PontoTx | null>(null);
 
   const { data: categories } = useBudgetCategories(year, "manual");
   const allLineItems = useMemo(
@@ -382,6 +384,12 @@ export default function BankboekingenTab({ year }: { year: number }) {
                         <Wand2 size={12} /> Regel
                       </button>
                     )}
+                    <button
+                      className="ml-3 text-xs text-muted-foreground hover:text-brand-red underline"
+                      onClick={() => setOpenTx(t)}
+                    >
+                      Openen
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -412,7 +420,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
                 const cls = strategyColor[strat] || "bg-muted text-muted-foreground border-border";
                 const label = strategyLabel[strat] || strat;
                 return (
-                  <tr key={tx.id} className="border-t border-border">
+                  <tr key={tx.id} className="border-t border-border cursor-pointer hover:bg-muted/40" onClick={() => setOpenTx(tx)}>
                     <td className="px-3 py-1.5 text-xs whitespace-nowrap">
                       {tx.executed_at ? new Date(tx.executed_at).toLocaleDateString("nl-NL") : "—"}
                     </td>
@@ -467,6 +475,95 @@ export default function BankboekingenTab({ year }: { year: number }) {
           </table>
         </div>
       )}
+
+      <Dialog open={!!openTx} onOpenChange={(o) => !o && setOpenTx(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Bankboeking</DialogTitle>
+          </DialogHeader>
+          {openTx && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Datum</span>
+                <span className="font-medium">{openTx.executed_at ? new Date(openTx.executed_at).toLocaleDateString("nl-NL") : "—"}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Bedrag</span>
+                <span className={`font-semibold tabular-nums ${Number(openTx.amount) < 0 ? "text-destructive" : "text-green-600"}`}>
+                  <CurrencyText value={Number(openTx.amount)} /> {openTx.currency || "EUR"}
+                </span>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Tegenpartij</div>
+                <div className="font-medium">{openTx.counterparty_name || "—"}</div>
+                {openTx.counterparty_iban && (
+                  <div className="text-xs text-muted-foreground tabular-nums">{openTx.counterparty_iban}</div>
+                )}
+              </div>
+              {openTx.description && (
+                <div>
+                  <div className="text-xs text-muted-foreground">Omschrijving</div>
+                  <div className="whitespace-pre-wrap break-words">{openTx.description}</div>
+                </div>
+              )}
+              {openTx.remittance_info && openTx.remittance_info !== openTx.description && (
+                <div>
+                  <div className="text-xs text-muted-foreground">Mededeling</div>
+                  <div className="whitespace-pre-wrap break-words">{openTx.remittance_info}</div>
+                </div>
+              )}
+              <div className="border-t border-border pt-3 space-y-2">
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Begrotingspost</span>
+                  <span className="font-medium text-right">
+                    {openTx.budget_line_item_id ? (lineItemLabel.get(openTx.budget_line_item_id) || "onbekend") : "— niet gekoppeld —"}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Dossier</span>
+                  <span className="font-medium text-right">{openTx.dossier || "—"}</span>
+                </div>
+                {(() => {
+                  const meta = parseContribDossier(openTx.dossier);
+                  if (!meta) return null;
+                  const name = memberNames?.get(meta.memberId) || `Lid #${meta.memberId}`;
+                  return (
+                    <div className="rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
+                      <div><span className="text-muted-foreground">Gekoppeld lid: </span><a className="font-medium underline hover:text-brand-red" href={`/leden/${meta.memberId}`}>{name} (#{meta.memberId})</a></div>
+                      {meta.invoice && <div><span className="text-muted-foreground">Factuur: </span><span className="font-medium">{meta.invoice}</span></div>}
+                    </div>
+                  );
+                })()}
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Matchstrategie</span>
+                  <span className="font-medium">
+                    {openTx.match_strategy ? (strategyLabel[openTx.match_strategy] || openTx.match_strategy) : (openTx.matched_manually ? "handmatig" : "—")}
+                  </span>
+                </div>
+              </div>
+              <div className="text-[10px] text-muted-foreground pt-2 border-t border-border tabular-nums">
+                ID: {openTx.transaction_id}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            {openTx?.budget_line_item_id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await updateTx(openTx.id, { budget_line_item_id: null, dossier: null });
+                  setOpenTx(null);
+                  toast.success("Koppeling verwijderd");
+                }}
+              >
+                Koppeling verwijderen
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setOpenTx(null)}>Sluiten</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
