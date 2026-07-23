@@ -43,7 +43,7 @@ function useReconciliation(year: number) {
           .eq("year", year),
         supabase
           .from("contribution_payments")
-          .select("member_id, year, amount, status, payment_method, paid_at, notes")
+          .select("member_id, year, amount, status, payment_method, paid_at")
           .eq("year", year)
           .eq("status", "paid"),
         supabase.from("members_data").select("id, data").in("member_type", ["member", "lead", "old"]),
