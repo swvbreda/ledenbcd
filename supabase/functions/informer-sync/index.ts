@@ -619,11 +619,12 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
               invoice_number: invoiceNumber,
               invoice_file_path: null,
               amount,
+              invoice_date: invoiceDate,
             });
           } else {
             await supabase
               .from("contribution_invoices")
-              .update({ amount })
+              .update({ amount, invoice_date: invoiceDate })
               .eq("id", invExisting.id);
           }
         }

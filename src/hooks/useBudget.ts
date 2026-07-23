@@ -200,10 +200,8 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         bankAsExpenses = Array.from(seen.values());
       }
 
-      // Voor de post "Contributies" (Inkomsten) is member_contributions leidend:
-      // die tabel bevat alle als betaald geregistreerde bijdragen (inclusief
-      // handmatige koppelingen en backfill), en klopt daarmee altijd met de
-      // ledenadministratie en met /contributie.
+      // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen
+      // leidend: de bankbijschrijvingen en verrekeningen komen hierin samen.
       const contribCategory = (categories || []).find(
         (c: any) => String(c.name).toLowerCase() === "inkomsten"
       );
@@ -216,24 +214,24 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         : null;
       if (contribLineItem) {
         const { data: paidContribs, error: pcErr } = await (supabase as any)
-          .from("member_contributions")
-          .select("id, member_id, amount, paid_date, updated_at")
+          .from("contribution_payments")
+          .select("id, member_id, amount, paid_at, updated_at")
           .eq("year", year)
-          .eq("paid", true);
+          .eq("status", "paid");
         if (pcErr) throw pcErr;
         const contribAsExpenses = (paidContribs || []).map((c: any) => ({
           id: `contrib:${c.id}`,
           line_item_id: contribLineItem.id,
           description: `Contributie lid #${c.member_id}`,
           amount: Number(c.amount) || 0,
-          expense_date: c.paid_date || c.updated_at,
+          expense_date: c.paid_at || c.updated_at,
           creditor_name: null,
           invoice_reference: null,
           dossier: null,
           source: "contribution",
           pdf_file_path: null,
           paid: true,
-          paid_date: c.paid_date,
+          paid_date: c.paid_at,
           created_at: c.updated_at,
           direction: "in" as const,
           _fromBank: true,

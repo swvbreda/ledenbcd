@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions, useUpsertContribution, useContributionInvoices } from "@/hooks/useContributions";
+import { useContributions, useUpsertContribution, useContributionInvoices, useContributionPayments } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -52,6 +52,7 @@ export default function FinancienPage() {
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: contributions } = useContributions(year);
   const { data: contributionInvoices } = useContributionInvoices(year);
+  const { data: contributionPayments } = useContributionPayments(year);
   const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
@@ -232,23 +233,34 @@ export default function FinancienPage() {
   
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
+  const paidByMember = useMemo(() => {
+    const map = new Map<number, number>();
+    (contributionPayments ?? []).forEach((p) => {
+      map.set(p.member_id, (map.get(p.member_id) ?? 0) + (Number(p.amount) || 0));
+    });
+    return map;
+  }, [contributionPayments]);
+
   const contributionStats = useMemo(() => {
     const contribs = contributions ?? [];
     const totalMembers = yearSettings?.budgeted_member_count
       ? yearSettings.budgeted_member_count
       : contribs.length > 0 ? contribs.length : effectiveMembers.length;
-    const paidCount = contribs.filter((c) => c.paid).length;
+    const paidCount = contribs.filter((c) => (paidByMember.get(c.member_id) ?? (c.paid ? c.amount : 0)) > 0).length;
     const unpaidCount = totalMembers - paidCount;
-    const totalReceived = contribs.filter((c) => c.paid).reduce((s, c) => s + c.amount, 0);
+    const totalReceived = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
     return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount };
-  }, [effectiveMembers, contributions, yearSettings, contributionAmount]);
+  }, [effectiveMembers, contributions, yearSettings, contributionAmount, contributionPayments, paidByMember]);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
-  const totalBudgeted = (categories || []).reduce(
+  const expenseCategories = (categories || []).filter(
+    (c) => !/inkomst|contribut|subsid|opbreng/i.test(c.name)
+  );
+  const totalBudgeted = expenseCategories.reduce(
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
   );
-  const totalSpent = (categories || []).reduce(
+  const totalSpent = expenseCategories.reduce(
     (s, c) => s + c.line_items.reduce(
       (ls, li) => ls + li.expenses.reduce((es, e) => es + (e.direction === "in" ? -e.amount : e.amount), 0),
       0
@@ -369,16 +381,12 @@ export default function FinancienPage() {
                     getCellClicks={(li) => {
                       if (li.name.toLowerCase().includes("contribut")) {
                         const invs = contributionInvoices ?? [];
-                        const paidMemberIds = new Set(
-                          (contributions ?? []).filter((c) => c.paid).map((c) => c.member_id)
-                        );
-                        const paidTotal = invs
-                          .filter((i) => paidMemberIds.has(i.member_id))
-                          .reduce((s, i) => s + (i.amount ?? 0), 0);
-                        const openTotal = invs
-                          .filter((i) => !paidMemberIds.has(i.member_id))
-                          .reduce((s, i) => s + (i.amount ?? 0), 0);
-                        const invoicedTotal = paidTotal + openTotal;
+                        const paidTotal = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                        const openTotal = invs.reduce((s, i) => {
+                          const paid = paidByMember.get(i.member_id) ?? 0;
+                          return s + Math.max(0, (Number(i.amount) || 0) - paid);
+                        }, 0);
+                        const invoicedTotal = invs.reduce((s, i) => s + (Number(i.amount) || 0), 0);
                         const budgetedMembers = yearSettings?.budgeted_member_count ?? 0;
                         const extra = invs.length - budgetedMembers;
                         const hint =
@@ -609,6 +617,7 @@ export default function FinancienPage() {
         budgetedMemberCount={yearSettings?.budgeted_member_count ?? contributionStats.totalMembers}
         invoices={contributionInvoices ?? []}
         contributions={contributions ?? []}
+        payments={contributionPayments ?? []}
         members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam, bedrijfsnaam: (m as any).bedrijfsnaam }))}
       />
     </div>

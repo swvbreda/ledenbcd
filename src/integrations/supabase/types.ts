@@ -426,6 +426,7 @@ export type Database = {
           amount: number | null
           created_at: string
           id: string
+          invoice_date: string | null
           invoice_file_path: string | null
           invoice_number: string | null
           member_id: number
@@ -435,6 +436,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: string
+          invoice_date?: string | null
           invoice_file_path?: string | null
           invoice_number?: string | null
           member_id: number
@@ -444,6 +446,7 @@ export type Database = {
           amount?: number | null
           created_at?: string
           id?: string
+          invoice_date?: string | null
           invoice_file_path?: string | null
           invoice_number?: string | null
           member_id?: number
