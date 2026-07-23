@@ -8,6 +8,7 @@ export interface ContributionInvoice {
   year: number;
   invoice_number: string | null;
   invoice_file_path: string | null;
+  amount: number | null;
   created_at: string;
 }
 
@@ -126,6 +127,7 @@ export function useCreateContributionInvoice() {
       year: number;
       invoice_number?: string | null;
       invoice_file_path?: string | null;
+      amount?: number | null;
     }) => {
       const { data, error } = await supabase
         .from("contribution_invoices")
@@ -134,6 +136,7 @@ export function useCreateContributionInvoice() {
           year: input.year,
           invoice_number: input.invoice_number ?? null,
           invoice_file_path: input.invoice_file_path ?? null,
+          amount: input.amount ?? null,
         })
         .select()
         .single();
