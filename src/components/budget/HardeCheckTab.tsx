@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   year: number;
@@ -216,6 +217,7 @@ function useReconciliation(year: number) {
 
 export default function HardeCheckTab({ year }: Props) {
   const { data, isLoading } = useReconciliation(year);
+  const navigate = useNavigate();
 
   if (isLoading || !data) {
     return <div className="p-8 text-sm text-muted-foreground">Bezig met controleren…</div>;
@@ -283,7 +285,12 @@ export default function HardeCheckTab({ year }: Props) {
             </thead>
             <tbody>
               {problems.map((r, i) => (
-                <tr key={i} className="border-b border-border/50 hover:bg-muted/20">
+                <tr
+                  key={i}
+                  className={`border-b border-border/50 hover:bg-muted/20 ${r.member_id ? "cursor-pointer" : ""}`}
+                  onClick={() => r.member_id && navigate(`/leden/${r.member_id}`)}
+                  title={r.member_id ? "Open ledendetail" : undefined}
+                >
                   <td className="px-3 py-2">
                     {r.member_id ? (
                       <div>
