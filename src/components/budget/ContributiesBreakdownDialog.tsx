@@ -34,23 +34,39 @@ export default function ContributiesBreakdownDialog({
     return m;
   }, [contributions]);
 
+  const contribByMember = useMemo(() => {
+    const m = new Map<number, Contribution>();
+    contributions.forEach((c) => m.set(c.member_id, c));
+    return m;
+  }, [contributions]);
+
+  const fmtDate = (d?: string | null) => {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
   const rows = useMemo(() => {
     return invoices
       .map((inv) => {
         const mem = memberMap.get(inv.member_id);
         const paidC = paidMap.get(inv.member_id);
+        const contrib = contribByMember.get(inv.member_id);
+        const invoice_date = contrib?.invoice_date ?? inv.created_at ?? null;
         return {
           key: inv.id,
           member_id: inv.member_id,
           naam: mem?.naam ?? `Lid #${inv.member_id}`,
           invoice_number: inv.invoice_number ?? "—",
+          invoice_date,
           amount: inv.amount ?? 0,
           paid: !!paidC,
           paid_date: paidC?.paid_date ?? null,
         };
       })
       .sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
-  }, [invoices, memberMap, paidMap]);
+  }, [invoices, memberMap, paidMap, contribByMember]);
 
   const filtered = useMemo(() => {
     if (mode === "paid") return rows.filter((r) => r.paid);
@@ -99,24 +115,28 @@ export default function ContributiesBreakdownDialog({
                     <th className="px-3 py-2 text-left font-medium w-16">Nr</th>
                     <th className="px-3 py-2 text-left font-medium">Lid</th>
                     <th className="px-3 py-2 text-left font-medium">Factuurnr</th>
+                    <th className="px-3 py-2 text-left font-medium w-28">Factuurdatum</th>
                     <th className="px-3 py-2 text-right font-medium">Bedrag</th>
-                    <th className="px-3 py-2 text-left font-medium w-28">Status</th>
+                    <th className="px-3 py-2 text-left font-medium w-28">Betaaldatum</th>
+                    <th className="px-3 py-2 text-left font-medium w-24">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
-                    <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Geen resultaten</td></tr>
+                    <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Geen resultaten</td></tr>
                   ) : filtered.map((r) => (
                     <tr key={r.key} className="border-t border-border/50 hover:bg-muted/30">
                       <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{r.member_id}</td>
                       <td className="px-3 py-1.5">{r.naam}</td>
                       <td className="px-3 py-1.5 tabular-nums">{r.invoice_number}</td>
+                      <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{fmtDate(r.invoice_date)}</td>
                       <td className="px-3 py-1.5 text-right"><CurrencyCell value={r.amount} /></td>
+                      <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{r.paid ? fmtDate(r.paid_date) : "—"}</td>
                       <td className="px-3 py-1.5">
                         {r.paid ? (
-                          <span className="text-emerald-600 text-xs">✓ {r.paid_date ?? "betaald"}</span>
+                          <span className="text-emerald-600 text-xs font-medium">Betaald</span>
                         ) : (
-                          <span className="text-amber-600 text-xs">Openstaand</span>
+                          <span className="text-amber-600 text-xs font-medium">Open</span>
                         )}
                       </td>
                     </tr>
@@ -124,9 +144,9 @@ export default function ContributiesBreakdownDialog({
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/40 font-semibold border-t border-border">
-                    <td colSpan={3} className="px-3 py-2">Totaal ({filtered.length})</td>
+                    <td colSpan={4} className="px-3 py-2">Totaal ({filtered.length})</td>
                     <td className="px-3 py-2 text-right"><CurrencyCell value={total} /></td>
-                    <td />
+                    <td colSpan={2} />
                   </tr>
                 </tfoot>
               </table>
