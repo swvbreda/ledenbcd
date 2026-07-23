@@ -321,6 +321,7 @@ async function informerCall(
   init: RequestInit = {},
   sink?: ApiCall[],
   swappedAuth = false,
+  overrideCode?: string,
 ): Promise<ApiCall> {
   const method = (init.method ?? "GET").toUpperCase();
   const url = `${INFORMER_BASE}${path}`;
@@ -339,7 +340,11 @@ async function informerCall(
   try {
     const res = await fetch(url, {
       ...init,
-      headers: { ...informerHeaders(swappedAuth), ...(init.headers || {}) },
+      headers: {
+        ...informerHeaders(swappedAuth),
+        ...(overrideCode ? { Securitycode: overrideCode } : {}),
+        ...(init.headers || {}),
+      },
     });
     status = res.status;
     ok = res.ok;
