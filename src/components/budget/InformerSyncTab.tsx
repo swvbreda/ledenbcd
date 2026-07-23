@@ -26,8 +26,8 @@ const ACTION_LABELS: Record<string, string> = {
   pull_invoices: "Facturen ← Informer",
   pull_creditors: "Crediteuren ← Informer",
   pull_bank_balances: "Banksaldi ← Informer",
-  pull_ponto_balances: "Banksaldi ← Ponto",
-  pull_ponto_transactions: "Boekingen ← Ponto",
+  pull_ponto_balances: "Banksaldi (live)",
+  pull_ponto_transactions: "Bankboekingen (live)",
   all: "Volledige sync",
 };
 
@@ -116,15 +116,15 @@ export default function InformerSyncTab() {
       );
       if (error) throw new Error(error.message);
       if (data?.success) {
-        toast.success(`Ponto-saldi opgehaald — ${data.items_processed} rekening${data.items_processed === 1 ? "" : "en"}`);
+        toast.success(`Live banksaldi opgehaald — ${data.items_processed} rekening${data.items_processed === 1 ? "" : "en"}`);
       } else {
-        toast.error(`Ponto-sync mislukt: ${data?.error ?? "onbekende fout"}`);
+        toast.error(`Live bank-sync mislukt: ${data?.error ?? "onbekende fout"}`);
       }
       qc.invalidateQueries({ queryKey: ["informer_sync_log"] });
       qc.invalidateQueries({ queryKey: ["informer_sync_state"] });
       qc.invalidateQueries({ queryKey: ["ponto_bank_balances"] });
     } catch (e) {
-      toast.error(`Ponto-sync mislukt: ${(e as Error).message}`);
+      toast.error(`Live bank-sync mislukt: ${(e as Error).message}`);
     } finally {
       setSyncing(false);
     }
@@ -167,7 +167,7 @@ export default function InformerSyncTab() {
                   : "nog niet gedraaid"}
               </div>
               <div>
-                Laatste Ponto-sync:{" "}
+                Laatste live bank-sync:{" "}
                 {(state as any)?.last_ponto_sync_at
                   ? formatDistanceToNow(new Date((state as any).last_ponto_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
@@ -182,7 +182,7 @@ export default function InformerSyncTab() {
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Banksaldi
             </Button>
             <Button variant="outline" onClick={runPontoSync} disabled={syncing}>
-              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Ponto saldi
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Live saldi
             </Button>
             <Button onClick={runSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
