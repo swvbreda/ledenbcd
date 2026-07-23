@@ -171,6 +171,16 @@ export default function BankboekingenTab({ year }: { year: number }) {
     return { inc, out, net: inc - out };
   }, [filtered]);
 
+  const unlinked = useMemo(() => {
+    let inc = 0, out = 0, incN = 0, outN = 0;
+    for (const t of (txs ?? [])) {
+      if (t.budget_line_item_id) continue;
+      const a = Number(t.amount);
+      if (a >= 0) { inc += a; incN++; } else { out += Math.abs(a); outN++; }
+    }
+    return { inc, out, incN, outN, total: incN + outN };
+  }, [txs]);
+
   const runSync = async () => {
     setSyncing(true);
     try {
@@ -216,6 +226,25 @@ export default function BankboekingenTab({ year }: { year: number }) {
 
   return (
     <div className="mt-4 space-y-3">
+      {unlinked.total > 0 && (
+        <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 flex flex-wrap items-center gap-4 text-xs">
+          <span className="font-semibold text-amber-900">
+            {unlinked.total} bankboekingen zonder begrotingspost
+          </span>
+          <span className="text-amber-800">
+            Uit: <CurrencyText value={unlinked.out} /> ({unlinked.outN})
+          </span>
+          <span className="text-amber-800">
+            In: <CurrencyText value={unlinked.inc} /> ({unlinked.incN})
+          </span>
+          <button
+            className="ml-auto text-amber-900 underline hover:no-underline"
+            onClick={() => setStatusFilter("unmatched")}
+          >
+            Toon alleen niet-gekoppelde →
+          </button>
+        </div>
+      )}
       <div className="border border-border rounded-lg p-3 bg-card flex flex-wrap items-center gap-3">
         <Filter size={14} className="text-muted-foreground" />
         <Input
