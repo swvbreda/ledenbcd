@@ -333,9 +333,6 @@ export default function FinancienPage() {
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
             </TabsTrigger>
-            <TabsTrigger value="ponto" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Bankboekingen
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -432,6 +429,7 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="boekingen">
+            <BankboekingenTab year={year} />
             <BoekingenOverzicht
               categories={categories || []}
               contributions={contributions || []}
@@ -488,10 +486,6 @@ export default function FinancienPage() {
 
           <TabsContent value="informer">
             <InformerSyncTab />
-          </TabsContent>
-
-          <TabsContent value="ponto">
-            <BankboekingenTab year={year} />
           </TabsContent>
         </Tabs>
         </>
