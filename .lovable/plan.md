@@ -1,41 +1,41 @@
-## Probleem
+## Wat er nu misgaat
 
-De Contributie-kaarten kloppen niet omdat ze rekenen met "aantal unieke leden × €3000":
-- **130 facturen** voor 106 unieke leden (sommige leden hebben 2–3 facturen — deelbetalingen/meerdere shops) worden als 105 × €3000 = €315.000 getoond
-- **107 leden als betaald** vs 105 gefactureerd → onmogelijke 102% en negatief openstaand
-- 4 leden (#63, #65, #115, #117) staan als "betaald" via bankmatch maar hebben geen factuur in 2026 → zichtbaar in "Nog geen factuur verstuurd (11)" én tellen mee bij betaald
+De bovenste rijen in het facturenoverzicht zijn geen contributiefacturen, waardoor het lijkt of Informer niet gesynct wordt. Twee bronnen van "vervuiling":
 
-## Oplossing
+1. **Twee rijen met `invoice_number = "SEPA Overboeking IBAN: ..."`** (leden #65 en #115, aangemaakt 12:02) — restant van een eerdere auto‑registratie vanuit een bankmatch waarbij de bank‑omschrijving als factuurnummer is opgeslagen. Deze code staat niet meer in de repo, maar de rijen bestaan nog.
+2. **Vier rijen `2026-0001 t/m 2026-0004`** met bedragen €15.000 / €10.000 / €630 / €500 voor leden #1, #2, #8, #12 (aangemaakt 12:04 door de laatste `informer-sync`‑run). Dit zijn echte Informer‑verkoopfacturen, maar geen contributie — het zijn sponsor-/donatiefacturen uit een andere nummerreeks (met streepje). De echte contributiefacturen in Informer hebben nummers als `2026068`, `2026101`, `2025180` (zonder streepje) en bedragen van €3.000/€1.000.
 
-### 1. Werkelijke bedragen tonen (bron: Informer)
-- Nieuwe kolom `amount` op `contribution_invoices` (numeric)
-- `informer-sync` vult die kolom bij het aanmaken/updaten van een factuurregel met het bedrag uit `invoiceAmount(inv)` (dat bedrag wordt al opgehaald voor `member_contributions`)
-- Voor bestaande 130 rijen: back-fill vanuit `member_contributions.amount` per (member_id, year) als eenmalige update
+De huidige `pullInvoices` in `supabase/functions/informer-sync/index.ts` importeert álle sales-facturen van gekoppelde debiteuren en schrijft ze zowel in `member_contributions` als in `contribution_invoices`. Er wordt niet gefilterd op "contributie".
 
-### 2. Statistieken herberekenen in ContributieTab
-- **Gefactureerd** = `sum(contribution_invoices.amount)` over alle 130 facturen van het jaar (niet aantal leden × €3000)
-- **Ontvangen** = som van bedragen van gematchte bankbetalingen (`bankPaidMap`) + handmatige betalingen zonder bank-match, gecapt op het factuurbedrag per lid
-- **Openstaand** = Gefactureerd − Ontvangen (nooit meer negatief zolang Ontvangen op factuurbedrag gecapt is)
-- **Betaald teller** = leden met factuur die volledig betaald zijn, uit `stats.invoiced` — geen 107/105 meer
-- Subtitel "X / Y leden" blijft leesbaar; naast het bedrag komt "N facturen" waar het aantal facturen relevant is
+## Wat we gaan doen
 
-### 3. Automatisch factuur registreren bij betaling zonder factuur
-Wanneer `bankPaidMap` een lid matcht dat geen factuur heeft in `contribution_invoices` voor dat jaar:
-- direct een rij aanmaken in `contribution_invoices` met `invoice_number` = bankreferentie (of `AUTO-{member_id}-{jaar}` als leeg), `amount` = bedrag van de bankbetaling
-- gebeurt in `useCreateContributionInvoice`-flow, aangeroepen vanuit een nieuwe effect in `ContributieTab` die door de bankmatch-map itereert
-- Gevolg: de 4 leden (#63, #65, #115, #117) verdwijnen uit "Nog geen factuur verstuurd", worden zichtbaar in het Facturen-overzicht, en de tellingen komen weer in balans
+### 1. Informer‑sync filteren op contributiefacturen
+In `pullInvoices` een filter toevoegen dat alleen contributiefacturen accepteert. Combinatie van criteria (alle moeten waar zijn):
+- Factuurnummer bevat **geen streepje** en matcht patroon `^20\d{6}$` (formaat `2026068`, `2025180`) — sluit `2026-0001` reeks uit.
+- Bedrag ≥ €500 en ≤ 2× `contribution_amount` uit `budget_year_settings` (dekt gedeeltelijke betalingen zoals #52 met €1.000 en volledig €3.000, sluit uitschieters €10k/€15k uit).
 
-### 4. Facturen van oud-leden
-Lid #126 (member_type='old') heeft een factuur uit 2026. Facturen worden altijd geteld op basis van `contribution_invoices`, niet op `effectiveMembers` — dat gebeurt na deze wijziging automatisch goed omdat we sommeren over de tabel, niet over leden.
+Deze regels blokkeren de nu zichtbare vervuiling zonder de goede rijen te raken. Niet-contributiefacturen worden overgeslagen (niet in `contribution_invoices` én niet in `member_contributions`), zodat het dashboard puur over contributie gaat.
 
-## Techniek
+### 2. Bestaande foute rijen opruimen (via migratie)
+```sql
+DELETE FROM contribution_invoices
+ WHERE invoice_number LIKE 'SEPA%'
+    OR invoice_number ~ '^20\d{2}-\d{4}$';
 
-- **Migratie:** `ALTER TABLE contribution_invoices ADD COLUMN amount numeric(10,2)`, back-fill via `UPDATE ... FROM member_contributions`, geen RLS-wijziging
-- **Edge function:** `supabase/functions/informer-sync/index.ts` regels 543–550 uitbreiden met `amount`
-- **Hook:** `useContributions.ts` → `ContributionInvoice` type + `useCreateContributionInvoice` krijgen `amount`
-- **Component:** `src/components/budget/ContributieTab.tsx` — `stats` en `bankPaidMap`-gebruik herschrijven, nieuw effect voor auto-factuur-registratie
-- **Bijeffect:** `FacturenOverzichtTab.tsx` gebruikt nu ook echte factuurbedragen (nu nog `amount = yearSettings?.contribution_amount`)
+DELETE FROM member_contributions
+ WHERE year = 2026
+   AND invoice_number ~ '^20\d{2}-\d{4}$';
+```
+De bijbehorende bankboekingen blijven bestaan, en zijn indien nodig alsnog te koppelen aan de juiste (nieuwe) contributiefactuur.
 
-## Buiten scope
-- Wijzigingen aan `DossierOverzichtTab` / Ponto — die staan los van deze telling
-- Formuleren van nieuwe bank-matchregels
+### 3. Sync opnieuw laten lopen
+Na de code‑ en migratieaanpassing één keer `informer-sync` triggeren zodat de correcte contributiefacturen (2026068, 2026101 e.d.) bovenaan verschijnen, gesorteerd op invoice_date / created_at.
+
+## Waar het overzicht daarna aan voldoet
+- Bovenaan: de meest recente contributiefacturen uit Informer, met echte factuurnummers en bedragen ≈ €3.000.
+- Geen "SEPA Overboeking…"‑rijen meer.
+- Geen sponsor‑/donatiefacturen meer in de contributielijst.
+- Totalen (Nog te versturen / Verstuurd / Betaald) worden weer inhoudelijk kloppend.
+
+## Vraag ter bevestiging
+Klopt het dat Informer contributiefacturen altijd de vorm `YYYYNNN` hebben (bv. `2026068`) en dat de reeks met streepje (`2026-0001`) puur voor sponsoring/overig gebruikt wordt? Zo ja, dan volstaat het filter hierboven. Als er nog een andere kenmerk is (bv. dagboek, productcode, of "Contributie" in de omschrijving), noem dat dan even, dan neem ik dat mee als extra criterium.
