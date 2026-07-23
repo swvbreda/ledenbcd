@@ -271,6 +271,11 @@ function DebtorLinkDialog({
     }
   };
 
+  useEffect(() => {
+    if (open) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const setLink = async (debtorId: string, memberIdRaw: string) => {
     const prev = mapping[debtorId];
     if (!memberIdRaw) {
