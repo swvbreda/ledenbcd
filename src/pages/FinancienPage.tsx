@@ -342,7 +342,11 @@ export default function FinancienPage() {
 
           <TabsContent value="dashboard">
             <BankBalancesCard />
+            <div className="mt-4">
+              <BudgetVsActualTable categories={categories || []} year={year} />
+            </div>
             <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
+
               {/* Left: Budget categories */}
               <div className="space-y-3">
                 {(categories || []).map((cat) => (
