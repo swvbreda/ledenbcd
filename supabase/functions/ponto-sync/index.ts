@@ -183,7 +183,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
   // Alleen inkomende, nog niet gekoppelde boekingen kandidaat maken
   const { data: pending } = await supabase
     .from("ponto_transactions")
-    .select("id, executed_at, amount, counterparty_name, description, remittance_info")
+    .select("id, executed_at, amount, counterparty_name, counterparty_iban, description, remittance_info")
     .gt("amount", 0)
     .is("budget_line_item_id", null)
     .eq("matched_manually", false)
