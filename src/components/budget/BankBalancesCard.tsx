@@ -34,6 +34,7 @@ export default function BankBalancesCard() {
     if (!acc) return b.updated_at;
     return b.updated_at > acc ? b.updated_at : acc;
   }, null);
+  const hasBalances = (data ?? []).some((b) => Number(b.balance) !== 0);
 
   if (isLoading) return null;
   if (!data || data.length === 0) return null;
@@ -51,6 +52,11 @@ export default function BankBalancesCard() {
           </span>
         )}
       </div>
+      {!hasBalances && (
+        <p className="text-xs text-muted-foreground mb-2">
+          Informer levert geen actueel banksaldo via de API. Alleen de rekening­namen worden getoond; saldo werk je bij in Informer zelf.
+        </p>
+      )}
       <table className="w-full text-sm">
         <tbody>
           {data.map((b) => (
@@ -60,11 +66,13 @@ export default function BankBalancesCard() {
                 {b.iban && <div className="text-xs text-muted-foreground tabular-nums">{b.iban}</div>}
               </td>
               <td className="py-1.5 text-right tabular-nums">
-                <CurrencyText value={Number(b.balance)} />
+                {Number(b.balance) !== 0
+                  ? <CurrencyText value={Number(b.balance)} />
+                  : <span className="text-muted-foreground">—</span>}
               </td>
             </tr>
           ))}
-          {data.length > 1 && (
+          {data.length > 1 && hasBalances && (
             <tr className="font-semibold">
               <td className="pt-2">Totaal</td>
               <td className="pt-2 text-right tabular-nums"><CurrencyText value={total} /></td>
