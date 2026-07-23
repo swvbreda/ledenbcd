@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw, CheckCircle2, AlertCircle, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -270,6 +270,11 @@ function DebtorLinkDialog({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const setLink = async (debtorId: string, memberIdRaw: string) => {
     const prev = mapping[debtorId];
