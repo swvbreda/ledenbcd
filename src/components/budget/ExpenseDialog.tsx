@@ -119,7 +119,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Uitgaven – {lineItemName}</DialogTitle>
+          <DialogTitle>Transacties – {lineItemName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {visibleExpenses.length > 0 ? (
@@ -129,10 +129,9 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   <tr className="border-b border-border">
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Datum</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Omschrijving</th>
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Dossier</th>
-                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Begrotingspost</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Leverancier</th>
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium">Factuurnr.</th>
+                    <th className="text-left px-2 py-1 text-muted-foreground font-medium">Dossier</th>
                     <th className="text-right px-2 py-1 text-muted-foreground font-medium">Bedrag</th>
                     <th className="w-10" />
                   </tr>
@@ -159,30 +158,11 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                           <div className="text-[11px] text-muted-foreground truncate" title={merchant}>{merchant}</div>
                         )}
                       </td>
-                      <td className="px-2 py-1 align-top">{e.dossier || ""}</td>
-                      <td className="px-2 py-1 min-w-[220px]">
-                        {onUpdateExpense && !isBank ? (
-                          <Select
-                            value={e.line_item_id}
-                            onValueChange={(value) => value !== e.line_item_id && onUpdateExpense(e.id, { line_item_id: value })}
-                          >
-                            <SelectTrigger className="h-8 text-xs bg-background border-primary/40">
-                              <SelectValue>{getLineItemLabel(e.line_item_id)}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {allLineItems.map((li) => (
-                                <SelectItem key={li.id} value={li.id} className="text-xs">{li.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          getLineItemLabel(e.line_item_id)
-                        )}
-                      </td>
                       <td className="px-2 py-1 max-w-[160px]">
                         <div className="truncate" title={merchant}>{merchant}</div>
                       </td>
                       <td className="px-2 py-1 tabular-nums">{e.invoice_reference || ""}</td>
+                      <td className="px-2 py-1 align-top">{e.dossier || ""}</td>
                       <td className="text-right px-2 py-1"><CurrencyCell value={e.amount} /></td>
                       <td className="px-1">
                         <div className="flex items-center gap-0.5">
@@ -210,7 +190,7 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
                   );
                   })}
                   <tr className="font-medium bg-muted/30">
-                    <td className="px-2 py-1" colSpan={6}>Totaal</td>
+                    <td className="px-2 py-1" colSpan={5}>Totaal</td>
                     <td className="text-right px-2 py-1"><CurrencyCell value={total} /></td>
                     <td />
                   </tr>
@@ -218,11 +198,11 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
               </table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Nog geen uitgaven geregistreerd.</p>
+            <p className="text-sm text-muted-foreground">Nog geen transacties geregistreerd.</p>
           )}
 
           <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Nieuwe uitgave toevoegen</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Nieuwe transactie toevoegen</p>
             <div className="grid grid-cols-3 gap-2">
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-sm" />
               <Input placeholder="Omschrijving" value={description} onChange={(e) => setDescription(e.target.value)} className="h-8 text-sm" />
