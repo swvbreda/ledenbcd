@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Props {
   year: number;
@@ -75,6 +74,20 @@ function useReconciliation(year: number) {
         ...pontoRows.map((t: any) => ({ ...t, amount: Number(t.amount) })),
         ...bankTxRows,
       ];
+      const dedupedBankRows = Array.from(
+        bankRows.reduce((map: Map<string, any>, row: any) => {
+          const date = String(row.value_date ?? "").slice(0, 10);
+          const amount = Math.round((Number(row.amount) || 0) * 100);
+          const counterparty = String(row.counterparty_name ?? "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
+          const dossier = String(row.dossier ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+          const key = `${date}|${amount}|${counterparty}|${dossier}`;
+          const existing = map.get(key);
+          if (!existing || String(row.id).startsWith("ponto:") || !String(existing.id).startsWith("ponto:")) {
+            map.set(key, row);
+          }
+          return map;
+        }, new Map<string, any>()).values(),
+      );
 
       const invoices = invRes.data ?? [];
       const payments = payRes.data ?? [];
@@ -90,7 +103,7 @@ function useReconciliation(year: number) {
       const bankByMember = new Map<number, { total: number; rows: any[] }>();
       const orphanBank: any[] = [];
       const nonContributionBank: any[] = [];
-      for (const t of bankRows) {
+      for (const t of dedupedBankRows) {
         const m = (t.dossier || "").match(/Contributie\s*#(\d+)/i);
         if (m) {
           const id = Number(m[1]);
@@ -159,7 +172,7 @@ function useReconciliation(year: number) {
 
       // Totals
       const totals = {
-        bank_in: bankRows.reduce((s: number, t: any) => s + Number(t.amount), 0),
+        bank_in: dedupedBankRows.reduce((s: number, t: any) => s + Number(t.amount), 0),
         bank_contribution: [...bankByMember.values()].reduce((s, v) => s + v.total, 0) +
           orphanBank.reduce((s, t) => s + Number(t.amount), 0),
         invoices_total: invoices.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0),
@@ -169,8 +182,8 @@ function useReconciliation(year: number) {
         non_contribution: nonContributionBank.reduce((s, t) => s + Number(t.amount), 0),
       };
 
-      const earliestBank = bankRows.length
-        ? bankRows.reduce((min: string | null, t: any) => {
+      const earliestBank = dedupedBankRows.length
+        ? dedupedBankRows.reduce((min: string | null, t: any) => {
             const d = t.value_date ?? null;
             if (!d) return min;
             return !min || d < min ? d : min;
