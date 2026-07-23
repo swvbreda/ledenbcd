@@ -410,6 +410,27 @@ async function matchContributionPayments(supabase: any): Promise<number> {
 
     if (!hit) continue;
 
+    // Prior-year invoice reference: als in de omschrijving een factuurnummer
+    // staat dat met een ander jaar begint (bv. "2025118" op een 2026-boeking),
+    // dan is dit een nabetaling op een oude factuur — categoriseer onder dat
+    // vorige jaar in plaats van het lopende jaar. Voorkomt dat een €1.000
+    // nabetaling op 2025 als (extra) 2026-contributie wordt geboekt.
+    {
+      const priorMatch = hayLower.match(/\b(20\d{2})(\d{2,4})\b/);
+      if (priorMatch) {
+        const refYear = Number(priorMatch[1]);
+        const refNumber = priorMatch[0];
+        if (refYear >= 2000 && refYear <= currentYear + 1 && refYear !== hit.year) {
+          hit = {
+            member_id: hit.member_id,
+            year: refYear,
+            invoice_number: refNumber,
+            strategy: `${hit.strategy}-prior`,
+          };
+        }
+      }
+    }
+
     const paidAt = t.executed_at ?? new Date().toISOString();
 
     // Alleen een nieuwe betaling registreren als contributie nog niet volledig
