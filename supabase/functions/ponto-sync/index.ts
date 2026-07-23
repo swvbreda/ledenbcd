@@ -319,6 +319,27 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       }
     }
 
+    // 3) IBAN-match uit eerder gekoppelde boekingen van hetzelfde lid
+    if (!hit && iban && ibanToMember.has(iban)) {
+      const memberId = ibanToMember.get(iban)!;
+      const inv = findOpenInvoice(memberId, amount);
+      if (inv) hit = { member_id: memberId, year: inv.year, invoice_number: inv.invoice_number };
+    }
+
+    // 4) Naam-match op tegenpartij (coffeeshop-/bedrijfsnaam / contactpersoon)
+    if (!hit) {
+      const cpNorm = normalizeName(t.counterparty_name || "");
+      if (cpNorm.length >= 3) {
+        const matches = memberIndex.filter((m) =>
+          m.keys.some((k) => cpNorm === k || cpNorm.includes(k) || k.includes(cpNorm)),
+        );
+        if (matches.length === 1) {
+          const inv = findOpenInvoice(matches[0].id, amount);
+          if (inv) hit = { member_id: matches[0].id, year: inv.year, invoice_number: inv.invoice_number };
+        }
+      }
+    }
+
     if (!hit) continue;
 
     const paidAt = t.executed_at ?? new Date().toISOString();
