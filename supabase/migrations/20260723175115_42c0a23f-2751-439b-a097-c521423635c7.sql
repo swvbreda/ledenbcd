@@ -1,0 +1,1 @@
+ALTER TABLE public.internal_declarations ADD COLUMN IF NOT EXISTS paid_at date; ALTER TABLE public.internal_declarations ADD COLUMN IF NOT EXISTS bank_transaction_id uuid REFERENCES public.ponto_transactions(id) ON DELETE SET NULL;
