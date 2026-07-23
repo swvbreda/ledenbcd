@@ -12,6 +12,11 @@ interface Props {
   onDeleteLineItem: (id: string) => void;
   onDeleteCategory: (id: string) => void;
   onOpenExpenses: (lineItemId: string, lineItemName: string) => void;
+  getCellClicks?: (li: BudgetCategory["line_items"][number]) => {
+    budgeted?: () => void;
+    spent?: () => void;
+    remaining?: () => void;
+  } | null;
 }
 
 export default function BudgetCategoryTable({
@@ -21,6 +26,7 @@ export default function BudgetCategoryTable({
   onDeleteLineItem,
   onDeleteCategory,
   onOpenExpenses,
+  getCellClicks,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -103,6 +109,13 @@ export default function BudgetCategoryTable({
             {category.line_items.map((li) => {
               const spent = sumExpenses(li);
               const remaining = li.budgeted_amount - spent;
+              const clicks = getCellClicks ? getCellClicks(li) : null;
+              const cellBtn = (fn?: () => void) =>
+                fn
+                  ? (e: React.MouseEvent) => { e.stopPropagation(); fn(); }
+                  : undefined;
+              const clickableClass = (fn?: () => void) =>
+                fn ? "cursor-pointer hover:underline underline-offset-2 decoration-dotted" : "";
               return (
                 <tr
                   key={li.id}
@@ -110,10 +123,14 @@ export default function BudgetCategoryTable({
                   onClick={() => onOpenExpenses(li.id, li.name)}
                 >
                   <td className="px-3 py-1.5">{li.name}</td>
-                  <td className="px-3 py-1.5"><CurrencyCell value={li.budgeted_amount} /></td>
-                  <td className="px-3 py-1.5">{spent !== 0 ? <CurrencyCell value={spent} /> : ""}</td>
-                  <td className="px-3 py-1.5">
-                    <CurrencyCell value={remaining} className={remainingClass(remaining)} />
+                  <td className="px-3 py-1.5" onClick={cellBtn(clicks?.budgeted)}>
+                    <CurrencyCell value={li.budgeted_amount} className={clickableClass(clicks?.budgeted)} />
+                  </td>
+                  <td className="px-3 py-1.5" onClick={cellBtn(clicks?.spent)}>
+                    {spent !== 0 ? <CurrencyCell value={spent} className={clickableClass(clicks?.spent)} /> : ""}
+                  </td>
+                  <td className="px-3 py-1.5" onClick={cellBtn(clicks?.remaining)}>
+                    <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />
                   </td>
                   <td className="px-1">
                     <button
