@@ -243,8 +243,22 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     if (keys.length) memberIndex.push({ id: Number((m as any).id), keys });
   }
 
-  // IBAN → member leren uit al gekoppelde bankboekingen
+  // IBAN → member: eerst uit de lid-data (handmatig ingevoerde bankrekeningen),
+  // daarna aangevuld door te leren uit al gekoppelde bankboekingen.
   const ibanToMember = new Map<string, number>();
+  const memberIbans = new Map<number, Set<string>>();
+  for (const m of memberRows ?? []) {
+    const d: any = (m as any).data || {};
+    const list: string[] = Array.isArray(d.ibans) ? d.ibans : [];
+    const set = new Set<string>();
+    for (const raw of list) {
+      const norm = String(raw || "").replace(/\s+/g, "").toUpperCase();
+      if (!norm) continue;
+      set.add(norm);
+      if (!ibanToMember.has(norm)) ibanToMember.set(norm, Number((m as any).id));
+    }
+    memberIbans.set(Number((m as any).id), set);
+  }
   const learnFromRows = (rows: any[] | null | undefined) => {
     for (const r of rows ?? []) {
       const raw = (r.counterparty_iban || "").replace(/\s+/g, "").toUpperCase();
@@ -259,6 +273,30 @@ async function matchContributionPayments(supabase: any): Promise<number> {
   ]);
   learnFromRows(pontoLearn);
   learnFromRows(bankLearn);
+
+  // Backfill: IBAN's die uit historische matches komen maar nog niet in de
+  // lid-data staan, toevoegen aan members_data.data.ibans (idempotent).
+  const membersToUpdate = new Map<number, Set<string>>();
+  for (const [iban, memberId] of ibanToMember.entries()) {
+    const known = memberIbans.get(memberId);
+    if (!known || known.has(iban)) continue;
+    if (!membersToUpdate.has(memberId)) membersToUpdate.set(memberId, new Set(known));
+    membersToUpdate.get(memberId)!.add(iban);
+    known.add(iban);
+  }
+  for (const [memberId, ibanSet] of membersToUpdate.entries()) {
+    const { data: row } = await supabase
+      .from("members_data")
+      .select("data")
+      .eq("id", memberId)
+      .maybeSingle();
+    const currentData: any = (row as any)?.data || {};
+    const merged = Array.from(ibanSet);
+    await supabase
+      .from("members_data")
+      .update({ data: { ...currentData, ibans: merged } })
+      .eq("id", memberId);
+  }
 
   let matched = 0;
   const AMOUNT_TOL = 5; // euro
@@ -385,7 +423,26 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + amount);
 
     matched++;
-    if (iban) ibanToMember.set(iban, hit.member_id);
+    if (iban) {
+      ibanToMember.set(iban, hit.member_id);
+      const known = memberIbans.get(hit.member_id);
+      if (known && !known.has(iban)) {
+        known.add(iban);
+        const { data: row } = await supabase
+          .from("members_data")
+          .select("data")
+          .eq("id", hit.member_id)
+          .maybeSingle();
+        const currentData: any = (row as any)?.data || {};
+        const existing: string[] = Array.isArray(currentData.ibans) ? currentData.ibans : [];
+        if (!existing.includes(iban)) {
+          await supabase
+            .from("members_data")
+            .update({ data: { ...currentData, ibans: [...existing, iban] } })
+            .eq("id", hit.member_id);
+        }
+      }
+    }
   }
 
   return matched;

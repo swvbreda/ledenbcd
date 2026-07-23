@@ -59,6 +59,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
   const [factuurEmail, setFactuurEmail] = useState(member.factuurEmail || "");
   const [factuurTelefoon, setFactuurTelefoon] = useState(member.factuurTelefoon || "");
 
+  // Bankrekeningen (IBANs)
+  const normalizeIban = (v: string) => v.replace(/\s+/g, "").toUpperCase();
+  const [ibans, setIbans] = useState<string[]>(
+    (member.ibans || []).map(normalizeIban).filter(Boolean),
+  );
+  const addIban = () => setIbans((prev) => [...prev, ""]);
+  const updateIban = (idx: number, v: string) =>
+    setIbans((prev) => prev.map((x, i) => (i === idx ? normalizeIban(v) : x)));
+  const removeIban = (idx: number) => setIbans((prev) => prev.filter((_, i) => i !== idx));
+
   // Contacten
   const [contacten, setContacten] = useState<Contact[]>([...member.contacten]);
 
@@ -108,6 +118,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       factuurPlaats: factuurPlaats || undefined,
       factuurEmail: factuurEmail || undefined,
       factuurTelefoon: factuurTelefoon || undefined,
+      ibans: (() => {
+        const cleaned = Array.from(
+          new Set(
+            ibans
+              .map(normalizeIban)
+              .filter((x) => /^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(x)),
+          ),
+        );
+        return cleaned.length ? cleaned : undefined;
+      })(),
       contactpersoon: primaryContact?.naam || member.contactpersoon,
       functie: primaryContact?.functie || member.functie,
       telefoon: primaryContact?.telefoon || member.telefoon,
@@ -243,6 +263,34 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
           <EditableField label="Plaats" value={factuurPlaats} onChange={setFactuurPlaats} />
           <EditableField label="E-mail" value={factuurEmail} onChange={setFactuurEmail} />
           <EditableField label="Telefoon" value={factuurTelefoon} onChange={setFactuurTelefoon} />
+        </div>
+
+        <div className="pt-2 border-t border-border">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-muted-foreground">Bankrekening(en) — IBAN</label>
+            <Button variant="outline" size="sm" onClick={addIban} className="gap-1 text-xs h-7">
+              <Plus size={12} /> IBAN toevoegen
+            </Button>
+          </div>
+          {ibans.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Nog geen IBAN toegevoegd.</p>
+          ) : (
+            <div className="space-y-2">
+              {ibans.map((iban, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={iban}
+                    onChange={(e) => updateIban(i, e.target.value)}
+                    placeholder="NL12RABO0123456789"
+                    className="h-8 text-sm font-mono uppercase"
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => removeIban(i)} className="h-8 w-8 p-0 text-destructive">
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
