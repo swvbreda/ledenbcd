@@ -98,7 +98,10 @@ export default function BankboekingenTab({ year }: { year: number }) {
       const set = new Set<string>();
       for (const r of [...(expRows ?? []), ...(pontoRows ?? []), ...(bankRows ?? [])]) {
         const v = ((r as any).dossier || "").trim();
-        if (v) set.add(v);
+        if (!v) continue;
+        // Filter contributie-koppelingen per lid: dat zijn geen dossiers
+        if (/^contributie\b/i.test(v)) continue;
+        set.add(v);
       }
       return Array.from(set).sort((a, b) => a.localeCompare(b, "nl"));
     },
