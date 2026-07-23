@@ -283,7 +283,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     const hayLower = hay.toLowerCase();
     const iban = ((t as any).counterparty_iban || "").replace(/\s+/g, "").toUpperCase();
 
-    let hit: { member_id: number; year: number; invoice_number: string | null } | null = null;
+    let hit: { member_id: number; year: number; invoice_number: string | null; strategy: string } | null = null;
 
     // 1) Factuurnummer-match
     for (const inv of invoiceList) {
@@ -296,7 +296,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       if (!numberFound) continue;
       const invAmt = inv.amount != null ? Number(inv.amount) : null;
       if (invAmt != null && Math.abs(invAmt - amount) > AMOUNT_TOL) continue;
-      hit = { member_id: inv.member_id, year: inv.year, invoice_number: num };
+      hit = { member_id: inv.member_id, year: inv.year, invoice_number: num, strategy: "invoice" };
       break;
     }
 
@@ -313,7 +313,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
           if (invAmt == null || Math.abs(invAmt - amount) > AMOUNT_TOL) continue;
           const paid = paidByMemberYear.get(`${inv.member_id}|${inv.year}`) ?? 0;
           if (paid >= invAmt - AMOUNT_TOL) continue; // al voldaan
-          hit = { member_id: inv.member_id, year: inv.year, invoice_number: inv.invoice_number };
+          hit = { member_id: inv.member_id, year: inv.year, invoice_number: inv.invoice_number, strategy: "member_ref" };
           break;
         }
       }
@@ -323,7 +323,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     if (!hit && iban && ibanToMember.has(iban)) {
       const memberId = ibanToMember.get(iban)!;
       const inv = findOpenInvoice(memberId, amount);
-      if (inv) hit = { member_id: memberId, year: inv.year, invoice_number: inv.invoice_number };
+      if (inv) hit = { member_id: memberId, year: inv.year, invoice_number: inv.invoice_number, strategy: "iban" };
     }
 
     // 4) Naam-match op tegenpartij (coffeeshop-/bedrijfsnaam / contactpersoon)
@@ -335,7 +335,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
         );
         if (matches.length === 1) {
           const inv = findOpenInvoice(matches[0].id, amount);
-          if (inv) hit = { member_id: matches[0].id, year: inv.year, invoice_number: inv.invoice_number };
+          if (inv) hit = { member_id: matches[0].id, year: inv.year, invoice_number: inv.invoice_number, strategy: "name" };
         }
       }
     }
@@ -376,6 +376,7 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       .update({
         budget_line_item_id: lineId ?? null,
         dossier: `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
+        match_strategy: hit.strategy,
       })
       .eq("id", t.id);
 
