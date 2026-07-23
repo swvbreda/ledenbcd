@@ -20,6 +20,7 @@ import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
+import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
@@ -224,6 +225,7 @@ export default function FinancienPage() {
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
+  const [contributieBreakdown, setContributieBreakdown] = useState<BreakdownMode | null>(null);
   
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
@@ -354,6 +356,16 @@ export default function FinancienPage() {
                     onDeleteLineItem={(id) => mutations.deleteLineItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
                     onDeleteCategory={(id) => mutations.deleteCategory.mutate(id, { onSuccess: () => toast.success("Categorie verwijderd") })}
                     onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
+                    getCellClicks={(li) => {
+                      if (li.name.toLowerCase().includes("contribut")) {
+                        return {
+                          budgeted: () => setContributieBreakdown("invoices"),
+                          spent: () => setContributieBreakdown("paid"),
+                          remaining: () => setContributieBreakdown("unpaid"),
+                        };
+                      }
+                      return null;
+                    }}
                   />
                 ))}
 
