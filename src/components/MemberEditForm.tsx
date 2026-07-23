@@ -59,6 +59,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
   const [factuurEmail, setFactuurEmail] = useState(member.factuurEmail || "");
   const [factuurTelefoon, setFactuurTelefoon] = useState(member.factuurTelefoon || "");
 
+  // Bankrekeningen (IBANs)
+  const normalizeIban = (v: string) => v.replace(/\s+/g, "").toUpperCase();
+  const [ibans, setIbans] = useState<string[]>(
+    (member.ibans || []).map(normalizeIban).filter(Boolean),
+  );
+  const addIban = () => setIbans((prev) => [...prev, ""]);
+  const updateIban = (idx: number, v: string) =>
+    setIbans((prev) => prev.map((x, i) => (i === idx ? normalizeIban(v) : x)));
+  const removeIban = (idx: number) => setIbans((prev) => prev.filter((_, i) => i !== idx));
+
   // Contacten
   const [contacten, setContacten] = useState<Contact[]>([...member.contacten]);
 
@@ -108,6 +118,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       factuurPlaats: factuurPlaats || undefined,
       factuurEmail: factuurEmail || undefined,
       factuurTelefoon: factuurTelefoon || undefined,
+      ibans: (() => {
+        const cleaned = Array.from(
+          new Set(
+            ibans
+              .map(normalizeIban)
+              .filter((x) => /^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(x)),
+          ),
+        );
+        return cleaned.length ? cleaned : undefined;
+      })(),
       contactpersoon: primaryContact?.naam || member.contactpersoon,
       functie: primaryContact?.functie || member.functie,
       telefoon: primaryContact?.telefoon || member.telefoon,
