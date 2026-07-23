@@ -23,6 +23,7 @@ import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
+import HardeCheckTab from "@/components/budget/HardeCheckTab";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
@@ -337,6 +338,9 @@ export default function FinancienPage() {
             </TabsTrigger>
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
+            </TabsTrigger>
+            <TabsTrigger value="check" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Harde check
             </TabsTrigger>
           </TabsList>
 
