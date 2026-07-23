@@ -1,0 +1,1 @@
+UPDATE public.contribution_payments SET amount = amount WHERE year=2026 AND member_id IN (2,12,131,134,135);
