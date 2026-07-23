@@ -33,6 +33,13 @@ const statusBadge = (status: string) => {
   }
 };
 
+const paidBadge = (paidAt: string | null) => {
+  if (paidAt) {
+    return <Badge variant="default" className="bg-green-600 text-xs">Uitbetaald {fmtDate(paidAt)}</Badge>;
+  }
+  return <Badge variant="outline" className="text-xs text-muted-foreground">Nog niet uitbetaald</Badge>;
+};
+
 type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type" | "status";
 
 export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject }: Props) {
@@ -135,6 +142,8 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
       max_allowance_note: form.max_allowance_note || null,
       status: "pending",
       submitted_by: userId,
+      paid_at: null,
+      bank_transaction_id: null,
     });
     setForm({
       board_member_name: form.board_member_name,
@@ -245,6 +254,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Rekening</th>
               <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Houder</th>
               <SortHeader label="Status" field="status" className="text-center" />
+              <th className="px-2 py-1.5 font-medium text-muted-foreground text-center">Bank</th>
               <th className="w-16" />
             </tr>
           </thead>
@@ -261,6 +271,7 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
                 <td className="px-2 py-1.5 text-xs">{d.bank_account || ""}</td>
                 <td className="px-2 py-1.5">{d.account_holder || ""}</td>
                 <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
+                <td className="px-2 py-1.5 text-center whitespace-nowrap">{paidBadge(d.paid_at)}</td>
                 <td className="px-1 whitespace-nowrap">
                   {isAdmin && (
                     <span className="inline-flex gap-0.5">
@@ -283,13 +294,13 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={12} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
+              <tr><td colSpan={13} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
             )}
             {filtered.length > 0 && (
               <tr className="bg-muted/30 font-semibold">
                 <td colSpan={6} className="px-2 py-1.5">Totaal</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={total} /></td>
-                <td colSpan={5} />
+                <td colSpan={6} />
               </tr>
             )}
           </tbody>

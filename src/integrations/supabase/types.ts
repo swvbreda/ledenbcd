@@ -973,6 +973,7 @@ export type Database = {
           amount: number
           appointment: string | null
           bank_account: string | null
+          bank_transaction_id: string | null
           board_member_name: string
           created_at: string
           declaration_type: string
@@ -982,6 +983,7 @@ export type Database = {
           km_return: number | null
           km_single: number | null
           max_allowance_note: string | null
+          paid_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
@@ -995,6 +997,7 @@ export type Database = {
           amount?: number
           appointment?: string | null
           bank_account?: string | null
+          bank_transaction_id?: string | null
           board_member_name: string
           created_at?: string
           declaration_type?: string
@@ -1004,6 +1007,7 @@ export type Database = {
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
+          paid_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -1017,6 +1021,7 @@ export type Database = {
           amount?: number
           appointment?: string | null
           bank_account?: string | null
+          bank_transaction_id?: string | null
           board_member_name?: string
           created_at?: string
           declaration_type?: string
@@ -1026,6 +1031,7 @@ export type Database = {
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
+          paid_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -1034,7 +1040,15 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "internal_declarations_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "ponto_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_conversions: {
         Row: {

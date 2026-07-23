@@ -20,6 +20,8 @@ export interface InternalDeclaration {
   submitted_by: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  paid_at: string | null;
+  bank_transaction_id: string | null;
 }
 
 export function useInternalDeclarations(year: number) {
