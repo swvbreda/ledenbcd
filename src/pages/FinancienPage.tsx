@@ -19,6 +19,7 @@ import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
+import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -332,6 +333,9 @@ export default function FinancienPage() {
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
             </TabsTrigger>
+            <TabsTrigger value="ponto" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Bankboekingen
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -484,6 +488,10 @@ export default function FinancienPage() {
 
           <TabsContent value="informer">
             <InformerSyncTab />
+          </TabsContent>
+
+          <TabsContent value="ponto">
+            <BankboekingenTab year={year} />
           </TabsContent>
         </Tabs>
         </>
