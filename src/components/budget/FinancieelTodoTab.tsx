@@ -26,6 +26,7 @@ const typeLabels: Record<string, string> = {
   pending_declaration: "Declaratie goedkeuren",
   member_archived: "Opzegging verwerken",
   unmatched_payment: "Betaling toewijzen",
+  manual_bank_match: "Bankboeking koppelen",
   manual: "Handmatig",
 };
 
@@ -40,7 +41,7 @@ const typeCategoryLabels: Record<string, string> = {
 const getTypeCategory = (todoType: string): string => {
   if (["new_member_invoice", "unpaid_contribution", "overdue_invoice"].includes(todoType)) return "contributie";
   if (todoType === "pending_declaration") return "declaratie";
-  if (todoType === "unmatched_payment") return "betaling";
+  if (todoType === "unmatched_payment" || todoType === "manual_bank_match") return "betaling";
   if (todoType === "member_archived") return "overig";
   return "overig";
 };
@@ -52,6 +53,7 @@ const typeColors: Record<string, string> = {
   pending_declaration: "bg-orange-100 text-orange-800",
   member_archived: "bg-rose-100 text-rose-800",
   unmatched_payment: "bg-purple-100 text-purple-800",
+  manual_bank_match: "bg-purple-100 text-purple-800",
   manual: "bg-muted text-muted-foreground",
 };
 
