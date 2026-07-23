@@ -654,42 +654,21 @@ async function pullBankBalances(supabase: any): Promise<ActionResult> {
       // Probeer verschillende endpoint-varianten voor grootboek-details
       // (verschilt per Informer-account/versie).
       if (ledgerId) {
-        for (const p of [`/ledger_accounts/${ledgerId}`, `/ledgers/${ledgerId}`]) {
+        for (const p of [
+          `/journals/${j.id}`,
+          `/ledger_accounts/${ledgerId}`,
+          `/ledgers/${ledgerId}`,
+        ]) {
           const lc = await informerCall(p, {}, api_calls);
           if (lc.ok && !hasInformerError(lc.response_body)) {
             const body = lc.response_body;
-            ledger = Array.isArray(body) ? (body[0] ?? {}) : (body?.ledger ?? body?.ledger_account ?? body ?? {});
+            ledger = Array.isArray(body) ? (body[0] ?? {}) : (body?.ledger ?? body?.ledger_account ?? body?.journal ?? body ?? {});
             break;
           }
         }
       }
 
-      // Bereken saldo uit mutaties als fallback.
-      let mutationsBalance: number | null = null;
-      let lastMutationDate: string | null = null;
-      for (const p of [
-        `/bank_mutations?journal_id=${j.id}&records=500&page=0`,
-        `/journal_mutations?journal_id=${j.id}&records=500&page=0`,
-        `/journals/${j.id}/mutations?records=500&page=0`,
-      ]) {
-        const mc = await informerCall(p, {}, api_calls);
-        if (!mc.ok || hasInformerError(mc.response_body)) continue;
-        const rows = normalizeInformerList(mc.response_body, ["mutation", "mutations", "bank_mutation", "bank_mutations", "data"]);
-        if (rows.length === 0) continue;
-        let sum = 0;
-        for (const m of rows) {
-          const debit = toAmount(m.debit ?? m.debit_amount ?? 0);
-          const credit = toAmount(m.credit ?? m.credit_amount ?? 0);
-          const amt = toAmount(m.amount ?? 0);
-          sum += debit - credit + (debit === 0 && credit === 0 ? amt : 0);
-          const d = m.date ?? m.mutation_date ?? m.booking_date ?? null;
-          if (d && (!lastMutationDate || d > lastMutationDate)) lastMutationDate = d;
-        }
-        mutationsBalance = sum;
-        break;
-      }
-
-      items.push({ ...j, ledger, ledger_id: ledgerId, _mutations_balance: mutationsBalance, _last_mutation_date: lastMutationDate });
+      items.push({ ...j, ledger, ledger_id: ledgerId });
     }
 
     if (items.length === 0) {
