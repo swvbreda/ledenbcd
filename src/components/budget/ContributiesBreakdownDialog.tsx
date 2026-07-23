@@ -65,7 +65,12 @@ export default function ContributiesBreakdownDialog({
           paid_date: paidC?.paid_date ?? null,
         };
       })
-      .sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
+      .sort((a, b) => {
+        const da = a.invoice_date ? new Date(a.invoice_date).getTime() : 0;
+        const db = b.invoice_date ? new Date(b.invoice_date).getTime() : 0;
+        if (db !== da) return db - da;
+        return a.naam.localeCompare(b.naam, "nl");
+      });
   }, [invoices, memberMap, paidMap, contribByMember]);
 
   const filtered = useMemo(() => {
