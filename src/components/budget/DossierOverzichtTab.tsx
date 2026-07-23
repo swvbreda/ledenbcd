@@ -419,19 +419,45 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Nieuw dossier aanmaken</DialogTitle>
-            <DialogDescription>Geef het dossier een naam en selecteer de uitgaven die je wilt koppelen.</DialogDescription>
+            <DialogTitle>Uitgaven koppelen aan dossier</DialogTitle>
+            <DialogDescription>Kies een bestaand dossier of maak een nieuwe aan, en selecteer de uitgaven.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Dossiernaam</label>
-              <Input
-                value={newDossierName}
-                onChange={(e) => setNewDossierName(e.target.value)}
-                placeholder="Bijv. Advocaatkosten 2025"
-                autoFocus
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium">Dossier</label>
+                {dossiers.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-xs text-brand-red hover:underline"
+                    onClick={() => setDossierMode(dossierMode === "existing" ? "new" : "existing")}
+                  >
+                    {dossierMode === "existing" ? "+ Nieuw dossier aanmaken" : "← Kies bestaand dossier"}
+                  </button>
+                )}
+              </div>
+              {dossierMode === "existing" && dossiers.length > 0 ? (
+                <Select value={existingDossier} onValueChange={setExistingDossier}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kies een bestaand dossier…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dossiers.map((d) => (
+                      <SelectItem key={d.dossier} value={d.dossier}>
+                        {d.dossier} <span className="text-muted-foreground text-xs">({d.entries.length})</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={newDossierName}
+                  onChange={(e) => setNewDossierName(e.target.value)}
+                  placeholder="Bijv. Advocaatkosten 2025"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
@@ -497,9 +523,12 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuleren</Button>
             <Button
               onClick={createDossier}
-              disabled={!newDossierName.trim() || selectedExpenseIds.size === 0}
+              disabled={
+                (dossierMode === "new" ? !newDossierName.trim() : !existingDossier.trim()) ||
+                selectedExpenseIds.size === 0
+              }
             >
-              Dossier aanmaken ({selectedExpenseIds.size})
+              {dossierMode === "new" ? "Dossier aanmaken" : "Koppelen"} ({selectedExpenseIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
