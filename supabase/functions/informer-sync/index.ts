@@ -650,25 +650,9 @@ async function pullBankBalances(supabase: any): Promise<ActionResult> {
     const items: any[] = [];
     for (const j of bankJournals) {
       const ledgerId = j.ledger_id ?? j.ledgerId;
-      let ledger: any = {};
-      // Probeer verschillende endpoint-varianten voor grootboek-details
-      // (verschilt per Informer-account/versie).
-      if (ledgerId) {
-        for (const p of [
-          `/journals/${j.id}`,
-          `/ledger_accounts/${ledgerId}`,
-          `/ledgers/${ledgerId}`,
-        ]) {
-          const lc = await informerCall(p, {}, api_calls);
-          if (lc.ok && !hasInformerError(lc.response_body)) {
-            const body = lc.response_body;
-            ledger = Array.isArray(body) ? (body[0] ?? {}) : (body?.ledger ?? body?.ledger_account ?? body?.journal ?? body ?? {});
-            break;
-          }
-        }
-      }
-
-      items.push({ ...j, ledger, ledger_id: ledgerId });
+      // Informer v2 API biedt geen endpoint voor bank-saldi of grootboek­details;
+      // we bewaren de rekening zonder saldo en tonen dat in de UI.
+      items.push({ ...j, ledger: {}, ledger_id: ledgerId });
     }
 
     if (items.length === 0) {
