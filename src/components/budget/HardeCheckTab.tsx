@@ -371,17 +371,17 @@ export default function HardeCheckTab({ year }: Props) {
       </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-3xl overflow-hidden p-4 sm:p-6">
           {detail && (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  {detail.member_name ?? "Onbekend lid"}
-                  {detail.member_id && <span className="text-muted-foreground font-normal"> · #{detail.member_id}</span>}
+                <DialogTitle className="pr-8 leading-tight break-words">
+                  <span className="break-words">{detail.member_name ?? "Onbekend lid"}</span>
+                  {detail.member_id && <span className="text-muted-foreground font-normal whitespace-nowrap"> · #{detail.member_id}</span>}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-4 overflow-y-auto overflow-x-hidden pr-1 text-sm">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <SummaryBox label="Bank ontvangen" value={detail.bank_amount} />
                   <SummaryBox label="Informer-factuur" value={detail.invoice_amount ?? 0} sub={detail.invoice_number ?? undefined} />
                   <SummaryBox label="Gemarkeerd betaald" value={detail.marked_paid} />
@@ -390,15 +390,15 @@ export default function HardeCheckTab({ year }: Props) {
                 <div>
                   <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">Bankboekingen ({detail.bank_rows?.length ?? 0})</div>
                   {detail.bank_rows && detail.bank_rows.length > 0 ? (
-                    <div className="border border-border rounded-md divide-y">
+                    <div className="border border-border rounded-md divide-y overflow-hidden">
                       {detail.bank_rows.map((b, i) => (
-                        <div key={i} className="p-2 text-xs flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium">{b.value_date} — {b.counterparty_name ?? "?"}</div>
-                            <div className="text-muted-foreground truncate">{b.description}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">Dossier: {b.dossier ?? "—"} · Bron: {b.source.toUpperCase()}</div>
+                        <div key={i} className="grid gap-2 p-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                          <div className="min-w-0 space-y-1">
+                            <div className="font-medium break-words">{b.value_date} — {b.counterparty_name ?? "?"}</div>
+                            <div className="text-muted-foreground break-words [overflow-wrap:anywhere]">{b.description}</div>
+                            <div className="text-[10px] text-muted-foreground break-words [overflow-wrap:anywhere]">Dossier: {b.dossier ?? "—"} · Bron: {b.source.toUpperCase()}</div>
                           </div>
-                          <div className="tabular-nums font-semibold shrink-0"><CurrencyCell value={b.amount} /></div>
+                          <div className="tabular-nums font-semibold sm:text-right"><CurrencyCell value={b.amount} /></div>
                         </div>
                       ))}
                     </div>
@@ -407,20 +407,20 @@ export default function HardeCheckTab({ year }: Props) {
                   )}
                 </div>
 
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground break-words">
                   {detail.category === "amount_mismatch" && "Bank en Informer-factuurbedrag komen niet overeen. Controleer of er een extra of onterecht gekoppelde betaling is, of pas de factuur aan in Informer."}
                   {detail.category === "no_invoice" && "Er is een bankbetaling ontvangen zonder bijbehorende Informer-factuur — maak de factuur alsnog aan."}
                   {detail.category === "no_bank" && "Er is een factuur maar (nog) geen (volledige) bankontvangst. Wacht op betaling of stuur een herinnering."}
                   {detail.category === "orphan" && "Deze bankboeking kon niet aan een lid worden gekoppeld — koppel handmatig via het Te doen-tabblad."}
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="gap-2 sm:gap-2">
                 {detail.member_id && (
-                  <Button variant="outline" onClick={() => { navigate(`/leden/${detail.member_id}`); setDetail(null); }}>
+                  <Button className="w-full sm:w-auto" variant="outline" onClick={() => { navigate(`/leden/${detail.member_id}`); setDetail(null); }}>
                     <ExternalLink size={14} className="mr-1" /> Open ledendossier
                   </Button>
                 )}
-                <Button onClick={() => setDetail(null)}>Sluiten</Button>
+                <Button className="w-full sm:w-auto" onClick={() => setDetail(null)}>Sluiten</Button>
               </DialogFooter>
             </>
           )}
@@ -432,10 +432,10 @@ export default function HardeCheckTab({ year }: Props) {
 
 function SummaryBox({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
-    <div className="border border-border rounded-md p-2">
+    <div className="min-w-0 border border-border rounded-md p-2">
       <div className="text-[10px] text-muted-foreground uppercase">{label}</div>
-      <div className="text-base font-semibold tabular-nums"><CurrencyCell value={value} /></div>
-      {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
+      <div className="text-base font-semibold tabular-nums break-words"><CurrencyCell value={value} /></div>
+      {sub && <div className="text-[10px] text-muted-foreground break-words">{sub}</div>}
     </div>
   );
 }
