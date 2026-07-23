@@ -531,14 +531,27 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
     const mappedRelationIds = new Set(mapRows.map((row: any) => String(row.informer_debtor_id)));
     const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
 
+    // Fallback-set: alle bestaande member-ids, zodat we ook facturen matchen
+    // waarvan het relatienummer (== lidnummer) niet expliciet in de mapping
+    // staat, maar wel een bestaand lid is.
+    const { data: memberRows } = await supabase
+      .from("members_data")
+      .select("id");
+    const knownMemberIds = new Set<number>((memberRows ?? []).map((m: any) => Number(m.id)));
+
     let processed = 0;
     let skippedNonContribution = 0;
+    let skippedNoMember = 0;
     const errors: string[] = [];
     for (const inv of invoices) {
         const relationId = invoiceRelationId(inv);
-        if (relationId && !mappedRelationIds.has(relationId)) continue;
-        const memberId = relationToMember.get(relationId);
-        if (!memberId) continue;
+        let memberId: number | undefined = relationToMember.get(relationId);
+        if (!memberId) {
+          for (const candidate of invoiceMemberIdCandidates(inv)) {
+            if (knownMemberIds.has(candidate)) { memberId = candidate; break; }
+          }
+        }
+        if (!memberId) { skippedNoMember++; continue; }
         const externalId = String(inv.id ?? inv.invoice_id ?? "");
         const year = detectYear(inv);
         if (!externalId || !year) continue;
@@ -620,7 +633,12 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       success: errors.length === 0,
       items_processed: processed,
       error_message: errors.join(" | ") || undefined,
-      details: { remapped_relation_numbers: remapped, skipped_non_contribution: skippedNonContribution },
+      details: {
+        remapped_relation_numbers: remapped,
+        skipped_non_contribution: skippedNonContribution,
+        skipped_no_member: skippedNoMember,
+        total_invoices: invoices.length,
+      },
       api_calls,
     };
   } catch (e) {
