@@ -54,4 +54,5 @@ export interface Member {
   bestuursfunctie?: string;
   oprichter?: boolean;
   aanverwant?: number[];
+  ibans?: string[];
 }
