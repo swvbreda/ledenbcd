@@ -47,6 +47,7 @@ export function useContributions(year?: number) {
     queryKey: ["contributions", year, user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) throw new Error("Niet ingelogd");
       let q = supabase.from("member_contributions").select("*");
       if (year) q = q.eq("year", year);
       const { data, error } = await q.order("member_id");
@@ -89,6 +90,7 @@ export function useUpsertContribution() {
       paid_date?: string | null;
       notes?: string | null;
     }) => {
+      if (!user) throw new Error("Niet ingelogd");
       const { data, error } = await supabase
         .from("member_contributions")
         .upsert(
@@ -99,7 +101,7 @@ export function useUpsertContribution() {
             paid: input.paid,
             paid_date: input.paid_date ?? null,
             notes: input.notes ?? null,
-            created_by: user!.id,
+            created_by: user.id,
           },
           { onConflict: "member_id,year" }
         )
@@ -121,7 +123,7 @@ export function useContributionInvoices(year?: number) {
     queryKey: ["contribution-invoices", year, user?.id],
     enabled: !!user,
     queryFn: async () => {
-      let q = supabase.from("contribution_invoices").select("*");
+      let q = (supabase as any).from("contribution_invoices").select("*");
       if (year) q = q.eq("year", year);
       const { data, error } = await q.order("member_id");
       if (error) throw error;
@@ -187,7 +189,7 @@ export function useMemberInvoices(memberId: number) {
     queryKey: ["contribution-invoices", "member", memberId, user?.id],
     enabled: !!user && !!memberId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("contribution_invoices")
         .select("*")
         .eq("member_id", memberId)
