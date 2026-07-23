@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BudgetCategory } from "@/hooks/useBudget";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   categories: BudgetCategory[];
@@ -56,6 +63,8 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newDossierName, setNewDossierName] = useState("");
+  const [existingDossier, setExistingDossier] = useState<string>("");
+  const [dossierMode, setDossierMode] = useState<"existing" | "new">("existing");
   const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState("");
 
@@ -186,10 +195,13 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
     updateEntry(entry, null);
   };
 
-  const openNewDialog = () => {
+  const openNewDialog = (mode: "existing" | "new" = "existing") => {
     setNewDossierName("");
+    setExistingDossier("");
     setSelectedExpenseIds(new Set());
     setSearchFilter("");
+    // If no existing dossiers, force "new" mode
+    setDossierMode(dossiers.length === 0 ? "new" : mode);
     setShowNewDialog(true);
   };
 
@@ -203,10 +215,11 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
   };
 
   const createDossier = () => {
-    if (!newDossierName.trim() || selectedExpenseIds.size === 0) return;
+    const targetName = dossierMode === "new" ? newDossierName.trim() : existingDossier.trim();
+    if (!targetName || selectedExpenseIds.size === 0) return;
     for (const id of selectedExpenseIds) {
       const entry = allExpenses.find((e) => e.id === id);
-      if (entry) updateEntry(entry, newDossierName.trim());
+      if (entry) updateEntry(entry, targetName);
     }
     setShowNewDialog(false);
   };
