@@ -939,6 +939,7 @@ export type Database = {
           last_debtor_sync_at: string | null
           last_payment_sync_at: string | null
           last_ponto_sync_at: string | null
+          last_ponto_tx_sync_at: string | null
           updated_at: string
         }
         Insert: {
@@ -948,6 +949,7 @@ export type Database = {
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
           last_ponto_sync_at?: string | null
+          last_ponto_tx_sync_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -957,6 +959,7 @@ export type Database = {
           last_debtor_sync_at?: string | null
           last_payment_sync_at?: string | null
           last_ponto_sync_at?: string | null
+          last_ponto_tx_sync_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1678,6 +1681,124 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ponto_matching_rules: {
+        Row: {
+          budget_line_item_id: string | null
+          created_at: string
+          created_by: string | null
+          dossier: string | null
+          id: string
+          match_field: string
+          pattern: string
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          budget_line_item_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier?: string | null
+          id?: string
+          match_field?: string
+          pattern: string
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_line_item_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier?: string | null
+          id?: string
+          match_field?: string
+          pattern?: string
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_matching_rules_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ponto_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          budget_line_item_id: string | null
+          category: string | null
+          counterparty_iban: string | null
+          counterparty_name: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          dossier: string | null
+          executed_at: string | null
+          id: string
+          matched_manually: boolean
+          matched_rule_id: string | null
+          raw: Json | null
+          remittance_info: string | null
+          transaction_id: string
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          budget_line_item_id?: string | null
+          category?: string | null
+          counterparty_iban?: string | null
+          counterparty_name?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          dossier?: string | null
+          executed_at?: string | null
+          id?: string
+          matched_manually?: boolean
+          matched_rule_id?: string | null
+          raw?: Json | null
+          remittance_info?: string | null
+          transaction_id: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          budget_line_item_id?: string | null
+          category?: string | null
+          counterparty_iban?: string | null
+          counterparty_name?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          dossier?: string | null
+          executed_at?: string | null
+          id?: string
+          matched_manually?: boolean
+          matched_rule_id?: string | null
+          raw?: Json | null
+          remittance_info?: string | null
+          transaction_id?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_transactions_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       publications: {
         Row: {

@@ -27,6 +27,7 @@ const ACTION_LABELS: Record<string, string> = {
   pull_creditors: "Crediteuren ← Informer",
   pull_bank_balances: "Banksaldi ← Informer",
   pull_ponto_balances: "Banksaldi ← Ponto",
+  pull_ponto_transactions: "Boekingen ← Ponto",
   all: "Volledige sync",
 };
 
