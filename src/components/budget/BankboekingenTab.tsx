@@ -25,6 +25,7 @@ interface PontoTx {
   budget_line_item_id: string | null;
   matched_manually: boolean;
   matched_rule_id: string | null;
+  match_strategy: string | null;
 }
 
 interface Rule {
@@ -106,6 +107,49 @@ export default function BankboekingenTab({ year }: { year: number }) {
       return Array.from(set).sort((a, b) => a.localeCompare(b, "nl"));
     },
   });
+
+  const { data: memberNames } = useQuery({
+    queryKey: ["members_name_index"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("members_data")
+        .select("id, data");
+      if (error) throw error;
+      const map = new Map<number, string>();
+      for (const m of data ?? []) {
+        const d: any = (m as any).data || {};
+        map.set(Number((m as any).id), d.naam || d.bedrijfsnaam || `Lid #${(m as any).id}`);
+      }
+      return map;
+    },
+  });
+
+  const strategyLabel: Record<string, string> = {
+    invoice: "factuurnummer",
+    member_ref: "lidnummer",
+    iban: "IBAN",
+    name: "naam",
+  };
+  const strategyColor: Record<string, string> = {
+    invoice: "bg-green-100 text-green-800 border-green-200",
+    member_ref: "bg-blue-100 text-blue-800 border-blue-200",
+    iban: "bg-purple-100 text-purple-800 border-purple-200",
+    name: "bg-amber-100 text-amber-800 border-amber-200",
+  };
+
+  const parseContribDossier = (d: string | null) => {
+    if (!d) return null;
+    const m = d.match(/^Contributie\s*#(\d+)(?:\s*\(([^)]+)\))?/i);
+    if (!m) return null;
+    return { memberId: Number(m[1]), invoice: m[2] || null };
+  };
+
+  const contribMatches = useMemo(() => {
+    return (txs ?? [])
+      .map((t) => ({ tx: t, meta: parseContribDossier(t.dossier) }))
+      .filter((r) => r.meta !== null)
+      .sort((a, b) => (b.tx.executed_at || "").localeCompare(a.tx.executed_at || ""));
+  }, [txs]);
 
   const filtered = useMemo(() => {
     const q = filter.toLowerCase().trim();
@@ -316,6 +360,54 @@ export default function BankboekingenTab({ year }: { year: number }) {
           </table>
         )}
       </div>
+
+      {contribMatches.length > 0 && (
+        <div className="border border-border rounded-lg bg-card">
+          <div className="px-3 py-2 border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Contributie-matches ({contribMatches.length})
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-3 py-2 font-medium">Datum</th>
+                <th className="px-3 py-2 font-medium">Tegenpartij</th>
+                <th className="px-3 py-2 font-medium text-right">Bedrag</th>
+                <th className="px-3 py-2 font-medium">Lid</th>
+                <th className="px-3 py-2 font-medium">Factuur</th>
+                <th className="px-3 py-2 font-medium">Strategie</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contribMatches.map(({ tx, meta }) => {
+                const strat = tx.match_strategy || (tx.matched_manually ? "handmatig" : "onbekend");
+                const cls = strategyColor[strat] || "bg-muted text-muted-foreground border-border";
+                const label = strategyLabel[strat] || strat;
+                return (
+                  <tr key={tx.id} className="border-t border-border">
+                    <td className="px-3 py-1.5 text-xs whitespace-nowrap">
+                      {tx.executed_at ? new Date(tx.executed_at).toLocaleDateString("nl-NL") : "—"}
+                    </td>
+                    <td className="px-3 py-1.5">{tx.counterparty_name || "—"}</td>
+                    <td className="px-3 py-1.5 text-right tabular-nums whitespace-nowrap text-green-600">
+                      <CurrencyText value={Number(tx.amount)} />
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <div className="font-medium">{memberNames?.get(meta!.memberId) || `Lid #${meta!.memberId}`}</div>
+                      <div className="text-xs text-muted-foreground">#{meta!.memberId}</div>
+                    </td>
+                    <td className="px-3 py-1.5 text-xs">{meta!.invoice || "—"}</td>
+                    <td className="px-3 py-1.5">
+                      <span className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${cls}`}>
+                        {label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {(rules?.length ?? 0) > 0 && (
         <div className="border border-border rounded-lg bg-card">

@@ -1,0 +1,1 @@
+ALTER TABLE public.ponto_transactions ADD COLUMN IF NOT EXISTS match_strategy text;
