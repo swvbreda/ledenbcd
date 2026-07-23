@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Trash2, ArrowDownToLine } from "lucide-react";
-import type { BudgetExpense } from "@/hooks/useBudget";
+import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   onAddExpense: (expense: { line_item_id: string; description?: string; amount: number; expense_date?: string; creditor_name?: string; invoice_reference?: string; dossier?: string; created_by: string }) => void;
   onDeleteExpense: (id: string) => void;
   onUpdateExpense?: (id: string, fields: { line_item_id?: string; dossier?: string | null; direction?: "in" | "out" }) => void;
+  categories?: BudgetCategory[];
   userId: string;
 }
 
