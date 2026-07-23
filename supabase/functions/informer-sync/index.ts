@@ -668,12 +668,13 @@ async function pullBankBalances(supabase: any): Promise<ActionResult> {
       let mutationsBalance: number | null = null;
       let lastMutationDate: string | null = null;
       for (const p of [
-        `/mutations?journal_id=${j.id}&records=500&page=0`,
-        `/mutations?ledger_id=${ledgerId}&records=500&page=0`,
+        `/bank_mutations?journal_id=${j.id}&records=500&page=0`,
+        `/journal_mutations?journal_id=${j.id}&records=500&page=0`,
+        `/journals/${j.id}/mutations?records=500&page=0`,
       ]) {
         const mc = await informerCall(p, {}, api_calls);
         if (!mc.ok || hasInformerError(mc.response_body)) continue;
-        const rows = normalizeInformerList(mc.response_body, ["mutation", "mutations", "data"]);
+        const rows = normalizeInformerList(mc.response_body, ["mutation", "mutations", "bank_mutation", "bank_mutations", "data"]);
         if (rows.length === 0) continue;
         let sum = 0;
         for (const m of rows) {
