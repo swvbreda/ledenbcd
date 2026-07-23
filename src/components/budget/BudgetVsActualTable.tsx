@@ -9,7 +9,13 @@ interface Props {
 export default function BudgetVsActualTable({ categories, year }: Props) {
   if (categories.length === 0) return null;
 
-  const perCat = categories
+  // Only expense categories — inkomstenposten (bv. contributies, subsidies) horen
+  // niet in "uitgegeven van begroot".
+  const expenseCategories = categories.filter(
+    (c) => !/inkomst|contribut|subsid|opbreng/i.test(c.name)
+  );
+
+  const perCat = expenseCategories
     .map((cat) => {
       const budgeted = cat.line_items.reduce((sum, li) => sum + Number(li.budgeted_amount || 0), 0);
       const spent = cat.line_items.reduce(
