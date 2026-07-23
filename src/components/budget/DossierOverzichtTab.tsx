@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BudgetCategory } from "@/hooks/useBudget";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   categories: BudgetCategory[];
@@ -56,6 +63,8 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newDossierName, setNewDossierName] = useState("");
+  const [existingDossier, setExistingDossier] = useState<string>("");
+  const [dossierMode, setDossierMode] = useState<"existing" | "new">("existing");
   const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState("");
 
@@ -186,10 +195,13 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
     updateEntry(entry, null);
   };
 
-  const openNewDialog = () => {
+  const openNewDialog = (mode: "existing" | "new" = "existing") => {
     setNewDossierName("");
+    setExistingDossier("");
     setSelectedExpenseIds(new Set());
     setSearchFilter("");
+    // If no existing dossiers, force "new" mode
+    setDossierMode(dossiers.length === 0 ? "new" : mode);
     setShowNewDialog(true);
   };
 
@@ -203,10 +215,11 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
   };
 
   const createDossier = () => {
-    if (!newDossierName.trim() || selectedExpenseIds.size === 0) return;
+    const targetName = dossierMode === "new" ? newDossierName.trim() : existingDossier.trim();
+    if (!targetName || selectedExpenseIds.size === 0) return;
     for (const id of selectedExpenseIds) {
       const entry = allExpenses.find((e) => e.id === id);
-      if (entry) updateEntry(entry, newDossierName.trim());
+      if (entry) updateEntry(entry, targetName);
     }
     setShowNewDialog(false);
   };
@@ -277,7 +290,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             <strong className="tabular-nums">{unassignedCount}</strong> uitgave{unassignedCount === 1 ? "" : "n"} nog niet aan een dossier gekoppeld.
           </span>
           {onUpdateExpense && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={openNewDialog}>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("existing")}>
               Toewijzen
             </Button>
           )}
@@ -291,7 +304,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             Totaal: <CurrencyText value={grandTotal} />
           </span>
           {onUpdateExpense && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={openNewDialog}>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("new")}>
               <Plus className="h-3.5 w-3.5 mr-1" />
               Nieuw dossier
             </Button>
@@ -406,19 +419,45 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Nieuw dossier aanmaken</DialogTitle>
-            <DialogDescription>Geef het dossier een naam en selecteer de uitgaven die je wilt koppelen.</DialogDescription>
+            <DialogTitle>Uitgaven koppelen aan dossier</DialogTitle>
+            <DialogDescription>Kies een bestaand dossier of maak een nieuwe aan, en selecteer de uitgaven.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Dossiernaam</label>
-              <Input
-                value={newDossierName}
-                onChange={(e) => setNewDossierName(e.target.value)}
-                placeholder="Bijv. Advocaatkosten 2025"
-                autoFocus
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium">Dossier</label>
+                {dossiers.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-xs text-brand-red hover:underline"
+                    onClick={() => setDossierMode(dossierMode === "existing" ? "new" : "existing")}
+                  >
+                    {dossierMode === "existing" ? "+ Nieuw dossier aanmaken" : "← Kies bestaand dossier"}
+                  </button>
+                )}
+              </div>
+              {dossierMode === "existing" && dossiers.length > 0 ? (
+                <Select value={existingDossier} onValueChange={setExistingDossier}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kies een bestaand dossier…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dossiers.map((d) => (
+                      <SelectItem key={d.dossier} value={d.dossier}>
+                        {d.dossier} <span className="text-muted-foreground text-xs">({d.entries.length})</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={newDossierName}
+                  onChange={(e) => setNewDossierName(e.target.value)}
+                  placeholder="Bijv. Advocaatkosten 2025"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>
@@ -484,9 +523,12 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuleren</Button>
             <Button
               onClick={createDossier}
-              disabled={!newDossierName.trim() || selectedExpenseIds.size === 0}
+              disabled={
+                (dossierMode === "new" ? !newDossierName.trim() : !existingDossier.trim()) ||
+                selectedExpenseIds.size === 0
+              }
             >
-              Dossier aanmaken ({selectedExpenseIds.size})
+              {dossierMode === "new" ? "Dossier aanmaken" : "Koppelen"} ({selectedExpenseIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
