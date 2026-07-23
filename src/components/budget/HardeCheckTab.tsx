@@ -128,9 +128,21 @@ function useReconciliation(year: number) {
       const bankByMember = new Map<number, { total: number; rows: any[] }>();
       const orphanBank: BankIncomeRow[] = [];
       const nonContributionBank: BankIncomeRow[] = [];
+      const priorYearBank: BankIncomeRow[] = [];
       for (const t of dedupedBankRows) {
         const m = (t.dossier || "").match(/Contributie\s*#(\d+)/i);
         if (m) {
+          // Detecteer of dossier of omschrijving verwijst naar een factuurnummer
+          // van een ander jaar (bv. "(2025118)" op een 2026-boeking). Zulke
+          // boekingen zijn nabetalingen op oude facturen en horen NIET bij het
+          // huidige jaar in de reconciliatie.
+          const yearRef =
+            (t.dossier || "").match(/\b(20\d{2})\d{2,4}\b/) ||
+            (t.description || "").match(/\b(20\d{2})\d{2,4}\b/);
+          if (yearRef && Number(yearRef[1]) !== year) {
+            priorYearBank.push(t);
+            continue;
+          }
           const id = Number(m[1]);
           const entry = bankByMember.get(id) ?? { total: 0, rows: [] as BankIncomeRow[] };
           entry.total += Number(t.amount);
