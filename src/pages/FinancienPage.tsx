@@ -513,6 +513,10 @@ export default function FinancienPage() {
           <TabsContent value="informer">
             <InformerSyncTab />
           </TabsContent>
+
+          <TabsContent value="check">
+            <HardeCheckTab year={year} />
+          </TabsContent>
         </Tabs>
         </>
       )}
