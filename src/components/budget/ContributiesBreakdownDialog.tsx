@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
-import type { Contribution, ContributionInvoice } from "@/hooks/useContributions";
+import type { Contribution, ContributionInvoice, ContributionPayment } from "@/hooks/useContributions";
 
 export type BreakdownMode = "invoices" | "paid" | "unpaid";
 
@@ -16,11 +16,12 @@ interface Props {
   budgetedMemberCount: number;
   invoices: ContributionInvoice[];
   contributions: Contribution[];
+  payments?: ContributionPayment[];
   members: MemberLite[];
 }
 
 export default function ContributiesBreakdownDialog({
-  open, onOpenChange, mode, year, budgetedMemberCount, invoices, contributions, members,
+  open, onOpenChange, mode, year, budgetedMemberCount, invoices, contributions, payments = [], members,
 }: Props) {
   const memberMap = useMemo(() => {
     const m = new Map<number, MemberLite>();
@@ -33,6 +34,18 @@ export default function ContributiesBreakdownDialog({
     contributions.forEach((c) => { if (c.paid) m.set(c.member_id, c); });
     return m;
   }, [contributions]);
+
+  const paymentsByMember = useMemo(() => {
+    const m = new Map<number, { amount: number; paidDate: string | null }>();
+    payments.forEach((p) => {
+      const current = m.get(p.member_id) ?? { amount: 0, paidDate: null };
+      const paidDate = p.paid_at
+        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
+        : current.paidDate;
+      m.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
+    });
+    return m;
+  }, [payments]);
 
   const contribByMember = useMemo(() => {
     const m = new Map<number, Contribution>();
@@ -53,16 +66,23 @@ export default function ContributiesBreakdownDialog({
         const mem = memberMap.get(inv.member_id);
         const paidC = paidMap.get(inv.member_id);
         const contrib = contribByMember.get(inv.member_id);
-        const invoice_date = contrib?.invoice_date ?? inv.created_at ?? null;
+        const invoice_date = inv.invoice_date ?? contrib?.invoice_date ?? inv.created_at ?? null;
+        const invoiceAmount = Number(inv.amount ?? contrib?.amount ?? 0) || 0;
+        const payment = paymentsByMember.get(inv.member_id);
+        const paidAmount = payment?.amount ?? (paidC ? invoiceAmount : 0);
+        const openAmount = Math.max(0, invoiceAmount - paidAmount);
+        const paid = paidAmount >= invoiceAmount - 0.01 || !!paidC;
         return {
           key: inv.id,
           member_id: inv.member_id,
           naam: mem?.naam ?? `Lid #${inv.member_id}`,
           invoice_number: inv.invoice_number ?? "—",
           invoice_date,
-          amount: inv.amount ?? 0,
-          paid: !!paidC,
-          paid_date: paidC?.paid_date ?? null,
+          amount: invoiceAmount,
+          paidAmount,
+          openAmount,
+          paid,
+          paid_date: payment?.paidDate ?? paidC?.paid_date ?? null,
         };
       })
       .sort((a, b) => {
@@ -71,18 +91,22 @@ export default function ContributiesBreakdownDialog({
         if (db !== da) return db - da;
         return a.naam.localeCompare(b.naam, "nl");
       });
-  }, [invoices, memberMap, paidMap, contribByMember]);
+  }, [invoices, memberMap, paidMap, contribByMember, paymentsByMember]);
 
   const filtered = useMemo(() => {
-    if (mode === "paid") return rows.filter((r) => r.paid);
-    if (mode === "unpaid") return rows.filter((r) => !r.paid);
+    if (mode === "paid") return rows.filter((r) => r.paidAmount > 0);
+    if (mode === "unpaid") return rows.filter((r) => r.openAmount > 0.01);
     return rows;
   }, [rows, mode]);
 
-  const total = filtered.reduce((s, r) => s + r.amount, 0);
+  const total = filtered.reduce((s, r) => {
+    if (mode === "paid") return s + r.paidAmount;
+    if (mode === "unpaid") return s + r.openAmount;
+    return s + r.amount;
+  }, 0);
   const invoicedCount = rows.length;
-  const paidCount = rows.filter((r) => r.paid).length;
-  const unpaidCount = invoicedCount - paidCount;
+  const paidCount = rows.filter((r) => r.paidAmount > 0).length;
+  const unpaidCount = rows.filter((r) => r.openAmount > 0.01).length;
 
   const title = mode === "paid" ? "Ontvangen contributies" : mode === "unpaid" ? "Nog te ontvangen contributies" : "Alle facturen";
 
@@ -135,7 +159,9 @@ export default function ContributiesBreakdownDialog({
                       <td className="px-3 py-1.5">{r.naam}</td>
                       <td className="px-3 py-1.5 tabular-nums">{r.invoice_number}</td>
                       <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{fmtDate(r.invoice_date)}</td>
-                      <td className="px-3 py-1.5 text-right"><CurrencyCell value={r.amount} /></td>
+                      <td className="px-3 py-1.5 text-right">
+                        <CurrencyCell value={mode === "paid" ? r.paidAmount : mode === "unpaid" ? r.openAmount : r.amount} />
+                      </td>
                       <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{r.paid ? fmtDate(r.paid_date) : "—"}</td>
                       <td className="px-3 py-1.5">
                         {r.paid ? (
