@@ -201,20 +201,9 @@ export default function ExpenseDialog({ open, onOpenChange, lineItemName, lineIt
             <p className="text-sm text-muted-foreground">Nog geen transacties geregistreerd.</p>
           )}
 
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Nieuwe transactie toevoegen</p>
-            <div className="grid grid-cols-3 gap-2">
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-sm" />
-              <Input placeholder="Omschrijving" value={description} onChange={(e) => setDescription(e.target.value)} className="h-8 text-sm" />
-              <Input placeholder="Dossier" value={dossier} onChange={(e) => setDossier(e.target.value)} className="h-8 text-sm" />
-              <Input placeholder="Leverancier" value={creditor} onChange={(e) => setCreditor(e.target.value)} className="h-8 text-sm" />
-              <Input placeholder="Factuurnummer" value={invoiceRef} onChange={(e) => setInvoiceRef(e.target.value)} className="h-8 text-sm" />
-              <Input type="number" placeholder="Bedrag (€)" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-8 text-sm" />
-            </div>
-            <Button size="sm" className="mt-2" onClick={handleAdd} disabled={!amount}>
-              <Plus size={14} className="mr-1" /> Toevoegen
-            </Button>
-          </div>
+          <p className="text-xs text-muted-foreground border-t border-border pt-3">
+            Transacties worden automatisch overgenomen uit de bankboekingen. Handmatig toevoegen is niet meer nodig.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
