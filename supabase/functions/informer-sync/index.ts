@@ -688,11 +688,10 @@ async function pullBankBalances(supabase: any): Promise<ActionResult> {
       const iban = b.iban ?? l.iban ?? b.bank_account?.iban ?? l.bank_account?.iban ?? null;
       const balance = toAmount(
         l.balance ?? l.actual_balance ?? l.current_balance ?? l.saldo ?? l.book_balance ??
-        b.balance ?? b.actual_balance ?? b.current_balance ?? b.saldo ??
-        b._mutations_balance ?? 0,
+        b.balance ?? b.actual_balance ?? b.current_balance ?? b.saldo ?? 0,
       );
       const currency = l.currency ?? b.currency ?? b.currency_code ?? "EUR";
-      const asOf = l.balance_date ?? l.last_mutation_date ?? b._last_mutation_date ?? b.balance_date ?? today;
+      const asOf = l.balance_date ?? l.last_mutation_date ?? b.balance_date ?? today;
 
       await supabase.from("informer_bank_balances").upsert({
         account_id: accountId,
