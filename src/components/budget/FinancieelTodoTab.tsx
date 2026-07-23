@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2, Upload, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { CheckCircle2, Clock, Sparkles, User, X, RotateCcw, Loader2, Plus, StickyNote, ChevronDown, ChevronUp, Send, PauseCircle, Paperclip, FileText, Trash2, Upload, ArrowUp, ArrowDown, ArrowUpDown, Link2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import AdminUploadDialog from "./AdminUploadDialog";
+import LinkBankTransactionDialog from "./LinkBankTransactionDialog";
 import { useFinanceTodos, useFinanceTodoMutations, type FinanceTodo } from "@/hooks/useFinanceTodos";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,6 +86,7 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [holdReason, setHoldReason] = useState("");
   const [sortKey, setSortKey] = useState<"title" | "todo_type" | "assigned_to" | "member_id" | "due_date" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [linkDialogTodo, setLinkDialogTodo] = useState<{ id: string; reference_id: string } | null>(null);
 
   // Add form state
   const [newTitle, setNewTitle] = useState("");
@@ -327,6 +329,17 @@ export default function FinancieelTodoTab({ year }: Props) {
         onOpenChange={setShowUploadDialog}
         onComplete={() => refetch()}
       />
+
+      {linkDialogTodo && (
+        <LinkBankTransactionDialog
+          todoId={linkDialogTodo.id}
+          transactionId={linkDialogTodo.reference_id}
+          year={year}
+          open={!!linkDialogTodo}
+          onOpenChange={(o) => { if (!o) setLinkDialogTodo(null); }}
+          onLinked={() => refetch()}
+        />
+      )}
 
       {/* Bulk actions */}
       {selectedIds.size > 0 && (
@@ -578,6 +591,15 @@ export default function FinancieelTodoTab({ year }: Props) {
                     </td>
                     <td className="px-2 py-1.5 align-middle">
                       <div className="flex items-center justify-end gap-0.5">
+                        {todo.todo_type === "manual_bank_match" && todo.reference_id && (
+                          <button
+                            onClick={() => setLinkDialogTodo({ id: todo.id, reference_id: todo.reference_id! })}
+                            className="p-1 text-muted-foreground hover:text-primary"
+                            title="Koppelen aan lid of begrotingspost"
+                          >
+                            <Link2 size={13} />
+                          </button>
+                        )}
                         <button onClick={() => complete.mutate(todo.id, { onSuccess: () => toast.success("Taak afgerond") })} className="p-1 text-muted-foreground hover:text-green-600" title="Afronden"><CheckCircle2 size={13} /></button>
                         <button onClick={() => { setHoldDialogId(todo.id); setHoldReason(""); }} className="p-1 text-muted-foreground hover:text-amber-600" title="On hold"><PauseCircle size={13} /></button>
                         <button onClick={() => dismiss.mutate(todo.id, { onSuccess: () => toast.success("Genegeerd") })} className="p-1 text-muted-foreground hover:text-destructive" title="Negeren"><X size={13} /></button>
