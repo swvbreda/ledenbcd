@@ -423,6 +423,7 @@ export type Database = {
       }
       contribution_invoices: {
         Row: {
+          amount: number | null
           created_at: string
           id: string
           invoice_file_path: string | null
@@ -431,6 +432,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          amount?: number | null
           created_at?: string
           id?: string
           invoice_file_path?: string | null
@@ -439,6 +441,7 @@ export type Database = {
           year: number
         }
         Update: {
+          amount?: number | null
           created_at?: string
           id?: string
           invoice_file_path?: string | null
