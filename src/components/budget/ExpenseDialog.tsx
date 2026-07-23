@@ -16,7 +16,7 @@ interface Props {
   userId: string;
 }
 
-export default function ExpenseDialog({ open, onOpenChange, lineItemName, expenses, onDeleteExpense, onUpdateExpense }: Props) {
+export default function ExpenseDialog({ open, onOpenChange, lineItemName, expenses, onDeleteExpense, onUpdateExpense, categories: _categories }: Props) {
   const fmtDate = (d?: string | null) => {
     if (!d) return "";
     const dt = new Date(d);
