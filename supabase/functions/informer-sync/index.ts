@@ -471,6 +471,19 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         error_message: "Geen debiteur-koppelingen — koppel eerst leden aan Informer-debiteuren." };
     }
 
+    // Contributiedrempel om niet-contributie sales-facturen (sponsoring/donaties/overig)
+    // uit te sluiten. We accepteren alleen bedragen tussen €500 en 2× het jaarbedrag.
+    const { data: yearSettingsRows } = await supabase
+      .from("budget_year_settings")
+      .select("year, contribution_amount");
+    const contributionByYear = new Map<number, number>();
+    for (const r of (yearSettingsRows ?? [])) {
+      contributionByYear.set(Number(r.year), Number(r.contribution_amount ?? 3000));
+    }
+    const defaultContribution = 3000;
+    // Contributiefactuurnummers hebben het formaat YYYYNNN (bv. 2026068), zonder streepje.
+    const CONTRIBUTION_NUMBER_RE = /^20\d{6}$/;
+
     const invoices = await fetchAllInformerPages("/invoices/sales", ["sales", "invoices", "data"], api_calls);
     const invoiceRemap = await ensureInvoiceRelationMappings(
       supabase,
@@ -491,6 +504,7 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
     const relationToMember = new Map(mapRows.map((row: any) => [String(row.informer_debtor_id), row.member_id]));
 
     let processed = 0;
+    let skippedNonContribution = 0;
     const errors: string[] = [];
     for (const inv of invoices) {
         const relationId = invoiceRelationId(inv);
@@ -507,6 +521,17 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
         const status = invoiceStatus(inv);
         const isPaid = paidAmount >= amount || status === "paid" || status === "betaald";
         const paidDate = inv.payment_date ?? inv.paid_date ?? null;
+
+        // Filter: alleen contributiefacturen doorlaten.
+        // 1) Factuurnummer moet aanwezig zijn en het contributie-formaat YYYYNNN hebben.
+        // 2) Bedrag moet realistisch zijn voor contributie (€500 – 2× jaarbedrag).
+        const contribAmountYear = contributionByYear.get(year) ?? defaultContribution;
+        const numberOk = typeof invoiceNumber === "string" && CONTRIBUTION_NUMBER_RE.test(invoiceNumber);
+        const amountOk = amount >= 500 && amount <= contribAmountYear * 2;
+        if (!numberOk || !amountOk) {
+          skippedNonContribution++;
+          continue;
+        }
 
         // Try match by external_invoice_id first, otherwise by (member_id, year)
         const { data: existing } = await supabase
@@ -566,7 +591,7 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
       success: errors.length === 0,
       items_processed: processed,
       error_message: errors.join(" | ") || undefined,
-      details: { remapped_relation_numbers: remapped },
+      details: { remapped_relation_numbers: remapped, skipped_non_contribution: skippedNonContribution },
       api_calls,
     };
   } catch (e) {
