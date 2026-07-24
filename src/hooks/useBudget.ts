@@ -556,6 +556,56 @@ export function useBudgetMutations(year: number) {
     },
   });
 
+  const updatePontoTransaction = useMutation({
+    mutationFn: async ({
+      id,
+      budget_line_item_id,
+      dossier,
+    }: {
+      id: string;
+      budget_line_item_id?: string | null;
+      dossier?: string | null;
+    }) => {
+      const client = supabase as any;
+      const fields: any = {};
+      if (budget_line_item_id !== undefined) fields.budget_line_item_id = budget_line_item_id;
+      if (dossier !== undefined) fields.dossier = dossier;
+      const { error } = await client.from("ponto_transactions").update(fields).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const linkPaymentToMember = useMutation({
+    mutationFn: async ({
+      member_id,
+      amount,
+      paid_at,
+      userId,
+    }: {
+      member_id: number;
+      amount: number;
+      paid_at: string | null;
+      userId: string;
+    }) => {
+      const { error } = await (supabase as any).from("contribution_payments").insert({
+        member_id,
+        year,
+        amount,
+        status: "paid",
+        payment_method: "bank",
+        paid_at: paid_at || new Date().toISOString(),
+        created_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budget-categories", year] });
+      qc.invalidateQueries({ queryKey: ["contribution-payments"] });
+      qc.invalidateQueries({ queryKey: ["contributions"] });
+    },
+  });
+
   const addBalanceItem = useMutation({
     mutationFn: async ({ name, amount, section, side = 'right' }: { name: string; amount: number; section: string; side?: string }) => {
       const { data: existing } = await supabase
