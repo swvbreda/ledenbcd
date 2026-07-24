@@ -2465,6 +2465,15 @@ export type Database = {
           read_ct: number
         }[]
       }
+      send_welcome_email_admin: {
+        Args: {
+          _body: string
+          _idempotency_key: string
+          _recipient: string
+          _subject: string
+        }
+        Returns: number
+      }
       set_vault_secret: {
         Args: { _name: string; _value: string }
         Returns: undefined
