@@ -168,10 +168,16 @@ export default function ExpenseDialog({
     return { merchant: "", note: cleaned };
   };
 
-  const visibleExpenses = expenses
-    .filter((e) => (isIncomeCategory ? true : e.direction !== "in"))
-    .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
-  const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
+  // Voor uitgaven-posten tonen we ook bijschrijvingen (bijv. terugstortingen
+  // van dubbel geboekte betalingen), zodat de penningmeester ze kan zien en
+  // corrigeren. Bijschrijvingen worden van het totaal afgetrokken.
+  const visibleExpenses = [...expenses].sort((a, b) =>
+    (b.expense_date || "").localeCompare(a.expense_date || ""),
+  );
+  const total = visibleExpenses.reduce(
+    (s, e) => s + (e.direction === "in" ? -e.amount : e.amount),
+    0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
