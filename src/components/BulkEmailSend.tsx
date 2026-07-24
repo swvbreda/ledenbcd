@@ -66,26 +66,19 @@ const EMAIL_RE = /^[^\s@"'<>,;:]+@[^\s@"'<>,;:]+\.[^\s@"'<>,;:]{2,}$/;
 function isValidEmail(s: string): boolean {
   return EMAIL_RE.test(s);
 }
-function pickEmail(data: any): string | null {
-  const direct = (data?.email || "").toString().trim().toLowerCase();
-  if (direct && isValidEmail(direct)) return direct;
+function collectContactEmails(data: any): { email: string; naam: string }[] {
+  const out: { email: string; naam: string }[] = [];
+  const seen = new Set<string>();
+  const push = (email?: string, naam?: string) => {
+    const e = (email || "").toString().trim().toLowerCase();
+    if (!e || !isValidEmail(e) || seen.has(e)) return;
+    seen.add(e);
+    out.push({ email: e, naam: (naam || "").toString().trim() || "lid" });
+  };
+  push(data?.email, data?.contactpersoon);
   const contacten = Array.isArray(data?.contacten) ? data.contacten : [];
-  for (const c of contacten) {
-    const e = (c?.email || "").toString().trim().toLowerCase();
-    if (e && isValidEmail(e)) return e;
-  }
-  return null;
-}
-
-function pickContactNaam(data: any): string {
-  const direct = (data?.contactpersoon || "").toString().trim();
-  if (direct) return direct;
-  const contacten = Array.isArray(data?.contacten) ? data.contacten : [];
-  for (const c of contacten) {
-    const n = (c?.naam || "").toString().trim();
-    if (n) return n;
-  }
-  return "lid";
+  for (const c of contacten) push(c?.email, c?.naam);
+  return out;
 }
 
 export function BulkEmailSend({
@@ -158,16 +151,19 @@ export function BulkEmailSend({
     const list: Recipient[] = [];
     const seen = new Set<string>();
     for (const m of filtered) {
-      const email = pickEmail(m.merged);
-      if (!email || seen.has(email)) continue;
-      seen.add(email);
-      list.push({
-        memberId: m.id,
-        email,
-        contactpersoon: pickContactNaam(m.merged),
-        coffeeshop: (m.merged.naam || m.merged.bedrijfsnaam || "").toString(),
-        plaats: (m.merged.plaats || "").toString(),
-      });
+      const coffeeshop = (m.merged.naam || m.merged.bedrijfsnaam || "").toString();
+      const plaats = (m.merged.plaats || "").toString();
+      for (const c of collectContactEmails(m.merged)) {
+        if (seen.has(c.email)) continue;
+        seen.add(c.email);
+        list.push({
+          memberId: m.id,
+          email: c.email,
+          contactpersoon: c.naam,
+          coffeeshop,
+          plaats,
+        });
+      }
     }
     list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
     return list;
