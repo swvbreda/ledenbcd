@@ -61,6 +61,15 @@ export default function ExpenseDialog({
     [members]
   );
 
+  const dossierOptions = useMemo(() => {
+    const set = new Set<string>();
+    expenses.forEach((e) => {
+      const d = (e.dossier || "").trim();
+      if (d) set.add(d);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [expenses]);
+
   const startEdit = (e: BudgetExpense) => {
     setEditingId(e.id);
     setEditLineItemId(e.line_item_id);
@@ -302,12 +311,21 @@ export default function ExpenseDialog({
                                 </div>
                                 <div>
                                   <label className="text-[11px] font-medium text-muted-foreground">Dossier</label>
-                                  <Input
-                                    value={editDossier}
-                                    onChange={(ev) => setEditDossier(ev.target.value)}
-                                    className="h-8 text-xs"
-                                    placeholder="Optioneel dossier..."
-                                  />
+                                  <Select
+                                    value={editDossier || "__none__"}
+                                    onValueChange={(v) => setEditDossier(v === "__none__" ? "" : v)}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Geen dossier" /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="__none__" className="text-xs">Geen dossier</SelectItem>
+                                      {dossierOptions.map((d) => (
+                                        <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>
+                                      ))}
+                                      {editDossier && !dossierOptions.includes(editDossier) && (
+                                        <SelectItem value={editDossier} className="text-xs">{editDossier}</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                                 <div className="flex gap-2">
                                   <Button size="sm" className="h-8 text-xs" onClick={() => saveEdit(e)}>
