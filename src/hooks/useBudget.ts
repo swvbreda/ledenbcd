@@ -630,9 +630,7 @@ export function useBudgetMutations(year: number) {
       }
       return { similarUpdated };
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["bank-statement", year] });
-    },
+    onSuccess: invalidate,
   });
 
   const updatePontoTransaction = useMutation({
