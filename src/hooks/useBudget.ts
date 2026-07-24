@@ -82,6 +82,42 @@ export interface BankStatementData {
 
 export type ExpenseSourcePreference = "manual" | "pdf_import";
 
+const normalizeInvoiceKey = (value?: string | null) =>
+  (value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const normalizePartyKey = (value?: string | null) =>
+  (value || "")
+    .toLowerCase()
+    .replace(/\b(via|bv|b\.v\.|vof|v\.o\.f\.|nv|n\.v\.)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 48);
+
+const dayNumber = (value?: string | null) => {
+  const timestamp = value ? new Date(value).getTime() : NaN;
+  return Number.isNaN(timestamp) ? 0 : Math.floor(timestamp / 86_400_000);
+};
+
+const extractInvoiceReference = (...parts: Array<string | null | undefined>) => {
+  const text = parts.filter(Boolean).join(" ");
+  if (!text) return null;
+
+  const patterns = [
+    /(?:fact(?:uur)?\.?\s*(?:n\.?r\.?|nr\.?|nummer)?|factuurnummer|invoice|reminfo|remi|eref)\s*[:/#-]?\s*(20\d{2})\s*[- ]\s*(\d{2,6})/i,
+    /\b(20\d{2})\s*[- ]\s*(\d{3,6})\b/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1] && match?.[2]) {
+      return `${match[1]}-${match[2]}`;
+    }
+  }
+
+  return null;
+};
+
 export function useBudgetCategories(year: number, sourcePreference: ExpenseSourcePreference = "manual") {
   return useQuery({
     queryKey: ["budget-categories", year, sourcePreference],
@@ -125,23 +161,26 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
           .eq("year", year)
           .in("line_item_id", lineItemIds);
         if (bankErr) throw bankErr;
-        bankAsExpenses = (bankRows || []).map((b: any) => ({
-          id: `bank:${b.id}`,
-          line_item_id: b.line_item_id,
-          description: b.description,
-          amount: Number(b.amount) || 0,
-          expense_date: b.transaction_date,
-          creditor_name: b.counterparty,
-          invoice_reference: b.invoice_reference,
-          dossier: b.dossier,
-          source: "bank",
-          pdf_file_path: null,
-          paid: true,
-          paid_date: b.transaction_date,
-          created_at: b.created_at,
-          direction: b.direction,
-          _fromBank: true,
-        }));
+        bankAsExpenses = (bankRows || []).map((b: any) => {
+          const invoiceReference = extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference;
+          return {
+            id: `bank:${b.id}`,
+            line_item_id: b.line_item_id,
+            description: b.description,
+            amount: Number(b.amount) || 0,
+            expense_date: b.transaction_date,
+            creditor_name: b.counterparty,
+            invoice_reference: invoiceReference,
+            dossier: b.dossier,
+            source: "bank",
+            pdf_file_path: null,
+            paid: true,
+            paid_date: b.transaction_date,
+            created_at: b.created_at,
+            direction: b.direction,
+            _fromBank: true,
+          };
+        });
 
         // Live bankboekingen (Ponto): koppel via budget_line_item_id
         const yearStart = `${year}-01-01`;
@@ -155,9 +194,7 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         if (pontoErr) throw pontoErr;
         const pontoAsExpenses = (pontoRows || []).map((p: any) => {
           const raw = Number(p.amount) || 0;
-          const descBlob = `${p.description || ""} ${p.remittance_info || ""}`;
-          const invMatch = descBlob.match(/(?:fact(?:uur)?\.?\s*n?r?\.?|factuur|invoice|REMI\/)\s*[:#]?\s*([0-9]{2,4}[-\s]?[0-9]{2,6})/i);
-          const cleanInv = invMatch ? invMatch[1].replace(/\s+/g, "") : null;
+          const invoiceReference = extractInvoiceReference(p.description, p.remittance_info);
           return {
             id: `ponto:${p.id}`,
             line_item_id: p.budget_line_item_id,
@@ -165,7 +202,7 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
             amount: Math.abs(raw),
             expense_date: p.executed_at,
             creditor_name: p.counterparty_name,
-            invoice_reference: cleanInv,
+            invoice_reference: invoiceReference,
             dossier: p.dossier,
             source: "bank",
             pdf_file_path: null,
@@ -185,12 +222,6 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
       // matchen daarom primair op factuurnummer + bedrag, en pas als er geen
       // factuurnummer is op datum(±2) + bedrag + tegenpartij. Voorkeur: Ponto.
       {
-        const norm = (s?: string | null) => (s || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
-        const normInv = (s?: string | null) => (s || "").toLowerCase().replace(/[\s.]/g, "");
-        const dayNum = (d?: string | null) => {
-          const t = d ? new Date(d).getTime() : NaN;
-          return isNaN(t) ? 0 : Math.floor(t / 86400000);
-        };
         const isPonto = (e: any) => String(e.id).startsWith("ponto:");
         // Sorteer zodat Ponto-regels eerst worden gezien en behouden blijven.
         const sorted = [...bankAsExpenses].sort((a, b) => (isPonto(b) ? 1 : 0) - (isPonto(a) ? 1 : 0));
@@ -199,18 +230,19 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         const dateSeen: { key: string; day: number; entry: any }[] = [];
         for (const e of sorted) {
           const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const invKey = normInv(e.invoice_reference);
+          const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
+          const directionKey = e.direction || "out";
           if (invKey) {
-            const key = `${e.line_item_id}|${amtKey}|${invKey}`;
+            const key = `${e.line_item_id}|${directionKey}|${amtKey}|${invKey}`;
             if (invSeen.has(key)) continue;
             invSeen.set(key, e);
             kept.push(e);
             continue;
           }
-          const cpKey = norm(e.creditor_name);
-          const baseKey = `${e.line_item_id}|${amtKey}|${cpKey}`;
-          const day = dayNum(e.expense_date);
-          const dup = dateSeen.find((d) => d.key === baseKey && Math.abs(d.day - day) <= 2);
+          const cpKey = normalizePartyKey(e.creditor_name || e.description);
+          const baseKey = `${e.line_item_id}|${directionKey}|${amtKey}|${cpKey}`;
+          const day = dayNumber(e.expense_date);
+          const dup = dateSeen.find((d) => d.key === baseKey && Math.abs(d.day - day) <= 4);
           if (dup) continue;
           dateSeen.push({ key: baseKey, day, entry: e });
           kept.push(e);
@@ -223,30 +255,26 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
       // dag±2 + bedrag + creditor) op dezelfde post, laten we de handmatige
       // versie vallen zodat we niet dubbel tellen.
       {
-        const normInv = (s?: string | null) => (s || "").toLowerCase().replace(/[\s.]/g, "");
-        const norm = (s?: string | null) => (s || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
-        const dayNum = (d?: string | null) => {
-          const t = d ? new Date(d).getTime() : NaN;
-          return isNaN(t) ? 0 : Math.floor(t / 86400000);
-        };
         const bankInv = new Set<string>();
         const bankDate: { key: string; day: number }[] = [];
         for (const b of bankAsExpenses) {
           const amtKey = Math.round((Number(b.amount) || 0) * 100);
-          const invKey = normInv(b.invoice_reference);
-          if (invKey) bankInv.add(`${b.line_item_id}|${amtKey}|${invKey}`);
+          const invKey = normalizeInvoiceKey(extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference);
+          const directionKey = b.direction || "out";
+          if (invKey) bankInv.add(`${b.line_item_id}|${directionKey}|${amtKey}|${invKey}`);
           bankDate.push({
-            key: `${b.line_item_id}|${amtKey}|${norm(b.creditor_name)}`,
-            day: dayNum(b.expense_date),
+            key: `${b.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(b.creditor_name || b.description)}`,
+            day: dayNumber(b.expense_date),
           });
         }
         expenses = expenses.filter((e: any) => {
           const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const invKey = normInv(e.invoice_reference);
-          if (invKey && bankInv.has(`${e.line_item_id}|${amtKey}|${invKey}`)) return false;
-          const baseKey = `${e.line_item_id}|${amtKey}|${norm(e.creditor_name)}`;
-          const day = dayNum(e.expense_date);
-          if (bankDate.some((d) => d.key === baseKey && Math.abs(d.day - day) <= 2)) return false;
+          const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
+          const directionKey = e.direction || "out";
+          if (invKey && bankInv.has(`${e.line_item_id}|${directionKey}|${amtKey}|${invKey}`)) return false;
+          const baseKey = `${e.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(e.creditor_name || e.description)}`;
+          const day = dayNumber(e.expense_date);
+          if (bankDate.some((d) => d.key === baseKey && Math.abs(d.day - day) <= 4)) return false;
           return true;
         });
       }
