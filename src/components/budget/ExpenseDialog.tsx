@@ -179,6 +179,37 @@ export default function ExpenseDialog({
     0,
   );
 
+  // Een bijschrijving is alleen echt een "terugstorting" als er op deze post
+  // een uitgave staat naar dezelfde tegenpartij. Anders is het een externe
+  // bijdrage (bijv. PCN die meebetaalt aan juridische kosten).
+  const outgoingParties = new Set(
+    visibleExpenses
+      .filter((e) => e.direction !== "in")
+      .map((e) =>
+        (e.creditor_name || "")
+          .toLowerCase()
+          .replace(/\b(bv|b\.v\.|vof|nv|n\.v\.)\b/g, " ")
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim(),
+      )
+      .filter(Boolean),
+  );
+  const isRefundRow = (e: BudgetExpense) => {
+    const opposite = isIncomeCategory ? "out" : "in";
+    if (e.direction !== opposite) return false;
+    if (isIncomeCategory) return true; // afboeking op inkomstenpost = terugstorting
+    const party = (e.creditor_name || "")
+      .toLowerCase()
+      .replace(/\b(bv|b\.v\.|vof|nv|n\.v\.)\b/g, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    if (!party) return false;
+    for (const p of outgoingParties) {
+      if (p && (p === party || p.includes(party) || party.includes(p))) return true;
+    }
+    return false;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl">
@@ -207,12 +238,14 @@ export default function ExpenseDialog({
                     const isEditing = editingId === e.id;
                     const isContribRow = e.id.startsWith("contrib:");
                     const canEdit = !isContribRow;
-                    const isRefund = isIncomeCategory ? e.direction === "out" : e.direction === "in";
-                    const signedAmount = isRefund ? -Math.abs(e.amount) : e.amount;
+                    const isNegative = isIncomeCategory ? e.direction === "out" : e.direction === "in";
+                    const isRefund = isNegative && isRefundRow(e);
+                    const isContribution = isNegative && !isRefund;
+                    const signedAmount = isNegative ? -Math.abs(e.amount) : e.amount;
                     return (
                       <Fragment key={e.id}>
                         <tr
-                          className={`border-b border-border/50 ${canEdit ? "cursor-pointer hover:bg-muted/40" : ""} ${isEditing ? "bg-muted/40" : ""} ${isRefund ? "bg-green-50/40" : ""}`}
+                          className={`border-b border-border/50 ${canEdit ? "cursor-pointer hover:bg-muted/40" : ""} ${isEditing ? "bg-muted/40" : ""} ${isNegative ? "bg-green-50/40" : ""}`}
                           onClick={() => {
                             if (!canEdit) return;
                             if (isEditing) cancelEdit();
@@ -228,9 +261,12 @@ export default function ExpenseDialog({
                               {isRefund && (
                                 <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Terugstorting</div>
                               )}
+                              {isContribution && (
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Bijdrage</div>
+                              )}
                             </div>
                           </td>
-                          <td className={`text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums ${isRefund ? "text-green-700" : ""}`}><CurrencyCell value={signedAmount} /></td>
+                          <td className={`text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums ${isNegative ? "text-green-700" : ""}`}><CurrencyCell value={signedAmount} /></td>
                           <td className="px-2 py-1 max-w-[200px]">
                             <div className="truncate" title={merchant}>{merchant || "—"}</div>
                           </td>
