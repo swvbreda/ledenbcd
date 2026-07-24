@@ -267,12 +267,13 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       if (raw && mm) ibanToMember.set(raw, Number(mm[1]));
     }
   };
-  const [{ data: pontoLearn }, { data: bankLearn }] = await Promise.all([
-    supabase.from("ponto_transactions").select("counterparty_iban, dossier").ilike("dossier", "Contributie #%"),
-    supabase.from("bank_transactions").select("counterparty_iban, dossier").ilike("dossier", "Contributie #%"),
-  ]);
+  // Note: bank_transactions has no counterparty_iban column (unlike
+  // ponto_transactions), so we only learn IBAN→member links from Ponto rows.
+  const { data: pontoLearn } = await supabase
+    .from("ponto_transactions")
+    .select("counterparty_iban, dossier")
+    .ilike("dossier", "Contributie #%");
   learnFromRows(pontoLearn);
-  learnFromRows(bankLearn);
 
   // Backfill: IBAN's die uit historische matches komen maar nog niet in de
   // lid-data staan, toevoegen aan members_data.data.ibans (idempotent).
