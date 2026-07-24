@@ -106,6 +106,10 @@ const extractInvoiceReference = (...parts: Array<string | null | undefined>) => 
   const patterns = [
     /(?:fact(?:uur)?\.?\s*(?:n\.?r\.?|nr\.?|nummer)?|factuurnummer|invoice|reminfo|remi|eref)\s*[:/#-]?\s*(20\d{2})\s*[- ]\s*(\d{2,6})/i,
     /\b(20\d{2})\s*[- ]\s*(\d{3,6})\b/i,
+    // Contigue nummers zoals "Declaratienummer:20261238" of "factuurnr 20261238"
+    /(?:fact(?:uur)?\.?\s*(?:n\.?r\.?|nr\.?|nummer)?|factuurnummer|declaratienummer|declaratie(?:\s*nr\.?)?|invoice|reminfo|remi|eref)\s*[:/#-]?\s*(20\d{2})(\d{3,6})\b/i,
+    // Losstaand 20YY-nummer met minimaal 4 aansluitende cijfers (bv. 20261238)
+    /\b(20\d{2})(\d{4,6})\b/,
   ];
 
   for (const pattern of patterns) {
