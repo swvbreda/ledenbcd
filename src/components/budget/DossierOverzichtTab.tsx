@@ -204,19 +204,6 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
 
   return (
     <div className="mt-4 space-y-3">
-      {unassignedCount > 0 && (
-        <div className="border border-brand-red/40 bg-brand-red/5 rounded-lg px-3 py-2 flex items-center justify-between gap-3 text-sm">
-          <span>
-            <strong className="tabular-nums">{unassignedCount}</strong> uitgave{unassignedCount === 1 ? "" : "n"} nog niet aan een dossier gekoppeld.
-          </span>
-          {onUpdateExpense && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("existing")}>
-              Toewijzen
-            </Button>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">{dossiers.length} dossiers</h3>
         <div className="flex items-center gap-2">
