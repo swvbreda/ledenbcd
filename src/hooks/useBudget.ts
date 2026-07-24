@@ -754,6 +754,8 @@ export function useBudgetMutations(year: number) {
     deleteNote,
     replaceBankStatement,
     updateBankTransaction,
+    updatePontoTransaction,
+    linkPaymentToMember,
   };
 }
 
