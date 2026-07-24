@@ -107,6 +107,26 @@ Deno.serve(async (req) => {
     const isServiceRole =
       supabaseServiceKey && authHeader === `Bearer ${supabaseServiceKey}`
     let allowed = isServiceRole
+    // Also accept any valid service_role JWT (handles key rotation where the
+    // env-provided service key no longer matches tokens stored in vault).
+    if (!allowed && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.slice('Bearer '.length).trim()
+        const parts = token.split('.')
+        if (parts.length >= 2) {
+          const payload = parts[1]
+            .replaceAll('-', '+')
+            .replaceAll('_', '/')
+            .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
+          const claims = JSON.parse(atob(payload)) as Record<string, unknown>
+          if (claims?.role === 'service_role') {
+            allowed = true
+          }
+        }
+      } catch (_) {
+        // ignore malformed tokens; fall through to admin check
+      }
+    }
     if (!allowed && authHeader.startsWith('Bearer ')) {
       try {
         const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''

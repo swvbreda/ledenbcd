@@ -2400,6 +2400,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _list_vault_secret_names: { Args: never; Returns: string[] }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -2464,6 +2465,15 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      send_welcome_email_admin: {
+        Args: {
+          _body: string
+          _idempotency_key: string
+          _recipient: string
+          _subject: string
+        }
+        Returns: number
       }
       set_vault_secret: {
         Args: { _name: string; _value: string }
