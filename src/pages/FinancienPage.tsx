@@ -226,7 +226,7 @@ export default function FinancienPage() {
 
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
-  const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string } | null>(null);
+  const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string; categoryName?: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [contributieBreakdown, setContributieBreakdown] = useState<BreakdownMode | null>(null);
@@ -377,7 +377,10 @@ export default function FinancienPage() {
                     onUpdateLineItem={(id, name, amount) => mutations.updateLineItem.mutate({ id, name, amount })}
                     onDeleteLineItem={(id) => mutations.deleteLineItem.mutate(id, { onSuccess: () => toast.success("Post verwijderd") })}
                     onDeleteCategory={(id) => mutations.deleteCategory.mutate(id, { onSuccess: () => toast.success("Categorie verwijderd") })}
-                    onOpenExpenses={(lineItemId, lineItemName) => setExpenseDialog({ lineItemId, lineItemName })}
+                    onOpenExpenses={(lineItemId, lineItemName) => {
+                      const cat = (categories || []).find((c) => c.line_items.some((li) => li.id === lineItemId));
+                      setExpenseDialog({ lineItemId, lineItemName, categoryName: cat?.name });
+                    }}
                     getCellClicks={(li) => {
                       // Alleen de Inkomsten-post "Contributies" krijgt de klikbare
                       // breakdown; de uitgavenpost "Contributies & abonnementen"
@@ -560,11 +563,16 @@ export default function FinancienPage() {
           onOpenChange={(open) => !open && setExpenseDialog(null)}
           lineItemName={expenseDialog.lineItemName}
           lineItemId={expenseDialog.lineItemId}
+          categoryName={expenseDialog.categoryName}
           expenses={selectedLineItemExpenses}
           onAddExpense={(expense) => mutations.addExpense.mutate(expense, { onSuccess: () => toast.success("Uitgave toegevoegd") })}
           onDeleteExpense={(id) => mutations.deleteExpense.mutate(id, { onSuccess: () => toast.success("Uitgave verwijderd") })}
           onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking verplaatst") })}
+          onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Bankboeking bijgewerkt") })}
+          onUpdatePontoTransaction={(id, fields) => mutations.updatePontoTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Bankboeking bijgewerkt") })}
+          onLinkPayment={(input) => mutations.linkPaymentToMember.mutate({ ...input, userId: user.id }, { onSuccess: () => toast.success("Contributie gekoppeld aan lid") })}
           categories={categories || []}
+          members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
           userId={user.id}
         />
       )}
