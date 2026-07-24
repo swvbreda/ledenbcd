@@ -256,6 +256,20 @@ export default function ExpenseDialog({
                         {isEditing && (
                           <tr className="bg-muted/20 border-b border-border">
                             <td colSpan={5} className="px-3 py-3">
+                              <div className="mb-3 rounded border border-border bg-background p-3 space-y-1 text-xs">
+                                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                  <div><span className="text-muted-foreground">Datum: </span><span className="font-medium">{fmtDate(e.expense_date) || "—"}</span></div>
+                                  <div><span className="text-muted-foreground">Bedrag: </span><span className="font-medium tabular-nums">€ {(Number(e.amount) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                                  {e.creditor_name && <div><span className="text-muted-foreground">Tegenpartij: </span><span className="font-medium">{e.creditor_name}</span></div>}
+                                  {e.invoice_reference && <div><span className="text-muted-foreground">Referentie: </span><span className="font-medium">{e.invoice_reference}</span></div>}
+                                </div>
+                                {e.description && (
+                                  <div>
+                                    <div className="text-muted-foreground mb-0.5">Volledige omschrijving:</div>
+                                    <div className="whitespace-pre-wrap break-words font-mono text-[11px] bg-muted/40 rounded p-2">{e.description}</div>
+                                  </div>
+                                )}
+                              </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
                                 <div>
                                   <label className="text-[11px] font-medium text-muted-foreground">Categorie</label>
