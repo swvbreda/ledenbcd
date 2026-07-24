@@ -209,7 +209,7 @@ export function BulkEmailSend({
           body: {
             templateName: "member-welcome",
             recipientEmail: r.email,
-            idempotencyKey: `${templateKey}-${audience}-${stamp}-${r.memberId}`,
+            idempotencyKey: `${templateKey}-${audience}-${stamp}-${r.memberId}-${r.email}`,
             templateData: {
               subject: fill(template.subject, r),
               body: fill(template.body, r),
