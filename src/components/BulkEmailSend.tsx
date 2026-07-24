@@ -3,6 +3,7 @@ import { Send, Users, Loader2, Download, CheckCircle2, XCircle, Ban } from "luci
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -95,6 +96,8 @@ export function BulkEmailSend({
   const [allMembers, setAllMembers] = useState<
     { id: number; member_type: string; merged: any; hasAccount: boolean }[]
   >([]);
+  const [alreadySent, setAlreadySent] = useState<Set<string>>(new Set());
+  const [skipAlreadySent, setSkipAlreadySent] = useState(true);
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -103,14 +106,27 @@ export function BulkEmailSend({
     (async () => {
       setLoading(true);
       try {
-        const [mdRes, meRes, mpRes] = await Promise.all([
+        const [mdRes, meRes, mpRes, logRes] = await Promise.all([
           supabase.from("members_data").select("id, member_type, data"),
           supabase.from("member_edits").select("member_id, data"),
           supabase.from("member_profiles").select("member_id"),
+          supabase
+            .from("email_send_log")
+            .select("recipient_email")
+            .eq("template_name", "member-welcome")
+            .eq("status", "sent"),
         ]);
         if (mdRes.error) throw mdRes.error;
         if (meRes.error) throw meRes.error;
         if (mpRes.error) throw mpRes.error;
+        if (logRes.error) throw logRes.error;
+        setAlreadySent(
+          new Set(
+            (logRes.data || [])
+              .map((r: any) => (r.recipient_email || "").toString().trim().toLowerCase())
+              .filter(Boolean),
+          ),
+        );
 
         const editsMap = new Map<number, any>();
         (meRes.data || []).forEach((e: any) => editsMap.set(e.member_id, e.data));
@@ -155,6 +171,7 @@ export function BulkEmailSend({
       const plaats = (m.merged.plaats || "").toString();
       for (const c of collectContactEmails(m.merged)) {
         if (seen.has(c.email)) continue;
+        if (skipAlreadySent && alreadySent.has(c.email)) continue;
         seen.add(c.email);
         list.push({
           memberId: m.id,
@@ -167,7 +184,7 @@ export function BulkEmailSend({
     }
     list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
     return list;
-  }, [allMembers, audience]);
+  }, [allMembers, audience, alreadySent, skipAlreadySent]);
 
   const fill = (s: string, r: Recipient) =>
     s
@@ -297,6 +314,18 @@ export function BulkEmailSend({
               ontvanger{recipients.length === 1 ? "" : "s"} met e-mailadres
             </p>
           </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <Checkbox
+              checked={skipAlreadySent}
+              onCheckedChange={(v) => setSkipAlreadySent(v === true)}
+            />
+            <span>
+              Sla ontvangers over die al een uitnodiging kregen
+              {alreadySent.size > 0 && (
+                <span className="tabular-nums"> ({alreadySent.size} eerder verzonden)</span>
+              )}
+            </span>
+          </label>
           <p className="text-xs text-muted-foreground">
             Sla eerst op om de meest recente tekst te gebruiken. Eén mail per uniek e-mailadres.
           </p>
