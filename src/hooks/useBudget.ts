@@ -155,6 +155,9 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
         if (pontoErr) throw pontoErr;
         const pontoAsExpenses = (pontoRows || []).map((p: any) => {
           const raw = Number(p.amount) || 0;
+          const descBlob = `${p.description || ""} ${p.remittance_info || ""}`;
+          const invMatch = descBlob.match(/(?:fact(?:uur)?\.?\s*n?r?\.?|factuur|invoice|REMI\/)\s*[:#]?\s*([0-9]{2,4}[-\s]?[0-9]{2,6})/i);
+          const cleanInv = invMatch ? invMatch[1].replace(/\s+/g, "") : null;
           return {
             id: `ponto:${p.id}`,
             line_item_id: p.budget_line_item_id,
@@ -162,7 +165,7 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
             amount: Math.abs(raw),
             expense_date: p.executed_at,
             creditor_name: p.counterparty_name,
-            invoice_reference: null,
+            invoice_reference: cleanInv,
             dossier: p.dossier,
             source: "bank",
             pdf_file_path: null,
@@ -177,27 +180,75 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
       }
 
       // Dedupliceer bankregels: ABN-import (bank_transactions) en Ponto
-      // (ponto_transactions) kunnen dezelfde betaling bevatten. We houden per
-      // (datum + bedrag + tegenpartij) één regel over, met voorkeur voor de
-      // Ponto-live regel (die is meestal completer qua omschrijving).
+      // (ponto_transactions) kunnen dezelfde betaling bevatten, soms met een
+      // dagverschil (executed_at vs booking date) en verschillende opmaak. We
+      // matchen daarom primair op factuurnummer + bedrag, en pas als er geen
+      // factuurnummer is op datum(±2) + bedrag + tegenpartij. Voorkeur: Ponto.
       {
-        const seen = new Map<string, any>();
         const norm = (s?: string | null) => (s || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
-        for (const e of bankAsExpenses) {
-          const dateKey = (e.expense_date || "").slice(0, 10);
+        const normInv = (s?: string | null) => (s || "").toLowerCase().replace(/[\s.]/g, "");
+        const dayNum = (d?: string | null) => {
+          const t = d ? new Date(d).getTime() : NaN;
+          return isNaN(t) ? 0 : Math.floor(t / 86400000);
+        };
+        const isPonto = (e: any) => String(e.id).startsWith("ponto:");
+        // Sorteer zodat Ponto-regels eerst worden gezien en behouden blijven.
+        const sorted = [...bankAsExpenses].sort((a, b) => (isPonto(b) ? 1 : 0) - (isPonto(a) ? 1 : 0));
+        const kept: any[] = [];
+        const invSeen = new Map<string, any>();
+        const dateSeen: { key: string; day: number; entry: any }[] = [];
+        for (const e of sorted) {
           const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const cpKey = norm(e.creditor_name);
-          const key = `${e.line_item_id}|${dateKey}|${amtKey}|${cpKey}`;
-          const existing = seen.get(key);
-          if (!existing) {
-            seen.set(key, e);
-          } else {
-            // Prefer ponto (id begins with "ponto:") over ABN-import when both aanwezig
-            const preferNew = String(e.id).startsWith("ponto:") && !String(existing.id).startsWith("ponto:");
-            if (preferNew) seen.set(key, e);
+          const invKey = normInv(e.invoice_reference);
+          if (invKey) {
+            const key = `${e.line_item_id}|${amtKey}|${invKey}`;
+            if (invSeen.has(key)) continue;
+            invSeen.set(key, e);
+            kept.push(e);
+            continue;
           }
+          const cpKey = norm(e.creditor_name);
+          const baseKey = `${e.line_item_id}|${amtKey}|${cpKey}`;
+          const day = dayNum(e.expense_date);
+          const dup = dateSeen.find((d) => d.key === baseKey && Math.abs(d.day - day) <= 2);
+          if (dup) continue;
+          dateSeen.push({ key: baseKey, day, entry: e });
+          kept.push(e);
         }
-        bankAsExpenses = Array.from(seen.values());
+        bankAsExpenses = kept;
+      }
+
+      // Dedupliceer handmatige/PDF-boekingen tegen bankregels: als er een
+      // bankboeking bestaat met hetzelfde factuurnummer + bedrag (of dezelfde
+      // dag±2 + bedrag + creditor) op dezelfde post, laten we de handmatige
+      // versie vallen zodat we niet dubbel tellen.
+      {
+        const normInv = (s?: string | null) => (s || "").toLowerCase().replace(/[\s.]/g, "");
+        const norm = (s?: string | null) => (s || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 40);
+        const dayNum = (d?: string | null) => {
+          const t = d ? new Date(d).getTime() : NaN;
+          return isNaN(t) ? 0 : Math.floor(t / 86400000);
+        };
+        const bankInv = new Set<string>();
+        const bankDate: { key: string; day: number }[] = [];
+        for (const b of bankAsExpenses) {
+          const amtKey = Math.round((Number(b.amount) || 0) * 100);
+          const invKey = normInv(b.invoice_reference);
+          if (invKey) bankInv.add(`${b.line_item_id}|${amtKey}|${invKey}`);
+          bankDate.push({
+            key: `${b.line_item_id}|${amtKey}|${norm(b.creditor_name)}`,
+            day: dayNum(b.expense_date),
+          });
+        }
+        expenses = expenses.filter((e: any) => {
+          const amtKey = Math.round((Number(e.amount) || 0) * 100);
+          const invKey = normInv(e.invoice_reference);
+          if (invKey && bankInv.has(`${e.line_item_id}|${amtKey}|${invKey}`)) return false;
+          const baseKey = `${e.line_item_id}|${amtKey}|${norm(e.creditor_name)}`;
+          const day = dayNum(e.expense_date);
+          if (bankDate.some((d) => d.key === baseKey && Math.abs(d.day - day) <= 2)) return false;
+          return true;
+        });
       }
 
       // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen
