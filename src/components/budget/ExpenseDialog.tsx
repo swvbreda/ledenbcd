@@ -168,10 +168,16 @@ export default function ExpenseDialog({
     return { merchant: "", note: cleaned };
   };
 
-  const visibleExpenses = expenses
-    .filter((e) => (isIncomeCategory ? true : e.direction !== "in"))
-    .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
-  const total = visibleExpenses.reduce((s, e) => s + e.amount, 0);
+  // Voor uitgaven-posten tonen we ook bijschrijvingen (bijv. terugstortingen
+  // van dubbel geboekte betalingen), zodat de penningmeester ze kan zien en
+  // corrigeren. Bijschrijvingen worden van het totaal afgetrokken.
+  const visibleExpenses = [...expenses].sort((a, b) =>
+    (b.expense_date || "").localeCompare(a.expense_date || ""),
+  );
+  const total = visibleExpenses.reduce(
+    (s, e) => s + (e.direction === "in" ? -e.amount : e.amount),
+    0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -201,10 +207,12 @@ export default function ExpenseDialog({
                     const isEditing = editingId === e.id;
                     const isContribRow = e.id.startsWith("contrib:");
                     const canEdit = !isContribRow;
+                    const isRefund = isIncomeCategory ? e.direction === "out" : e.direction === "in";
+                    const signedAmount = isRefund ? -Math.abs(e.amount) : e.amount;
                     return (
                       <Fragment key={e.id}>
                         <tr
-                          className={`border-b border-border/50 ${canEdit ? "cursor-pointer hover:bg-muted/40" : ""} ${isEditing ? "bg-muted/40" : ""}`}
+                          className={`border-b border-border/50 ${canEdit ? "cursor-pointer hover:bg-muted/40" : ""} ${isEditing ? "bg-muted/40" : ""} ${isRefund ? "bg-green-50/40" : ""}`}
                           onClick={() => {
                             if (!canEdit) return;
                             if (isEditing) cancelEdit();
@@ -213,11 +221,16 @@ export default function ExpenseDialog({
                         >
                           <td className="px-2 py-1 whitespace-nowrap align-top">
                             {fmtDate(e.expense_date)}
-                            {isBank && (
-                              <div className="mt-1 inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</div>
-                            )}
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {isBank && (
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</div>
+                              )}
+                              {isRefund && (
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Terugstorting</div>
+                              )}
+                            </div>
                           </td>
-                          <td className="text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums"><CurrencyCell value={e.amount} /></td>
+                          <td className={`text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums ${isRefund ? "text-green-700" : ""}`}><CurrencyCell value={signedAmount} /></td>
                           <td className="px-2 py-1 max-w-[200px]">
                             <div className="truncate" title={merchant}>{merchant || "—"}</div>
                           </td>
