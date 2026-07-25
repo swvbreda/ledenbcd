@@ -1,12 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
-import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, RefreshCw, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   year: number;
@@ -235,9 +236,68 @@ function useReconciliation(year: number) {
 }
 
 export default function HardeCheckTab({ year }: Props) {
-  const { data, isLoading } = useReconciliation(year);
+  const { data, isLoading, isFetching } = useReconciliation(year);
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [detail, setDetail] = useState<ReconRow | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["harde-check", year] });
+    qc.invalidateQueries({ queryKey: ["contributions"] });
+    qc.invalidateQueries({ queryKey: ["contribution-invoices"] });
+  };
+
+  const handleDeleteRow = async (r: ReconRow) => {
+    const key = `${r.member_id ?? "orphan"}-${r.bank_rows?.[0]?.id ?? "x"}`;
+    const parts: string[] = [];
+    if (r.invoice_number || r.invoice_amount != null) parts.push(`Informer-factuur (${r.invoice_number ?? "zonder nummer"})`);
+    if (r.marked_paid > 0) parts.push(`${r.marked_paid.toLocaleString("nl-NL", { style: "currency", currency: "EUR" })} aan geregistreerde betalingen`);
+    if (r.category === "orphan" && r.bank_rows?.length) parts.push(`bankboeking ${r.bank_rows[0].value_date ?? ""} (${r.bank_rows[0].counterparty_name ?? "?"})`);
+    if (parts.length === 0) {
+      toast.info("Niets te verwijderen voor deze rij.");
+      return;
+    }
+    const confirmMsg = `Verwijderen voor ${r.member_name ?? "onbekend lid"} (${year}):\n\n- ${parts.join("\n- ")}\n\nDit kan niet ongedaan worden gemaakt.`;
+    if (!window.confirm(confirmMsg)) return;
+    setDeleting(key);
+    try {
+      if (r.member_id) {
+        // Delete invoices for this member+year
+        const { error: e1 } = await supabase
+          .from("contribution_invoices")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+        if (e1) throw e1;
+        // Delete registered payments for this member+year
+        const { error: e2 } = await supabase
+          .from("contribution_payments")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+        if (e2) throw e2;
+        // Also clear the member_contributions "paid" flag so it reappears cleanly
+        await supabase
+          .from("member_contributions")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+      } else if (r.category === "orphan" && r.bank_rows?.length) {
+        // Delete the orphan bank row from its source table
+        const row = r.bank_rows[0];
+        const table = row.source === "ponto" ? "ponto_transactions" : "bank_transactions";
+        const { error } = await supabase.from(table).delete().eq("id", row.id);
+        if (error) throw error;
+      }
+      toast.success("Rij verwijderd");
+      refresh();
+    } catch (err: any) {
+      toast.error("Verwijderen mislukt: " + (err?.message ?? String(err)));
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (isLoading || !data) {
     return <div className="p-8 text-sm text-muted-foreground">Bezig met controleren…</div>;
@@ -285,11 +345,23 @@ export default function HardeCheckTab({ year }: Props) {
             <AlertTriangle size={14} className="text-orange-600" />
             <h3 className="text-sm font-semibold">Verschillen ({problems.length})</h3>
           </div>
-          {problems.length === 0 && (
-            <span className="text-xs text-green-700 flex items-center gap-1">
-              <CheckCircle2 size={12} /> Alles klopt
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {problems.length === 0 && (
+              <span className="text-xs text-green-700 flex items-center gap-1">
+                <CheckCircle2 size={12} /> Alles klopt
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={refresh}
+              disabled={isFetching}
+              title="Herladen"
+            >
+              <RefreshCw size={12} className={isFetching ? "animate-spin" : ""} /> Vernieuwen
+            </Button>
+          </div>
         </div>
         {problems.length > 0 && (
           <table className="w-full text-sm">
@@ -301,6 +373,7 @@ export default function HardeCheckTab({ year }: Props) {
                 <th className="text-right px-3 py-2 font-medium">Informer factuur</th>
                 <th className="text-right px-3 py-2 font-medium">Gemarkeerd betaald</th>
                 <th className="text-left px-3 py-2 font-medium">Toelichting</th>
+                <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
@@ -349,6 +422,18 @@ export default function HardeCheckTab({ year }: Props) {
                     {r.category === "no_bank" && "Factuur staat in Informer maar geen bijpassende bankontvangst gevonden."}
                     {r.category === "amount_mismatch" && "Bank en Informer-factuur bedragen komen niet overeen."}
                     {r.category === "orphan" && `${r.counterparty ?? "?"} — ${r.bank_date} — kon niet automatisch aan een lid worden gekoppeld.`}
+                  </td>
+                  <td className="px-2 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      title="Rij verwijderen (factuur en/of betalingen)"
+                      disabled={deleting !== null}
+                      onClick={() => handleDeleteRow(r)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </td>
                 </tr>
               ))}
