@@ -236,9 +236,68 @@ function useReconciliation(year: number) {
 }
 
 export default function HardeCheckTab({ year }: Props) {
-  const { data, isLoading } = useReconciliation(year);
+  const { data, isLoading, isFetching } = useReconciliation(year);
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [detail, setDetail] = useState<ReconRow | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["harde-check", year] });
+    qc.invalidateQueries({ queryKey: ["contributions"] });
+    qc.invalidateQueries({ queryKey: ["contribution-invoices"] });
+  };
+
+  const handleDeleteRow = async (r: ReconRow) => {
+    const key = `${r.member_id ?? "orphan"}-${r.bank_rows?.[0]?.id ?? "x"}`;
+    const parts: string[] = [];
+    if (r.invoice_number || r.invoice_amount != null) parts.push(`Informer-factuur (${r.invoice_number ?? "zonder nummer"})`);
+    if (r.marked_paid > 0) parts.push(`${r.marked_paid.toLocaleString("nl-NL", { style: "currency", currency: "EUR" })} aan geregistreerde betalingen`);
+    if (r.category === "orphan" && r.bank_rows?.length) parts.push(`bankboeking ${r.bank_rows[0].value_date ?? ""} (${r.bank_rows[0].counterparty_name ?? "?"})`);
+    if (parts.length === 0) {
+      toast.info("Niets te verwijderen voor deze rij.");
+      return;
+    }
+    const confirmMsg = `Verwijderen voor ${r.member_name ?? "onbekend lid"} (${year}):\n\n- ${parts.join("\n- ")}\n\nDit kan niet ongedaan worden gemaakt.`;
+    if (!window.confirm(confirmMsg)) return;
+    setDeleting(key);
+    try {
+      if (r.member_id) {
+        // Delete invoices for this member+year
+        const { error: e1 } = await supabase
+          .from("contribution_invoices")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+        if (e1) throw e1;
+        // Delete registered payments for this member+year
+        const { error: e2 } = await supabase
+          .from("contribution_payments")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+        if (e2) throw e2;
+        // Also clear the member_contributions "paid" flag so it reappears cleanly
+        await supabase
+          .from("member_contributions")
+          .delete()
+          .eq("member_id", r.member_id)
+          .eq("year", year);
+      } else if (r.category === "orphan" && r.bank_rows?.length) {
+        // Delete the orphan bank row from its source table
+        const row = r.bank_rows[0];
+        const table = row.source === "ponto" ? "ponto_transactions" : "bank_transactions";
+        const { error } = await supabase.from(table).delete().eq("id", row.id);
+        if (error) throw error;
+      }
+      toast.success("Rij verwijderd");
+      refresh();
+    } catch (err: any) {
+      toast.error("Verwijderen mislukt: " + (err?.message ?? String(err)));
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   if (isLoading || !data) {
     return <div className="p-8 text-sm text-muted-foreground">Bezig met controleren…</div>;
