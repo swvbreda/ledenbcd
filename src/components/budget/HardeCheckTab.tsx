@@ -345,11 +345,23 @@ export default function HardeCheckTab({ year }: Props) {
             <AlertTriangle size={14} className="text-orange-600" />
             <h3 className="text-sm font-semibold">Verschillen ({problems.length})</h3>
           </div>
-          {problems.length === 0 && (
-            <span className="text-xs text-green-700 flex items-center gap-1">
-              <CheckCircle2 size={12} /> Alles klopt
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {problems.length === 0 && (
+              <span className="text-xs text-green-700 flex items-center gap-1">
+                <CheckCircle2 size={12} /> Alles klopt
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={refresh}
+              disabled={isFetching}
+              title="Herladen"
+            >
+              <RefreshCw size={12} className={isFetching ? "animate-spin" : ""} /> Vernieuwen
+            </Button>
+          </div>
         </div>
         {problems.length > 0 && (
           <table className="w-full text-sm">
@@ -361,6 +373,7 @@ export default function HardeCheckTab({ year }: Props) {
                 <th className="text-right px-3 py-2 font-medium">Informer factuur</th>
                 <th className="text-right px-3 py-2 font-medium">Gemarkeerd betaald</th>
                 <th className="text-left px-3 py-2 font-medium">Toelichting</th>
+                <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
@@ -409,6 +422,18 @@ export default function HardeCheckTab({ year }: Props) {
                     {r.category === "no_bank" && "Factuur staat in Informer maar geen bijpassende bankontvangst gevonden."}
                     {r.category === "amount_mismatch" && "Bank en Informer-factuur bedragen komen niet overeen."}
                     {r.category === "orphan" && `${r.counterparty ?? "?"} — ${r.bank_date} — kon niet automatisch aan een lid worden gekoppeld.`}
+                  </td>
+                  <td className="px-2 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      title="Rij verwijderen (factuur en/of betalingen)"
+                      disabled={deleting !== null}
+                      onClick={() => handleDeleteRow(r)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </td>
                 </tr>
               ))}
