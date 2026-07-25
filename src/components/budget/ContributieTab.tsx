@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import {
   useContributions,
   useUpsertContribution,
@@ -105,32 +105,11 @@ export default function ContributieTab({ year }: Props) {
     return map;
   }, [bankData, invoicesData, effectiveMembers]);
 
-  // Auto-register an invoice row when a bank payment matched a member that
-  // doesn't have any invoice in this year yet — keeps totals in balance and
-  // removes the member from "Nog geen factuur verstuurd".
-  const autoRegistered = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!invoicesData) return;
-    bankPaidMap.forEach((hit, memberId) => {
-      const key = `${memberId}-${year}`;
-      if (autoRegistered.current.has(key)) return;
-      const hasInvoice = (invoicesMap.get(memberId) ?? []).length > 0;
-      if (hasInvoice) return;
-      autoRegistered.current.add(key);
-      const invNumber = (hit.ref || "").trim().slice(0, 60) || `AUTO-${memberId}-${year}`;
-      createInvoice
-        .mutateAsync({
-          member_id: memberId,
-          year,
-          invoice_number: invNumber,
-          invoice_file_path: null,
-          amount: Math.abs(hit.amount) || FIXED_AMOUNT,
-        })
-        .catch(() => {
-          autoRegistered.current.delete(key);
-        });
-    });
-  }, [bankPaidMap, invoicesData, invoicesMap, year, createInvoice]);
+  // Note: earlier we auto-registered a placeholder invoice here when a bank
+  // payment matched a member without an invoice. That wrote the raw SEPA
+  // description into invoice_number, corrupting the facturenlijst. The
+  // Informer-sync + Ponto matcher now cover this properly, so we no longer
+  // create synthetic invoices from the client.
 
   const membersWithoutInvoice = useMemo(() => {
     return effectiveMembers
