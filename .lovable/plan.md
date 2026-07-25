@@ -1,31 +1,18 @@
-Ik heb de ruwe bankdata gecontroleerd. Conclusie: het staat niet dubbel in één bankafschrift, maar dezelfde betaling komt uit twee bronnen binnen:
+## Situatie
 
-- **ABN-import** uit het handmatig geüploade bankafschrift
-- **Ponto-live** uit de automatische bankkoppeling
+- Dr Pleasure (#131) heeft factuur **2026-0002** open (€1.500).
+- De betaling van Riemer BV zit **nog niet** in `ponto_transactions` — de laatste inkomende boeking dateert van 22 juli. Ponto is dus nog niet gesynced sinds die overboeking, of Ponto heeft hem nog niet aangeleverd.
+- Ter vergelijking: Flamingo (2026-0001) en L-J-N (2026-0004) betaalden ook met een afwijkende bedrijfsnaam en zijn nu **handmatig** gekoppeld — de auto-match had die op basis van het factuurnummer in de omschrijving ook moeten pakken, maar dat gebeurt pas als de boeking via Ponto binnenkomt.
 
-Voorbeelden:
+## Aanpak
 
-| Factuur | Bedrag | Gevonden in |
-|---|---:|---|
-| 2026-0006 | € 9.110,40 | ABN 26-03 + Ponto 25-03 |
-| 2026-0008 | € 7.550,40 | ABN 29-04 + Ponto 28-04 |
-| 2026-0010 | € 7.550,00 | ABN 29-05 + Ponto 31-05 |
+1. **Ponto-sync forceren** (`trigger_informer_sync` equivalent voor Ponto, of de bestaande knop op de Financiën-pagina) zodat de Riemer-boeking wordt opgehaald. Daarna direct `matchContributionPayments` draaien.
+2. **Verifiëren wat er in de omschrijving staat.** Zodra de boeking binnen is, kijken of `2026-0002` letterlijk voorkomt. Zo ja → stap-1-match in `ponto-sync/index.ts` (regel 343-356) pakt hem automatisch en koppelt aan #131, ongeacht dat de tegenpartij "Riemer BV" heet.
+3. **Als het factuurnummer niet in de omschrijving staat**, valt de match terug op naam/IBAN, wat hier niet werkt. In dat geval:
+   - Boeking handmatig koppelen aan #131 via het bestaande "Openen"-dialoog in de bankboekingenlijst.
+   - Nieuwe IBAN van Riemer BV opslaan onder `members_data.data.ibans` van #131 zodat toekomstige betalingen automatisch matchen via de bestaande IBAN-strategie (stap 3 in `matchContributionPayments`).
+4. **Kleine verbetering in matching** (`supabase/functions/ponto-sync/index.ts`): loggen wanneer een factuurnummer wél in de omschrijving voorkomt maar het bedrag afwijkt (nu wordt zo'n rij stil overgeslagen), zodat we in de sync-log direct zien waarom een auto-match faalde.
 
-Dat kleine datumverschil komt door boekingsdatum vs. uitvoerdatum. Daardoor zie je ze als losse regels, terwijl het administratief dezelfde betaling is.
+## Vragen
 
-Plan om dit goed te maken:
-
-1. **Deduplicatie aanscherpen**
-   - Match ABN en Ponto op factuurnummer + bedrag, ook wanneer het factuurnummer in de volledige omschrijving staat.
-   - Negeer datumverschillen van een paar dagen bij dezelfde factuur.
-
-2. **Bronkeuze vastleggen**
-   - Als dezelfde betaling in ABN én Ponto staat, toon maar één regel.
-   - Gebruik bij voorkeur de Ponto-live regel, omdat die automatisch blijft bijwerken.
-
-3. **Totaal corrigeren**
-   - Zorg dat de tabel en totaaltelling dezelfde ontdubbelde lijst gebruiken.
-   - Hierdoor hoort Strategiebureau niet meer op € 71.508,60 uit te komen, maar op de som van unieke facturen.
-
-4. **Controle na wijziging**
-   - Heropen de Strategiebureau-transactietabel en check dat facturen 2026-0006, 2026-0008 en 2026-0010 nog maar één keer zichtbaar zijn.
+Voor ik dit uitvoer: mag ik nu de Ponto-sync triggeren om te kijken of de Riemer-boeking al opvraagbaar is, of heb je zelf de bankomschrijving bij de hand die ik kan gebruiken om te bepalen of het factuurnummer erin staat?
