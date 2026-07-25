@@ -2479,6 +2479,7 @@ export type Database = {
         Args: { _name: string; _value: string }
         Returns: undefined
       }
+      trigger_informer_sync: { Args: { _action?: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user" | "extern" | "inhuur"

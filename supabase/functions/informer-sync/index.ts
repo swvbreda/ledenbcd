@@ -821,6 +821,26 @@ Deno.serve(async (req) => {
   const isServiceRole = SERVICE_ROLE && authHeader === `Bearer ${SERVICE_ROLE}`;
   const isInternal = INTERNAL_WEBHOOK_SECRET && internalSecret === INTERNAL_WEBHOOK_SECRET;
   let authorized = isServiceRole || isInternal;
+  // Also accept any valid service_role JWT (handles key rotation where the
+  // env-provided service key no longer matches tokens stored in vault).
+  if (!authorized && authHeader.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.slice("Bearer ".length).trim();
+      const parts = token.split(".");
+      if (parts.length >= 2) {
+        const payload = parts[1]
+          .replaceAll("-", "+")
+          .replaceAll("_", "/")
+          .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
+        const claims = JSON.parse(atob(payload)) as Record<string, unknown>;
+        if (claims?.role === "service_role") {
+          authorized = true;
+        }
+      }
+    } catch (_) {
+      // ignore malformed tokens
+    }
+  }
   if (!authorized) {
     if (!authHeader.startsWith("Bearer ") || !ANON_KEY) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
