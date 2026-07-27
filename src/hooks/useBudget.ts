@@ -122,9 +122,9 @@ const extractInvoiceReference = (...parts: Array<string | null | undefined>) => 
   return null;
 };
 
-export function useBudgetCategories(year: number, sourcePreference: ExpenseSourcePreference = "manual") {
+export function useBudgetCategories(year: number) {
   return useQuery({
-    queryKey: ["budget-categories", year, sourcePreference],
+    queryKey: ["budget-categories", year],
     queryFn: async () => {
       const { data: categories, error } = await supabase
         .from("budget_categories")
@@ -147,8 +147,7 @@ export function useBudgetCategories(year: number, sourcePreference: ExpenseSourc
           .from("budget_expenses")
           .select("*")
           .in("line_item_id", lineItemIds)
-          .eq("direction", "out")
-          .eq("source", sourcePreference);
+          .eq("direction", "out");
         if (expError) throw expError;
         expenses = exp || [];
       }
