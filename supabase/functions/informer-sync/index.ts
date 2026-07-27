@@ -397,13 +397,27 @@ async function logResult(supabase: any, r: ActionResult) {
 }
 
 // Fetch-and-merge: overschrijf nooit de volledige data-JSON van een lid.
-function mergeMemberDataFromDebtor(existing: any, debtor: any): any {
+// Het ledenbestand is leidend: bestaande waarden worden NOOIT overschreven.
+// Afwijkingen worden als "verschil" teruggegeven zodat het bestuur per veld kan kiezen.
+function mergeMemberDataFromDebtor(
+  existing: any,
+  debtor: any,
+): { merged: any; diffs: { field: string; local_value: string; informer_value: string }[] } {
   const merged = { ...(existing ?? {}) };
+  const diffs: { field: string; local_value: string; informer_value: string }[] = [];
   const set = (key: string, value: unknown) => {
     if (value === undefined || value === null) return;
     const s = typeof value === "string" ? value.trim() : value;
-    if (s === "" ) return;
-    merged[key] = s;
+    if (s === "") return;
+    const current = merged[key];
+    const currentStr = current === undefined || current === null ? "" : String(current).trim();
+    if (currentStr === "") {
+      merged[key] = s;
+      return;
+    }
+    if (currentStr.toLowerCase() !== String(s).toLowerCase()) {
+      diffs.push({ field: key, local_value: currentStr, informer_value: String(s) });
+    }
   };
   set("bedrijfsnaam", debtor.name ?? debtor.company_name ?? debtor.debtor_name);
   set("email", debtor.email);
@@ -419,7 +433,7 @@ function mergeMemberDataFromDebtor(existing: any, debtor: any): any {
   merged.factuurPostcode = merged.factuurPostcode || merged.postcode;
   merged.factuurPlaats = merged.factuurPlaats || merged.plaats;
   merged.factuurTelefoon = merged.factuurTelefoon || merged.telefoon;
-  return merged;
+  return { merged, diffs };
 }
 
 async function pullDebtors(supabase: any): Promise<ActionResult> {
