@@ -74,7 +74,7 @@ export default function LinkBankTransactionDialog({
     },
   });
 
-  const { data: categories } = useBudgetCategories(year, "manual");
+  const { data: categories } = useBudgetCategories(year);
   const allLineItems = useMemo(
     () =>
       (categories || []).flatMap((c) =>
