@@ -156,8 +156,9 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const filtered = useMemo(() => {
     const q = filter.toLowerCase().trim();
     return (txs ?? []).filter((t) => {
-      if (statusFilter === "matched" && !t.budget_line_item_id) return false;
-      if (statusFilter === "unmatched" && t.budget_line_item_id) return false;
+      const handled = !!t.budget_line_item_id || isExcludedDossier(t.dossier);
+      if (statusFilter === "matched" && !handled) return false;
+      if (statusFilter === "unmatched" && handled) return false;
       if (!q) return true;
       return [t.counterparty_name, t.description, t.remittance_info, t.dossier]
         .some((v) => (v || "").toLowerCase().includes(q));
@@ -176,7 +177,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const unlinked = useMemo(() => {
     let inc = 0, out = 0, incN = 0, outN = 0;
     for (const t of (txs ?? [])) {
-      if (t.budget_line_item_id) continue;
+      if (t.budget_line_item_id || isExcludedDossier(t.dossier)) continue;
       const a = Number(t.amount);
       if (a >= 0) { inc += a; incN++; } else { out += Math.abs(a); outN++; }
     }
