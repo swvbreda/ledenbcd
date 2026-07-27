@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isExcludedDossier } from "@/lib/budgetExclusions";
 
 export interface BudgetCategory {
   id: string;
@@ -164,7 +165,7 @@ export function useBudgetCategories(year: number) {
           .eq("year", year)
           .in("line_item_id", lineItemIds);
         if (bankErr) throw bankErr;
-        bankAsExpenses = (bankRows || []).map((b: any) => {
+        bankAsExpenses = (bankRows || []).filter((b: any) => !isExcludedDossier(b.dossier)).map((b: any) => {
           const invoiceReference = extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference;
           return {
             id: `bank:${b.id}`,
@@ -195,7 +196,7 @@ export function useBudgetCategories(year: number) {
           .gte("executed_at", yearStart)
           .lt("executed_at", yearEnd);
         if (pontoErr) throw pontoErr;
-        const pontoAsExpenses = (pontoRows || []).map((p: any) => {
+        const pontoAsExpenses = (pontoRows || []).filter((p: any) => !isExcludedDossier(p.dossier)).map((p: any) => {
           const raw = Number(p.amount) || 0;
           const invoiceReference = extractInvoiceReference(p.description, p.remittance_info);
           return {

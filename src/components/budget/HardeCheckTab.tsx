@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
+import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { AlertTriangle, CheckCircle2, Info, RefreshCw, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -75,11 +76,12 @@ function useReconciliation(year: number) {
       const allPonto = ptRes.data ?? [];
       const pontoRows = allPonto.filter(
         (t: any) => {
+          if (isExcludedDossier(t.dossier)) return false;
           const d = (t.value_date ?? t.executed_at ?? "").slice(0, 4);
           return d === String(year);
         },
       );
-      const bankTxRows: BankIncomeRow[] = (btRes.data ?? []).map((t: any) => ({
+      const bankTxRows: BankIncomeRow[] = (btRes.data ?? []).filter((t: any) => !isExcludedDossier(t.dossier)).map((t: any) => ({
         id: t.id,
         value_date: t.transaction_date,
         amount: Number(t.amount),
