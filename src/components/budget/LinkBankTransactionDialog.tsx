@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useBudgetCategories } from "@/hooks/useBudget";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
+import { EXCLUDED_DOSSIER } from "@/lib/budgetExclusions";
 
 interface Props {
   todoId: string;
@@ -21,7 +22,7 @@ interface Props {
   onLinked: () => void;
 }
 
-type Mode = "contribution" | "budget";
+type Mode = "contribution" | "budget" | "excluded";
 
 export default function LinkBankTransactionDialog({
   todoId,
@@ -38,6 +39,7 @@ export default function LinkBankTransactionDialog({
   const [amount, setAmount] = useState<string>("");
   const [lineItemId, setLineItemId] = useState<string>("");
   const [dossier, setDossier] = useState<string>("");
+  const [excludeNote, setExcludeNote] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
 
@@ -130,7 +132,7 @@ export default function LinkBankTransactionDialog({
           })
           .eq("id", tx.id);
         if (txErr) throw txErr;
-      } else {
+      } else if (mode === "budget") {
         if (!lineItemId) throw new Error("Kies een begrotingspost");
         const { error: txErr } = await supabase
           .from("ponto_transactions")
@@ -139,6 +141,18 @@ export default function LinkBankTransactionDialog({
             dossier: dossier.trim() || null,
             matched_manually: true,
             match_strategy: "manual",
+          })
+          .eq("id", tx.id);
+        if (txErr) throw txErr;
+      } else {
+        const note = excludeNote.trim();
+        const { error: txErr } = await supabase
+          .from("ponto_transactions")
+          .update({
+            budget_line_item_id: null,
+            dossier: note ? `${EXCLUDED_DOSSIER} — ${note}` : EXCLUDED_DOSSIER,
+            matched_manually: true,
+            match_strategy: "excluded",
           })
           .eq("id", tx.id);
         if (txErr) throw txErr;
@@ -194,7 +208,7 @@ export default function LinkBankTransactionDialog({
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant={mode === "contribution" ? "default" : "outline"}
@@ -212,6 +226,15 @@ export default function LinkBankTransactionDialog({
                 onClick={() => setMode("budget")}
               >
                 Andere begrotingspost
+              </Button>
+              <Button
+                type="button"
+                variant={mode === "excluded" ? "default" : "outline"}
+                size="sm"
+                className="w-full"
+                onClick={() => setMode("excluded")}
+              >
+                Verkeerde rekening — buiten begroting
               </Button>
             </div>
 
@@ -257,7 +280,7 @@ export default function LinkBankTransactionDialog({
                   />
                 </div>
               </div>
-            ) : (
+            ) : mode === "budget" ? (
               <div className="space-y-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Begrotingspost</Label>
@@ -284,6 +307,22 @@ export default function LinkBankTransactionDialog({
                   />
                 </div>
               </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Deze boeking is met de verkeerde rekening gedaan en telt niet mee in
+                  de begroting, het dashboard of de harde check.
+                </p>
+                <div className="space-y-1">
+                  <Label className="text-xs">Toelichting (optioneel)</Label>
+                  <Input
+                    value={excludeNote}
+                    onChange={(e) => setExcludeNote(e.target.value)}
+                    placeholder="Bijv. privérekening penningmeester"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -297,7 +336,7 @@ export default function LinkBankTransactionDialog({
             disabled={
               saving ||
               !tx ||
-              (mode === "contribution" ? !memberId : !lineItemId)
+              (mode === "contribution" ? !memberId : mode === "budget" ? !lineItemId : false)
             }
           >
             {saving && <Loader2 size={14} className="animate-spin mr-1" />}
