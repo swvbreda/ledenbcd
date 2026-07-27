@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { Button } from "@/components/ui/button";
