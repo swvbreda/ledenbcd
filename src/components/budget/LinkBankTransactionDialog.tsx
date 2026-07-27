@@ -200,6 +200,9 @@ export default function LinkBankTransactionDialog({
       qc.invalidateQueries({ queryKey: ["ponto_transactions"] });
       qc.invalidateQueries({ queryKey: ["contributions"] });
       qc.invalidateQueries({ queryKey: ["contribution-invoices"] });
+      qc.invalidateQueries({ queryKey: ["contribution-payments"] });
+      qc.invalidateQueries({ queryKey: ["finance-todos"] });
+      qc.invalidateQueries({ queryKey: ["budget"] });
       onLinked();
       onOpenChange(false);
     } catch (e) {
