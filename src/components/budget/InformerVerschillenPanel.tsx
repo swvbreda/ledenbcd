@@ -112,7 +112,10 @@ export default function InformerVerschillenPanel() {
       if (error) throw error;
       const merged: Record<string, unknown> = { ...((existing?.data ?? {}) as Record<string, unknown>) };
       for (const r of rows) merged[r.field] = r.informer_value ?? "";
-      const { error: upErr } = await supabase.from("members_data").update({ data: merged }).eq("id", memberId);
+      const { error: upErr } = await supabase
+        .from("members_data")
+        .update({ data: merged as never })
+        .eq("id", memberId);
       if (upErr) throw upErr;
       const { error: delErr } = await supabase
         .from("informer_field_diffs").delete().in("id", rows.map((r) => r.id));
