@@ -11,7 +11,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { useMembersData } from "@/contexts/MembersDataContext";
-import InformerVerschillenPanel from "./InformerVerschillenPanel";
 
 interface SyncLog {
   id: string;
@@ -234,8 +233,6 @@ export default function InformerSyncTab() {
       </div>
 
       <DebtorLinkDialog open={linkOpen} onOpenChange={setLinkOpen} onLinked={() => qc.invalidateQueries({ queryKey: ["informer_sync_log"] })} />
-
-      <InformerVerschillenPanel />
 
       <Dialog open={verifyOpen} onOpenChange={setVerifyOpen}>
         <DialogContent className="max-w-lg">

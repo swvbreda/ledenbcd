@@ -904,45 +904,6 @@ export type Database = {
           },
         ]
       }
-      informer_field_diffs: {
-        Row: {
-          created_at: string
-          field: string
-          id: string
-          informer_value: string | null
-          local_value: string | null
-          member_id: number
-          resolved_at: string | null
-          resolved_by: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          field: string
-          id?: string
-          informer_value?: string | null
-          local_value?: string | null
-          member_id: number
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          field?: string
-          id?: string
-          informer_value?: string | null
-          local_value?: string | null
-          member_id?: number
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       informer_sync_log: {
         Row: {
           action: string

@@ -282,11 +282,6 @@ async function ensureInvoiceRelationMappings(
   if (error) throw error;
 
   const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
-  // Alleen koppelen aan leden die echt bestaan — anders breekt de hele run op een FK-fout.
-  const { data: memberRows, error: memberErr } = await supabase.from("members_data").select("id");
-  if (memberErr) throw memberErr;
-  const existingMemberIds = new Set((memberRows ?? []).map((m: any) => Number(m.id)));
-  const skippedMemberIds: number[] = [];
   const extraUpserts: any[] = [];
   const seen = new Set<string>();
   for (const relationId of invoiceRelationIds) {
@@ -299,7 +294,6 @@ async function ensureInvoiceRelationMappings(
     const memberId = Number(relationNumber);
     if (!internalId || !Number.isInteger(memberId)) continue;
     if (knownInternalIds.has(internalId)) continue;
-    if (!existingMemberIds.has(memberId)) { skippedMemberIds.push(memberId); continue; }
     extraUpserts.push({
       member_id: memberId,
       informer_debtor_id: internalId,
@@ -316,9 +310,6 @@ async function ensureInvoiceRelationMappings(
     if (upsertError) throw upsertError;
   }
 
-  if (skippedMemberIds.length > 0) {
-    console.warn(`ensureInvoiceRelationMappings: onbekende leden overgeslagen: ${skippedMemberIds.join(", ")}`);
-  }
   return { remapped: extraUpserts.length };
 }
 
@@ -406,27 +397,13 @@ async function logResult(supabase: any, r: ActionResult) {
 }
 
 // Fetch-and-merge: overschrijf nooit de volledige data-JSON van een lid.
-// Het ledenbestand is leidend: bestaande waarden worden NOOIT overschreven.
-// Afwijkingen worden als "verschil" teruggegeven zodat het bestuur per veld kan kiezen.
-function mergeMemberDataFromDebtor(
-  existing: any,
-  debtor: any,
-): { merged: any; diffs: { field: string; local_value: string; informer_value: string }[] } {
+function mergeMemberDataFromDebtor(existing: any, debtor: any): any {
   const merged = { ...(existing ?? {}) };
-  const diffs: { field: string; local_value: string; informer_value: string }[] = [];
   const set = (key: string, value: unknown) => {
     if (value === undefined || value === null) return;
     const s = typeof value === "string" ? value.trim() : value;
-    if (s === "") return;
-    const current = merged[key];
-    const currentStr = current === undefined || current === null ? "" : String(current).trim();
-    if (currentStr === "") {
-      merged[key] = s;
-      return;
-    }
-    if (currentStr.toLowerCase() !== String(s).toLowerCase()) {
-      diffs.push({ field: key, local_value: currentStr, informer_value: String(s) });
-    }
+    if (s === "" ) return;
+    merged[key] = s;
   };
   set("bedrijfsnaam", debtor.name ?? debtor.company_name ?? debtor.debtor_name);
   set("email", debtor.email);
@@ -442,7 +419,7 @@ function mergeMemberDataFromDebtor(
   merged.factuurPostcode = merged.factuurPostcode || merged.postcode;
   merged.factuurPlaats = merged.factuurPlaats || merged.plaats;
   merged.factuurTelefoon = merged.factuurTelefoon || merged.telefoon;
-  return { merged, diffs };
+  return merged;
 }
 
 async function pullDebtors(supabase: any): Promise<ActionResult> {
@@ -480,46 +457,9 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
 
       const { data: existing } = await supabase.from("members_data").select("data").eq("id", row.member_id).maybeSingle();
       if (!existing) { errors.push(`lid #${row.member_id}: niet meer aanwezig`); continue; }
-      const { merged, diffs } = mergeMemberDataFromDebtor(existing.data, debtor);
+      const merged = mergeMemberDataFromDebtor(existing.data, debtor);
       const { error: upErr } = await supabase.from("members_data").update({ data: merged }).eq("id", row.member_id);
       if (upErr) { errors.push(`lid #${row.member_id}: ${upErr.message}`); continue; }
-
-      // Verschillen registreren zodat het bestuur per veld kan kiezen.
-      const seenFields = new Set(diffs.map((d) => d.field));
-      if (diffs.length > 0) {
-        const { data: knownRows } = await supabase
-          .from("informer_field_diffs")
-          .select("field, informer_value, status")
-          .eq("member_id", row.member_id);
-        const known = new Map((knownRows ?? []).map((r: any) => [String(r.field), r]));
-        const payload = diffs
-          .filter((d) => {
-            const prev = known.get(d.field);
-            // Genegeerde verschillen blijven genegeerd tot Informer een andere waarde stuurt.
-            if (prev && prev.status === "ignored" && String(prev.informer_value ?? "") === d.informer_value) return false;
-            return true;
-          })
-          .map((d) => ({
-            member_id: row.member_id,
-            field: d.field,
-            local_value: d.local_value,
-            informer_value: d.informer_value,
-            status: "open",
-            resolved_by: null,
-            resolved_at: null,
-            updated_at: new Date().toISOString(),
-          }));
-        if (payload.length > 0) {
-          await supabase.from("informer_field_diffs").upsert(payload, { onConflict: "member_id,field" });
-        }
-      }
-      // Verschillen die niet meer bestaan opruimen.
-      const staleQuery = supabase.from("informer_field_diffs").delete().eq("member_id", row.member_id);
-      if (seenFields.size > 0) {
-        await staleQuery.not("field", "in", `(${[...seenFields].join(",")})`);
-      } else {
-        await staleQuery;
-      }
       processed++;
     }
     await supabase.from("informer_sync_state").update({

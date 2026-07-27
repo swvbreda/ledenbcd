@@ -1,32 +1,18 @@
-## Wat er aan de hand is (geverifieerd)
+## Situatie
 
-De debiteuren-sync heeft op 27-07 om 09:42 **121 leden bijgewerkt** (`pull_debtors`, 121 items). Die actie schrijft de Informer-waarden rechtstreeks in het ledenbestand: bedrijfsnaam, e-mail, telefoon, KvK, adres, postcode en plaats worden overschreven zodra Informer een niet-lege waarde teruggeeft. Daardoor zie je in het ledenbestand nu de Informer-versie in plaats van jouw eigen gegevens.
+- Dr Pleasure (#131) heeft factuur **2026-0002** open (€1.500).
+- De betaling van Riemer BV zit **nog niet** in `ponto_transactions` — de laatste inkomende boeking dateert van 22 juli. Ponto is dus nog niet gesynced sinds die overboeking, of Ponto heeft hem nog niet aangeleverd.
+- Ter vergelijking: Flamingo (2026-0001) en L-J-N (2026-0004) betaalden ook met een afwijkende bedrijfsnaam en zijn nu **handmatig** gekoppeld — de auto-match had die op basis van het factuurnummer in de omschrijving ook moeten pakken, maar dat gebeurt pas als de boeking via Ponto binnenkomt.
 
-Dat botst met de afspraak dat het ledenbestand leidend is en gegevens nooit zomaar overschreven worden.
+## Aanpak
 
-## Wat ik ga bouwen
+1. **Ponto-sync forceren** (`trigger_informer_sync` equivalent voor Ponto, of de bestaande knop op de Financiën-pagina) zodat de Riemer-boeking wordt opgehaald. Daarna direct `matchContributionPayments` draaien.
+2. **Verifiëren wat er in de omschrijving staat.** Zodra de boeking binnen is, kijken of `2026-0002` letterlijk voorkomt. Zo ja → stap-1-match in `ponto-sync/index.ts` (regel 343-356) pakt hem automatisch en koppelt aan #131, ongeacht dat de tegenpartij "Riemer BV" heet.
+3. **Als het factuurnummer niet in de omschrijving staat**, valt de match terug op naam/IBAN, wat hier niet werkt. In dat geval:
+   - Boeking handmatig koppelen aan #131 via het bestaande "Openen"-dialoog in de bankboekingenlijst.
+   - Nieuwe IBAN van Riemer BV opslaan onder `members_data.data.ibans` van #131 zodat toekomstige betalingen automatisch matchen via de bestaande IBAN-strategie (stap 3 in `matchContributionPayments`).
+4. **Kleine verbetering in matching** (`supabase/functions/ponto-sync/index.ts`): loggen wanneer een factuurnummer wél in de omschrijving voorkomt maar het bedrag afwijkt (nu wordt zo'n rij stil overgeslagen), zodat we in de sync-log direct zien waarom een auto-match faalde.
 
-**1. Sync wordt niet-destructief**
-- Informer vult alleen nog velden die in het ledenbestand **leeg** zijn.
-- Bestaande waarden worden nooit overschreven; ze worden alleen als "verschil" geregistreerd.
-- De factuurvelden (`factuur*`) blijven werken zoals nu: alleen invullen als ze leeg zijn.
+## Vragen
 
-**2. Verschillenoverzicht in de Informer-tab**
-Nieuw blok "Verschillen met Informer" onder Financiën → Informer:
-- Per lid een rij met veld, waarde in ledenbestand, waarde in Informer.
-- Knop per veld: **Informer overnemen** (schrijft die ene waarde weg) of **Negeren** (verschil verdwijnt uit de lijst tot de waarde in Informer weer wijzigt).
-- Knop "Alles overnemen voor dit lid" voor het snelle geval.
-- Filter op veldtype en zoek op ledennaam.
-
-**3. Ontbrekende/foute koppelingen zichtbaar**
-- Leden zonder Informer-debiteur en debiteuren zonder lid worden apart bovenaan getoond, zodat afwijkingen door een verkeerde koppeling meteen opvallen.
-- Meteen meegenomen: `pull_invoices` breekt nu volledig af op een koppeling die naar een niet-bestaand lid verwijst. Die wordt overgeslagen en gelogd in plaats van de hele run te laten falen.
-
-**4. Over de al overschreven gegevens**
-Er is geen automatische terugdraai mogelijk — de oude waarden zijn bij die run overschreven en niet apart bewaard. Waar een lid zelf gegevens heeft ingediend (`member_edits`) toon ik die als derde kolom in het verschillenoverzicht, zodat je daaruit kunt herstellen. Voor de rest kun je per veld beslissen.
-
-## Technisch
-
-- `supabase/functions/informer-sync/index.ts`: `mergeMemberDataFromDebtor` vult alleen lege velden; afwijkingen worden weggeschreven naar een nieuwe tabel `informer_field_diffs` (member_id, veld, waarde_lokaal, waarde_informer, status open/genegeerd/overgenomen, timestamps) met RLS voor admin/bestuur. FK-fout in `pull_invoices` wordt per rij afgevangen.
-- Nieuwe component `src/components/budget/InformerVerschillenPanel.tsx`, ingehangen in `InformerSyncTab.tsx`.
-- Overnemen gebeurt via fetch-and-merge op `members_data.data` (nooit de hele JSON vervangen).
+Voor ik dit uitvoer: mag ik nu de Ponto-sync triggeren om te kijken of de Riemer-boeking al opvraagbaar is, of heb je zelf de bankomschrijving bij de hand die ik kan gebruiken om te bepalen of het factuurnummer erin staat?
