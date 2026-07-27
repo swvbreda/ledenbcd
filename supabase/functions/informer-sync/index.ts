@@ -282,6 +282,11 @@ async function ensureInvoiceRelationMappings(
   if (error) throw error;
 
   const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
+  // Alleen koppelen aan leden die echt bestaan — anders breekt de hele run op een FK-fout.
+  const { data: memberRows, error: memberErr } = await supabase.from("members_data").select("id");
+  if (memberErr) throw memberErr;
+  const existingMemberIds = new Set((memberRows ?? []).map((m: any) => Number(m.id)));
+  const skippedMemberIds: number[] = [];
   const extraUpserts: any[] = [];
   const seen = new Set<string>();
   for (const relationId of invoiceRelationIds) {
@@ -294,6 +299,7 @@ async function ensureInvoiceRelationMappings(
     const memberId = Number(relationNumber);
     if (!internalId || !Number.isInteger(memberId)) continue;
     if (knownInternalIds.has(internalId)) continue;
+    if (!existingMemberIds.has(memberId)) { skippedMemberIds.push(memberId); continue; }
     extraUpserts.push({
       member_id: memberId,
       informer_debtor_id: internalId,
@@ -310,6 +316,9 @@ async function ensureInvoiceRelationMappings(
     if (upsertError) throw upsertError;
   }
 
+  if (skippedMemberIds.length > 0) {
+    console.warn(`ensureInvoiceRelationMappings: onbekende leden overgeslagen: ${skippedMemberIds.join(", ")}`);
+  }
   return { remapped: extraUpserts.length };
 }
 
