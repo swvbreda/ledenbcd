@@ -20,6 +20,13 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLinked: () => void;
+  /** Voor todo's zonder echte banktransactie (bv. uit een PDF-afschrift) */
+  fallback?: {
+    date?: string | null;
+    amount?: number | null;
+    name?: string | null;
+    description?: string | null;
+  };
 }
 
 type Mode = "contribution" | "budget" | "excluded";
@@ -31,6 +38,7 @@ export default function LinkBankTransactionDialog({
   open,
   onOpenChange,
   onLinked,
+  fallback,
 }: Props) {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -56,6 +64,25 @@ export default function LinkBankTransactionDialog({
       return data;
     },
   });
+
+  // Weergavegegevens: echte banktransactie, anders de gegevens uit de taak.
+  const info = tx
+    ? {
+        name: tx.counterparty_name as string | null,
+        amount: Number(tx.amount) || 0,
+        date: tx.executed_at as string | null,
+        iban: (tx as any).counterparty_iban as string | null,
+        description: (tx.description || tx.remittance_info) as string | null,
+      }
+    : fallback
+      ? {
+          name: fallback.name ?? null,
+          amount: Number(fallback.amount) || 0,
+          date: fallback.date ?? null,
+          iban: null,
+          description: fallback.description ?? null,
+        }
+      : null;
 
   const { data: members } = useQuery({
     queryKey: ["members_pick_list"],
@@ -86,10 +113,9 @@ export default function LinkBankTransactionDialog({
   );
 
   useEffect(() => {
-    if (tx) {
-      setAmount(String(Math.abs(Number(tx.amount || 0))));
-    }
-  }, [tx]);
+    if (info) setAmount(String(Math.abs(info.amount)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tx, fallback?.amount]);
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
@@ -101,7 +127,7 @@ export default function LinkBankTransactionDialog({
   }, [members, memberSearch]);
 
   const handleSave = async () => {
-    if (!tx) return;
+    if (!info) return;
     setSaving(true);
     try {
       if (mode === "contribution") {
@@ -110,7 +136,7 @@ export default function LinkBankTransactionDialog({
         if (!Number.isFinite(amt) || amt <= 0) throw new Error("Ongeldig bedrag");
 
         const memId = Number(memberId);
-        const paidAt = tx.executed_at || new Date().toISOString();
+        const paidAt = info.date || new Date().toISOString();
 
         const { error: payErr } = await supabase.from("contribution_payments").insert({
           member_id: memId,
@@ -123,17 +149,20 @@ export default function LinkBankTransactionDialog({
         });
         if (payErr) throw payErr;
 
-        const { error: txErr } = await supabase
-          .from("ponto_transactions")
-          .update({
-            dossier: `Contributie #${memId}`,
-            matched_manually: true,
-            match_strategy: "manual",
-          })
-          .eq("id", tx.id);
-        if (txErr) throw txErr;
+        if (tx) {
+          const { error: txErr } = await supabase
+            .from("ponto_transactions")
+            .update({
+              dossier: `Contributie #${memId}`,
+              matched_manually: true,
+              match_strategy: "manual",
+            })
+            .eq("id", tx.id);
+          if (txErr) throw txErr;
+        }
       } else if (mode === "budget") {
         if (!lineItemId) throw new Error("Kies een begrotingspost");
+        if (!tx) throw new Error("Deze taak heeft geen bankboeking om te koppelen");
         const { error: txErr } = await supabase
           .from("ponto_transactions")
           .update({
@@ -146,16 +175,18 @@ export default function LinkBankTransactionDialog({
         if (txErr) throw txErr;
       } else {
         const note = excludeNote.trim();
-        const { error: txErr } = await supabase
-          .from("ponto_transactions")
-          .update({
-            budget_line_item_id: null,
-            dossier: note ? `${EXCLUDED_DOSSIER} — ${note}` : EXCLUDED_DOSSIER,
-            matched_manually: true,
-            match_strategy: "excluded",
-          })
-          .eq("id", tx.id);
-        if (txErr) throw txErr;
+        if (tx) {
+          const { error: txErr } = await supabase
+            .from("ponto_transactions")
+            .update({
+              budget_line_item_id: null,
+              dossier: note ? `${EXCLUDED_DOSSIER} — ${note}` : EXCLUDED_DOSSIER,
+              matched_manually: true,
+              match_strategy: "excluded",
+            })
+            .eq("id", tx.id);
+          if (txErr) throw txErr;
+        }
       }
 
       const { error: doneErr } = await supabase
@@ -185,7 +216,7 @@ export default function LinkBankTransactionDialog({
           <DialogTitle>Bankboeking koppelen</DialogTitle>
         </DialogHeader>
 
-        {!tx ? (
+        {!info ? (
           <div className="py-6 flex justify-center">
             <Loader2 className="animate-spin text-muted-foreground" size={20} />
           </div>
@@ -193,17 +224,17 @@ export default function LinkBankTransactionDialog({
           <div className="space-y-4">
             <div className="rounded-md border border-border bg-muted/30 p-3 text-sm space-y-1">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium">{tx.counterparty_name || "—"}</span>
+                <span className="font-medium">{info.name || "—"}</span>
                 <span className="tabular-nums text-green-700">
-                  <CurrencyText value={Number(tx.amount)} />
+                  <CurrencyText value={info.amount} />
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
-                {tx.executed_at ? new Date(tx.executed_at).toLocaleDateString("nl-NL") : ""} · {tx.counterparty_iban || "geen IBAN"}
+                {info.date ? new Date(info.date).toLocaleDateString("nl-NL") : ""} · {info.iban || "geen IBAN"}
               </div>
-              {(tx.description || tx.remittance_info) && (
+              {info.description && (
                 <div className="text-xs text-muted-foreground line-clamp-2">
-                  {tx.description || tx.remittance_info}
+                  {info.description}
                 </div>
               )}
             </div>
@@ -223,6 +254,7 @@ export default function LinkBankTransactionDialog({
                 variant={mode === "budget" ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
+                disabled={!tx}
                 onClick={() => setMode("budget")}
               >
                 Andere begrotingspost
@@ -335,7 +367,7 @@ export default function LinkBankTransactionDialog({
             onClick={handleSave}
             disabled={
               saving ||
-              !tx ||
+              !info ||
               (mode === "contribution" ? !memberId : mode === "budget" ? !lineItemId : false)
             }
           >
