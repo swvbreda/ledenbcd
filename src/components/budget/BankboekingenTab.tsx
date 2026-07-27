@@ -47,7 +47,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
   const [newDossierValue, setNewDossierValue] = useState("");
   const [openTx, setOpenTx] = useState<PontoTx | null>(null);
 
-  const { data: categories } = useBudgetCategories(year, "manual");
+  const { data: categories } = useBudgetCategories(year);
   const allLineItems = useMemo(
     () => (categories || []).flatMap((c) =>
       c.line_items.map((li) => ({ id: li.id, label: `${c.name} · ${li.name}` }))
