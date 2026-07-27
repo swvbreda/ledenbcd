@@ -299,26 +299,6 @@ export default function FinancienPage() {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Uitgaven bron:</span>
-            <Select
-              value={expenseSourcePreference}
-              onValueChange={(v) =>
-                yearSettingsMutation.mutate(
-                  { expense_source_preference: v as "manual" | "pdf_import" },
-                  { onSuccess: () => toast.success("Bronvoorkeur opgeslagen") }
-                )
-              }
-            >
-              <SelectTrigger className="w-[220px] h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="manual">Alleen handmatig</SelectItem>
-                <SelectItem value="pdf_import">Alleen PDF-import</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </div>
 
