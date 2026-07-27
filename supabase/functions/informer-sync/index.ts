@@ -471,9 +471,46 @@ async function pullDebtors(supabase: any): Promise<ActionResult> {
 
       const { data: existing } = await supabase.from("members_data").select("data").eq("id", row.member_id).maybeSingle();
       if (!existing) { errors.push(`lid #${row.member_id}: niet meer aanwezig`); continue; }
-      const merged = mergeMemberDataFromDebtor(existing.data, debtor);
+      const { merged, diffs } = mergeMemberDataFromDebtor(existing.data, debtor);
       const { error: upErr } = await supabase.from("members_data").update({ data: merged }).eq("id", row.member_id);
       if (upErr) { errors.push(`lid #${row.member_id}: ${upErr.message}`); continue; }
+
+      // Verschillen registreren zodat het bestuur per veld kan kiezen.
+      const seenFields = new Set(diffs.map((d) => d.field));
+      if (diffs.length > 0) {
+        const { data: knownRows } = await supabase
+          .from("informer_field_diffs")
+          .select("field, informer_value, status")
+          .eq("member_id", row.member_id);
+        const known = new Map((knownRows ?? []).map((r: any) => [String(r.field), r]));
+        const payload = diffs
+          .filter((d) => {
+            const prev = known.get(d.field);
+            // Genegeerde verschillen blijven genegeerd tot Informer een andere waarde stuurt.
+            if (prev && prev.status === "ignored" && String(prev.informer_value ?? "") === d.informer_value) return false;
+            return true;
+          })
+          .map((d) => ({
+            member_id: row.member_id,
+            field: d.field,
+            local_value: d.local_value,
+            informer_value: d.informer_value,
+            status: "open",
+            resolved_by: null,
+            resolved_at: null,
+            updated_at: new Date().toISOString(),
+          }));
+        if (payload.length > 0) {
+          await supabase.from("informer_field_diffs").upsert(payload, { onConflict: "member_id,field" });
+        }
+      }
+      // Verschillen die niet meer bestaan opruimen.
+      const staleQuery = supabase.from("informer_field_diffs").delete().eq("member_id", row.member_id);
+      if (seenFields.size > 0) {
+        await staleQuery.not("field", "in", `(${[...seenFields].join(",")})`);
+      } else {
+        await staleQuery;
+      }
       processed++;
     }
     await supabase.from("informer_sync_state").update({
