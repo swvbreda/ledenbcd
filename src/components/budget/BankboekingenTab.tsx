@@ -187,7 +187,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
     setSyncing(true);
     try {
       const { data, error } = await invokeWithAuth<{ success: boolean; transactions_processed: number; rule_matches: number; contribution_matches?: number; error?: string }>(
-        "ponto-sync?action=transactions", { method: "POST" },
+        "ponto-sync?action=all", { method: "POST" },
       );
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "onbekende fout");
@@ -199,6 +199,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
       toast.success(parts.join(" · "));
       qc.invalidateQueries({ queryKey: ["ponto_transactions"] });
       qc.invalidateQueries({ queryKey: ["contributions"] });
+      qc.invalidateQueries({ queryKey: ["ponto_bank_balances"] });
     } catch (e) {
       toast.error(`Sync mislukt: ${(e as Error).message}`);
     } finally {
