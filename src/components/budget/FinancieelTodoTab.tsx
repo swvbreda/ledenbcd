@@ -87,7 +87,36 @@ export default function FinancieelTodoTab({ year }: Props) {
   const [holdReason, setHoldReason] = useState("");
   const [sortKey, setSortKey] = useState<"title" | "todo_type" | "assigned_to" | "member_id" | "due_date" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [linkDialogTodo, setLinkDialogTodo] = useState<{ id: string; reference_id: string } | null>(null);
+  const [linkDialogTodo, setLinkDialogTodo] = useState<{
+    id: string;
+    transactionId: string;
+    fallback?: { date?: string | null; amount?: number | null; name?: string | null; description?: string | null };
+  } | null>(null);
+
+  // Sommige taken verwijzen niet naar een echte bankboeking maar naar een
+  // synthetische sleutel uit een PDF-afschrift: "unmatched:datum|bedrag|naam".
+  const openLinkDialog = (todo: any) => {
+    const ref: string = todo.reference_id || "";
+    if (ref.startsWith("unmatched:")) {
+      const [date, amount, name] = ref.slice("unmatched:".length).split("|");
+      setLinkDialogTodo({
+        id: todo.id,
+        transactionId: "",
+        fallback: {
+          date: date || null,
+          amount: Number(amount) || 0,
+          name: name || todo.title,
+          description: todo.description || null,
+        },
+      });
+      return;
+    }
+    setLinkDialogTodo({ id: todo.id, transactionId: ref });
+  };
+
+  const isLinkable = (todo: any) =>
+    !!todo.reference_id &&
+    (todo.todo_type === "manual_bank_match" || todo.todo_type === "unmatched_payment");
 
   // Add form state
   const [newTitle, setNewTitle] = useState("");
@@ -334,7 +363,8 @@ export default function FinancieelTodoTab({ year }: Props) {
       {linkDialogTodo && (
         <LinkBankTransactionDialog
           todoId={linkDialogTodo.id}
-          transactionId={linkDialogTodo.reference_id}
+          transactionId={linkDialogTodo.transactionId}
+          fallback={linkDialogTodo.fallback}
           year={year}
           open={!!linkDialogTodo}
           onOpenChange={(o) => { if (!o) setLinkDialogTodo(null); }}
@@ -545,7 +575,17 @@ export default function FinancieelTodoTab({ year }: Props) {
                       />
                     </td>
                     <td className="px-2 py-1.5 align-middle">
-                      <span className="text-sm font-medium">{todo.title}</span>
+                      {isLinkable(todo) ? (
+                        <button
+                          type="button"
+                          onClick={() => openLinkDialog(todo)}
+                          className="text-sm font-medium text-left hover:text-primary hover:underline"
+                        >
+                          {todo.title}
+                        </button>
+                      ) : (
+                        <span className="text-sm font-medium">{todo.title}</span>
+                      )}
                       <span className="inline-flex items-center gap-2 ml-2 text-[11px] text-muted-foreground">
                         <button onClick={() => toggleNotes(todo.id)} className="hover:text-foreground transition-colors inline-flex items-center gap-0.5">
                           <StickyNote size={9} />
@@ -597,9 +637,9 @@ export default function FinancieelTodoTab({ year }: Props) {
                     </td>
                     <td className="px-2 py-1.5 align-middle">
                       <div className="flex items-center justify-end gap-0.5">
-                        {todo.todo_type === "manual_bank_match" && todo.reference_id && (
+                        {isLinkable(todo) && (
                           <button
-                            onClick={() => setLinkDialogTodo({ id: todo.id, reference_id: todo.reference_id! })}
+                            onClick={() => openLinkDialog(todo)}
                             className="p-1 text-muted-foreground hover:text-primary"
                             title="Koppelen aan lid of begrotingspost"
                           >
