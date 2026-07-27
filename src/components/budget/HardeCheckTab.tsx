@@ -75,11 +75,12 @@ function useReconciliation(year: number) {
       const allPonto = ptRes.data ?? [];
       const pontoRows = allPonto.filter(
         (t: any) => {
+          if (isExcludedDossier(t.dossier)) return false;
           const d = (t.value_date ?? t.executed_at ?? "").slice(0, 4);
           return d === String(year);
         },
       );
-      const bankTxRows: BankIncomeRow[] = (btRes.data ?? []).map((t: any) => ({
+      const bankTxRows: BankIncomeRow[] = (btRes.data ?? []).filter((t: any) => !isExcludedDossier(t.dossier)).map((t: any) => ({
         id: t.id,
         value_date: t.transaction_date,
         amount: Number(t.amount),
