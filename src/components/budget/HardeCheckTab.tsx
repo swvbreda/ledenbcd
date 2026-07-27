@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
+import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { AlertTriangle, CheckCircle2, Info, RefreshCw, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
