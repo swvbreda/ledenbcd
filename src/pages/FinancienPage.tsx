@@ -42,8 +42,7 @@ export default function FinancienPage() {
   const { user, isAdmin } = useAuth();
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
-  const expenseSourcePreference = yearSettings?.expense_source_preference === "pdf_import" ? "pdf_import" : "manual";
-  const { data: categories, isLoading } = useBudgetCategories(year, expenseSourcePreference);
+  const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
   const { data: bankStatement } = useBankStatement(year);
   const { data: budgetNotes } = useBudgetNotes(year);
