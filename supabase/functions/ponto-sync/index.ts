@@ -511,6 +511,104 @@ async function matchContributionPayments(supabase: any): Promise<number> {
   return matched;
 }
 
+const EXCLUDED_DOSSIER_HINT = "buiten begroting";
+
+/**
+ * Houdt de handmatige takenlijst beperkt tot échte uitzonderingen.
+ *
+ *  • Boekingen die inmiddels automatisch (of handmatig) zijn gekoppeld →
+ *    bijbehorende openstaande taak wordt automatisch afgerond.
+ *  • Boekingen die na alle herkenningsregels nog steeds niet te plaatsen zijn →
+ *    krijgen één taak "Betaling toewijzen" met de echte transactie-id als
+ *    referentie, zodat de penningmeester ze in het koppelvenster kan afhandelen.
+ */
+async function syncExceptionTodos(supabase: any): Promise<{ created: number; closed: number }> {
+  const euro = (n: number) =>
+    `€${Number(n).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const { data: openTodos } = await supabase
+    .from("finance_todos")
+    .select("id, reference_id, year")
+    .eq("todo_type", "unmatched_payment")
+    .eq("status", "pending");
+  const pendingTodos = openTodos ?? [];
+
+  const { data: allTodos } = await supabase
+    .from("finance_todos")
+    .select("reference_id")
+    .eq("todo_type", "unmatched_payment");
+  const knownRefs = new Set((allTodos ?? []).map((t: any) => t.reference_id).filter(Boolean));
+
+  // 1) Taken sluiten waarvan de boeking inmiddels gekoppeld is
+  let closed = 0;
+  const refs = pendingTodos.map((t: any) => t.reference_id).filter((r: any) => typeof r === "string" && r.includes("-"));
+  if (refs.length > 0) {
+    const { data: linked } = await supabase
+      .from("ponto_transactions")
+      .select("id, budget_line_item_id, matched_manually, dossier")
+      .in("id", refs);
+    const resolved = new Set(
+      (linked ?? [])
+        .filter((t: any) => t.budget_line_item_id || t.matched_manually || t.dossier)
+        .map((t: any) => t.id),
+    );
+    const toClose = pendingTodos.filter((t: any) => resolved.has(t.reference_id)).map((t: any) => t.id);
+    if (toClose.length > 0) {
+      const { error } = await supabase
+        .from("finance_todos")
+        .update({
+          status: "done",
+          completed_at: new Date().toISOString(),
+          notes: "Automatisch gekoppeld door de bankherkenning.",
+          notes_by: "systeem",
+        })
+        .in("id", toClose);
+      if (!error) closed = toClose.length;
+    }
+  }
+
+  // 2) Taken aanmaken voor wat écht niet herkend is
+  const { data: leftovers } = await supabase
+    .from("ponto_transactions")
+    .select("id, executed_at, value_date, amount, counterparty_name, description, remittance_info, dossier")
+    .is("budget_line_item_id", null)
+    .eq("matched_manually", false)
+    .order("executed_at", { ascending: false })
+    .limit(200);
+
+  let created = 0;
+  for (const t of leftovers ?? []) {
+    if (knownRefs.has(t.id)) continue;
+    if ((t.dossier || "").toLowerCase().includes(EXCLUDED_DOSSIER_HINT)) continue;
+    const when = t.executed_at ?? t.value_date ?? null;
+    const year = when ? new Date(when).getFullYear() : new Date().getFullYear();
+    const naam = (t.counterparty_name || "Onbekende tegenpartij").trim();
+    const amount = Number(t.amount);
+    const omschrijving = [t.description, t.remittance_info].filter(Boolean).join(" · ");
+    const { error } = await supabase.from("finance_todos").insert({
+      todo_type: "unmatched_payment",
+      title: `Betaling toewijzen: ${naam} - ${euro(amount)}`,
+      description: [
+        when ? `Datum: ${String(when).slice(0, 10)}` : null,
+        `Bedrag: ${euro(amount)}`,
+        omschrijving ? `Omschrijving: ${omschrijving}` : null,
+        "Deze bankboeking kon niet automatisch worden herkend. Koppel hem aan een lid/factuur of zet hem buiten de begroting.",
+      ].filter(Boolean).join(" · "),
+      assigned_to: "penningmeester",
+      reference_id: t.id,
+      year,
+    });
+    if (error) {
+      if (error.code === "23505") continue;
+      console.warn("finance_todos insert failed", error.message);
+      continue;
+    }
+    created++;
+  }
+
+  return { created, closed };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -531,6 +629,8 @@ Deno.serve(async (req) => {
     let txProcessed = 0;
     let ruleMatches = 0;
     let contributionMatches = 0;
+    let todosCreated = 0;
+    let todosClosed = 0;
 
     for (const a of accounts) {
       const attr = a.attributes ?? {};
@@ -601,9 +701,30 @@ Deno.serve(async (req) => {
 
     if (action === "transactions" || action === "all") {
       try {
+        // Herkenningsregels ook toepassen op oudere, nog niet gekoppelde
+        // boekingen — zo werken nieuwe regels ook met terugwerkende kracht.
+        const { data: stillOpen } = await supabase
+          .from("ponto_transactions")
+          .select("id, budget_line_item_id, matched_manually, counterparty_name, description, remittance_info")
+          .is("budget_line_item_id", null)
+          .eq("matched_manually", false)
+          .order("executed_at", { ascending: false })
+          .limit(500);
+        ruleMatches += await applyMatchingRules(supabase, stillOpen ?? []);
+      } catch (e) {
+        console.warn("applyMatchingRules backlog failed", (e as Error).message);
+      }
+      try {
         contributionMatches = await matchContributionPayments(supabase);
       } catch (e) {
         console.warn("matchContributionPayments failed", (e as Error).message);
+      }
+      try {
+        const res = await syncExceptionTodos(supabase);
+        todosCreated = res.created;
+        todosClosed = res.closed;
+      } catch (e) {
+        console.warn("syncExceptionTodos failed", (e as Error).message);
       }
     }
 
@@ -625,7 +746,13 @@ Deno.serve(async (req) => {
         action: "pull_ponto_transactions",
         success: true,
         items_processed: txProcessed,
-        details: { api_calls: calls, rule_matches: ruleMatches, contribution_matches: contributionMatches },
+        details: {
+          api_calls: calls,
+          rule_matches: ruleMatches,
+          contribution_matches: contributionMatches,
+          todos_created: todosCreated,
+          todos_closed: todosClosed,
+        },
       });
     }
 
@@ -637,6 +764,8 @@ Deno.serve(async (req) => {
       transactions_processed: txProcessed,
       rule_matches: ruleMatches,
       contribution_matches: contributionMatches,
+      todos_created: todosCreated,
+      todos_closed: todosClosed,
       api_calls: calls,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
