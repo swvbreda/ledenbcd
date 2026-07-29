@@ -541,7 +541,10 @@ async function syncExceptionTodos(supabase: any): Promise<{ created: number; clo
 
   // 1) Taken sluiten waarvan de boeking inmiddels gekoppeld is
   let closed = 0;
-  const refs = pendingTodos.map((t: any) => t.reference_id).filter((r: any) => typeof r === "string" && r.includes("-"));
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const refs = pendingTodos
+    .map((t: any) => t.reference_id)
+    .filter((r: any) => typeof r === "string" && UUID_RE.test(r));
   if (refs.length > 0) {
     const { data: linked } = await supabase
       .from("ponto_transactions")
