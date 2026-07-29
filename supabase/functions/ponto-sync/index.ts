@@ -573,15 +573,18 @@ async function syncExceptionTodos(supabase: any): Promise<{ created: number; clo
     .select("id, executed_at, value_date, amount, counterparty_name, description, remittance_info, dossier")
     .is("budget_line_item_id", null)
     .eq("matched_manually", false)
+    .gt("amount", 0)
     .order("executed_at", { ascending: false })
     .limit(200);
 
   let created = 0;
+  const minYear = new Date().getFullYear() - 1;
   for (const t of leftovers ?? []) {
     if (knownRefs.has(t.id)) continue;
     if ((t.dossier || "").toLowerCase().includes(EXCLUDED_DOSSIER_HINT)) continue;
     const when = t.executed_at ?? t.value_date ?? null;
     const year = when ? new Date(when).getFullYear() : new Date().getFullYear();
+    if (year < minYear) continue;
     const naam = (t.counterparty_name || "Onbekende tegenpartij").trim();
     const amount = Number(t.amount);
     const omschrijving = [t.description, t.remittance_info].filter(Boolean).join(" · ");
