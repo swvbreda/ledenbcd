@@ -33,7 +33,6 @@ import {
 const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
   { title: "Ledenbestand", url: "/leden", icon: Users },
-  { title: "Leden & betalingen", url: "/leden-betalingen", icon: ListChecks },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
   { title: "Ledenvoordelen", url: "/ledenvoordelen", icon: Gift },
