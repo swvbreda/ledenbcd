@@ -24,6 +24,7 @@ import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 import HardeCheckTab from "@/components/budget/HardeCheckTab";
+import LedenBetalingenTab from "@/components/budget/LedenBetalingenTab";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
@@ -318,6 +319,9 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Contributie
             </TabsTrigger>
+            <TabsTrigger value="leden-betalingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Leden &amp; betalingen
+            </TabsTrigger>
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
@@ -531,6 +535,10 @@ export default function FinancienPage() {
 
           <TabsContent value="check">
             <HardeCheckTab year={year} />
+          </TabsContent>
+
+          <TabsContent value="leden-betalingen">
+            <LedenBetalingenTab year={year} />
           </TabsContent>
         </Tabs>
         </>
