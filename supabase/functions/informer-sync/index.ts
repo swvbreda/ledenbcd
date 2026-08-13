@@ -281,8 +281,18 @@ async function ensureInvoiceRelationMappings(
     .select("member_id, informer_debtor_id, matched_by");
   if (error) throw error;
 
+  // Een Informer-relatienummer hoeft geen bestaand lidnummer te zijn (bijv.
+  // oud lid of losse debiteur). Zonder deze controle sneuvelt de hele
+  // facturenstap op de foreign key naar members_data.
+  const { data: memberRows, error: memberErr } = await supabase
+    .from("members_data")
+    .select("id");
+  if (memberErr) throw memberErr;
+  const knownMemberIds = new Set((memberRows ?? []).map((m: any) => Number(m.id)));
+
   const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
   const extraUpserts: any[] = [];
+  const skipped: number[] = [];
   const seen = new Set<string>();
   for (const relationId of invoiceRelationIds) {
     if (!relationId || existingRelationIds.has(relationId) || seen.has(relationId)) continue;
@@ -293,6 +303,7 @@ async function ensureInvoiceRelationMappings(
     const relationNumber = informerRelationNumber(relation);
     const memberId = Number(relationNumber);
     if (!internalId || !Number.isInteger(memberId)) continue;
+    if (!knownMemberIds.has(memberId)) { skipped.push(memberId); continue; }
     if (knownInternalIds.has(internalId)) continue;
     extraUpserts.push({
       member_id: memberId,
@@ -308,6 +319,10 @@ async function ensureInvoiceRelationMappings(
       .from("informer_debtor_map")
       .upsert(extraUpserts, { onConflict: "member_id" });
     if (upsertError) throw upsertError;
+  }
+
+  if (skipped.length > 0) {
+    console.warn("informer-sync: relatienummers zonder bestaand lid overgeslagen:", skipped.join(", "));
   }
 
   return { remapped: extraUpserts.length };
