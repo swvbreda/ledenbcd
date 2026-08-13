@@ -281,8 +281,18 @@ async function ensureInvoiceRelationMappings(
     .select("member_id, informer_debtor_id, matched_by");
   if (error) throw error;
 
+  // Een Informer-relatienummer hoeft geen bestaand lidnummer te zijn (bijv.
+  // oud lid of losse debiteur). Zonder deze controle sneuvelt de hele
+  // facturenstap op de foreign key naar members_data.
+  const { data: memberRows, error: memberErr } = await supabase
+    .from("members_data")
+    .select("id");
+  if (memberErr) throw memberErr;
+  const knownMemberIds = new Set((memberRows ?? []).map((m: any) => Number(m.id)));
+
   const knownInternalIds = new Set((mapRows ?? []).map((row: any) => String(row.informer_debtor_id ?? "")));
   const extraUpserts: any[] = [];
+  const skipped: number[] = [];
   const seen = new Set<string>();
   for (const relationId of invoiceRelationIds) {
     if (!relationId || existingRelationIds.has(relationId) || seen.has(relationId)) continue;
@@ -293,6 +303,7 @@ async function ensureInvoiceRelationMappings(
     const relationNumber = informerRelationNumber(relation);
     const memberId = Number(relationNumber);
     if (!internalId || !Number.isInteger(memberId)) continue;
+    if (!knownMemberIds.has(memberId)) { skipped.push(memberId); continue; }
     if (knownInternalIds.has(internalId)) continue;
     extraUpserts.push({
       member_id: memberId,
@@ -310,6 +321,10 @@ async function ensureInvoiceRelationMappings(
     if (upsertError) throw upsertError;
   }
 
+  if (skipped.length > 0) {
+    console.warn("informer-sync: relatienummers zonder bestaand lid overgeslagen:", skipped.join(", "));
+  }
+
   return { remapped: extraUpserts.length };
 }
 
@@ -322,6 +337,7 @@ async function informerCall(
   sink?: ApiCall[],
   swappedAuth = false,
   overrideCode?: string,
+  attempt = 0,
 ): Promise<ApiCall> {
   const method = (init.method ?? "GET").toUpperCase();
   const url = `${INFORMER_BASE}${path}`;
@@ -380,6 +396,17 @@ async function informerCall(
     const retry = await informerCall(path, init, undefined, true);
     sink?.push(retry);
     return retry;
+  }
+  // Informer hanteert een rate limit; bij 429 kort wachten en opnieuw proberen
+  // zodat een hele sync-run niet op één verzoek sneuvelt.
+  if (status === 429 && attempt < 3) {
+    const retryAfter = Number(response_headers["retry-after"]);
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1000, 15000)
+      : 2000 * (attempt + 1);
+    sink?.push(call);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return await informerCall(path, init, sink, swappedAuth, overrideCode, attempt + 1);
   }
   sink?.push(call);
   return call;
