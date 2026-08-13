@@ -1,18 +1,27 @@
-## Situatie
+# Leden & betalingen verplaatsen naar Financiën (admin-only)
 
-- Dr Pleasure (#131) heeft factuur **2026-0002** open (€1.500).
-- De betaling van Riemer BV zit **nog niet** in `ponto_transactions` — de laatste inkomende boeking dateert van 22 juli. Ponto is dus nog niet gesynced sinds die overboeking, of Ponto heeft hem nog niet aangeleverd.
-- Ter vergelijking: Flamingo (2026-0001) en L-J-N (2026-0004) betaalden ook met een afwijkende bedrijfsnaam en zijn nu **handmatig** gekoppeld — de auto-match had die op basis van het factuurnummer in de omschrijving ook moeten pakken, maar dat gebeurt pas als de boeking via Ponto binnenkomt.
+## Wat er nu misgaat
 
-## Aanpak
+Bevestigd in de code:
+- `/leden-betalingen` staat in `src/App.tsx` binnen de gewone beveiligde routes — dus **elk ingelogd account** (ook gewone leden) kan de pagina openen, inclusief contributiebedragen en betaalstatus van alle leden.
+- De link "Leden & betalingen" staat in `src/components/AppSidebar.tsx` in de algemene `navItems`, dus zichtbaar voor iedereen.
+- Ter vergelijking: `/financien` is wél afgeschermd (`if (!isAdmin) return <Navigate to="/" replace />`) en de sidebar-link staat in het admin-blok.
 
-1. **Ponto-sync forceren** (`trigger_informer_sync` equivalent voor Ponto, of de bestaande knop op de Financiën-pagina) zodat de Riemer-boeking wordt opgehaald. Daarna direct `matchContributionPayments` draaien.
-2. **Verifiëren wat er in de omschrijving staat.** Zodra de boeking binnen is, kijken of `2026-0002` letterlijk voorkomt. Zo ja → stap-1-match in `ponto-sync/index.ts` (regel 343-356) pakt hem automatisch en koppelt aan #131, ongeacht dat de tegenpartij "Riemer BV" heet.
-3. **Als het factuurnummer niet in de omschrijving staat**, valt de match terug op naam/IBAN, wat hier niet werkt. In dat geval:
-   - Boeking handmatig koppelen aan #131 via het bestaande "Openen"-dialoog in de bankboekingenlijst.
-   - Nieuwe IBAN van Riemer BV opslaan onder `members_data.data.ibans` van #131 zodat toekomstige betalingen automatisch matchen via de bestaande IBAN-strategie (stap 3 in `matchContributionPayments`).
-4. **Kleine verbetering in matching** (`supabase/functions/ponto-sync/index.ts`): loggen wanneer een factuurnummer wél in de omschrijving voorkomt maar het bedrag afwijkt (nu wordt zo'n rij stil overgeslagen), zodat we in de sync-log direct zien waarom een auto-match faalde.
+## Wat ik ga doen
 
-## Vragen
+1. Het overzicht wordt een tabblad **"Leden & betalingen"** binnen Financiën, naast Dashboard / Declaraties / Contributie / etc.
+2. De losse pagina verdwijnt:
+   - sidebar-item verwijderen uit de algemene navigatie;
+   - de route `/leden-betalingen` vervangen door een redirect naar `/financien`, zodat oude links/bookmarks van niet-admins niet in een 404 maar op de normale admin-check landen.
+3. De inhoud (KPI-kaarten, zoekbalk, statusfilters, tabel) blijft ongewijzigd; alleen de eigen hero-banner en de eigen jaarknoppen vervallen — het tabblad volgt de jaarkeuze die al bovenaan de Financiën-pagina staat.
 
-Voor ik dit uitvoer: mag ik nu de Ponto-sync triggeren om te kijken of de Riemer-boeking al opvraagbaar is, of heb je zelf de bankomschrijving bij de hand die ik kan gebruiken om te bepalen of het factuurnummer erin staat?
+Resultaat: de betalingsgegevens zijn alleen nog zichtbaar voor beheerders, op precies één plek.
+
+## Technisch
+
+- `src/pages/LedenBetalingenPage.tsx` wordt omgebouwd tot `src/components/budget/LedenBetalingenTab.tsx` met een `year: number` prop (geen eigen jaar-state, geen `BcdHeroBanner`).
+- `src/pages/FinancienPage.tsx`: extra `TabsTrigger value="leden-betalingen"` + `TabsContent` die de nieuwe component rendert met de bestaande `year`.
+- `src/App.tsx`: import van de oude pagina weg; route wordt `<Route path="/leden-betalingen" element={<Navigate to="/financien" replace />} />`.
+- `src/components/AppSidebar.tsx`: item "Leden & betalingen" uit `navItems` halen.
+
+Let op: dit is een UI-/toegangswijziging in de frontend. De onderliggende leesrechten op contributiegegevens in de database blijven zoals ze zijn — zeg het als je die ook wilt beperken tot bestuur/penningmeester.
