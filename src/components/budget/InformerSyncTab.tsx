@@ -166,8 +166,45 @@ export default function InformerSyncTab() {
 
   const openLinker = () => setLinkOpen(true);
 
+  const STALE_MS = 48 * 60 * 60 * 1000;
+  const staleSources = useMemo(() => {
+    const s = state as any;
+    const checks: { label: string; at: string | null }[] = [
+      { label: "Live banksaldi", at: s?.last_ponto_sync_at ?? null },
+      { label: "Bankboekingen", at: s?.last_ponto_tx_sync_at ?? null },
+      { label: "Informer debiteuren", at: s?.last_debtor_sync_at ?? null },
+      { label: "Informer facturen", at: s?.last_payment_sync_at ?? null },
+    ];
+    return checks.filter((c) => !c.at || Date.now() - new Date(c.at).getTime() > STALE_MS);
+  }, [state]);
+
+  const lastFailure = useMemo(
+    () => (logs ?? []).find((l) => !l.success) ?? null,
+    [logs],
+  );
+
   return (
     <div className="mt-4 space-y-4">
+      {(staleSources.length > 0 || lastFailure) && (
+        <div className="border border-amber-300 bg-amber-50 rounded-lg p-3 text-sm space-y-1">
+          <div className="flex items-center gap-2 font-medium text-amber-900">
+            <AlertCircle size={14} /> Synchronisatie-aandachtspunten
+          </div>
+          {staleSources.length > 0 && (
+            <div className="text-amber-900/90 text-xs">
+              Langer dan 48 uur niet bijgewerkt: {staleSources.map((s) => s.label).join(", ")}.
+              De automatische sync draait dagelijks; klik hiernaast op “Synchroniseer nu” om direct bij te werken.
+            </div>
+          )}
+          {lastFailure && (
+            <div className="text-amber-900/90 text-xs">
+              Laatste fout ({ACTION_LABELS[lastFailure.action] ?? lastFailure.action},{" "}
+              {formatDistanceToNow(new Date(lastFailure.run_at), { addSuffix: true, locale: nl })}):{" "}
+              {lastFailure.error_message ?? "onbekend"}
+            </div>
+          )}
+        </div>
+      )}
       <div className="border border-border rounded-lg p-4 bg-card">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -205,6 +242,9 @@ export default function InformerSyncTab() {
                 {(state as any)?.last_ponto_sync_at
                   ? formatDistanceToNow(new Date((state as any).last_ponto_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
+              </div>
+              <div className="pt-1 text-[11px]">
+                Automatisch: bank 06:00 en 18:00, Informer 04:30 (dagelijks).
               </div>
             </div>
           </div>
