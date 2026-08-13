@@ -686,17 +686,32 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
     const { data: state } = await supabase.from("informer_sync_state").select("*").eq("id", 1).single();
     const since = state?.last_creditor_sync_at ?? new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
 
-    const lastEdit = String(since).slice(0, 10);
-    const call = await informerCall(
-      `/invoices/purchase?last_edit=${encodeURIComponent(lastEdit)}`,
-      {},
-      api_calls,
-    );
-    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
-    const apiError = hasInformerError(call.response_body);
-    if (apiError) throw new Error(`Informer fout: ${apiError}`);
-    const invoices = normalizeInformerList(call.response_body, ["purchase", "invoices", "data"]);
+    // Informer geeft een 400 op de last_edit-filter voor inkoopfacturen.
+    // We halen ze daarom gepagineerd op (net als verkoopfacturen) en filteren zelf.
+    let invoices: any[] = [];
+    try {
+      invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
+    } catch (pagedError) {
+      // Fallback: kale aanroep zonder parameters
+      const call = await informerCall("/invoices/purchase", {}, api_calls);
+      if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+      const apiError = hasInformerError(call.response_body);
+      if (!call.ok || apiError) {
+        throw new Error(
+          `${(pagedError as Error).message}${apiError ? ` | Informer: ${apiError}` : ""}`,
+        );
+      }
+      invoices = normalizeInformerList(call.response_body, ["purchase", "invoices", "data"]);
+    }
+
+    // Alleen facturen vanaf de laatste geslaagde sync (met 7 dagen marge) verwerken.
+    const cutoff = new Date(new Date(since).getTime() - 7 * 24 * 3600 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    invoices = invoices.filter((inv: any) => {
+      const d = String(inv?.invoice_date ?? inv?.date ?? "").slice(0, 10);
+      return !d || d >= cutoff;
+    });
 
     // Find or create a default "Informer-import" line item to attach expenses to
     const year = new Date().getFullYear();
