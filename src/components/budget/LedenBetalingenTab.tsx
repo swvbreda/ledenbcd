@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,9 +19,7 @@ const statusMeta: Record<StatusKey, { label: string; icon: typeof CheckCircle2; 
   open: { label: "Openstaand", icon: AlertCircle, className: "bg-muted text-muted-foreground border-border" },
 };
 
-export default function LedenBetalingenPage() {
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(currentYear);
+export default function LedenBetalingenTab({ year }: { year: number }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"alle" | StatusKey>("alle");
 
@@ -93,15 +90,9 @@ export default function LedenBetalingenPage() {
   );
 
   const loading = dataLoading || loadingContrib || loadingPay;
-  const years = [currentYear + 1, currentYear, currentYear - 1, currentYear - 2];
 
   return (
     <div className="space-y-6">
-      <BcdHeroBanner
-        title="Leden & betalingen"
-        subtitle={`Leden, contributies en betaalstatus van ${year} in één overzicht`}
-      />
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Leden", value: String(totals.leden), sub: `${totals.betaaldeLeden} volledig betaald` },
@@ -128,13 +119,6 @@ export default function LedenBetalingenPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-        <div className="flex gap-1 flex-wrap">
-          {years.map((y) => (
-            <Button key={y} size="sm" variant={y === year ? "default" : "outline"} onClick={() => setYear(y)}>
-              {y}
-            </Button>
-          ))}
         </div>
       </div>
 

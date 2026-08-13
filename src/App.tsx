@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +12,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index";
 import MemberDetail from "./pages/MemberDetail";
 import LedenPage from "./pages/LedenPage";
-import LedenBetalingenPage from "./pages/LedenBetalingenPage";
 import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
@@ -80,7 +79,7 @@ const App = () => (
                 >
                   <Route path="/" element={<Index />} />
                   <Route path="/leden" element={<LedenPage />} />
-                  <Route path="/leden-betalingen" element={<LedenBetalingenPage />} />
+                  <Route path="/leden-betalingen" element={<Navigate to="/financien" replace />} />
                   <Route path="/leden/:id" element={<MemberDetail />} />
                   <Route path="/community" element={<CommunityPage />} />
                   <Route path="/locaties" element={<LocatiesPage />} />
