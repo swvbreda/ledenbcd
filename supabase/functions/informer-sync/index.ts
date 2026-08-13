@@ -322,7 +322,10 @@ async function ensureInvoiceRelationMappings(
   }
 
   if (skipped.length > 0) {
-    console.warn("informer-sync: relatienummers zonder bestaand lid overgeslagen:", skipped.join(", "));
+    const unique = Array.from(new Set(skipped));
+    console.log(
+      `informer-sync: ${unique.length} relatienummer(s) zonder bestaand lid overgeslagen (${unique.slice(0, 10).join(", ")}${unique.length > 10 ? ", …" : ""})`,
+    );
   }
 
   return { remapped: extraUpserts.length };
