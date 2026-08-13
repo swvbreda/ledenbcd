@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMembers } from "@/hooks/useMembers";
 import { useContributions, useContributionPayments } from "@/hooks/useContributions";
+import { useAuth } from "@/hooks/useAuth";
 
 const euro = (n: number) =>
   new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -22,6 +23,7 @@ const statusMeta: Record<StatusKey, { label: string; icon: typeof CheckCircle2; 
 export default function LedenBetalingenTab({ year }: { year: number }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"alle" | StatusKey>("alle");
+  const { isAdmin, loading: authLoading } = useAuth();
 
   const { effectiveMembers, dataLoading } = useMembers();
   const { data: contributions = [], isLoading: loadingContrib } = useContributions(year);
@@ -90,6 +92,22 @@ export default function LedenBetalingenTab({ year }: { year: number }) {
   );
 
   const loading = dataLoading || loadingContrib || loadingPay;
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Laden…
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <p className="py-12 text-center text-muted-foreground">
+        Geen toegang. Deze gegevens zijn alleen beschikbaar voor beheerders.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-6">
