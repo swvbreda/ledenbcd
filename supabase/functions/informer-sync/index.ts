@@ -337,6 +337,7 @@ async function informerCall(
   sink?: ApiCall[],
   swappedAuth = false,
   overrideCode?: string,
+  attempt = 0,
 ): Promise<ApiCall> {
   const method = (init.method ?? "GET").toUpperCase();
   const url = `${INFORMER_BASE}${path}`;
@@ -395,6 +396,17 @@ async function informerCall(
     const retry = await informerCall(path, init, undefined, true);
     sink?.push(retry);
     return retry;
+  }
+  // Informer hanteert een rate limit; bij 429 kort wachten en opnieuw proberen
+  // zodat een hele sync-run niet op één verzoek sneuvelt.
+  if (status === 429 && attempt < 3) {
+    const retryAfter = Number(response_headers["retry-after"]);
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1000, 15000)
+      : 2000 * (attempt + 1);
+    sink?.push(call);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return await informerCall(path, init, sink, swappedAuth, overrideCode, attempt + 1);
   }
   sink?.push(call);
   return call;
