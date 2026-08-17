@@ -52,6 +52,8 @@ const GemeenteDetailPage = () => {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
         if (getGemeente(plaats) !== decodedGemeente) continue;
+        // Skip empty placeholder rows (no address and no own place)
+        if (!l.naam && !l.adres && !l.plaats) continue;
 
         const sd = l.stadsdeel || m.stadsdeel || "";
         const locatieNaam = l.naam || m.naam;
@@ -112,7 +114,7 @@ const GemeenteDetailPage = () => {
     });
 
     return { totaalNL, aangesloten, marktPct, stadsdelen, perStadsdeel, sortedKeys, locaties };
-  }, [decodedGemeente]);
+  }, [decodedGemeente, mergedRepresented]);
 
   if (!data) {
     return (

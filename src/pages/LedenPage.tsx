@@ -53,7 +53,7 @@ const LedenPage = () => {
     activeLeadIds,
   } = useMembers();
 
-  const { members: mergedSearched } = useMergedMembers(searchedMembers);
+  const mergedSearched = searchedMembers;
 
   const { rawOldMembers } = useMembersData();
   const { members: archivedMembers } = useMergedMembers(rawOldMembers);
