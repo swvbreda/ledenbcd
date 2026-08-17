@@ -4,9 +4,13 @@ import { getMembershipYears } from "@/lib/membership";
 import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCategorie";
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
+import { getGemeente } from "@/data/gemeenteMapping";
 
 export function useMembers() {
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
+  const { members: mergedMembers } = useMergedMembers(rawMembers);
+  const { members: mergedLeads } = useMergedMembers(rawLeads);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
@@ -14,15 +18,15 @@ export function useMembers() {
   const { conversions } = useLeadConversions();
 
   const effectiveAll = useMemo(
-    () => [...rawMembers, ...rawLeads],
-    [rawMembers, rawLeads]
+    () => [...mergedMembers, ...mergedLeads],
+    [mergedMembers, mergedLeads]
   );
   const allIncludingLeads = effectiveAll;
 
   /** Set of lead IDs (leads are those in rawLeads) */
   const activeLeadIds = useMemo(
-    () => new Set(rawLeads.map((l) => l.id)),
-    [rawLeads]
+    () => new Set(mergedLeads.map((l) => l.id)),
+    [mergedLeads]
   );
 
   const cities = useMemo(
@@ -54,6 +58,7 @@ export function useMembers() {
       (m) =>
         m.naam.toLowerCase().includes(q) ||
         m.plaats.toLowerCase().includes(q) ||
+        (getGemeente(m.plaats) || "").toLowerCase().includes(q) ||
         m.contactpersoon.toLowerCase().includes(q) ||
         m.bedrijfsnaam.toLowerCase().includes(q) ||
         String(m.id).includes(q) ||
@@ -68,6 +73,7 @@ export function useMembers() {
         m.locaties.some((l) =>
           l.naam.toLowerCase().includes(q) ||
           (l.plaats || "").toLowerCase().includes(q) ||
+          (getGemeente(l.plaats || m.plaats) || "").toLowerCase().includes(q) ||
           (l.adres || "").toLowerCase().includes(q)
         )
     );
@@ -94,10 +100,10 @@ export function useMembers() {
     filteredMembers,
     searchedMembers,
     clearFilters,
-    allMembers: rawMembers,
+    allMembers: mergedMembers,
     activeLeadIds,
-    effectiveMembers: rawMembers,
-    effectiveLeads: rawLeads,
+    effectiveMembers: mergedMembers,
+    effectiveLeads: mergedLeads,
     conversions,
     dataLoading,
   };
