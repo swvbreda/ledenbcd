@@ -11,6 +11,10 @@ interface MemberEdit {
   data: Partial<Member>;
 }
 
+/** Drop placeholder location rows that have neither address nor place */
+const cleanLocaties = <T extends { naam?: string; adres?: string; plaats?: string }>(locaties: T[]): T[] =>
+  (locaties || []).filter((l) => !!(l.adres?.trim() || l.plaats?.trim()));
+
 export function useMemberEdits() {
   return useQuery({
     queryKey: ["member-edits"],
@@ -89,7 +93,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   let merged: Member = baseMember;
 
   if (edits) {
-    const mergedLocaties = edits.locaties || merged.locaties;
+    const mergedLocaties = cleanLocaties(edits.locaties || merged.locaties);
     merged = {
       ...merged,
       ...edits,
@@ -100,7 +104,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   }
 
   if (pendingEdit) {
-    const mergedLocaties = pendingEdit.locaties || merged.locaties;
+    const mergedLocaties = cleanLocaties(pendingEdit.locaties || merged.locaties);
     merged = {
       ...merged,
       ...pendingEdit,
@@ -118,16 +122,15 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
   const { data: editsMap, isLoading } = useMemberEdits();
 
   const merged = useMemo(() => {
-    if (!editsMap || editsMap.size === 0) return members;
     return members.map((m) => {
-      const edits = editsMap.get(m.id);
-      if (!edits) return m;
-      const mergedLocaties = edits.locaties || m.locaties;
+      const edits = editsMap?.get(m.id);
+      const mergedLocaties = cleanLocaties(edits?.locaties || m.locaties);
+      if (!edits && mergedLocaties.length === (m.locaties?.length ?? 0)) return m;
       return {
         ...m,
-        ...edits,
+        ...(edits || {}),
         locaties: mergedLocaties,
-        contacten: edits.contacten || m.contacten,
+        contacten: edits?.contacten || m.contacten,
         aantalLocaties: mergedLocaties.length,
       };
     });
