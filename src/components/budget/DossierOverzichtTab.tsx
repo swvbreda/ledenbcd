@@ -36,7 +36,10 @@ import {
   useDossierMutations,
   useDossierMutationActions,
   useExpenseDocuments,
+  groupByDossier,
+  isUnassigned,
   type DossierMutation,
+  type DossierEntry,
 } from "@/hooks/useDossiers";
 import { useAuth } from "@/hooks/useAuth";
 import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
@@ -50,7 +53,7 @@ interface Props {
 
 interface DossierRow {
   dossier: string;
-  entries: DossierMutation[];
+  entries: DossierEntry[];
   out: number;
   income: number;
   total: number;
@@ -83,16 +86,11 @@ export default function DossierOverzichtTab({ year }: Props) {
   const canEdit = isAdmin;
 
   const dossiers = useMemo(() => {
-    const map = new Map<string, DossierMutation[]>();
-    for (const e of mutations) {
-      if (!e.dossier) continue;
-      if (!map.has(e.dossier)) map.set(e.dossier, []);
-      map.get(e.dossier)!.push(e);
-    }
+    const map = groupByDossier(mutations);
     const rows: DossierRow[] = [];
     for (const [dossier, entries] of map) {
-      const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
-      const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
+      const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
+      const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
       rows.push({ dossier, entries, out, income, total: out - income });
     }
     rows.sort((a, b) => b.total - a.total);
@@ -110,7 +108,7 @@ export default function DossierOverzichtTab({ year }: Props) {
   const unassigned = useMemo(() => {
     const lower = searchFilter.toLowerCase();
     return mutations.filter((e) => {
-      if (e.dossier) return false;
+      if (!isUnassigned(e)) return false;
       if (!lower) return true;
       return (
         e.counterparty.toLowerCase().includes(lower) ||
