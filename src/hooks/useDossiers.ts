@@ -43,6 +43,34 @@ export interface DossierSplit {
   year: number | null;
 }
 
+/** Mutatie zoals getoond binnen één dossier: met het deel dat aan dat dossier toebehoort. */
+export type DossierEntry = DossierMutation & { shareAmount: number; shared: boolean };
+
+/** Groepeert mutaties per dossier; gesplitste kosten tellen per dossier alleen hun deel mee. */
+export function groupByDossier(mutations: DossierMutation[]) {
+  const map = new Map<string, DossierEntry[]>();
+  const push = (dossier: string, entry: DossierEntry) => {
+    if (!dossier) return;
+    if (!map.has(dossier)) map.set(dossier, []);
+    map.get(dossier)!.push(entry);
+  };
+  for (const m of mutations) {
+    if (m.splits && m.splits.length > 0) {
+      for (const s of m.splits) {
+        push(s.dossier, { ...m, shareAmount: s.amount, shared: m.splits.length > 1 });
+      }
+    } else if (m.dossier) {
+      push(m.dossier, { ...m, shareAmount: m.amount, shared: false });
+    }
+  }
+  return map;
+}
+
+/** True als deze mutatie aan geen enkel dossier hangt (ook niet via een verdeling). */
+export function isUnassigned(m: DossierMutation) {
+  return !m.dossier && (!m.splits || m.splits.length === 0);
+}
+
 const client = supabase as any;
 
 export function entryKeyFor(kind: DossierEntryKind, id: string) {
