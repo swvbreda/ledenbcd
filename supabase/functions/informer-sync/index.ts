@@ -1272,6 +1272,7 @@ Deno.serve(async (req) => {
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
     if (action === "pull_invoices" || action === "all") results.push(await pullInvoices(supabase));
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
+    if (action === "pull_invoice_documents") results.push(await pullInvoiceDocuments(supabase));
     if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
 
     for (const r of results) await logResult(supabase, r);
