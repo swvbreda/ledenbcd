@@ -944,6 +944,72 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 }
 
 async function pullBankBalances(supabase: any): Promise<ActionResult> {
+  return await _pullBankBalances(supabase);
+}
+
+// Losse stap: probeer voor bestaande Informer-boekingen alsnog het
+// factuurbestand op te halen, zonder de rest van de sync te draaien.
+async function pullInvoiceDocuments(supabase: any): Promise<ActionResult> {
+  const action = "pull_invoice_documents";
+  const api_calls: ApiCall[] = [];
+  try {
+    let invoices: any[] = [];
+    try {
+      invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
+    } catch (e) {
+      return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+    }
+    const byExternalId = new Map<string, any>();
+    for (const inv of invoices) {
+      const id = String(inv.id ?? inv.invoice_id ?? "");
+      if (id) byExternalId.set(id, inv);
+    }
+
+    const { data: expenses } = await supabase
+      .from("budget_expenses")
+      .select("id, external_id, expense_date")
+      .eq("source", "informer")
+      .not("external_id", "is", null)
+      .limit(200);
+
+    let stored = 0;
+    let checked = 0;
+    const reasons: Record<string, number> = {};
+    const diagnostics: any[] = [];
+    for (const exp of expenses || []) {
+      const inv = byExternalId.get(String(exp.external_id));
+      if (!inv) {
+        reasons["factuur niet meer in Informer"] = (reasons["factuur niet meer in Informer"] ?? 0) + 1;
+        continue;
+      }
+      checked++;
+      const year = Number(String(exp.expense_date ?? "").slice(0, 4)) || new Date().getFullYear();
+      const res = await storeInvoicePdf(supabase, exp.id, String(exp.external_id), inv, year);
+      if (res.stored) stored++;
+      reasons[res.reason] = (reasons[res.reason] ?? 0) + 1;
+      if (!res.stored && res.attempts.length > 0 && diagnostics.length < 5) {
+        diagnostics.push({ invoice: inv?.invoice_number ?? exp.external_id, reason: res.reason, attempts: res.attempts });
+      }
+    }
+
+    return {
+      action,
+      success: true,
+      items_processed: stored,
+      details: {
+        invoices_checked: checked,
+        documents_stored: stored,
+        document_reasons: reasons,
+        document_diagnostics: diagnostics,
+      },
+      api_calls,
+    };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+  }
+}
+
+async function _pullBankBalances(supabase: any): Promise<ActionResult> {
   const action = "pull_bank_balances";
   const api_calls: ApiCall[] = [];
   try {
