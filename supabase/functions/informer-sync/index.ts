@@ -871,6 +871,8 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 
     let processed = 0;
     let documentsStored = 0;
+    const docDiagnostics: any[] = [];
+    const docReasons: Record<string, number> = {};
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
       if (!externalId) continue;
@@ -906,16 +908,36 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       }
       if (expenseId) {
         try {
-          const stored = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
-          if (stored) documentsStored++;
-        } catch (_e) {
+          const res = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
+          if (res.stored) documentsStored++;
+          docReasons[res.reason] = (docReasons[res.reason] ?? 0) + 1;
+          if (!res.stored && res.attempts.length > 0 && docDiagnostics.length < 5) {
+            docDiagnostics.push({
+              invoice: inv?.invoice_number ?? externalId,
+              reason: res.reason,
+              attempts: res.attempts,
+            });
+          }
+        } catch (e) {
           // Factuurbestand ophalen mag de sync nooit laten falen.
+          docReasons[`fout: ${(e as Error).message}`] = (docReasons[`fout: ${(e as Error).message}`] ?? 0) + 1;
         }
       }
       processed++;
     }
     await supabase.from("informer_sync_state").update({ last_creditor_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed, api_calls };
+    return {
+      action,
+      success: true,
+      items_processed: processed,
+      details: {
+        invoices_checked: invoices.length,
+        documents_stored: documentsStored,
+        document_reasons: docReasons,
+        document_diagnostics: docDiagnostics,
+      },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
