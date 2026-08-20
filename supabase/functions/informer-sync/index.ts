@@ -830,6 +830,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
     }
 
     let processed = 0;
+    let documentsStored = 0;
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
       if (!externalId) continue;
@@ -840,13 +841,14 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 
       // Upsert on external_id
       const { data: existing } = await supabase.from("budget_expenses").select("id").eq("external_id", externalId).maybeSingle();
+      let expenseId: string | null = existing?.id ?? null;
       if (existing?.id) {
         await supabase.from("budget_expenses").update({
           amount, creditor_name: creditor, expense_date: expenseDate, description,
           paid: toAmount(inv.paid ?? 0) >= amount, paid_date: inv.payment_date ?? inv.paid_date ?? null,
         }).eq("id", existing.id);
       } else {
-        await supabase.from("budget_expenses").insert({
+        const { data: inserted } = await supabase.from("budget_expenses").insert({
           line_item_id: lineItemId,
           amount,
           direction: "out",
@@ -859,12 +861,27 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
           paid: toAmount(inv.paid ?? 0) >= amount,
           paid_date: inv.payment_date ?? inv.paid_date ?? null,
           created_by: "00000000-0000-0000-0000-000000000000",
-        });
+        }).select("id").maybeSingle();
+        expenseId = inserted?.id ?? null;
+      }
+      if (expenseId) {
+        try {
+          const stored = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
+          if (stored) documentsStored++;
+        } catch (_e) {
+          // Factuurbestand ophalen mag de sync nooit laten falen.
+        }
       }
       processed++;
     }
     await supabase.from("informer_sync_state").update({ last_creditor_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed, api_calls };
+    return {
+      action,
+      success: true,
+      items_processed: processed,
+      error_message: documentsStored > 0 ? `${documentsStored} factuurbestand(en) opgehaald` : undefined,
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
