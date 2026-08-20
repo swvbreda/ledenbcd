@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Pencil, Check, X, Trash2, Plus } from "lucide-react";
+import { Pencil, Check, X, Trash2, Plus, Paperclip, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +32,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  useDossierMutations,
+  useDossierMutationActions,
+  useExpenseDocuments,
+  type DossierMutation,
+} from "@/hooks/useDossiers";
+import { useAuth } from "@/hooks/useAuth";
+import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
 
 interface Props {
   categories: BudgetCategory[];
@@ -39,25 +48,27 @@ interface Props {
   onUpdateBankTransaction?: (id: string, fields: { dossier?: string | null }) => void;
 }
 
-interface DossierEntry {
-  id: string;
-  date: string;
-  creditor: string;
-  invoice: string;
-  amount: number;
-  categoryName: string;
-  lineItemName: string;
-  currentDossier: string;
-  isBank: boolean;
-}
-
 interface DossierRow {
   dossier: string;
-  entries: DossierEntry[];
+  entries: DossierMutation[];
+  out: number;
+  income: number;
   total: number;
 }
 
-export default function DossierOverzichtTab({ categories, year, onUpdateExpense, onUpdateBankTransaction }: Props) {
+const formatDate = (value: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+export default function DossierOverzichtTab({ year }: Props) {
+  const { isAdmin } = useAuth();
+  const { data: mutations = [], isLoading } = useDossierMutations(year);
+  const { data: documents = [] } = useExpenseDocuments();
+  const { setDossier } = useDossierMutationActions(year);
+
   const [editingDossier, setEditingDossier] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
@@ -65,79 +76,61 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
   const [newDossierName, setNewDossierName] = useState("");
   const [existingDossier, setExistingDossier] = useState<string>("");
   const [dossierMode, setDossierMode] = useState<"existing" | "new">("existing");
-  const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchFilter, setSearchFilter] = useState("");
+  const [openDossier, setOpenDossier] = useState<string | null>(null);
 
-  // All expenses flat list
-  const allExpenses = useMemo(() => {
-    const list: DossierEntry[] = [];
-    for (const cat of categories) {
-      for (const li of cat.line_items) {
-        for (const exp of li.expenses) {
-          if (exp.direction === "in") continue;
-          const isBank = !!(exp as any)._fromBank;
-          list.push({
-            id: exp.id,
-            date: exp.expense_date || "",
-            creditor: exp.creditor_name || exp.description || "",
-            invoice: exp.invoice_reference || "",
-            amount: exp.amount,
-            categoryName: cat.name,
-            lineItemName: li.name,
-            currentDossier: exp.dossier?.trim() || "",
-            isBank,
-          });
-        }
-      }
-    }
-    list.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-    return list;
-  }, [categories]);
+  const canEdit = isAdmin;
 
   const dossiers = useMemo(() => {
-    const map = new Map<string, DossierEntry[]>();
-    for (const e of allExpenses) {
-      if (!e.currentDossier) continue;
-      if (!map.has(e.currentDossier)) map.set(e.currentDossier, []);
-      map.get(e.currentDossier)!.push(e);
+    const map = new Map<string, DossierMutation[]>();
+    for (const e of mutations) {
+      if (!e.dossier) continue;
+      if (!map.has(e.dossier)) map.set(e.dossier, []);
+      map.get(e.dossier)!.push(e);
     }
     const rows: DossierRow[] = [];
     for (const [dossier, entries] of map) {
-      rows.push({ dossier, entries, total: entries.reduce((s, e) => s + e.amount, 0) });
+      const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
+      const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
+      rows.push({ dossier, entries, out, income, total: out - income });
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
-  }, [allExpenses]);
+  }, [mutations]);
+
+  const docsByEntry = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of documents) map.set(d.entry_key, (map.get(d.entry_key) || 0) + 1);
+    return map;
+  }, [documents]);
 
   const grandTotal = dossiers.reduce((s, d) => s + d.total, 0);
 
-  const unassignedCount = allExpenses.filter((e) => !e.currentDossier).length;
-
-  // Expenses available for the new dossier dialog (no dossier yet)
-
-  const unassignedExpenses = useMemo(() => {
-    const lowerFilter = searchFilter.toLowerCase();
-    return allExpenses.filter((e) => {
-      if (e.currentDossier) return false;
-      if (!lowerFilter) return true;
+  const unassigned = useMemo(() => {
+    const lower = searchFilter.toLowerCase();
+    return mutations.filter((e) => {
+      if (e.dossier) return false;
+      if (!lower) return true;
       return (
-        e.creditor.toLowerCase().includes(lowerFilter) ||
-        e.invoice.toLowerCase().includes(lowerFilter) ||
-        e.categoryName.toLowerCase().includes(lowerFilter) ||
-        e.lineItemName.toLowerCase().includes(lowerFilter)
+        e.counterparty.toLowerCase().includes(lower) ||
+        e.description.toLowerCase().includes(lower) ||
+        e.invoice.toLowerCase().includes(lower) ||
+        e.categoryName.toLowerCase().includes(lower) ||
+        e.lineItemName.toLowerCase().includes(lower)
       );
     });
-  }, [allExpenses, searchFilter]);
+  }, [mutations, searchFilter]);
 
-  const updateEntry = (entry: DossierEntry, dossier: string | null) => {
-    if (entry.isBank) {
-      if (!onUpdateBankTransaction) return;
-      const realId = entry.id.replace(/^bank:/, "");
-      onUpdateBankTransaction(realId, { dossier });
-    } else {
-      if (!onUpdateExpense) return;
-      onUpdateExpense(entry.id, { dossier });
-    }
+  const applyDossier = (entries: DossierMutation[], dossier: string | null) => {
+    if (!canEdit || entries.length === 0) return;
+    setDossier.mutate(
+      { entries, dossier },
+      {
+        onSuccess: () => toast.success("Dossier bijgewerkt"),
+        onError: (e: any) => toast.error(e?.message || "Bijwerken mislukt"),
+      },
+    );
   };
 
   const startRename = (dossier: string) => {
@@ -151,56 +144,50 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
       setEditingDossier(null);
       return;
     }
-    for (const entry of row.entries) {
-      updateEntry(entry, newVal);
-    }
+    applyDossier(row.entries, newVal);
     setEditingDossier(null);
   };
 
   const confirmDelete = () => {
     if (!deletingDossier) return;
-    for (const entry of deletingDossier.entries) {
-      updateEntry(entry, null);
-    }
+    applyDossier(deletingDossier.entries, null);
     setDeletingDossier(null);
-  };
-
-  const removeEntry = (entry: DossierEntry) => {
-    updateEntry(entry, null);
   };
 
   const openNewDialog = (mode: "existing" | "new" = "existing") => {
     setNewDossierName("");
     setExistingDossier("");
-    setSelectedExpenseIds(new Set());
+    setSelectedIds(new Set());
     setSearchFilter("");
-    // If no existing dossiers, force "new" mode
     setDossierMode(dossiers.length === 0 ? "new" : mode);
     setShowNewDialog(true);
   };
 
-  const toggleExpense = (id: string) => {
-    setSelectedExpenseIds((prev) => {
+  const toggleEntry = (key: string) => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
   const createDossier = () => {
     const targetName = dossierMode === "new" ? newDossierName.trim() : existingDossier.trim();
-    if (!targetName || selectedExpenseIds.size === 0) return;
-    for (const id of selectedExpenseIds) {
-      const entry = allExpenses.find((e) => e.id === id);
-      if (entry) updateEntry(entry, targetName);
-    }
+    if (!targetName || selectedIds.size === 0) return;
+    applyDossier(
+      mutations.filter((e) => selectedIds.has(e.key)),
+      targetName,
+    );
     setShowNewDialog(false);
   };
 
-  const selectedTotal = useMemo(() => {
-    return allExpenses.filter((e) => selectedExpenseIds.has(e.id)).reduce((s, e) => s + e.amount, 0);
-  }, [allExpenses, selectedExpenseIds]);
+  const selectedTotal = useMemo(
+    () => mutations.filter((e) => selectedIds.has(e.key)).reduce((s, e) => s + e.amount, 0),
+    [mutations, selectedIds],
+  );
+
+  const activeRow = openDossier ? dossiers.find((d) => d.dossier === openDossier) : null;
 
   return (
     <div className="mt-4 space-y-3">
@@ -210,23 +197,25 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
           <span className="text-xs text-muted-foreground">
             Totaal: <CurrencyText value={grandTotal} />
           </span>
-          {onUpdateExpense && (
+          {canEdit && (
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openNewDialog("new")}>
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus className="mr-1 h-3.5 w-3.5" />
               Nieuw dossier
             </Button>
           )}
         </div>
       </div>
 
-      {dossiers.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Geen dossiers gevonden voor {year}</p>
+      {isLoading ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">Laden…</p>
+      ) : dossiers.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">Geen dossiers gevonden voor {year}</p>
       ) : (
         dossiers.map((d) => (
-          <div key={d.dossier} className="border border-border rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between bg-muted/40 px-3 py-1.5 gap-2">
+          <div key={d.dossier} className="overflow-hidden rounded-lg border border-border">
+            <div className="flex items-center justify-between gap-2 bg-muted/40 px-3 py-1.5">
               {editingDossier === d.dossier ? (
-                <div className="flex items-center gap-1 flex-1">
+                <div className="flex flex-1 items-center gap-1">
                   <Input
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
@@ -245,9 +234,20 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <span className="text-sm font-semibold truncate">{d.dossier}</span>
-                  {onUpdateExpense && (
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex min-w-0 items-center gap-1 text-sm font-semibold hover:text-brand-red"
+                    onClick={() => setOpenDossier(d.dossier)}
+                    title="Dossier openen"
+                  >
+                    <span className="truncate">{d.dossier}</span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                  </button>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
+                  </span>
+                  {canEdit && (
                     <>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => startRename(d.dossier)}>
                         <Pencil className="h-3 w-3 text-muted-foreground" />
@@ -259,36 +259,58 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
                   )}
                 </div>
               )}
-              <span className="text-xs font-medium tabular-nums whitespace-nowrap text-right min-w-[10%] pr-1"><CurrencyText value={d.total} /></span>
+              <span className="min-w-[10%] whitespace-nowrap pr-1 text-right text-xs font-medium tabular-nums">
+                <CurrencyText value={d.total} />
+              </span>
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
-                  <th className="px-3 py-1 text-left font-medium w-[15%]">Datum</th>
-                  <th className="px-3 py-1 text-left font-medium w-[24%]">Crediteur</th>
-                  <th className="px-3 py-1 text-left font-medium w-[14%]">Factuurnr</th>
-                  <th className="px-3 py-1 text-left font-medium w-[17%]">Categorie</th>
-                  <th className="px-3 py-1 text-left font-medium w-[16%]">Begrotingspost</th>
-                  <th className="px-3 py-1 text-right font-medium w-[10%]">Bedrag</th>
-                  {onUpdateExpense && <th className="px-1 py-1 w-[4%]"></th>}
+                  <th className="w-[12%] px-3 py-1 text-left font-medium">Datum</th>
+                  <th className="w-[22%] px-3 py-1 text-left font-medium">Tegenpartij</th>
+                  <th className="w-[13%] px-3 py-1 text-left font-medium">Factuurnr</th>
+                  <th className="w-[16%] px-3 py-1 text-left font-medium">Categorie</th>
+                  <th className="w-[16%] px-3 py-1 text-left font-medium">Begrotingspost</th>
+                  <th className="w-[11%] px-3 py-1 text-right font-medium">Bedrag</th>
+                  <th className="w-[6%] px-2 py-1 text-left font-medium">Factuur</th>
+                  {canEdit && <th className="w-[4%] px-1 py-1" />}
                 </tr>
               </thead>
               <tbody>
                 {d.entries.map((e) => (
-                  <tr key={e.id} className="border-b border-border/30 hover:bg-muted/20 group">
-                    <td className="px-3 py-1 tabular-nums whitespace-nowrap">{e.date || ""}</td>
-                    <td className="px-3 py-1">{e.creditor}</td>
-                    <td className="px-3 py-1 tabular-nums">{e.invoice || ""}</td>
+                  <tr
+                    key={e.key}
+                    className="group cursor-pointer border-b border-border/30 hover:bg-muted/20"
+                    onClick={() => setOpenDossier(d.dossier)}
+                  >
+                    <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.date)}</td>
+                    <td className="px-3 py-1">{e.counterparty || e.description}</td>
+                    <td className="px-3 py-1 tabular-nums">{e.invoice}</td>
                     <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
-                    <td className="px-3 py-1 text-muted-foreground">{e.lineItemName}</td>
-                    <td className="px-3 py-1 text-right"><CurrencyCell value={e.amount} /></td>
-                    {onUpdateExpense && (
+                    <td className="px-3 py-1 text-muted-foreground">{e.lineItemName || "Niet gekoppeld"}</td>
+                    <td className={`px-3 py-1 text-right ${e.direction === "in" ? "text-green-600" : ""}`}>
+                      <CurrencyCell value={e.direction === "in" ? e.amount : -e.amount} />
+                    </td>
+                    <td className="px-2 py-1 text-muted-foreground">
+                      {docsByEntry.get(e.key) ? (
+                        <span className="inline-flex items-center gap-0.5 text-brand-red">
+                          <Paperclip className="h-3 w-3" />
+                          {docsByEntry.get(e.key)}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                    {canEdit && (
                       <td className="px-1 py-1 text-center">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeEntry(e)}
+                          className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            applyDossier([e], null);
+                          }}
                           title="Verwijder uit dossier"
                         >
                           <X className="h-3 w-3 text-muted-foreground" />
@@ -303,14 +325,27 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
         ))
       )}
 
+      {activeRow && (
+        <DossierDetailDialog
+          open={!!openDossier}
+          onOpenChange={(o) => !o && setOpenDossier(null)}
+          dossier={activeRow.dossier}
+          year={year}
+          entries={activeRow.entries}
+          documents={documents.filter((doc) => activeRow.entries.some((e) => e.key === doc.entry_key))}
+          isAdmin={canEdit}
+          onRemoveFromDossier={(entry) => applyDossier([entry], null)}
+        />
+      )}
+
       {/* Delete confirmation */}
       <AlertDialog open={!!deletingDossier} onOpenChange={(open) => !open && setDeletingDossier(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Dossier verwijderen</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet je zeker dat je dossier "{deletingDossier?.dossier}" wilt verwijderen?
-              De {deletingDossier?.entries.length} uitgaven worden niet verwijderd, maar de dossierkoppeling wordt losgemaakt.
+              Weet je zeker dat je dossier "{deletingDossier?.dossier}" wilt verwijderen? De{" "}
+              {deletingDossier?.entries.length} mutaties worden niet verwijderd, maar de dossierkoppeling wordt losgemaakt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -324,15 +359,15 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
 
       {/* New dossier dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Uitgaven koppelen aan dossier</DialogTitle>
-            <DialogDescription>Kies een bestaand dossier of maak een nieuwe aan, en selecteer de uitgaven.</DialogDescription>
+            <DialogTitle>Mutaties koppelen aan dossier</DialogTitle>
+            <DialogDescription>Kies een bestaand dossier of maak een nieuwe aan, en selecteer de mutaties.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1 flex items-center justify-between">
                 <label className="text-sm font-medium">Dossier</label>
                 {dossiers.length > 0 && (
                   <button
@@ -352,7 +387,7 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
                   <SelectContent>
                     {dossiers.map((d) => (
                       <SelectItem key={d.dossier} value={d.dossier}>
-                        {d.dossier} <span className="text-muted-foreground text-xs">({d.entries.length})</span>
+                        {d.dossier} <span className="text-xs text-muted-foreground">({d.entries.length})</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -368,55 +403,54 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium">Uitgaven zonder dossier ({unassignedExpenses.length})</label>
-                {selectedExpenseIds.size > 0 && (
+              <div className="mb-1 flex items-center justify-between">
+                <label className="text-sm font-medium">Mutaties zonder dossier ({unassigned.length})</label>
+                {selectedIds.size > 0 && (
                   <span className="text-xs text-muted-foreground">
-                    {selectedExpenseIds.size} geselecteerd · <CurrencyText value={selectedTotal} />
+                    {selectedIds.size} geselecteerd · <CurrencyText value={selectedTotal} />
                   </span>
                 )}
               </div>
               <Input
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Zoek op crediteur, factuurnr, categorie…"
+                placeholder="Zoek op tegenpartij, omschrijving, factuurnr, categorie…"
                 className="mb-2 h-8 text-sm"
               />
-              <ScrollArea className="h-[300px] border border-border rounded-md">
-                {unassignedExpenses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-4 text-center">
-                    {searchFilter ? "Geen resultaten" : "Alle uitgaven zijn al aan een dossier gekoppeld"}
+              <ScrollArea className="h-[300px] rounded-md border border-border">
+                {unassigned.length === 0 ? (
+                  <p className="p-4 text-center text-sm text-muted-foreground">
+                    {searchFilter ? "Geen resultaten" : "Alle mutaties zijn al aan een dossier gekoppeld"}
                   </p>
                 ) : (
                   <table className="w-full text-xs">
-                    <thead className="sticky top-0 bg-background z-10">
+                    <thead className="sticky top-0 z-10 bg-background">
                       <tr className="border-b border-border/50">
-                        <th className="px-2 py-1.5 w-8"></th>
+                        <th className="w-8 px-2 py-1.5" />
                         <th className="px-2 py-1.5 text-left font-medium">Datum</th>
-                        <th className="px-2 py-1.5 text-left font-medium">Crediteur</th>
+                        <th className="px-2 py-1.5 text-left font-medium">Tegenpartij</th>
                         <th className="px-2 py-1.5 text-left font-medium">Factuurnr</th>
                         <th className="px-2 py-1.5 text-left font-medium">Categorie</th>
                         <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {unassignedExpenses.map((e) => (
+                      {unassigned.map((e) => (
                         <tr
-                          key={e.id}
-                          className="border-b border-border/30 hover:bg-muted/20 cursor-pointer"
-                          onClick={() => toggleExpense(e.id)}
+                          key={e.key}
+                          className="cursor-pointer border-b border-border/30 hover:bg-muted/20"
+                          onClick={() => toggleEntry(e.key)}
                         >
                           <td className="px-2 py-1">
-                            <Checkbox
-                              checked={selectedExpenseIds.has(e.id)}
-                              onCheckedChange={() => toggleExpense(e.id)}
-                            />
+                            <Checkbox checked={selectedIds.has(e.key)} onCheckedChange={() => toggleEntry(e.key)} />
                           </td>
-                          <td className="px-2 py-1 tabular-nums whitespace-nowrap">{e.date || ""}</td>
-                          <td className="px-2 py-1">{e.creditor}</td>
-                          <td className="px-2 py-1 tabular-nums">{e.invoice || ""}</td>
-                          <td className="px-2 py-1 text-muted-foreground">{e.categoryName}</td>
-                          <td className="px-2 py-1 text-right tabular-nums"><CurrencyCell value={e.amount} /></td>
+                          <td className="whitespace-nowrap px-2 py-1 tabular-nums">{formatDate(e.date)}</td>
+                          <td className="px-2 py-1">{e.counterparty || e.description}</td>
+                          <td className="px-2 py-1 tabular-nums">{e.invoice}</td>
+                          <td className="px-2 py-1 text-muted-foreground">{e.categoryName || "—"}</td>
+                          <td className={`px-2 py-1 text-right tabular-nums ${e.direction === "in" ? "text-green-600" : ""}`}>
+                            <CurrencyCell value={e.direction === "in" ? e.amount : -e.amount} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -427,15 +461,16 @@ export default function DossierOverzichtTab({ categories, year, onUpdateExpense,
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuleren</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>
+              Annuleren
+            </Button>
             <Button
               onClick={createDossier}
               disabled={
-                (dossierMode === "new" ? !newDossierName.trim() : !existingDossier.trim()) ||
-                selectedExpenseIds.size === 0
+                (dossierMode === "new" ? !newDossierName.trim() : !existingDossier.trim()) || selectedIds.size === 0
               }
             >
-              {dossierMode === "new" ? "Dossier aanmaken" : "Koppelen"} ({selectedExpenseIds.size})
+              {dossierMode === "new" ? "Dossier aanmaken" : "Koppelen"} ({selectedIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
