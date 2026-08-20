@@ -405,6 +405,18 @@ export default function ExpenseDialog({
                               </div>
 
                               {isIncomeCategory && isContributionLine && onLinkPayment && (
+                                <></>
+                              )}
+                              {entryKeyFromRowId(e.id) && (
+                                <DossierSplitEditor
+                                  entryKey={entryKeyFromRowId(e.id)!}
+                                  totalAmount={Number(e.amount) || 0}
+                                  year={year ?? Number((e.expense_date || "").slice(0, 4)) || new Date().getFullYear()}
+                                  dossierOptions={dossierOptions}
+                                />
+                              )}
+
+                              {isIncomeCategory && isContributionLine && onLinkPayment && (
                                 <div className="mt-3 pt-3 border-t border-border/60">
                                   <div className="text-[11px] font-medium text-muted-foreground mb-1">
                                     Contributie koppelen aan lid
