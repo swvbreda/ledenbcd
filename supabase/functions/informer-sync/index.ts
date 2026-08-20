@@ -191,6 +191,101 @@ async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall
   return all;
 }
 
+// Probeert het PDF-bestand van een inkoopfactuur op te halen. Informer levert
+// dit niet voor elke factuur; in dat geval geven we null terug en kan de
+// penningmeester de factuur handmatig uploaden.
+async function fetchPurchaseInvoicePdf(
+  externalId: string,
+  inv: any,
+): Promise<{ bytes: Uint8Array; contentType: string } | null> {
+  const directUrl =
+    inv?.pdf_url ?? inv?.document_url ?? inv?.attachment_url ?? inv?.file_url ?? null;
+  const candidates: string[] = [];
+  if (typeof directUrl === "string" && /^https?:\/\//.test(directUrl)) candidates.push(directUrl);
+  candidates.push(
+    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/pdf`,
+    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/download`,
+    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/attachment`,
+  );
+
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, {
+        headers: { ...informerHeaders(), Accept: "application/pdf" },
+      });
+      if (!res.ok) continue;
+      const contentType = res.headers.get("content-type") ?? "";
+      const buffer = new Uint8Array(await res.arrayBuffer());
+      if (buffer.length < 1000) continue;
+      const looksPdf =
+        contentType.includes("pdf") ||
+        (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46);
+      if (!looksPdf) continue;
+      return { bytes: buffer, contentType: "application/pdf" };
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+// Slaat de factuur-PDF op in de opslagmap en koppelt hem aan de boeking.
+async function storeInvoicePdf(
+  supabase: any,
+  expenseId: string,
+  externalId: string,
+  inv: any,
+  year: number,
+): Promise<boolean> {
+  const entryKey = `expense:${expenseId}`;
+  const { data: existingDoc } = await supabase
+    .from("expense_documents")
+    .select("id")
+    .eq("entry_key", entryKey)
+    .eq("source", "informer")
+    .maybeSingle();
+  if (existingDoc?.id) return false;
+
+  const pdf = await fetchPurchaseInvoicePdf(externalId, inv);
+  if (!pdf) return false;
+
+  const fileName = `${inv?.invoice_number ?? externalId}.pdf`.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${year}/informer/${externalId}/${fileName}`;
+  const { error: upErr } = await supabase.storage
+    .from("expense-invoices")
+    .upload(path, pdf.bytes, { contentType: pdf.contentType, upsert: true });
+  if (upErr) return false;
+
+  const { error } = await supabase.from("expense_documents").insert({
+    entry_key: entryKey,
+    year,
+    file_path: path,
+    file_name: fileName,
+    mime_type: "application/pdf",
+    source: "informer",
+    invoice_reference: inv?.invoice_number ?? null,
+  });
+  return !error;
+}
+
+async function fetchAllInformerPagesLegacy(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
+  const all: any[] = [];
+  for (let page = 0; page < 50; page++) {
+    const separator = path.includes("?") ? "&" : "?";
+    const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
+    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
+    const apiError = hasInformerError(call.response_body);
+    if (!call.ok && apiError && /no records found/i.test(apiError)) break;
+    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
+    if (apiError && /no records found/i.test(apiError)) break;
+    if (apiError) throw new Error(`Informer fout: ${apiError}`);
+    const batch = normalizeInformerList(call.response_body, keys);
+    all.push(...batch);
+    if (batch.length < records) break;
+  }
+  return all;
+}
+
 async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
   return await fetchAllInformerPages("/relations", ["relation", "relations", "data"], api_calls);
 }
