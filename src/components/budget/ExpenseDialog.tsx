@@ -6,7 +6,6 @@ import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
-import { useDossierSplits } from "@/hooks/useDossiers";
 
 interface MemberOption { id: number; naam: string }
 
@@ -78,8 +77,6 @@ export default function ExpenseDialog({
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [expenses, allDossiers]);
-
-  const { data: allSplits = [] } = useDossierSplits();
 
   const entryKeyFromRowId = (rawId: string): string | null => {
     if (rawId.startsWith("ponto:")) return `ponto:${rawId.split(":")[1]}`;
