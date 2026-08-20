@@ -404,14 +404,11 @@ export default function ExpenseDialog({
                                 </div>
                               </div>
 
-                              {isIncomeCategory && isContributionLine && onLinkPayment && (
-                                <></>
-                              )}
                               {entryKeyFromRowId(e.id) && (
                                 <DossierSplitEditor
                                   entryKey={entryKeyFromRowId(e.id)!}
                                   totalAmount={Number(e.amount) || 0}
-                                  year={year ?? Number((e.expense_date || "").slice(0, 4)) || new Date().getFullYear()}
+                                  year={year ?? (Number((e.expense_date || "").slice(0, 4)) || new Date().getFullYear())}
                                   dossierOptions={dossierOptions}
                                 />
                               )}
