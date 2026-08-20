@@ -616,6 +616,48 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_documents: {
+        Row: {
+          created_at: string
+          dossier: string | null
+          entry_key: string
+          file_name: string
+          file_path: string
+          id: string
+          invoice_reference: string | null
+          mime_type: string | null
+          source: string
+          uploaded_by: string | null
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          dossier?: string | null
+          entry_key: string
+          file_name: string
+          file_path: string
+          id?: string
+          invoice_reference?: string | null
+          mime_type?: string | null
+          source?: string
+          uploaded_by?: string | null
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          dossier?: string | null
+          entry_key?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          invoice_reference?: string | null
+          mime_type?: string | null
+          source?: string
+          uploaded_by?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       external_org_contacts: {
         Row: {
           created_at: string
