@@ -18,6 +18,8 @@ export interface DossierMutation {
   lineItemName: string;
   dossier: string;
   source: string;
+  /** Verdeling over meerdere dossiers; leeg = één dossier (veld `dossier`). */
+  splits: { dossier: string; amount: number }[];
 }
 
 export interface ExpenseDocument {
