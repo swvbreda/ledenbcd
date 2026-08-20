@@ -561,6 +561,7 @@ export default function FinancienPage() {
           categories={categories || []}
           members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
           userId={user.id}
+          year={year}
         />
       )}
 
