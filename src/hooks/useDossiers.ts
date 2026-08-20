@@ -18,6 +18,8 @@ export interface DossierMutation {
   lineItemName: string;
   dossier: string;
   source: string;
+  /** Verdeling over meerdere dossiers; leeg = één dossier (veld `dossier`). */
+  splits: { dossier: string; amount: number }[];
 }
 
 export interface ExpenseDocument {
@@ -33,10 +35,97 @@ export interface ExpenseDocument {
   created_at: string;
 }
 
+export interface DossierSplit {
+  id: string;
+  entry_key: string;
+  dossier: string;
+  amount: number;
+  year: number | null;
+}
+
+/** Mutatie zoals getoond binnen één dossier: met het deel dat aan dat dossier toebehoort. */
+export type DossierEntry = DossierMutation & { shareAmount: number; shared: boolean };
+
+/** Groepeert mutaties per dossier; gesplitste kosten tellen per dossier alleen hun deel mee. */
+export function groupByDossier(mutations: DossierMutation[]) {
+  const map = new Map<string, DossierEntry[]>();
+  const push = (dossier: string, entry: DossierEntry) => {
+    if (!dossier) return;
+    if (!map.has(dossier)) map.set(dossier, []);
+    map.get(dossier)!.push(entry);
+  };
+  for (const m of mutations) {
+    if (m.splits && m.splits.length > 0) {
+      for (const s of m.splits) {
+        push(s.dossier, { ...m, shareAmount: s.amount, shared: m.splits.length > 1 });
+      }
+    } else if (m.dossier) {
+      push(m.dossier, { ...m, shareAmount: m.amount, shared: false });
+    }
+  }
+  return map;
+}
+
+/** True als deze mutatie aan geen enkel dossier hangt (ook niet via een verdeling). */
+export function isUnassigned(m: DossierMutation) {
+  return !m.dossier && (!m.splits || m.splits.length === 0);
+}
+
 const client = supabase as any;
 
 export function entryKeyFor(kind: DossierEntryKind, id: string) {
   return `${kind}:${id}`;
+}
+
+/** Alle dossierverdelingen (kosten die over meerdere dossiers zijn verdeeld). */
+export function useDossierSplits() {
+  return useQuery({
+    queryKey: ["dossier-splits"],
+    queryFn: async () => {
+      const { data, error } = await client.from("expense_dossier_splits").select("*");
+      if (error) throw error;
+      return (data || []).map((s: any) => ({ ...s, amount: Number(s.amount) || 0 })) as DossierSplit[];
+    },
+  });
+}
+
+export function useDossierSplitActions() {
+  const qc = useQueryClient();
+
+  const save = useMutation({
+    mutationFn: async ({
+      entryKey,
+      splits,
+      year,
+    }: {
+      entryKey: string;
+      splits: { dossier: string; amount: number }[];
+      year: number;
+    }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error: delErr } = await client.from("expense_dossier_splits").delete().eq("entry_key", entryKey);
+      if (delErr) throw delErr;
+      const rows = splits
+        .filter((s) => s.dossier.trim() && Number.isFinite(s.amount))
+        .map((s) => ({
+          entry_key: entryKey,
+          dossier: s.dossier.trim(),
+          amount: s.amount,
+          year,
+          created_by: auth?.user?.id ?? null,
+        }));
+      if (rows.length > 0) {
+        const { error } = await client.from("expense_dossier_splits").insert(rows);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dossier-splits"] });
+      qc.invalidateQueries({ queryKey: ["dossier-mutations"] });
+    },
+  });
+
+  return { save };
 }
 
 /** Alle mutaties (uitgaven, inkomsten, bankboekingen) van een jaar — ook zonder begrotingspost. */
@@ -75,6 +164,18 @@ export function useDossierMutations(year: number) {
 
       const rows: DossierMutation[] = [];
 
+      const { data: splitRows, error: splitErr } = await client
+        .from("expense_dossier_splits")
+        .select("entry_key, dossier, amount");
+      if (splitErr) throw splitErr;
+      const splitsByEntry = new Map<string, { dossier: string; amount: number }[]>();
+      for (const s of splitRows || []) {
+        const list = splitsByEntry.get(s.entry_key) || [];
+        list.push({ dossier: String(s.dossier), amount: Number(s.amount) || 0 });
+        splitsByEntry.set(s.entry_key, list);
+      }
+      const splitsFor = (key: string) => splitsByEntry.get(key) || [];
+
       if (liIds.length > 0) {
         const { data: expenses, error } = await client
           .from("budget_expenses")
@@ -95,6 +196,7 @@ export function useDossierMutations(year: number) {
             ...names(e.line_item_id),
             dossier: (e.dossier || "").trim(),
             source: e.source || "manual",
+            splits: splitsFor(entryKeyFor("expense", e.id)),
           });
         }
       }
@@ -118,6 +220,7 @@ export function useDossierMutations(year: number) {
           ...names(b.line_item_id),
           dossier: (b.dossier || "").trim(),
           source: "bank",
+          splits: splitsFor(entryKeyFor("bank", b.id)),
         });
       }
 
@@ -144,6 +247,7 @@ export function useDossierMutations(year: number) {
           ...names(p.budget_line_item_id),
           dossier: (p.dossier || "").trim(),
           source: "bank",
+          splits: splitsFor(entryKeyFor("ponto", p.id)),
         });
       }
 

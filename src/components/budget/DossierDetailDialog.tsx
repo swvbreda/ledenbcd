@@ -15,6 +15,7 @@ import DossierInvoiceThumb, { useDocumentUrl } from "@/components/budget/Dossier
 import {
   useExpenseDocumentActions,
   type DossierMutation,
+  type DossierEntry,
   type ExpenseDocument,
 } from "@/hooks/useDossiers";
 
@@ -60,7 +61,7 @@ function DocumentViewer({ doc, onClose }: { doc: ExpenseDocument; onClose: () =>
 interface Props {
   dossier: string;
   year: number;
-  entries: DossierMutation[];
+  entries: DossierEntry[];
   documents: ExpenseDocument[];
   isAdmin: boolean;
   open: boolean;
@@ -93,8 +94,8 @@ export default function DossierDetailDialog({
   }, [documents]);
 
   const totals = useMemo(() => {
-    const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.amount, 0);
-    const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.amount, 0);
+    const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
+    const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
     return { out, income, saldo: income - out };
   }, [entries]);
 
@@ -172,7 +173,12 @@ export default function DossierDetailDialog({
                         {e.lineItemName ? `${e.categoryName} / ${e.lineItemName}` : "Niet gekoppeld"}
                       </td>
                       <td className={`px-3 py-1 text-right ${e.direction === "in" ? "text-green-600" : ""}`}>
-                        <CurrencyCell value={e.direction === "in" ? e.amount : -e.amount} />
+                        <CurrencyCell value={e.direction === "in" ? e.shareAmount : -e.shareAmount} />
+                        {e.shared && (
+                          <span className="ml-1 text-[10px] text-muted-foreground">
+                            (deel van <CurrencyText value={e.amount} />)
+                          </span>
+                        )}
                       </td>
                       <td className="px-2 py-1">
                         <div className="flex items-center gap-1">

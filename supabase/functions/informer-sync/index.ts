@@ -191,52 +191,109 @@ async function fetchAllInformerPages(path: string, keys: string[], sink: ApiCall
   return all;
 }
 
-// Probeert het PDF-bestand van een inkoopfactuur op te halen. Informer levert
-// dit niet voor elke factuur; in dat geval geven we null terug en kan de
-// penningmeester de factuur handmatig uploaden.
-async function fetchPurchaseInvoicePdf(
-  externalId: string,
-  inv: any,
-): Promise<{ bytes: Uint8Array; contentType: string } | null> {
-  const directUrl =
-    inv?.pdf_url ?? inv?.document_url ?? inv?.attachment_url ?? inv?.file_url ?? null;
-  const candidates: string[] = [];
-  if (typeof directUrl === "string" && /^https?:\/\//.test(directUrl)) candidates.push(directUrl);
-  candidates.push(
-    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/pdf`,
-    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/download`,
-    `${INFORMER_BASE}/invoices/purchase/${encodeURIComponent(externalId)}/attachment`,
-  );
+type DocAttempt = { url: string; status: number | string; note?: string };
+type DocFetchResult = {
+  file: { bytes: Uint8Array; contentType: string; extension: string } | null;
+  attempts: DocAttempt[];
+};
 
-  for (const url of candidates) {
-    try {
-      const res = await fetch(url, {
-        headers: { ...informerHeaders(), Accept: "application/pdf" },
-      });
-      if (!res.ok) continue;
-      const contentType = res.headers.get("content-type") ?? "";
-      const buffer = new Uint8Array(await res.arrayBuffer());
-      if (buffer.length < 1000) continue;
-      const looksPdf =
-        contentType.includes("pdf") ||
-        (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46);
-      if (!looksPdf) continue;
-      return { bytes: buffer, contentType: "application/pdf" };
-    } catch {
-      continue;
-    }
-  }
-  return null;
+function shortUrl(url: string) {
+  return url.replace(INFORMER_BASE, "").slice(0, 120);
 }
 
-// Slaat de factuur-PDF op in de opslagmap en koppelt hem aan de boeking.
+// Probeert het bestand van een inkoopfactuur op te halen. Informer levert dit
+// niet voor elke factuur; we geven altijd terug wát er is geprobeerd zodat we
+// in het logboek kunnen zien waaróm er geen bestand is.
+async function fetchPurchaseInvoiceFile(externalId: string, inv: any): Promise<DocFetchResult> {
+  const attempts: DocAttempt[] = [];
+  const candidates: string[] = [];
+
+  for (const key of ["pdf_url", "document_url", "attachment_url", "file_url", "download_url"]) {
+    const v = inv?.[key];
+    if (typeof v === "string" && /^https?:\/\//.test(v)) candidates.push(v);
+  }
+  const id = encodeURIComponent(externalId);
+  candidates.push(
+    `${INFORMER_BASE}/invoices/purchase/${id}/pdf`,
+    `${INFORMER_BASE}/invoices/purchase/${id}/download`,
+    `${INFORMER_BASE}/invoices/purchase/${id}/attachment`,
+    `${INFORMER_BASE}/invoices/purchase/${id}/attachments`,
+    `${INFORMER_BASE}/invoices/purchase/${id}/documents`,
+    `${INFORMER_BASE}/attachments?invoice_id=${id}`,
+  );
+
+  const seen = new Set<string>();
+  for (const url of candidates) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    try {
+      const res = await fetch(url, {
+        headers: { ...informerHeaders(), Accept: "application/pdf, application/json, */*" },
+      });
+      const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+      if (!res.ok) {
+        attempts.push({ url: shortUrl(url), status: res.status });
+        continue;
+      }
+      const buffer = new Uint8Array(await res.arrayBuffer());
+      const isPdf =
+        contentType.includes("pdf") ||
+        (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46);
+      const isImage = contentType.startsWith("image/");
+      if ((isPdf || isImage) && buffer.length > 500) {
+        attempts.push({ url: shortUrl(url), status: res.status, note: "bestand gevonden" });
+        const extension = isPdf ? "pdf" : (contentType.split("/")[1] || "jpg").split(";")[0];
+        return {
+          file: { bytes: buffer, contentType: isPdf ? "application/pdf" : contentType, extension },
+          attempts,
+        };
+      }
+      // JSON-antwoord: mogelijk een lijst met bijlage-URL's.
+      if (contentType.includes("json")) {
+        let nested: string | null = null;
+        try {
+          const body = JSON.parse(new TextDecoder().decode(buffer));
+          const stack = [body];
+          while (stack.length && !nested) {
+            const cur: any = stack.pop();
+            if (!cur || typeof cur !== "object") continue;
+            for (const [k, v] of Object.entries(cur)) {
+              if (typeof v === "string" && /^https?:\/\//.test(v) && /(pdf|file|document|attachment|download)/i.test(k)) {
+                nested = v;
+                break;
+              }
+              if (v && typeof v === "object") stack.push(v);
+            }
+          }
+        } catch { /* geen bruikbare JSON */ }
+        if (nested && !seen.has(nested)) {
+          candidates.push(nested);
+          attempts.push({ url: shortUrl(url), status: res.status, note: "json met bijlage-link" });
+          continue;
+        }
+        attempts.push({ url: shortUrl(url), status: res.status, note: "json zonder bestand" });
+        continue;
+      }
+      attempts.push({
+        url: shortUrl(url),
+        status: res.status,
+        note: `geen bestand (${contentType || "onbekend type"}, ${buffer.length} bytes)`,
+      });
+    } catch (e) {
+      attempts.push({ url: shortUrl(url), status: "netwerkfout", note: (e as Error).message });
+    }
+  }
+  return { file: null, attempts };
+}
+
+// Slaat het factuurbestand op in de opslagmap en koppelt het aan de boeking.
 async function storeInvoicePdf(
   supabase: any,
   expenseId: string,
   externalId: string,
   inv: any,
   year: number,
-): Promise<boolean> {
+): Promise<{ stored: boolean; reason: string; attempts: DocAttempt[] }> {
   const entryKey = `expense:${expenseId}`;
   const { data: existingDoc } = await supabase
     .from("expense_documents")
@@ -244,28 +301,29 @@ async function storeInvoicePdf(
     .eq("entry_key", entryKey)
     .eq("source", "informer")
     .maybeSingle();
-  if (existingDoc?.id) return false;
+  if (existingDoc?.id) return { stored: false, reason: "al aanwezig", attempts: [] };
 
-  const pdf = await fetchPurchaseInvoicePdf(externalId, inv);
-  if (!pdf) return false;
+  const { file, attempts } = await fetchPurchaseInvoiceFile(externalId, inv);
+  if (!file) return { stored: false, reason: "geen bestand bij Informer", attempts };
 
-  const fileName = `${inv?.invoice_number ?? externalId}.pdf`.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const fileName = `${inv?.invoice_number ?? externalId}.${file.extension}`.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${year}/informer/${externalId}/${fileName}`;
   const { error: upErr } = await supabase.storage
     .from("expense-invoices")
-    .upload(path, pdf.bytes, { contentType: pdf.contentType, upsert: true });
-  if (upErr) return false;
+    .upload(path, file.bytes, { contentType: file.contentType, upsert: true });
+  if (upErr) return { stored: false, reason: `opslaan mislukt: ${upErr.message}`, attempts };
 
   const { error } = await supabase.from("expense_documents").insert({
     entry_key: entryKey,
     year,
     file_path: path,
     file_name: fileName,
-    mime_type: "application/pdf",
+    mime_type: file.contentType,
     source: "informer",
     invoice_reference: inv?.invoice_number ?? null,
   });
-  return !error;
+  if (error) return { stored: false, reason: `vastleggen mislukt: ${error.message}`, attempts };
+  return { stored: true, reason: "opgeslagen", attempts };
 }
 
 async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
@@ -813,6 +871,8 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
 
     let processed = 0;
     let documentsStored = 0;
+    const docDiagnostics: any[] = [];
+    const docReasons: Record<string, number> = {};
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
       if (!externalId) continue;
@@ -848,22 +908,108 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       }
       if (expenseId) {
         try {
-          const stored = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
-          if (stored) documentsStored++;
-        } catch (_e) {
+          const res = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
+          if (res.stored) documentsStored++;
+          docReasons[res.reason] = (docReasons[res.reason] ?? 0) + 1;
+          if (!res.stored && res.attempts.length > 0 && docDiagnostics.length < 5) {
+            docDiagnostics.push({
+              invoice: inv?.invoice_number ?? externalId,
+              reason: res.reason,
+              attempts: res.attempts,
+            });
+          }
+        } catch (e) {
           // Factuurbestand ophalen mag de sync nooit laten falen.
+          docReasons[`fout: ${(e as Error).message}`] = (docReasons[`fout: ${(e as Error).message}`] ?? 0) + 1;
         }
       }
       processed++;
     }
     await supabase.from("informer_sync_state").update({ last_creditor_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return { action, success: true, items_processed: processed, api_calls };
+    return {
+      action,
+      success: true,
+      items_processed: processed,
+      details: {
+        invoices_checked: invoices.length,
+        documents_stored: documentsStored,
+        document_reasons: docReasons,
+        document_diagnostics: docDiagnostics,
+      },
+      api_calls,
+    };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
 }
 
 async function pullBankBalances(supabase: any): Promise<ActionResult> {
+  return await _pullBankBalances(supabase);
+}
+
+// Losse stap: probeer voor bestaande Informer-boekingen alsnog het
+// factuurbestand op te halen, zonder de rest van de sync te draaien.
+async function pullInvoiceDocuments(supabase: any): Promise<ActionResult> {
+  const action = "pull_invoice_documents";
+  const api_calls: ApiCall[] = [];
+  try {
+    let invoices: any[] = [];
+    try {
+      invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
+    } catch (e) {
+      return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+    }
+    const byExternalId = new Map<string, any>();
+    for (const inv of invoices) {
+      const id = String(inv.id ?? inv.invoice_id ?? "");
+      if (id) byExternalId.set(id, inv);
+    }
+
+    const { data: expenses } = await supabase
+      .from("budget_expenses")
+      .select("id, external_id, expense_date")
+      .eq("source", "informer")
+      .not("external_id", "is", null)
+      .limit(200);
+
+    let stored = 0;
+    let checked = 0;
+    const reasons: Record<string, number> = {};
+    const diagnostics: any[] = [];
+    for (const exp of expenses || []) {
+      const inv = byExternalId.get(String(exp.external_id));
+      if (!inv) {
+        reasons["factuur niet meer in Informer"] = (reasons["factuur niet meer in Informer"] ?? 0) + 1;
+        continue;
+      }
+      checked++;
+      const year = Number(String(exp.expense_date ?? "").slice(0, 4)) || new Date().getFullYear();
+      const res = await storeInvoicePdf(supabase, exp.id, String(exp.external_id), inv, year);
+      if (res.stored) stored++;
+      reasons[res.reason] = (reasons[res.reason] ?? 0) + 1;
+      if (!res.stored && res.attempts.length > 0 && diagnostics.length < 5) {
+        diagnostics.push({ invoice: inv?.invoice_number ?? exp.external_id, reason: res.reason, attempts: res.attempts });
+      }
+    }
+
+    return {
+      action,
+      success: true,
+      items_processed: stored,
+      details: {
+        invoices_checked: checked,
+        documents_stored: stored,
+        document_reasons: reasons,
+        document_diagnostics: diagnostics,
+      },
+      api_calls,
+    };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+  }
+}
+
+async function _pullBankBalances(supabase: any): Promise<ActionResult> {
   const action = "pull_bank_balances";
   const api_calls: ApiCall[] = [];
   try {
@@ -1126,6 +1272,7 @@ Deno.serve(async (req) => {
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
     if (action === "pull_invoices" || action === "all") results.push(await pullInvoices(supabase));
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
+    if (action === "pull_invoice_documents") results.push(await pullInvoiceDocuments(supabase));
     if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
 
     for (const r of results) await logResult(supabase, r);

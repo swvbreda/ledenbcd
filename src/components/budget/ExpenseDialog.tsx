@@ -5,6 +5,7 @@ import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
 
 interface MemberOption { id: number; naam: string }
 
@@ -24,6 +25,9 @@ interface Props {
   categories?: BudgetCategory[];
   members?: MemberOption[];
   userId: string;
+  /** Alle bestaande dossiernamen, zodat splitsen ook naar andere dossiers kan. */
+  allDossiers?: string[];
+  year?: number;
 }
 
 export default function ExpenseDialog({
@@ -39,6 +43,8 @@ export default function ExpenseDialog({
   onLinkPayment,
   categories,
   members = [],
+  allDossiers = [],
+  year,
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string>("");
@@ -66,8 +72,18 @@ export default function ExpenseDialog({
       const d = (e.dossier || "").trim();
       if (d) set.add(d);
     });
+    allDossiers.forEach((d) => {
+      if (d && d.trim()) set.add(d.trim());
+    });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [expenses]);
+  }, [expenses, allDossiers]);
+
+  const entryKeyFromRowId = (rawId: string): string | null => {
+    if (rawId.startsWith("ponto:")) return `ponto:${rawId.split(":")[1]}`;
+    if (rawId.startsWith("bank:")) return `bank:${rawId.split(":")[1]}`;
+    if (rawId.startsWith("contrib:")) return null;
+    return `expense:${rawId}`;
+  };
 
   const startEdit = (e: BudgetExpense) => {
     setEditingId(e.id);
@@ -384,6 +400,15 @@ export default function ExpenseDialog({
                                   </Button>
                                 </div>
                               </div>
+
+                              {entryKeyFromRowId(e.id) && (
+                                <DossierSplitEditor
+                                  entryKey={entryKeyFromRowId(e.id)!}
+                                  totalAmount={Number(e.amount) || 0}
+                                  year={year ?? (Number((e.expense_date || "").slice(0, 4)) || new Date().getFullYear())}
+                                  dossierOptions={dossierOptions}
+                                />
+                              )}
 
                               {isIncomeCategory && isContributionLine && onLinkPayment && (
                                 <div className="mt-3 pt-3 border-t border-border/60">
