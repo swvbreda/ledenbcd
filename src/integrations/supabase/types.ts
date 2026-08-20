@@ -658,6 +658,36 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_dossier_splits: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          dossier: string
+          entry_key: string
+          id: string
+          year: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          dossier: string
+          entry_key: string
+          id?: string
+          year?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          dossier?: string
+          entry_key?: string
+          id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       external_org_contacts: {
         Row: {
           created_at: string
