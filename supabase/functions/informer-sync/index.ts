@@ -268,24 +268,6 @@ async function storeInvoicePdf(
   return !error;
 }
 
-async function fetchAllInformerPagesLegacy(path: string, keys: string[], sink: ApiCall[], records = 100): Promise<any[]> {
-  const all: any[] = [];
-  for (let page = 0; page < 50; page++) {
-    const separator = path.includes("?") ? "&" : "?";
-    const call = await informerCall(`${path}${separator}records=${records}&page=${page}`, {}, sink);
-    if (call.error) throw new Error(`Netwerkfout: ${call.error}`);
-    const apiError = hasInformerError(call.response_body);
-    if (!call.ok && apiError && /no records found/i.test(apiError)) break;
-    if (!call.ok) throw new Error(`Informer ${call.status} (req_id=${call.request_id ?? "-"})`);
-    if (apiError && /no records found/i.test(apiError)) break;
-    if (apiError) throw new Error(`Informer fout: ${apiError}`);
-    const batch = normalizeInformerList(call.response_body, keys);
-    all.push(...batch);
-    if (batch.length < records) break;
-  }
-  return all;
-}
-
 async function fetchInformerRelations(api_calls: ApiCall[]): Promise<any[]> {
   return await fetchAllInformerPages("/relations", ["relation", "relations", "data"], api_calls);
 }
@@ -875,13 +857,7 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       processed++;
     }
     await supabase.from("informer_sync_state").update({ last_creditor_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", 1);
-    return {
-      action,
-      success: true,
-      items_processed: processed,
-      error_message: documentsStored > 0 ? `${documentsStored} factuurbestand(en) opgehaald` : undefined,
-      api_calls,
-    };
+    return { action, success: true, items_processed: processed, api_calls };
   } catch (e) {
     return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
   }
