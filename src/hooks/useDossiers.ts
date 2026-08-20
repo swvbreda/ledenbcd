@@ -136,6 +136,18 @@ export function useDossierMutations(year: number) {
 
       const rows: DossierMutation[] = [];
 
+      const { data: splitRows, error: splitErr } = await client
+        .from("expense_dossier_splits")
+        .select("entry_key, dossier, amount");
+      if (splitErr) throw splitErr;
+      const splitsByEntry = new Map<string, { dossier: string; amount: number }[]>();
+      for (const s of splitRows || []) {
+        const list = splitsByEntry.get(s.entry_key) || [];
+        list.push({ dossier: String(s.dossier), amount: Number(s.amount) || 0 });
+        splitsByEntry.set(s.entry_key, list);
+      }
+      const splitsFor = (key: string) => splitsByEntry.get(key) || [];
+
       if (liIds.length > 0) {
         const { data: expenses, error } = await client
           .from("budget_expenses")
@@ -156,6 +168,7 @@ export function useDossierMutations(year: number) {
             ...names(e.line_item_id),
             dossier: (e.dossier || "").trim(),
             source: e.source || "manual",
+            splits: splitsFor(entryKeyFor("expense", e.id)),
           });
         }
       }
@@ -179,6 +192,7 @@ export function useDossierMutations(year: number) {
           ...names(b.line_item_id),
           dossier: (b.dossier || "").trim(),
           source: "bank",
+          splits: splitsFor(entryKeyFor("bank", b.id)),
         });
       }
 
@@ -205,6 +219,7 @@ export function useDossierMutations(year: number) {
           ...names(p.budget_line_item_id),
           dossier: (p.dossier || "").trim(),
           source: "bank",
+          splits: splitsFor(entryKeyFor("ponto", p.id)),
         });
       }
 
