@@ -33,10 +33,69 @@ export interface ExpenseDocument {
   created_at: string;
 }
 
+export interface DossierSplit {
+  id: string;
+  entry_key: string;
+  dossier: string;
+  amount: number;
+  year: number | null;
+}
+
 const client = supabase as any;
 
 export function entryKeyFor(kind: DossierEntryKind, id: string) {
   return `${kind}:${id}`;
+}
+
+/** Alle dossierverdelingen (kosten die over meerdere dossiers zijn verdeeld). */
+export function useDossierSplits() {
+  return useQuery({
+    queryKey: ["dossier-splits"],
+    queryFn: async () => {
+      const { data, error } = await client.from("expense_dossier_splits").select("*");
+      if (error) throw error;
+      return (data || []).map((s: any) => ({ ...s, amount: Number(s.amount) || 0 })) as DossierSplit[];
+    },
+  });
+}
+
+export function useDossierSplitActions() {
+  const qc = useQueryClient();
+
+  const save = useMutation({
+    mutationFn: async ({
+      entryKey,
+      splits,
+      year,
+    }: {
+      entryKey: string;
+      splits: { dossier: string; amount: number }[];
+      year: number;
+    }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error: delErr } = await client.from("expense_dossier_splits").delete().eq("entry_key", entryKey);
+      if (delErr) throw delErr;
+      const rows = splits
+        .filter((s) => s.dossier.trim() && Number.isFinite(s.amount))
+        .map((s) => ({
+          entry_key: entryKey,
+          dossier: s.dossier.trim(),
+          amount: s.amount,
+          year,
+          created_by: auth?.user?.id ?? null,
+        }));
+      if (rows.length > 0) {
+        const { error } = await client.from("expense_dossier_splits").insert(rows);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dossier-splits"] });
+      qc.invalidateQueries({ queryKey: ["dossier-mutations"] });
+    },
+  });
+
+  return { save };
 }
 
 /** Alle mutaties (uitgaven, inkomsten, bankboekingen) van een jaar — ook zonder begrotingspost. */
