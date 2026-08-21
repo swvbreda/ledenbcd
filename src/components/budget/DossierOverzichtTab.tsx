@@ -270,11 +270,12 @@ export default function DossierOverzichtTab({ year }: Props) {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
-                  <th className="w-[12%] px-3 py-1 text-left font-medium">Datum</th>
-                  <th className="w-[22%] px-3 py-1 text-left font-medium">Tegenpartij</th>
-                  <th className="w-[13%] px-3 py-1 text-left font-medium">Factuurnr</th>
-                  <th className="w-[16%] px-3 py-1 text-left font-medium">Categorie</th>
-                  <th className="w-[16%] px-3 py-1 text-left font-medium">Begrotingspost</th>
+                  <th className="w-[10%] px-3 py-1 text-left font-medium">Factuurdatum</th>
+                  <th className="w-[10%] px-3 py-1 text-left font-medium">Betaaldatum</th>
+                  <th className="w-[17%] px-3 py-1 text-left font-medium">Tegenpartij</th>
+                  <th className="w-[14%] px-3 py-1 text-left font-medium">Factuurnr</th>
+                  <th className="w-[13%] px-3 py-1 text-left font-medium">Categorie</th>
+                  <th className="w-[15%] px-3 py-1 text-left font-medium">Begrotingspost</th>
                   <th className="w-[11%] px-3 py-1 text-right font-medium">Bedrag</th>
                   <th className="w-[6%] px-2 py-1 text-left font-medium">Factuur</th>
                   {canEdit && <th className="w-[4%] px-1 py-1" />}
@@ -287,9 +288,17 @@ export default function DossierOverzichtTab({ year }: Props) {
                     className="group cursor-pointer border-b border-border/30 hover:bg-muted/20"
                     onClick={() => setOpenDossier(d.dossier)}
                   >
-                    <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.date)}</td>
+                    <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.invoiceDate) || "—"}</td>
+                    <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
                     <td className="px-3 py-1">{e.counterparty || e.description}</td>
-                    <td className="px-3 py-1 tabular-nums">{e.invoice}</td>
+                    <td className="px-3 py-1 tabular-nums">
+                      {e.invoice || "—"}
+                      {e.sources.length > 1 && (
+                        <span className="ml-1 rounded bg-muted px-1 text-[10px] text-muted-foreground">
+                          {e.sources.length} bronnen
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
                     <td className="px-3 py-1 text-muted-foreground">{e.lineItemName || "Niet gekoppeld"}</td>
                     <td className={`px-3 py-1 text-right ${e.direction === "in" ? "text-green-600" : ""}`}>

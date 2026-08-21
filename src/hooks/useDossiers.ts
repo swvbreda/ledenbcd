@@ -10,7 +10,12 @@ export interface DossierMutation {
   key: string;
   kind: DossierEntryKind;
   id: string;
+  /** Algemene sorteerdatum; voor facturen de factuurdatum, voor bankregels de betaaldatum. */
   date: string | null;
+  /** Datum op de factuur/boeking uit Informer of een handmatige import. */
+  invoiceDate: string | null;
+  /** Datum waarop de betaling werkelijk op de bankrekening is verwerkt. */
+  paymentDate: string | null;
   counterparty: string;
   description: string;
   invoice: string;
@@ -93,6 +98,8 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
     );
     if (match) {
       match.sources.push(e);
+      if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
+      if (!match.paymentDate && e.paymentDate) match.paymentDate = e.paymentDate;
       // Alle factuurnummers van de samengevoegde bronnen tonen.
       const nums = new Set(
         [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
@@ -230,6 +237,10 @@ export function useDossierMutations(year: number) {
             kind: "expense",
             id: e.id,
             date: e.expense_date,
+            invoiceDate: e.expense_date,
+            // Alleen de live bankregel bewijst wanneer er werkelijk betaald is.
+            // Informer-/importvelden kunnen een boekings- of factuurdatum bevatten.
+            paymentDate: null,
             counterparty: e.creditor_name || "",
             description: e.description || "",
             invoice: e.invoice_reference || "",
@@ -270,6 +281,8 @@ export function useDossierMutations(year: number) {
           kind: "ponto",
           id: p.id,
           date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
+          invoiceDate: null,
+          paymentDate: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
           counterparty: p.counterparty_name || "",
           description: p.description || p.remittance_info || "",
           invoice: pontoInvoices,
