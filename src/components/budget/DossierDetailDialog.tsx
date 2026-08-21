@@ -235,7 +235,7 @@ export default function DossierDetailDialog({
                       </td>
                       <td className="px-2 py-1">
                         <div className="flex items-center gap-1">
-                          {docs.length > 0 && (
+                          {docs.length > 0 ? (
                             <button
                               type="button"
                               className="inline-flex items-center gap-1 text-brand-red hover:underline"
@@ -244,6 +244,10 @@ export default function DossierDetailDialog({
                               <Paperclip className="h-3 w-3" />
                               {docs.length}
                             </button>
+                          ) : (
+                            e.direction === "out" && (
+                              <span className="text-[10px] text-muted-foreground">geen factuur</span>
+                            )
                           )}
                           {isAdmin && (
                             <Button
