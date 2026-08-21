@@ -39,6 +39,7 @@ import {
   groupByDossier,
   isUnassigned,
   dedupeEntries,
+  type DedupedEntry,
   type DossierMutation,
   type DossierEntry,
 } from "@/hooks/useDossiers";
