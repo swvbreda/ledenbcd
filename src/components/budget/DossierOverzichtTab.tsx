@@ -55,7 +55,7 @@ interface Props {
 
 interface DossierRow {
   dossier: string;
-  entries: DossierEntry[];
+  entries: DedupedEntry[];
   out: number;
   income: number;
   total: number;
