@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
+import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber, invoiceKeysOf } from "@/lib/ledgerDedupe";
 
 
 export type DossierEntryKind = "expense" | "bank" | "ponto";
@@ -14,7 +14,9 @@ export interface DossierMutation {
   date: string | null;
   /** Datum op de factuur/boeking uit Informer of een handmatige import. */
   invoiceDate: string | null;
-  /** Datum waarop de betaling werkelijk op de bankrekening is verwerkt. */
+  /** Bedrag volgens de factuurboeking (kan afwijken van de bankafschrijving). */
+  invoiceAmount: number | null;
+
   paymentDate: string | null;
   counterparty: string;
   description: string;
@@ -102,6 +104,12 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
       match.sources.push(e);
       if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
       if (!match.paymentDate && e.paymentDate) match.paymentDate = e.paymentDate;
+      // Bedrag volgens de factuurboeking(en) naast de bankafschrijving tonen.
+      if (e.kind !== "ponto") {
+        match.invoiceAmount = (match.invoiceAmount || 0) + e.shareAmount;
+      } else if (e.invoiceAmount != null) {
+        match.invoiceAmount = (match.invoiceAmount || 0) + e.invoiceAmount;
+      }
       // Alle factuurnummers van de samengevoegde bronnen tonen.
       const nums = new Set(
         [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
@@ -113,7 +121,11 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
         match.categoryName = e.categoryName;
       }
     } else {
-      result.push({ ...e, sources: [e] });
+      result.push({
+        ...e,
+        invoiceAmount: e.kind === "ponto" ? e.invoiceAmount : e.invoiceAmount ?? e.shareAmount,
+        sources: [e],
+      });
     }
   }
   result.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -227,6 +239,10 @@ export function useDossierMutations(year: number) {
       }
       const splitsFor = (key: string) => splitsByEntry.get(key) || [];
 
+      // Index op factuurnummer: zo kan een bankregel zonder eigen factuurveld
+      // toch de factuurdatum en het factuurbedrag van de boeking overnemen.
+      const invoiceIndex = new Map<string, { date: string | null; amount: number }>();
+
       if (liIds.length > 0) {
         const { data: expenses, error } = await client
           .from("budget_expenses")
@@ -234,27 +250,33 @@ export function useDossierMutations(year: number) {
           .in("line_item_id", liIds);
         if (error) throw error;
         for (const e of expenses || []) {
+          const amount = Math.abs(Number(e.amount) || 0);
           rows.push({
             key: entryKeyFor("expense", e.id),
             kind: "expense",
             id: e.id,
             date: e.expense_date,
             invoiceDate: e.expense_date,
+            invoiceAmount: amount,
             // Alleen de live bankregel bewijst wanneer er werkelijk betaald is.
             // Informer-/importvelden kunnen een boekings- of factuurdatum bevatten.
             paymentDate: null,
             counterparty: e.creditor_name || "",
             description: e.description || "",
             invoice: e.invoice_reference || "",
-            amount: Math.abs(Number(e.amount) || 0),
+            amount,
             direction: e.direction === "in" ? "in" : "out",
             ...names(e.line_item_id),
             dossier: (e.dossier || "").trim(),
             source: e.source || "manual",
             splits: splitsFor(entryKeyFor("expense", e.id)),
           });
+          for (const key of invoiceKeysOf({ date: e.expense_date, amount, invoice: e.invoice_reference })) {
+            if (!invoiceIndex.has(key)) invoiceIndex.set(key, { date: e.expense_date || null, amount });
+          }
         }
       }
+
 
       // De oude PDF-bankimport (`bank_transactions`) wordt bewust NIET meer
       // meegenomen: die overlapt volledig met de live bankkoppeling (Ponto)
@@ -278,13 +300,24 @@ export function useDossierMutations(year: number) {
             ...invoiceNumbersIn(p.remittance_info),
           ]),
         ].join(", ");
+        // Factuurdatum/-bedrag overnemen van een boeking met hetzelfde factuurnummer.
+        let invMeta: { date: string | null; amount: number } | null = null;
+        let invTotal = 0;
+        for (const key of invoiceKeysOf({ date: null, amount: 0, invoice: pontoInvoices, description: p.description })) {
+          const hit = invoiceIndex.get(key);
+          if (!hit) continue;
+          if (!invMeta || (hit.date && (!invMeta.date || hit.date < invMeta.date))) invMeta = hit;
+          invTotal += hit.amount;
+        }
         rows.push({
           key: entryKeyFor("ponto", p.id),
           kind: "ponto",
           id: p.id,
           date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
-          invoiceDate: null,
+          invoiceDate: invMeta?.date || null,
+          invoiceAmount: invTotal > 0 ? invTotal : null,
           paymentDate: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
+
           counterparty: p.counterparty_name || "",
           description: p.description || p.remittance_info || "",
           invoice: pontoInvoices,

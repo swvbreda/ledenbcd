@@ -17,6 +17,16 @@ export function normalizeInvoice(value?: string | null): string {
 }
 
 /**
+ * Sleutel om factuurnummers te vergelijken: voorloopnullen weg en, bij lange
+ * nummers, ook de "20xx"-jaarprefix genegeerd. Zo matcht `0260079` met
+ * `20260079` en `2026 0408` met `20260408`.
+ */
+export function invoiceKey(value?: string | null): string {
+  const digits = String(value || "").replace(/\D/g, "").replace(/^0+/, "");
+  return digits;
+}
+
+/**
  * Alle waarschijnlijke factuurnummers uit een omschrijving.
  * Reeksen van tien of meer cijfers zijn doorgaans IBAN-/rekeningnummers en
  * worden bewust genegeerd, zodat die niet als factuurnummer in beeld komen.
@@ -27,12 +37,21 @@ export function invoiceNumbersIn(text?: string | null): string[] {
 
 /** Alle factuurnummers van een regel: uit het factuurveld én de omschrijving. */
 export function allInvoiceNumbers(entry: LedgerLike): string[] {
+  // Ook het hele factuurveld als één nummer (bv. "2026-0010" → "20260010").
+  const whole = String(entry.invoice || "").replace(/\D/g, "");
   return [
     ...new Set([
+      ...(whole.length >= 5 && whole.length <= 9 ? [whole] : []),
       ...invoiceNumbersIn(entry.invoice),
       ...invoiceNumbersIn(entry.description),
     ]),
   ];
+}
+
+
+/** Vergelijkbare sleutels van alle factuurnummers van een regel. */
+export function invoiceKeysOf(entry: LedgerLike): string[] {
+  return [...new Set(allInvoiceNumbers(entry).map(invoiceKey).filter((k) => k.length >= 5))];
 }
 
 /**
@@ -41,11 +60,12 @@ export function allInvoiceNumbers(entry: LedgerLike): string[] {
  * een creditnota, waardoor het betaalde bedrag afwijkt van de factuur.
  */
 export function sharesInvoiceNumber(a: LedgerLike, b: LedgerLike): boolean {
-  const numsA = allInvoiceNumbers(a);
-  if (numsA.length === 0) return false;
-  const numsB = new Set(allInvoiceNumbers(b));
-  return numsA.some((n) => numsB.has(n));
+  const keysA = invoiceKeysOf(a);
+  if (keysA.length === 0) return false;
+  const keysB = new Set(invoiceKeysOf(b));
+  return keysA.some((n) => keysB.has(n));
 }
+
 
 const dayNumber = (date?: string | null) => {
   if (!date) return NaN;
