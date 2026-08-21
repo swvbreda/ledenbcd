@@ -222,6 +222,7 @@ export default function DossierDetailDialog({
                   <th className="px-3 py-1.5 text-left font-medium">Omschrijving</th>
                   <th className="px-3 py-1.5 text-left font-medium">Factuurnr</th>
                   <th className="px-3 py-1.5 text-left font-medium">Begrotingspost</th>
+                  <th className="px-3 py-1.5 text-right font-medium">Factuurbedrag</th>
                   <th className="px-3 py-1.5 text-right font-medium">Bedrag</th>
                   <th className="px-2 py-1.5 text-left font-medium">Factuur</th>
                   {isAdmin && onRemoveFromDossier && <th className="w-8" />}
@@ -240,14 +241,19 @@ export default function DossierDetailDialog({
                       </td>
                       <td className="px-3 py-1 tabular-nums">
                         {e.invoice || "—"}
-                        {(e.sources?.length || 1) > 1 && (
-                          <span className="ml-1 rounded bg-muted px-1 text-[10px] text-muted-foreground">
-                            {e.sources!.length} bronnen
-                          </span>
-                        )}
+                        {(e.sources?.length || 1) > 1 && <MergedSourcesHint sources={e.sources!} />}
                       </td>
                       <td className="px-3 py-1 text-muted-foreground">
                         {e.lineItemName ? `${e.categoryName} / ${e.lineItemName}` : "Niet gekoppeld"}
+                      </td>
+                      <td
+                        className={`px-3 py-1 text-right tabular-nums ${
+                          e.invoiceAmount != null && Math.abs(e.invoiceAmount - e.shareAmount) > 0.5
+                            ? "font-medium text-amber-600"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {e.invoiceAmount != null ? <CurrencyCell value={e.invoiceAmount} /> : "—"}
                       </td>
                       <td className={`px-3 py-1 text-right ${e.direction === "in" ? "text-green-600" : ""}`}>
                         <CurrencyCell value={e.direction === "in" ? e.shareAmount : -e.shareAmount} />
@@ -257,6 +263,7 @@ export default function DossierDetailDialog({
                           </span>
                         )}
                       </td>
+
                       <td className="px-2 py-1">
                         <div className="flex items-center gap-1">
                           {docs.length > 0 ? (
