@@ -16,7 +16,6 @@ import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
-import ControleUitgavenTab from "@/components/budget/ControleUitgavenTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
@@ -25,8 +24,6 @@ import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
-import HardeCheckTab from "@/components/budget/HardeCheckTab";
-import LedenBetalingenTab from "@/components/budget/LedenBetalingenTab";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
@@ -321,9 +318,6 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="leden-betalingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Leden &amp; betalingen
-            </TabsTrigger>
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
@@ -336,12 +330,7 @@ export default function FinancienPage() {
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
             </TabsTrigger>
-            <TabsTrigger value="controle" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Controle uitgaven
-            </TabsTrigger>
-            <TabsTrigger value="check" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Harde check
-            </TabsTrigger>
+
 
           </TabsList>
 
@@ -537,19 +526,6 @@ export default function FinancienPage() {
 
           <TabsContent value="informer">
             <InformerSyncTab />
-          </TabsContent>
-
-          <TabsContent value="controle">
-            <ControleUitgavenTab year={year} />
-          </TabsContent>
-
-
-          <TabsContent value="check">
-            <HardeCheckTab year={year} />
-          </TabsContent>
-
-          <TabsContent value="leden-betalingen">
-            <LedenBetalingenTab year={year} />
           </TabsContent>
         </Tabs>
         </>
