@@ -99,6 +99,28 @@ export default function DossierDetailDialog({
     return { out, income, saldo: income - out };
   }, [entries]);
 
+  /** Pseudo-mutatie zodat facturen zonder gekoppelde betaling toch in het dossier komen. */
+  const dossierEntry = useMemo(
+    () =>
+      ({
+        key: `dossier:${dossier}`,
+        kind: "expense",
+        id: `dossier-${dossier.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`,
+        date: null,
+        counterparty: "",
+        description: "",
+        invoice: "",
+        amount: 0,
+        direction: "out",
+        categoryName: "",
+        lineItemName: "",
+        dossier,
+        source: "manual",
+        splits: [],
+      }) as DossierMutation,
+    [dossier],
+  );
+
   const pickFiles = (entry: DossierMutation) => {
     setUploadTarget(entry);
     fileInput.current?.click();
