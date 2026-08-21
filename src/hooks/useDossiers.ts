@@ -239,6 +239,10 @@ export function useDossierMutations(year: number) {
       }
       const splitsFor = (key: string) => splitsByEntry.get(key) || [];
 
+      // Index op factuurnummer: zo kan een bankregel zonder eigen factuurveld
+      // toch de factuurdatum en het factuurbedrag van de boeking overnemen.
+      const invoiceIndex = new Map<string, { date: string | null; amount: number }>();
+
       if (liIds.length > 0) {
         const { data: expenses, error } = await client
           .from("budget_expenses")
@@ -246,27 +250,33 @@ export function useDossierMutations(year: number) {
           .in("line_item_id", liIds);
         if (error) throw error;
         for (const e of expenses || []) {
+          const amount = Math.abs(Number(e.amount) || 0);
           rows.push({
             key: entryKeyFor("expense", e.id),
             kind: "expense",
             id: e.id,
             date: e.expense_date,
             invoiceDate: e.expense_date,
+            invoiceAmount: amount,
             // Alleen de live bankregel bewijst wanneer er werkelijk betaald is.
             // Informer-/importvelden kunnen een boekings- of factuurdatum bevatten.
             paymentDate: null,
             counterparty: e.creditor_name || "",
             description: e.description || "",
             invoice: e.invoice_reference || "",
-            amount: Math.abs(Number(e.amount) || 0),
+            amount,
             direction: e.direction === "in" ? "in" : "out",
             ...names(e.line_item_id),
             dossier: (e.dossier || "").trim(),
             source: e.source || "manual",
             splits: splitsFor(entryKeyFor("expense", e.id)),
           });
+          for (const key of invoiceKeysOf({ date: e.expense_date, amount, invoice: e.invoice_reference })) {
+            if (!invoiceIndex.has(key)) invoiceIndex.set(key, { date: e.expense_date || null, amount });
+          }
         }
       }
+
 
       // De oude PDF-bankimport (`bank_transactions`) wordt bewust NIET meer
       // meegenomen: die overlapt volledig met de live bankkoppeling (Ponto)
