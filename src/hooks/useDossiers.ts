@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isSamePayment } from "@/lib/ledgerDedupe";
+import { isSamePayment, invoiceNumbersIn } from "@/lib/ledgerDedupe";
 
 
 export type DossierEntryKind = "expense" | "bank" | "ponto";
@@ -93,7 +93,11 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
     );
     if (match) {
       match.sources.push(e);
-      if (!match.invoice && e.invoice) match.invoice = e.invoice;
+      // Alle factuurnummers van de samengevoegde bronnen tonen.
+      const nums = new Set(
+        [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
+      );
+      match.invoice = [...nums].join(", ");
       if (!match.counterparty && e.counterparty) match.counterparty = e.counterparty;
       if (!match.lineItemName && e.lineItemName) {
         match.lineItemName = e.lineItemName;
@@ -254,6 +258,13 @@ export function useDossierMutations(year: number) {
       if (pontoErr) throw pontoErr;
       for (const p of pontoRows || []) {
         const raw = Number(p.amount) || 0;
+        // Bankregels hebben geen apart factuurveld: nummers uit de omschrijving halen.
+        const pontoInvoices = [
+          ...new Set([
+            ...invoiceNumbersIn(p.description),
+            ...invoiceNumbersIn(p.remittance_info),
+          ]),
+        ].join(", ");
         rows.push({
           key: entryKeyFor("ponto", p.id),
           kind: "ponto",
@@ -261,7 +272,7 @@ export function useDossierMutations(year: number) {
           date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
           counterparty: p.counterparty_name || "",
           description: p.description || p.remittance_info || "",
-          invoice: "",
+          invoice: pontoInvoices,
           amount: Math.abs(raw),
           direction: raw >= 0 ? "in" : "out",
           ...names(p.budget_line_item_id),
