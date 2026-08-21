@@ -93,7 +93,11 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
     );
     if (match) {
       match.sources.push(e);
-      if (!match.invoice && e.invoice) match.invoice = e.invoice;
+      // Alle factuurnummers van de samengevoegde bronnen tonen.
+      const nums = new Set(
+        [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
+      );
+      match.invoice = [...nums].join(", ");
       if (!match.counterparty && e.counterparty) match.counterparty = e.counterparty;
       if (!match.lineItemName && e.lineItemName) {
         match.lineItemName = e.lineItemName;
