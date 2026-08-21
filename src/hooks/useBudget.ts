@@ -159,32 +159,9 @@ export function useBudgetCategories(year: number) {
       let bankAsExpenses: any[] = [];
       if (lineItemIds.length > 0) {
         const client = supabase as any;
-        const { data: bankRows, error: bankErr } = await client
-          .from("bank_transactions")
-          .select("*")
-          .eq("year", year)
-          .in("line_item_id", lineItemIds);
-        if (bankErr) throw bankErr;
-        bankAsExpenses = (bankRows || []).filter((b: any) => !isExcludedDossier(b.dossier)).map((b: any) => {
-          const invoiceReference = extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference;
-          return {
-            id: `bank:${b.id}`,
-            line_item_id: b.line_item_id,
-            description: b.description,
-            amount: Number(b.amount) || 0,
-            expense_date: b.transaction_date,
-            creditor_name: b.counterparty,
-            invoice_reference: invoiceReference,
-            dossier: b.dossier,
-            source: "bank",
-            pdf_file_path: null,
-            paid: true,
-            paid_date: b.transaction_date,
-            created_at: b.created_at,
-            direction: b.direction,
-            _fromBank: true,
-          };
-        });
+        // De oude PDF-bankimport (`bank_transactions`) telt niet meer mee: die
+        // overlapt volledig met de live bankkoppeling (Ponto) hieronder.
+
 
         // Live bankboekingen (Ponto): koppel via budget_line_item_id
         const yearStart = `${year}-01-01`;
