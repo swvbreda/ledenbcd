@@ -116,35 +116,43 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
   const result: DedupedEntry[] = [];
   for (const e of ordered) {
     const self = { date: e.date, amount: e.shareAmount, counterparty: e.counterparty, description: e.description, invoice: e.invoice, direction: e.direction };
-    let refund = false;
-    const match = result.find((r) => {
-      const other = { date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction };
-      if (isSamePayment(other, self)) return true;
-      // Terugstorting van een dubbele betaling: zelfde factuur, zelfde bedrag,
-      // tegengestelde richting. Samenvoegen tot één regel die per saldo nul is.
-      if (
-        r.direction !== e.direction &&
-        Math.abs(Math.abs(r.shareAmount) - Math.abs(e.shareAmount)) <= 0.5 &&
-        sharesInvoiceNumber(other, self)
-      ) {
-        refund = true;
-        return true;
-      }
-      // Een bankbetaling bundelt vaak meerdere facturen of verrekent een
-      // creditnota; dan wijkt het bedrag af maar is het dezelfde betaling.
-      return r.kind === "ponto" && e.kind !== "ponto" && sharesInvoiceNumber(other, self);
-    });
+    const asLedger = (r: DedupedEntry) => ({ date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction });
+    // Twee losse bankafschrijvingen zijn nooit dezelfde betaling; alleen een
+    // bankregel en een factuurboeking worden samengevoegd.
+    const match =
+      e.kind === "ponto"
+        ? undefined
+        : result.find((r) => {
+            const other = asLedger(r);
+            if (r.kind === "ponto" && isSamePayment(other, self)) return true;
+            // Een bankbetaling bundelt vaak meerdere facturen of verrekent een
+            // creditnota; dan wijkt het bedrag af maar is het dezelfde betaling.
+            return r.kind === "ponto" && sharesInvoiceNumber(other, self);
+          });
+    // Terugstorting van een dubbele betaling: zelfde factuur, zelfde bedrag,
+    // tegengestelde richting. Samenvoegen met de meest recente betaling ervoor.
+    const refundOf = match
+      ? undefined
+      : result
+          .filter(
+            (r) =>
+              r.direction !== e.direction &&
+              Math.abs(Math.abs(r.shareAmount) - Math.abs(e.shareAmount)) <= 0.5 &&
+              sharesInvoiceNumber(asLedger(r), self),
+          )
+          .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+          .pop();
+    if (refundOf) {
+      // Betaling en terugstorting salderen; de regel blijft zichtbaar met notitie.
+      refundOf.sources.push(e);
+      refundOf.shareAmount = refundOf.shareAmount - Math.abs(e.shareAmount);
+      refundOf.amount = refundOf.shareAmount;
+      refundOf.note = `Dubbele betaling — teruggestort op ${formatNlDate(e.paymentDate || e.date)}`;
+      continue;
+    }
     if (match) {
       match.sources.push(e);
-      if (refund) {
-        // Betaling en terugstorting salderen; de regel blijft zichtbaar met notitie.
-        const netto = match.shareAmount - Math.abs(e.shareAmount);
-        match.shareAmount = netto;
-        match.amount = netto;
-        match.note = `Dubbele betaling — teruggestort op ${formatNlDate(e.paymentDate || e.date)}`;
-        refund = false;
-        continue;
-      }
+
       if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
       if (!match.paymentDate && e.paymentDate) match.paymentDate = e.paymentDate;
       // Factuurbedrag per factuurnummer bewaren: hetzelfde nummer dat zowel via
