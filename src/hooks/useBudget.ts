@@ -231,34 +231,32 @@ export function useBudgetCategories(year: number) {
         bankAsExpenses = kept;
       }
 
-      // Dedupliceer handmatige/PDF-boekingen tegen bankregels: als er een
-      // bankboeking bestaat met hetzelfde factuurnummer + bedrag (of dezelfde
-      // dag±2 + bedrag + creditor) op dezelfde post, laten we de handmatige
-      // versie vallen zodat we niet dubbel tellen.
+      // Dedupliceer handmatige/Informer-boekingen tegen bankregels: bestaat er
+      // een bankbetaling die vrijwel zeker dezelfde betaling is (gelijk bedrag +
+      // factuurnummer, of gelijk bedrag + tegenpartij binnen 10 dagen), dan valt
+      // de handmatige versie weg zodat we niet dubbel tellen.
       {
-        const bankInv = new Set<string>();
-        const bankDate: { key: string; day: number }[] = [];
-        for (const b of bankAsExpenses) {
-          const amtKey = Math.round((Number(b.amount) || 0) * 100);
-          const invKey = normalizeInvoiceKey(extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference);
-          const directionKey = b.direction || "out";
-          if (invKey) bankInv.add(`${b.line_item_id}|${directionKey}|${amtKey}|${invKey}`);
-          bankDate.push({
-            key: `${b.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(b.creditor_name || b.description)}`,
-            day: dayNumber(b.expense_date),
-          });
-        }
+        const bankLike = bankAsExpenses.map((b: any) => ({
+          date: b.expense_date,
+          amount: Number(b.amount) || 0,
+          counterparty: b.creditor_name || b.description,
+          description: b.description,
+          invoice: extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference,
+          direction: b.direction || "out",
+        }));
         expenses = expenses.filter((e: any) => {
-          const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
-          const directionKey = e.direction || "out";
-          if (invKey && bankInv.has(`${e.line_item_id}|${directionKey}|${amtKey}|${invKey}`)) return false;
-          const baseKey = `${e.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(e.creditor_name || e.description)}`;
-          const day = dayNumber(e.expense_date);
-          if (bankDate.some((d) => d.key === baseKey && Math.abs(d.day - day) <= 4)) return false;
-          return true;
+          const cand = {
+            date: e.expense_date,
+            amount: Number(e.amount) || 0,
+            counterparty: e.creditor_name || e.description,
+            description: e.description,
+            invoice: extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference,
+            direction: e.direction || "out",
+          };
+          return !bankLike.some((b) => isSamePayment(b, cand));
         });
       }
+
 
       // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen
       // leidend: de bankbijschrijvingen en verrekeningen komen hierin samen.
