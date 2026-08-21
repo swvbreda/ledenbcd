@@ -213,7 +213,7 @@ export default function DossierDetailDialog({
               </thead>
               <tbody>
                 {entries.map((e) => {
-                  const docs = docsByEntry.get(e.key) || [];
+                  const docs = docsForEntry(e);
                   return (
                     <tr key={e.key} className="group border-b border-border/30 hover:bg-muted/20">
                       <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.date)}</td>
