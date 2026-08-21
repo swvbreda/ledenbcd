@@ -372,14 +372,33 @@ export function useExpenseDocumentActions() {
 
   const remove = useMutation({
     mutationFn: async (doc: ExpenseDocument) => {
-      await supabase.storage.from("expense-invoices").remove([doc.file_path]);
+      // Zelfde bestand kan aan meerdere boekingen hangen; alleen de laatste koppeling wist het bestand.
+      const { data: siblings } = await client
+        .from("expense_documents")
+        .select("id")
+        .eq("file_path", doc.file_path);
       const { error } = await client.from("expense_documents").delete().eq("id", doc.id);
+      if (error) throw error;
+      if ((siblings || []).length <= 1) {
+        await supabase.storage.from("expense-invoices").remove([doc.file_path]);
+      }
+    },
+    onSuccess: invalidate,
+  });
+
+  /** Hangt een bestaande factuur aan een andere mutatie binnen hetzelfde dossier. */
+  const relink = useMutation({
+    mutationFn: async ({ doc, entryKey }: { doc: ExpenseDocument; entryKey: string }) => {
+      const { error } = await client
+        .from("expense_documents")
+        .update({ entry_key: entryKey })
+        .eq("id", doc.id);
       if (error) throw error;
     },
     onSuccess: invalidate,
   });
 
-  return { upload, remove };
+  return { upload, remove, relink };
 }
 
 export async function getDocumentUrl(path: string) {
