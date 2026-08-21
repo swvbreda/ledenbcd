@@ -350,6 +350,40 @@ export default function DossierDetailDialog({
       </Dialog>
 
       {viewing && <DocumentViewer doc={viewing} onClose={() => setViewing(null)} />}
+
+      {linking && (
+        <Dialog open onOpenChange={(o) => !o && setLinking(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-base">Factuur koppelen aan betaling</DialogTitle>
+              <DialogDescription className="truncate">{linking.file_name}</DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[50vh] space-y-1 overflow-y-auto">
+              <button
+                type="button"
+                className="w-full rounded-md border border-border px-3 py-2 text-left text-xs hover:bg-muted/40"
+                onClick={() => doRelink(`dossier:${dossier}`)}
+              >
+                Alleen aan dossier koppelen (nog geen betaling)
+              </button>
+              {entries.map((e) => (
+                <button
+                  key={e.key}
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-left text-xs hover:bg-muted/40"
+                  onClick={() => doRelink(e.key)}
+                >
+                  <span className="truncate">
+                    {formatDate(e.date)} · {e.counterparty || e.description || "—"}
+                    {e.invoice ? ` · ${e.invoice}` : ""}
+                  </span>
+                  <CurrencyText value={e.direction === "in" ? e.shareAmount : -e.shareAmount} />
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
