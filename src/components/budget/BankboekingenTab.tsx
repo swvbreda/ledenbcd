@@ -367,10 +367,11 @@ export default function BankboekingenTab({ year }: { year: number }) {
                         }}
                       >
                         <option value="">— geen dossier —</option>
-                        {(dossierList ?? []).map((d) => (
+                        <option value={EXCLUDED_DOSSIER}>⚠︎ Verkeerd betaald — buiten begroting</option>
+                        {(dossierList ?? []).filter((d) => d !== EXCLUDED_DOSSIER).map((d) => (
                           <option key={d} value={d}>{d}</option>
                         ))}
-                        {t.dossier && !(dossierList ?? []).includes(t.dossier) && (
+                        {t.dossier && t.dossier !== EXCLUDED_DOSSIER && !(dossierList ?? []).includes(t.dossier) && (
                           <option value={t.dossier}>{t.dossier}</option>
                         )}
                         <option value="__new__">+ nieuw dossier…</option>
