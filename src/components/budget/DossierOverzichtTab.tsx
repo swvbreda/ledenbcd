@@ -38,9 +38,11 @@ import {
   useExpenseDocuments,
   groupByDossier,
   isUnassigned,
+  dedupeEntries,
   type DossierMutation,
   type DossierEntry,
 } from "@/hooks/useDossiers";
+import { isContributionDossier } from "@/lib/budgetExclusions";
 import { useAuth } from "@/hooks/useAuth";
 import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
 
