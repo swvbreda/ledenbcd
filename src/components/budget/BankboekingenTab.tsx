@@ -314,10 +314,26 @@ export default function BankboekingenTab({ year }: { year: number }) {
                   <td className="px-3 py-2">
                     <select
                       className="border border-border rounded px-2 py-1 text-xs bg-background w-full max-w-[220px]"
-                      value={t.budget_line_item_id ?? ""}
-                      onChange={(e) => updateTx(t.id, { budget_line_item_id: e.target.value || null })}
+                      value={isExcludedDossier(t.dossier) ? "__excluded__" : (t.budget_line_item_id ?? "")}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "__excluded__") {
+                          updateTx(t.id, {
+                            budget_line_item_id: null,
+                            dossier: EXCLUDED_DOSSIER,
+                            match_strategy: "excluded",
+                          });
+                          return;
+                        }
+                        updateTx(t.id, {
+                          budget_line_item_id: value || null,
+                          dossier: isExcludedDossier(t.dossier) ? null : t.dossier,
+                          match_strategy: value ? "manual" : null,
+                        });
+                      }}
                     >
                       <option value="">— niet gekoppeld —</option>
+                      <option value="__excluded__">⚠︎ Verkeerd betaald — buiten begroting</option>
                       {allLineItems.map((li) => (
                         <option key={li.id} value={li.id}>{li.label}</option>
                       ))}
