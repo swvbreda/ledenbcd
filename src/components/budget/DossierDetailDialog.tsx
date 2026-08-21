@@ -170,6 +170,19 @@ export default function DossierDetailDialog({
     if (fileInput.current) fileInput.current.value = "";
   };
 
+  const doRelink = (entryKey: string) => {
+    if (!linking) return;
+    relink.mutate(
+      { doc: linking, entryKey },
+      {
+        onSuccess: () => toast.success("Factuur gekoppeld"),
+        onError: (e: any) => toast.error(e?.message || "Koppelen mislukt"),
+      },
+    );
+    setLinking(null);
+  };
+
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
