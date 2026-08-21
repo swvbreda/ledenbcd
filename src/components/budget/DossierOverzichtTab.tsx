@@ -38,9 +38,11 @@ import {
   useExpenseDocuments,
   groupByDossier,
   isUnassigned,
+  dedupeEntries,
   type DossierMutation,
   type DossierEntry,
 } from "@/hooks/useDossiers";
+import { isContributionDossier } from "@/lib/budgetExclusions";
 import { useAuth } from "@/hooks/useAuth";
 import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
 
@@ -88,7 +90,9 @@ export default function DossierOverzichtTab({ year }: Props) {
   const dossiers = useMemo(() => {
     const map = groupByDossier(mutations);
     const rows: DossierRow[] = [];
-    for (const [dossier, entries] of map) {
+    for (const [dossier, groupEntries] of map) {
+      if (isContributionDossier(dossier)) continue;
+      const entries = dedupeEntries(groupEntries);
       const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
       rows.push({ dossier, entries, out, income, total: out - income });
@@ -96,6 +100,7 @@ export default function DossierOverzichtTab({ year }: Props) {
     rows.sort((a, b) => b.total - a.total);
     return rows;
   }, [mutations]);
+
 
   const docsByEntry = useMemo(() => {
     const map = new Map<string, number>();
@@ -307,7 +312,7 @@ export default function DossierOverzichtTab({ year }: Props) {
                           className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
                           onClick={(ev) => {
                             ev.stopPropagation();
-                            applyDossier([e], null);
+                            applyDossier((e as any).sources || [e], null);
                           }}
                           title="Verwijder uit dossier"
                         >

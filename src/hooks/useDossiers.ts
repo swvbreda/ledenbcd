@@ -71,6 +71,44 @@ export function isUnassigned(m: DossierMutation) {
   return !m.dossier && (!m.splits || m.splits.length === 0);
 }
 
+const normalizeName = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .replace(/\b(b\.?v\.?|n\.?v\.?|v\.?o\.?f\.?)\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+/**
+ * Zelfde kosten die zowel via de bank als via Informer binnenkomen worden als
+ * één regel getoond. `sources` bevat alle onderliggende boekingen.
+ */
+export type DedupedEntry = DossierEntry & { sources: DossierEntry[] };
+
+export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
+  const result: DedupedEntry[] = [];
+  for (const e of entries) {
+    const match = result.find((r) => {
+      if (r.direction !== e.direction) return false;
+      if (Math.abs(r.shareAmount - e.shareAmount) > 0.5) return false;
+      if (normalizeName(r.counterparty) !== normalizeName(e.counterparty)) return false;
+      if (!r.date || !e.date) return true;
+      const diff = Math.abs(new Date(r.date).getTime() - new Date(e.date).getTime());
+      return diff <= 1000 * 60 * 60 * 24 * 14;
+    });
+    if (match) {
+      match.sources.push(e);
+      if (!match.invoice && e.invoice) match.invoice = e.invoice;
+      if (!match.lineItemName && e.lineItemName) {
+        match.lineItemName = e.lineItemName;
+        match.categoryName = e.categoryName;
+      }
+    } else {
+      result.push({ ...e, sources: [e] });
+    }
+  }
+  return result;
+}
+
+
 const client = supabase as any;
 
 export function entryKeyFor(kind: DossierEntryKind, id: string) {
