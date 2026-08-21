@@ -234,7 +234,14 @@ export default function DossierDetailDialog({
                       <td className="max-w-[260px] px-3 py-1 text-muted-foreground">
                         <span className="line-clamp-2">{e.description}</span>
                       </td>
-                      <td className="px-3 py-1 tabular-nums">{e.invoice}</td>
+                      <td className="px-3 py-1 tabular-nums">
+                        {e.invoice || "—"}
+                        {(e.sources?.length || 1) > 1 && (
+                          <span className="ml-1 rounded bg-muted px-1 text-[10px] text-muted-foreground">
+                            {e.sources!.length} bronnen
+                          </span>
+                        )}
+                      </td>
                       <td className="px-3 py-1 text-muted-foreground">
                         {e.lineItemName ? `${e.categoryName} / ${e.lineItemName}` : "Niet gekoppeld"}
                       </td>
