@@ -25,6 +25,28 @@ export function invoiceNumbersIn(text?: string | null): string[] {
   return [...new Set(String(text || "").match(/\b\d{5,9}\b/g) || [])];
 }
 
+/** Alle factuurnummers van een regel: uit het factuurveld én de omschrijving. */
+export function allInvoiceNumbers(entry: LedgerLike): string[] {
+  return [
+    ...new Set([
+      ...invoiceNumbersIn(entry.invoice),
+      ...invoiceNumbersIn(entry.description),
+    ]),
+  ];
+}
+
+/**
+ * True als beide regels hetzelfde factuurnummer noemen. Bedragen mogen
+ * verschillen: een bankbetaling bundelt vaak meerdere facturen of verrekent
+ * een creditnota, waardoor het betaalde bedrag afwijkt van de factuur.
+ */
+export function sharesInvoiceNumber(a: LedgerLike, b: LedgerLike): boolean {
+  const numsA = allInvoiceNumbers(a);
+  if (numsA.length === 0) return false;
+  const numsB = new Set(allInvoiceNumbers(b));
+  return numsA.some((n) => numsB.has(n));
+}
+
 const dayNumber = (date?: string | null) => {
   if (!date) return NaN;
   const t = new Date(date).getTime();
