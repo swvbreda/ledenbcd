@@ -54,6 +54,15 @@ export function invoiceKeysOf(entry: LedgerLike): string[] {
   return [...new Set(allInvoiceNumbers(entry).map(invoiceKey).filter((k) => k.length >= 5))];
 }
 
+/** True als twee genormaliseerde factuursleutels hetzelfde nummer aanduiden. */
+export function invoiceKeysMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  // Bankomschrijvingen missen soms de eerste cijfers ("0260079" ⇢ "20260079").
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length >= 6 && long.endsWith(short);
+}
+
 /**
  * True als beide regels hetzelfde factuurnummer noemen. Bedragen mogen
  * verschillen: een bankbetaling bundelt vaak meerdere facturen of verrekent
@@ -62,9 +71,10 @@ export function invoiceKeysOf(entry: LedgerLike): string[] {
 export function sharesInvoiceNumber(a: LedgerLike, b: LedgerLike): boolean {
   const keysA = invoiceKeysOf(a);
   if (keysA.length === 0) return false;
-  const keysB = new Set(invoiceKeysOf(b));
-  return keysA.some((n) => keysB.has(n));
+  const keysB = invoiceKeysOf(b);
+  return keysA.some((n) => keysB.some((m) => invoiceKeysMatch(n, m)));
 }
+
 
 
 const dayNumber = (date?: string | null) => {

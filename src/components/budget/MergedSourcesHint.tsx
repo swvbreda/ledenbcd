@@ -25,7 +25,7 @@ const fmtAmount = (value: number) =>
  * Waarschuwing bij een samengevoegde regel: bankafschrijving en factuurboeking
  * op hetzelfde factuurnummer, oftewel een mogelijke dubbele boeking.
  */
-export default function MergedSourcesHint({ sources }: { sources: SourceLike[] }) {
+export default function MergedSourcesHint({ sources, note }: { sources: SourceLike[]; note?: string }) {
   if (!sources || sources.length < 2) return null;
   return (
     <Tooltip>
@@ -38,10 +38,11 @@ export default function MergedSourcesHint({ sources }: { sources: SourceLike[] }
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        <p className="mb-1 text-xs font-medium">Mogelijke dubbele betaling</p>
+        <p className="mb-1 text-xs font-medium">{note || "Mogelijke dubbele betaling"}</p>
         <p className="mb-1.5 text-[11px] text-muted-foreground">
           Bankafschrijving en factuurboeking met hetzelfde factuurnummer zijn samengevoegd tot één regel.
         </p>
+
         <ul className="space-y-0.5 text-[11px]">
           {sources.map((s) => (
             <li key={s.key} className="tabular-nums">
