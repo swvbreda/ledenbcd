@@ -58,10 +58,12 @@ function DocumentViewer({ doc, onClose }: { doc: ExpenseDocument; onClose: () =>
   );
 }
 
+type DetailEntry = DossierEntry & { sources?: DossierEntry[] };
+
 interface Props {
   dossier: string;
   year: number;
-  entries: DossierEntry[];
+  entries: DetailEntry[];
   documents: ExpenseDocument[];
   isAdmin: boolean;
   open: boolean;
@@ -79,12 +81,13 @@ export default function DossierDetailDialog({
   onOpenChange,
   onRemoveFromDossier,
 }: Props) {
-  const { upload, remove } = useExpenseDocumentActions();
+  const { upload, remove, relink } = useExpenseDocumentActions();
   const [viewing, setViewing] = useState<ExpenseDocument | null>(null);
   const [uploadTarget, setUploadTarget] = useState<DossierMutation | null>(null);
+  const [linking, setLinking] = useState<ExpenseDocument | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const docsByEntry = useMemo(() => {
+  const docsByKey = useMemo(() => {
     const map = new Map<string, ExpenseDocument[]>();
     for (const d of documents) {
       if (!map.has(d.entry_key)) map.set(d.entry_key, []);
@@ -92,6 +95,34 @@ export default function DossierDetailDialog({
     }
     return map;
   }, [documents]);
+
+  /** Facturen van álle onderliggende bronnen (bank + Informer) van een samengevoegde regel. */
+  const docsForEntry = (e: DetailEntry) => {
+    const keys = [e.key, ...(e.sources || []).map((s) => s.key)];
+    const seen = new Set<string>();
+    const out: ExpenseDocument[] = [];
+    for (const k of keys) {
+      for (const d of docsByKey.get(k) || []) {
+        if (seen.has(d.file_path)) continue;
+        seen.add(d.file_path);
+        out.push(d);
+      }
+    }
+    return out;
+  };
+
+  /** Unieke facturen in het dossier (zelfde bestand kan aan meerdere boekingen hangen). */
+  const uniqueDocs = useMemo(() => {
+    const seen = new Set<string>();
+    return documents.filter((d) => {
+      if (seen.has(d.file_path)) return false;
+      seen.add(d.file_path);
+      return true;
+    });
+  }, [documents]);
+
+  const entryForDoc = (doc: ExpenseDocument) =>
+    entries.find((e) => [e.key, ...(e.sources || []).map((s) => s.key)].includes(doc.entry_key));
 
   const totals = useMemo(() => {
     const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
