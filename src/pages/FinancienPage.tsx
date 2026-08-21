@@ -322,8 +322,6 @@ export default function FinancienPage() {
               Contributie
             </TabsTrigger>
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-
-            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
             <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
@@ -335,12 +333,7 @@ export default function FinancienPage() {
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
             </TabsTrigger>
-            <TabsTrigger value="controle" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Controle uitgaven
-            </TabsTrigger>
-            <TabsTrigger value="check" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Harde check
-            </TabsTrigger>
+
 
           </TabsList>
 
