@@ -90,12 +90,14 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
   const ordered = [...entries].sort((a, b) => (b.kind === "ponto" ? 1 : 0) - (a.kind === "ponto" ? 1 : 0));
   const result: DedupedEntry[] = [];
   for (const e of ordered) {
-    const match = result.find((r) =>
-      isSamePayment(
-        { date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction },
-        { date: e.date, amount: e.shareAmount, counterparty: e.counterparty, description: e.description, invoice: e.invoice, direction: e.direction },
-      ),
-    );
+    const self = { date: e.date, amount: e.shareAmount, counterparty: e.counterparty, description: e.description, invoice: e.invoice, direction: e.direction };
+    const match = result.find((r) => {
+      const other = { date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction };
+      if (isSamePayment(other, self)) return true;
+      // Een bankbetaling bundelt vaak meerdere facturen of verrekent een
+      // creditnota; dan wijkt het bedrag af maar is het dezelfde betaling.
+      return r.kind === "ponto" && e.kind !== "ponto" && sharesInvoiceNumber(other, self);
+    });
     if (match) {
       match.sources.push(e);
       if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
