@@ -295,7 +295,10 @@ export default function DossierOverzichtTab({ year }: Props) {
                     <td className="px-3 py-1">{e.counterparty || e.description}</td>
                     <td className="px-3 py-1 tabular-nums">
                       {e.invoice || "—"}
-                      {e.sources.length > 1 && <MergedSourcesHint sources={e.sources} />}
+                      {e.sources.length > 1 && <MergedSourcesHint sources={e.sources} note={e.note} />}
+                      {e.note && (
+                        <span className="block text-[10px] font-normal text-amber-600">{e.note}</span>
+                      )}
                     </td>
                     <td className="px-3 py-1 text-muted-foreground">{e.categoryName}</td>
                     <td className="px-3 py-1 text-muted-foreground">{e.lineItemName || "Niet gekoppeld"}</td>
