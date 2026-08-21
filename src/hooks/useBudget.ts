@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
+import { isSamePayment } from "@/lib/ledgerDedupe";
+
 
 export interface BudgetCategory {
   id: string;
@@ -159,32 +161,9 @@ export function useBudgetCategories(year: number) {
       let bankAsExpenses: any[] = [];
       if (lineItemIds.length > 0) {
         const client = supabase as any;
-        const { data: bankRows, error: bankErr } = await client
-          .from("bank_transactions")
-          .select("*")
-          .eq("year", year)
-          .in("line_item_id", lineItemIds);
-        if (bankErr) throw bankErr;
-        bankAsExpenses = (bankRows || []).filter((b: any) => !isExcludedDossier(b.dossier)).map((b: any) => {
-          const invoiceReference = extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference;
-          return {
-            id: `bank:${b.id}`,
-            line_item_id: b.line_item_id,
-            description: b.description,
-            amount: Number(b.amount) || 0,
-            expense_date: b.transaction_date,
-            creditor_name: b.counterparty,
-            invoice_reference: invoiceReference,
-            dossier: b.dossier,
-            source: "bank",
-            pdf_file_path: null,
-            paid: true,
-            paid_date: b.transaction_date,
-            created_at: b.created_at,
-            direction: b.direction,
-            _fromBank: true,
-          };
-        });
+        // De oude PDF-bankimport (`bank_transactions`) telt niet meer mee: die
+        // overlapt volledig met de live bankkoppeling (Ponto) hieronder.
+
 
         // Live bankboekingen (Ponto): koppel via budget_line_item_id
         const yearStart = `${year}-01-01`;
@@ -254,34 +233,32 @@ export function useBudgetCategories(year: number) {
         bankAsExpenses = kept;
       }
 
-      // Dedupliceer handmatige/PDF-boekingen tegen bankregels: als er een
-      // bankboeking bestaat met hetzelfde factuurnummer + bedrag (of dezelfde
-      // dag±2 + bedrag + creditor) op dezelfde post, laten we de handmatige
-      // versie vallen zodat we niet dubbel tellen.
+      // Dedupliceer handmatige/Informer-boekingen tegen bankregels: bestaat er
+      // een bankbetaling die vrijwel zeker dezelfde betaling is (gelijk bedrag +
+      // factuurnummer, of gelijk bedrag + tegenpartij binnen 10 dagen), dan valt
+      // de handmatige versie weg zodat we niet dubbel tellen.
       {
-        const bankInv = new Set<string>();
-        const bankDate: { key: string; day: number }[] = [];
-        for (const b of bankAsExpenses) {
-          const amtKey = Math.round((Number(b.amount) || 0) * 100);
-          const invKey = normalizeInvoiceKey(extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference);
-          const directionKey = b.direction || "out";
-          if (invKey) bankInv.add(`${b.line_item_id}|${directionKey}|${amtKey}|${invKey}`);
-          bankDate.push({
-            key: `${b.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(b.creditor_name || b.description)}`,
-            day: dayNumber(b.expense_date),
-          });
-        }
+        const bankLike = bankAsExpenses.map((b: any) => ({
+          date: b.expense_date,
+          amount: Number(b.amount) || 0,
+          counterparty: b.creditor_name || b.description,
+          description: b.description,
+          invoice: extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference,
+          direction: b.direction || "out",
+        }));
         expenses = expenses.filter((e: any) => {
-          const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
-          const directionKey = e.direction || "out";
-          if (invKey && bankInv.has(`${e.line_item_id}|${directionKey}|${amtKey}|${invKey}`)) return false;
-          const baseKey = `${e.line_item_id}|${directionKey}|${amtKey}|${normalizePartyKey(e.creditor_name || e.description)}`;
-          const day = dayNumber(e.expense_date);
-          if (bankDate.some((d) => d.key === baseKey && Math.abs(d.day - day) <= 4)) return false;
-          return true;
+          const cand = {
+            date: e.expense_date,
+            amount: Number(e.amount) || 0,
+            counterparty: e.creditor_name || e.description,
+            description: e.description,
+            invoice: extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference,
+            direction: e.direction || "out",
+          };
+          return !bankLike.some((b) => isSamePayment(b, cand));
         });
       }
+
 
       // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen
       // leidend: de bankbijschrijvingen en verrekeningen komen hierin samen.

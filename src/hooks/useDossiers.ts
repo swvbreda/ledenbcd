@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isSamePayment } from "@/lib/ledgerDedupe";
+
 
 export type DossierEntryKind = "expense" | "bank" | "ponto";
 
@@ -71,32 +73,28 @@ export function isUnassigned(m: DossierMutation) {
   return !m.dossier && (!m.splits || m.splits.length === 0);
 }
 
-const normalizeName = (s: string) =>
-  (s || "")
-    .toLowerCase()
-    .replace(/\b(b\.?v\.?|n\.?v\.?|v\.?o\.?f\.?)\b/g, "")
-    .replace(/[^a-z0-9]/g, "");
-
 /**
  * Zelfde kosten die zowel via de bank als via Informer binnenkomen worden als
  * één regel getoond. `sources` bevat alle onderliggende boekingen.
+ * De bankboeking (Ponto) is leidend; Informer/handmatig wordt eraan gehangen.
  */
 export type DedupedEntry = DossierEntry & { sources: DossierEntry[] };
 
 export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
+  // Bankregels eerst, zodat die de "hoofdregel" worden.
+  const ordered = [...entries].sort((a, b) => (b.kind === "ponto" ? 1 : 0) - (a.kind === "ponto" ? 1 : 0));
   const result: DedupedEntry[] = [];
-  for (const e of entries) {
-    const match = result.find((r) => {
-      if (r.direction !== e.direction) return false;
-      if (Math.abs(r.shareAmount - e.shareAmount) > 0.5) return false;
-      if (normalizeName(r.counterparty) !== normalizeName(e.counterparty)) return false;
-      if (!r.date || !e.date) return true;
-      const diff = Math.abs(new Date(r.date).getTime() - new Date(e.date).getTime());
-      return diff <= 1000 * 60 * 60 * 24 * 14;
-    });
+  for (const e of ordered) {
+    const match = result.find((r) =>
+      isSamePayment(
+        { date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction },
+        { date: e.date, amount: e.shareAmount, counterparty: e.counterparty, description: e.description, invoice: e.invoice, direction: e.direction },
+      ),
+    );
     if (match) {
       match.sources.push(e);
       if (!match.invoice && e.invoice) match.invoice = e.invoice;
+      if (!match.counterparty && e.counterparty) match.counterparty = e.counterparty;
       if (!match.lineItemName && e.lineItemName) {
         match.lineItemName = e.lineItemName;
         match.categoryName = e.categoryName;
@@ -105,8 +103,10 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
       result.push({ ...e, sources: [e] });
     }
   }
+  result.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   return result;
 }
+
 
 
 const client = supabase as any;
@@ -239,28 +239,10 @@ export function useDossierMutations(year: number) {
         }
       }
 
-      const { data: bankRows, error: bankErr } = await client
-        .from("bank_transactions")
-        .select("*")
-        .eq("year", year);
-      if (bankErr) throw bankErr;
-      for (const b of bankRows || []) {
-        rows.push({
-          key: entryKeyFor("bank", b.id),
-          kind: "bank",
-          id: b.id,
-          date: b.transaction_date,
-          counterparty: b.counterparty || "",
-          description: b.description || "",
-          invoice: b.invoice_reference || "",
-          amount: Math.abs(Number(b.amount) || 0),
-          direction: b.direction === "in" ? "in" : "out",
-          ...names(b.line_item_id),
-          dossier: (b.dossier || "").trim(),
-          source: "bank",
-          splits: splitsFor(entryKeyFor("bank", b.id)),
-        });
-      }
+      // De oude PDF-bankimport (`bank_transactions`) wordt bewust NIET meer
+      // meegenomen: die overlapt volledig met de live bankkoppeling (Ponto)
+      // en zorgde voor dubbele bedragen in de dossiers.
+
 
       const { data: pontoRows, error: pontoErr } = await client
         .from("ponto_transactions")
