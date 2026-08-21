@@ -22,7 +22,7 @@ export function normalizeInvoice(value?: string | null): string {
  * worden bewust genegeerd, zodat die niet als factuurnummer in beeld komen.
  */
 export function invoiceNumbersIn(text?: string | null): string[] {
-  return [...new Set(String(text || "").match(/\d{5,9}/g) || [])];
+  return [...new Set(String(text || "").match(/\b\d{5,9}\b/g) || [])];
 }
 
 const dayNumber = (date?: string | null) => {
