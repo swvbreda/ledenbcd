@@ -16,7 +16,6 @@ import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
-import ControleUitgavenTab from "@/components/budget/ControleUitgavenTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
@@ -25,8 +24,6 @@ import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 
 import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
-import HardeCheckTab from "@/components/budget/HardeCheckTab";
-import LedenBetalingenTab from "@/components/budget/LedenBetalingenTab";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Button } from "@/components/ui/button";
