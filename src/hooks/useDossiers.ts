@@ -239,28 +239,10 @@ export function useDossierMutations(year: number) {
         }
       }
 
-      const { data: bankRows, error: bankErr } = await client
-        .from("bank_transactions")
-        .select("*")
-        .eq("year", year);
-      if (bankErr) throw bankErr;
-      for (const b of bankRows || []) {
-        rows.push({
-          key: entryKeyFor("bank", b.id),
-          kind: "bank",
-          id: b.id,
-          date: b.transaction_date,
-          counterparty: b.counterparty || "",
-          description: b.description || "",
-          invoice: b.invoice_reference || "",
-          amount: Math.abs(Number(b.amount) || 0),
-          direction: b.direction === "in" ? "in" : "out",
-          ...names(b.line_item_id),
-          dossier: (b.dossier || "").trim(),
-          source: "bank",
-          splits: splitsFor(entryKeyFor("bank", b.id)),
-        });
-      }
+      // De oude PDF-bankimport (`bank_transactions`) wordt bewust NIET meer
+      // meegenomen: die overlapt volledig met de live bankkoppeling (Ponto)
+      // en zorgde voor dubbele bedragen in de dossiers.
+
 
       const { data: pontoRows, error: pontoErr } = await client
         .from("ponto_transactions")
