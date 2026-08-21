@@ -334,9 +334,13 @@ export default function FinancienPage() {
             <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Informer
             </TabsTrigger>
+            <TabsTrigger value="controle" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+              Controle uitgaven
+            </TabsTrigger>
             <TabsTrigger value="check" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Harde check
             </TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="dashboard">
