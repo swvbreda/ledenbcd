@@ -85,7 +85,30 @@ export function isUnassigned(m: DossierMutation) {
  * één regel getoond. `sources` bevat alle onderliggende boekingen.
  * De bankboeking (Ponto) is leidend; Informer/handmatig wordt eraan gehangen.
  */
-export type DedupedEntry = DossierEntry & { sources: DossierEntry[] };
+export type DedupedEntry = DossierEntry & {
+  sources: DossierEntry[];
+  /** Toelichting bij een samengevoegde correctie, bv. een dubbele betaling. */
+  note?: string;
+  /** Factuurbedragen per factuurnummer, zodat niets dubbel wordt geteld. */
+  invoiceAmountByKey?: Record<string, number>;
+};
+
+/** Sleutel waaronder het factuurbedrag van een bron wordt bewaard. */
+function amountKeyFor(e: DossierEntry): string {
+  const keys = invoiceKeysOf({
+    date: e.date,
+    amount: e.amount,
+    invoice: e.invoice,
+    description: e.description,
+  });
+  return keys[0] || `entry:${e.key}`;
+}
+
+const formatNlDate = (value?: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? String(value).slice(0, 10) : d.toLocaleDateString("nl-NL");
+};
 
 export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
   // Bankregels eerst, zodat die de "hoofdregel" worden.
@@ -93,23 +116,46 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
   const result: DedupedEntry[] = [];
   for (const e of ordered) {
     const self = { date: e.date, amount: e.shareAmount, counterparty: e.counterparty, description: e.description, invoice: e.invoice, direction: e.direction };
+    let refund = false;
     const match = result.find((r) => {
       const other = { date: r.date, amount: r.shareAmount, counterparty: r.counterparty, description: r.description, invoice: r.invoice, direction: r.direction };
       if (isSamePayment(other, self)) return true;
+      // Terugstorting van een dubbele betaling: zelfde factuur, zelfde bedrag,
+      // tegengestelde richting. Samenvoegen tot één regel die per saldo nul is.
+      if (
+        r.direction !== e.direction &&
+        Math.abs(Math.abs(r.shareAmount) - Math.abs(e.shareAmount)) <= 0.5 &&
+        sharesInvoiceNumber(other, self)
+      ) {
+        refund = true;
+        return true;
+      }
       // Een bankbetaling bundelt vaak meerdere facturen of verrekent een
       // creditnota; dan wijkt het bedrag af maar is het dezelfde betaling.
       return r.kind === "ponto" && e.kind !== "ponto" && sharesInvoiceNumber(other, self);
     });
     if (match) {
       match.sources.push(e);
+      if (refund) {
+        // Betaling en terugstorting salderen; de regel blijft zichtbaar met notitie.
+        const netto = match.shareAmount - Math.abs(e.shareAmount);
+        match.shareAmount = netto;
+        match.amount = netto;
+        match.note = `Dubbele betaling — teruggestort op ${formatNlDate(e.paymentDate || e.date)}`;
+        refund = false;
+        continue;
+      }
       if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
       if (!match.paymentDate && e.paymentDate) match.paymentDate = e.paymentDate;
-      // Bedrag volgens de factuurboeking(en) naast de bankafschrijving tonen.
-      if (e.kind !== "ponto") {
-        match.invoiceAmount = (match.invoiceAmount || 0) + e.shareAmount;
-      } else if (e.invoiceAmount != null) {
-        match.invoiceAmount = (match.invoiceAmount || 0) + e.invoiceAmount;
-      }
+      // Factuurbedrag per factuurnummer bewaren: hetzelfde nummer dat zowel via
+      // de bank als via Informer binnenkomt telt maar één keer mee.
+      const amounts = match.invoiceAmountByKey || {};
+      const key = amountKeyFor(e);
+      const value = e.kind === "ponto" ? e.invoiceAmount : e.invoiceAmount ?? e.shareAmount;
+      if (value != null) amounts[key] = Math.max(amounts[key] ?? 0, Math.abs(value));
+      match.invoiceAmountByKey = amounts;
+      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
+      match.invoiceAmount = total > 0 ? total : match.invoiceAmount;
       // Alle factuurnummers van de samengevoegde bronnen tonen.
       const nums = new Set(
         [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
@@ -121,9 +167,11 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
         match.categoryName = e.categoryName;
       }
     } else {
+      const value = e.kind === "ponto" ? e.invoiceAmount : e.invoiceAmount ?? e.shareAmount;
       result.push({
         ...e,
-        invoiceAmount: e.kind === "ponto" ? e.invoiceAmount : e.invoiceAmount ?? e.shareAmount,
+        invoiceAmount: value,
+        invoiceAmountByKey: value != null ? { [amountKeyFor(e)]: Math.abs(value) } : {},
         sources: [e],
       });
     }
@@ -131,6 +179,7 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
   result.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   return result;
 }
+
 
 
 
