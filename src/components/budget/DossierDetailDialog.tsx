@@ -59,7 +59,7 @@ function DocumentViewer({ doc, onClose }: { doc: ExpenseDocument; onClose: () =>
   );
 }
 
-type DetailEntry = DossierEntry & { sources?: DossierEntry[] };
+type DetailEntry = DossierEntry & { sources?: DossierEntry[]; note?: string };
 
 interface Props {
   dossier: string;
