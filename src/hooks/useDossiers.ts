@@ -104,6 +104,12 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
       match.sources.push(e);
       if (!match.invoiceDate && e.invoiceDate) match.invoiceDate = e.invoiceDate;
       if (!match.paymentDate && e.paymentDate) match.paymentDate = e.paymentDate;
+      // Bedrag volgens de factuurboeking(en) naast de bankafschrijving tonen.
+      if (e.kind !== "ponto") {
+        match.invoiceAmount = (match.invoiceAmount || 0) + e.shareAmount;
+      } else if (e.invoiceAmount != null) {
+        match.invoiceAmount = (match.invoiceAmount || 0) + e.invoiceAmount;
+      }
       // Alle factuurnummers van de samengevoegde bronnen tonen.
       const nums = new Set(
         [...match.invoice.split(/\s*[,·]\s*/), ...e.invoice.split(/\s*[,·]\s*/)].filter(Boolean),
@@ -114,6 +120,14 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
         match.lineItemName = e.lineItemName;
         match.categoryName = e.categoryName;
       }
+    } else {
+      result.push({
+        ...e,
+        invoiceAmount: e.kind === "ponto" ? e.invoiceAmount : e.invoiceAmount ?? e.shareAmount,
+        sources: [e],
+      });
+    }
+
     } else {
       result.push({ ...e, sources: [e] });
     }
