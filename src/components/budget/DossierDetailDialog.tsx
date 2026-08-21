@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import DossierInvoiceThumb, { useDocumentUrl } from "@/components/budget/DossierInvoiceThumb";
+import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
 import {
   useExpenseDocumentActions,
   type DossierMutation,
