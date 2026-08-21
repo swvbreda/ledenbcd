@@ -272,7 +272,7 @@ export function useDossierMutations(year: number) {
           date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
           counterparty: p.counterparty_name || "",
           description: p.description || p.remittance_info || "",
-          invoice: "",
+          invoice: pontoInvoices,
           amount: Math.abs(raw),
           direction: raw >= 0 ? "in" : "out",
           ...names(p.budget_line_item_id),
