@@ -300,13 +300,24 @@ export function useDossierMutations(year: number) {
             ...invoiceNumbersIn(p.remittance_info),
           ]),
         ].join(", ");
+        // Factuurdatum/-bedrag overnemen van een boeking met hetzelfde factuurnummer.
+        let invMeta: { date: string | null; amount: number } | null = null;
+        let invTotal = 0;
+        for (const key of invoiceKeysOf({ date: null, amount: 0, invoice: pontoInvoices, description: p.description })) {
+          const hit = invoiceIndex.get(key);
+          if (!hit) continue;
+          if (!invMeta || (hit.date && (!invMeta.date || hit.date < invMeta.date))) invMeta = hit;
+          invTotal += hit.amount;
+        }
         rows.push({
           key: entryKeyFor("ponto", p.id),
           kind: "ponto",
           id: p.id,
           date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
-          invoiceDate: null,
+          invoiceDate: invMeta?.date || null,
+          invoiceAmount: invTotal > 0 ? invTotal : null,
           paymentDate: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
+
           counterparty: p.counterparty_name || "",
           description: p.description || p.remittance_info || "",
           invoice: pontoInvoices,
