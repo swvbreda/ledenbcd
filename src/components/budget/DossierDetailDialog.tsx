@@ -138,6 +138,8 @@ export default function DossierDetailDialog({
         kind: "expense",
         id: `dossier-${dossier.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`,
         date: null,
+        invoiceDate: null,
+        paymentDate: null,
         counterparty: "",
         description: "",
         invoice: "",
@@ -214,7 +216,8 @@ export default function DossierDetailDialog({
             <table className="w-full text-xs">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr className="border-b border-border/60">
-                  <th className="px-3 py-1.5 text-left font-medium">Datum</th>
+                  <th className="px-3 py-1.5 text-left font-medium">Factuurdatum</th>
+                  <th className="px-3 py-1.5 text-left font-medium">Betaaldatum</th>
                   <th className="px-3 py-1.5 text-left font-medium">Tegenpartij</th>
                   <th className="px-3 py-1.5 text-left font-medium">Omschrijving</th>
                   <th className="px-3 py-1.5 text-left font-medium">Factuurnr</th>
@@ -229,7 +232,8 @@ export default function DossierDetailDialog({
                   const docs = docsForEntry(e);
                   return (
                     <tr key={e.key} className="group border-b border-border/30 hover:bg-muted/20">
-                      <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.date)}</td>
+                      <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.invoiceDate) || "—"}</td>
+                      <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
                       <td className="px-3 py-1">{e.counterparty || "—"}</td>
                       <td className="max-w-[260px] px-3 py-1 text-muted-foreground">
                         <span className="line-clamp-2">{e.description}</span>
@@ -394,7 +398,7 @@ export default function DossierDetailDialog({
                   onClick={() => doRelink(e.key)}
                 >
                   <span className="truncate">
-                    {formatDate(e.date)} · {e.counterparty || e.description || "—"}
+                    Factuur {formatDate(e.invoiceDate) || "—"} · Betaald {formatDate(e.paymentDate) || "—"} · {e.counterparty || e.description || "—"}
                     {e.invoice ? ` · ${e.invoice}` : ""}
                   </span>
                   <CurrencyText value={e.direction === "in" ? e.shareAmount : -e.shareAmount} />
