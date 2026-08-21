@@ -47,7 +47,6 @@ import { isContributionDossier } from "@/lib/budgetExclusions";
 import { useAuth } from "@/hooks/useAuth";
 import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
 import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface Props {
   categories: BudgetCategory[];
