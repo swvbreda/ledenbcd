@@ -238,7 +238,9 @@ export function useDossierMutations(year: number) {
             id: e.id,
             date: e.expense_date,
             invoiceDate: e.expense_date,
-            paymentDate: e.paid_date,
+            // Alleen de live bankregel bewijst wanneer er werkelijk betaald is.
+            // Informer-/importvelden kunnen een boekings- of factuurdatum bevatten.
+            paymentDate: null,
             counterparty: e.creditor_name || "",
             description: e.description || "",
             invoice: e.invoice_reference || "",

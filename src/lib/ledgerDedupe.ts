@@ -16,9 +16,13 @@ export function normalizeInvoice(value?: string | null): string {
   return digits.length >= 5 ? digits : "";
 }
 
-/** Alle factuurnummers (>= 5 cijfers) uit een omschrijving. */
+/**
+ * Alle waarschijnlijke factuurnummers uit een omschrijving.
+ * Reeksen van tien of meer cijfers zijn doorgaans IBAN-/rekeningnummers en
+ * worden bewust genegeerd, zodat die niet als factuurnummer in beeld komen.
+ */
 export function invoiceNumbersIn(text?: string | null): string[] {
-  return (String(text || "").match(/\d{5,}/g) || []).map((n) => n);
+  return [...new Set(String(text || "").match(/\d{5,9}/g) || [])];
 }
 
 const dayNumber = (date?: string | null) => {
