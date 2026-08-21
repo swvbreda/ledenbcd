@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isSamePayment } from "@/lib/ledgerDedupe";
+
 
 export type DossierEntryKind = "expense" | "bank" | "ponto";
 
