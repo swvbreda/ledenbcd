@@ -99,6 +99,28 @@ export default function DossierDetailDialog({
     return { out, income, saldo: income - out };
   }, [entries]);
 
+  /** Pseudo-mutatie zodat facturen zonder gekoppelde betaling toch in het dossier komen. */
+  const dossierEntry = useMemo(
+    () =>
+      ({
+        key: `dossier:${dossier}`,
+        kind: "expense",
+        id: `dossier-${dossier.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`,
+        date: null,
+        counterparty: "",
+        description: "",
+        invoice: "",
+        amount: 0,
+        direction: "out",
+        categoryName: "",
+        lineItemName: "",
+        dossier,
+        source: "manual",
+        splits: [],
+      }) as DossierMutation,
+    [dossier],
+  );
+
   const pickFiles = (entry: DossierMutation) => {
     setUploadTarget(entry);
     fileInput.current?.click();
@@ -226,10 +248,18 @@ export default function DossierDetailDialog({
           </ScrollArea>
 
           <div>
-            <h4 className="mb-2 text-sm font-semibold">Facturen</h4>
+            <div className="mb-2 flex items-center justify-between">
+              <h4 className="text-sm font-semibold">Facturen</h4>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => pickFiles(dossierEntry)}>
+                  <Upload className="mr-1 h-3.5 w-3.5" /> Factuur toevoegen
+                </Button>
+              )}
+            </div>
             {documents.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                Nog geen facturen in dit dossier. Upload een PDF of foto via het uploadicoon bij een mutatie.
+                Nog geen facturen in dit dossier. Upload een PDF of foto via het uploadicoon bij een mutatie of via
+                "Factuur toevoegen".
               </p>
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-2">

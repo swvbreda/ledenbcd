@@ -335,7 +335,7 @@ export default function DossierOverzichtTab({ year }: Props) {
           dossier={activeRow.dossier}
           year={year}
           entries={activeRow.entries}
-          documents={documents.filter((doc) => activeRow.entries.some((e) => e.key === doc.entry_key))}
+          documents={documents.filter((doc) => activeRow.entries.some((e) => e.key === doc.entry_key) || doc.entry_key === `dossier:${activeRow.dossier}`)}
           isAdmin={canEdit}
           onRemoveFromDossier={(entry) => applyDossier([entry], null)}
         />
