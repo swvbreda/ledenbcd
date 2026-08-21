@@ -321,9 +321,8 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="leden-betalingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-              Leden &amp; betalingen
-            </TabsTrigger>
+            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+
             <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
