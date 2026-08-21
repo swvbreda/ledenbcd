@@ -127,10 +127,6 @@ export function dedupeEntries(entries: DossierEntry[]): DedupedEntry[] {
         sources: [e],
       });
     }
-
-    } else {
-      result.push({ ...e, sources: [e] });
-    }
   }
   result.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   return result;
