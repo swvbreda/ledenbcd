@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Download, Paperclip, Upload, X } from "lucide-react";
+import { Download, Link2, Paperclip, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
