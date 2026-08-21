@@ -14,7 +14,9 @@ export interface DossierMutation {
   date: string | null;
   /** Datum op de factuur/boeking uit Informer of een handmatige import. */
   invoiceDate: string | null;
-  /** Datum waarop de betaling werkelijk op de bankrekening is verwerkt. */
+  /** Bedrag volgens de factuurboeking (kan afwijken van de bankafschrijving). */
+  invoiceAmount: number | null;
+
   paymentDate: string | null;
   counterparty: string;
   description: string;
