@@ -312,7 +312,7 @@ export default function DossierOverzichtTab({ year }: Props) {
                           className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
                           onClick={(ev) => {
                             ev.stopPropagation();
-                            applyDossier([e], null);
+                            applyDossier((e as any).sources || [e], null);
                           }}
                           title="Verwijder uit dossier"
                         >
