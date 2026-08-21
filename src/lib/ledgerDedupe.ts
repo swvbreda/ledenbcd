@@ -37,13 +37,17 @@ export function invoiceNumbersIn(text?: string | null): string[] {
 
 /** Alle factuurnummers van een regel: uit het factuurveld én de omschrijving. */
 export function allInvoiceNumbers(entry: LedgerLike): string[] {
+  // Ook het hele factuurveld als één nummer (bv. "2026-0010" → "20260010").
+  const whole = String(entry.invoice || "").replace(/\D/g, "");
   return [
     ...new Set([
+      ...(whole.length >= 5 && whole.length <= 9 ? [whole] : []),
       ...invoiceNumbersIn(entry.invoice),
       ...invoiceNumbersIn(entry.description),
     ]),
   ];
 }
+
 
 /** Vergelijkbare sleutels van alle factuurnummers van een regel. */
 export function invoiceKeysOf(entry: LedgerLike): string[] {
