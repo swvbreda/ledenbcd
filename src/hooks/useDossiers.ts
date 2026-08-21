@@ -258,6 +258,13 @@ export function useDossierMutations(year: number) {
       if (pontoErr) throw pontoErr;
       for (const p of pontoRows || []) {
         const raw = Number(p.amount) || 0;
+        // Bankregels hebben geen apart factuurveld: nummers uit de omschrijving halen.
+        const pontoInvoices = [
+          ...new Set([
+            ...invoiceNumbersIn(p.description),
+            ...invoiceNumbersIn(p.remittance_info),
+          ]),
+        ].join(", ");
         rows.push({
           key: entryKeyFor("ponto", p.id),
           kind: "ponto",
