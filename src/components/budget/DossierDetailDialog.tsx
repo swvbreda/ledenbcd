@@ -291,31 +291,47 @@ export default function DossierDetailDialog({
                 </Button>
               )}
             </div>
-            {documents.length === 0 ? (
+            {uniqueDocs.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 Nog geen facturen in dit dossier. Upload een PDF of foto via het uploadicoon bij een mutatie of via
                 "Factuur toevoegen".
               </p>
             ) : (
               <div className="flex gap-3 overflow-x-auto pb-2">
-                {documents.map((d) => {
-                  const entry = entries.find((e) => e.key === d.entry_key);
+                {uniqueDocs.map((d) => {
+                  const entry = entryForDoc(d);
                   return (
-                    <DossierInvoiceThumb
-                      key={d.id}
-                      doc={d}
-                      caption={entry ? `${entry.counterparty || entry.description} · ${entry.invoice || formatDate(entry.date)}` : d.file_name}
-                      onOpen={setViewing}
-                      onDelete={
-                        isAdmin
-                          ? (doc) =>
-                              remove.mutate(doc, {
-                                onSuccess: () => toast.success("Factuur verwijderd"),
-                                onError: (err: any) => toast.error(err?.message || "Verwijderen mislukt"),
-                              })
-                          : undefined
-                      }
-                    />
+                    <div key={d.id} className="flex flex-col items-start gap-1">
+                      <DossierInvoiceThumb
+                        doc={d}
+                        caption={
+                          entry
+                            ? `${entry.counterparty || entry.description} · ${entry.invoice || formatDate(entry.date)}`
+                            : `${d.file_name} · nog geen betaling`
+                        }
+                        onOpen={setViewing}
+                        onDelete={
+                          isAdmin
+                            ? (doc) =>
+                                remove.mutate(doc, {
+                                  onSuccess: () => toast.success("Factuur verwijderd"),
+                                  onError: (err: any) => toast.error(err?.message || "Verwijderen mislukt"),
+                                })
+                            : undefined
+                        }
+                      />
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1 text-[11px] text-muted-foreground"
+                          onClick={() => setLinking(d)}
+                        >
+                          <Link2 className="mr-1 h-3 w-3" />
+                          {entry ? "Andere betaling" : "Koppelen aan betaling"}
+                        </Button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
