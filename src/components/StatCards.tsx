@@ -10,6 +10,8 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 import { supabase } from "@/integrations/supabase/client";
+import { countLocations, memberLocationCount } from "@/lib/locationCount";
+
 
 interface StatCardsProps {
   members: Member[];
@@ -76,7 +78,7 @@ const StatCards = ({ members }: StatCardsProps) => {
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
   const repCityCount: Record<string, number> = {};
   allRepresented.forEach((m) => {
-    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + (m.locaties?.length || m.aantalLocaties || 1);
+    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + memberLocationCount(m);
   });
   const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
   const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
