@@ -96,25 +96,25 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 .join(" · ")}
             </p>
           )}
+          {event.description && (
+            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{event.description}</p>
+          )}
+        </div>
+
+        <div className="flex w-full shrink-0 flex-col items-stretch gap-3 md:w-64 md:items-end">
           {imageUrl && (
-            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block">
               <img
                 src={imageUrl}
                 alt={`Afbeelding bij ${event.title}`}
                 loading="lazy"
-                className="max-h-72 w-auto rounded-md border border-border object-contain"
+                className="w-full rounded-md border border-border object-contain"
               />
             </a>
           )}
-          {event.description && (
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{event.description}</p>
-          )}
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {upcoming && memberId != null && (
-            own ? (
-              <>
+          {upcoming &&
+            (memberId != null && own ? (
+              <div className="flex flex-wrap items-center gap-2 md:justify-end">
                 <Button variant="outline" size="sm" onClick={() => setRegisterOpen(true)}>
                   Wijzigen ({own.guests} pers.)
                 </Button>
@@ -130,28 +130,33 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 >
                   Afmelden
                 </Button>
-              </>
-            ) : (
-              <Button size="sm" disabled={full} onClick={() => setRegisterOpen(true)}>
+              </div>
+            ) : memberId != null ? (
+              <Button className="w-full md:w-auto" disabled={full} onClick={() => setRegisterOpen(true)}>
                 {full ? "Volgeboekt" : "Aanmelden"}
               </Button>
-            )
-          )}
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setDeelnemersOpen(true)}>
-                Deelnemers
+            ) : isAdmin ? (
+              <Button className="w-full md:w-auto" disabled={full} onClick={() => setDeelnemersOpen(true)}>
+                {full ? "Volgeboekt" : "Aanmelden"}
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </>
-          )}
+            ) : null)}
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <Button variant="outline" size="sm" onClick={() => setDeelnemersOpen(true)}>
+            Deelnemers
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setConfirmDelete(true)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      )}
+
 
       <AgendaEventDialog open={editOpen} onOpenChange={setEditOpen} event={event} />
 
