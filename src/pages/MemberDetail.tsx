@@ -22,7 +22,8 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
-import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
+import { useAssignLinkLocation, useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
