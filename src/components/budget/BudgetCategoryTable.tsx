@@ -111,8 +111,21 @@ export default function BudgetCategoryTable({
               {!expanded && <><span className="text-muted-foreground text-xs">{spentLabel}: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">{remainingLabel}: </span><strong className={totalRemainingClass}><CurrencyText value={totalRemaining} className="justify-end" /></strong></>}
+              {!expanded && (
+                <>
+                  <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
+                  <strong className={isIncome ? totalRemainingClass : "text-green-600"}>
+                    <CurrencyText value={isIncome ? totalRemaining : availableTotal} className="justify-end" />
+                  </strong>
+                  {!isIncome && overrunTotal < 0 && (
+                    <span className="text-destructive text-xs ml-1">
+                      (overschreden <CurrencyText value={overrunTotal} className="inline-flex" />)
+                    </span>
+                  )}
+                </>
+              )}
             </td>
+
             <td />
           </tr>
         </thead>
