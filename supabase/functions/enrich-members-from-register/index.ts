@@ -249,6 +249,8 @@ Deno.serve(async (req) => {
         let loc = locaties.find((l) => sameLocation(l, shop));
         const locKey = normPc(shop.postcode) || norm(shop.naam);
 
+        const ubo = uboByRegister.get(rid) ?? [];
+
         if (!loc) {
           loc = {
             naam: shop.naam,
@@ -259,10 +261,20 @@ Deno.serve(async (req) => {
           };
           if (shop.kvk_oprichtingsdatum) loc.oprichtingsDatum = shop.kvk_oprichtingsdatum;
           if (shop.kvk_nummer) loc.kvk = shop.kvk_nummer;
+          if (shop.vergunninghouder) loc.vergunninghouder = shop.vergunninghouder;
+          if (shop.exploitant) loc.exploitant = shop.exploitant;
+          if (ubo.length) loc.ubo = ubo;
           locaties.push(loc);
           locationsAdded++;
           changed = true;
           continue;
+        }
+
+        // Eigendomsketen altijd bijwerken vanuit de bron (register is leidend)
+        if (ubo.length && JSON.stringify(loc.ubo ?? []) !== JSON.stringify(ubo)) {
+          loc.ubo = ubo;
+          fieldsFilled++;
+          changed = true;
         }
 
         const candidates: Array<[string, string | null]> = [
@@ -272,7 +284,10 @@ Deno.serve(async (req) => {
           ["stadsdeel", shop.gemeente],
           ["oprichtingsDatum", shop.kvk_oprichtingsdatum],
           ["kvk", shop.kvk_nummer],
+          ["vergunninghouder", shop.vergunninghouder],
+          ["exploitant", shop.exploitant],
         ];
+
 
         for (const [field, value] of candidates) {
           if (!value) continue;
