@@ -35,7 +35,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { isActiveShop } from "@/lib/registerActive";
+
 type Koppeling = "alle" | "lid" | "voorstel" | "geen";
+type Vergunning = "vergund" | "alle";
 
 const CoffeeshopRegisterPage = () => {
   const navigate = useNavigate();
@@ -52,6 +55,7 @@ const CoffeeshopRegisterPage = () => {
   const [search, setSearch] = useState("");
   const [gemeente, setGemeente] = useState("alle");
   const [koppeling, setKoppeling] = useState<Koppeling>("alle");
+  const [vergunning, setVergunning] = useState<Vergunning>("vergund");
   const [detail, setDetail] = useState<RegisterShop | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<{
     shop: RegisterShop;
@@ -86,16 +90,28 @@ const CoffeeshopRegisterPage = () => {
     return map;
   }, [links]);
 
-  const gemeenten = useMemo(
-    () => Array.from(new Set(shops.map((s) => s.gemeente).filter(Boolean) as string[])).sort(),
-    [shops],
+  /** Vergunde shops: de basis voor alle cijfers op deze pagina. */
+  const actief = useMemo(() => shops.filter(isActiveShop), [shops]);
+
+  /** Zichtbare shops: standaard alleen vergund, optioneel alle niet-vervallen. */
+  const zichtbaar = useMemo(
+    () => (vergunning === "vergund" ? actief : shops.filter((s) => !s.vervallen)),
+    [vergunning, actief, shops],
   );
 
-  const actief = useMemo(() => shops.filter((s) => !s.vervallen), [shops]);
+  const gemeenten = useMemo(
+    () => Array.from(new Set(zichtbaar.map((s) => s.gemeente).filter(Boolean) as string[])).sort(),
+    [zichtbaar],
+  );
+
+  const gemeentenVergund = useMemo(
+    () => new Set(actief.map((s) => s.gemeente).filter(Boolean) as string[]).size,
+    [actief],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return actief.filter((s) => {
+    return zichtbaar.filter((s) => {
       if (gemeente !== "alle" && s.gemeente !== gemeente) return false;
       const link = linkByShop.get(s.id);
       if (koppeling === "lid" && link?.status !== "bevestigd") return false;
@@ -106,16 +122,17 @@ const CoffeeshopRegisterPage = () => {
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q));
     });
-  }, [actief, search, gemeente, koppeling, linkByShop]);
+  }, [zichtbaar, search, gemeente, koppeling, linkByShop]);
 
   const bevestigd = useMemo(
-    () => Array.from(linkByShop.values()).filter((l) => l.status === "bevestigd").length,
-    [linkByShop],
+    () => actief.filter((s) => linkByShop.get(s.id)?.status === "bevestigd").length,
+    [actief, linkByShop],
   );
   const voorstellen = useMemo(
-    () => Array.from(linkByShop.values()).filter((l) => l.status === "voorstel").length,
-    [linkByShop],
+    () => actief.filter((s) => linkByShop.get(s.id)?.status === "voorstel").length,
+    [actief, linkByShop],
   );
+
 
   if (!allowed) {
     return (
@@ -166,10 +183,10 @@ const CoffeeshopRegisterPage = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Coffeeshops in NL", value: actief.length },
+          { label: "Vergunde coffeeshops in NL", value: actief.length },
           { label: "Gekoppeld aan leden", value: bevestigd },
           { label: "Voorstellen te bevestigen", value: voorstellen },
-          { label: "Gemeenten", value: gemeenten.length },
+          { label: "Gemeenten", value: gemeentenVergund },
         ].map((k) => (
           <div key={k.label} className="rounded-lg border bg-card p-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
@@ -206,6 +223,13 @@ const CoffeeshopRegisterPage = () => {
             <SelectItem value="lid">Aangesloten leden</SelectItem>
             <SelectItem value="voorstel">Voorstellen</SelectItem>
             <SelectItem value="geen">Niet gekoppeld</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={vergunning} onValueChange={(v) => setVergunning(v as Vergunning)}>
+          <SelectTrigger className="sm:w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="vergund">Alleen vergund</SelectItem>
+            <SelectItem value="alle">Incl. aanvragen &amp; weigeringen</SelectItem>
           </SelectContent>
         </Select>
       </div>

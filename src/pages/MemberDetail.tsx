@@ -20,7 +20,9 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import MemberRegisterShops from "@/components/register/MemberRegisterShops";
+import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
+import { locationKey } from "@/components/register/RegisterCoverageCard";
+import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
@@ -44,7 +46,7 @@ const setStoredContactpersonen = (memberId: number, namen: string[]) => {
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, isInhuur, linkedMemberIds } = useAuth();
+  const { isAdmin, isBoard, isInhuur, linkedMemberIds } = useAuth();
   const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeContacts = isAdmin || isInhuur || isOwnProfile;
@@ -54,6 +56,27 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+
+  // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
+  const canSeeRegister = isAdmin || isBoard;
+  const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
+  const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
+  const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
+  const memberLinks = useMemo(
+    () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
+    [registerLinks, memberId],
+  );
+  const linkByLocation = useMemo(() => {
+    const map = new Map<string, (typeof memberLinks)[number]>();
+    memberLinks.forEach((l) => {
+      if (!l.location_key) return;
+      const current = map.get(l.location_key);
+      if (!current || (current.status !== "bevestigd" && l.status === "bevestigd")) {
+        map.set(l.location_key, l);
+      }
+    });
+    return map;
+  }, [memberLinks]);
 
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
@@ -695,7 +718,10 @@ const MemberDetail = () => {
               <MapPin size={16} className="text-brand-red" /> Locaties ({member.aantalLocaties})
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {member.locaties.map((loc, i) => (
+              {member.locaties.map((loc, i) => {
+                const key = locationKey(loc as any);
+                const link = canSeeRegister ? linkByLocation.get(key) : undefined;
+                return (
                 <div key={i} className="border border-border rounded-md p-4 hover:bg-muted/20 transition-colors">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium font-display">{loc.naam}</span>
@@ -746,8 +772,35 @@ const MemberDetail = () => {
                     </div>
                   )}
 
+                  {canSeeRegister && (
+                    <LocationRegisterInfo link={link} shop={link ? shopById.get(link.register_id) : null} />
+                  )}
                 </div>
-              ))}
+                );
+              })}
+
+              {/* Registershops die aan dit lid gekoppeld zijn, maar (nog) niet aan een vestiging */}
+              {canSeeRegister &&
+                memberLinks
+                  .filter((l) => {
+                    if (!l.location_key) return true;
+                    return !member.locaties.some((loc) => locationKey(loc as any) === l.location_key);
+                  })
+                  .map((l) => {
+                    const shop = shopById.get(l.register_id);
+                    if (!shop) return null;
+                    return (
+                      <div key={l.id} className="border border-dashed border-border rounded-md p-4 bg-muted/10">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium font-display">{shop.naam}</span>
+                          <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
+                            Alleen in register
+                          </span>
+                        </div>
+                        <LocationRegisterInfo link={l} shop={shop} />
+                      </div>
+                    );
+                  })}
             </div>
           </div>
 
@@ -780,8 +833,6 @@ const MemberDetail = () => {
             </div>
           )}
 
-          {/* Gelieerde coffeeshops uit het landelijke register */}
-          {memberId != null && <MemberRegisterShops memberId={Number(memberId)} />}
 
           {/* Mailingvoorkeuren */}
           {(isAdmin || isOwnProfile) && (
