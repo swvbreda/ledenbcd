@@ -161,6 +161,28 @@ Deno.serve(async (req) => {
     }
     const shopById = new Map(shops.map((s) => [s.id, s]));
 
+    // Eigendomsketen (UBO) per registerrij ophalen
+    const uboByRegister = new Map<string, any[]>();
+    for (let i = 0; i < registerIds.length; i += 200) {
+      const { data: uboRows } = await db
+        .from("coffeeshop_register_ubo")
+        .select("register_id, niveau, naam, kvk_nummer, soort, is_uiteindelijk, toelichting")
+        .in("register_id", registerIds.slice(i, i + 200))
+        .order("niveau");
+      for (const u of uboRows ?? []) {
+        const arr = uboByRegister.get((u as any).register_id) ?? [];
+        arr.push({
+          naam: (u as any).naam,
+          kvk: (u as any).kvk_nummer ?? null,
+          niveau: (u as any).niveau,
+          soort: (u as any).soort,
+          uiteindelijkBelanghebbende: !!(u as any).is_uiteindelijk,
+          toelichting: (u as any).toelichting ?? null,
+        });
+        uboByRegister.set((u as any).register_id, arr);
+      }
+    }
+
     // KvK-verrijking (max 40 shops per run, gecached op de registerrij)
     let kvkLookups = 0;
     if (kvkKey) {
