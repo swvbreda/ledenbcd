@@ -44,6 +44,7 @@ const emptyForm = {
   location: "",
   max_seats: "",
   image_path: "" as string,
+  meeting_url: "",
   is_published: true,
 };
 
@@ -76,6 +77,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
             location: event.location ?? "",
             max_seats: event.max_seats != null ? String(event.max_seats) : "",
             image_path: event.image_path ?? "",
+            meeting_url: event.meeting_url ?? "",
             is_published: event.is_published,
           }
         : emptyForm,
@@ -111,6 +113,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
         location: form.location.trim() || null,
         max_seats: form.max_seats ? Number(form.max_seats) : null,
         image_path: imagePath,
+        meeting_url: form.meeting_url.trim() || null,
         is_published: form.is_published,
       },
       {
