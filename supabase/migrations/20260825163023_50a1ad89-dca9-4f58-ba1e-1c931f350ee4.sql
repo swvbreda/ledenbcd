@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.agenda_check_capacity() FROM PUBLIC, anon, authenticated;

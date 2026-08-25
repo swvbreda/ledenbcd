@@ -15,6 +15,7 @@ import LedenPage from "./pages/LedenPage";
 import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
+import AgendaPage from "./pages/AgendaPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
@@ -98,6 +99,7 @@ const App = () => (
                   <Route path="/ledenvoordelen" element={<LedenvoordelenPage />} />
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                   <Route path="/financien" element={<FinancienPage />} />
+                  <Route path="/agenda" element={<AgendaPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>

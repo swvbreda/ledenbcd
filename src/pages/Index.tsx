@@ -7,6 +7,8 @@ import JubileumOverzicht from "@/components/JubileumOverzicht";
 import BestuurOverzicht from "@/components/BestuurOverzicht";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MemberAlertBanner from "@/components/MemberAlertBanner";
+import AgendaDashboardCard from "@/components/agenda/AgendaDashboardCard";
+
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 
@@ -33,7 +35,10 @@ const Index = () => {
 
       <BestuurOverzicht members={members} />
 
+      <AgendaDashboardCard />
+
       <StatCards members={members} />
+
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
         <VerloopChart />
