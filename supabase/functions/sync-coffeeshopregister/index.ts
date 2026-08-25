@@ -1,0 +1,321 @@
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+/**
+ * Haalt het landelijke coffeeshopregister op uit het project "Coffeeshopbeleid"
+ * en zet het om naar lokale tabellen, inclusief automatische matching op leden.
+ *
+ * Zonder COFFEESHOPBELEID_API_SECRET gebruikt de functie de openbaar leesbare
+ * REST-tabellen (zonder UBO-keten). Met het geheim wordt het beveiligde
+ * export-eindpunt gebruikt, dat ook de eigendomsketen teruggeeft.
+ */
+
+const SOURCE_URL = "https://dilxcjjsvpxrkjrnivla.supabase.co";
+const SOURCE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpbHhjampzdnB4cmtqcm5pdmxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjcxNzgsImV4cCI6MjA5NDM0MzE3OH0.l7dN6P3FmCN-pD7ev5bqc46ZH7hjWaRq1YNhrN3NWRM";
+const SOURCE_APP_URL = "https://coffeeshopbeleid.nl";
+const PAGE_SIZE = 500;
+
+type SourceShop = Record<string, any>;
+
+function admin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+}
+
+/** Naam normaliseren voor matching: kleine letters, zonder ruis. */
+function normName(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\bcoffeeshop\b|\bcoffee\s?shop\b|\bshop\b/g, " ")
+    .replace(/\b(b\.?v\.?|v\.?o\.?f\.?|holding)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function normPlace(value: string | null | undefined): string {
+  return (value ?? "").toLowerCase().replace(/[^a-z]/g, "");
+}
+
+function normPostcode(value: string | null | undefined): string {
+  return (value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+async function fetchAllPublic(table: string, select: string): Promise<any[]> {
+  const rows: any[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const res = await fetch(
+      `${SOURCE_URL}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=id.asc&offset=${offset}&limit=${PAGE_SIZE}`,
+      { headers: { apikey: SOURCE_ANON_KEY, Authorization: `Bearer ${SOURCE_ANON_KEY}` } },
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Bron ${table} gaf ${res.status}: ${body.slice(0, 300)}`);
+    }
+    const page = await res.json();
+    rows.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  return rows;
+}
+
+/** Beveiligd export-eindpunt (inclusief UBO) van het bronproject. */
+async function fetchSecureExport(secret: string): Promise<SourceShop[] | null> {
+  const shops: SourceShop[] = [];
+  for (let page = 0; ; page++) {
+    const res = await fetch(
+      `${SOURCE_APP_URL}/api/public/hooks/bcd-register-export?page=${page}&limit=${PAGE_SIZE}`,
+      { headers: { "x-bcd-secret": secret } },
+    );
+    if (res.status === 404) return null; // eindpunt bestaat nog niet
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Export-eindpunt gaf ${res.status}: ${body.slice(0, 300)}`);
+    }
+    const json = await res.json();
+    const batch: SourceShop[] = json.shops ?? json.data ?? [];
+    shops.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
+  return shops;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // Alleen aanroepbaar met het interne geheim of de service-role sleutel.
+  const internal = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
+  const auth = req.headers.get("authorization") ?? "";
+  const providedInternal = req.headers.get("x-internal-secret");
+  const isService = auth === `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+  if (!isService && (!internal || providedInternal !== internal)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const db = admin();
+  let shopsSynced = 0;
+  let uboSynced = 0;
+  let linksProposed = 0;
+
+  try {
+    const secret = Deno.env.get("COFFEESHOPBELEID_API_SECRET");
+    let shops: SourceShop[] | null = null;
+    let uboBron: "export" | "geen" = "geen";
+
+    if (secret) {
+      shops = await fetchSecureExport(secret);
+      if (shops) uboBron = "export";
+    }
+
+    let gemeenteById = new Map<string, { naam: string; provincie: string | null }>();
+    if (!shops) {
+      // Terugval: openbare registergegevens zonder UBO.
+      const [bronShops, gemeenten] = await Promise.all([
+        fetchAllPublic("coffeeshop_vergunningen", "*"),
+        fetchAllPublic("gemeenten", "id,naam,provincie"),
+      ]);
+      gemeenteById = new Map(
+        gemeenten.map((g: any) => [g.id, { naam: g.naam, provincie: g.provincie ?? null }]),
+      );
+      shops = bronShops;
+    } else {
+      gemeenteById = new Map(
+        shops
+          .filter((s) => s.gemeente_id && s.gemeente)
+          .map((s) => [
+            s.gemeente_id,
+            {
+              naam: typeof s.gemeente === "string" ? s.gemeente : s.gemeente?.naam,
+              provincie: typeof s.gemeente === "object" ? s.gemeente?.provincie ?? null : s.provincie ?? null,
+            },
+          ]),
+      );
+    }
+
+    const rows = shops.map((s) => {
+      const gem = gemeenteById.get(s.gemeente_id);
+      return {
+        bron_id: s.id,
+        naam: s.naam_coffeeshop ?? s.naam ?? "Onbekend",
+        straat: s.straat ?? null,
+        huisnummer: s.huisnummer ?? null,
+        huisnummer_toevoeging: s.huisnummer_toevoeging ?? null,
+        postcode: s.postcode ?? null,
+        plaats: s.plaats ?? null,
+        gemeente: gem?.naam ?? (typeof s.gemeente === "string" ? s.gemeente : null),
+        provincie: gem?.provincie ?? null,
+        latitude: s.latitude ?? null,
+        longitude: s.longitude ?? null,
+        exploitant: s.exploitant ?? null,
+        vergunninghouder: s.vergunninghouder ?? null,
+        vergunningnummer: s.vergunningnummer ?? null,
+        status: s.status ?? "actief",
+        vergunningverlening: s.vergunningverlening ?? null,
+        einddatum: s.einddatum ?? null,
+        website: s.website ?? null,
+        telefoon: s.telefoon ?? null,
+        raw: s,
+        vervallen: false,
+        synced_at: new Date().toISOString(),
+      };
+    });
+
+    for (let i = 0; i < rows.length; i += 200) {
+      const chunk = rows.slice(i, i + 200);
+      const { error } = await db.from("coffeeshop_register").upsert(chunk, { onConflict: "bron_id" });
+      if (error) throw error;
+      shopsSynced += chunk.length;
+    }
+
+    // Bronrecords die niet meer voorkomen markeren als vervallen.
+    const bronIds = new Set(rows.map((r) => r.bron_id));
+    const { data: bestaand } = await db.from("coffeeshop_register").select("id,bron_id,vervallen");
+    const verdwenen = (bestaand ?? []).filter((r: any) => !bronIds.has(r.bron_id) && !r.vervallen);
+    if (verdwenen.length) {
+      await db
+        .from("coffeeshop_register")
+        .update({ vervallen: true })
+        .in("id", verdwenen.map((r: any) => r.id));
+    }
+
+    // UBO-keten (alleen beschikbaar via het beveiligde eindpunt).
+    if (uboBron === "export") {
+      const { data: registerRows } = await db.from("coffeeshop_register").select("id,bron_id");
+      const idByBron = new Map((registerRows ?? []).map((r: any) => [r.bron_id, r.id]));
+      const uboRows = shops.flatMap((s) =>
+        (s.ubo_keten ?? s.ubo ?? []).map((u: any) => ({
+          register_id: idByBron.get(s.id),
+          niveau: u.niveau ?? 0,
+          naam: u.naam,
+          kvk_nummer: u.kvk_nummer ?? null,
+          soort: u.soort ?? "rechtspersoon",
+          betrouwbaarheid: u.betrouwbaarheid ?? null,
+          is_uiteindelijk: !!u.is_uiteindelijk,
+          toelichting: u.toelichting ?? null,
+        })).filter((u: any) => u.register_id && u.naam),
+      );
+      for (let i = 0; i < uboRows.length; i += 200) {
+        const chunk = uboRows.slice(i, i + 200);
+        const { error } = await db
+          .from("coffeeshop_register_ubo")
+          .upsert(chunk, { onConflict: "register_id,niveau,naam" });
+        if (error) throw error;
+        uboSynced += chunk.length;
+      }
+    }
+
+    // ---- Automatische matching op leden ----
+    const { data: registerRows } = await db
+      .from("coffeeshop_register")
+      .select("id,naam,plaats,gemeente,postcode,huisnummer")
+      .eq("vervallen", false);
+    const { data: memberRows } = await db
+      .from("members_data")
+      .select("id,data")
+      .eq("member_type", "member");
+    const { data: editRows } = await db.from("member_edits").select("member_id,data");
+    const editById = new Map((editRows ?? []).map((e: any) => [e.member_id, e.data]));
+    const { data: existingLinks } = await db
+      .from("coffeeshop_member_links")
+      .select("register_id,member_id");
+    const linkKey = new Set((existingLinks ?? []).map((l: any) => `${l.register_id}:${l.member_id}`));
+
+    type Kandidaat = { member_id: number; naam: string; plaats: string; postcode: string; huisnummer: string };
+    const kandidaten: Kandidaat[] = [];
+    for (const m of memberRows ?? []) {
+      const data = { ...(m as any).data, ...(editById.get((m as any).id) ?? {}) };
+      const locaties = Array.isArray(data.locaties) && data.locaties.length
+        ? data.locaties
+        : [{ naam: data.naam, plaats: data.plaats, postcode: data.postcode, adres: data.adres }];
+      for (const loc of locaties) {
+        const adres: string = loc.adres ?? "";
+        kandidaten.push({
+          member_id: (m as any).id,
+          naam: normName(loc.naam ?? data.naam),
+          plaats: normPlace(loc.plaats ?? data.plaats),
+          postcode: normPostcode(loc.postcode),
+          huisnummer: (adres.match(/(\d+)/)?.[1] ?? ""),
+        });
+      }
+    }
+
+    const nieuweLinks: any[] = [];
+    for (const shop of registerRows ?? []) {
+      const sNaam = normName((shop as any).naam);
+      const sPlaats = normPlace((shop as any).plaats);
+      const sPostcode = normPostcode((shop as any).postcode);
+      const sNummer = String((shop as any).huisnummer ?? "").replace(/\D/g, "");
+
+      let best: { member_id: number; score: number; reden: string } | null = null;
+      for (const k of kandidaten) {
+        let score = 0;
+        let reden = "";
+        if (sPostcode && k.postcode && sPostcode === k.postcode && sNummer && k.huisnummer === sNummer) {
+          score = 0.95;
+          reden = "Adres (postcode + huisnummer)";
+        } else if (sNaam && k.naam && sNaam === k.naam && sPlaats && sPlaats === k.plaats) {
+          score = 0.9;
+          reden = "Naam + plaats";
+        } else if (sNaam && k.naam && sNaam === k.naam && sPlaats && k.plaats) {
+          score = 0.6;
+          reden = "Alleen naam";
+        }
+        if (score > (best?.score ?? 0)) best = { member_id: k.member_id, score, reden };
+      }
+
+      if (best && best.score >= 0.6 && !linkKey.has(`${(shop as any).id}:${best.member_id}`)) {
+        nieuweLinks.push({
+          register_id: (shop as any).id,
+          member_id: best.member_id,
+          match_score: best.score,
+          match_reden: best.reden,
+          status: best.score >= 0.9 ? "voorstel" : "voorstel",
+        });
+      }
+    }
+
+    for (let i = 0; i < nieuweLinks.length; i += 200) {
+      const chunk = nieuweLinks.slice(i, i + 200);
+      const { error } = await db
+        .from("coffeeshop_member_links")
+        .upsert(chunk, { onConflict: "register_id,member_id", ignoreDuplicates: true });
+      if (error) throw error;
+      linksProposed += chunk.length;
+    }
+
+    await db.from("coffeeshop_register_sync_state").update({
+      last_run_at: new Date().toISOString(),
+      last_status: uboBron === "export" ? "ok (incl. UBO)" : "ok (openbaar, zonder UBO)",
+      shops_synced: shopsSynced,
+      ubo_synced: uboSynced,
+      links_proposed: linksProposed,
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+
+    return new Response(
+      JSON.stringify({ ok: true, shopsSynced, uboSynced, linksProposed, uboBron }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (err: any) {
+    console.error("sync-coffeeshopregister mislukt:", err?.message ?? err);
+    await db.from("coffeeshop_register_sync_state").update({
+      last_run_at: new Date().toISOString(),
+      last_status: "fout",
+      error_message: String(err?.message ?? err).slice(0, 500),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+
+    return new Response(JSON.stringify({ error: String(err?.message ?? err) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
