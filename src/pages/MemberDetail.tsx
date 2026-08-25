@@ -57,6 +57,27 @@ const MemberDetail = () => {
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
+  // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
+  const canSeeRegister = isAdmin || isBoard;
+  const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
+  const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
+  const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
+  const memberLinks = useMemo(
+    () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
+    [registerLinks, memberId],
+  );
+  const linkByLocation = useMemo(() => {
+    const map = new Map<string, (typeof memberLinks)[number]>();
+    memberLinks.forEach((l) => {
+      if (!l.location_key) return;
+      const current = map.get(l.location_key);
+      if (!current || (current.status !== "bevestigd" && l.status === "bevestigd")) {
+        map.set(l.location_key, l);
+      }
+    });
+    return map;
+  }, [memberLinks]);
+
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
   useEffect(() => {
