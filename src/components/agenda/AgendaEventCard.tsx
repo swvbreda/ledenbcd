@@ -40,6 +40,7 @@ interface Props {
 
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
   const { unregister, deleteEvent } = useAgendaMutations();
+  const { isBoard } = useAuth();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
   const { rawMembers, rawLeads } = useMembersData();
