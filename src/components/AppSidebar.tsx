@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -25,9 +25,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
@@ -55,7 +52,6 @@ export function AppSidebar() {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [saving, setSaving] = useState(false);
-  const [ledenOpen, setLedenOpen] = useState(false);
   const canSeeRegister = isAdmin || isBoard;
 
   const handleChangePassword = async () => {
@@ -96,68 +92,39 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
-                  if (item.title === "Ledenbestand" && canSeeRegister) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          onClick={() => setLedenOpen((v) => !v)}
-                          data-state={ledenOpen ? "open" : "closed"}
-                          className="hover:bg-sidebar-accent/50"
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && (
-                            <ChevronDown
-                              className={`ml-auto h-4 w-4 transition-transform ${ledenOpen ? "rotate-180" : ""}`}
-                            />
-                          )}
-                        </SidebarMenuButton>
-                        {ledenOpen && (
-                          <SidebarMenuSub>
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink
-                                  to="/leden"
-                                  className="hover:bg-sidebar-accent/50"
-                                  activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                                  onClick={closeMobile}
-                                >
-                                  <span>Leden</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink
-                                  to="/coffeeshopregister"
-                                  className="hover:bg-sidebar-accent/50"
-                                  activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                                  onClick={closeMobile}
-                                >
-                                  <span>Coffeeshopregister</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          </SidebarMenuSub>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  }
-                  return (
-                    <SidebarMenuItem key={item.title}>
+                  const registerItem = canSeeRegister && item.title === "Ledenbestand" && (
+                    <SidebarMenuItem key="Coffeeshopregister">
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url}
-                          end={item.url === "/"}
+                          to="/coffeeshopregister"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
                           onClick={closeMobile}
                         >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
+                          <Building2 className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Coffeeshopregister</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
+                  );
+                  return (
+                    <>
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === "/"}
+                            className="hover:bg-sidebar-accent/50"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                            onClick={closeMobile}
+                          >
+                            <item.icon className="mr-2 h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {registerItem}
+                    </>
                   );
                 })}
                 {isAdmin && (
