@@ -120,6 +120,7 @@ export function useSetRegisterLink() {
       member_id: number | null;
       status: "bevestigd" | "afgewezen";
       existingId?: string;
+      previousStatus?: "voorstel" | "afgewezen";
     }) => {
       if (input.status === "afgewezen" && input.existingId) {
         const { error } = await supabase
@@ -143,8 +144,33 @@ export function useSetRegisterLink() {
       );
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
       qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+      if (input.status === "bevestigd") {
+        toast.success("Koppeling bevestigd", {
+          action: {
+            label: "Ongedaan maken",
+            onClick: async () => {
+              const query = supabase
+                .from("coffeeshop_member_links")
+                .update({ status: input.previousStatus ?? "afgewezen" });
+              const { error } = input.existingId
+                ? await query.eq("id", input.existingId)
+                : await query
+                    .eq("register_id", input.register_id)
+                    .eq("member_id", input.member_id ?? -1);
+              if (error) {
+                toast.error("Ongedaan maken mislukt");
+                return;
+              }
+              qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+              toast.success("Koppeling ongedaan gemaakt");
+            },
+          },
+        });
+      } else {
+        toast.success("Koppeling verwijderd");
+      }
     },
     onError: (e: any) => toast.error(e.message ?? "Koppelen mislukt"),
   });

@@ -23,6 +23,16 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Koppeling = "alle" | "lid" | "voorstel" | "geen";
 
@@ -42,6 +52,7 @@ const CoffeeshopRegisterPage = () => {
   const [gemeente, setGemeente] = useState("alle");
   const [koppeling, setKoppeling] = useState<Koppeling>("alle");
   const [detail, setDetail] = useState<RegisterShop | null>(null);
+  const [unlinkTarget, setUnlinkTarget] = useState<{ shop: RegisterShop; linkId: string; memberId: number } | null>(null);
 
   const memberName = useMemo(() => {
     const map = new Map<number, string>();
@@ -238,6 +249,8 @@ const CoffeeshopRegisterPage = () => {
                                 register_id: s.id,
                                 member_id: link.member_id,
                                 status: "bevestigd",
+                                existingId: link.id,
+                                previousStatus: "voorstel",
                               })
                             }
                           >
@@ -259,6 +272,18 @@ const CoffeeshopRegisterPage = () => {
                           </Button>
                         </span>
                       )}
+                      {link?.status === "bevestigd" && (
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setUnlinkTarget({ shop: s, linkId: link.id, memberId: link.member_id })}
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Ontkoppelen
+                          </Button>
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -273,6 +298,36 @@ const CoffeeshopRegisterPage = () => {
         open={!!detail}
         onOpenChange={(o) => !o && setDetail(null)}
       />
+
+      <AlertDialog open={!!unlinkTarget} onOpenChange={(open) => !open && setUnlinkTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Koppeling verwijderen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {unlinkTarget
+                ? `${unlinkTarget.shop.naam} wordt ontkoppeld van ${memberName.get(unlinkTarget.memberId) ?? `lid #${unlinkTarget.memberId}`}. Andere koppelingen en lidgegevens blijven behouden.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!unlinkTarget) return;
+                setLink.mutate({
+                  register_id: unlinkTarget.shop.id,
+                  member_id: unlinkTarget.memberId,
+                  status: "afgewezen",
+                  existingId: unlinkTarget.linkId,
+                });
+                setUnlinkTarget(null);
+              }}
+            >
+              Ontkoppelen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
