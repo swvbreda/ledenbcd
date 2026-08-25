@@ -274,6 +274,7 @@ Deno.serve(async (req) => {
       const sNummer = String((shop as any).huisnummer ?? "").replace(/\D/g, "");
 
       let best: { member_id: number; score: number; reden: string } | null = null;
+      let besteLeden = new Set<number>(); // leden met dezelfde topscore (uniciteitscheck)
       for (const k of kandidaten) {
         let score = 0;
         let reden = "";
@@ -287,18 +288,28 @@ Deno.serve(async (req) => {
           score = 0.6;
           reden = "Alleen naam";
         }
-        if (score > (best?.score ?? 0)) best = { member_id: k.member_id, score, reden };
+        if (score === 0) continue;
+        if (score > (best?.score ?? 0)) {
+          best = { member_id: k.member_id, score, reden };
+          besteLeden = new Set([k.member_id]);
+        } else if (best && score === best.score) {
+          besteLeden.add(k.member_id);
+        }
       }
 
       if (best && best.score >= 0.6 && !linkKey.has(`${(shop as any).id}:${best.member_id}`)) {
+        // Alleen automatisch bevestigen bij hoge zekerheid én een unieke kandidaat.
+        const uniek = besteLeden.size === 1;
         nieuweLinks.push({
           register_id: (shop as any).id,
           member_id: best.member_id,
           match_score: best.score,
           match_reden: best.reden,
-          status: best.score >= 0.9 ? "voorstel" : "voorstel",
+          status: best.score >= 0.9 && uniek ? "bevestigd" : "voorstel",
+          bevestigd_op: best.score >= 0.9 && uniek ? new Date().toISOString() : null,
         });
       }
+
     }
 
     for (let i = 0; i < nieuweLinks.length; i += 200) {

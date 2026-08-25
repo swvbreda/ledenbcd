@@ -20,6 +20,7 @@ import {
   type MembershipRequest,
 } from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import RegisterLinkApprovals from "@/components/register/RegisterLinkApprovals";
 import type { Member } from "@/data/types";
 
 const fieldLabels: Record<string, string> = {
@@ -332,6 +333,9 @@ export default function GoedkeuringenPage() {
           {showAll ? "Alleen openstaand" : "Toon alles"}
         </Button>
       </BcdHeroBanner>
+
+      {/* Koppelvoorstellen coffeeshopregister */}
+      <RegisterLinkApprovals />
 
       {/* Nieuwe aanmeldingen via publieke site */}
       <section className="space-y-2">
