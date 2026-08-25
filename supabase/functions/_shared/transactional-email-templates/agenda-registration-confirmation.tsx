@@ -12,6 +12,7 @@ interface Props {
   eventTime?: string
   location?: string
   guests?: number | string
+  attendeeNames?: string
   note?: string
   description?: string
   eventUrl?: string
