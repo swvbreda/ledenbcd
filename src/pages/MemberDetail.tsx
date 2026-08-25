@@ -717,6 +717,9 @@ const MemberDetail = () => {
             </div>
           )}
 
+          {/* Gelieerde coffeeshops uit het landelijke register */}
+          {memberId != null && <MemberRegisterShops memberId={Number(memberId)} />}
+
           {/* Mailingvoorkeuren */}
           {(isAdmin || isOwnProfile) && (
             <MailingPreferences member={member} canEdit={isAdmin || isOwnProfile} />
