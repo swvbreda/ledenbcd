@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
     // ---- Automatische matching op leden ----
     const { data: registerRows } = await db
       .from("coffeeshop_register")
-      .select("id,naam,plaats,gemeente,postcode,huisnummer")
+      .select("id,naam,plaats,gemeente,postcode,huisnummer,kvk_nummer,vergunninghouder,exploitant")
       .eq("vervallen", false);
     const { data: memberRows } = await db
       .from("members_data")
@@ -247,21 +247,65 @@ Deno.serve(async (req) => {
       .select("register_id,member_id");
     const linkKey = new Set((existingLinks ?? []).map((l: any) => `${l.register_id}:${l.member_id}`));
 
-    type Kandidaat = { member_id: number; naam: string; plaats: string; postcode: string; huisnummer: string };
+    // UBO-keten per registershop (leeg zolang het beveiligde eindpunt niet gebruikt wordt).
+    const { data: uboAll } = await db
+      .from("coffeeshop_register_ubo")
+      .select("register_id,naam,kvk_nummer");
+    const uboByRegister = new Map<string, { namen: Set<string>; kvks: Set<string> }>();
+    for (const u of uboAll ?? []) {
+      const key = (u as any).register_id as string;
+      if (!uboByRegister.has(key)) uboByRegister.set(key, { namen: new Set(), kvks: new Set() });
+      const bucket = uboByRegister.get(key)!;
+      const n = normName((u as any).naam);
+      if (n) bucket.namen.add(n);
+      const k = normKvk((u as any).kvk_nummer);
+      if (k) bucket.kvks.add(k);
+    }
+
+    type Kandidaat = {
+      member_id: number;
+      naam: string;
+      plaats: string;
+      postcode: string;
+      huisnummer: string;
+      kvks: Set<string>;
+      bedrijven: Set<string>;
+    };
     const kandidaten: Kandidaat[] = [];
     for (const m of memberRows ?? []) {
       const data = { ...(m as any).data, ...(editById.get((m as any).id) ?? {}) };
       const locaties = Array.isArray(data.locaties) && data.locaties.length
         ? data.locaties
         : [{ naam: data.naam, plaats: data.plaats, postcode: data.postcode, adres: data.adres }];
+      // Bedrijfsnamen en KvK-nummers gelden voor het hele lid (BV kan meerdere shops houden).
+      const memberBedrijven = new Set<string>();
+      for (const v of [data.bedrijfsnaam, data.factuurBedrijfsnaam, data.vergunninghouder, data.exploitant]) {
+        const n = normName(v);
+        if (n) memberBedrijven.add(n);
+      }
+      const memberKvks = new Set<string>();
+      for (const v of [data.kvk, data.kvkNummer, data.factuurKvk]) {
+        const k = normKvk(v);
+        if (k) memberKvks.add(k);
+      }
+      for (const loc of locaties) {
+        for (const v of [loc.bedrijfsnaam, loc.vergunninghouder, loc.exploitant]) {
+          const n = normName(v);
+          if (n) memberBedrijven.add(n);
+        }
+        const lk = normKvk(loc.kvk);
+        if (lk) memberKvks.add(lk);
+      }
       for (const loc of locaties) {
         const adres: string = loc.adres ?? "";
         kandidaten.push({
           member_id: (m as any).id,
           naam: normName(loc.naam ?? data.naam),
-          plaats: normPlace(loc.plaats ?? data.plaats),
+          plaats: normPlace(canonPlace(loc.plaats ?? data.plaats)),
           postcode: normPostcode(loc.postcode),
           huisnummer: (adres.match(/(\d+)/)?.[1] ?? ""),
+          kvks: memberKvks,
+          bedrijven: memberBedrijven,
         });
       }
     }
@@ -269,24 +313,54 @@ Deno.serve(async (req) => {
     const nieuweLinks: any[] = [];
     for (const shop of registerRows ?? []) {
       const sNaam = normName((shop as any).naam);
-      const sPlaats = normPlace((shop as any).plaats);
+      const sPlaats = normPlace(canonPlace((shop as any).plaats));
+      const sGemeente = normPlace(canonPlace((shop as any).gemeente));
       const sPostcode = normPostcode((shop as any).postcode);
       const sNummer = String((shop as any).huisnummer ?? "").replace(/\D/g, "");
+      const sKvk = normKvk((shop as any).kvk_nummer);
+      const sBedrijven = new Map<string, string>(); // genormaliseerd -> label
+      for (const [label, waarde] of [
+        ["Vergunninghouder", (shop as any).vergunninghouder],
+        ["Exploitant", (shop as any).exploitant],
+      ] as const) {
+        const n = normName(waarde);
+        if (n) sBedrijven.set(n, `${label}: ${waarde}`);
+      }
+      const ubo = uboByRegister.get((shop as any).id) ?? { namen: new Set<string>(), kvks: new Set<string>() };
 
       let best: { member_id: number; score: number; reden: string } | null = null;
       let besteLeden = new Set<number>(); // leden met dezelfde topscore (uniciteitscheck)
       for (const k of kandidaten) {
         let score = 0;
         let reden = "";
+        const zelfdePlaats = !!sPlaats && !!k.plaats && (sPlaats === k.plaats || sGemeente === k.plaats);
+
+        const kvkHit = sKvk && k.kvks.has(sKvk);
+        const bedrijfHit = [...sBedrijven.keys()].find((n) => k.bedrijven.has(n));
+        const uboKvkHit = [...ubo.kvks].find((v) => k.kvks.has(v));
+        const uboNaamHit = [...ubo.namen].find((v) => k.bedrijven.has(v));
+
         if (sPostcode && k.postcode && sPostcode === k.postcode && sNummer && k.huisnummer === sNummer) {
           score = 0.95;
           reden = "Adres (postcode + huisnummer)";
-        } else if (sNaam && k.naam && sNaam === k.naam && sPlaats && sPlaats === k.plaats) {
+        } else if (kvkHit) {
+          score = 0.95;
+          reden = `KvK ${(shop as any).kvk_nummer}`;
+        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats) {
           score = 0.9;
           reden = "Naam + plaats";
-        } else if (sNaam && k.naam && sNaam === k.naam && sPlaats && k.plaats) {
+        } else if (bedrijfHit) {
+          score = 0.85;
+          reden = sBedrijven.get(bedrijfHit)!;
+        } else if (uboKvkHit || uboNaamHit) {
+          score = 0.75;
+          reden = "UBO/eigendomsketen komt overeen";
+        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats === false && sPlaats && k.plaats) {
+          // Zelfde naam maar andere plaats: geen voorstel meer (te veel valse matches).
+          continue;
+        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats) {
           score = 0.6;
-          reden = "Alleen naam";
+          reden = "Alleen naam (zelfde plaats)";
         }
         if (score === 0) continue;
         if (score > (best?.score ?? 0)) {
@@ -311,6 +385,7 @@ Deno.serve(async (req) => {
       }
 
     }
+
 
     for (let i = 0; i < nieuweLinks.length; i += 200) {
       const chunk = nieuweLinks.slice(i, i + 200);
