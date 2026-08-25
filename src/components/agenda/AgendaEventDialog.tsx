@@ -218,10 +218,43 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
             <Label htmlFor="ag-desc">Omschrijving</Label>
             <Textarea
               id="ag-desc"
-              rows={3}
+              rows={6}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder={"Gebruik lege regels voor alinea's."}
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Regeleinden en witregels blijven behouden.
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="ag-img">Afbeelding (poster of flyer)</Label>
+            <Input
+              id="ag-img"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            {previewUrl && (
+              <div className="mt-2 flex items-start gap-3">
+                <img
+                  src={previewUrl}
+                  alt="Voorbeeld van de agenda-afbeelding"
+                  className="h-32 w-auto rounded-md border border-border object-cover"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFile(null);
+                    setForm({ ...form, image_path: "" });
+                  }}
+                >
+                  Verwijderen
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -238,9 +271,10 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuleren
           </Button>
-          <Button onClick={submit} disabled={saveEvent.isPending}>
-            Opslaan
+          <Button onClick={submit} disabled={saveEvent.isPending || uploading}>
+            {uploading ? "Uploaden…" : "Opslaan"}
           </Button>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>
