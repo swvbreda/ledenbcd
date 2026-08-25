@@ -32,6 +32,7 @@ const AgendaRegistrationConfirmation = ({
   eventTime,
   location,
   guests,
+  attendeeNames,
   note,
   description,
   eventUrl,
