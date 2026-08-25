@@ -63,8 +63,10 @@ const LocatiesPage = () => {
   const navigate = useNavigate();
 
   const { members: represented } = useMergedMembers(allRepresented);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   const representedLocaties = countLocations(represented);
-  const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
+  const marketPctNL = totalNL > 0 ? Math.round((representedLocaties / totalNL) * 100) : 0;
+
 
   // Track when data updates to show a brief notification
   const [showUpdated, setShowUpdated] = useState(false);
