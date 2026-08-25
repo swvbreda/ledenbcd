@@ -20,6 +20,7 @@ const GemeenteDetailPage = () => {
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
+  const { perGemeente: perStad } = useRegisterStats();
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
@@ -113,7 +114,7 @@ const GemeenteDetailPage = () => {
     });
 
     return { totaalNL, aangesloten, marktPct, stadsdelen, perStadsdeel, sortedKeys, locaties };
-  }, [decodedGemeente, mergedRepresented]);
+  }, [perStad, decodedGemeente, mergedRepresented]);
 
   if (!data) {
     return (

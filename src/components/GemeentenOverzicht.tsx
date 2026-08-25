@@ -57,6 +57,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   // Use merged members + merged leads for market share calculations
   const represented = [...members, ...mergedLeads];
   const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
