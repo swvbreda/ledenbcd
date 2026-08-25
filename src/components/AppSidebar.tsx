@@ -92,71 +92,37 @@ export function AppSidebar() {
             <SidebarGroupLabel>Navigatie</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navItems.map((item) => {
-                  if (item.title === "Ledenbestand" && canSeeRegister) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          onClick={() => setLedenOpen((v) => !v)}
-                          data-state={ledenOpen ? "open" : "closed"}
-                          className="hover:bg-sidebar-accent/50"
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && (
-                            <ChevronDown
-                              className={`ml-auto h-4 w-4 transition-transform ${ledenOpen ? "rotate-180" : ""}`}
-                            />
-                          )}
-                        </SidebarMenuButton>
-                        {ledenOpen && (
-                          <SidebarMenuSub>
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink
-                                  to="/leden"
-                                  className="hover:bg-sidebar-accent/50"
-                                  activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                                  onClick={closeMobile}
-                                >
-                                  <span>Leden</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink
-                                  to="/coffeeshopregister"
-                                  className="hover:bg-sidebar-accent/50"
-                                  activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                                  onClick={closeMobile}
-                                >
-                                  <span>Coffeeshopregister</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          </SidebarMenuSub>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  }
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.url}
-                          end={item.url === "/"}
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                          onClick={closeMobile}
-                        >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        className="hover:bg-sidebar-accent/50"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                        onClick={closeMobile}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {canSeeRegister && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/coffeeshopregister"
+                        className="hover:bg-sidebar-accent/50"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                        onClick={closeMobile}
+                      >
+                        <Building2 className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>Coffeeshopregister</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
                 {isAdmin && (
                   <>
                     <SidebarMenuItem>
