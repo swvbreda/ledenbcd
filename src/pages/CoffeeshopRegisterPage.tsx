@@ -35,7 +35,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { isActiveShop } from "@/lib/registerActive";
+
 type Koppeling = "alle" | "lid" | "voorstel" | "geen";
+type Vergunning = "vergund" | "alle";
 
 const CoffeeshopRegisterPage = () => {
   const navigate = useNavigate();
