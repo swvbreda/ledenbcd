@@ -16,6 +16,7 @@ import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
 import AgendaPage from "./pages/AgendaPage";
+import CoffeeshopRegisterPage from "./pages/CoffeeshopRegisterPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
