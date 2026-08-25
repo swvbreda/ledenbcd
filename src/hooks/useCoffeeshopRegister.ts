@@ -44,6 +44,7 @@ export type RegisterLink = {
   match_score: number;
   match_reden: string | null;
   status: "voorstel" | "bevestigd" | "afgewezen";
+  location_key: string | null;
 };
 
 export function useCoffeeshopRegister(enabled = true) {
