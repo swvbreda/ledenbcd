@@ -16,6 +16,7 @@ import {
 import {
   useAgendaMutations,
   useAgendaImageUrl,
+  useAgendaBoardAttendance,
   formatEventDate,
   formatTimeRange,
   isUpcoming,
