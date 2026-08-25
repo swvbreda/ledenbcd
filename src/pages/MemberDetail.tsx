@@ -315,6 +315,41 @@ const MemberDetail = () => {
                       </AlertDialogContent>
                     </AlertDialog>
                   )}
+                  {isAdmin && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-destructive">
+                          <Trash2 size={14} /> Verwijderen
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Definitief verwijderen?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {member.naam} wordt permanent uit de database verwijderd. Dit kan niet ongedaan worden gemaakt.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={async () => {
+                              const { error } = await supabase.from("members_data").delete().eq("id", member.id);
+                              if (error) {
+                                toast.error("Verwijderen mislukt");
+                                console.error(error);
+                                return;
+                              }
+                              toast.success(`${member.naam} is verwijderd`);
+                              refetchMembers();
+                              navigate("/leden");
+                            }}
+                          >
+                            Verwijderen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               )}
             </div>
