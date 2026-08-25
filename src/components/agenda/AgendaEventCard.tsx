@@ -125,8 +125,9 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 src={imageUrl}
                 alt={`Afbeelding bij ${event.title}`}
                 loading="lazy"
-                className="w-full rounded-md border border-border object-contain"
+                className="aspect-[3/4] w-full rounded-md border border-border bg-muted/40 object-contain"
               />
+
             </a>
           )}
           {upcoming &&
