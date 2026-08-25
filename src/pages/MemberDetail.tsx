@@ -46,7 +46,7 @@ const setStoredContactpersonen = (memberId: number, namen: string[]) => {
 const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, isInhuur, linkedMemberIds } = useAuth();
+  const { isAdmin, isBoard, isInhuur, linkedMemberIds } = useAuth();
   const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   const canSeeContacts = isAdmin || isInhuur || isOwnProfile;
