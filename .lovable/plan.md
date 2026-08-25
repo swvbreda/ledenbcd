@@ -4,6 +4,8 @@
 
 1. **Afbeelding per agenda-item** — bij het toevoegen/bewerken van een agenda-item kun je een afbeelding (poster/flyer, zoals de "Open dag Tweede Kamer") uploaden. Die verschijnt op de agendakaart en op het dashboard-kaartje.
 2. **Beschrijving met alinea's** — de omschrijving blijft nu één lap tekst. Regeleinden en witregels worden voortaan getoond zoals je ze typt, dus alinea's blijven staan.
+3. **Zoekbare ledenkeuze bij aanmelden** — de lange dropdown "Kies een lid..." wordt een zoekveld: typen filtert direct op naam, plaats en lidnummer. Ook leads staan in de lijst (met een label "Lead"), zodat je die ook kunt aanmelden.
+
 
 ## Technisch
 
