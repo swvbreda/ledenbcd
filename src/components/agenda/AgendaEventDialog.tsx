@@ -126,7 +126,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{event ? "Agenda-item bewerken" : "Nieuw agenda-item"}</DialogTitle>
           <DialogDescription>
