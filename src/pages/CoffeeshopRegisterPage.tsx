@@ -61,12 +61,21 @@ const CoffeeshopRegisterPage = () => {
   }, [rawMembers]);
 
   const linkByShop = useMemo(() => {
-    const map = new Map<string, { member_id: number; status: string; id: string; reden: string | null }>();
+    const map = new Map<
+      string,
+      { member_id: number; status: string; id: string; reden: string | null; score: number | null }
+    >();
     links.forEach((l) => {
       if (l.status === "afgewezen") return;
       const current = map.get(l.register_id);
       if (!current || (current.status !== "bevestigd" && l.status === "bevestigd")) {
-        map.set(l.register_id, { member_id: l.member_id, status: l.status, id: l.id, reden: l.match_reden });
+        map.set(l.register_id, {
+          member_id: l.member_id,
+          status: l.status,
+          id: l.id,
+          reden: l.match_reden,
+          score: l.match_score ?? null,
+        });
       }
     });
     return map;
