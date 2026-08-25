@@ -37,6 +37,76 @@ export interface AgendaRegistration {
   updated_at: string;
 }
 
+/** E-mailadressen van een lid: eerst de inlogadressen, anders het hoofdadres. */
+async function memberEmails(memberId: number): Promise<string[]> {
+  const emails = new Set<string>();
+  const { data: allowed } = await supabase
+    .from("member_allowed_emails")
+    .select("email")
+    .eq("member_id", memberId);
+  for (const row of allowed ?? []) {
+    const e = (row as any).email?.trim();
+    if (e) emails.add(e.toLowerCase());
+  }
+  if (emails.size === 0) {
+    const { data: md } = await supabase
+      .from("members_data")
+      .select("data")
+      .eq("id", memberId)
+      .maybeSingle();
+    const e = ((md as any)?.data?.email ?? "").trim();
+    if (e) emails.add(e.toLowerCase());
+  }
+  return [...emails];
+}
+
+/** Stuurt de bevestigingsmail; geeft terug of er minstens één mail is verstuurd. */
+async function sendRegistrationConfirmation(args: {
+  registrationId: string;
+  eventId: string;
+  memberId: number;
+  guests: number;
+  note: string | null;
+}): Promise<boolean> {
+  const { data: ev } = await supabase
+    .from("agenda_events" as any)
+    .select("title, description, event_date, start_time, end_time, location")
+    .eq("id", args.eventId)
+    .maybeSingle();
+  if (!ev) return false;
+
+  const recipients = await memberEmails(args.memberId);
+  if (recipients.length === 0) return false;
+
+  const e = ev as any;
+  const templateData = {
+    eventTitle: e.title,
+    eventDate: formatEventDate(e.event_date),
+    eventTime: formatTimeRange(e.start_time, e.end_time),
+    location: e.location ?? "",
+    guests: args.guests,
+    note: args.note ?? "",
+    description: e.description ?? "",
+    eventUrl: `${window.location.origin}/agenda`,
+  };
+
+  let sent = 0;
+  for (const recipientEmail of recipients) {
+    const { error } = await supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "agenda-registration-confirmation",
+        recipientEmail,
+        idempotencyKey: `agenda-reg-${args.registrationId}-${recipientEmail}`,
+        templateData,
+      },
+    });
+    if (!error) sent++;
+    else console.error("Bevestigingsmail agenda mislukt:", error);
+  }
+  return sent > 0;
+}
+
+
 /** Upload een afbeelding naar de agenda-bucket en geeft het pad terug. */
 export async function uploadAgendaImage(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
