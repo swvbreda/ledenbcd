@@ -19,6 +19,8 @@ type Participant = {
 
 const CommunityDeelnemersLijst = () => {
   const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
+  const { isAdmin, isBoard } = useAuth();
+  const [uploadOpen, setUploadOpen] = useState(false);
   const memberById = useMemo(() => {
     const map = new Map<number, { m: (typeof rawMembers)[number]; type: "member" | "lead" | "old" }>();
     rawMembers.forEach((m) => map.set(m.id, { m, type: "member" }));
@@ -31,21 +33,19 @@ const CommunityDeelnemersLijst = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data } = await supabase
-        .from("whatsapp_participants")
-        .select("id, display_name, phone, member_id, sort_key")
-        .order("sort_key");
-      if (!active) return;
-      setParticipants((data || []) as Participant[]);
-      setIsLoading(false);
-    })();
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    const { data } = await supabase
+      .from("whatsapp_participants")
+      .select("id, display_name, phone, member_id, sort_key")
+      .order("sort_key");
+    setParticipants((data || []) as Participant[]);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
