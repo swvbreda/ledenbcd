@@ -141,7 +141,7 @@ export function useAgendaMutations() {
       guests: number;
       note?: string | null;
       id?: string;
-    }) => {
+    }): Promise<{ emailed: boolean }> => {
       const { data: userData } = await supabase.auth.getUser();
       if (input.id) {
         const { error } = await supabase
@@ -149,19 +149,33 @@ export function useAgendaMutations() {
           .update({ guests: input.guests, note: input.note ?? null } as any)
           .eq("id", input.id);
         if (error) throw error;
-        return;
+        return { emailed: false };
       }
-      const { error } = await supabase.from("agenda_registrations" as any).insert({
-        event_id: input.event_id,
-        member_id: input.member_id,
+      const { data: created, error } = await supabase
+        .from("agenda_registrations" as any)
+        .insert({
+          event_id: input.event_id,
+          member_id: input.member_id,
+          guests: input.guests,
+          note: input.note ?? null,
+          registered_by: userData.user?.id ?? null,
+        } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const emailed = await sendRegistrationConfirmation({
+        registrationId: (created as any)?.id as string,
+        eventId: input.event_id,
+        memberId: input.member_id,
         guests: input.guests,
         note: input.note ?? null,
-        registered_by: userData.user?.id ?? null,
-      } as any);
-      if (error) throw error;
+      });
+      return { emailed };
     },
     onSuccess: invalidate,
   });
+
 
   const unregister = useMutation({
     mutationFn: async (id: string) => {
