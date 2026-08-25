@@ -191,9 +191,8 @@ export default function BalancePanel({
 
       {/* Resultaat */}
       <div className="border border-border rounded-lg overflow-hidden">
-        <div className="px-3 py-2 bg-muted/50 flex items-center justify-between">
+        <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Resultaat</h3>
-          <span className="text-xs text-muted-foreground">Verschil</span>
         </div>
         <table className="w-full text-sm">
            <colgroup>
