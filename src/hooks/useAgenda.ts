@@ -213,6 +213,7 @@ export function useAgendaMutations() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["agenda-events"] });
     qc.invalidateQueries({ queryKey: ["agenda-registrations"] });
+    qc.invalidateQueries({ queryKey: ["agenda-board-attendance"] });
   };
 
   const saveEvent = useMutation({
