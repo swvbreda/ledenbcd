@@ -10,6 +10,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import {
   useRegisterLinks,
@@ -136,26 +147,42 @@ const CoffeeshopRegisterDetailDialog = ({
                           register_id: shop.id,
                           member_id: link.member_id,
                           status: "bevestigd",
+                          existingId: link.id,
+                          previousStatus: "voorstel",
                         })
                       }
                     >
                       Bevestigen
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      setLink.mutate({
-                        register_id: shop.id,
-                        member_id: link.member_id,
-                        status: "afgewezen",
-                        existingId: link.id,
-                      })
-                    }
-                  >
-                    Ontkoppelen
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="ghost">Ontkoppelen</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Koppeling verwijderen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {shop.naam} wordt ontkoppeld van {gekoppeldLid.naam}. Andere koppelingen en lidgegevens blijven behouden.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() =>
+                            setLink.mutate({
+                              register_id: shop.id,
+                              member_id: link.member_id,
+                              status: "afgewezen",
+                              existingId: link.id,
+                            })
+                          }
+                        >
+                          Ontkoppelen
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             ) : (
