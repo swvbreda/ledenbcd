@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Check, RefreshCw, Search, X } from "lucide-react";
+import { ArrowLeft, Building2, Check, Link2, RefreshCw, Search, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
+import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +53,10 @@ const CoffeeshopRegisterPage = () => {
   const [gemeente, setGemeente] = useState("alle");
   const [koppeling, setKoppeling] = useState<Koppeling>("alle");
   const [detail, setDetail] = useState<RegisterShop | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    shop: RegisterShop;
+    proposal: { linkId: string; memberId: number; reden: string | null; score: number | null } | null;
+  } | null>(null);
   const [unlinkTarget, setUnlinkTarget] = useState<{ shop: RegisterShop; linkId: string; memberId: number } | null>(null);
 
   const memberName = useMemo(() => {
@@ -328,6 +333,13 @@ const CoffeeshopRegisterPage = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmLinkDialog
+        shop={confirmTarget?.shop ?? null}
+        proposal={confirmTarget?.proposal ?? null}
+        open={!!confirmTarget}
+        onOpenChange={(o) => !o && setConfirmTarget(null)}
+      />
 
       <CoffeeshopRegisterDetailDialog
         shop={detail}
