@@ -1,0 +1,1 @@
+ALTER TABLE public.agenda_registrations ADD COLUMN IF NOT EXISTS attendee_names text[] NOT NULL DEFAULT '{}'::text[];
