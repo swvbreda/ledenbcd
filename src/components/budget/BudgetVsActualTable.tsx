@@ -18,19 +18,30 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
   const perCat = expenseCategories
     .map((cat) => {
       const budgeted = cat.line_items.reduce((sum, li) => sum + Number(li.budgeted_amount || 0), 0);
-      const spent = cat.line_items.reduce(
-        (sum, li) =>
-          sum +
-          li.expenses.reduce((es, e) => es + (e.direction === "in" ? 0 : Number(e.amount || 0)), 0),
+      // Alleen betaalde uitgaven tellen mee.
+      const spentPerLine = cat.line_items.map((li) =>
+        li.expenses.reduce(
+          (es, e) => es + (e.direction === "in" || e.paid === false ? 0 : Number(e.amount || 0)),
+          0
+        )
+      );
+      const spent = spentPerLine.reduce((s, v) => s + v, 0);
+      const available = cat.line_items.reduce(
+        (s, li, i) => s + Math.max(Number(li.budgeted_amount || 0) - spentPerLine[i], 0),
         0
       );
-      return { id: cat.id, name: cat.name, budgeted, spent };
+      const overrun = cat.line_items.reduce(
+        (s, li, i) => s + Math.min(Number(li.budgeted_amount || 0) - spentPerLine[i], 0),
+        0
+      );
+      return { id: cat.id, name: cat.name, budgeted, spent, available, overrun };
     })
     .sort((a, b) => b.spent - a.spent);
 
   const totalBudgeted = perCat.reduce((s, c) => s + c.budgeted, 0);
   const totalSpent = perCat.reduce((s, c) => s + c.spent, 0);
-  const remaining = totalBudgeted - totalSpent;
+  const totalAvailable = perCat.reduce((s, c) => s + c.available, 0);
+  const totalOverrun = perCat.reduce((s, c) => s + c.overrun, 0);
   const over = totalSpent > totalBudgeted && totalBudgeted > 0;
   const pct = totalBudgeted > 0 ? Math.min(100, Math.round((totalSpent / totalBudgeted) * 100)) : 0;
 
@@ -42,12 +53,21 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
           <span className="tabular-nums"><CurrencyText value={totalSpent} /></span>
           {" uitgegeven van "}
           <span className="tabular-nums"><CurrencyText value={totalBudgeted} /></span>
-          {" · resterend "}
-          <span className={`tabular-nums font-medium ${over ? "text-destructive" : "text-green-600"}`}>
-            <CurrencyText value={remaining} />
+          {" · beschikbaar "}
+          <span className="tabular-nums font-medium text-green-600">
+            <CurrencyText value={totalAvailable} />
           </span>
+          {totalOverrun < 0 && (
+            <>
+              {" · overschreden "}
+              <span className="tabular-nums font-medium text-destructive">
+                <CurrencyText value={totalOverrun} />
+              </span>
+            </>
+          )}
         </div>
       </div>
+
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full ${over ? "bg-destructive" : "bg-brand-red"}`}
@@ -61,7 +81,7 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
             <th className="text-right font-medium py-1">Begroot</th>
             <th className="text-right font-medium py-1">Uitgegeven</th>
             <th className="text-right font-medium py-1 w-16">%</th>
-            <th className="text-right font-medium py-1">Resterend</th>
+            <th className="text-right font-medium py-1">Beschikbaar</th>
           </tr>
         </thead>
         <tbody>
@@ -76,9 +96,17 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
                 <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {c.budgeted > 0 ? `${catPct}%` : "—"}
                 </td>
-                <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive" : ""}`}>
-                  <CurrencyCell value={c.budgeted - c.spent} />
+                <td className="py-1 text-right tabular-nums">
+                  <div className="flex flex-col items-end">
+                    <CurrencyCell value={c.available} />
+                    {c.overrun < 0 && (
+                      <span className="text-destructive text-[10px] tabular-nums">
+                        overschreden <CurrencyText value={c.overrun} className="inline-flex" />
+                      </span>
+                    )}
+                  </div>
                 </td>
+
               </tr>
             );
           })}

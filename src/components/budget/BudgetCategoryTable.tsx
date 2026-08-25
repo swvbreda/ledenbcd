@@ -39,23 +39,30 @@ export default function BudgetCategoryTable({
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
   const isIncome = category.name.toLowerCase() === "inkomsten";
+  const expenseSign = (e: BudgetCategory["line_items"][number]["expenses"][number]) =>
+    // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
+    // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
+    // Voor kostenposten is het andersom: uit=gerealiseerd, in=refund.
+    e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
+  // Alleen daadwerkelijk betaalde boekingen tellen mee in Uitgaven.
   const sumExpenses = (li: typeof category.line_items[number]) =>
-    li.expenses.reduce((es, e) => {
-      // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
-      // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
-      // Voor kostenposten is het andersom: uit=gerealiseerd, in=refund.
-      const sign = e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
-      return es + sign * e.amount;
-    }, 0);
+    li.expenses.reduce((es, e) => (e.paid === false ? es : es + expenseSign(e) * e.amount), 0);
+  const sumUnpaid = (li: typeof category.line_items[number]) =>
+    li.expenses.reduce((es, e) => (e.paid === false ? es + expenseSign(e) * e.amount : es), 0);
   const totalSpent = category.line_items.reduce((s, li) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     return s + (clicks?.spentValue ?? sumExpenses(li));
   }, 0);
-  const totalRemaining = category.line_items.reduce((s, li) => {
+  const totalUnpaid = category.line_items.reduce((s, li) => s + sumUnpaid(li), 0);
+  const remainingOf = (li: typeof category.line_items[number]) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
-    return s + (clicks?.remainingValue ?? (li.budgeted_amount - spentValue));
-  }, 0);
+    return clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
+  };
+  const totalRemaining = category.line_items.reduce((s, li) => s + remainingOf(li), 0);
+  // Overschrijdingen niet wegstrepen tegen posten die nog ruimte hebben.
+  const availableTotal = category.line_items.reduce((s, li) => s + Math.max(remainingOf(li), 0), 0);
+  const overrunTotal = category.line_items.reduce((s, li) => s + Math.min(remainingOf(li), 0), 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
   const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
@@ -66,6 +73,7 @@ export default function BudgetCategoryTable({
   const totalRemainingClass = isIncome
     ? (totalRemaining <= 0 ? "text-green-600" : "text-foreground")
     : (totalRemaining < 0 ? "text-destructive" : "text-green-600");
+
 
   const handleAdd = () => {
     if (!newName.trim()) return;
@@ -103,8 +111,21 @@ export default function BudgetCategoryTable({
               {!expanded && <><span className="text-muted-foreground text-xs">{spentLabel}: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
             </td>
             <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">{remainingLabel}: </span><strong className={totalRemainingClass}><CurrencyText value={totalRemaining} className="justify-end" /></strong></>}
+              {!expanded && (
+                <>
+                  <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
+                  <strong className={isIncome ? totalRemainingClass : "text-green-600"}>
+                    <CurrencyText value={isIncome ? totalRemaining : availableTotal} className="justify-end" />
+                  </strong>
+                  {!isIncome && overrunTotal < 0 && (
+                    <span className="text-destructive text-xs ml-1">
+                      (overschreden <CurrencyText value={overrunTotal} className="inline-flex" />)
+                    </span>
+                  )}
+                </>
+              )}
             </td>
+
             <td />
           </tr>
         </thead>
@@ -171,10 +192,40 @@ export default function BudgetCategoryTable({
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5 font-semibold">
-                <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
+                {isIncome ? (
+                  <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
+                ) : (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <CurrencyCell value={availableTotal} className="text-green-600" />
+                    {overrunTotal < 0 && (
+                      <>
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          beschikbaar
+                        </span>
+                        <CurrencyCell value={overrunTotal} className="text-destructive text-xs" />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          overschreden
+                        </span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          saldo <CurrencyText value={totalRemaining} className="inline-flex" />
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
               <td />
             </tr>
+            {totalUnpaid !== 0 && (
+              <tr className="bg-muted/10 text-muted-foreground">
+                <td className="px-3 py-1.5 text-xs">Nog te betalen (niet in Uitgaven)</td>
+                <td />
+                <td className="px-3 py-1.5 text-xs"><CurrencyCell value={totalUnpaid} className="text-xs" /></td>
+                <td />
+                <td />
+              </tr>
+            )}
+
           </tbody>
         )}
       </table>
