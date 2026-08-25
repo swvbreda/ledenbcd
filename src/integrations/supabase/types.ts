@@ -1787,6 +1787,39 @@ export type Database = {
         }
         Relationships: []
       }
+      member_location_register_status: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          location_key: string
+          member_id: number
+          note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_key: string
+          member_id: number
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_key?: string
+          member_id?: number
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_mailing_preferences: {
         Row: {
           created_at: string
@@ -2957,6 +2990,22 @@ export type Database = {
           created_at: string
           has_login: boolean
           status: string
+        }[]
+      }
+      get_register_link_summary: {
+        Args: never
+        Returns: {
+          actieve_shops: number
+          bevestigde_koppelingen: number
+          gekoppelde_leden: number
+          vervallen_koppelingen: number
+        }[]
+      }
+      get_register_plaats_stats: {
+        Args: never
+        Returns: {
+          aantal: number
+          plaats: string
         }[]
       }
       has_role: {
