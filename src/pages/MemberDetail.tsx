@@ -718,7 +718,10 @@ const MemberDetail = () => {
               <MapPin size={16} className="text-brand-red" /> Locaties ({member.aantalLocaties})
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {member.locaties.map((loc, i) => (
+              {member.locaties.map((loc, i) => {
+                const key = locationKey(loc as any);
+                const link = canSeeRegister ? linkByLocation.get(key) : undefined;
+                return (
                 <div key={i} className="border border-border rounded-md p-4 hover:bg-muted/20 transition-colors">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium font-display">{loc.naam}</span>
@@ -769,8 +772,35 @@ const MemberDetail = () => {
                     </div>
                   )}
 
+                  {canSeeRegister && (
+                    <LocationRegisterInfo link={link} shop={link ? shopById.get(link.register_id) : null} />
+                  )}
                 </div>
-              ))}
+                );
+              })}
+
+              {/* Registershops die aan dit lid gekoppeld zijn, maar (nog) niet aan een vestiging */}
+              {canSeeRegister &&
+                memberLinks
+                  .filter((l) => {
+                    if (!l.location_key) return true;
+                    return !member.locaties.some((loc) => locationKey(loc as any) === l.location_key);
+                  })
+                  .map((l) => {
+                    const shop = shopById.get(l.register_id);
+                    if (!shop) return null;
+                    return (
+                      <div key={l.id} className="border border-dashed border-border rounded-md p-4 bg-muted/10">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium font-display">{shop.naam}</span>
+                          <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
+                            Alleen in register
+                          </span>
+                        </div>
+                        <LocationRegisterInfo link={l} shop={shop} />
+                      </div>
+                    );
+                  })}
             </div>
           </div>
 
