@@ -181,6 +181,25 @@ export function useSetRegisterLink() {
   });
 }
 
+/** Hangt een bestaande koppeling aan een specifieke vestiging van het lid. */
+export function useAssignLinkLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { linkId: string; location_key: string | null }) => {
+      const { error } = await supabase
+        .from("coffeeshop_member_links")
+        .update({ location_key: input.location_key })
+        .eq("id", input.linkId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+      toast.success("Vestiging toegewezen");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Toewijzen mislukt"),
+  });
+}
+
 export function useSyncRegister() {
   const qc = useQueryClient();
   return useMutation({
