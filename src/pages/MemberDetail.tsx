@@ -20,7 +20,9 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import MemberRegisterShops from "@/components/register/MemberRegisterShops";
+import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
+import { locationKey } from "@/components/register/RegisterCoverageCard";
+import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
