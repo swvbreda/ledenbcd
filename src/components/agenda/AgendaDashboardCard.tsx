@@ -2,7 +2,20 @@ import { Link } from "react-router-dom";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAgendaEvents, useAgendaRegistrations, formatEventDate, formatTimeRange, isUpcoming } from "@/hooks/useAgenda";
+import { useAgendaEvents, useAgendaRegistrations, useAgendaImageUrl, formatEventDate, formatTimeRange, isUpcoming, type AgendaEvent } from "@/hooks/useAgenda";
+
+function AgendaThumb({ event }: { event: AgendaEvent }) {
+  const { data: url } = useAgendaImageUrl(event.image_path);
+  if (!url) return null;
+  return (
+    <img
+      src={url}
+      alt={`Afbeelding bij ${event.title}`}
+      loading="lazy"
+      className="h-14 w-14 shrink-0 rounded-md border border-border object-cover"
+    />
+  );
+}
 
 export default function AgendaDashboardCard() {
   const { data: events = [], isLoading } = useAgendaEvents();
@@ -33,8 +46,10 @@ export default function AgendaDashboardCard() {
             <Link
               key={e.id}
               to="/agenda"
-              className="block rounded-md border border-border p-3 transition-colors hover:bg-accent/40"
+              className="flex items-start gap-3 rounded-md border border-border p-3 transition-colors hover:bg-accent/40"
             >
+              <AgendaThumb event={e} />
+              <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{e.title}</span>
                 <Badge variant={e.event_type === "evenement" ? "default" : "secondary"}>
@@ -59,6 +74,7 @@ export default function AgendaDashboardCard() {
                   <Users className="h-3 w-3" />
                   {guestsFor(e.id)} aangemeld
                 </span>
+              </div>
               </div>
             </Link>
           ))
