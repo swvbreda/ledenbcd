@@ -1,14 +1,15 @@
 import { TrendingUp, Building2, Clock, UserPlus, Award, UserCheck } from "lucide-react";
 import type { Member } from "@/data/types";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
 import verloopDetail from "@/data/verloop-detail.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { getMembershipYears } from "@/lib/membership";
-import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
+  const { perGemeente: perStad } = useRegisterStats();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
   const { conversions } = useLeadConversions();
@@ -28,7 +29,6 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const longPct = allMembers.length ? Math.round((longMembers.length / allMembers.length) * 100) : 0;
 
   // Cities where BCD is present (at least 1 location)
-  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
   const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
   const unconvertedLeads = mergedLeads.filter((l) => !convertedLeadIds.has(l.id));
   const represented = [...allMembers, ...unconvertedLeads];

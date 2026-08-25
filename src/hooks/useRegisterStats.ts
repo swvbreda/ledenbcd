@@ -13,7 +13,7 @@ export type RegisterStats = {
   fromRegister: boolean;
 };
 
-/** Actuele landelijke cijfers uit het coffeeshopregister (val terug op het statische bestand). */
+/** Actuele, geverifieerde cijfers uit Coffeeshopbeleid (statisch bestand alleen als noodfallback). */
 export function useRegisterStats() {
   const query = useQuery({
     queryKey: ["register-plaats-stats"],
