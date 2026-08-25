@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import {
   useAgendaMutations,
+  uploadAgendaImage,
+  useAgendaImageUrl,
   type AgendaEvent,
   type AgendaEventType,
 } from "@/hooks/useAgenda";
@@ -41,8 +43,10 @@ const emptyForm = {
   end_time: "",
   location: "",
   max_seats: "",
+  image_path: "" as string,
   is_published: true,
 };
+
 
 export default function AgendaEventDialog({ open, onOpenChange, event }: Props) {
   const { saveEvent } = useAgendaMutations();
