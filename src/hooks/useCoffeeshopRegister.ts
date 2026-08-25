@@ -121,6 +121,8 @@ export function useSetRegisterLink() {
       status: "bevestigd" | "afgewezen";
       existingId?: string;
       previousStatus?: "voorstel" | "afgewezen";
+      /** Vestiging van het lid waar deze registershop bij hoort */
+      location_key?: string | null;
     }) => {
       if (input.status === "afgewezen" && input.existingId) {
         const { error } = await supabase
@@ -139,11 +141,13 @@ export function useSetRegisterLink() {
           match_score: 1,
           match_reden: "Handmatig bevestigd",
           bevestigd_op: new Date().toISOString(),
+          ...(input.location_key ? { location_key: input.location_key } : {}),
         },
         { onConflict: "register_id,member_id" },
       );
       if (error) throw error;
     },
+
     onSuccess: (_data, input) => {
       qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
       if (input.status === "bevestigd") {
