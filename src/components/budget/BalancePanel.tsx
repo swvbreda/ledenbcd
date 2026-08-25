@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Check, X, StickyNote } from "lucide-react";
-import type { BankStatementData, BudgetBalanceItem } from "@/hooks/useBudget";
+import type { BudgetBalanceItem, FinancialResultData } from "@/hooks/useBudget";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +19,7 @@ interface Props {
   items: BudgetBalanceItem[];
   totalBudgeted: number;
   totalSpent: number;
-  bankStatement?: BankStatementData;
+  financialResult?: FinancialResultData;
   contributionStats?: ContributionStats;
   notes?: { id: string; note: string; created_at: string }[];
   onAdd: (name: string, amount: number, section: string, side?: string) => void;
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function BalancePanel({
-  items, totalBudgeted, totalSpent, bankStatement, contributionStats, notes,
+  items, totalBudgeted, totalSpent, financialResult, contributionStats, notes,
   onAdd, onUpdate, onDelete, onAddNote, onDeleteNote, onUpdateYearSettings, year,
 }: Props) {
   const [adding, setAdding] = useState<string | null>(null);
@@ -45,14 +45,23 @@ export default function BalancePanel({
 
   const middelenLeft = items.filter((i) => i.section === "middelen" && i.side === "left");
   const middelenRight = items.filter((i) => i.section === "middelen" && i.side === "right");
-  const resultaatItems = items.filter((i) => i.section === "resultaat");
+  const openingBalanceItem = items.find((i) =>
+    i.section === "resultaat" && /^bank saldo 31-12-/i.test(i.name.trim()),
+  );
+  const reserveTotal = items
+    .filter((i) => i.section === "middelen" && i.side === "left" && /reserve|reservering/i.test(i.name))
+    .reduce((sum, item) => sum + item.amount, 0);
+  const openingBalance = openingBalanceItem?.amount ?? 0;
+  const contributionIncome = financialResult?.contributionIncome ?? contributionStats?.totalReceived ?? 0;
+  const otherIncome = financialResult?.otherIncome ?? 0;
+  const resultExpenses = financialResult?.totalExpenses ?? totalSpent;
+  const availableBankBalance = openingBalance + contributionIncome + otherIncome - resultExpenses;
   const hasManualBudgetedExpenses = middelenLeft.some(
     (item) => item.name.trim().toLowerCase() === "begrote uitgaven",
   );
 
   const leftTotal = middelenLeft.reduce((s, i) => s + i.amount, 0);
   const rightTotal = middelenRight.reduce((s, i) => s + i.amount, 0);
-  const hasBankStatement = !!bankStatement?.upload;
 
   const handleAdd = (section: string) => {
     if (!newName.trim()) return;
@@ -193,72 +202,26 @@ export default function BalancePanel({
             <col />
           </colgroup>
           <tbody>
-            {resultaatItems.map((item) => (
-              <tr key={item.id} className="border-b border-border/50">
-                <td className="px-3 py-1.5">{item.name}</td>
-                <td className="text-right px-3 py-1.5 tabular-nums whitespace-nowrap pr-7">
-                  {renderItemCell(item)}
-                </td>
-                <td />
+            {[
+              { label: openingBalanceItem?.name || `Banksaldo 31-12-${year - 1}`, value: openingBalance },
+              { label: "Contributie", value: contributionIncome },
+              { label: "Overige inkomsten", value: otherIncome },
+              { label: "Reserve (totaal)", value: reserveTotal, note: "Onderdeel van het banksaldo" },
+              { label: "Uitgaven", value: resultExpenses },
+            ].map((row) => (
+              <tr key={row.label} className="border-b border-border/50">
+                <td className="px-3 py-1.5">{row.label}</td>
+                <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={row.value} /></td>
+                <td className="text-right px-3 py-1.5 text-xs text-muted-foreground">{row.note}</td>
               </tr>
             ))}
-            {hasBankStatement && (
-              <>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1.5">Beginsaldo bank</td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.upload!.opening_balance ?? 0} /></td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap text-xs text-muted-foreground">{bankStatement.upload!.file_name}</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1.5">Bijschrijvingen bank</td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.totalIn} /></td>
-                  <td />
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="px-3 py-1.5">Afschrijvingen bank</td>
-                  <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.totalOut} /></td>
-                  <td />
-                </tr>
-                <tr className="bg-primary/5 font-semibold border-t border-border">
-                  <td className="px-3 py-2">Eindsaldo bank</td>
-                  <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={bankStatement.upload!.closing_balance ?? ((bankStatement.upload!.opening_balance ?? 0) + bankStatement.netMutation)} /></td>
-                  <td className="text-right px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">Mutatie <CurrencyCell value={bankStatement.netMutation} /></td>
-                </tr>
-              </>
-            )}
-            {!hasBankStatement && contributionStats && (
-              <tr className="border-b border-border/50">
-                <td className="px-3 py-1.5">Ontvangen contributie</td>
-                <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={contributionStats.totalReceived} /></td>
-                <td className="text-right px-3 py-1.5 whitespace-nowrap">
-                  <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className="text-destructive" />
-                </td>
-              </tr>
-            )}
-            {!hasBankStatement && <tr className="border-b border-border/50">
-              <td className="px-3 py-1.5">Uitgaven {year}</td>
-              <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={totalSpent} /></td>
-              <td className="px-3 py-1.5">
-                {contributionStats && (
-                  <div className="text-xs text-muted-foreground leading-tight space-y-0.5">
-                    <div>{contributionStats.unpaidCount} leden nog betalen</div>
-                    <div>{contributionStats.paidCount} hebben betaald</div>
-                  </div>
-                )}
-              </td>
-            </tr>}
-            {!hasBankStatement && <tr className="bg-primary/5 font-semibold border-t border-border">
-              <td className="px-3 py-2">Totaal</td>
-              <td className="text-right px-3 py-2 whitespace-nowrap pr-7">
-                <CurrencyCell value={resultaatItems.reduce((s, i) => s + i.amount, 0) + (contributionStats?.totalReceived ?? 0) - totalSpent} />
-              </td>
-              <td className="text-right px-3 py-2 whitespace-nowrap">
-                {contributionStats && <CurrencyCell value={contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount} className={(contributionStats.totalReceived - contributionStats.totalMembers * contributionStats.contributionAmount) < 0 ? "text-destructive" : ""} />}
-              </td>
-            </tr>}
+            <tr className="bg-primary/5 font-semibold border-t border-border">
+              <td className="px-3 py-2">Beschikbaar banksaldo</td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={availableBankBalance} /></td>
+              <td />
+            </tr>
           </tbody>
         </table>
-        {renderAddForm("resultaat")}
       </div>
 
       {/* Contributie & Vrijwilligersvergoeding */}

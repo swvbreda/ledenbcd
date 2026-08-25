@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
-import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation } from "@/hooks/useBudget";
+import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import { useContributions, useUpsertContribution, useContributionInvoices, useContributionPayments } from "@/hooks/useContributions";
@@ -45,6 +45,7 @@ export default function FinancienPage() {
   const { data: categories, isLoading } = useBudgetCategories(year);
   const { data: balanceItems } = useBudgetBalance(year);
   const { data: bankStatement } = useBankStatement(year);
+  const { data: financialResult } = useFinancialResult(year);
   const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
@@ -444,8 +445,8 @@ export default function FinancienPage() {
                   items={balanceItems || []}
                   totalBudgeted={totalBudgeted}
                   totalSpent={totalSpent}
-                  bankStatement={bankStatement}
                   contributionStats={contributionStats}
+                  financialResult={financialResult}
                   notes={budgetNotes}
                   year={year}
                   onAdd={(name, amount, section, side) =>

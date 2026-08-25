@@ -83,6 +83,12 @@ export interface BankStatementData {
   netMutation: number;
 }
 
+export interface FinancialResultData {
+  contributionIncome: number;
+  otherIncome: number;
+  totalExpenses: number;
+}
+
 export type ExpenseSourcePreference = "manual" | "pdf_import";
 
 const normalizeInvoiceKey = (value?: string | null) =>
@@ -398,6 +404,36 @@ export function useBankStatement(year: number) {
         totalOut,
         netMutation: totalIn - totalOut,
       } as BankStatementData;
+    },
+  });
+}
+
+export function useFinancialResult(year: number) {
+  return useQuery({
+    queryKey: ["financial-result", year],
+    queryFn: async () => {
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year + 1}-01-01`;
+      const { data, error } = await supabase
+        .from("ponto_transactions")
+        .select("amount, dossier")
+        .gte("executed_at", yearStart)
+        .lt("executed_at", yearEnd)
+        .limit(5000);
+      if (error) throw error;
+
+      return (data || []).reduce<FinancialResultData>((totals, transaction) => {
+        if (isExcludedDossier(transaction.dossier)) return totals;
+        const amount = Number(transaction.amount) || 0;
+        if (amount < 0) {
+          totals.totalExpenses += Math.abs(amount);
+        } else if (/^contributie\b/i.test(transaction.dossier || "")) {
+          totals.contributionIncome += amount;
+        } else if (amount > 0) {
+          totals.otherIncome += amount;
+        }
+        return totals;
+      }, { contributionIncome: 0, otherIncome: 0, totalExpenses: 0 });
     },
   });
 }
