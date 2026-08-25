@@ -85,7 +85,19 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               {event.max_seats != null ? ` / ${event.max_seats}` : ""}
             </span>
           </div>
-          {event.description && <p className="mt-2 text-sm">{event.description}</p>}
+          {imageUrl && (
+            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+              <img
+                src={imageUrl}
+                alt={`Afbeelding bij ${event.title}`}
+                loading="lazy"
+                className="max-h-72 w-auto rounded-md border border-border object-contain"
+              />
+            </a>
+          )}
+          {event.description && (
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{event.description}</p>
+          )}
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
