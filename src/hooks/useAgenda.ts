@@ -257,13 +257,21 @@ export function useAgendaMutations() {
       board_member_id?: string | null;
       guests: number;
       note?: string | null;
+      attendee_names?: string[] | null;
       id?: string;
     }): Promise<{ emailed: boolean }> => {
+      const cleanNames = (input.attendee_names ?? [])
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0);
       const { data: userData } = await supabase.auth.getUser();
       if (input.id) {
         const { error } = await supabase
           .from("agenda_registrations" as any)
-          .update({ guests: input.guests, note: input.note ?? null } as any)
+          .update({
+            guests: input.guests,
+            note: input.note ?? null,
+            attendee_names: cleanNames,
+          } as any)
           .eq("id", input.id);
         if (error) throw error;
         return { emailed: false };
