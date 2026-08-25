@@ -56,20 +56,23 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** Bestaand voorstel (leeg bij handmatig koppelen) */
   proposal?: { linkId: string; memberId: number; reden: string | null; score: number | null } | null;
+  /** Vooraf gekozen lid (bij koppelen vanuit een ledenlocatie) */
+  presetMemberId?: number | null;
 };
 
-const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal }: Props) => {
+const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal, presetMemberId }: Props) => {
   const { rawMembers, rawLeads } = useMembersData();
   const setLink = useSetRegisterLink();
   const [query, setQuery] = useState("");
   const [manualId, setManualId] = useState<number | null>(null);
+
 
   const alle: Member[] = useMemo(
     () => [...(rawMembers ?? []), ...(rawLeads ?? [])],
     [rawMembers, rawLeads],
   );
 
-  const selectedId = proposal?.memberId ?? manualId;
+  const selectedId = proposal?.memberId ?? manualId ?? presetMemberId ?? null;
   const member = useMemo(
     () => alle.find((m) => m.id === selectedId) ?? null,
     [alle, selectedId],

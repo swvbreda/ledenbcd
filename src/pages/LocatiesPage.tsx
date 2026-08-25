@@ -6,13 +6,12 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
 import DocumentenZoeker from "@/components/DocumentenZoeker";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
 import { countLocations, memberLocationCount } from "@/lib/locationCount";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
+import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
 
 
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-const totalNL = coffeeshopData.totaalNL;
 
 interface StadsdeelData {
   naam: string;
@@ -64,8 +63,10 @@ const LocatiesPage = () => {
   const navigate = useNavigate();
 
   const { members: represented } = useMergedMembers(allRepresented);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   const representedLocaties = countLocations(represented);
-  const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
+  const marketPctNL = totalNL > 0 ? Math.round((representedLocaties / totalNL) * 100) : 0;
+
 
   // Track when data updates to show a brief notification
   const [showUpdated, setShowUpdated] = useState(false);
@@ -138,7 +139,8 @@ const LocatiesPage = () => {
     }
 
     return Array.from(map.values());
-  }, [represented]);
+  }, [represented, perStad]);
+
   const filtered = useMemo(() => {
     let result = cities;
     if (search) {
@@ -215,7 +217,10 @@ const LocatiesPage = () => {
         ))}
       </div>
 
+      <RegisterCoverageCard />
+
       <DocumentenZoeker />
+
 
       <MapErrorBoundary>
         <CityMap cities={filtered} allCoffeeshopCities={perStad} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />

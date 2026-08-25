@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
@@ -41,12 +41,12 @@ const StatCards = ({ members }: StatCardsProps) => {
   // Use merged members + converted leads + active leads for all location/market calculations
   const allRepresented = [...mergedMembers, ...convertedAsMembers, ...activeLeads];
   const allCities = new Set(allRepresented.map((m) => m.plaats).filter(Boolean));
-  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   const totalNLCities = Object.keys(perStad).length;
   const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
   const matchedCities = representedGemeenten.size;
-  const cityPct = Math.round((matchedCities / totalNLCities) * 100);
-  const totalNL = coffeeshopData.totaalNL;
+  const cityPct = totalNLCities > 0 ? Math.round((matchedCities / totalNLCities) * 100) : 0;
+
   const localRepresentedLocations = countLocations(allRepresented);
 
   // Fetch authoritative count from public-stats edge function so de UI altijd matcht.

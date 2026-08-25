@@ -1,17 +1,15 @@
 import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
-  const totalNL = coffeeshopData.totaalNL;
-  const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   // Use merged members + merged leads for market share
   const represented = [...members, ...mergedLeads];
   const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
