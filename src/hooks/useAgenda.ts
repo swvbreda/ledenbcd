@@ -284,6 +284,7 @@ export function useAgendaMutations() {
           board_member_id: input.board_member_id ?? null,
           guests: input.guests,
           note: input.note ?? null,
+          attendee_names: cleanNames,
           registered_by: userData.user?.id ?? null,
         } as any)
         .select("id")
