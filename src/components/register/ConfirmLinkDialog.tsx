@@ -58,9 +58,12 @@ type Props = {
   proposal?: { linkId: string; memberId: number; reden: string | null; score: number | null } | null;
   /** Vooraf gekozen lid (bij koppelen vanuit een ledenlocatie) */
   presetMemberId?: number | null;
+  /** Vestigingssleutel van dat lid (bij koppelen vanuit een ledenlocatie) */
+  presetLocationKey?: string | null;
 };
 
-const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal, presetMemberId }: Props) => {
+const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal, presetMemberId, presetLocationKey }: Props) => {
+
   const { rawMembers, rawLeads } = useMembersData();
   const setLink = useSetRegisterLink();
   const [query, setQuery] = useState("");
