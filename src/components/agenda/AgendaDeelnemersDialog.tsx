@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, ChevronsUpDown, Minus, Pencil, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -40,17 +41,68 @@ interface Props {
 
 type Selection = { kind: "member"; id: number } | { kind: "board"; id: string } | null;
 
+/** Zorgt dat de namenlijst exact `count` velden heeft. */
+function resizeNames(names: string[], count: number) {
+  const next = names.slice(0, count);
+  while (next.length < count) next.push("");
+  return next;
+}
+
+function Stepper({
+  value,
+  onChange,
+  min = 1,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+}) {
+  return (
+    <div className="flex h-10 items-center overflow-hidden rounded-md border border-input bg-background">
+      <button
+        type="button"
+        aria-label="Minder personen"
+        className="h-full w-10 border-r border-input text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        disabled={value <= min}
+      >
+        <Minus className="mx-auto h-4 w-4" />
+      </button>
+      <span className="w-12 text-center text-sm font-semibold tabular-nums">{value}</span>
+      <button
+        type="button"
+        aria-label="Meer personen"
+        className="h-full w-10 border-l border-input text-muted-foreground transition-colors hover:bg-muted"
+        onClick={() => onChange(value + 1)}
+      >
+        <Plus className="mx-auto h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 export default function AgendaDeelnemersDialog({ open, onOpenChange, event, registrations }: Props) {
   const { rawMembers, rawLeads } = useMembersData();
   const { data: boardMembers = [] } = useBoardMemberOptions();
   const { register, unregister } = useAgendaMutations();
   const [selection, setSelection] = useState<Selection>(null);
-  const [guests, setGuests] = useState("1");
+  const [guests, setGuests] = useState(1);
+  const [names, setNames] = useState<string[]>([""]);
+  const [note, setNote] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const [editId, setEditId] = useState<string | null>(null);
-  const [editGuests, setEditGuests] = useState("1");
+  const [editGuests, setEditGuests] = useState(1);
+  const [editNames, setEditNames] = useState<string[]>([""]);
   const [editNote, setEditNote] = useState("");
+
+  useEffect(() => {
+    setNames((prev) => resizeNames(prev, guests));
+  }, [guests]);
+
+  useEffect(() => {
+    setEditNames((prev) => resizeNames(prev, editGuests));
+  }, [editGuests]);
 
   const candidates = useMemo(
     () =>
@@ -95,10 +147,16 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
       ? boardName.get(r.board_member_id) ?? "Bestuurslid"
       : memberName.get(r.member_id as number) ?? `Lid #${r.member_id}`;
 
+  const resetForm = () => {
+    setSelection(null);
+    setGuests(1);
+    setNames([""]);
+    setNote("");
+  };
+
   const addAttendee = () => {
-    const n = Number(guests);
-    if (!selection || !Number.isFinite(n) || n < 1) {
-      toast.error("Kies een deelnemer en een geldig aantal personen");
+    if (!selection) {
+      toast.error("Kies eerst een deelnemer");
       return;
     }
     register.mutate(
@@ -106,7 +164,9 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         event_id: event.id,
         member_id: selection.kind === "member" ? selection.id : null,
         board_member_id: selection.kind === "board" ? selection.id : null,
-        guests: n,
+        guests,
+        note: note.trim() || null,
+        attendee_names: names,
       },
       {
         onSuccess: (res) => {
@@ -115,8 +175,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
               ? "Aangemeld — bevestiging verstuurd"
               : "Aangemeld (geen bevestigingsmail verstuurd)",
           );
-          setSelection(null);
-          setGuests("1");
+          resetForm();
         },
         onError: (e: any) => toast.error(e?.message || "Aanmelden mislukt"),
       },
@@ -125,18 +184,21 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
 
   const startEdit = (r: AgendaRegistration) => {
     setEditId(r.id);
-    setEditGuests(String(r.guests));
+    setEditGuests(r.guests);
+    setEditNames(resizeNames(r.attendee_names ?? [], r.guests));
     setEditNote(r.note ?? "");
   };
 
   const saveEdit = () => {
-    const n = Number(editGuests);
-    if (!editId || !Number.isFinite(n) || n < 1) {
-      toast.error("Vul een geldig aantal personen in");
-      return;
-    }
+    if (!editId) return;
     register.mutate(
-      { id: editId, event_id: event.id, guests: n, note: editNote.trim() || null },
+      {
+        id: editId,
+        event_id: event.id,
+        guests: editGuests,
+        note: editNote.trim() || null,
+        attendee_names: editNames,
+      },
       {
         onSuccess: () => {
           toast.success("Aanmelding bijgewerkt");
@@ -149,199 +211,321 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Deelnemers</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-2xl gap-0 p-0">
+        <DialogHeader className="space-y-1 border-b border-border p-6 text-left">
+          <DialogTitle className="font-display text-2xl uppercase leading-none">
+            Deelnemers
+          </DialogTitle>
+          <DialogDescription className="text-sm font-medium text-primary">
             {event.title} — {formatEventDate(event.event_date)}
           </DialogDescription>
+          <div className="flex flex-wrap gap-2 pt-3">
+            <span className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm">
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              <span className="font-semibold tabular-nums">{registrations.length}</span>
+              <span className="text-muted-foreground">
+                aanmelding{registrations.length === 1 ? "" : "en"}
+              </span>
+            </span>
+            <span className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm">
+              <span className="font-semibold tabular-nums">{totalGuests}</span>
+              <span className="text-muted-foreground">
+                persone{totalGuests === 1 ? "" : "n"}
+                {event.max_seats != null && ` van ${event.max_seats}`}
+              </span>
+            </span>
+          </div>
         </DialogHeader>
 
-        <p className="text-sm text-muted-foreground">
-          {registrations.length} aanmelding{registrations.length === 1 ? "" : "en"} · {totalGuests} persone
-          {totalGuests === 1 ? "" : "n"}
-          {event.max_seats != null && ` van ${event.max_seats} plaatsen`}
-        </p>
+        <ScrollArea className="max-h-[65vh]">
+          <div className="space-y-8 p-6">
+            <section>
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Huidige deelnemers
+              </h3>
+              {registrations.length === 0 ? (
+                <p className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
+                  Nog geen aanmeldingen
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {registrations.map((r) => {
+                    const rowNames = (r.attendee_names ?? []).filter((n) => n.trim().length > 0);
+                    return (
+                      <div
+                        key={r.id}
+                        className="rounded-xl border border-border p-4 transition-colors hover:border-primary/30"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold">{rowLabel(r)}</span>
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                                {r.board_member_id ? "Bestuur" : "Lid"}
+                              </span>
+                              <span className="text-sm text-muted-foreground tabular-nums">
+                                {r.guests} pers.
+                              </span>
+                            </div>
+                            {editId !== r.id && (
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                {rowNames.length > 0 ? (
+                                  <span className="text-foreground">{rowNames.join(", ")}</span>
+                                ) : (
+                                  <span className="italic">Geen namen ingevuld</span>
+                                )}
+                              </p>
+                            )}
+                            {editId !== r.id && r.note && (
+                              <p className="mt-1 text-xs text-muted-foreground">{r.note}</p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {editId === r.id ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="h-8"
+                                  onClick={saveEdit}
+                                  disabled={register.isPending}
+                                >
+                                  Opslaan
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setEditId(null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => startEdit(r)}
+                                >
+                                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() =>
+                                    unregister.mutate(r.id, {
+                                      onSuccess: () => toast.success("Aanmelding verwijderd"),
+                                      onError: (e: any) =>
+                                        toast.error(e?.message || "Verwijderen mislukt"),
+                                    })
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
 
-        <ScrollArea className="max-h-[320px] rounded-md border border-border">
-          {registrations.length === 0 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">Nog geen aanmeldingen</p>
-          ) : (
-            <table className="w-full text-sm">
-              <tbody>
-                {registrations.map((r) => (
-                  <tr key={r.id} className="border-b border-border/40 last:border-0 align-top">
-                    <td className="px-3 py-2">
-                      <span className="font-medium">{rowLabel(r)}</span>
-                      {r.board_member_id && (
-                        <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
-                          Bestuur
+                        {editId === r.id && (
+                          <div className="mt-4 space-y-3 border-t border-border pt-4">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs uppercase text-muted-foreground">
+                                Aantal personen
+                              </Label>
+                              <Stepper value={editGuests} onChange={setEditGuests} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs uppercase text-muted-foreground">
+                                Namen
+                              </Label>
+                              {editNames.map((n, i) => (
+                                <Input
+                                  key={i}
+                                  value={n}
+                                  placeholder={`Naam persoon ${i + 1}`}
+                                  onChange={(e) =>
+                                    setEditNames((prev) =>
+                                      prev.map((v, j) => (j === i ? e.target.value : v)),
+                                    )
+                                  }
+                                />
+                              ))}
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs uppercase text-muted-foreground">
+                                Opmerking
+                              </Label>
+                              <Textarea
+                                rows={2}
+                                value={editNote}
+                                onChange={(e) => setEditNote(e.target.value)}
+                                className="resize-none"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-border bg-muted/30 p-5">
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Nieuwe aanmelding
+              </h3>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase text-muted-foreground">
+                    Wie meld je aan?
+                  </Label>
+                  <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between bg-background font-normal"
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{selectionLabel}</span>
                         </span>
-                      )}
-                      {editId === r.id ? (
-                        <Input
-                          value={editNote}
-                          onChange={(e) => setEditNote(e.target.value)}
-                          placeholder="Opmerking"
-                          className="mt-2 h-8"
-                        />
-                      ) : (
-                        r.note && <span className="block text-xs text-muted-foreground">{r.note}</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
-                      {editId === r.id ? (
-                        <Input
-                          type="number"
-                          min={1}
-                          value={editGuests}
-                          onChange={(e) => setEditGuests(e.target.value)}
-                          className="h-8 w-16"
-                        />
-                      ) : (
-                        `${r.guests} pers.`
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-2 py-2 text-right">
-                      {editId === r.id ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="sm" className="h-7" onClick={saveEdit} disabled={register.isPending}>
-                            Opslaan
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => setEditId(null)}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => startEdit(r)}
-                          >
-                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() =>
-                              unregister.mutate(r.id, {
-                                onSuccess: () => toast.success("Aanmelding verwijderd"),
-                                onError: (e: any) => toast.error(e?.message || "Verwijderen mislukt"),
-                              })
-                            }
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </ScrollArea>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Typ een naam, plaats of nummer…" />
+                        <CommandList>
+                          <CommandEmpty>Geen resultaten</CommandEmpty>
+                          <CommandGroup heading="Bestuur">
+                            {availableBoard.map((b) => (
+                              <CommandItem
+                                key={b.id}
+                                value={`${b.naam} ${b.functie ?? ""} bestuur`}
+                                onSelect={() => {
+                                  setSelection({ kind: "board", id: b.id });
+                                  setPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selection?.kind === "board" && selection.id === b.id
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                <span className="truncate">{b.naam}</span>
+                                {b.functie && (
+                                  <span className="ml-2 truncate text-xs text-muted-foreground">
+                                    {b.functie}
+                                  </span>
+                                )}
+                                <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                                  Bestuur
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                          <CommandGroup heading="Leden & leads">
+                            {availableMembers.map((m) => (
+                              <CommandItem
+                                key={m.id}
+                                value={`${m.naam || m.bedrijfsnaam} ${m.plaats ?? ""} ${m.id}`}
+                                onSelect={() => {
+                                  setSelection({ kind: "member", id: m.id });
+                                  setPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selection?.kind === "member" && selection.id === m.id
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                <span className="truncate">{m.naam || m.bedrijfsnaam}</span>
+                                {m.plaats && (
+                                  <span className="ml-2 truncate text-xs text-muted-foreground">
+                                    {m.plaats}
+                                  </span>
+                                )}
+                                {m.isLead && (
+                                  <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                                    Lead
+                                  </span>
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-        <div className="space-y-2 rounded-md border border-border p-3">
-          <Label>Deelnemer aanmelden</Label>
-          <div className="flex gap-2">
-            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="flex-1 justify-between font-normal">
-                  <span className="truncate">{selectionLabel}</span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase text-muted-foreground">
+                      Aantal personen
+                    </Label>
+                    <Stepper value={guests} onChange={setGuests} />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs uppercase text-muted-foreground">
+                      Namen van de personen
+                    </Label>
+                    <div className="space-y-2">
+                      {names.map((n, i) => (
+                        <Input
+                          key={i}
+                          value={n}
+                          placeholder={`Naam persoon ${i + 1}`}
+                          className="bg-background"
+                          onChange={(e) =>
+                            setNames((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase text-muted-foreground">
+                    Eventuele opmerking
+                  </Label>
+                  <Textarea
+                    rows={2}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Bijv. dieetwensen of vragen…"
+                    className="resize-none bg-background"
+                  />
+                </div>
+
+                <Button
+                  className="w-full uppercase tracking-wide"
+                  onClick={addAttendee}
+                  disabled={register.isPending}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Aanmelding opslaan
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[320px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Typ een naam, plaats of nummer…" />
-                  <CommandList>
-                    <CommandEmpty>Geen resultaten</CommandEmpty>
-                    <CommandGroup heading="Bestuur">
-                      {availableBoard.map((b) => (
-                        <CommandItem
-                          key={b.id}
-                          value={`${b.naam} ${b.functie ?? ""} bestuur`}
-                          onSelect={() => {
-                            setSelection({ kind: "board", id: b.id });
-                            setPickerOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selection?.kind === "board" && selection.id === b.id
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          <span className="truncate">{b.naam}</span>
-                          {b.functie && (
-                            <span className="ml-2 truncate text-xs text-muted-foreground">
-                              {b.functie}
-                            </span>
-                          )}
-                          <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
-                            Bestuur
-                          </span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                    <CommandGroup heading="Leden & leads">
-                      {availableMembers.map((m) => (
-                        <CommandItem
-                          key={m.id}
-                          value={`${m.naam || m.bedrijfsnaam} ${m.plaats ?? ""} ${m.id}`}
-                          onSelect={() => {
-                            setSelection({ kind: "member", id: m.id });
-                            setPickerOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selection?.kind === "member" && selection.id === m.id
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          <span className="truncate">{m.naam || m.bedrijfsnaam}</span>
-                          {m.plaats && (
-                            <span className="ml-2 truncate text-xs text-muted-foreground">{m.plaats}</span>
-                          )}
-                          {m.isLead && (
-                            <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
-                              Lead
-                            </span>
-                          )}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <Input
-              type="number"
-              min={1}
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              className="w-20"
-            />
-            <Button onClick={addAttendee} disabled={register.isPending}>
-              <UserPlus className="mr-1 h-4 w-4" />
-              Aanmelden
-            </Button>
+              </div>
+            </section>
           </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
