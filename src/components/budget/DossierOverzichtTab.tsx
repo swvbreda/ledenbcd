@@ -328,15 +328,16 @@ export default function DossierOverzichtTab({ year }: Props) {
                       <CurrencyCell value={e.direction === "in" ? e.amount : -e.amount} />
                     </td>
                     <td className="px-2 py-1 text-muted-foreground">
-                      {docsByEntry.get(e.key) ? (
+                      {docCountFor(e) ? (
                         <span className="inline-flex items-center gap-0.5 text-brand-red">
                           <Paperclip className="h-3 w-3" />
-                          {docsByEntry.get(e.key)}
+                          {docCountFor(e)}
                         </span>
                       ) : (
                         ""
                       )}
                     </td>
+
 
                     {canEdit && (
                       <td className="px-1 py-1 text-center">
