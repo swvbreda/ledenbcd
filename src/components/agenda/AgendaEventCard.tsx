@@ -75,19 +75,17 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 {event.location}
               </span>
             )}
-            {isEvent && (
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3.5 w-3.5 text-brand-red" />
-                {totalGuests} aangemeld
-                {event.max_seats != null ? ` / ${event.max_seats}` : ""}
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3.5 w-3.5 text-brand-red" />
+              {totalGuests} aangemeld
+              {event.max_seats != null ? ` / ${event.max_seats}` : ""}
+            </span>
           </div>
           {event.description && <p className="mt-2 text-sm">{event.description}</p>}
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {isEvent && upcoming && memberId != null && (
+          {upcoming && memberId != null && (
             own ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => setRegisterOpen(true)}>
@@ -114,11 +112,9 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
           )}
           {isAdmin && (
             <>
-              {isEvent && (
-                <Button variant="outline" size="sm" onClick={() => setDeelnemersOpen(true)}>
-                  Deelnemers
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => setDeelnemersOpen(true)}>
+                Deelnemers
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
                 <Pencil className="h-4 w-4 text-muted-foreground" />
               </Button>
