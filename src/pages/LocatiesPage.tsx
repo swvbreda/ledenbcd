@@ -64,7 +64,7 @@ const LocatiesPage = () => {
   const navigate = useNavigate();
 
   const { members: represented } = useMergedMembers(allRepresented);
-  const representedLocaties = represented.reduce((s, m) => s + (m.aantalLocaties || 1), 0);
+  const representedLocaties = countLocations(represented);
   const marketPctNL = Math.round((representedLocaties / totalNL) * 100);
 
   // Track when data updates to show a brief notification
@@ -84,7 +84,7 @@ const LocatiesPage = () => {
   const repCityCount: Record<string, number> = {};
   represented.forEach((m) => {
     const gemeente = getGemeente(m.plaats);
-    if (gemeente) repCityCount[gemeente] = (repCityCount[gemeente] || 0) + (m.aantalLocaties || 1);
+    if (gemeente) repCityCount[gemeente] = (repCityCount[gemeente] || 0) + memberLocationCount(m);
   });
 
   // G4 stats
