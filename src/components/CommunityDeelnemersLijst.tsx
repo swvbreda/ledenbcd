@@ -1,10 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Search, Phone, User, AlertCircle } from "lucide-react";
+import { Search, Phone, User, AlertCircle, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhone } from "@/lib/phoneMatch";
+import { useAuth } from "@/hooks/useAuth";
+import CommunityUploadDialog from "@/components/CommunityUploadDialog";
 
 type Participant = {
   id: string;
@@ -16,6 +19,8 @@ type Participant = {
 
 const CommunityDeelnemersLijst = () => {
   const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
+  const { isAdmin, isBoard } = useAuth();
+  const [uploadOpen, setUploadOpen] = useState(false);
   const memberById = useMemo(() => {
     const map = new Map<number, { m: (typeof rawMembers)[number]; type: "member" | "lead" | "old" }>();
     rawMembers.forEach((m) => map.set(m.id, { m, type: "member" }));
@@ -28,21 +33,19 @@ const CommunityDeelnemersLijst = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data } = await supabase
-        .from("whatsapp_participants")
-        .select("id, display_name, phone, member_id, sort_key")
-        .order("sort_key");
-      if (!active) return;
-      setParticipants((data || []) as Participant[]);
-      setIsLoading(false);
-    })();
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    const { data } = await supabase
+      .from("whatsapp_participants")
+      .select("id, display_name, phone, member_id, sort_key")
+      .order("sort_key");
+    setParticipants((data || []) as Participant[]);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -78,16 +81,35 @@ const CommunityDeelnemersLijst = () => {
             ({matchedCount} gekoppeld aan coffeeshop, {participants.length - matchedCount} nog niet)
           </span>
         </p>
-        <div className="relative w-full sm:w-72">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Zoek coffeeshop, naam of nummer"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-8"
-          />
+        <div className="flex items-center gap-2 flex-wrap">
+          {(isAdmin || isBoard) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-brand-red text-brand-red hover:bg-brand-red/10"
+              onClick={() => setUploadOpen(true)}
+            >
+              <Upload size={14} />
+              Upload deelnemerslijst
+            </Button>
+          )}
+          <div className="relative w-full sm:w-72">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Zoek coffeeshop, naam of nummer"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
       </div>
+
+      <CommunityUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        onSuccess={load}
+      />
 
       <div className="border border-border rounded-md overflow-hidden">
         <div className="overflow-x-auto">
