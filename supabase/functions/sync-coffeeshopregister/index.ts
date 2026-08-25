@@ -160,6 +160,7 @@ Deno.serve(async (req) => {
 
     const rows = shops.map((s) => {
       const gem = gemeenteById.get(s.gemeente_id);
+      const gemeente = canonPlace(gem?.naam ?? (typeof s.gemeente === "string" ? s.gemeente : null));
       return {
         bron_id: s.id,
         naam: s.naam_coffeeshop ?? s.naam ?? "Onbekend",
@@ -167,8 +168,8 @@ Deno.serve(async (req) => {
         huisnummer: s.huisnummer ?? null,
         huisnummer_toevoeging: s.huisnummer_toevoeging ?? null,
         postcode: s.postcode ?? null,
-        plaats: s.plaats ?? null,
-        gemeente: gem?.naam ?? (typeof s.gemeente === "string" ? s.gemeente : null),
+        plaats: canonPlace(s.plaats) ?? gemeente,
+        gemeente,
         provincie: gem?.provincie ?? null,
         latitude: s.latitude ?? null,
         longitude: s.longitude ?? null,
