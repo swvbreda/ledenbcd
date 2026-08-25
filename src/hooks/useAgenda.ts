@@ -208,7 +208,8 @@ export function useAgendaMutations() {
   const register = useMutation({
     mutationFn: async (input: {
       event_id: string;
-      member_id: number;
+      member_id?: number | null;
+      board_member_id?: string | null;
       guests: number;
       note?: string | null;
       id?: string;
@@ -226,7 +227,8 @@ export function useAgendaMutations() {
         .from("agenda_registrations" as any)
         .insert({
           event_id: input.event_id,
-          member_id: input.member_id,
+          member_id: input.board_member_id ? null : input.member_id ?? null,
+          board_member_id: input.board_member_id ?? null,
           guests: input.guests,
           note: input.note ?? null,
           registered_by: userData.user?.id ?? null,
@@ -234,6 +236,8 @@ export function useAgendaMutations() {
         .select("id")
         .single();
       if (error) throw error;
+
+      if (input.board_member_id || !input.member_id) return { emailed: false };
 
       const emailed = await sendRegistrationConfirmation({
         registrationId: (created as any)?.id as string,
