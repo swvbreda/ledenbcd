@@ -22,7 +22,8 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
-import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
+import { useAssignLinkLocation, useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
@@ -62,12 +63,17 @@ const MemberDetail = () => {
   const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
   const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
   const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
+  const assignLocation = useAssignLinkLocation();
   const memberLinks = useMemo(
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
     [registerLinks, memberId],
   );
+  // Koppeling per vestiging: eerst op vestigingssleutel, daarna terugval op adres/postcode/plaats.
   const linkByLocation = useMemo(() => {
     const map = new Map<string, (typeof memberLinks)[number]>();
+    const norm = (v?: string | null) => (v ?? "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const locs = (member?.locaties ?? []) as any[];
+
     memberLinks.forEach((l) => {
       if (!l.location_key) return;
       const current = map.get(l.location_key);
@@ -75,8 +81,33 @@ const MemberDetail = () => {
         map.set(l.location_key, l);
       }
     });
+
+    memberLinks
+      .filter((l) => !l.location_key)
+      .forEach((l) => {
+        const shop = shopById.get(l.register_id);
+        if (!shop) return;
+        const shopPc = norm(shop.postcode);
+        const shopAdr = norm([shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].join(" "));
+        const shopPlaats = norm(shop.plaats);
+        const candidates = locs.filter((loc) => {
+          if (shopPc && norm(loc.postcode) === shopPc) return true;
+          if (shopAdr && norm(loc.adres) === shopAdr && norm(loc.plaats) === shopPlaats) return true;
+          return false;
+        });
+        const inPlaats = candidates.length ? candidates : locs.filter((loc) => shopPlaats && norm(loc.plaats) === shopPlaats);
+        if (inPlaats.length !== 1) return;
+        const key = locationKey(inPlaats[0]);
+        if (!map.has(key)) map.set(key, l);
+      });
+
     return map;
-  }, [memberLinks]);
+  }, [memberLinks, shopById, member?.locaties]);
+
+  const matchedLinkIds = useMemo(
+    () => new Set(Array.from(linkByLocation.values()).map((l) => l.id)),
+    [linkByLocation],
+  );
 
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
@@ -782,10 +813,7 @@ const MemberDetail = () => {
               {/* Registershops die aan dit lid gekoppeld zijn, maar (nog) niet aan een vestiging */}
               {canSeeRegister &&
                 memberLinks
-                  .filter((l) => {
-                    if (!l.location_key) return true;
-                    return !member.locaties.some((loc) => locationKey(loc as any) === l.location_key);
-                  })
+                  .filter((l) => !matchedLinkIds.has(l.id))
                   .map((l) => {
                     const shop = shopById.get(l.register_id);
                     if (!shop) return null;
@@ -798,6 +826,25 @@ const MemberDetail = () => {
                           </span>
                         </div>
                         <LocationRegisterInfo link={l} shop={shop} />
+                        {isAdmin && (
+                          <div className="mt-3">
+                            <p className="text-xs text-muted-foreground mb-1">Koppel aan vestiging:</p>
+                            <Select
+                              onValueChange={(v) => assignLocation.mutate({ linkId: l.id, location_key: v })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Kies vestiging…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {member.locaties.map((loc, li) => (
+                                  <SelectItem key={li} value={locationKey(loc as any)} className="text-xs">
+                                    {loc.naam} — {loc.adres || loc.plaats}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
