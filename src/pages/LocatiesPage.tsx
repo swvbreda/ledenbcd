@@ -139,7 +139,8 @@ const LocatiesPage = () => {
     }
 
     return Array.from(map.values());
-  }, [represented]);
+  }, [represented, perStad]);
+
   const filtered = useMemo(() => {
     let result = cities;
     if (search) {
