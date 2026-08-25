@@ -333,6 +333,9 @@ export default function GoedkeuringenPage() {
         </Button>
       </BcdHeroBanner>
 
+      {/* Koppelvoorstellen coffeeshopregister */}
+      <RegisterLinkApprovals />
+
       {/* Nieuwe aanmeldingen via publieke site */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
