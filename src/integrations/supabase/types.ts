@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          event_date: string
+          event_type: string
+          id: string
+          is_published: boolean
+          location: string | null
+          max_seats: number | null
+          start_time: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          event_type?: string
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          max_seats?: number | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          max_seats?: number | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agenda_registrations: {
+        Row: {
+          created_at: string
+          event_id: string
+          guests: number
+          id: string
+          member_id: number
+          note: string | null
+          registered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          guests?: number
+          id?: string
+          member_id: number
+          note?: string | null
+          registered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          guests?: number
+          id?: string
+          member_id?: number
+          note?: string | null
+          registered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_statement_uploads: {
         Row: {
           closing_balance: number | null
