@@ -55,6 +55,20 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
   const full = seatsLeft != null && seatsLeft <= 0 && !own;
 
+  // Namen van aangemelde deelnemers (leden/leads); bestuur staat al in de eigen regel.
+  const memberNames = new Map<number, string>();
+  for (const m of [...rawMembers, ...rawLeads]) {
+    memberNames.set(m.id, m.naam || m.bedrijfsnaam || `Lid #${m.id}`);
+  }
+  const attendeeEntries = registrations
+    .filter((r) => !r.board_member_id)
+    .flatMap((r) => {
+      const base = r.member_id != null ? memberNames.get(r.member_id) ?? `Lid #${r.member_id}` : "Onbekend";
+      const names = (r.attendee_names ?? []).filter((n) => n.trim().length > 0);
+      if (names.length === 0) return [{ name: base, detail: null as string | null }];
+      return names.map((n) => ({ name: n, detail: base }));
+    });
+
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
