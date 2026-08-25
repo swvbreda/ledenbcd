@@ -278,8 +278,18 @@ Deno.serve(async (req) => {
       if (k) bucket.kvks.add(k);
     }
 
+    /** Zelfde sleutel als de frontend (naam|adres|postcode, genormaliseerd). */
+    const locKey = (loc: any) =>
+      [
+        String(loc?.naam ?? "").toLowerCase().replace(/[^a-z0-9]/g, ""),
+        String(loc?.adres ?? "").toLowerCase().replace(/[^a-z0-9]/g, ""),
+        String(loc?.postcode ?? "").toLowerCase().replace(/[^a-z0-9]/g, ""),
+      ].join("|");
+
     type Kandidaat = {
       member_id: number;
+      location_key: string;
+      echt: boolean;
       naam: string;
       plaats: string;
       postcode: string;
@@ -316,6 +326,8 @@ Deno.serve(async (req) => {
         const adres: string = loc.adres ?? "";
         kandidaten.push({
           member_id: (m as any).id,
+          location_key: locKey(loc),
+          echt: !!(String(loc.adres ?? "").trim() || String(loc.plaats ?? "").trim()),
           naam: normName(loc.naam ?? data.naam),
           plaats: normPlace(canonPlace(loc.plaats ?? data.plaats)),
           postcode: normPostcode(loc.postcode),
@@ -325,6 +337,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+
 
     const nieuweLinks: any[] = [];
     for (const shop of registerRows ?? []) {
