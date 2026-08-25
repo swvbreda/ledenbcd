@@ -256,6 +256,10 @@ export function useResolveProposal() {
     mutationFn: async (input: { proposal: EnrichmentProposal; apply: boolean }) => {
       const { proposal, apply } = input;
 
+      if (apply && String(proposal.field ?? "").toLowerCase().startsWith("factuur")) {
+        throw new Error("Factuurgegevens worden nooit overschreven vanuit het register");
+      }
+
       if (apply) {
         const { data: row, error } = await supabase
           .from("members_data")
