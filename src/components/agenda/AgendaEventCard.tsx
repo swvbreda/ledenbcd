@@ -55,8 +55,8 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-base uppercase">{event.title}</h3>
             <Badge variant={isEvent ? "default" : "secondary"}>
