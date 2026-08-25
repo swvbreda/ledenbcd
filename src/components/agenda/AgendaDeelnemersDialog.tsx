@@ -77,8 +77,10 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
     register.mutate(
       { event_id: event.id, member_id: id, guests: n },
       {
-        onSuccess: () => {
-          toast.success("Lid aangemeld");
+        onSuccess: (res) => {
+          toast.success(
+            res?.emailed ? "Lid aangemeld — bevestiging verstuurd" : "Lid aangemeld (geen e-mailadres bekend)",
+          );
           setMemberId("");
           setGuests("1");
         },

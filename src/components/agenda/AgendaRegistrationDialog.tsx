@@ -55,8 +55,10 @@ export default function AgendaRegistrationDialog({
     register.mutate(
       { id: existing?.id, event_id: event.id, member_id: memberId, guests: n, note: note.trim() || null },
       {
-        onSuccess: () => {
-          toast.success(existing ? "Aanmelding bijgewerkt" : "Je bent aangemeld");
+        onSuccess: (res) => {
+          if (existing) toast.success("Aanmelding bijgewerkt");
+          else if (res?.emailed) toast.success("Je bent aangemeld — bevestiging per e-mail verstuurd");
+          else toast.success("Je bent aangemeld (geen e-mailadres bekend)");
           onOpenChange(false);
         },
         onError: (e: any) => toast.error(e?.message || "Aanmelden mislukt"),
