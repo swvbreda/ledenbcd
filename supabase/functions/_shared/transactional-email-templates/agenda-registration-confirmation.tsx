@@ -53,6 +53,7 @@ const AgendaRegistrationConfirmation = ({
           {eventTime ? <Row label="Tijd" value={eventTime} /> : null}
           {location ? <Row label="Locatie" value={location} /> : null}
           {guests ? <Row label="Aantal personen" value={String(guests)} /> : null}
+          {attendeeNames ? <Row label="Namen" value={String(attendeeNames)} /> : null}
           {note ? <Row label="Opmerking" value={note} /> : null}
         </Section>
 
