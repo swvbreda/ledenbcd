@@ -20,6 +20,9 @@ const FIELD_LABELS: Record<string, string> = {
   bedrijfsnaam: "Bedrijfsnaam",
 };
 
+/** Velden die als terugval de facturatiegegevens bepalen. */
+const INVOICE_SENSITIVE = new Set(["bedrijfsnaam", "kvk"]);
+
 type Props = {
   memberName: Map<number, string>;
   isAdmin: boolean;
@@ -90,6 +93,9 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                     </span>
                     <span className="text-muted-foreground">→</span>
                     <span>{p.proposed_value}</span>
+                    {INVOICE_SENSITIVE.has(p.field) && p.scope !== "locatie" && (
+                      <Badge variant="destructive">beïnvloedt facturatie</Badge>
+                    )}
                     <Badge variant="secondary" className="ml-auto">
                       {p.source === "kvk" ? "KvK" : "Register"}
                     </Badge>
