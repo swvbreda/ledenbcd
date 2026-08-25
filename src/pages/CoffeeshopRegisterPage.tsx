@@ -86,16 +86,28 @@ const CoffeeshopRegisterPage = () => {
     return map;
   }, [links]);
 
-  const gemeenten = useMemo(
-    () => Array.from(new Set(shops.map((s) => s.gemeente).filter(Boolean) as string[])).sort(),
-    [shops],
+  /** Vergunde shops: de basis voor alle cijfers op deze pagina. */
+  const actief = useMemo(() => shops.filter(isActiveShop), [shops]);
+
+  /** Zichtbare shops: standaard alleen vergund, optioneel alle niet-vervallen. */
+  const zichtbaar = useMemo(
+    () => (vergunning === "vergund" ? actief : shops.filter((s) => !s.vervallen)),
+    [vergunning, actief, shops],
   );
 
-  const actief = useMemo(() => shops.filter((s) => !s.vervallen), [shops]);
+  const gemeenten = useMemo(
+    () => Array.from(new Set(zichtbaar.map((s) => s.gemeente).filter(Boolean) as string[])).sort(),
+    [zichtbaar],
+  );
+
+  const gemeentenVergund = useMemo(
+    () => new Set(actief.map((s) => s.gemeente).filter(Boolean) as string[]).size,
+    [actief],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return actief.filter((s) => {
+    return zichtbaar.filter((s) => {
       if (gemeente !== "alle" && s.gemeente !== gemeente) return false;
       const link = linkByShop.get(s.id);
       if (koppeling === "lid" && link?.status !== "bevestigd") return false;
@@ -106,16 +118,17 @@ const CoffeeshopRegisterPage = () => {
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q));
     });
-  }, [actief, search, gemeente, koppeling, linkByShop]);
+  }, [zichtbaar, search, gemeente, koppeling, linkByShop]);
 
   const bevestigd = useMemo(
-    () => Array.from(linkByShop.values()).filter((l) => l.status === "bevestigd").length,
-    [linkByShop],
+    () => actief.filter((s) => linkByShop.get(s.id)?.status === "bevestigd").length,
+    [actief, linkByShop],
   );
   const voorstellen = useMemo(
-    () => Array.from(linkByShop.values()).filter((l) => l.status === "voorstel").length,
-    [linkByShop],
+    () => actief.filter((s) => linkByShop.get(s.id)?.status === "voorstel").length,
+    [actief, linkByShop],
   );
+
 
   if (!allowed) {
     return (
