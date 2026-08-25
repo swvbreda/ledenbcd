@@ -291,6 +291,7 @@ Deno.serve(async (req) => {
 
         for (const [field, value] of candidates) {
           if (!value) continue;
+          if (isInvoiceField(field)) continue;
           const current = loc[field];
           if (!current || String(current).trim() === "") {
             loc[field] = value;
@@ -318,16 +319,39 @@ Deno.serve(async (req) => {
         const memberCandidates: Array<[string, string | null]> = [
           ["website", shop.website],
           ["telefoon", shop.telefoon],
-          ["bedrijfsnaam", shop.vergunninghouder || shop.exploitant || null],
-          ["kvk", shop.kvk_nummer],
         ];
         for (const [field, value] of memberCandidates) {
           if (!value) continue;
+          if (isInvoiceField(field)) continue;
           if (!data[field] || String(data[field]).trim() === "") {
             data[field] = value;
             fieldsFilled++;
             changed = true;
           }
+        }
+
+        // Facturatiegevoelig: nooit stil invullen, altijd als voorstel
+        const sensitive: Array<[string, string | null]> = [
+          ["bedrijfsnaam", shop.vergunninghouder || shop.exploitant || null],
+          ["kvk", shop.kvk_nummer],
+        ];
+        for (const [field, value] of sensitive) {
+          if (!value) continue;
+          const current = data[field];
+          if (current && norm(current) === norm(value)) continue;
+          const key = `${memberId}|${rid}||${field}`;
+          if (knownProposal.has(key)) continue;
+          knownProposal.add(key);
+          proposals.push({
+            member_id: memberId,
+            register_id: rid,
+            scope: "lid",
+            location_key: null,
+            field,
+            current_value: current ? String(current) : null,
+            proposed_value: String(value),
+            source: field === "kvk" ? "kvk" : "register",
+          });
         }
       }
 
