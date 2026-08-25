@@ -81,16 +81,35 @@ const CommunityDeelnemersLijst = () => {
             ({matchedCount} gekoppeld aan coffeeshop, {participants.length - matchedCount} nog niet)
           </span>
         </p>
-        <div className="relative w-full sm:w-72">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Zoek coffeeshop, naam of nummer"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-8"
-          />
+        <div className="flex items-center gap-2 flex-wrap">
+          {(isAdmin || isBoard) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-brand-red text-brand-red hover:bg-brand-red/10"
+              onClick={() => setUploadOpen(true)}
+            >
+              <Upload size={14} />
+              Upload deelnemerslijst
+            </Button>
+          )}
+          <div className="relative w-full sm:w-72">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Zoek coffeeshop, naam of nummer"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
       </div>
+
+      <CommunityUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        onSuccess={load}
+      />
 
       <div className="border border-border rounded-md overflow-hidden">
         <div className="overflow-x-auto">
