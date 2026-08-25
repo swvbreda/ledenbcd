@@ -1,3 +1,12 @@
+export interface UboEntry {
+  naam: string;
+  kvk?: string | null;
+  niveau?: number;
+  soort?: string;
+  uiteindelijkBelanghebbende?: boolean;
+  toelichting?: string | null;
+}
+
 export interface Location {
   naam: string;
   plaats?: string;
@@ -6,7 +15,11 @@ export interface Location {
   postcode?: string;
   oprichtingsDatum?: string;
   kvk?: string;
+  vergunninghouder?: string;
+  exploitant?: string;
+  ubo?: UboEntry[];
 }
+
 
 export interface Contact {
   naam: string;
