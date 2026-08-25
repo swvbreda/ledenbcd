@@ -66,8 +66,12 @@ const MemberDetail = () => {
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
     [registerLinks, memberId],
   );
+  // Koppeling per vestiging: eerst op vestigingssleutel, daarna terugval op adres/postcode/plaats.
   const linkByLocation = useMemo(() => {
     const map = new Map<string, (typeof memberLinks)[number]>();
+    const norm = (v?: string | null) => (v ?? "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const locs = (member?.locaties ?? []) as any[];
+
     memberLinks.forEach((l) => {
       if (!l.location_key) return;
       const current = map.get(l.location_key);
@@ -75,8 +79,33 @@ const MemberDetail = () => {
         map.set(l.location_key, l);
       }
     });
+
+    memberLinks
+      .filter((l) => !l.location_key)
+      .forEach((l) => {
+        const shop = shopById.get(l.register_id);
+        if (!shop) return;
+        const shopPc = norm(shop.postcode);
+        const shopAdr = norm([shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].join(" "));
+        const shopPlaats = norm(shop.plaats);
+        const candidates = locs.filter((loc) => {
+          if (shopPc && norm(loc.postcode) === shopPc) return true;
+          if (shopAdr && norm(loc.adres) === shopAdr && norm(loc.plaats) === shopPlaats) return true;
+          return false;
+        });
+        const inPlaats = candidates.length ? candidates : locs.filter((loc) => shopPlaats && norm(loc.plaats) === shopPlaats);
+        if (inPlaats.length !== 1) return;
+        const key = locationKey(inPlaats[0]);
+        if (!map.has(key)) map.set(key, l);
+      });
+
     return map;
-  }, [memberLinks]);
+  }, [memberLinks, shopById, member?.locaties]);
+
+  const matchedLinkIds = useMemo(
+    () => new Set(Array.from(linkByLocation.values()).map((l) => l.id)),
+    [linkByLocation],
+  );
 
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
