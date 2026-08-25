@@ -16,12 +16,12 @@ function AgendaPoster({ event }: { event: AgendaEvent }) {
   const { data: url } = useAgendaImageUrl(event.image_path);
   if (!url) return null;
   return (
-    <div className="w-full overflow-hidden md:h-auto md:w-48 md:shrink-0">
+    <div className="w-full shrink-0 overflow-hidden bg-muted/40 md:w-48">
       <img
         src={url}
         alt={`Poster van ${event.title}`}
         loading="lazy"
-        className="h-40 w-full object-cover transition-transform duration-700 group-hover:scale-105 md:h-full"
+        className="aspect-[3/4] w-full object-contain transition-transform duration-700 group-hover:scale-105"
       />
     </div>
   );
