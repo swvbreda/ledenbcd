@@ -218,6 +218,23 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
           </div>
 
           <div>
+            <Label htmlFor="ag-meeting">Vergaderlink (Topical)</Label>
+            <Input
+              id="ag-meeting"
+              type="url"
+              value={form.meeting_url}
+              onChange={(e) => setForm({ ...form, meeting_url: e.target.value })}
+              placeholder="https://app.topicalmeetings.com/..."
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Wordt automatisch gevuld vanuit Topical via de Outlook-agenda. Alleen zichtbaar voor
+              aangemelde deelnemers.
+            </p>
+          </div>
+
+
+
+          <div>
             <Label htmlFor="ag-desc">Omschrijving</Label>
             <Textarea
               id="ag-desc"
