@@ -81,7 +81,7 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
             <th className="text-right font-medium py-1">Begroot</th>
             <th className="text-right font-medium py-1">Uitgegeven</th>
             <th className="text-right font-medium py-1 w-16">%</th>
-            <th className="text-right font-medium py-1">Resterend</th>
+            <th className="text-right font-medium py-1">Beschikbaar</th>
           </tr>
         </thead>
         <tbody>
@@ -96,9 +96,17 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
                 <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {c.budgeted > 0 ? `${catPct}%` : "—"}
                 </td>
-                <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive" : ""}`}>
-                  <CurrencyCell value={c.budgeted - c.spent} />
+                <td className="py-1 text-right tabular-nums">
+                  <div className="flex flex-col items-end">
+                    <CurrencyCell value={c.available} />
+                    {c.overrun < 0 && (
+                      <span className="text-destructive text-[10px] tabular-nums">
+                        overschreden <CurrencyText value={c.overrun} className="inline-flex" />
+                      </span>
+                    )}
+                  </div>
                 </td>
+
               </tr>
             );
           })}
