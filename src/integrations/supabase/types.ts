@@ -595,6 +595,9 @@ export type Database = {
           huisnummer: string | null
           huisnummer_toevoeging: string | null
           id: string
+          kvk_checked_at: string | null
+          kvk_nummer: string | null
+          kvk_oprichtingsdatum: string | null
           latitude: number | null
           longitude: number | null
           naam: string
@@ -622,6 +625,9 @@ export type Database = {
           huisnummer?: string | null
           huisnummer_toevoeging?: string | null
           id?: string
+          kvk_checked_at?: string | null
+          kvk_nummer?: string | null
+          kvk_oprichtingsdatum?: string | null
           latitude?: number | null
           longitude?: number | null
           naam: string
@@ -649,6 +655,9 @@ export type Database = {
           huisnummer?: string | null
           huisnummer_toevoeging?: string | null
           id?: string
+          kvk_checked_at?: string | null
+          kvk_nummer?: string | null
+          kvk_oprichtingsdatum?: string | null
           latitude?: number | null
           longitude?: number | null
           naam?: string
@@ -2337,6 +2346,65 @@ export type Database = {
         }
         Relationships: []
       }
+      register_enrichment_proposals: {
+        Row: {
+          created_at: string
+          current_value: string | null
+          field: string
+          id: string
+          location_key: string | null
+          member_id: number
+          proposed_value: string
+          register_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          scope: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: string | null
+          field: string
+          id?: string
+          location_key?: string | null
+          member_id: number
+          proposed_value: string
+          register_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scope?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: string | null
+          field?: string
+          id?: string
+          location_key?: string | null
+          member_id?: number
+          proposed_value?: string
+          register_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scope?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "register_enrichment_proposals_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "coffeeshop_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secure_document_views: {
         Row: {
           document_id: string
@@ -2936,6 +3004,7 @@ export type Database = {
       }
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
+      trigger_register_enrichment: { Args: never; Returns: number }
       trigger_topical_sync: { Args: never; Returns: number }
     }
     Enums: {
