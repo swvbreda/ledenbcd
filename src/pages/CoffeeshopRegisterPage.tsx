@@ -55,6 +55,7 @@ const CoffeeshopRegisterPage = () => {
   const [search, setSearch] = useState("");
   const [gemeente, setGemeente] = useState("alle");
   const [koppeling, setKoppeling] = useState<Koppeling>("alle");
+  const [vergunning, setVergunning] = useState<Vergunning>("vergund");
   const [detail, setDetail] = useState<RegisterShop | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<{
     shop: RegisterShop;
