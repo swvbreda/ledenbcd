@@ -23,6 +23,8 @@ import {
   type AgendaEvent,
   type AgendaRegistration,
 } from "@/hooks/useAgenda";
+import { useMembersData } from "@/contexts/MembersDataContext";
+import AttendanceList from "./AttendanceList";
 import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
@@ -39,6 +41,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const { unregister, deleteEvent } = useAgendaMutations();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
+  const { rawMembers, rawLeads } = useMembersData();
   const boardPresent = boardAttendance.filter((b) => b.event_id === event.id);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -52,6 +55,20 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
   const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
   const full = seatsLeft != null && seatsLeft <= 0 && !own;
+
+  // Namen van aangemelde deelnemers (leden/leads); bestuur staat al in de eigen regel.
+  const memberNames = new Map<number, string>();
+  for (const m of [...rawMembers, ...rawLeads]) {
+    memberNames.set(m.id, m.naam || m.bedrijfsnaam || `Lid #${m.id}`);
+  }
+  const attendeeEntries = registrations
+    .filter((r) => !r.board_member_id)
+    .flatMap((r) => {
+      const base = r.member_id != null ? memberNames.get(r.member_id) ?? `Lid #${r.member_id}` : "Onbekend";
+      const names = (r.attendee_names ?? []).filter((n) => n.trim().length > 0);
+      if (names.length === 0) return [{ name: base, detail: null as string | null }];
+      return names.map((n) => ({ name: n, detail: base }));
+    });
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -88,14 +105,12 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               {event.max_seats != null ? ` / ${event.max_seats}` : ""}
             </span>
           </div>
-          {boardPresent.length > 0 && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Bestuur aanwezig: </span>
-              {boardPresent
-                .map((b) => (b.functie ? `${b.naam} (${b.functie})` : b.naam))
-                .join(" · ")}
-            </p>
-          )}
+          <AttendanceList
+            label="Bestuur aanwezig"
+            entries={boardPresent.map((b) => ({ name: b.naam, detail: b.functie }))}
+          />
+          <AttendanceList label="Aangemeld" entries={attendeeEntries} />
+
           {event.description && (
             <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{event.description}</p>
           )}
