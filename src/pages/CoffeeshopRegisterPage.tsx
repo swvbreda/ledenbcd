@@ -239,10 +239,24 @@ const CoffeeshopRegisterPage = () => {
                     </td>
                     <td className="px-3 py-2">
                       {link ? (
-                        <Badge variant={link.status === "bevestigd" ? "default" : "secondary"}>
-                          {memberName.get(link.member_id) ?? `Lid #${link.member_id}`}
-                          {link.status === "voorstel" && " (voorstel)"}
-                        </Badge>
+                        <div className="space-y-0.5">
+                          <Badge variant={link.status === "bevestigd" ? "default" : "secondary"}>
+                            {memberName.get(link.member_id) ?? `Lid #${link.member_id}`}
+                            {link.status === "voorstel" && " (voorstel)"}
+                          </Badge>
+                          {link.status === "voorstel" && (
+                            <p
+                              className={`text-xs ${
+                                (link.score ?? 0) < 0.7
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {link.reden ?? "onbekende reden"}
+                              {link.score != null && ` · ${Math.round(link.score * 100)}%`}
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -254,16 +268,18 @@ const CoffeeshopRegisterPage = () => {
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              setLink.mutate({
-                                register_id: s.id,
-                                member_id: link.member_id,
-                                status: "bevestigd",
-                                existingId: link.id,
-                                previousStatus: "voorstel",
+                              setConfirmTarget({
+                                shop: s,
+                                proposal: {
+                                  linkId: link.id,
+                                  memberId: link.member_id,
+                                  reden: link.reden,
+                                  score: link.score,
+                                },
                               })
                             }
                           >
-                            <Check className="h-4 w-4" />
+                            <Check className="mr-1 h-4 w-4" /> Controleren
                           </Button>
                           <Button
                             size="sm"
@@ -278,6 +294,17 @@ const CoffeeshopRegisterPage = () => {
                             }
                           >
                             <X className="h-4 w-4" />
+                          </Button>
+                        </span>
+                      )}
+                      {!link && (
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmTarget({ shop: s, proposal: null })}
+                          >
+                            <Link2 className="mr-1 h-4 w-4" /> Koppel aan lid
                           </Button>
                         </span>
                       )}
