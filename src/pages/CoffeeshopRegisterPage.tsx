@@ -186,7 +186,7 @@ const CoffeeshopRegisterPage = () => {
           { label: "Coffeeshops in NL", value: actief.length },
           { label: "Gekoppeld aan leden", value: bevestigd },
           { label: "Voorstellen te bevestigen", value: voorstellen },
-          { label: "Gemeenten", value: gemeenten.length },
+          { label: "Gemeenten", value: gemeentenVergund },
         ].map((k) => (
           <div key={k.label} className="rounded-lg border bg-card p-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
