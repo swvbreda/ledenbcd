@@ -718,7 +718,34 @@ const MemberDetail = () => {
                     {loc.oprichtingsDatum && (
                       <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
                     )}
+                    {loc.vergunninghouder && (
+                      <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
+                    )}
+                    {loc.exploitant && loc.exploitant !== loc.vergunninghouder && (
+                      <p className="text-xs">Exploitant: {loc.exploitant}</p>
+                    )}
                   </div>
+                  {Array.isArray(loc.ubo) && loc.ubo.length > 0 && (
+                    <div className="mt-2 border-t border-border pt-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Eigendomsketen (UBO)
+                      </p>
+                      <ul className="mt-1 space-y-0.5">
+                        {loc.ubo.map((u, ui) => (
+                          <li key={ui} className="text-xs text-muted-foreground">
+                            <span style={{ paddingLeft: `${(u.niveau ?? 0) * 10}px` }}>
+                              {u.naam}
+                              {u.kvk && <span className="font-mono"> · KVK {u.kvk}</span>}
+                              {u.uiteindelijkBelanghebbende && (
+                                <span className="ml-1 text-primary font-medium">· UBO</span>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
