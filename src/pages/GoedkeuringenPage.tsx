@@ -20,6 +20,7 @@ import {
   type MembershipRequest,
 } from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import RegisterLinkApprovals from "@/components/register/RegisterLinkApprovals";
 import type { Member } from "@/data/types";
 
 const fieldLabels: Record<string, string> = {
