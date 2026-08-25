@@ -105,10 +105,23 @@ export default function DossierOverzichtTab({ year }: Props) {
 
 
   const docsByEntry = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const d of documents) map.set(d.entry_key, (map.get(d.entry_key) || 0) + 1);
+    const map = new Map<string, Set<string>>();
+    for (const d of documents) {
+      if (!map.has(d.entry_key)) map.set(d.entry_key, new Set());
+      map.get(d.entry_key)!.add(d.file_path);
+    }
     return map;
   }, [documents]);
+
+  /** Aantal unieke facturen over alle onderliggende bronnen van een samengevoegde regel. */
+  const docCountFor = (e: DedupedEntry) => {
+    const seen = new Set<string>();
+    for (const k of [e.key, ...(e.sources || []).map((s) => s.key)]) {
+      for (const p of docsByEntry.get(k) || []) seen.add(p);
+    }
+    return seen.size;
+  };
+
 
   const grandTotal = dossiers.reduce((s, d) => s + d.total, 0);
 
@@ -315,15 +328,16 @@ export default function DossierOverzichtTab({ year }: Props) {
                       <CurrencyCell value={e.direction === "in" ? e.amount : -e.amount} />
                     </td>
                     <td className="px-2 py-1 text-muted-foreground">
-                      {docsByEntry.get(e.key) ? (
+                      {docCountFor(e) ? (
                         <span className="inline-flex items-center gap-0.5 text-brand-red">
                           <Paperclip className="h-3 w-3" />
-                          {docsByEntry.get(e.key)}
+                          {docCountFor(e)}
                         </span>
                       ) : (
                         ""
                       )}
                     </td>
+
 
                     {canEdit && (
                       <td className="px-1 py-1 text-center">
