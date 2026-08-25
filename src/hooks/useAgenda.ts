@@ -29,7 +29,8 @@ export type AgendaEventInput = Omit<
 export interface AgendaRegistration {
   id: string;
   event_id: string;
-  member_id: number;
+  member_id: number | null;
+  board_member_id: string | null;
   guests: number;
   note: string | null;
   registered_by: string | null;
