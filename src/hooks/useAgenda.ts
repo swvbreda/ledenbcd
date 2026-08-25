@@ -33,6 +33,7 @@ export interface AgendaRegistration {
   board_member_id: string | null;
   guests: number;
   note: string | null;
+  attendee_names: string[] | null;
   registered_by: string | null;
   created_at: string;
   updated_at: string;
