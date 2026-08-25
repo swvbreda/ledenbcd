@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
