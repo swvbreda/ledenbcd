@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Check, RefreshCw, Search, X } from "lucide-react";
+import { ArrowLeft, Building2, Check, Link2, RefreshCw, Search, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
+import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +53,10 @@ const CoffeeshopRegisterPage = () => {
   const [gemeente, setGemeente] = useState("alle");
   const [koppeling, setKoppeling] = useState<Koppeling>("alle");
   const [detail, setDetail] = useState<RegisterShop | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    shop: RegisterShop;
+    proposal: { linkId: string; memberId: number; reden: string | null; score: number | null } | null;
+  } | null>(null);
   const [unlinkTarget, setUnlinkTarget] = useState<{ shop: RegisterShop; linkId: string; memberId: number } | null>(null);
 
   const memberName = useMemo(() => {
@@ -61,12 +66,21 @@ const CoffeeshopRegisterPage = () => {
   }, [rawMembers]);
 
   const linkByShop = useMemo(() => {
-    const map = new Map<string, { member_id: number; status: string; id: string; reden: string | null }>();
+    const map = new Map<
+      string,
+      { member_id: number; status: string; id: string; reden: string | null; score: number | null }
+    >();
     links.forEach((l) => {
       if (l.status === "afgewezen") return;
       const current = map.get(l.register_id);
       if (!current || (current.status !== "bevestigd" && l.status === "bevestigd")) {
-        map.set(l.register_id, { member_id: l.member_id, status: l.status, id: l.id, reden: l.match_reden });
+        map.set(l.register_id, {
+          member_id: l.member_id,
+          status: l.status,
+          id: l.id,
+          reden: l.match_reden,
+          score: l.match_score ?? null,
+        });
       }
     });
     return map;
@@ -230,10 +244,24 @@ const CoffeeshopRegisterPage = () => {
                     </td>
                     <td className="px-3 py-2">
                       {link ? (
-                        <Badge variant={link.status === "bevestigd" ? "default" : "secondary"}>
-                          {memberName.get(link.member_id) ?? `Lid #${link.member_id}`}
-                          {link.status === "voorstel" && " (voorstel)"}
-                        </Badge>
+                        <div className="space-y-0.5">
+                          <Badge variant={link.status === "bevestigd" ? "default" : "secondary"}>
+                            {memberName.get(link.member_id) ?? `Lid #${link.member_id}`}
+                            {link.status === "voorstel" && " (voorstel)"}
+                          </Badge>
+                          {link.status === "voorstel" && (
+                            <p
+                              className={`text-xs ${
+                                (link.score ?? 0) < 0.7
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {link.reden ?? "onbekende reden"}
+                              {link.score != null && ` · ${Math.round(link.score * 100)}%`}
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -245,16 +273,18 @@ const CoffeeshopRegisterPage = () => {
                             size="sm"
                             variant="outline"
                             onClick={() =>
-                              setLink.mutate({
-                                register_id: s.id,
-                                member_id: link.member_id,
-                                status: "bevestigd",
-                                existingId: link.id,
-                                previousStatus: "voorstel",
+                              setConfirmTarget({
+                                shop: s,
+                                proposal: {
+                                  linkId: link.id,
+                                  memberId: link.member_id,
+                                  reden: link.reden,
+                                  score: link.score,
+                                },
                               })
                             }
                           >
-                            <Check className="h-4 w-4" />
+                            <Check className="mr-1 h-4 w-4" /> Controleren
                           </Button>
                           <Button
                             size="sm"
@@ -269,6 +299,17 @@ const CoffeeshopRegisterPage = () => {
                             }
                           >
                             <X className="h-4 w-4" />
+                          </Button>
+                        </span>
+                      )}
+                      {!link && (
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmTarget({ shop: s, proposal: null })}
+                          >
+                            <Link2 className="mr-1 h-4 w-4" /> Koppel aan lid
                           </Button>
                         </span>
                       )}
@@ -292,6 +333,13 @@ const CoffeeshopRegisterPage = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmLinkDialog
+        shop={confirmTarget?.shop ?? null}
+        proposal={confirmTarget?.proposal ?? null}
+        open={!!confirmTarget}
+        onOpenChange={(o) => !o && setConfirmTarget(null)}
+      />
 
       <CoffeeshopRegisterDetailDialog
         shop={detail}
