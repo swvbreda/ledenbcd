@@ -183,7 +183,7 @@ const CoffeeshopRegisterPage = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Coffeeshops in NL", value: actief.length },
+          { label: "Vergunde coffeeshops in NL", value: actief.length },
           { label: "Gekoppeld aan leden", value: bevestigd },
           { label: "Voorstellen te bevestigen", value: voorstellen },
           { label: "Gemeenten", value: gemeentenVergund },
