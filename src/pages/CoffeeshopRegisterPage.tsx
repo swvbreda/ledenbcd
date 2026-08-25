@@ -225,6 +225,13 @@ const CoffeeshopRegisterPage = () => {
             <SelectItem value="geen">Niet gekoppeld</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={vergunning} onValueChange={(v) => setVergunning(v as Vergunning)}>
+          <SelectTrigger className="sm:w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="vergund">Alleen vergund</SelectItem>
+            <SelectItem value="alle">Incl. aanvragen &amp; weigeringen</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border overflow-hidden">
