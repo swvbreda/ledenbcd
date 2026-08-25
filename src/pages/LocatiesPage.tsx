@@ -6,13 +6,12 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
 import DocumentenZoeker from "@/components/DocumentenZoeker";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
 import { countLocations, memberLocationCount } from "@/lib/locationCount";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
+import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
 
 
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-const totalNL = coffeeshopData.totaalNL;
 
 interface StadsdeelData {
   naam: string;
