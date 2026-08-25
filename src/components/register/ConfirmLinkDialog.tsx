@@ -251,9 +251,11 @@ const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal, presetMemberId 
                     status: "bevestigd",
                     existingId: proposal?.linkId,
                     previousStatus: proposal ? "voorstel" : undefined,
+                    location_key: selectedId === presetMemberId ? presetLocationKey ?? null : null,
                   },
                   { onSuccess: close },
                 );
+
               }}
             >
               <Check className="mr-1 h-4 w-4" /> Koppeling bevestigen
