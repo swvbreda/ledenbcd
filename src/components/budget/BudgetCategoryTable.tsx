@@ -179,10 +179,40 @@ export default function BudgetCategoryTable({
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5 font-semibold">
-                <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
+                {isIncome ? (
+                  <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
+                ) : (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <CurrencyCell value={availableTotal} className="text-green-600" />
+                    {overrunTotal < 0 && (
+                      <>
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          beschikbaar
+                        </span>
+                        <CurrencyCell value={overrunTotal} className="text-destructive text-xs" />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          overschreden
+                        </span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
+                          saldo <CurrencyText value={totalRemaining} className="inline-flex" />
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
               <td />
             </tr>
+            {totalUnpaid !== 0 && (
+              <tr className="bg-muted/10 text-muted-foreground">
+                <td className="px-3 py-1.5 text-xs">Nog te betalen (niet in Uitgaven)</td>
+                <td />
+                <td className="px-3 py-1.5 text-xs"><CurrencyCell value={totalUnpaid} className="text-xs" /></td>
+                <td />
+                <td />
+              </tr>
+            )}
+
           </tbody>
         )}
       </table>
