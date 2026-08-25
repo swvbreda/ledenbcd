@@ -23,6 +23,7 @@ export type Database = {
           event_date: string
           event_type: string
           id: string
+          image_path: string | null
           is_published: boolean
           location: string | null
           max_seats: number | null
@@ -38,6 +39,7 @@ export type Database = {
           event_date: string
           event_type?: string
           id?: string
+          image_path?: string | null
           is_published?: boolean
           location?: string | null
           max_seats?: number | null
@@ -53,6 +55,7 @@ export type Database = {
           event_date?: string
           event_type?: string
           id?: string
+          image_path?: string | null
           is_published?: boolean
           location?: string | null
           max_seats?: number | null
