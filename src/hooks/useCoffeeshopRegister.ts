@@ -168,3 +168,114 @@ export function useSyncRegister() {
     onError: (e: any) => toast.error(e.message ?? "Synchronisatie mislukt"),
   });
 }
+
+export type EnrichmentProposal = {
+  id: string;
+  member_id: number;
+  register_id: string | null;
+  scope: string;
+  location_key: string | null;
+  field: string;
+  current_value: string | null;
+  proposed_value: string;
+  source: string;
+  status: "open" | "toegepast" | "genegeerd";
+  created_at: string;
+};
+
+export function useEnrichmentProposals(enabled = true) {
+  return useQuery({
+    queryKey: ["register-enrichment-proposals"],
+    enabled,
+    queryFn: async (): Promise<EnrichmentProposal[]> => {
+      const { data, error } = await supabase
+        .from("register_enrichment_proposals" as any)
+        .select("*")
+        .eq("status", "open")
+        .order("member_id");
+      if (error) throw error;
+      return (data ?? []) as unknown as EnrichmentProposal[];
+    },
+  });
+}
+
+/** Neemt een voorstel over in de ledendata (fetch-and-merge) of negeert het. */
+export function useResolveProposal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { proposal: EnrichmentProposal; apply: boolean }) => {
+      const { proposal, apply } = input;
+
+      if (apply) {
+        const { data: row, error } = await supabase
+          .from("members_data")
+          .select("id, data")
+          .eq("id", proposal.member_id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!row) throw new Error("Lid niet gevonden");
+
+        const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
+        if (proposal.scope === "locatie") {
+          const key = (proposal.location_key ?? "").toUpperCase();
+          const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
+          const match =
+            locaties.find(
+              (l) => String(l?.postcode ?? "").toUpperCase().replace(/\s+/g, "") === key,
+            ) ??
+            locaties.find(
+              (l) =>
+                String(l?.naam ?? "")
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, " ")
+                  .trim() === (proposal.location_key ?? ""),
+            );
+          if (!match) throw new Error("Locatie niet gevonden bij dit lid");
+          match[proposal.field] = proposal.proposed_value;
+          data.locaties = locaties;
+        } else {
+          data[proposal.field] = proposal.proposed_value;
+        }
+
+        const { error: upErr } = await supabase
+          .from("members_data")
+          .update({ data })
+          .eq("id", proposal.member_id);
+        if (upErr) throw upErr;
+      }
+
+      const { error: statusErr } = await supabase
+        .from("register_enrichment_proposals" as any)
+        .update({
+          status: apply ? "toegepast" : "genegeerd",
+          resolved_at: new Date().toISOString(),
+        })
+        .eq("id", proposal.id);
+      if (statusErr) throw statusErr;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.apply ? "Overgenomen" : "Genegeerd");
+      qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
+      qc.invalidateQueries({ queryKey: ["members-data"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Bijwerken mislukt"),
+  });
+}
+
+export function useRunEnrichment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("trigger_register_enrichment" as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Aanvullen gestart — dit duurt even");
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
+        qc.invalidateQueries({ queryKey: ["members-data"] });
+      }, 10000);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Aanvullen mislukt"),
+  });
+}

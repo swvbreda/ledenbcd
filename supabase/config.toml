@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.sync-coffeeshopregister]
 verify_jwt = false
+
+[functions.enrich-members-from-register]
+verify_jwt = false
