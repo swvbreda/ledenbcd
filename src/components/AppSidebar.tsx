@@ -92,22 +92,39 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
-                  const isLedenbestand = item.title === "Ledenbestand";
-                  return (
-                    <SidebarMenuItem key={item.title}>
+                  const registerItem = canSeeRegister && item.title === "Ledenbestand" && (
+                    <SidebarMenuItem key="Coffeeshopregister">
                       <SidebarMenuButton asChild>
                         <NavLink
-                          to={item.url}
-                          end={item.url === "/"}
+                          to="/coffeeshopregister"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
                           onClick={closeMobile}
                         >
-                          <item.icon className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
+                          <Building2 className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Coffeeshopregister</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
+                  );
+                  return (
+                    <>
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === "/"}
+                            className="hover:bg-sidebar-accent/50"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                            onClick={closeMobile}
+                          >
+                            <item.icon className="mr-2 h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {registerItem}
+                    </>
                   );
                 })}
                 {isAdmin && (
