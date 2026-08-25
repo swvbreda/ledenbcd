@@ -115,7 +115,7 @@ export function AppSidebar() {
                         {ledenOpen && (
                           <SidebarMenuSub>
                             <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={location.pathname === "/leden"}>
+                              <SidebarMenuSubButton asChild>
                                 <NavLink
                                   to="/leden"
                                   className="hover:bg-sidebar-accent/50"
@@ -127,7 +127,7 @@ export function AppSidebar() {
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                             <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild isActive={location.pathname === "/coffeeshopregister"}>
+                              <SidebarMenuSubButton asChild>
                                 <NavLink
                                   to="/coffeeshopregister"
                                   className="hover:bg-sidebar-accent/50"
