@@ -39,23 +39,30 @@ export default function BudgetCategoryTable({
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
   const isIncome = category.name.toLowerCase() === "inkomsten";
+  const expenseSign = (e: BudgetCategory["line_items"][number]["expenses"][number]) =>
+    // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
+    // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
+    // Voor kostenposten is het andersom: uit=gerealiseerd, in=refund.
+    e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
+  // Alleen daadwerkelijk betaalde boekingen tellen mee in Uitgaven.
   const sumExpenses = (li: typeof category.line_items[number]) =>
-    li.expenses.reduce((es, e) => {
-      // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
-      // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
-      // Voor kostenposten is het andersom: uit=gerealiseerd, in=refund.
-      const sign = e.direction === "in" ? (isIncome ? 1 : -1) : (isIncome ? -1 : 1);
-      return es + sign * e.amount;
-    }, 0);
+    li.expenses.reduce((es, e) => (e.paid === false ? es : es + expenseSign(e) * e.amount), 0);
+  const sumUnpaid = (li: typeof category.line_items[number]) =>
+    li.expenses.reduce((es, e) => (e.paid === false ? es + expenseSign(e) * e.amount : es), 0);
   const totalSpent = category.line_items.reduce((s, li) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     return s + (clicks?.spentValue ?? sumExpenses(li));
   }, 0);
-  const totalRemaining = category.line_items.reduce((s, li) => {
+  const totalUnpaid = category.line_items.reduce((s, li) => s + sumUnpaid(li), 0);
+  const remainingOf = (li: typeof category.line_items[number]) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
-    return s + (clicks?.remainingValue ?? (li.budgeted_amount - spentValue));
-  }, 0);
+    return clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
+  };
+  const totalRemaining = category.line_items.reduce((s, li) => s + remainingOf(li), 0);
+  // Overschrijdingen niet wegstrepen tegen posten die nog ruimte hebben.
+  const availableTotal = category.line_items.reduce((s, li) => s + Math.max(remainingOf(li), 0), 0);
+  const overrunTotal = category.line_items.reduce((s, li) => s + Math.min(remainingOf(li), 0), 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
   const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
@@ -66,6 +73,7 @@ export default function BudgetCategoryTable({
   const totalRemainingClass = isIncome
     ? (totalRemaining <= 0 ? "text-green-600" : "text-foreground")
     : (totalRemaining < 0 ? "text-destructive" : "text-green-600");
+
 
   const handleAdd = () => {
     if (!newName.trim()) return;
