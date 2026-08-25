@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
