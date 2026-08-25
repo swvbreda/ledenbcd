@@ -355,7 +355,19 @@ export function useAgendaMutations() {
     onSuccess: invalidate,
   });
 
-  return { saveEvent, deleteEvent, register, unregister, generateMeetings };
+  /** Haalt de Topical-vergaderlinks op uit de gekoppelde Outlook-agenda. */
+  const syncTopical = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("trigger_topical_sync" as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // De sync draait asynchroon; even later opnieuw ophalen.
+      setTimeout(invalidate, 4000);
+    },
+  });
+
+  return { saveEvent, deleteEvent, register, unregister, generateMeetings, syncTopical };
 }
 
 export const formatEventDate = (date: string) =>
