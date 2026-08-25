@@ -23,6 +23,8 @@ import {
   type AgendaEvent,
   type AgendaRegistration,
 } from "@/hooks/useAgenda";
+import { useMembersData } from "@/contexts/MembersDataContext";
+import AttendanceList from "./AttendanceList";
 import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
