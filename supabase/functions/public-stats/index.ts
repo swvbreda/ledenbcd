@@ -68,10 +68,14 @@ Deno.serve(async (req) => {
       // Arrays merge: prefer edit.locaties when present, else base.locaties
       d.locaties = Array.isArray(edit?.locaties) ? edit.locaties : base?.locaties;
       const plaats = d?.plaats as string | undefined;
-      // Match dashboard logic: locaties.length, fallback to aantalLocaties
-      const locLen = Array.isArray(d?.locaties) ? d.locaties.length : 0;
+      // Match dashboard logic: only count location rows with an adres or plaats
+      const realLocs = Array.isArray(d?.locaties)
+        ? d.locaties.filter((l: any) => (l?.adres ?? "").trim() || (l?.plaats ?? "").trim())
+        : [];
+      const locLen = realLocs.length;
       const fallback = Number(d?.aantalLocaties);
       aantalCoffeeshops += locLen > 0 ? locLen : (Number.isFinite(fallback) && fallback > 0 ? fallback : 0);
+
       if (plaats) {
         gemeenten.add(plaats);
         const prov = PLAATS_TO_PROVINCIE[plaats];

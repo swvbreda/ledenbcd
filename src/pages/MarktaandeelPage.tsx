@@ -6,6 +6,8 @@ import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { countLocations, memberLocationCount } from "@/lib/locationCount";
+
 
 const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 const totalNL = coffeeshopData.totaalNL;
@@ -14,7 +16,7 @@ const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const { allRepresented } = useMembersData();
   const { members: represented } = useMergedMembers(allRepresented);
-  const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
+  const totalLocaties = countLocations(represented);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -30,7 +32,7 @@ const MarktaandeelPage = () => {
   // Count represented locations per city
   const cityCount: Record<string, number> = {};
   represented.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
+    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + memberLocationCount(m);
   });
 
   // All cities from NL data, enriched with BCD data
