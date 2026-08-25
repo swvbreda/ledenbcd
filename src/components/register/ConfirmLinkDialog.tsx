@@ -72,7 +72,7 @@ const ConfirmLinkDialog = ({ shop, open, onOpenChange, proposal, presetMemberId 
     [rawMembers, rawLeads],
   );
 
-  const selectedId = proposal?.memberId ?? manualId;
+  const selectedId = proposal?.memberId ?? manualId ?? presetMemberId ?? null;
   const member = useMemo(
     () => alle.find((m) => m.id === selectedId) ?? null,
     [alle, selectedId],
