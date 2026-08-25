@@ -413,6 +413,9 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                 value={`${b.naam} ${b.functie ?? ""} bestuur`}
                                 onSelect={() => {
                                   setSelection({ kind: "board", id: b.id });
+                                  setNames((prev) =>
+                                    prev.map((v, i) => (i === 0 && !v.trim() ? b.naam : v)),
+                                  );
                                   setPickerOpen(false);
                                 }}
                               >

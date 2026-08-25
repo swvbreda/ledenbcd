@@ -2691,6 +2691,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      seed_board_registrations: {
+        Args: { _event_id: string }
+        Returns: undefined
+      }
       send_welcome_email_admin: {
         Args: {
           _body: string
