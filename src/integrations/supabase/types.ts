@@ -544,6 +544,7 @@ export type Database = {
           bevestigd_op: string | null
           created_at: string
           id: string
+          location_key: string | null
           match_reden: string | null
           match_score: number
           member_id: number
@@ -556,6 +557,7 @@ export type Database = {
           bevestigd_op?: string | null
           created_at?: string
           id?: string
+          location_key?: string | null
           match_reden?: string | null
           match_score?: number
           member_id: number
@@ -568,6 +570,7 @@ export type Database = {
           bevestigd_op?: string | null
           created_at?: string
           id?: string
+          location_key?: string | null
           match_reden?: string | null
           match_score?: number
           member_id?: number

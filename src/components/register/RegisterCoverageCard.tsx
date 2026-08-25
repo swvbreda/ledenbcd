@@ -83,7 +83,7 @@ const RegisterCoverageCard = () => {
   const markStatus = useMarkNotInRegister();
 
   const [open, setOpen] = useState(false);
-  const [linkTarget, setLinkTarget] = useState<{ shop: RegisterShop; memberId: number } | null>(null);
+  const [linkTarget, setLinkTarget] = useState<{ shop: RegisterShop; memberId: number; locationKey: string } | null>(null);
   const [shopQuery, setShopQuery] = useState<Record<string, string>>({});
 
   const totalLocations = useMemo(
@@ -248,7 +248,7 @@ const RegisterCoverageCard = () => {
                           key={s.id}
                           variant="outline"
                           size="sm"
-                          onClick={() => setLinkTarget({ shop: s, memberId: loc.memberId })}
+                          onClick={() => setLinkTarget({ shop: s, memberId: loc.memberId, locationKey: loc.key })}
                         >
                           <Link2 className="mr-1 h-3.5 w-3.5" />
                           {s.naam}
@@ -274,6 +274,7 @@ const RegisterCoverageCard = () => {
       <ConfirmLinkDialog
         shop={linkTarget?.shop ?? null}
         presetMemberId={linkTarget?.memberId ?? null}
+        presetLocationKey={linkTarget?.locationKey ?? null}
         open={!!linkTarget}
         onOpenChange={(o) => !o && setLinkTarget(null)}
       />
