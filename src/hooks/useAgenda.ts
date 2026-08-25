@@ -167,6 +167,47 @@ export function useAgendaRegistrations() {
   });
 }
 
+export interface BoardAttendance {
+  event_id: string;
+  naam: string;
+  functie: string | null;
+  guests: number;
+}
+
+/** Welke bestuursleden zijn aangemeld — zichtbaar voor alle ingelogde gebruikers. */
+export function useAgendaBoardAttendance() {
+  return useQuery({
+    queryKey: ["agenda-board-attendance"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_agenda_board_attendance" as any);
+      if (error) throw error;
+      return (data ?? []) as unknown as BoardAttendance[];
+    },
+  });
+}
+
+export interface BoardMemberOption {
+  id: string;
+  naam: string;
+  functie: string | null;
+}
+
+/** Bestuursleden om aan te melden. */
+export function useBoardMemberOptions() {
+  return useQuery({
+    queryKey: ["agenda-board-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_board_members_public");
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((b) => ({
+        id: b.id as string,
+        naam: b.naam as string,
+        functie: (b.functie ?? null) as string | null,
+      })) as BoardMemberOption[];
+    },
+  });
+}
+
 export function useAgendaMutations() {
   const qc = useQueryClient();
   const invalidate = () => {
