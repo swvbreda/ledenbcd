@@ -39,6 +39,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const isEvent = event.event_type === "evenement";
   const upcoming = isUpcoming(event);
   const own = memberId != null ? registrations.find((r) => r.member_id === memberId) : undefined;
   const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
