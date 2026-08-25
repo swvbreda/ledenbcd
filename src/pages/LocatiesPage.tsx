@@ -217,7 +217,10 @@ const LocatiesPage = () => {
         ))}
       </div>
 
+      <RegisterCoverageCard />
+
       <DocumentenZoeker />
+
 
       <MapErrorBoundary>
         <CityMap cities={filtered} allCoffeeshopCities={perStad} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />
