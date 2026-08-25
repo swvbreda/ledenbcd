@@ -69,6 +69,7 @@ async function sendRegistrationConfirmation(args: {
   memberId: number;
   guests: number;
   note: string | null;
+  attendeeNames?: string[] | null;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
