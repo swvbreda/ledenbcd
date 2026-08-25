@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarPlus, Plus } from "lucide-react";
+import { CalendarPlus, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -27,7 +27,7 @@ export default function AgendaPage() {
   const { isAdmin, linkedMemberId } = useAuth();
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: registrations = [] } = useAgendaRegistrations();
-  const { generateMeetings } = useAgendaMutations();
+  const { generateMeetings, syncTopical } = useAgendaMutations();
   const [newOpen, setNewOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
@@ -85,6 +85,20 @@ export default function AgendaPage() {
           >
             <CalendarPlus className="mr-1 h-4 w-4" />
             Vergaderingen {new Date().getFullYear()} genereren
+          </Button>
+          <Button
+            variant="outline"
+            disabled={syncTopical.isPending}
+            onClick={() =>
+              syncTopical.mutate(undefined, {
+                onSuccess: () =>
+                  toast.success("Topical-synchronisatie gestart — links verschijnen zo"),
+                onError: (err: any) => toast.error(err?.message || "Synchroniseren mislukt"),
+              })
+            }
+          >
+            <RefreshCw className="mr-1 h-4 w-4" />
+            Topical synchroniseren
           </Button>
         </div>
       )}
