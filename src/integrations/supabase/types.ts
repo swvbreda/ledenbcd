@@ -538,6 +538,220 @@ export type Database = {
         }
         Relationships: []
       }
+      coffeeshop_member_links: {
+        Row: {
+          bevestigd_door: string | null
+          bevestigd_op: string | null
+          created_at: string
+          id: string
+          match_reden: string | null
+          match_score: number
+          member_id: number
+          register_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bevestigd_door?: string | null
+          bevestigd_op?: string | null
+          created_at?: string
+          id?: string
+          match_reden?: string | null
+          match_score?: number
+          member_id: number
+          register_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bevestigd_door?: string | null
+          bevestigd_op?: string | null
+          created_at?: string
+          id?: string
+          match_reden?: string | null
+          match_score?: number
+          member_id?: number
+          register_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coffeeshop_member_links_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "coffeeshop_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coffeeshop_register: {
+        Row: {
+          bron_id: string
+          created_at: string
+          einddatum: string | null
+          exploitant: string | null
+          gemeente: string | null
+          huisnummer: string | null
+          huisnummer_toevoeging: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          naam: string
+          plaats: string | null
+          postcode: string | null
+          provincie: string | null
+          raw: Json
+          status: string
+          straat: string | null
+          synced_at: string
+          telefoon: string | null
+          updated_at: string
+          vergunninghouder: string | null
+          vergunningnummer: string | null
+          vergunningverlening: string | null
+          vervallen: boolean
+          website: string | null
+        }
+        Insert: {
+          bron_id: string
+          created_at?: string
+          einddatum?: string | null
+          exploitant?: string | null
+          gemeente?: string | null
+          huisnummer?: string | null
+          huisnummer_toevoeging?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          naam: string
+          plaats?: string | null
+          postcode?: string | null
+          provincie?: string | null
+          raw?: Json
+          status?: string
+          straat?: string | null
+          synced_at?: string
+          telefoon?: string | null
+          updated_at?: string
+          vergunninghouder?: string | null
+          vergunningnummer?: string | null
+          vergunningverlening?: string | null
+          vervallen?: boolean
+          website?: string | null
+        }
+        Update: {
+          bron_id?: string
+          created_at?: string
+          einddatum?: string | null
+          exploitant?: string | null
+          gemeente?: string | null
+          huisnummer?: string | null
+          huisnummer_toevoeging?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          naam?: string
+          plaats?: string | null
+          postcode?: string | null
+          provincie?: string | null
+          raw?: Json
+          status?: string
+          straat?: string | null
+          synced_at?: string
+          telefoon?: string | null
+          updated_at?: string
+          vergunninghouder?: string | null
+          vergunningnummer?: string | null
+          vergunningverlening?: string | null
+          vervallen?: boolean
+          website?: string | null
+        }
+        Relationships: []
+      }
+      coffeeshop_register_sync_state: {
+        Row: {
+          error_message: string | null
+          id: number
+          last_run_at: string | null
+          last_status: string | null
+          links_proposed: number
+          shops_synced: number
+          ubo_synced: number
+          updated_at: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: number
+          last_run_at?: string | null
+          last_status?: string | null
+          links_proposed?: number
+          shops_synced?: number
+          ubo_synced?: number
+          updated_at?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: number
+          last_run_at?: string | null
+          last_status?: string | null
+          links_proposed?: number
+          shops_synced?: number
+          ubo_synced?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coffeeshop_register_ubo: {
+        Row: {
+          betrouwbaarheid: string | null
+          created_at: string
+          id: string
+          is_uiteindelijk: boolean
+          kvk_nummer: string | null
+          naam: string
+          niveau: number
+          register_id: string
+          soort: string
+          toelichting: string | null
+          updated_at: string
+        }
+        Insert: {
+          betrouwbaarheid?: string | null
+          created_at?: string
+          id?: string
+          is_uiteindelijk?: boolean
+          kvk_nummer?: string | null
+          naam: string
+          niveau?: number
+          register_id: string
+          soort?: string
+          toelichting?: string | null
+          updated_at?: string
+        }
+        Update: {
+          betrouwbaarheid?: string | null
+          created_at?: string
+          id?: string
+          is_uiteindelijk?: boolean
+          kvk_nummer?: string | null
+          naam?: string
+          niveau?: number
+          register_id?: string
+          soort?: string
+          toelichting?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coffeeshop_register_ubo_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: false
+            referencedRelation: "coffeeshop_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contribution_invoices: {
         Row: {
           amount: number | null
@@ -2720,6 +2934,7 @@ export type Database = {
         Args: { _name: string; _value: string }
         Returns: undefined
       }
+      trigger_coffeeshopregister_sync: { Args: never; Returns: number }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
       trigger_topical_sync: { Args: never; Returns: number }
     }

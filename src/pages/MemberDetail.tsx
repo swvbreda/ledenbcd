@@ -20,6 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
+import MemberRegisterShops from "@/components/register/MemberRegisterShops";
 import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
@@ -716,6 +717,9 @@ const MemberDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Gelieerde coffeeshops uit het landelijke register */}
+          {memberId != null && <MemberRegisterShops memberId={Number(memberId)} />}
 
           {/* Mailingvoorkeuren */}
           {(isAdmin || isOwnProfile) && (

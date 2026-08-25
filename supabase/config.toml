@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.sync-topical-calendar]
 verify_jwt = false
+
+[functions.sync-coffeeshopregister]
+verify_jwt = false

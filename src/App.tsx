@@ -16,6 +16,7 @@ import CommunityPage from "./pages/CommunityPage";
 import FinancienPage from "./pages/FinancienPage";
 import JaarplanPage from "./pages/JaarplanPage";
 import AgendaPage from "./pages/AgendaPage";
+import CoffeeshopRegisterPage from "./pages/CoffeeshopRegisterPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
@@ -100,6 +101,7 @@ const App = () => (
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                   <Route path="/financien" element={<FinancienPage />} />
                   <Route path="/agenda" element={<AgendaPage />} />
+                  <Route path="/coffeeshopregister" element={<CoffeeshopRegisterPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>

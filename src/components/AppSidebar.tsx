@@ -250,6 +250,16 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+                {(isAdmin || isBoard) && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/coffeeshopregister" onClick={closeMobile}>
+                        <Building2 className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>Coffeeshopregister</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
