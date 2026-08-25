@@ -4,14 +4,13 @@ import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
 
 const GemeenteDetailPage = () => {
   const { allRepresented } = useMembersData();

@@ -2,20 +2,18 @@ import { useState } from "react";
 import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { aggregateByGemeente } from "@/data/gemeenteMapping";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { countLocations, memberLocationCount } from "@/lib/locationCount";
 
 
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-const totalNL = coffeeshopData.totaalNL;
 
 const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const { allRepresented } = useMembersData();
   const { members: represented } = useMergedMembers(allRepresented);
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   const totalLocaties = countLocations(represented);
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -50,7 +48,7 @@ const MarktaandeelPage = () => {
     .map(([city, bcd]) => ({ city, total: 0, bcd, pct: 0 }))
     .sort((a, b) => b.bcd - a.bcd);
 
-  const marketPct = Math.round((totalLocaties / totalNL) * 100);
+  const marketPct = totalNL > 0 ? Math.round((totalLocaties / totalNL) * 100) : 0;
 
   // G4 stats
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];

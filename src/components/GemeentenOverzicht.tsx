@@ -1,14 +1,12 @@
 import type { Member } from "@/data/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { pctColor } from "@/lib/pctColor";
 
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-const totalNL = coffeeshopData.totaalNL;
 
 
 const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: number; strokeWidth?: number }) => {
