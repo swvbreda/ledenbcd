@@ -4,6 +4,8 @@
 
 1. **Afbeelding per agenda-item** — bij het toevoegen/bewerken van een agenda-item kun je een afbeelding (poster/flyer, zoals de "Open dag Tweede Kamer") uploaden. Die verschijnt op de agendakaart en op het dashboard-kaartje.
 2. **Beschrijving met alinea's** — de omschrijving blijft nu één lap tekst. Regeleinden en witregels worden voortaan getoond zoals je ze typt, dus alinea's blijven staan.
+3. **Zoekbare ledenkeuze bij aanmelden** — de lange dropdown "Kies een lid..." wordt een zoekveld: typen filtert direct op naam, plaats en lidnummer. Ook leads staan in de lijst (met een label "Lead"), zodat je die ook kunt aanmelden.
+
 
 ## Technisch
 
@@ -13,6 +15,8 @@
 - **`AgendaEventDialog.tsx`**: bestandsveld met voorbeeldweergave, wissen-knop; upload gebeurt bij opslaan.
 - **`AgendaEventCard.tsx`**: afbeelding bovenaan de kaart (responsief, afgeronde hoeken, klikbaar voor groot formaat); omschrijving met `whitespace-pre-line`.
 - **`AgendaDashboardCard.tsx`**: kleine thumbnail links naast het item als er een afbeelding is.
+- **`AgendaRegistrationDialog.tsx`**: dropdown vervangen door een Command/Combobox met zoekveld (`Popover` + `Command`), gevoed door leden én leads (`member_type` 'member' en 'lead'), gesorteerd op naam.
+
 
 ## Nog even checken
 
