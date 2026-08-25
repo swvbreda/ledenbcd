@@ -45,7 +45,7 @@ const StatCards = ({ members }: StatCardsProps) => {
   const matchedCities = representedGemeenten.size;
   const cityPct = Math.round((matchedCities / totalNLCities) * 100);
   const totalNL = coffeeshopData.totaalNL;
-  const localRepresentedLocations = allRepresented.reduce((sum, m) => sum + (m.locaties?.length || m.aantalLocaties), 0);
+  const localRepresentedLocations = countLocations(allRepresented);
 
   // Fetch authoritative count from public-stats edge function so de UI altijd matcht.
   // Refreshes every 5 minutes while the dashboard is open.
