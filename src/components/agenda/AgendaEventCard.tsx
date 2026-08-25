@@ -41,6 +41,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const { unregister, deleteEvent } = useAgendaMutations();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
+  const { rawMembers, rawLeads } = useMembersData();
   const boardPresent = boardAttendance.filter((b) => b.event_id === event.id);
   const [editOpen, setEditOpen] = useState(false);
 
