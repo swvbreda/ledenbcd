@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   useAgendaMutations,
+  useAgendaImageUrl,
   formatEventDate,
   formatTimeRange,
   isUpcoming,
@@ -24,6 +25,7 @@ import {
 import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
+
 
 interface Props {
   event: AgendaEvent;
