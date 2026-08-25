@@ -41,6 +41,13 @@ function normPlace(value: string | null | undefined): string {
   return (value ?? "").toLowerCase().replace(/[^a-z]/g, "");
 }
 
+/** KvK-nummer normaliseren: alleen cijfers, 8-cijferig. */
+function normKvk(value: string | number | null | undefined): string {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  return digits.length === 8 ? digits : "";
+}
+
+
 /** Schrijfwijzen gelijktrekken: krulapostrof, provincie-suffix, bekende synoniemen. */
 const PLACE_SYNONYMS: Record<string, string> = {
   "'s-gravenhage": "Den Haag",
