@@ -64,6 +64,11 @@ function sameLocation(loc: any, shop: any): boolean {
   return false;
 }
 
+/** Factuurvelden worden nooit door het register aangeraakt. */
+function isInvoiceField(field: string): boolean {
+  return field.toLowerCase().startsWith("factuur");
+}
+
 type Proposal = {
   member_id: number;
   register_id: string | null;
