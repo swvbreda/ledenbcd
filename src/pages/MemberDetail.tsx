@@ -63,6 +63,7 @@ const MemberDetail = () => {
   const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
   const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
   const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
+  const assignLocation = useAssignLinkLocation();
   const memberLinks = useMemo(
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
     [registerLinks, memberId],
