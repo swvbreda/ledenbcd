@@ -1,10 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Search, Phone, User, AlertCircle } from "lucide-react";
+import { Search, Phone, User, AlertCircle, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhone } from "@/lib/phoneMatch";
+import { useAuth } from "@/hooks/useAuth";
+import CommunityUploadDialog from "@/components/CommunityUploadDialog";
 
 type Participant = {
   id: string;
