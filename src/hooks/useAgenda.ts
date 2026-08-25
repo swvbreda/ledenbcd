@@ -299,6 +299,7 @@ export function useAgendaMutations() {
         memberId: input.member_id,
         guests: input.guests,
         note: input.note ?? null,
+        attendeeNames: cleanNames,
       });
       return { emailed };
     },
