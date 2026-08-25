@@ -55,6 +55,8 @@ export function AppSidebar() {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [saving, setSaving] = useState(false);
+  const [ledenOpen, setLedenOpen] = useState(false);
+  const canSeeRegister = isAdmin || isBoard;
 
   const handleChangePassword = async () => {
     if (newPw.length < 8) {
