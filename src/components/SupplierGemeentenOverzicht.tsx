@@ -1,12 +1,9 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
-import coffeeshopData from "@/data/coffeeshops-nl.json";
-import { getGemeente, aggregateByGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
-
-const perStad = aggregateByGemeente(coffeeshopData.perStad as Record<string, number>);
-const totalNL = coffeeshopData.totaalNL;
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: number; strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2;
@@ -37,6 +34,7 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 
 const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
   const totalLocaties = members.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
 
   const cityCount: Record<string, number> = {};

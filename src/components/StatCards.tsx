@@ -7,7 +7,7 @@ import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { aggregateByGemeente, getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 import { supabase } from "@/integrations/supabase/client";
 import { countLocations, memberLocationCount } from "@/lib/locationCount";
