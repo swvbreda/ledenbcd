@@ -41,6 +41,25 @@ function normPlace(value: string | null | undefined): string {
   return (value ?? "").toLowerCase().replace(/[^a-z]/g, "");
 }
 
+/** Schrijfwijzen gelijktrekken: krulapostrof, provincie-suffix, bekende synoniemen. */
+const PLACE_SYNONYMS: Record<string, string> = {
+  "'s-gravenhage": "Den Haag",
+  "s-gravenhage": "Den Haag",
+  "den haag": "Den Haag",
+  "'s-hertogenbosch": "'s-Hertogenbosch",
+  "s-hertogenbosch": "'s-Hertogenbosch",
+  "den bosch": "'s-Hertogenbosch",
+};
+
+function canonPlace(value: string | null | undefined): string | null {
+  let v = (value ?? "").replace(/[‘’´`]/g, "'").replace(/\s+/g, " ").trim();
+  if (!v) return null;
+  v = v.replace(/\s*\([A-Za-z.\s]+\)\s*$/, "").trim(); // "Hengelo (O.)" -> "Hengelo"
+  const key = v.toLowerCase();
+  return PLACE_SYNONYMS[key] ?? v;
+}
+
+
 function normPostcode(value: string | null | undefined): string {
   return (value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
