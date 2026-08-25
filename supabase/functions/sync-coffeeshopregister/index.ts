@@ -245,14 +245,23 @@ Deno.serve(async (req) => {
       .eq("vervallen", false);
     const { data: memberRows } = await db
       .from("members_data")
-      .select("id,data")
-      .eq("member_type", "member");
+      .select("id,data,member_type")
+      .in("member_type", ["member", "lead"]);
     const { data: editRows } = await db.from("member_edits").select("member_id,data");
     const editById = new Map((editRows ?? []).map((e: any) => [e.member_id, e.data]));
     const { data: existingLinks } = await db
       .from("coffeeshop_member_links")
-      .select("register_id,member_id");
+      .select("register_id,member_id,status,location_key");
     const linkKey = new Set((existingLinks ?? []).map((l: any) => `${l.register_id}:${l.member_id}`));
+    const gekoppeldeShops = new Set(
+      (existingLinks ?? []).filter((l: any) => l.status !== "afgewezen").map((l: any) => l.register_id as string),
+    );
+    const gekoppeldeLocaties = new Set(
+      (existingLinks ?? [])
+        .filter((l: any) => l.status === "bevestigd" && l.location_key)
+        .map((l: any) => `${l.member_id}:${l.location_key}`),
+    );
+
 
     // UBO-keten per registershop (leeg zolang het beveiligde eindpunt niet gebruikt wordt).
     const { data: uboAll } = await db
