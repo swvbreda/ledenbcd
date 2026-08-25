@@ -67,36 +67,46 @@ export type Database = {
       }
       agenda_registrations: {
         Row: {
+          board_member_id: string | null
           created_at: string
           event_id: string
           guests: number
           id: string
-          member_id: number
+          member_id: number | null
           note: string | null
           registered_by: string | null
           updated_at: string
         }
         Insert: {
+          board_member_id?: string | null
           created_at?: string
           event_id: string
           guests?: number
           id?: string
-          member_id: number
+          member_id?: number | null
           note?: string | null
           registered_by?: string | null
           updated_at?: string
         }
         Update: {
+          board_member_id?: string | null
           created_at?: string
           event_id?: string
           guests?: number
           id?: string
-          member_id?: number
+          member_id?: number | null
           note?: string | null
           registered_by?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agenda_registrations_board_member_id_fkey"
+            columns: ["board_member_id"]
+            isOneToOne: false
+            referencedRelation: "board_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agenda_registrations_event_id_fkey"
             columns: ["event_id"]
@@ -2613,6 +2623,15 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_agenda_board_attendance: {
+        Args: never
+        Returns: {
+          event_id: string
+          functie: string
+          guests: number
+          naam: string
+        }[]
       }
       get_board_members_public: {
         Args: never

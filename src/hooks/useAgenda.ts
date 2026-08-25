@@ -29,7 +29,8 @@ export type AgendaEventInput = Omit<
 export interface AgendaRegistration {
   id: string;
   event_id: string;
-  member_id: number;
+  member_id: number | null;
+  board_member_id: string | null;
   guests: number;
   note: string | null;
   registered_by: string | null;
@@ -166,11 +167,53 @@ export function useAgendaRegistrations() {
   });
 }
 
+export interface BoardAttendance {
+  event_id: string;
+  naam: string;
+  functie: string | null;
+  guests: number;
+}
+
+/** Welke bestuursleden zijn aangemeld — zichtbaar voor alle ingelogde gebruikers. */
+export function useAgendaBoardAttendance() {
+  return useQuery({
+    queryKey: ["agenda-board-attendance"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_agenda_board_attendance" as any);
+      if (error) throw error;
+      return (data ?? []) as unknown as BoardAttendance[];
+    },
+  });
+}
+
+export interface BoardMemberOption {
+  id: string;
+  naam: string;
+  functie: string | null;
+}
+
+/** Bestuursleden om aan te melden. */
+export function useBoardMemberOptions() {
+  return useQuery({
+    queryKey: ["agenda-board-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_board_members_public");
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((b) => ({
+        id: b.id as string,
+        naam: b.naam as string,
+        functie: (b.functie ?? null) as string | null,
+      })) as BoardMemberOption[];
+    },
+  });
+}
+
 export function useAgendaMutations() {
   const qc = useQueryClient();
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["agenda-events"] });
     qc.invalidateQueries({ queryKey: ["agenda-registrations"] });
+    qc.invalidateQueries({ queryKey: ["agenda-board-attendance"] });
   };
 
   const saveEvent = useMutation({
@@ -207,7 +250,8 @@ export function useAgendaMutations() {
   const register = useMutation({
     mutationFn: async (input: {
       event_id: string;
-      member_id: number;
+      member_id?: number | null;
+      board_member_id?: string | null;
       guests: number;
       note?: string | null;
       id?: string;
@@ -225,7 +269,8 @@ export function useAgendaMutations() {
         .from("agenda_registrations" as any)
         .insert({
           event_id: input.event_id,
-          member_id: input.member_id,
+          member_id: input.board_member_id ? null : input.member_id ?? null,
+          board_member_id: input.board_member_id ?? null,
           guests: input.guests,
           note: input.note ?? null,
           registered_by: userData.user?.id ?? null,
@@ -233,6 +278,8 @@ export function useAgendaMutations() {
         .select("id")
         .single();
       if (error) throw error;
+
+      if (input.board_member_id || !input.member_id) return { emailed: false };
 
       const emailed = await sendRegistrationConfirmation({
         registrationId: (created as any)?.id as string,

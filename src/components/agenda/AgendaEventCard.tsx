@@ -16,6 +16,7 @@ import {
 import {
   useAgendaMutations,
   useAgendaImageUrl,
+  useAgendaBoardAttendance,
   formatEventDate,
   formatTimeRange,
   isUpcoming,
@@ -37,6 +38,8 @@ interface Props {
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
   const { unregister, deleteEvent } = useAgendaMutations();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
+  const { data: boardAttendance = [] } = useAgendaBoardAttendance();
+  const boardPresent = boardAttendance.filter((b) => b.event_id === event.id);
   const [editOpen, setEditOpen] = useState(false);
 
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -85,6 +88,14 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               {event.max_seats != null ? ` / ${event.max_seats}` : ""}
             </span>
           </div>
+          {boardPresent.length > 0 && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Bestuur aanwezig: </span>
+              {boardPresent
+                .map((b) => (b.functie ? `${b.naam} (${b.functie})` : b.naam))
+                .join(" · ")}
+            </p>
+          )}
           {imageUrl && (
             <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block">
               <img
