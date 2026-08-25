@@ -33,6 +33,7 @@ export interface AgendaRegistration {
   board_member_id: string | null;
   guests: number;
   note: string | null;
+  attendee_names: string[] | null;
   registered_by: string | null;
   created_at: string;
   updated_at: string;
@@ -68,6 +69,7 @@ async function sendRegistrationConfirmation(args: {
   memberId: number;
   guests: number;
   note: string | null;
+  attendeeNames?: string[] | null;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
@@ -86,6 +88,7 @@ async function sendRegistrationConfirmation(args: {
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
     guests: args.guests,
+    attendeeNames: (args.attendeeNames ?? []).filter((n) => n.trim().length > 0).join(", "),
     note: args.note ?? "",
     description: e.description ?? "",
     eventUrl: `${window.location.origin}/agenda`,
@@ -254,13 +257,21 @@ export function useAgendaMutations() {
       board_member_id?: string | null;
       guests: number;
       note?: string | null;
+      attendee_names?: string[] | null;
       id?: string;
     }): Promise<{ emailed: boolean }> => {
+      const cleanNames = (input.attendee_names ?? [])
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0);
       const { data: userData } = await supabase.auth.getUser();
       if (input.id) {
         const { error } = await supabase
           .from("agenda_registrations" as any)
-          .update({ guests: input.guests, note: input.note ?? null } as any)
+          .update({
+            guests: input.guests,
+            note: input.note ?? null,
+            attendee_names: cleanNames,
+          } as any)
           .eq("id", input.id);
         if (error) throw error;
         return { emailed: false };
@@ -273,6 +284,7 @@ export function useAgendaMutations() {
           board_member_id: input.board_member_id ?? null,
           guests: input.guests,
           note: input.note ?? null,
+          attendee_names: cleanNames,
           registered_by: userData.user?.id ?? null,
         } as any)
         .select("id")
@@ -287,6 +299,7 @@ export function useAgendaMutations() {
         memberId: input.member_id,
         guests: input.guests,
         note: input.note ?? null,
+        attendeeNames: cleanNames,
       });
       return { emailed };
     },
