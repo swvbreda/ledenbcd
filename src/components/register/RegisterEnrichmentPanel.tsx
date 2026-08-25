@@ -20,6 +20,9 @@ const FIELD_LABELS: Record<string, string> = {
   bedrijfsnaam: "Bedrijfsnaam",
 };
 
+/** Velden die als terugval de facturatiegegevens bepalen. */
+const INVOICE_SENSITIVE = new Set(["bedrijfsnaam", "kvk"]);
+
 type Props = {
   memberName: Map<number, string>;
   isAdmin: boolean;
