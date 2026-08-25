@@ -13,7 +13,9 @@ export interface AgendaEvent {
   end_time: string | null;
   location: string | null;
   max_seats: number | null;
+  image_path: string | null;
   is_published: boolean;
+
   created_by: string | null;
   created_at: string;
   updated_at: string;
