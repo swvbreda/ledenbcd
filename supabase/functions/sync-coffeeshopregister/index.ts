@@ -320,6 +320,20 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
 
+    // Aansluitend ledengegevens aanvullen vanuit het register (best effort).
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/enrich-members-from-register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: "{}",
+      });
+    } catch (e) {
+      console.warn("enrichment na sync mislukt:", String(e));
+    }
+
     return new Response(
       JSON.stringify({ ok: true, shopsSynced, uboSynced, linksProposed, uboBron }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
