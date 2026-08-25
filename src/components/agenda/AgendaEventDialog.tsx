@@ -51,9 +51,19 @@ const emptyForm = {
 export default function AgendaEventDialog({ open, onOpenChange, event }: Props) {
   const { saveEvent } = useAgendaMutations();
   const [form, setForm] = useState(emptyForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const { data: existingImageUrl } = useAgendaImageUrl(form.image_path || null);
+  const localPreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const previewUrl = localPreview ?? existingImageUrl ?? null;
+
+  useEffect(() => () => {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+  }, [localPreview]);
 
   useEffect(() => {
     if (!open) return;
+    setFile(null);
     setForm(
       event
         ? {
@@ -65,16 +75,29 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
             end_time: event.end_time?.slice(0, 5) ?? "",
             location: event.location ?? "",
             max_seats: event.max_seats != null ? String(event.max_seats) : "",
+            image_path: event.image_path ?? "",
             is_published: event.is_published,
           }
         : emptyForm,
     );
   }, [open, event]);
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.title.trim() || !form.event_date) {
       toast.error("Titel en datum zijn verplicht");
       return;
+    }
+    let imagePath: string | null = form.image_path || null;
+    if (file) {
+      try {
+        setUploading(true);
+        imagePath = await uploadAgendaImage(file);
+      } catch (e: any) {
+        setUploading(false);
+        toast.error(e?.message || "Uploaden van de afbeelding mislukt");
+        return;
+      }
+      setUploading(false);
     }
     saveEvent.mutate(
       {
@@ -87,6 +110,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
         end_time: form.end_time || null,
         location: form.location.trim() || null,
         max_seats: form.max_seats ? Number(form.max_seats) : null,
+        image_path: imagePath,
         is_published: form.is_published,
       },
       {
@@ -98,6 +122,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
       },
     );
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
