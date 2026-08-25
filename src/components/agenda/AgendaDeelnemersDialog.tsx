@@ -11,13 +11,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import {
@@ -35,20 +39,33 @@ interface Props {
 }
 
 export default function AgendaDeelnemersDialog({ open, onOpenChange, event, registrations }: Props) {
-  const { rawMembers } = useMembersData();
+  const { rawMembers, rawLeads } = useMembersData();
   const { register, unregister } = useAgendaMutations();
   const [memberId, setMemberId] = useState("");
   const [guests, setGuests] = useState("1");
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const candidates = useMemo(
+    () =>
+      [
+        ...rawMembers.map((m) => ({ ...m, isLead: false })),
+        ...rawLeads.map((m) => ({ ...m, isLead: true })),
+      ].sort((a, b) =>
+        (a.naam || a.bedrijfsnaam || "").localeCompare(b.naam || b.bedrijfsnaam || "", "nl"),
+      ),
+    [rawMembers, rawLeads],
+  );
+
   const memberName = useMemo(() => {
     const map = new Map<number, string>();
-    for (const m of rawMembers) map.set(m.id, m.naam || m.bedrijfsnaam || `Lid #${m.id}`);
+    for (const m of candidates) map.set(m.id, m.naam || m.bedrijfsnaam || `Lid #${m.id}`);
     return map;
-  }, [rawMembers]);
+  }, [candidates]);
 
   const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
   const alreadyRegistered = new Set(registrations.map((r) => r.member_id));
-  const availableMembers = rawMembers.filter((m) => !alreadyRegistered.has(m.id));
+  const availableMembers = candidates.filter((m) => !alreadyRegistered.has(m.id));
 
   const addMember = () => {
     const id = Number(memberId);
@@ -126,18 +143,52 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         <div className="space-y-2 rounded-md border border-border p-3">
           <Label>Lid aanmelden</Label>
           <div className="flex gap-2">
-            <Select value={memberId} onValueChange={setMemberId}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Kies een lid…" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableMembers.map((m) => (
-                  <SelectItem key={m.id} value={String(m.id)}>
-                    {m.naam || m.bedrijfsnaam}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="flex-1 justify-between font-normal">
+                  <span className="truncate">
+                    {memberId ? memberName.get(Number(memberId)) : "Zoek een lid of lead…"}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Typ een naam, plaats of nummer…" />
+                  <CommandList>
+                    <CommandEmpty>Geen resultaten</CommandEmpty>
+                    <CommandGroup>
+                      {availableMembers.map((m) => (
+                        <CommandItem
+                          key={m.id}
+                          value={`${m.naam || m.bedrijfsnaam} ${m.plaats ?? ""} ${m.id}`}
+                          onSelect={() => {
+                            setMemberId(String(m.id));
+                            setPickerOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              memberId === String(m.id) ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                          <span className="truncate">{m.naam || m.bedrijfsnaam}</span>
+                          {m.plaats && (
+                            <span className="ml-2 truncate text-xs text-muted-foreground">{m.plaats}</span>
+                          )}
+                          {m.isLead && (
+                            <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                              Lead
+                            </span>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Input
               type="number"
               min={1}

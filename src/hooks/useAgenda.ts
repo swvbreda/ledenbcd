@@ -13,7 +13,9 @@ export interface AgendaEvent {
   end_time: string | null;
   location: string | null;
   max_seats: number | null;
+  image_path: string | null;
   is_published: boolean;
+
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -35,7 +37,36 @@ export interface AgendaRegistration {
   updated_at: string;
 }
 
+/** Upload een afbeelding naar de agenda-bucket en geeft het pad terug. */
+export async function uploadAgendaImage(file: File) {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("agenda-images").upload(path, file, {
+    contentType: file.type || undefined,
+    upsert: false,
+  });
+  if (error) throw error;
+  return path;
+}
+
+/** Ondertekende URL voor een agenda-afbeelding (private bucket). */
+export function useAgendaImageUrl(path: string | null | undefined) {
+  return useQuery({
+    queryKey: ["agenda-image", path],
+    enabled: !!path,
+    staleTime: 45 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("agenda-images")
+        .createSignedUrl(path as string, 60 * 60);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  });
+}
+
 export function useAgendaEvents() {
+
   return useQuery({
     queryKey: ["agenda-events"],
     queryFn: async () => {
