@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
+import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
 
 type Koppeling = "alle" | "lid" | "voorstel" | "geen";
 
@@ -151,6 +152,8 @@ const CoffeeshopRegisterPage = () => {
           </div>
         ))}
       </div>
+
+      <RegisterEnrichmentPanel memberName={memberName} isAdmin={isAdmin} />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
