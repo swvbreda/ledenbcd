@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CalendarDays, Clock, MapPin, Pencil, Trash2, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Pencil, Trash2, Users, Video } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,7 @@ interface Props {
 
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
   const { unregister, deleteEvent } = useAgendaMutations();
+  const { isBoard } = useAuth();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
   const { rawMembers, rawLeads } = useMembersData();
@@ -155,6 +157,15 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 {full ? "Volgeboekt" : "Aanmelden"}
               </Button>
             ) : null)}
+
+          {upcoming && event.meeting_url && (own || isAdmin || isBoard) && (
+            <Button asChild variant="outline" className="w-full md:w-auto">
+              <a href={event.meeting_url} target="_blank" rel="noopener noreferrer">
+                <Video className="mr-1 h-4 w-4 text-brand-red" />
+                Deelnemen aan Topical
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 

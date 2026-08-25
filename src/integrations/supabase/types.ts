@@ -22,11 +22,15 @@ export type Database = {
           end_time: string | null
           event_date: string
           event_type: string
+          external_event_id: string | null
+          external_source: string | null
+          external_synced_at: string | null
           id: string
           image_path: string | null
           is_published: boolean
           location: string | null
           max_seats: number | null
+          meeting_url: string | null
           start_time: string | null
           title: string
           updated_at: string
@@ -38,11 +42,15 @@ export type Database = {
           end_time?: string | null
           event_date: string
           event_type?: string
+          external_event_id?: string | null
+          external_source?: string | null
+          external_synced_at?: string | null
           id?: string
           image_path?: string | null
           is_published?: boolean
           location?: string | null
           max_seats?: number | null
+          meeting_url?: string | null
           start_time?: string | null
           title: string
           updated_at?: string
@@ -54,11 +62,15 @@ export type Database = {
           end_time?: string | null
           event_date?: string
           event_type?: string
+          external_event_id?: string | null
+          external_source?: string | null
+          external_synced_at?: string | null
           id?: string
           image_path?: string | null
           is_published?: boolean
           location?: string | null
           max_seats?: number | null
+          meeting_url?: string | null
           start_time?: string | null
           title?: string
           updated_at?: string
@@ -2709,6 +2721,7 @@ export type Database = {
         Returns: undefined
       }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
+      trigger_topical_sync: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user" | "extern" | "inhuur"

@@ -15,6 +15,10 @@ export interface AgendaEvent {
   max_seats: number | null;
   image_path: string | null;
   is_published: boolean;
+  meeting_url: string | null;
+  external_source?: string | null;
+  external_event_id?: string | null;
+  external_synced_at?: string | null;
 
   created_by: string | null;
   created_at: string;
@@ -23,7 +27,13 @@ export interface AgendaEvent {
 
 export type AgendaEventInput = Omit<
   AgendaEvent,
-  "id" | "created_at" | "updated_at" | "created_by"
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "created_by"
+  | "external_source"
+  | "external_event_id"
+  | "external_synced_at"
 >;
 
 export interface AgendaRegistration {
@@ -345,7 +355,19 @@ export function useAgendaMutations() {
     onSuccess: invalidate,
   });
 
-  return { saveEvent, deleteEvent, register, unregister, generateMeetings };
+  /** Haalt de Topical-vergaderlinks op uit de gekoppelde Outlook-agenda. */
+  const syncTopical = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("trigger_topical_sync" as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // De sync draait asynchroon; even later opnieuw ophalen.
+      setTimeout(invalidate, 4000);
+    },
+  });
+
+  return { saveEvent, deleteEvent, register, unregister, generateMeetings, syncTopical };
 }
 
 export const formatEventDate = (date: string) =>
