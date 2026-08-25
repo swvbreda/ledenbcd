@@ -88,6 +88,7 @@ async function sendRegistrationConfirmation(args: {
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
     guests: args.guests,
+    attendeeNames: (args.attendeeNames ?? []).filter((n) => n.trim().length > 0).join(", "),
     note: args.note ?? "",
     description: e.description ?? "",
     eventUrl: `${window.location.origin}/agenda`,
