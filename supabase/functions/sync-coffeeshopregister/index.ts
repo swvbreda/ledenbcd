@@ -339,81 +339,133 @@ Deno.serve(async (req) => {
     }
 
 
-    const nieuweLinks: any[] = [];
-    for (const shop of registerRows ?? []) {
-      const sNaam = normName((shop as any).naam);
-      const sPlaats = normPlace(canonPlace((shop as any).plaats));
-      const sGemeente = normPlace(canonPlace((shop as any).gemeente));
-      const sPostcode = normPostcode((shop as any).postcode);
-      const sNummer = String((shop as any).huisnummer ?? "").replace(/\D/g, "");
-      const sKvk = normKvk((shop as any).kvk_nummer);
-      const sBedrijven = new Map<string, string>(); // genormaliseerd -> label
+    type ShopInfo = {
+      id: string;
+      naam: string;
+      plaats: string;
+      gemeente: string;
+      postcode: string;
+      nummer: string;
+      kvk: string;
+      kvkLabel: string;
+      bedrijven: Map<string, string>;
+      ubo: { namen: Set<string>; kvks: Set<string> };
+    };
+
+    const shopInfos: ShopInfo[] = (registerRows ?? []).map((shop: any) => {
+      const bedrijven = new Map<string, string>(); // genormaliseerd -> label
       for (const [label, waarde] of [
-        ["Vergunninghouder", (shop as any).vergunninghouder],
-        ["Exploitant", (shop as any).exploitant],
+        ["Vergunninghouder", shop.vergunninghouder],
+        ["Exploitant", shop.exploitant],
       ] as const) {
         const n = normName(waarde);
-        if (n) sBedrijven.set(n, `${label}: ${waarde}`);
+        if (n) bedrijven.set(n, `${label}: ${waarde}`);
       }
-      const ubo = uboByRegister.get((shop as any).id) ?? { namen: new Set<string>(), kvks: new Set<string>() };
+      return {
+        id: shop.id,
+        naam: normName(shop.naam),
+        plaats: normPlace(canonPlace(shop.plaats)),
+        gemeente: normPlace(canonPlace(shop.gemeente)),
+        postcode: normPostcode(shop.postcode),
+        nummer: String(shop.huisnummer ?? "").replace(/\D/g, ""),
+        kvk: normKvk(shop.kvk_nummer),
+        kvkLabel: String(shop.kvk_nummer ?? ""),
+        bedrijven,
+        ubo: uboByRegister.get(shop.id) ?? { namen: new Set<string>(), kvks: new Set<string>() },
+      };
+    });
 
-      let best: { member_id: number; score: number; reden: string } | null = null;
+    /** Score van één registershop tegen één ledenlocatie. */
+    const scoreMatch = (s: ShopInfo, k: Kandidaat): { score: number; reden: string } => {
+      const zelfdePlaats = !!s.plaats && !!k.plaats && (s.plaats === k.plaats || s.gemeente === k.plaats);
+      const kvkHit = s.kvk && k.kvks.has(s.kvk);
+      const bedrijfHit = [...s.bedrijven.keys()].find((n) => k.bedrijven.has(n));
+      const uboKvkHit = [...s.ubo.kvks].find((v) => k.kvks.has(v));
+      const uboNaamHit = [...s.ubo.namen].find((v) => k.bedrijven.has(v));
+      const zelfdeNaam = !!s.naam && !!k.naam && s.naam === k.naam;
+
+      if (s.postcode && k.postcode && s.postcode === k.postcode && s.nummer && k.huisnummer === s.nummer) {
+        return { score: 0.95, reden: "Adres (postcode + huisnummer)" };
+      }
+      if (kvkHit) return { score: 0.95, reden: `KvK ${s.kvkLabel}` };
+      if (zelfdeNaam && zelfdePlaats) return { score: 0.9, reden: "Naam + plaats" };
+      if (bedrijfHit) return { score: 0.85, reden: s.bedrijven.get(bedrijfHit)! };
+      if (uboKvkHit || uboNaamHit) return { score: 0.75, reden: "UBO/eigendomsketen komt overeen" };
+      // Zelfde naam maar andere plaats: geen voorstel (te veel valse matches).
+      return { score: 0, reden: "" };
+    };
+
+    const nieuweLinks: any[] = [];
+    const claimedShops = new Set<string>(gekoppeldeShops);
+    const claimedLocaties = new Set<string>(gekoppeldeLocaties);
+
+    // Ronde 1: vanuit elke registershop het best passende lid zoeken.
+    for (const s of shopInfos) {
+      let best: { k: Kandidaat; score: number; reden: string } | null = null;
       let besteLeden = new Set<number>(); // leden met dezelfde topscore (uniciteitscheck)
       for (const k of kandidaten) {
-        let score = 0;
-        let reden = "";
-        const zelfdePlaats = !!sPlaats && !!k.plaats && (sPlaats === k.plaats || sGemeente === k.plaats);
-
-        const kvkHit = sKvk && k.kvks.has(sKvk);
-        const bedrijfHit = [...sBedrijven.keys()].find((n) => k.bedrijven.has(n));
-        const uboKvkHit = [...ubo.kvks].find((v) => k.kvks.has(v));
-        const uboNaamHit = [...ubo.namen].find((v) => k.bedrijven.has(v));
-
-        if (sPostcode && k.postcode && sPostcode === k.postcode && sNummer && k.huisnummer === sNummer) {
-          score = 0.95;
-          reden = "Adres (postcode + huisnummer)";
-        } else if (kvkHit) {
-          score = 0.95;
-          reden = `KvK ${(shop as any).kvk_nummer}`;
-        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats) {
-          score = 0.9;
-          reden = "Naam + plaats";
-        } else if (bedrijfHit) {
-          score = 0.85;
-          reden = sBedrijven.get(bedrijfHit)!;
-        } else if (uboKvkHit || uboNaamHit) {
-          score = 0.75;
-          reden = "UBO/eigendomsketen komt overeen";
-        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats === false && sPlaats && k.plaats) {
-          // Zelfde naam maar andere plaats: geen voorstel meer (te veel valse matches).
-          continue;
-        } else if (sNaam && k.naam && sNaam === k.naam && zelfdePlaats) {
-          score = 0.6;
-          reden = "Alleen naam (zelfde plaats)";
-        }
+        const { score, reden } = scoreMatch(s, k);
         if (score === 0) continue;
         if (score > (best?.score ?? 0)) {
-          best = { member_id: k.member_id, score, reden };
+          best = { k, score, reden };
           besteLeden = new Set([k.member_id]);
         } else if (best && score === best.score) {
           besteLeden.add(k.member_id);
         }
       }
 
-      if (best && best.score >= 0.6 && !linkKey.has(`${(shop as any).id}:${best.member_id}`)) {
+      if (best && best.score >= 0.6 && !linkKey.has(`${s.id}:${best.k.member_id}`)) {
         // Alleen automatisch bevestigen bij hoge zekerheid én een unieke kandidaat.
         const uniek = besteLeden.size === 1;
+        const bevestigd = best.score >= 0.9 && uniek;
         nieuweLinks.push({
-          register_id: (shop as any).id,
-          member_id: best.member_id,
+          register_id: s.id,
+          member_id: best.k.member_id,
+          location_key: best.k.location_key,
           match_score: best.score,
           match_reden: best.reden,
-          status: best.score >= 0.9 && uniek ? "bevestigd" : "voorstel",
-          bevestigd_op: best.score >= 0.9 && uniek ? new Date().toISOString() : null,
+          status: bevestigd ? "bevestigd" : "voorstel",
+          bevestigd_op: bevestigd ? new Date().toISOString() : null,
         });
+        claimedShops.add(s.id);
+        if (bevestigd) claimedLocaties.add(`${best.k.member_id}:${best.k.location_key}`);
       }
-
     }
+
+    // Ronde 2: vanuit elke nog ongekoppelde ledenlocatie de best passende vrije registershop zoeken.
+    const openKandidaten = kandidaten.filter(
+      (k) => k.echt && !claimedLocaties.has(`${k.member_id}:${k.location_key}`),
+    );
+    for (const k of openKandidaten) {
+      let best: { s: ShopInfo; score: number; reden: string } | null = null;
+      let aantalTop = 0;
+      for (const s of shopInfos) {
+        if (claimedShops.has(s.id)) continue;
+        if (linkKey.has(`${s.id}:${k.member_id}`)) continue;
+        const { score, reden } = scoreMatch(s, k);
+        if (score === 0) continue;
+        if (score > (best?.score ?? 0)) {
+          best = { s, score, reden };
+          aantalTop = 1;
+        } else if (best && score === best.score) {
+          aantalTop++;
+        }
+      }
+      if (!best || best.score < 0.6) continue;
+      const bevestigd = best.score >= 0.9 && aantalTop === 1;
+      nieuweLinks.push({
+        register_id: best.s.id,
+        member_id: k.member_id,
+        location_key: k.location_key,
+        match_score: best.score,
+        match_reden: `${best.reden} (vanuit ledenlocatie)`,
+        status: bevestigd ? "bevestigd" : "voorstel",
+        bevestigd_op: bevestigd ? new Date().toISOString() : null,
+      });
+      claimedShops.add(best.s.id);
+      if (bevestigd) claimedLocaties.add(`${k.member_id}:${k.location_key}`);
+    }
+
 
 
     for (let i = 0; i < nieuweLinks.length; i += 200) {
