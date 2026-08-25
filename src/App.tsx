@@ -101,6 +101,7 @@ const App = () => (
                   <Route path="/ledenvoordelen/:id" element={<BenefitDetailPage />} />
                   <Route path="/financien" element={<FinancienPage />} />
                   <Route path="/agenda" element={<AgendaPage />} />
+                  <Route path="/coffeeshopregister" element={<CoffeeshopRegisterPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>
