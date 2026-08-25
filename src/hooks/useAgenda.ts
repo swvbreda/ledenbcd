@@ -154,7 +154,9 @@ export function useAgendaMutations() {
           title: "Bestuursvergadering",
           event_type: "bestuursvergadering",
           event_date: d.toISOString().slice(0, 10),
-          start_time: "19:00",
+          start_time: "10:30",
+          end_time: "12:30",
+          location: "Witbolstraat",
           is_published: true,
           created_by: userData.user?.id ?? null,
         });

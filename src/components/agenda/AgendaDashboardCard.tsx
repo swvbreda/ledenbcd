@@ -1,12 +1,16 @@
 import { Link } from "react-router-dom";
-import { CalendarDays, Clock, MapPin } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAgendaEvents, formatEventDate, formatTimeRange, isUpcoming } from "@/hooks/useAgenda";
+import { useAgendaEvents, useAgendaRegistrations, formatEventDate, formatTimeRange, isUpcoming } from "@/hooks/useAgenda";
 
 export default function AgendaDashboardCard() {
   const { data: events = [], isLoading } = useAgendaEvents();
+  const { data: registrations = [] } = useAgendaRegistrations();
   const next = events.filter(isUpcoming).slice(0, 3);
+
+  const guestsFor = (eventId: string) =>
+    registrations.filter((r) => r.event_id === eventId).reduce((s, r) => s + r.guests, 0);
 
   return (
     <Card>
@@ -51,6 +55,10 @@ export default function AgendaDashboardCard() {
                     {e.location}
                   </span>
                 )}
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {guestsFor(e.id)} aangemeld
+                </span>
               </div>
             </Link>
           ))
