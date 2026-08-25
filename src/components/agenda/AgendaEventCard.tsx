@@ -36,7 +36,9 @@ interface Props {
 
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
   const { unregister, deleteEvent } = useAgendaMutations();
+  const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const [editOpen, setEditOpen] = useState(false);
+
   const [registerOpen, setRegisterOpen] = useState(false);
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
