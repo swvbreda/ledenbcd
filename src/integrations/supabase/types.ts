@@ -67,6 +67,7 @@ export type Database = {
       }
       agenda_registrations: {
         Row: {
+          attendee_names: string[]
           board_member_id: string | null
           created_at: string
           event_id: string
@@ -78,6 +79,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attendee_names?: string[]
           board_member_id?: string | null
           created_at?: string
           event_id: string
@@ -89,6 +91,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attendee_names?: string[]
           board_member_id?: string | null
           created_at?: string
           event_id?: string
