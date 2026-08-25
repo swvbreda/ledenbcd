@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.informer-sync]
 verify_jwt = false
+
+[functions.sync-topical-calendar]
+verify_jwt = false
