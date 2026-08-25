@@ -15,6 +15,8 @@
 - **`AgendaEventDialog.tsx`**: bestandsveld met voorbeeldweergave, wissen-knop; upload gebeurt bij opslaan.
 - **`AgendaEventCard.tsx`**: afbeelding bovenaan de kaart (responsief, afgeronde hoeken, klikbaar voor groot formaat); omschrijving met `whitespace-pre-line`.
 - **`AgendaDashboardCard.tsx`**: kleine thumbnail links naast het item als er een afbeelding is.
+- **`AgendaRegistrationDialog.tsx`**: dropdown vervangen door een Command/Combobox met zoekveld (`Popover` + `Command`), gevoed door leden én leads (`member_type` 'member' en 'lead'), gesorteerd op naam.
+
 
 ## Nog even checken
 
