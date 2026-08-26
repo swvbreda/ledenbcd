@@ -167,9 +167,36 @@ export function useBudgetCategories(year: number) {
       let bankAsExpenses: any[] = [];
       if (lineItemIds.length > 0) {
         const client = supabase as any;
-        // De oude PDF-bankimport (`bank_transactions`) telt niet meer mee: die
-        // overlapt volledig met de live bankkoppeling (Ponto) hieronder.
-
+        // Neem ook gekoppelde boekingen uit de administratieve bankimport mee.
+        // Niet iedere historische boeking staat in Ponto (zoals nabetalingen
+        // uit een vorig contributiejaar). De ontdubbeling hieronder geeft
+        // voorrang aan Ponto wanneer dezelfde betaling in beide bronnen staat.
+        const { data: importedRows, error: importedErr } = await client
+          .from("bank_transactions")
+          .select("id, transaction_date, direction, counterparty, description, invoice_reference, amount, line_item_id, dossier, created_at")
+          .in("line_item_id", lineItemIds)
+          .eq("year", year);
+        if (importedErr) throw importedErr;
+        const importedAsExpenses = (importedRows || [])
+          .filter((b: any) => !isExcludedDossier(b.dossier))
+          .map((b: any) => ({
+            id: `bank:${b.id}`,
+            line_item_id: b.line_item_id,
+            description: b.description,
+            amount: Math.abs(Number(b.amount) || 0),
+            expense_date: b.transaction_date,
+            creditor_name: b.counterparty,
+            invoice_reference: b.invoice_reference,
+            dossier: b.dossier,
+            source: "bank",
+            pdf_file_path: null,
+            paid: true,
+            paid_date: b.transaction_date,
+            created_at: b.created_at,
+            direction: b.direction === "in" ? "in" : "out",
+            _fromBank: true,
+          }));
+        bankAsExpenses = bankAsExpenses.concat(importedAsExpenses);
 
         // Live bankboekingen (Ponto): koppel via budget_line_item_id
         const yearStart = `${year}-01-01`;
