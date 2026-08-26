@@ -258,6 +258,9 @@ export function useKerngegevens(enabled = true) {
       vestigingenMetUbo,
       uboRijen,
       uniekeUbos: uboMap.size,
+      uniekeVergunninghouders,
+      ledenMeerdereBvs,
+
     };
   }, [members, gekoppeldeVestigingen, register, bevestigdeLinks, uboPerRegister]);
 
