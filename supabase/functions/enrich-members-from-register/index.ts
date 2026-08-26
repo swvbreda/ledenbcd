@@ -75,6 +75,11 @@ function sameLocation(loc: any, shop: any): boolean {
   return false;
 }
 
+/** Een echte vestiging heeft minimaal adres of plaats; lege invoerrijen tellen niet mee. */
+function realLocationCount(locaties: any[]): number {
+  return locaties.filter((loc) => String(loc?.adres ?? "").trim() || String(loc?.plaats ?? "").trim()).length;
+}
+
 /** Factuurvelden worden nooit door het register aangeraakt. */
 function isInvoiceField(field: string): boolean {
   return field.toLowerCase().startsWith("factuur");
@@ -330,6 +335,20 @@ Deno.serve(async (req) => {
       const data: any = JSON.parse(JSON.stringify(row.data ?? {}));
       const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
       let changed = false;
+
+      // Oude voorstellen van vóór de locatie-verrijking mogen de bedrijfsnaam
+      // van een meerlocatielid niet meer wijzigen. Vergunninghouders horen dan
+      // uitsluitend op de betreffende vestiging te staan.
+      if (realLocationCount(locaties) > 1) {
+        const { error: staleErr } = await db
+          .from("register_enrichment_proposals")
+          .update({ status: "genegeerd", resolved_at: new Date().toISOString() })
+          .eq("member_id", memberId)
+          .eq("scope", "lid")
+          .eq("field", "bedrijfsnaam")
+          .eq("status", "open");
+        if (staleErr) console.warn("oude algemene bedrijfsnaamvoorstellen opschonen mislukt:", staleErr.message);
+      }
 
       for (const rid of shopIds) {
         const shop = shopById.get(rid);
