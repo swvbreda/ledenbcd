@@ -138,11 +138,11 @@ const LocationRegisterInfo = ({
           )}
         </div>
 
-        {link && shop ? (
+        {link && shop && (
           <>
             <Row
               label="Dossier"
-              value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ")}
+              value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ") || null}
             />
             <Row label="Vergunninghouder" value={shop.vergunninghouder} />
             {shop.exploitant && shop.exploitant !== shop.vergunninghouder && (
@@ -157,13 +157,9 @@ const LocationRegisterInfo = ({
               }
             />
             <Row label="Status" value={shop.status} />
-            {ubo.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">UBO niet beschikbaar in het register</p>
-            )}
           </>
-        ) : (
-          <p className="text-xs text-muted-foreground">Niet gekoppeld aan het landelijke register</p>
         )}
+
       </div>
     </div>
   );
