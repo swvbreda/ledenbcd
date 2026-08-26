@@ -115,9 +115,6 @@ export default function BudgetCategoryTable({
                   <strong className={totalRemainingClass}>
                     <CurrencyText value={totalRemaining} className="justify-end" />
                   </strong>
-                  {!isIncome && totalRemaining < 0 && (
-                    <span className="text-destructive text-xs ml-1">(overschreden)</span>
-                  )}
                 </>
               )}
             </td>
@@ -154,10 +151,8 @@ export default function BudgetCategoryTable({
                 >
                   <td className="px-3 py-1.5">
                     {li.name}
-                    {clicks?.remainingHint && (
-                      <div className="text-[11px] text-muted-foreground mt-0.5">{clicks.remainingHint}</div>
-                    )}
                   </td>
+
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.budgeted)}>
                     <CurrencyCell value={li.budgeted_amount} className={clickableClass(clicks?.budgeted)} />
                   </td>
