@@ -354,7 +354,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
               <EditableField label="Oprichtingsdatum" value={loc.oprichtingsDatum || ""} onChange={(v) => updateLocation(i, "oprichtingsDatum", v)} type="date" />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Bottom save */}
