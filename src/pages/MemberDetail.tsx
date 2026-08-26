@@ -891,6 +891,7 @@ const MemberDetail = () => {
                         link={link}
                         shop={shop}
                         memberKvk={loc.kvk}
+                        memberWebsite={loc.website}
                         memberUbo={loc.ubo}
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
