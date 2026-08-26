@@ -21,6 +21,8 @@ import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
+import VergunninghoudersOverzicht from "@/components/members/VergunninghoudersOverzicht";
+
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
   useAssignLinkLocation,
