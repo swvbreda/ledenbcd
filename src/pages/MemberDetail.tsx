@@ -850,12 +850,16 @@ const MemberDetail = () => {
             <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-4">
               <MapPin size={16} className="text-brand-red" /> Locaties ({member.aantalLocaties})
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
               {member.locaties.map((loc, i) => {
                 const key = locationKey(loc as any);
                 const link = canSeeRegister ? linkByLocation.get(key) : undefined;
+                const shop = link ? shopById.get(link.register_id) : null;
                 return (
-                <div key={i} className="border border-border rounded-md p-4 hover:bg-muted/20 transition-colors">
+                <div
+                  key={i}
+                  className="flex h-full flex-col border border-border rounded-md p-4 transition-colors hover:bg-muted/20"
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium font-display">{loc.naam}</span>
                     {loc.stadsdeel && (
@@ -873,40 +877,26 @@ const MemberDetail = () => {
                       {loc.postcode && <>{loc.postcode} </>}
                       {loc.plaats}
                     </p>
-                    {loc.kvk && <p className="font-mono text-xs">KVK {loc.kvk}</p>}
                     {loc.oprichtingsDatum && (
                       <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
                     )}
-                    {loc.vergunninghouder && (
+                    {loc.vergunninghouder && !canSeeRegister && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
-                    {loc.exploitant && loc.exploitant !== loc.vergunninghouder && (
-                      <p className="text-xs">Exploitant: {loc.exploitant}</p>
-                    )}
                   </div>
-                  {Array.isArray(loc.ubo) && loc.ubo.length > 0 && (
-                    <div className="mt-2 border-t border-border pt-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Eigendomsketen (UBO)
-                      </p>
-                      <ul className="mt-1 space-y-0.5">
-                        {loc.ubo.map((u, ui) => (
-                          <li key={ui} className="text-xs text-muted-foreground">
-                            <span style={{ paddingLeft: `${(u.niveau ?? 0) * 10}px` }}>
-                              {u.naam}
-                              {u.kvk && <span className="font-mono"> · KVK {u.kvk}</span>}
-                              {u.uiteindelijkBelanghebbende && (
-                                <span className="ml-1 text-primary font-medium">· UBO</span>
-                              )}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
-                  {canSeeRegister && (
-                    <LocationRegisterInfo link={link} shop={link ? shopById.get(link.register_id) : null} />
+                  {canSeeRegister ? (
+                    <div className="flex flex-1 flex-col">
+                      <LocationRegisterInfo
+                        link={link}
+                        shop={shop}
+                        memberKvk={loc.kvk}
+                        memberUbo={loc.ubo}
+                        registerUbo={link ? uboByRegister?.get(link.register_id) : null}
+                      />
+                    </div>
+                  ) : (
+                    loc.kvk && <p className="mt-1 font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
                   )}
                 </div>
                 );
