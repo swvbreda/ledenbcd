@@ -37,7 +37,6 @@ const StatCards = ({ members }: StatCardsProps) => {
 
   // Use merged members + converted leads + active leads for all location/market calculations
   const allRepresented = [...mergedMembers, ...convertedAsMembers, ...activeLeads];
-  const allCities = new Set(allRepresented.map((m) => m.plaats).filter(Boolean));
   const {
     perGemeente: perStad,
     totaalNL: totalNL,
