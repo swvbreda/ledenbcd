@@ -89,8 +89,8 @@ const RegisterGemeenteDetailPage = () => {
 
       for (const shop of memberLinks) {
         const key = linkByShop.get(shop.id)?.location_key ?? null;
-        const loc = key ? findMemberLocation(locs, key) : null;
-        const idx = loc ? locs.indexOf(loc) : -1;
+        const loc = key ? findMemberLocation(locs as unknown as Record<string, any>[], key) : null;
+        const idx = loc ? locs.findIndex((l) => (l as unknown as Record<string, any>) === loc) : -1;
         if (idx >= 0 && !matched.has(idx)) matched.add(idx);
         else zonderVestiging++;
       }
