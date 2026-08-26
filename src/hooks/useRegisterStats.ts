@@ -9,6 +9,11 @@ const fallbackTotal = coffeeshopData.totaalNL as number;
 export type RegisterStats = {
   perGemeente: Record<string, number>;
   totaalNL: number;
+  representedPerGemeente: Record<string, number>;
+  totaalRepresented: number;
+  gekoppeldeRegistershops: number;
+  nietGekoppeldeLocaties: number;
+  koppelingenZonderVestiging: number;
   /** true wanneer de cijfers rechtstreeks uit het coffeeshopregister komen */
   fromRegister: boolean;
 };
@@ -19,18 +24,35 @@ export function useRegisterStats() {
     queryKey: ["register-plaats-stats"],
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<RegisterStats> => {
-      const { data, error } = await supabase.rpc("get_register_plaats_stats" as any);
+      const { data, error } = await supabase.functions.invoke("public-stats", { method: "GET" });
       if (error) throw error;
-      const rows = (data ?? []) as { plaats: string; aantal: number }[];
-      if (!rows.length) return { perGemeente: fallbackPerGemeente, totaalNL: fallbackTotal, fromRegister: false };
-      const perPlaats: Record<string, number> = {};
-      for (const r of rows) {
-        if (!r.plaats) continue;
-        perPlaats[r.plaats] = (perPlaats[r.plaats] || 0) + Number(r.aantal || 0);
+      const payload = (data ?? {}) as Record<string, unknown>;
+      const perPlaats = (payload.landelijk_per_gemeente ?? {}) as Record<string, number>;
+      const representedPerPlaats = (payload.vertegenwoordiging_per_gemeente ?? {}) as Record<string, number>;
+      if (!Object.keys(perPlaats).length) {
+        return {
+          perGemeente: fallbackPerGemeente,
+          totaalNL: fallbackTotal,
+          representedPerGemeente: {},
+          totaalRepresented: 0,
+          gekoppeldeRegistershops: 0,
+          nietGekoppeldeLocaties: 0,
+          koppelingenZonderVestiging: 0,
+          fromRegister: false,
+        };
       }
       const perGemeente = aggregateByGemeente(perPlaats);
-      const totaalNL = Object.values(perGemeente).reduce((s, n) => s + n, 0);
-      return { perGemeente, totaalNL, fromRegister: true };
+      const representedPerGemeente = aggregateByGemeente(representedPerPlaats);
+      return {
+        perGemeente,
+        totaalNL: Number(payload.aantal_landelijk ?? 0),
+        representedPerGemeente,
+        totaalRepresented: Number(payload.aantal_coffeeshops ?? 0),
+        gekoppeldeRegistershops: Number(payload.gekoppelde_registershops ?? 0),
+        nietGekoppeldeLocaties: Number(payload.niet_gekoppelde_locaties ?? 0),
+        koppelingenZonderVestiging: Number(payload.koppelingen_zonder_vestiging ?? 0),
+        fromRegister: true,
+      };
     },
   });
 
@@ -38,6 +60,11 @@ export function useRegisterStats() {
     ...query,
     perGemeente: query.data?.perGemeente ?? fallbackPerGemeente,
     totaalNL: query.data?.totaalNL ?? fallbackTotal,
+    representedPerGemeente: query.data?.representedPerGemeente ?? {},
+    totaalRepresented: query.data?.totaalRepresented ?? 0,
+    gekoppeldeRegistershops: query.data?.gekoppeldeRegistershops ?? 0,
+    nietGekoppeldeLocaties: query.data?.nietGekoppeldeLocaties ?? 0,
+    koppelingenZonderVestiging: query.data?.koppelingenZonderVestiging ?? 0,
     fromRegister: query.data?.fromRegister ?? false,
   };
 }

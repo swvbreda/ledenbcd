@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useCoffeeshopRegister, useRegisterLinks, type RegisterShop } from "@/hooks/useCoffeeshopRegister";
-import { useRegisterLinkSummary } from "@/hooks/useRegisterStats";
+import { useRegisterLinkSummary, useRegisterStats } from "@/hooks/useRegisterStats";
 import { isRealLocation, memberLocationCount } from "@/lib/locationCount";
 import { getGemeente } from "@/data/gemeenteMapping";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ const RegisterCoverageCard = () => {
   const { allRepresented } = useMembersData();
   const { members: represented } = useMergedMembers(allRepresented);
   const { data: summary } = useRegisterLinkSummary();
+  const representation = useRegisterStats();
   const { data: shops = [] } = useCoffeeshopRegister(allowed);
   const { data: links = [] } = useRegisterLinks(allowed);
   const { data: statuses = [] } = useLocationStatuses(allowed);
@@ -86,10 +87,7 @@ const RegisterCoverageCard = () => {
   const [linkTarget, setLinkTarget] = useState<{ shop: RegisterShop; memberId: number; locationKey: string } | null>(null);
   const [shopQuery, setShopQuery] = useState<Record<string, string>>({});
 
-  const totalLocations = useMemo(
-    () => represented.reduce((s, m) => s + memberLocationCount(m), 0),
-    [represented],
-  );
+  const totalLocations = representation.totaalRepresented || represented.reduce((s, m) => s + memberLocationCount(m), 0);
   const linked = summary?.bevestigde_koppelingen ?? 0;
 
   const statusKeys = useMemo(
@@ -147,7 +145,7 @@ const RegisterCoverageCard = () => {
     return out.sort((a, b) => a.memberNaam.localeCompare(b.memberNaam));
   }, [allowed, links, shopById, represented, statusKeys]);
 
-  const teKoppelen = allowed ? openLocations.length : Math.max(totalLocations - linked, 0);
+  const teKoppelen = allowed ? openLocations.length : representation.nietGekoppeldeLocaties;
   const gemarkeerd = statuses.length;
   const sluitend = teKoppelen === 0;
 
@@ -189,6 +187,7 @@ const RegisterCoverageCard = () => {
               <span className="tabular-nums font-medium text-foreground">{linked}</span> gekoppeld ·{" "}
               <span className="tabular-nums font-medium text-foreground">{teKoppelen}</span> te koppelen
               {gemarkeerd > 0 && ` · ${gemarkeerd} niet in register`}
+              {representation.koppelingenZonderVestiging > 0 && ` · ${representation.koppelingenZonderVestiging} zonder vestiging`}
             </p>
           </div>
         </div>

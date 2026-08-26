@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
@@ -9,8 +8,6 @@ import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
-import { supabase } from "@/integrations/supabase/client";
-import { countLocations, memberLocationCount } from "@/lib/locationCount";
 
 
 interface StatCardsProps {
@@ -40,46 +37,22 @@ const StatCards = ({ members }: StatCardsProps) => {
 
   // Use merged members + converted leads + active leads for all location/market calculations
   const allRepresented = [...mergedMembers, ...convertedAsMembers, ...activeLeads];
-  const allCities = new Set(allRepresented.map((m) => m.plaats).filter(Boolean));
-  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
+  const {
+    perGemeente: perStad,
+    totaalNL: totalNL,
+    representedPerGemeente: repCityCount,
+    totaalRepresented,
+    fromRegister,
+  } = useRegisterStats();
   const totalNLCities = Object.keys(perStad).length;
   const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
   const matchedCities = representedGemeenten.size;
   const cityPct = totalNLCities > 0 ? Math.round((matchedCities / totalNLCities) * 100) : 0;
 
-  const localRepresentedLocations = countLocations(allRepresented);
-
-  // Fetch authoritative count from public-stats edge function so de UI altijd matcht.
-  // Refreshes every 5 minutes while the dashboard is open.
-  const [publicStatsCount, setPublicStatsCount] = useState<number | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const fetchStats = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("public-stats", { method: "GET" });
-        if (cancelled || error) return;
-        const n = Number((data as any)?.aantal_coffeeshops);
-        if (Number.isFinite(n) && n > 0) setPublicStatsCount(n);
-      } catch {
-        /* fallback to local berekening */
-      }
-    };
-    fetchStats();
-    const interval = setInterval(fetchStats, 5 * 60 * 1000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
-  const representedLocations = publicStatsCount ?? localRepresentedLocations;
+  const representedLocations = fromRegister ? totaalRepresented : allRepresented.reduce((sum, member) => sum + Math.max(member.locaties?.length || member.aantalLocaties || 1, 1), 0);
   const marketPct = Math.round((representedLocations / totalNL) * 100);
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
-  const repCityCount: Record<string, number> = {};
-  allRepresented.forEach((m) => {
-    if (m.plaats) repCityCount[m.plaats] = (repCityCount[m.plaats] || 0) + memberLocationCount(m);
-  });
   const g4Bcd = g4Cities.reduce((s, c) => s + (repCityCount[c] || 0), 0);
   const g4Pct = g4Total > 0 ? Math.round((g4Bcd / g4Total) * 100) : 0;
 

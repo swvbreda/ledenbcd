@@ -57,17 +57,18 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
-  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
+  const {
+    perGemeente: perStad,
+    totaalNL: totalNL,
+    representedPerGemeente: cityCount,
+    totaalRepresented: totalLocaties,
+  } = useRegisterStats();
   // Use merged members + merged leads for market share calculations
   const represented = [...members, ...mergedLeads];
-  const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
-
-  // Count represented locations per city (members + leads)
-  const cityCount: Record<string, number> = {};
+  // Member counts remain local; shop counts come from the central register-backed calculation.
   const cityMembers: Record<string, number> = {};
   represented.forEach((m) => {
     if (m.plaats) {
-      cityCount[m.plaats] = (cityCount[m.plaats] || 0) + (m.aantalLocaties || 1);
       cityMembers[m.plaats] = (cityMembers[m.plaats] || 0) + 1;
     }
   });
