@@ -158,6 +158,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
             </div>
+            </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {jarenLid !== null && (() => {
