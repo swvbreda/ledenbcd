@@ -194,7 +194,6 @@ export default function BudgetCategoryTable({
               <td className="px-3 py-1.5 font-semibold">
                 <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
               </td>
-              </td>
               <td />
             </tr>
             {totalUnpaid !== 0 && (
