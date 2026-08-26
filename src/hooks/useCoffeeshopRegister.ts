@@ -24,6 +24,11 @@ export type RegisterShop = {
   telefoon: string | null;
   vervallen: boolean;
   synced_at: string;
+  /** KvK-gegevens van de onderneming resp. deze specifieke vestiging. */
+  kvk_nummer?: string | null;
+  kvk_oprichtingsdatum?: string | null;
+  kvk_vestigingsnummer?: string | null;
+  kvk_vestiging_datum?: string | null;
   /** Ruwe registervelden (o.a. is_ruis, ruis_reden, gesloten_op). */
   raw?: Record<string, unknown> | null;
 };
@@ -96,6 +101,30 @@ export function useRegisterUbo(registerId: string | null) {
         .order("niveau");
       if (error) throw error;
       return (data ?? []) as unknown as RegisterUbo[];
+    },
+  });
+}
+
+/** UBO-ketens van meerdere registershops in één query, gegroepeerd per register_id. */
+export function useRegisterUboBulk(registerIds: string[], enabled = true) {
+  const ids = Array.from(new Set(registerIds.filter(Boolean))).sort();
+  return useQuery({
+    queryKey: ["coffeeshop-register-ubo-bulk", ids.join(",")],
+    enabled: enabled && ids.length > 0,
+    queryFn: async (): Promise<Map<string, RegisterUbo[]>> => {
+      const { data, error } = await supabase
+        .from("coffeeshop_register_ubo")
+        .select("*")
+        .in("register_id", ids)
+        .order("niveau");
+      if (error) throw error;
+      const map = new Map<string, RegisterUbo[]>();
+      for (const row of (data ?? []) as unknown as RegisterUbo[]) {
+        const list = map.get(row.register_id) ?? [];
+        list.push(row);
+        map.set(row.register_id, list);
+      }
+      return map;
     },
   });
 }
