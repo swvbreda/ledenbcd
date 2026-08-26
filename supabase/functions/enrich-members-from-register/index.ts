@@ -419,24 +419,10 @@ Deno.serve(async (req) => {
           ["telefoon", shop.telefoon],
         ];
         // Een registerwebsite hoort alleen bij het lid als er precies één
-        // vestiging is; anders zou een vestigingslink als algemene site gelden.
+        // vestiging is; anders is het een vestigingslink en die wordt
+        // uitsluitend op locatieniveau gezet/voorgesteld (zie candidates).
         if (locaties.length <= 1) {
           memberCandidates.push(["website", cleanWebsite(shop.website)]);
-        } else if (shop.website && (!data.website || String(data.website).trim() === "")) {
-          const key = `${memberId}|${rid}||website`;
-          if (!knownProposal.has(key)) {
-            knownProposal.add(key);
-            proposals.push({
-              member_id: memberId,
-              register_id: rid,
-              scope: "lid",
-              location_key: null,
-              field: "website",
-              current_value: null,
-              proposed_value: cleanWebsite(shop.website)!,
-              source: "register",
-            });
-          }
         }
         for (const [field, value] of memberCandidates) {
           if (!value) continue;
