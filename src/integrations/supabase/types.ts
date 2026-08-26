@@ -3040,6 +3040,10 @@ export type Database = {
       }
       is_board_member: { Args: { _user_id: string }; Returns: boolean }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
+      merge_member_locations: {
+        Args: { _base: Json; _overlay: Json }
+        Returns: Json
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
