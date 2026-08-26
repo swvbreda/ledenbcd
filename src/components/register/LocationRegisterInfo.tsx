@@ -49,10 +49,13 @@ const LocationRegisterInfo = ({
   memberUbo,
   registerUbo,
   memberKvk,
+  memberWebsite,
 }: LocationRegisterInfoProps) => {
   const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
   const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
   const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
+  const websiteRaw = memberWebsite?.trim() || shop?.website || null;
+  const websiteLabel = cleanUrl(websiteRaw);
 
   const ubo: UboEntry[] =
     memberUbo && memberUbo.length > 0
