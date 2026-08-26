@@ -105,7 +105,6 @@ const KerngegevensPage = () => {
     );
   }
 
-  const maxBank = k.bankGroepen[0]?.aantal ?? 1;
   const maxGemeente = k.gemeenteRijen[0]?.vestigingen ?? 1;
   const maxDec = Math.max(1, ...k.decenniaRijen.map((d) => d.aantal));
 
