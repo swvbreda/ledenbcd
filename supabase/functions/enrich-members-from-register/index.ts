@@ -9,12 +9,16 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * - Lege velden (adres, postcode, plaats, stadsdeel/gemeente, website, telefoon,
  *   oprichtingsdatum) worden automatisch gevuld — bestaande waarden nooit
  *   overschreven; afwijkingen komen als voorstel in register_enrichment_proposals.
- * - Oprichtdatum komt uit het KvK-handelsregister (secret KVK_API_KEY); zonder
- *   sleutel wordt dat deel overgeslagen.
+ * - De oprichtdatum van een vestiging komt uit het KvK-VESTIGINGSprofiel (datum
+ *   aanvang van die vestiging), nooit uit de registratiedatum van het bedrijf:
+ *   anders krijgen alle vestigingen van dezelfde B.V. dezelfde datum. Kan de
+ *   vestiging niet eenduidig op postcode + huisnummer worden gevonden, dan blijft
+ *   de datum leeg. Secret: KVK_API_KEY; zonder sleutel wordt dit overgeslagen.
  */
 
 const KVK_SEARCH = "https://api.kvk.nl/api/v2/zoeken";
 const KVK_PROFILE = "https://api.kvk.nl/api/v1/basisprofielen";
+const KVK_VESTIGING = "https://api.kvk.nl/api/v1/vestigingsprofielen";
 
 function admin() {
   return createClient(
