@@ -123,6 +123,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   };
 
   const displayMembers = compact ? sorted.slice(0, 10) : sorted;
+  const { data: logos = {} } = useMemberLogosBulk(displayMembers.map((m) => m.id));
 
   // Mobile card view
   const MobileCard = ({ member: m }: { member: Member }) => {
@@ -135,7 +136,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         onClick={() => navigate(`/leden/${m.id}`)}
       >
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-start gap-2">
+            <LogoThumb url={logos[m.id]} naam={m.naam} size={32} />
+            <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
               {m.oprichter && <span className="text-amber-500">★</span>}
