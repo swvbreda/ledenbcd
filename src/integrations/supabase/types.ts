@@ -3011,6 +3011,17 @@ export type Database = {
           plaats: string
         }[]
       }
+      get_representation_stats: {
+        Args: never
+        Returns: {
+          gekoppelde_registershops: number
+          gemeente: string
+          koppelingen_zonder_vestiging: number
+          landelijke_shops: number
+          niet_gekoppelde_locaties: number
+          vertegenwoordigde_shops: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
