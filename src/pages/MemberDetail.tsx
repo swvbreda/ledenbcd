@@ -20,7 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
+import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
   useAssignLinkLocation,
