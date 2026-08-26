@@ -9,7 +9,7 @@ import { getGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
-  const { perGemeente: perStad } = useRegisterStats();
+  const { perGemeente: perStad, representedPerGemeente } = useRegisterStats();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
   const { conversions } = useLeadConversions();
