@@ -304,7 +304,17 @@ export function useResolveProposal() {
         const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
         if (proposal.scope === "locatie") {
           const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-          const match = findMemberLocation(locaties, proposal.location_key);
+          let shop: RegisterShop | null = null;
+          if (proposal.register_id) {
+            const { data: shopRow, error: shopError } = await supabase
+              .from("coffeeshop_register")
+              .select("naam, straat, huisnummer, huisnummer_toevoeging, postcode, plaats")
+              .eq("id", proposal.register_id)
+              .maybeSingle();
+            if (shopError) throw shopError;
+            shop = shopRow as RegisterShop | null;
+          }
+          const match = findMemberLocation(locaties, proposal.location_key, shop);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;

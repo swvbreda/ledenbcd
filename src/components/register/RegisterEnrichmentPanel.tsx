@@ -89,8 +89,8 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
         const key = isLocation ? `loc:${p.location_key ?? p.register_id ?? "?"}` : "algemeen";
         let group = groups.get(key);
         if (!group) {
-          const loc = isLocation ? findMemberLocation(locaties, p.location_key) : null;
           const shop = p.register_id ? ctx?.shops.get(p.register_id) : undefined;
+          const loc = isLocation ? findMemberLocation(locaties, p.location_key, shop) : null;
           const shopAddress = shop
             ? [
                 [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging]
