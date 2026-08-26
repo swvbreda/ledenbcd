@@ -304,7 +304,7 @@ export function useResolveProposal() {
         const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
         if (proposal.scope === "locatie") {
           const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-          let shop: RegisterShop | null = null;
+          let shop: Parameters<typeof findMemberLocation>[2] = null;
           if (proposal.register_id) {
             const { data: shopRow, error: shopError } = await supabase
               .from("coffeeshop_register")
@@ -312,7 +312,7 @@ export function useResolveProposal() {
               .eq("id", proposal.register_id)
               .maybeSingle();
             if (shopError) throw shopError;
-            shop = shopRow as RegisterShop | null;
+            shop = shopRow;
           }
           const { data: siblingRows, error: siblingError } = await supabase
             .from("register_enrichment_proposals" as any)
