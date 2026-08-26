@@ -371,7 +371,9 @@ const MemberDetail = () => {
                     </span>
                   )}
                 </div>
+                </div>
               </div>
+
               {(isAdmin || isOwnProfile) && !editing && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
