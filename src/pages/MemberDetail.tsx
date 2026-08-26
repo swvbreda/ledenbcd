@@ -22,6 +22,8 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import VergunninghoudersOverzicht from "@/components/members/VergunninghoudersOverzicht";
+import MediaUpload from "@/components/members/MediaUpload";
+import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
