@@ -102,6 +102,19 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-xs text-muted-foreground mt-1">
             {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
           </p>
+          {dataUpdatedAt > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                refetchStats();
+              }}
+              className="mt-1 text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+            >
+              {statsFetching
+                ? "bijwerken…"
+                : `bijgewerkt ${new Date(dataUpdatedAt).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })} · ververs`}
+            </button>
+          )}
         </div>
       </div>
 
