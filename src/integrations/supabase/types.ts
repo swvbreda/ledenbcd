@@ -2956,6 +2956,10 @@ export type Database = {
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }
+      can_manage_member_media: {
+        Args: { _member_folder: string; _user_id: string }
+        Returns: boolean
+      }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
