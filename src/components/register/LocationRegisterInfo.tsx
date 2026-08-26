@@ -1,53 +1,137 @@
 import { Badge } from "@/components/ui/badge";
-import type { RegisterLink, RegisterShop } from "@/hooks/useCoffeeshopRegister";
+import type { RegisterLink, RegisterShop, RegisterUbo } from "@/hooks/useCoffeeshopRegister";
+import type { UboEntry } from "@/data/types";
 
 const fmt = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" }) : null;
 
-/** Registergegevens van één vestiging, getoond binnen de locatiekaart van het lid. */
+const Row = ({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) => (
+  <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+    <span className="text-muted-foreground">{label}</span>
+    <span className={`min-w-0 break-words ${value ? "text-foreground" : "text-muted-foreground"} ${mono ? "font-mono tabular-nums" : ""}`}>
+      {value || "—"}
+    </span>
+  </div>
+);
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
+);
+
+export type LocationRegisterInfoProps = {
+  link?: RegisterLink | null;
+  shop?: RegisterShop | null;
+  /** UBO-keten die bij het lid is opgeslagen. */
+  memberUbo?: UboEntry[] | null;
+  /** UBO-keten uit het register voor de gekoppelde vestiging. */
+  registerUbo?: RegisterUbo[] | null;
+  /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
+  memberKvk?: string | null;
+};
+
+/**
+ * KvK-, UBO- en registergegevens van één vestiging, in een vaste volgorde zodat
+ * alle locatiekaarten dezelfde opbouw en uitlijning houden.
+ */
 const LocationRegisterInfo = ({
   link,
   shop,
-}: {
-  link?: RegisterLink | null;
-  shop?: RegisterShop | null;
-}) => {
-  if (!link || !shop) {
-    return (
-      <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">
-        Niet gekoppeld aan het landelijke register
-      </p>
-    );
-  }
+  memberUbo,
+  registerUbo,
+  memberKvk,
+}: LocationRegisterInfoProps) => {
+  const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
+  const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
+  const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
 
-  const adres = [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join(" ");
+  const ubo: UboEntry[] =
+    memberUbo && memberUbo.length > 0
+      ? memberUbo
+      : (registerUbo ?? []).map((u) => ({
+          naam: u.naam,
+          kvk: u.kvk_nummer,
+          niveau: u.niveau,
+          soort: u.soort,
+          uiteindelijkBelanghebbende: u.is_uiteindelijk,
+          toelichting: u.toelichting,
+        }));
+
+  const adres = shop
+    ? [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join(" ")
+    : "";
 
   return (
-    <div className="mt-2 border-t border-border pt-2 space-y-0.5">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Register</span>
-        <Badge variant={link.status === "bevestigd" ? "default" : "secondary"} className="text-[10px]">
-          {link.status === "bevestigd" ? "Bevestigd" : "Voorstel"}
-        </Badge>
+    <div className="mt-3 space-y-3">
+      {/* KvK-gegevens */}
+      <div className="border-t border-border pt-2.5 space-y-1">
+        <SectionTitle>KvK</SectionTitle>
+        <Row label="KvK-nummer" value={kvk} mono />
+        <Row label="Vestigingsnr." value={vestigingsnummer} mono />
+        {vestigingDatum && <Row label="Vestiging sinds" value={vestigingDatum} />}
       </div>
-      <p className="text-xs text-muted-foreground">
-        {shop.naam}
-        {adres && <> · {adres}</>}
-        {shop.plaats && <> · {shop.plaats}</>}
-      </p>
-      {shop.vergunninghouder && (
-        <p className="text-xs text-muted-foreground">Vergunninghouder: {shop.vergunninghouder}</p>
+
+      {/* Eigendomsketen */}
+      {ubo.length > 0 && (
+        <div className="border-t border-border pt-2.5 space-y-1">
+          <SectionTitle>Eigendomsketen (UBO)</SectionTitle>
+          <ul className="space-y-0.5">
+            {ubo.map((u, i) => (
+              <li key={i} className="text-xs text-muted-foreground">
+                <span style={{ paddingLeft: `${(u.niveau ?? 0) * 10}px` }}>
+                  {u.naam}
+                  {u.kvk && <span className="font-mono tabular-nums"> · KvK {u.kvk}</span>}
+                  {u.uiteindelijkBelanghebbende && (
+                    <span className="ml-1 font-medium text-primary">· UBO</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-      {shop.exploitant && shop.exploitant !== shop.vergunninghouder && (
-        <p className="text-xs text-muted-foreground">Exploitant: {shop.exploitant}</p>
-      )}
-      {(shop.vergunningnummer || shop.vergunningverlening) && (
-        <p className="text-xs text-muted-foreground">
-          Vergunning {shop.vergunningnummer ?? "—"}
-          {shop.vergunningverlening && <> · sinds {fmt(shop.vergunningverlening)}</>}
-        </p>
-      )}
-      <p className="text-xs text-muted-foreground">Status vergunning: {shop.status}</p>
+
+      {/* Register */}
+      <div className="mt-auto border-t border-border pt-2.5 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionTitle>Register</SectionTitle>
+          {link && shop ? (
+            <Badge variant={link.status === "bevestigd" ? "default" : "secondary"} className="text-[10px]">
+              {link.status === "bevestigd" ? "Bevestigd" : "Voorstel"}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px]">
+              Niet gekoppeld
+            </Badge>
+          )}
+        </div>
+
+        {link && shop ? (
+          <>
+            <Row
+              label="Dossier"
+              value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ")}
+            />
+            <Row label="Vergunninghouder" value={shop.vergunninghouder} />
+            {shop.exploitant && shop.exploitant !== shop.vergunninghouder && (
+              <Row label="Exploitant" value={shop.exploitant} />
+            )}
+            <Row
+              label="Vergunning"
+              value={
+                [shop.vergunningnummer, shop.vergunningverlening ? `sinds ${fmt(shop.vergunningverlening)}` : null]
+                  .filter(Boolean)
+                  .join(" · ") || null
+              }
+            />
+            <Row label="Status" value={shop.status} />
+            {ubo.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">UBO niet beschikbaar in het register</p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">Niet gekoppeld aan het landelijke register</p>
+        )}
+      </div>
     </div>
   );
 };
