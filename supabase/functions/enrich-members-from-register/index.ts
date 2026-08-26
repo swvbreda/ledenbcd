@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
           ["postcode", shop.postcode],
           ["plaats", shop.plaats],
           ["stadsdeel", shop.gemeente],
-          ["oprichtingsDatum", shop.kvk_oprichtingsdatum],
+          ["oprichtingsDatum", shop.kvk_vestiging_datum],
           ["kvk", shop.kvk_nummer],
           ["vergunninghouder", shop.vergunninghouder],
           ["exploitant", shop.exploitant],
