@@ -9,12 +9,16 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * - Lege velden (adres, postcode, plaats, stadsdeel/gemeente, website, telefoon,
  *   oprichtingsdatum) worden automatisch gevuld — bestaande waarden nooit
  *   overschreven; afwijkingen komen als voorstel in register_enrichment_proposals.
- * - Oprichtdatum komt uit het KvK-handelsregister (secret KVK_API_KEY); zonder
- *   sleutel wordt dat deel overgeslagen.
+ * - De oprichtdatum van een vestiging komt uit het KvK-VESTIGINGSprofiel (datum
+ *   aanvang van die vestiging), nooit uit de registratiedatum van het bedrijf:
+ *   anders krijgen alle vestigingen van dezelfde B.V. dezelfde datum. Kan de
+ *   vestiging niet eenduidig op postcode + huisnummer worden gevonden, dan blijft
+ *   de datum leeg. Secret: KVK_API_KEY; zonder sleutel wordt dit overgeslagen.
  */
 
 const KVK_SEARCH = "https://api.kvk.nl/api/v2/zoeken";
 const KVK_PROFILE = "https://api.kvk.nl/api/v1/basisprofielen";
+const KVK_VESTIGING = "https://api.kvk.nl/api/v1/vestigingsprofielen";
 
 function admin() {
   return createClient(
@@ -124,6 +128,55 @@ async function kvkLookup(
   return { kvkNummer, datum: `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` };
 }
 
+function toIsoDate(raw: unknown): string | null {
+  const s = String(raw ?? "").replace(/-/g, "");
+  if (s.length !== 8) return null;
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+/**
+ * Haalt de startdatum van DEZE vestiging op via het KvK-vestigingsprofiel.
+ * Alleen bij precies één zoekresultaat op postcode + huisnummer, anders null.
+ */
+async function kvkVestigingLookup(
+  apiKey: string,
+  shop: any,
+): Promise<{ vestigingsnummer: string | null; datum: string | null }> {
+  const headers = { apikey: apiKey, Accept: "application/json" };
+  const postcode = normPc(shop.postcode);
+  const huisnummer = shopHouseNumber(shop);
+  if (!postcode || !huisnummer) return { vestigingsnummer: null, datum: null };
+
+  const params = new URLSearchParams({
+    postcode,
+    huisnummer,
+    type: "hoofdvestiging,nevenvestiging",
+  });
+  if (shop.kvk_nummer) params.set("kvkNummer", String(shop.kvk_nummer));
+
+  const res = await fetch(`${KVK_SEARCH}?${params}`, { headers });
+  if (!res.ok) {
+    console.warn("KvK vestiging zoeken mislukt", res.status);
+    return { vestigingsnummer: null, datum: null };
+  }
+  const json = await res.json().catch(() => null);
+  const items: any[] = (json?.resultaten ?? []).filter((r: any) => r?.vestigingsnummer);
+  const uniek = Array.from(new Set(items.map((r: any) => String(r.vestigingsnummer))));
+  if (uniek.length !== 1) return { vestigingsnummer: null, datum: null }; // onzeker -> overslaan
+
+  const vestigingsnummer = uniek[0];
+  const profRes = await fetch(`${KVK_VESTIGING}/${vestigingsnummer}`, { headers });
+  if (!profRes.ok) {
+    console.warn("KvK vestigingsprofiel mislukt", profRes.status);
+    return { vestigingsnummer, datum: null };
+  }
+  const prof = await profRes.json().catch(() => null);
+  const datum = toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang);
+  return { vestigingsnummer, datum };
+}
+
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -210,7 +263,31 @@ Deno.serve(async (req) => {
           console.warn("KvK lookup fout", shop.id, String(e));
         }
       }
+
+      // Startdatum per vestiging (vestigingsprofiel), max 40 per run
+      const vestTodo = shops
+        .filter((s) => !s.kvk_vestiging_datum && !s.kvk_vestiging_checked_at)
+        .slice(0, 40);
+      for (const shop of vestTodo) {
+        try {
+          const { vestigingsnummer, datum } = await kvkVestigingLookup(kvkKey, shop);
+          await db
+            .from("coffeeshop_register")
+            .update({
+              kvk_vestigingsnummer: vestigingsnummer,
+              kvk_vestiging_datum: datum,
+              kvk_vestiging_checked_at: new Date().toISOString(),
+            })
+            .eq("id", shop.id);
+          shop.kvk_vestigingsnummer = vestigingsnummer;
+          shop.kvk_vestiging_datum = datum;
+          kvkLookups++;
+        } catch (e) {
+          console.warn("KvK vestiging lookup fout", shop.id, String(e));
+        }
+      }
     }
+
 
     // Openstaande/genegeerde voorstellen zodat we niets dubbel of opnieuw voorstellen
     const { data: existingProposals } = await db
@@ -264,7 +341,8 @@ Deno.serve(async (req) => {
             adres: shopAddress(shop),
             postcode: shop.postcode ?? "",
           };
-          if (shop.kvk_oprichtingsdatum) loc.oprichtingsDatum = shop.kvk_oprichtingsdatum;
+          // Alleen de startdatum van DEZE vestiging, nooit de bedrijfsdatum
+          if (shop.kvk_vestiging_datum) loc.oprichtingsDatum = shop.kvk_vestiging_datum;
           if (shop.kvk_nummer) loc.kvk = shop.kvk_nummer;
           if (shop.vergunninghouder) loc.vergunninghouder = shop.vergunninghouder;
           if (shop.exploitant) loc.exploitant = shop.exploitant;
@@ -287,7 +365,7 @@ Deno.serve(async (req) => {
           ["postcode", shop.postcode],
           ["plaats", shop.plaats],
           ["stadsdeel", shop.gemeente],
-          ["oprichtingsDatum", shop.kvk_oprichtingsdatum],
+          ["oprichtingsDatum", shop.kvk_vestiging_datum],
           ["kvk", shop.kvk_nummer],
           ["vergunninghouder", shop.vergunninghouder],
           ["exploitant", shop.exploitant],
@@ -314,7 +392,12 @@ Deno.serve(async (req) => {
                 field,
                 current_value: String(current),
                 proposed_value: String(value),
-                source: field === "oprichtingsDatum" || field === "kvk" ? "kvk" : "register",
+                source:
+                  field === "oprichtingsDatum"
+                    ? "kvk-vestiging"
+                    : field === "kvk"
+                      ? "kvk"
+                      : "register",
               });
             }
           }

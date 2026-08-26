@@ -226,7 +226,11 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{fieldLabel(p.field)}</span>
                             <Badge variant="secondary">
-                              {p.source === "kvk" ? "KvK" : "Register"}
+                              {p.source === "kvk-vestiging"
+                                ? "KvK-vestiging"
+                                : p.source === "kvk"
+                                  ? "KvK"
+                                  : "Register"}
                             </Badge>
                             {INVOICE_SENSITIVE.has(p.field) && p.scope !== "locatie" && (
                               <Badge variant="destructive">beïnvloedt facturatie</Badge>
