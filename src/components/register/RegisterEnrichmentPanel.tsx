@@ -31,6 +31,9 @@ const FIELD_LABELS: Record<string, string> = {
   website: "Website",
   telefoon: "Telefoon",
   bedrijfsnaam: "Bedrijfsnaam",
+  vergunninghouder: "Vergunninghouder (B.V.)",
+  exploitant: "Exploitant",
+
 };
 
 /** Velden die als terugval de facturatiegegevens bepalen. */
