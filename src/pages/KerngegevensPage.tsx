@@ -354,6 +354,63 @@ const KerngegevensPage = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <Sectie titel="Bankiert bij">
+          {bankItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
+          ) : (
+            <DonutDiagram
+              items={bankItems}
+              onSelect={(label) => {
+                const b = k.bankGroepen.find((g) => g.bank === label);
+                if (b) setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden });
+              }}
+            />
+          )}
+        </Sectie>
+
+        <Sectie
+          titel="Betaalverwerkers"
+          bron={
+            psp?.antwoorden
+              ? `Uit de enquête Pinverwerking & Betaaldienstverlening — ${psp.antwoorden} ingevulde antwoorden`
+              : undefined
+          }
+        >
+          {pspItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nog geen enquêteantwoorden over betaalverwerkers.
+            </p>
+          ) : (
+            <DonutDiagram
+              items={pspItems}
+              onSelect={(label) => {
+                const g = psp?.groepen.find((x) => x.naam === label);
+                if (g) setPspDetail({ titel: `Betaalverwerker ${g.naam}`, regels: g.vestigingen });
+              }}
+            />
+          )}
+        </Sectie>
+      </div>
+
+      <Dialog open={!!pspDetail} onOpenChange={(o) => !o && setPspDetail(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-brand-red" />
+              {pspDetail?.titel}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+            {(pspDetail?.regels ?? []).map((r) => (
+              <div key={r} className="py-2 text-sm">
+                {r}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-lg">
