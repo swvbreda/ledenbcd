@@ -128,6 +128,55 @@ async function kvkLookup(
   return { kvkNummer, datum: `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` };
 }
 
+function toIsoDate(raw: unknown): string | null {
+  const s = String(raw ?? "").replace(/-/g, "");
+  if (s.length !== 8) return null;
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+}
+
+/**
+ * Haalt de startdatum van DEZE vestiging op via het KvK-vestigingsprofiel.
+ * Alleen bij precies één zoekresultaat op postcode + huisnummer, anders null.
+ */
+async function kvkVestigingLookup(
+  apiKey: string,
+  shop: any,
+): Promise<{ vestigingsnummer: string | null; datum: string | null }> {
+  const headers = { apikey: apiKey, Accept: "application/json" };
+  const postcode = normPc(shop.postcode);
+  const huisnummer = shopHouseNumber(shop);
+  if (!postcode || !huisnummer) return { vestigingsnummer: null, datum: null };
+
+  const params = new URLSearchParams({
+    postcode,
+    huisnummer,
+    type: "hoofdvestiging,nevenvestiging",
+  });
+  if (shop.kvk_nummer) params.set("kvkNummer", String(shop.kvk_nummer));
+
+  const res = await fetch(`${KVK_SEARCH}?${params}`, { headers });
+  if (!res.ok) {
+    console.warn("KvK vestiging zoeken mislukt", res.status);
+    return { vestigingsnummer: null, datum: null };
+  }
+  const json = await res.json().catch(() => null);
+  const items: any[] = (json?.resultaten ?? []).filter((r: any) => r?.vestigingsnummer);
+  const uniek = Array.from(new Set(items.map((r: any) => String(r.vestigingsnummer))));
+  if (uniek.length !== 1) return { vestigingsnummer: null, datum: null }; // onzeker -> overslaan
+
+  const vestigingsnummer = uniek[0];
+  const profRes = await fetch(`${KVK_VESTIGING}/${vestigingsnummer}`, { headers });
+  if (!profRes.ok) {
+    console.warn("KvK vestigingsprofiel mislukt", profRes.status);
+    return { vestigingsnummer, datum: null };
+  }
+  const prof = await profRes.json().catch(() => null);
+  const datum = toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang);
+  return { vestigingsnummer, datum };
+}
+
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
