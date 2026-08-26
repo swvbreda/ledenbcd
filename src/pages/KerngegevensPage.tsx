@@ -57,7 +57,7 @@ const Sectie = ({
   className,
 }: {
   titel: string;
-  bron: string;
+  bron?: string;
   children: React.ReactNode;
   className?: string;
 }) => (
@@ -69,7 +69,7 @@ const Sectie = ({
   >
     <div>
       <h2 className="font-display text-lg uppercase tracking-tight">{titel}</h2>
-      <p className="text-xs text-muted-foreground">{bron}</p>
+      {bron && <p className="text-xs text-muted-foreground">{bron}</p>}
     </div>
     {children}
   </section>
