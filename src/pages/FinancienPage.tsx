@@ -372,13 +372,6 @@ export default function FinancienPage() {
                           const paid = paidByMember.get(i.member_id) ?? 0;
                           return s + Math.max(0, (Number(i.amount) || 0) - paid);
                         }, 0);
-                        const invoicedTotal = invs.reduce((s, i) => s + (Number(i.amount) || 0), 0);
-                        const budgetedMembers = yearSettings?.budgeted_member_count ?? 0;
-                        const extra = invs.length - budgetedMembers;
-                        const hint =
-                          budgetedMembers > 0 && extra !== 0
-                            ? `${invs.length} facturen verstuurd (${extra > 0 ? "+" : ""}${extra} t.o.v. begroting) · totaal gefactureerd ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(invoicedTotal)}`
-                            : `${invs.length} facturen verstuurd · totaal gefactureerd ${new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(invoicedTotal)}`;
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
@@ -386,7 +379,6 @@ export default function FinancienPage() {
                           spentValue: paidTotal,
                           remainingValue: openTotal,
                           remainingLabel: "openstaand",
-                          remainingHint: hint,
                         };
                       }
                       return null;
