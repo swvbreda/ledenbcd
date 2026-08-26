@@ -110,6 +110,25 @@ async function fetchSecureExport(secret: string): Promise<SourceShop[] | null> {
   return shops;
 }
 
+/**
+ * Coffeeshopbeleid heeft daarnaast een beveiligd ledendossier-endpoint. Dat
+ * bevat de door de bron zelf bevestigde vergunningkoppeling en UBO-keten. Het
+ * wordt als aanvulling gebruikt wanneer de volledige registerexport nog niet
+ * beschikbaar is.
+ */
+async function fetchLinkedDossiers(secret: string): Promise<any[]> {
+  const res = await fetch(`${SOURCE_APP_URL}/api/public/leden-dossier`, {
+    headers: { "x-bcd-sleutel": secret },
+  });
+  if (res.status === 404) return [];
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Ledendossier-endpoint gaf ${res.status}: ${body.slice(0, 300)}`);
+  }
+  const json = await res.json();
+  return json.leden ?? json.data ?? [];
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -133,11 +152,13 @@ Deno.serve(async (req) => {
   try {
     const secret = Deno.env.get("COFFEESHOPBELEID_API_SECRET");
     let shops: SourceShop[] | null = null;
+    let linkedDossiers: any[] = [];
     let uboBron: "export" | "geen" = "geen";
 
     if (secret) {
       shops = await fetchSecureExport(secret);
       if (shops) uboBron = "export";
+      linkedDossiers = await fetchLinkedDossiers(secret);
     }
 
     let gemeenteById = new Map<string, { naam: string; provincie: string | null }>();
@@ -213,10 +234,10 @@ Deno.serve(async (req) => {
     }
 
     // UBO-keten (alleen beschikbaar via het beveiligde eindpunt).
-    if (uboBron === "export") {
+    if (uboBron === "export" || linkedDossiers.length > 0) {
       const { data: registerRows } = await db.from("coffeeshop_register").select("id,bron_id");
       const idByBron = new Map((registerRows ?? []).map((r: any) => [r.bron_id, r.id]));
-      const uboRows = shops.flatMap((s) =>
+      const exportUboRows = shops.flatMap((s) =>
         (s.ubo_keten ?? s.ubo ?? []).map((u: any) => ({
           register_id: idByBron.get(s.id),
           niveau: u.niveau ?? 0,
@@ -228,6 +249,33 @@ Deno.serve(async (req) => {
           toelichting: u.toelichting ?? null,
         })).filter((u: any) => u.register_id && u.naam),
       );
+      const dossierUboRows = linkedDossiers.flatMap((d: any) => {
+        const bronId = d.koppeling?.vergunning_id;
+        const registerId = bronId ? idByBron.get(bronId) : null;
+        return (d.ubo_keten ?? []).map((u: any) => ({
+          register_id: registerId,
+          niveau: u.niveau ?? 0,
+          naam: u.naam,
+          kvk_nummer: u.kvk_nummer ?? null,
+          soort: u.soort ?? "rechtspersoon",
+          betrouwbaarheid: u.betrouwbaarheid ?? null,
+          is_uiteindelijk: !!u.is_uiteindelijk,
+          toelichting: u.toelichting ?? null,
+        })).filter((u: any) => u.register_id && u.naam);
+      });
+      const uniek = new Map<string, any>();
+      for (const row of [...exportUboRows, ...dossierUboRows]) {
+        uniek.set(`${row.register_id}:${row.niveau}:${row.naam}`, row);
+      }
+      const uboRows = Array.from(uniek.values());
+      const geraakteRegisterIds = Array.from(new Set(uboRows.map((row: any) => row.register_id)));
+      if (geraakteRegisterIds.length) {
+        const { error } = await db
+          .from("coffeeshop_register_ubo")
+          .delete()
+          .in("register_id", geraakteRegisterIds);
+        if (error) throw error;
+      }
       for (let i = 0; i < uboRows.length; i += 200) {
         const chunk = uboRows.slice(i, i + 200);
         const { error } = await db
@@ -236,6 +284,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
         uboSynced += chunk.length;
       }
+      if (dossierUboRows.length > 0) uboBron = "export";
     }
 
     // ---- Automatische matching op leden ----

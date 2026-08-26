@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import type { Member, Location } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
+import {
+  useCoffeeshopRegister,
+  useRegisterLinks,
+  useRegisterUboBulk,
+} from "@/hooks/useCoffeeshopRegister";
 import { isRealLocation, memberLocationCount, countLocations } from "@/lib/locationCount";
 import { getGemeente } from "@/data/gemeenteMapping";
 import { getMembershipYears } from "@/lib/membership";
@@ -31,16 +35,31 @@ export type UboRij = {
   naam: string;
   vestigingen: number;
   leden: string[];
+  vestigingsnamen: string[];
 };
 
 export function useKerngegevens(enabled = true) {
   const { rawMembers, isLoading: membersLoading } = useMembersData();
   const { members, isLoading: editsLoading } = useMergedMembers(rawMembers);
   const { data: links = [], isLoading: linksLoading } = useRegisterLinks(enabled);
+  const { data: register = [], isLoading: registerLoading } = useCoffeeshopRegister(enabled);
+
+  const bevestigdeLinks = useMemo(
+    () => links.filter((link) => link.status === "bevestigd"),
+    [links],
+  );
+  const gekoppeldeRegisterIds = useMemo(
+    () => bevestigdeLinks.map((link) => link.register_id),
+    [bevestigdeLinks],
+  );
+  const { data: uboPerRegister = new Map(), isLoading: uboLoading } = useRegisterUboBulk(
+    gekoppeldeRegisterIds,
+    enabled,
+  );
 
   const gekoppeldeVestigingen = useMemo(
-    () => links.filter((l) => l.status === "bevestigd").length,
-    [links],
+    () => bevestigdeLinks.length,
+    [bevestigdeLinks],
   );
 
   const result = useMemo(() => {
@@ -151,24 +170,54 @@ export function useKerngegevens(enabled = true) {
       : 0;
 
     // --- UBO ----------------------------------------------------------
-    const uboMap = new Map<string, { vestigingen: number; leden: Set<string> }>();
-    let vestigingenMetUbo = 0;
-    for (const m of leden) {
-      for (const loc of (m.locaties ?? []).filter(isRealLocation)) {
-        const ubos = (loc.ubo ?? []).filter((u) => u?.naam?.trim());
-        if (!ubos.length) continue;
-        vestigingenMetUbo += 1;
-        const uniek = new Set(ubos.map((u) => u.naam.trim()));
-        for (const naam of uniek) {
-          const entry = uboMap.get(naam) ?? { vestigingen: 0, leden: new Set<string>() };
-          entry.vestigingen += 1;
-          entry.leden.add(m.naam);
-          uboMap.set(naam, entry);
+    const lidNaam = new Map(leden.map((lid) => [lid.id, lid.naam]));
+    const registerNaam = new Map(register.map((shop) => [shop.id, shop.naam]));
+    const linksPerRegister = new Map<string, number[]>();
+    for (const link of bevestigdeLinks) {
+      const ids = linksPerRegister.get(link.register_id) ?? [];
+      ids.push(link.member_id);
+      linksPerRegister.set(link.register_id, ids);
+    }
+
+    const normalizeUbo = (naam: string) =>
+      naam.toLocaleLowerCase("nl-NL").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+    const uboMap = new Map<string, {
+      naam: string;
+      registers: Set<string>;
+      leden: Set<string>;
+      vestigingsnamen: Set<string>;
+    }>();
+    for (const [registerId, keten] of uboPerRegister) {
+      const uniekePersonen = new Map<string, string>();
+      for (const ubo of keten) {
+        const naam = ubo.naam?.trim();
+        if (!naam) continue;
+        uniekePersonen.set(normalizeUbo(naam), naam);
+      }
+      for (const [sleutel, naam] of uniekePersonen) {
+        const entry = uboMap.get(sleutel) ?? {
+          naam,
+          registers: new Set<string>(),
+          leden: new Set<string>(),
+          vestigingsnamen: new Set<string>(),
+        };
+        entry.registers.add(registerId);
+        entry.vestigingsnamen.add(registerNaam.get(registerId) ?? "Onbekende vestiging");
+        for (const memberId of linksPerRegister.get(registerId) ?? []) {
+          const naamLid = lidNaam.get(memberId);
+          if (naamLid) entry.leden.add(naamLid);
         }
+        uboMap.set(sleutel, entry);
       }
     }
+    const vestigingenMetUbo = Array.from(uboPerRegister.values()).filter((keten) => keten.length > 0).length;
     const uboRijen: UboRij[] = Array.from(uboMap.entries())
-      .map(([naam, v]) => ({ naam, vestigingen: v.vestigingen, leden: Array.from(v.leden) }))
+      .map(([, v]) => ({
+        naam: v.naam,
+        vestigingen: v.registers.size,
+        leden: Array.from(v.leden).sort(),
+        vestigingsnamen: Array.from(v.vestigingsnamen).sort(),
+      }))
       .filter((r) => r.vestigingen > 1)
       .sort((a, b) => b.vestigingen - a.vestigingen);
 
@@ -192,10 +241,10 @@ export function useKerngegevens(enabled = true) {
       uboRijen,
       uniekeUbos: uboMap.size,
     };
-  }, [members, gekoppeldeVestigingen]);
+  }, [members, gekoppeldeVestigingen, register, bevestigdeLinks, uboPerRegister]);
 
   return {
     ...result,
-    isLoading: membersLoading || editsLoading || linksLoading,
+    isLoading: membersLoading || editsLoading || linksLoading || registerLoading || uboLoading,
   };
 }

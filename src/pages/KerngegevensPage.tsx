@@ -271,6 +271,7 @@ const KerngegevensPage = () => {
                 <tr className="text-left text-xs uppercase text-muted-foreground">
                   <th className="py-2 pr-3 font-medium">Persoon</th>
                   <th className="py-2 pr-3 font-medium">Vestigingen</th>
+                  <th className="py-2 pr-3 font-medium">Registervestigingen</th>
                   <th className="py-2 font-medium">Leden</th>
                 </tr>
               </thead>
@@ -279,6 +280,7 @@ const KerngegevensPage = () => {
                   <tr key={r.naam}>
                     <td className="py-2 pr-3">{r.naam}</td>
                     <td className="py-2 pr-3 tabular-nums">{r.vestigingen}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{r.vestigingsnamen.join(", ")}</td>
                     <td className="py-2 text-muted-foreground">{r.leden.join(", ")}</td>
                   </tr>
                 ))}
