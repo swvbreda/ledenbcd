@@ -3,16 +3,6 @@ import { AlertTriangle, Check, ChevronDown, ChevronRight, RefreshCw, Sparkles, X
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   EnrichmentProposal,
   useEnrichmentContext,
   useEnrichmentProposals,
@@ -61,11 +51,6 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
   const resolve = useResolveProposal();
   const run = useRunEnrichment();
   const [open, setOpen] = useState(false);
-  const [confirm, setConfirm] = useState<
-    | { kind: "single"; proposal: EnrichmentProposal; locationLabel: string }
-    | { kind: "group"; group: Group; memberLabel: string }
-    | null
-  >(null);
   const [busy, setBusy] = useState(false);
 
   const memberIds = useMemo(() => proposals.map((p) => p.member_id), [proposals]);
@@ -153,7 +138,6 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
       }
     } finally {
       setBusy(false);
-      setConfirm(null);
     }
   };
 
@@ -216,7 +200,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                         size="sm"
                         variant="outline"
                         disabled={busy || !group.matched}
-                        onClick={() => setConfirm({ kind: "group", group, memberLabel })}
+                        onClick={() => void applyGroup(group, true)}
                       >
                         Alles overnemen
                       </Button>
@@ -261,15 +245,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                             size="sm"
                             variant="outline"
                             disabled={busy || resolve.isPending || !group.matched}
-                            onClick={() =>
-                              setConfirm({
-                                kind: "single",
-                                proposal: p,
-                                locationLabel: `${group.title}${
-                                  group.subtitle ? ` (${group.subtitle})` : ""
-                                }`,
-                              })
-                            }
+                            onClick={() => resolve.mutate({ proposal: p, apply: true })}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -291,67 +267,6 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
           ))}
         </div>
       )}
-
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Aanvulling overnemen?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                {confirm?.kind === "single" && (
-                  <>
-                    <p>
-                      Locatie: <span className="font-medium">{confirm.locationLabel}</span>
-                    </p>
-                    <p>
-                      {fieldLabel(confirm.proposal.field)}:{" "}
-                      <span className="line-through">{confirm.proposal.current_value || "—"}</span> →{" "}
-                      <span className="font-medium">{confirm.proposal.proposed_value}</span>
-                    </p>
-                    {INVOICE_SENSITIVE.has(confirm.proposal.field) &&
-                      confirm.proposal.scope !== "locatie" && (
-                        <p className="text-destructive">Let op: dit beïnvloedt de facturatie.</p>
-                      )}
-                  </>
-                )}
-                {confirm?.kind === "group" && (
-                  <>
-                    <p>
-                      {confirm.memberLabel} — {confirm.group.title}
-                      {confirm.group.subtitle ? ` (${confirm.group.subtitle})` : ""}
-                    </p>
-                    <ul className="list-disc pl-5">
-                      {confirm.group.items.map((p) => (
-                        <li key={p.id}>
-                          {fieldLabel(p.field)}: {p.current_value || "—"} → {p.proposed_value}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annuleren</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={busy}
-              onClick={(e) => {
-                e.preventDefault();
-                if (!confirm) return;
-                if (confirm.kind === "single") {
-                  resolve.mutate({ proposal: confirm.proposal, apply: true });
-                  setConfirm(null);
-                } else {
-                  void applyGroup(confirm.group, true);
-                }
-              }}
-            >
-              Overnemen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
