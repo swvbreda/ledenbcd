@@ -467,7 +467,15 @@ const AccountBeheerPage = () => {
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm">
-                        {personName || "—"}
+                        {personName ? (
+                          <span className="inline-flex items-center gap-2">
+                            <AccountAvatar
+                              url={memberIds.map((mid) => contactPhotos[mid]?.[contactSlug(personName)]).find(Boolean)}
+                              naam={personName}
+                            />
+                            <span>{personName}</span>
+                          </span>
+                        ) : "—"}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
