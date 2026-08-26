@@ -341,7 +341,8 @@ Deno.serve(async (req) => {
             adres: shopAddress(shop),
             postcode: shop.postcode ?? "",
           };
-          if (shop.kvk_oprichtingsdatum) loc.oprichtingsDatum = shop.kvk_oprichtingsdatum;
+          // Alleen de startdatum van DEZE vestiging, nooit de bedrijfsdatum
+          if (shop.kvk_vestiging_datum) loc.oprichtingsDatum = shop.kvk_vestiging_datum;
           if (shop.kvk_nummer) loc.kvk = shop.kvk_nummer;
           if (shop.vergunninghouder) loc.vergunninghouder = shop.vergunninghouder;
           if (shop.exploitant) loc.exploitant = shop.exploitant;
