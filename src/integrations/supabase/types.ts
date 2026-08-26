@@ -3040,6 +3040,7 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_gemeente: { Args: { _naam: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
