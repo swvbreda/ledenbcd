@@ -348,8 +348,9 @@ const KerngegevensPage = () => {
 
       <Sectie
         titel="Eigendom & UBO"
-        bron={`${k.vestigingenMetUbo} vestigingen met bekende UBO · ${k.uniekeUbos} unieke personen`}
+        bron={`${k.uniekeVergunninghouders} vergunninghoudende ondernemingen · ${k.ledenMeerdereBvs} leden met meerdere B.V.'s · ${k.vestigingenMetUbo} vestigingen met bekende UBO · ${k.uniekeUbos} unieke personen`}
       >
+
         {k.uboRijen.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Geen personen gevonden die aan meerdere vestigingen verbonden zijn.
