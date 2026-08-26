@@ -109,6 +109,12 @@ const MemberDetail = () => {
     [linkByLocation],
   );
 
+  // UBO-ketens van alle gekoppelde registerdossiers in één query.
+  const { data: uboByRegister } = useRegisterUboBulk(
+    memberLinks.map((l) => l.register_id),
+    canSeeRegister,
+  );
+
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
   useEffect(() => {
