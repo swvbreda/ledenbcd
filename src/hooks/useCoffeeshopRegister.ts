@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { findMemberLocation } from "@/lib/registerLocationMatch";
 
 export type RegisterShop = {
   id: string;
@@ -271,19 +272,8 @@ export function useResolveProposal() {
 
         const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
         if (proposal.scope === "locatie") {
-          const key = (proposal.location_key ?? "").toUpperCase();
           const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-          const match =
-            locaties.find(
-              (l) => String(l?.postcode ?? "").toUpperCase().replace(/\s+/g, "") === key,
-            ) ??
-            locaties.find(
-              (l) =>
-                String(l?.naam ?? "")
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, " ")
-                  .trim() === (proposal.location_key ?? ""),
-            );
+          const match = findMemberLocation(locaties, proposal.location_key);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;
@@ -331,5 +321,46 @@ export function useRunEnrichment() {
       }, 10000);
     },
     onError: (e: any) => toast.error(e.message ?? "Aanvullen mislukt"),
+  });
+}
+
+/** Context bij verrijkingsvoorstellen: ledenlocaties en de gekoppelde registervestigingen. */
+export function useEnrichmentContext(
+  memberIds: number[],
+  registerIds: string[],
+  enabled = true,
+) {
+  const memberKey = Array.from(new Set(memberIds)).sort((a, b) => a - b);
+  const regKey = Array.from(new Set(registerIds)).sort();
+  return useQuery({
+    queryKey: ["register-enrichment-context", memberKey, regKey],
+    enabled: enabled && (memberKey.length > 0 || regKey.length > 0),
+    queryFn: async () => {
+      const locaties = new Map<number, any[]>();
+      const shops = new Map<string, RegisterShop>();
+
+      if (memberKey.length) {
+        const { data, error } = await supabase
+          .from("members_data")
+          .select("id, data")
+          .in("id", memberKey);
+        if (error) throw error;
+        for (const row of data ?? []) {
+          const d: any = (row as any).data ?? {};
+          locaties.set((row as any).id, Array.isArray(d.locaties) ? d.locaties : []);
+        }
+      }
+
+      if (regKey.length) {
+        const { data, error } = await supabase
+          .from("coffeeshop_register")
+          .select("*")
+          .in("id", regKey);
+        if (error) throw error;
+        for (const row of (data ?? []) as unknown as RegisterShop[]) shops.set(row.id, row);
+      }
+
+      return { locaties, shops };
+    },
   });
 }
