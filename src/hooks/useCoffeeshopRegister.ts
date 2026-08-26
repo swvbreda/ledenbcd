@@ -24,6 +24,11 @@ export type RegisterShop = {
   telefoon: string | null;
   vervallen: boolean;
   synced_at: string;
+  /** KvK-gegevens van de onderneming resp. deze specifieke vestiging. */
+  kvk_nummer?: string | null;
+  kvk_oprichtingsdatum?: string | null;
+  kvk_vestigingsnummer?: string | null;
+  kvk_vestiging_datum?: string | null;
   /** Ruwe registervelden (o.a. is_ruis, ruis_reden, gesloten_op). */
   raw?: Record<string, unknown> | null;
 };
