@@ -24,7 +24,7 @@ import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import { useAssignLinkLocation, useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
+import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
 
