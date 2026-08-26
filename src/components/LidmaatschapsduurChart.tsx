@@ -5,7 +5,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { getMembershipYears } from "@/lib/membership";
-import { getGemeente } from "@/data/gemeenteMapping";
+
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
