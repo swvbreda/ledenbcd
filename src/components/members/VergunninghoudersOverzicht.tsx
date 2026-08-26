@@ -103,6 +103,13 @@ const VergunninghoudersOverzicht = ({ rows }: Props) => {
                   {r.vestigingsnummer && (
                     <span className="ml-1 font-mono text-xs">vest. {r.vestigingsnummer}</span>
                   )}
+                  {r.contacten && r.contacten.length > 0 && (
+                    <span className="block text-xs">
+                      {r.contacten
+                        .map((p) => p.naam + (p.functie ? ` (${p.functie})` : ""))
+                        .join(", ")}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
