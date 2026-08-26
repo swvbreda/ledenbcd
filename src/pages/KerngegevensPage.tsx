@@ -346,40 +346,6 @@ const KerngegevensPage = () => {
         </div>
       </div>
 
-      <Sectie
-        titel="Eigendom & UBO"
-        bron={`${k.uniekeVergunninghouders} vergunninghoudende ondernemingen · ${k.ledenMeerdereBvs} leden met meerdere B.V.'s · ${k.vestigingenMetUbo} vestigingen met bekende UBO · ${k.uniekeUbos} unieke personen`}
-      >
-
-        {k.uboRijen.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Geen personen gevonden die aan meerdere vestigingen verbonden zijn.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Persoon</th>
-                  <th className="py-2 pr-3 font-medium">Vestigingen</th>
-                  <th className="py-2 pr-3 font-medium">Registervestigingen</th>
-                  <th className="py-2 font-medium">Leden</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {k.uboRijen.map((r) => (
-                  <tr key={r.naam}>
-                    <td className="py-2 pr-3">{r.naam}</td>
-                    <td className="py-2 pr-3 tabular-nums">{r.vestigingen}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{r.vestigingsnamen.join(", ")}</td>
-                    <td className="py-2 text-muted-foreground">{r.leden.join(", ")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Sectie>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-lg">
