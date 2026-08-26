@@ -8,10 +8,19 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
 import { memberLocationCount } from "@/lib/locationCount";
+import { UNKNOWN_BANK } from "@/lib/bankFromIban";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
