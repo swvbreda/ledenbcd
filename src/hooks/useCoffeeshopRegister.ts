@@ -24,6 +24,8 @@ export type RegisterShop = {
   telefoon: string | null;
   vervallen: boolean;
   synced_at: string;
+  /** Ruwe registervelden (o.a. is_ruis, ruis_reden, gesloten_op). */
+  raw?: Record<string, unknown> | null;
 };
 
 export type RegisterUbo = {
