@@ -37,6 +37,13 @@ const norm = (v: unknown) =>
 
 const normPc = (v: unknown) => String(v ?? "").toUpperCase().replace(/\s+/g, "");
 
+/** Verwijdert tracking-parameters en fragmenten uit een URL. */
+const cleanWebsite = (url: string | null | undefined): string | null => {
+  const raw = (url ?? "").trim();
+  if (!raw) return null;
+  return raw.split(/[?#]/)[0].replace(/\/$/, "") || null;
+};
+
 function shopAddress(shop: any): string {
   return [shop.straat, [shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join("")]
     .filter(Boolean)
@@ -369,6 +376,8 @@ Deno.serve(async (req) => {
           ["kvk", shop.kvk_nummer],
           ["vergunninghouder", shop.vergunninghouder],
           ["exploitant", shop.exploitant],
+          // De website hoort bij DEZE vestiging, niet bij het lid als geheel
+          ["website", cleanWebsite(shop.website)],
         ];
 
 
@@ -405,9 +414,28 @@ Deno.serve(async (req) => {
 
         // Lidniveau: alleen als het lid het veld nog helemaal niet heeft
         const memberCandidates: Array<[string, string | null]> = [
-          ["website", shop.website],
           ["telefoon", shop.telefoon],
         ];
+        // Een registerwebsite hoort alleen bij het lid als er precies één
+        // vestiging is; anders zou een vestigingslink als algemene site gelden.
+        if (locaties.length <= 1) {
+          memberCandidates.push(["website", cleanWebsite(shop.website)]);
+        } else if (shop.website && (!data.website || String(data.website).trim() === "")) {
+          const key = `${memberId}|${rid}||website`;
+          if (!knownProposal.has(key)) {
+            knownProposal.add(key);
+            proposals.push({
+              member_id: memberId,
+              register_id: rid,
+              scope: "lid",
+              location_key: null,
+              field: "website",
+              current_value: null,
+              proposed_value: cleanWebsite(shop.website)!,
+              source: "register",
+            });
+          }
+        }
         for (const [field, value] of memberCandidates) {
           if (!value) continue;
           if (isInvoiceField(field)) continue;
@@ -417,6 +445,7 @@ Deno.serve(async (req) => {
             changed = true;
           }
         }
+
 
         // Facturatiegevoelig: nooit stil invullen, altijd als voorstel
         const sensitive: Array<[string, string | null]> = [

@@ -20,7 +20,7 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
+import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
   useAssignLinkLocation,
@@ -891,12 +891,25 @@ const MemberDetail = () => {
                         link={link}
                         shop={shop}
                         memberKvk={loc.kvk}
+                        memberWebsite={loc.website}
                         memberUbo={loc.ubo}
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
                     </div>
                   ) : (
-                    loc.kvk && <p className="mt-1 font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                    <div className="mt-1 space-y-0.5">
+                      {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
+                      {loc.website && (
+                        <a
+                          href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-muted-foreground hover:underline"
+                        >
+                          {cleanUrl(loc.website)}
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
                 );

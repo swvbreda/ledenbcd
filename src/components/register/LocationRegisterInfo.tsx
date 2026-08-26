@@ -27,7 +27,17 @@ export type LocationRegisterInfoProps = {
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
+  /** Website van deze vestiging zoals vastgelegd bij het lid (heeft voorrang). */
+  memberWebsite?: string | null;
 };
+
+/** Toont een nette URL zonder protocol, trailing slash en tracking-parameters. */
+export const cleanUrl = (url?: string | null) => {
+  if (!url) return null;
+  const stripped = url.split(/[?#]/)[0];
+  return stripped.replace(/^https?:\/\//, "").replace(/\/$/, "") || null;
+};
+
 
 /**
  * KvK-, UBO- en registergegevens van één vestiging, in een vaste volgorde zodat
@@ -39,10 +49,13 @@ const LocationRegisterInfo = ({
   memberUbo,
   registerUbo,
   memberKvk,
+  memberWebsite,
 }: LocationRegisterInfoProps) => {
   const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
   const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
   const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
+  const websiteRaw = memberWebsite?.trim() || shop?.website || null;
+  const websiteLabel = cleanUrl(websiteRaw);
 
   const ubo: UboEntry[] =
     memberUbo && memberUbo.length > 0
@@ -68,6 +81,21 @@ const LocationRegisterInfo = ({
         <Row label="KvK-nummer" value={kvk} mono />
         <Row label="Vestigingsnr." value={vestigingsnummer} mono />
         {vestigingDatum && <Row label="Vestiging sinds" value={vestigingDatum} />}
+        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+          <span className="text-muted-foreground">Website</span>
+          {websiteLabel ? (
+            <a
+              href={websiteRaw!.startsWith("http") ? websiteRaw! : `https://${websiteRaw}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 break-words text-foreground hover:underline"
+            >
+              {websiteLabel}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
       </div>
 
       {/* Eigendomsketen */}
