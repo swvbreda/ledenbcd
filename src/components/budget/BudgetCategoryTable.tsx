@@ -114,13 +114,11 @@ export default function BudgetCategoryTable({
               {!expanded && (
                 <>
                   <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
-                  <strong className={isIncome ? totalRemainingClass : "text-green-600"}>
-                    <CurrencyText value={isIncome ? totalRemaining : availableTotal} className="justify-end" />
+                  <strong className={totalRemainingClass}>
+                    <CurrencyText value={totalRemaining} className="justify-end" />
                   </strong>
-                  {!isIncome && overrunTotal < 0 && (
-                    <span className="text-destructive text-xs ml-1">
-                      (overschreden <CurrencyText value={overrunTotal} className="inline-flex" />)
-                    </span>
+                  {!isIncome && totalRemaining < 0 && (
+                    <span className="text-destructive text-xs ml-1">(overschreden)</span>
                   )}
                 </>
               )}
