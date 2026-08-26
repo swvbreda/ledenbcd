@@ -304,7 +304,28 @@ export function useResolveProposal() {
         const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
         if (proposal.scope === "locatie") {
           const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-          const match = findMemberLocation(locaties, proposal.location_key);
+          let shop: Parameters<typeof findMemberLocation>[2] = null;
+          if (proposal.register_id) {
+            const { data: shopRow, error: shopError } = await supabase
+              .from("coffeeshop_register")
+              .select("naam, straat, huisnummer, huisnummer_toevoeging, postcode, plaats")
+              .eq("id", proposal.register_id)
+              .maybeSingle();
+            if (shopError) throw shopError;
+            shop = shopRow;
+          }
+          const { data: siblingRows, error: siblingError } = await supabase
+            .from("register_enrichment_proposals" as any)
+            .select("current_value")
+            .eq("member_id", proposal.member_id)
+            .eq("register_id", proposal.register_id ?? "")
+            .eq("location_key", proposal.location_key ?? "")
+            .eq("field", "postcode")
+            .limit(1);
+          if (siblingError) throw siblingError;
+          const oldPostcode = (siblingRows?.[0] as { current_value?: string | null } | undefined)
+            ?.current_value;
+          const match = findMemberLocation(locaties, proposal.location_key, shop, [oldPostcode]);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;

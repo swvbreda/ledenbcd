@@ -89,8 +89,17 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
         const key = isLocation ? `loc:${p.location_key ?? p.register_id ?? "?"}` : "algemeen";
         let group = groups.get(key);
         if (!group) {
-          const loc = isLocation ? findMemberLocation(locaties, p.location_key) : null;
           const shop = p.register_id ? ctx?.shops.get(p.register_id) : undefined;
+          const oldPostcode = items.find(
+            (candidate) =>
+              candidate.scope === "locatie" &&
+              candidate.register_id === p.register_id &&
+              candidate.location_key === p.location_key &&
+              candidate.field === "postcode",
+          )?.current_value;
+          const loc = isLocation
+            ? findMemberLocation(locaties, p.location_key, shop, [oldPostcode])
+            : null;
           const shopAddress = shop
             ? [
                 [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging]
