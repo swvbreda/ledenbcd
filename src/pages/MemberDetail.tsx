@@ -609,6 +609,20 @@ const MemberDetail = () => {
                               )}
                             </p>
                             {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
+                            {(() => {
+                              const own = contactLocations(c, member.locaties || []);
+                              if (own.length === 0) {
+                                return (member.locaties?.length ?? 0) > 1 ? (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">Alle vestigingen</p>
+                                ) : null;
+                              }
+                              return (
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {c.functie?.toLowerCase().includes("eigenaar") ? "Eigenaar van: " : "Vestiging: "}
+                                  <span className="text-foreground">{own.map(locationLabel).join(", ")}</span>
+                                </p>
+                              );
+                            })()}
                             {c.email && (
                               <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:underline mt-1">
                                 <Mail size={13} /> {c.email}
