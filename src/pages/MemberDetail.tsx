@@ -24,7 +24,7 @@ import LocationRegisterInfo from "@/components/register/LocationRegisterInfo";
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import { useAssignLinkLocation, useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemberContributions, useMemberInvoices } from "@/hooks/useContributions";
+import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
 
@@ -118,6 +118,7 @@ const MemberDetail = () => {
   }, [convertedTo, navigate]);
   const { data: memberContributions } = useMemberContributions(memberId);
   const { data: memberInvoices } = useMemberInvoices(memberId);
+  const { data: memberPayments } = useMemberPayments(memberId);
   const currentYearContrib = useMemo(() => {
     const cy = new Date().getFullYear();
     return (memberContributions ?? []).find((c) => c.year === cy);
@@ -208,6 +209,16 @@ const MemberDetail = () => {
     } catch {
       return dateStr;
     }
+  };
+
+  const fmtEuro = (v: number) =>
+    "€ " + v.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  const fmtDateShort = (dateStr?: string | null) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
   return (
@@ -637,104 +648,183 @@ const MemberDetail = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="hidden md:grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md px-4 pb-1 text-xs font-medium text-muted-foreground sticky top-0 bg-card z-10">
-                  <span className="text-center">Jaar</span>
-                  <span className="text-center">Factuurdatum</span>
-                  <span className="text-center">Factuurnummer</span>
-                  <span className="text-center">Bedrag</span>
-                  <span className="text-center">Status</span>
-                  <span className="text-center">Betaald op</span>
+                <div className="hidden md:grid grid-cols-[4rem_7rem_minmax(0,1.4fr)_6.5rem_9rem_7rem] items-center gap-2 rounded-md px-4 pb-1 text-xs font-medium text-muted-foreground">
+                  <span>Jaar</span>
+                  <span>Factuurdatum</span>
+                  <span>Factuurnummer</span>
+                  <span className="text-right">Bedrag</span>
+                  <span>Status</span>
+                  <span className="text-right">Betaald op</span>
                 </div>
 
                 {Array.from(
                   new Set([
                     ...(memberContributions ?? []).map((c) => c.year),
                     ...(memberInvoices ?? []).map((i) => i.year),
+                    ...(memberPayments ?? []).map((p) => p.year),
                   ])
                 )
                   .sort((a, b) => b - a)
                   .map((year) => {
                     const contrib = (memberContributions ?? []).find((c) => c.year === year);
                     const yearInvoices = (memberInvoices ?? []).filter((inv) => inv.year === year);
+                    const yearPayments = (memberPayments ?? []).filter(
+                      (p) => p.year === year && p.status === "paid",
+                    );
+
+                    // Factuur is leidend voor datum/nummer/bedrag, contributieregel als fallback
+                    const invoiceDate =
+                      yearInvoices.find((i) => i.invoice_date)?.invoice_date ??
+                      contrib?.invoice_date ??
+                      null;
+                    const invoiceNumbers = Array.from(
+                      new Set(
+                        [
+                          ...yearInvoices.map((i) => i.invoice_number),
+                          contrib?.invoice_number,
+                        ].filter((n): n is string => !!n && n.trim() !== ""),
+                      ),
+                    );
+                    const expected =
+                      yearInvoices.find((i) => i.amount != null)?.amount ?? contrib?.amount ?? null;
+
+                    // Betalingen zijn leidend voor betaalde bedrag en betaaldatum
+                    const paidTotal = yearPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
+                    const lastPaidAt = yearPayments
+                      .map((p) => p.paid_at)
+                      .filter((d): d is string => !!d)
+                      .sort()
+                      .pop();
+                    const paidDate = lastPaidAt ?? contrib?.paid_date ?? null;
+                    const isPaid = yearPayments.length > 0 ? paidTotal > 0 : !!contrib?.paid;
+                    const fullyPaid =
+                      expected != null && paidTotal > 0 ? paidTotal >= Number(expected) : isPaid;
+
+                    let paymentNote: string | null = null;
+                    if (expected != null && paidTotal > 0) {
+                      if (paidTotal < Number(expected)) {
+                        paymentNote = `${fmtEuro(paidTotal)} van ${fmtEuro(Number(expected))}`;
+                      } else if (paidTotal > Number(expected)) {
+                        paymentNote = `${fmtEuro(paidTotal - Number(expected))} te veel betaald`;
+                      }
+                    }
+
+                    const invoiceNodes =
+                      yearInvoices.length > 0 || invoiceNumbers.length > 0 ? (
+                        <>
+                          {yearInvoices.map((inv) => {
+                            const handleOpen = async (e: React.MouseEvent) => {
+                              e.preventDefault();
+                              if (!inv.invoice_file_path) return;
+                              const { data, error } = await supabase.storage
+                                .from("contribution-invoices")
+                                .createSignedUrl(inv.invoice_file_path, 300);
+                              if (error || !data?.signedUrl) {
+                                toast.error("Factuur kon niet worden geopend");
+                                return;
+                              }
+                              const signedUrl = data.signedUrl.startsWith("http")
+                                ? data.signedUrl
+                                : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
+                              window.open(signedUrl, "_blank", "noopener,noreferrer");
+                            };
+
+                            const label = inv.invoice_number ?? contrib?.invoice_number ?? "—";
+                            return inv.invoice_file_path ? (
+                              <button
+                                key={inv.id}
+                                onClick={handleOpen}
+                                className="text-primary hover:underline cursor-pointer inline-flex items-center gap-1 text-sm"
+                                title="Factuur openen"
+                              >
+                                <FileText size={14} />
+                                {label}
+                              </button>
+                            ) : (
+                              <span key={inv.id} className="text-muted-foreground text-sm">
+                                {label}
+                              </span>
+                            );
+                          })}
+                          {yearInvoices.length === 0 &&
+                            invoiceNumbers.map((n) => (
+                              <span key={n} className="text-muted-foreground text-sm">
+                                {n}
+                              </span>
+                            ))}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      );
+
+                    const statusBadge = (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${
+                          fullyPaid
+                            ? "bg-success/10 text-success"
+                            : isPaid
+                              ? "bg-amber-500/10 text-amber-600"
+                              : "bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {fullyPaid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                        {fullyPaid ? "Betaald" : isPaid ? "Deels betaald" : "Openstaand"}
+                      </span>
+                    );
 
                     return (
                       <div
                         key={year}
-                        className="grid grid-cols-[repeat(6,minmax(0,1fr))] items-center rounded-md border border-border bg-muted/20 px-4 py-3 text-sm"
+                        className="rounded-md border border-border bg-muted/20 px-4 py-3 text-sm md:grid md:grid-cols-[4rem_7rem_minmax(0,1.4fr)_6.5rem_9rem_7rem] md:items-center md:gap-2"
                       >
-                        <span className="text-center font-semibold tabular-nums">{year}</span>
-
-                        <span className="text-center text-muted-foreground tabular-nums">
-                          {yearInvoices.length > 0
-                            ? new Date(yearInvoices[0].created_at).toLocaleDateString("nl-NL", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })
-                            : "—"}
-                        </span>
-
-                        <div className="flex flex-col items-center gap-1">
-                          {yearInvoices.length > 0
-                            ? yearInvoices.map((inv) => {
-                                const handleOpen = async (e: React.MouseEvent) => {
-                                  e.preventDefault();
-                                  if (!inv.invoice_file_path) return;
-                                  const { data, error } = await supabase.storage
-                                    .from("contribution-invoices")
-                                    .createSignedUrl(inv.invoice_file_path, 300);
-                                  if (error || !data?.signedUrl) {
-                                    toast.error("Factuur kon niet worden geopend");
-                                    return;
-                                  }
-                                  const signedUrl = data.signedUrl.startsWith("http")
-                                    ? data.signedUrl
-                                    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl}`;
-                                  window.open(signedUrl, "_blank", "noopener,noreferrer");
-                                };
-
-                                return inv.invoice_file_path ? (
-                                  <button
-                                    key={inv.id}
-                                    onClick={handleOpen}
-                                    className="text-primary hover:underline cursor-pointer inline-flex items-center justify-center gap-1 text-sm"
-                                    title="Factuur openen"
-                                  >
-                                    <FileText size={14} />
-                                    {inv.invoice_number ?? "—"}
-                                  </button>
-                                ) : (
-                                  <span key={inv.id} className="text-muted-foreground text-sm">
-                                    {inv.invoice_number ?? "—"}
-                                  </span>
-                                );
-                              })
-                            : <span className="text-muted-foreground text-sm">—</span>}
+                        {/* Mobiel: kaartweergave */}
+                        <div className="flex items-start justify-between gap-2 md:hidden">
+                          <span className="font-semibold tabular-nums text-base">{year}</span>
+                          <div className="flex flex-col items-end gap-0.5">
+                            {statusBadge}
+                            {paymentNote && (
+                              <span className="text-[11px] text-muted-foreground">{paymentNote}</span>
+                            )}
+                          </div>
                         </div>
+                        <dl className="mt-2 space-y-1 md:hidden">
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-xs text-muted-foreground">Factuurdatum</dt>
+                            <dd className="tabular-nums">{fmtDateShort(invoiceDate)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-xs text-muted-foreground">Factuurnummer</dt>
+                            <dd className="flex flex-col items-end gap-0.5 text-right">{invoiceNodes}</dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-xs text-muted-foreground">Bedrag</dt>
+                            <dd className="tabular-nums">
+                              {expected != null ? fmtEuro(Number(expected)) : "—"}
+                            </dd>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <dt className="text-xs text-muted-foreground">Betaald op</dt>
+                            <dd className="tabular-nums">{fmtDateShort(paidDate)}</dd>
+                          </div>
+                        </dl>
 
-                        <span className="text-center tabular-nums">
-                          € {Number(contrib?.amount ?? 3000).toLocaleString("nl-NL")}
+                        {/* Desktop: kolommen */}
+                        <span className="hidden md:block font-semibold tabular-nums">{year}</span>
+                        <span className="hidden md:block text-muted-foreground tabular-nums">
+                          {fmtDateShort(invoiceDate)}
                         </span>
-
-                        <div className="flex justify-center">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium ${
-                              contrib?.paid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                            }`}
-                          >
-                            {contrib?.paid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                            {contrib?.paid ? "Betaald" : "Openstaand"}
-                          </span>
+                        <div className="hidden md:flex flex-col gap-1 min-w-0">{invoiceNodes}</div>
+                        <span className="hidden md:block text-right tabular-nums">
+                          {expected != null ? fmtEuro(Number(expected)) : "—"}
+                        </span>
+                        <div className="hidden md:flex flex-col gap-0.5">
+                          {statusBadge}
+                          {paymentNote && (
+                            <span className="text-[11px] text-muted-foreground">{paymentNote}</span>
+                          )}
                         </div>
-
-                        <span className="text-center text-muted-foreground tabular-nums">
-                          {contrib?.paid_date
-                            ? new Date(contrib.paid_date).toLocaleDateString("nl-NL", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })
-                            : "—"}
+                        <span className="hidden md:block text-right text-muted-foreground tabular-nums">
+                          {fmtDateShort(paidDate)}
                         </span>
                       </div>
                     );
@@ -742,6 +832,7 @@ const MemberDetail = () => {
               </div>
             </div>
           )}
+
 
           {/* Locaties */}
           <div className="bg-card rounded-lg border border-border p-5">
