@@ -5,6 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMemberEdits } from "@/hooks/useMemberEdits";
 import { useQueryClient } from "@tanstack/react-query";
+import { useContactPhotosBulk, contactSlug } from "@/hooks/useMemberMedia";
+
+const AccountAvatar = ({ url, naam }: { url?: string; naam: string }) => (
+  <span className="shrink-0 rounded-full bg-muted overflow-hidden inline-flex items-center justify-center w-7 h-7">
+    {url ? (
+      <img src={url} alt={`Foto van ${naam}`} className="w-full h-full object-cover" loading="lazy" />
+    ) : (
+      <span className="text-[9px] font-semibold text-muted-foreground">
+        {naam.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
+      </span>
+    )}
+  </span>
+);
 import { toast } from "sonner";
 import { Shield, Trash2, UserPlus, Loader2, Search, X, ExternalLink, Link, Unlink, Pencil, KeyRound, Building2 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -199,6 +212,14 @@ const AccountBeheerPage = () => {
       );
     });
   }, [users, searchQuery, memberMap]);
+
+  const photoMemberIds = useMemo(
+    () => [...new Set(filteredUsers.flatMap((u) => u.member_ids || (u.member_id ? [u.member_id] : [])))],
+    [filteredUsers],
+  );
+  const { data: contactPhotos = {} } = useContactPhotosBulk(photoMemberIds);
+
+
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -467,7 +488,15 @@ const AccountBeheerPage = () => {
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground text-xs sm:text-sm">
-                        {personName || "—"}
+                        {personName ? (
+                          <span className="inline-flex items-center gap-2">
+                            <AccountAvatar
+                              url={memberIds.map((mid) => contactPhotos[mid]?.[contactSlug(personName)]).find(Boolean)}
+                              naam={personName}
+                            />
+                            <span>{personName}</span>
+                          </span>
+                        ) : "—"}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 hidden md:table-cell">

@@ -22,6 +22,8 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import VergunninghoudersOverzicht from "@/components/members/VergunninghoudersOverzicht";
+import MediaUpload from "@/components/members/MediaUpload";
+import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
@@ -64,6 +66,13 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+
+  // Logo & foto's van contactpersonen
+  const canEditMedia = isAdmin || isBoard || isOwnProfile;
+  const { logoUrl, uploadLogo, removeLogo } = useMemberLogo(memberId);
+  const { photos: contactPhotos, uploadPhoto, removePhoto } = useContactPhotos(canSeeContacts ? memberId : undefined);
+
+
 
   // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
   const canSeeRegister = isAdmin || isBoard;
@@ -297,7 +306,17 @@ const MemberDetail = () => {
           <div className="bg-card rounded-lg border border-border p-5 space-y-4">
             {/* Naam & badges + acties */}
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-              <div>
+              <div className="flex items-start gap-4">
+                <MediaUpload
+                  url={logoUrl}
+                  naam={member.naam}
+                  round={false}
+                  size={64}
+                  canEdit={canEditMedia}
+                  onUpload={uploadLogo}
+                  onRemove={removeLogo}
+                />
+                <div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
                   <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
@@ -362,7 +381,9 @@ const MemberDetail = () => {
                     </span>
                   )}
                 </div>
+                </div>
               </div>
+
               {(isAdmin || isOwnProfile) && !editing && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
@@ -570,6 +591,14 @@ const MemberDetail = () => {
                               </Tooltip>
                             </TooltipProvider>
                           )}
+                          <MediaUpload
+                            url={contactPhotos[contactSlug(c.naam)] ?? null}
+                            naam={c.naam}
+                            size={44}
+                            canEdit={canEditMedia}
+                            onUpload={(file) => uploadPhoto(c.naam, file)}
+                            onRemove={() => removePhoto(c.naam)}
+                          />
                           <div className="flex-1">
                             <p className="font-medium inline-flex items-center gap-1.5">
                               {c.naam}

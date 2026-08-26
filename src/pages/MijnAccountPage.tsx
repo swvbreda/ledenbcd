@@ -19,6 +19,8 @@ import ExternToestemmingBeheer from "@/components/ExternToestemmingBeheer";
 import { ContributiePaymentCard } from "@/components/ContributiePaymentCard";
 import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
+import MediaUpload from "@/components/members/MediaUpload";
+import { useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 
 // ── Password Section ──
 function PasswordSection() {
@@ -438,6 +440,9 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const [editTelefoon, setEditTelefoon] = useState("");
   const [editEmail2, setEditEmail2] = useState("");
   const [saving, setSaving] = useState(false);
+  const { photos, uploadPhoto, removePhoto } = useContactPhotos(linkedMember?.id);
+  const photoName = linkedMember?.contactpersoon || "";
+
 
   useEffect(() => {
     if (linkedMember) {
@@ -506,6 +511,24 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
           </Button>
         )}
       </div>
+
+      {linkedMember && photoName && (
+        <div className="flex items-center gap-3 mb-4">
+          <MediaUpload
+            url={photos[contactSlug(photoName)] ?? null}
+            naam={photoName}
+            size={56}
+            canEdit
+            onUpload={(file) => uploadPhoto(photoName, file)}
+            onRemove={() => removePhoto(photoName)}
+          />
+          <div className="text-xs text-muted-foreground">
+            <div className="font-medium text-foreground text-sm">{photoName}</div>
+            Klik op de foto om een profielfoto toe te voegen of te wijzigen.
+          </div>
+        </div>
+      )}
+
 
       {editingProfile && linkedMember ? (
         <div className="space-y-3 max-w-sm">

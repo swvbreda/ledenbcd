@@ -7,6 +7,22 @@ import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { getMembershipYears } from "@/lib/membership";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemberLogosBulk } from "@/hooks/useMemberMedia";
+
+const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
+  <span
+    className="shrink-0 rounded border border-border bg-muted overflow-hidden inline-flex items-center justify-center"
+    style={{ width: size, height: size }}
+  >
+    {url ? (
+      <img src={url} alt={`Logo van ${naam}`} className="w-full h-full object-contain p-0.5" loading="lazy" />
+    ) : (
+      <span className="text-[9px] font-display font-bold text-muted-foreground">
+        {naam.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
+      </span>
+    )}
+  </span>
+);
 
 interface MemberTableProps {
   members: Member[];
@@ -107,6 +123,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   };
 
   const displayMembers = compact ? sorted.slice(0, 10) : sorted;
+  const { data: logos = {} } = useMemberLogosBulk(displayMembers.map((m) => m.id));
 
   // Mobile card view
   const MobileCard = ({ member: m }: { member: Member }) => {
@@ -119,7 +136,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         onClick={() => navigate(`/leden/${m.id}`)}
       >
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-start gap-2">
+            <LogoThumb url={logos[m.id]} naam={m.naam} size={32} />
+            <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-medium font-display text-sm">{m.naam}</span>
               {m.oprichter && <span className="text-amber-500">★</span>}
@@ -138,6 +157,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
               {!memberIsLead && <span className="font-mono">#{m.id}</span>}
               <span>{gemeenten.join(", ")}</span>
+            </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -228,7 +248,8 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                   {memberIsLead ? (isAdmin ? "—" : "") : member.id}
                 </td>
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-2">
+                    <LogoThumb url={logos[member.id]} naam={member.naam} />
                     {member.naam}
                     {memberIsLead && isAdmin && (
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
