@@ -27,7 +27,17 @@ export type LocationRegisterInfoProps = {
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
+  /** Website van deze vestiging zoals vastgelegd bij het lid (heeft voorrang). */
+  memberWebsite?: string | null;
 };
+
+/** Toont een nette URL zonder protocol, trailing slash en tracking-parameters. */
+export const cleanUrl = (url?: string | null) => {
+  if (!url) return null;
+  const stripped = url.split(/[?#]/)[0];
+  return stripped.replace(/^https?:\/\//, "").replace(/\/$/, "") || null;
+};
+
 
 /**
  * KvK-, UBO- en registergegevens van één vestiging, in een vaste volgorde zodat
