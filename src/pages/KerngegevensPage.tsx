@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Banknote,
+  CreditCard,
   Building2,
   Link2,
   MapPin,
@@ -19,6 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
 import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
+import { bankColor, pspColor } from "@/lib/brandColors";
+import { usePinverwerkers } from "@/hooks/usePinverwerkers";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -84,12 +87,123 @@ const Balk = ({ pct }: { pct: number }) => (
   </div>
 );
 
+interface DonutItem {
+  label: string;
+  aantal: number;
+  pct: number;
+  color: string;
+  eenheid?: string;
+}
+
+const DonutDiagram = ({
+  items,
+  onSelect,
+}: {
+  items: DonutItem[];
+  onSelect: (label: string) => void;
+}) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+    <div className="h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={items}
+            dataKey="aantal"
+            nameKey="label"
+            cx="50%"
+            cy="50%"
+            innerRadius="55%"
+            outerRadius="85%"
+            paddingAngle={2}
+            onClick={(_, index) => {
+              const it = items[index];
+              if (it) onSelect(it.label);
+            }}
+          >
+            {items.map((it) => (
+              <Cell
+                key={it.label}
+                fill={it.color}
+                stroke="hsl(var(--card))"
+                strokeWidth={2}
+                className="outline-none cursor-pointer transition-opacity hover:opacity-80"
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const p = payload[0].payload as DonutItem;
+              return (
+                <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-sm text-xs">
+                  <div className="font-medium">{p.label}</div>
+                  <div className="text-muted-foreground">
+                    {p.aantal} {p.eenheid ?? ""} · {p.pct}%
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="space-y-2">
+      {items.map((it) => (
+        <button
+          key={it.label}
+          type="button"
+          onClick={() => onSelect(it.label)}
+          className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60 transition-colors text-left"
+        >
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block rounded-sm shrink-0"
+              style={{ width: 14, height: 14, backgroundColor: it.color }}
+            />
+            {it.label}
+          </span>
+          <span className="tabular-nums text-muted-foreground shrink-0">
+            {it.aantal} · {it.pct}%
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+
 const KerngegevensPage = () => {
   const navigate = useNavigate();
   const { isAdmin, isBoard } = useAuth();
   const allowed = isAdmin || isBoard;
   const k = useKerngegevens(allowed);
+  const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
+  const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
+
+  const bankItems: DonutItem[] = useMemo(
+    () =>
+      k.bankGroepen.map((b, i) => ({
+        label: b.bank,
+        aantal: b.aantal,
+        pct: b.pct,
+        eenheid: b.aantal === 1 ? "lid" : "leden",
+        color: b.bank === UNKNOWN_BANK ? bankColor(UNKNOWN_BANK) : bankColor(b.bank, i),
+      })),
+    [k.bankGroepen],
+  );
+
+  const pspItems: DonutItem[] = useMemo(
+    () =>
+      (psp?.groepen ?? []).map((p, i) => ({
+        label: p.naam,
+        aantal: p.aantal,
+        pct: p.pct,
+        eenheid: p.aantal === 1 ? "vestiging" : "vestigingen",
+        color: pspColor(p.naam, i),
+      })),
+    [psp],
+  );
 
   const peildatum = useMemo(
     () => new Date().toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }),
@@ -139,113 +253,8 @@ const KerngegevensPage = () => {
         />
       </div>
 
-      <Sectie titel="Bankiert bij" className="pt-6">
-        {k.bankGroepen.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={k.bankGroepen}
-                    dataKey="aantal"
-                    nameKey="bank"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="55%"
-                    outerRadius="85%"
-                    paddingAngle={2}
-                    onClick={(_, index) => {
-                      const b = k.bankGroepen[index];
-                      if (b) setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden });
-                    }}
-                  >
-                    {k.bankGroepen.map((b, i) => {
-                      const fill =
-                        b.bank === UNKNOWN_BANK
-                          ? "hsl(220 14% 75%)"
-                          : i === 0
-                            ? "hsl(0 85% 48%)"
-                            : i === 1
-                              ? "hsl(0 72% 58%)"
-                              : i === 2
-                                ? "hsl(0 60% 70%)"
-                                : i === 3
-                                  ? "hsl(0 48% 80%)"
-                                  : "hsl(0 40% 88%)";
-                      return (
-                        <Cell
-                          key={b.bank}
-                          fill={fill}
-                          stroke="hsl(var(--card))"
-                          strokeWidth={2}
-                          className="outline-none cursor-pointer transition-opacity hover:opacity-80"
-                        />
-                      );
-                    })}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      const p = payload[0].payload as {
-                        bank: string;
-                        aantal: number;
-                        pct: number;
-                      };
-                      return (
-                        <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-sm text-xs">
-                          <div className="font-medium">{p.bank}</div>
-                          <div className="text-muted-foreground">
-                            {p.aantal} {p.aantal === 1 ? "lid" : "leden"} · {p.pct}%
-                          </div>
-                        </div>
-                      );
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2">
-              {k.bankGroepen.map((b, i) => {
-                const color =
-                  b.bank === UNKNOWN_BANK
-                    ? "hsl(220 14% 75%)"
-                    : i === 0
-                      ? "hsl(0 85% 48%)"
-                      : i === 1
-                        ? "hsl(0 72% 58%)"
-                        : i === 2
-                          ? "hsl(0 60% 70%)"
-                          : i === 3
-                            ? "hsl(0 48% 80%)"
-                            : "hsl(0 40% 88%)";
-                return (
-                  <button
-                    key={b.bank}
-                    type="button"
-                    onClick={() =>
-                      setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden })
-                    }
-                    className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60 transition-colors text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="inline-block rounded-sm"
-                        style={{ width: 14, height: 14, backgroundColor: color }}
-                      />
-                      {b.bank}
-                    </span>
-                    <span className="tabular-nums text-muted-foreground">
-                      {b.aantal} · {b.pct}%
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </Sectie>
+      {/* Bank- en betaalverwerkerdiagrammen staan onderaan de pagina */}
+
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Sectie titel="Omvang ondernemers" bron="Aantal vestigingen per lid uit het ledenbestand">
@@ -345,6 +354,63 @@ const KerngegevensPage = () => {
           </Sectie>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <Sectie titel="Bankiert bij">
+          {bankItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
+          ) : (
+            <DonutDiagram
+              items={bankItems}
+              onSelect={(label) => {
+                const b = k.bankGroepen.find((g) => g.bank === label);
+                if (b) setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden });
+              }}
+            />
+          )}
+        </Sectie>
+
+        <Sectie
+          titel="Betaalverwerkers"
+          bron={
+            psp?.antwoorden
+              ? `Uit de enquête Pinverwerking & Betaaldienstverlening — ${psp.antwoorden} ingevulde antwoorden`
+              : undefined
+          }
+        >
+          {pspItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nog geen enquêteantwoorden over betaalverwerkers.
+            </p>
+          ) : (
+            <DonutDiagram
+              items={pspItems}
+              onSelect={(label) => {
+                const g = psp?.groepen.find((x) => x.naam === label);
+                if (g) setPspDetail({ titel: `Betaalverwerker ${g.naam}`, regels: g.vestigingen });
+              }}
+            />
+          )}
+        </Sectie>
+      </div>
+
+      <Dialog open={!!pspDetail} onOpenChange={(o) => !o && setPspDetail(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-brand-red" />
+              {pspDetail?.titel}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+            {(pspDetail?.regels ?? []).map((r) => (
+              <div key={r} className="py-2 text-sm">
+                {r}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
