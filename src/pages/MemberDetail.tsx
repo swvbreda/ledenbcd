@@ -992,6 +992,10 @@ const MemberDetail = () => {
             </div>
           </div>
 
+          {/* Vergunninghouders & eigenaren per vestiging */}
+          <VergunninghoudersOverzicht rows={vergunninghouderRows} />
+
+
           {/* Aanverwante leden */}
           {member.aanverwant && member.aanverwant.length > 0 && (
             <div className="bg-card rounded-lg border border-border p-5">
