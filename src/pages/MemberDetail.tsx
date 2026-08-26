@@ -306,7 +306,17 @@ const MemberDetail = () => {
           <div className="bg-card rounded-lg border border-border p-5 space-y-4">
             {/* Naam & badges + acties */}
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-              <div>
+              <div className="flex items-start gap-4">
+                <MediaUpload
+                  url={logoUrl}
+                  naam={member.naam}
+                  round={false}
+                  size={64}
+                  canEdit={canEditMedia}
+                  onUpload={uploadLogo}
+                  onRemove={removeLogo}
+                />
+                <div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
                   <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
