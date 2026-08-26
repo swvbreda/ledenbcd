@@ -18,6 +18,7 @@ import JaarplanPage from "./pages/JaarplanPage";
 import AgendaPage from "./pages/AgendaPage";
 import CoffeeshopRegisterPage from "./pages/CoffeeshopRegisterPage";
 import RegisterGemeenteDetailPage from "./pages/RegisterGemeenteDetailPage";
+import KerngegevensPage from "./pages/KerngegevensPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
