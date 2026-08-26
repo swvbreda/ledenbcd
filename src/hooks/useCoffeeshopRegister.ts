@@ -314,7 +314,18 @@ export function useResolveProposal() {
             if (shopError) throw shopError;
             shop = shopRow as RegisterShop | null;
           }
-          const match = findMemberLocation(locaties, proposal.location_key, shop);
+          const { data: siblingRows, error: siblingError } = await supabase
+            .from("register_enrichment_proposals" as any)
+            .select("current_value")
+            .eq("member_id", proposal.member_id)
+            .eq("register_id", proposal.register_id ?? "")
+            .eq("location_key", proposal.location_key ?? "")
+            .eq("field", "postcode")
+            .limit(1);
+          if (siblingError) throw siblingError;
+          const oldPostcode = (siblingRows?.[0] as { current_value?: string | null } | undefined)
+            ?.current_value;
+          const match = findMemberLocation(locaties, proposal.location_key, shop, [oldPostcode]);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;

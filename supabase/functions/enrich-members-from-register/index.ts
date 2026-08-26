@@ -336,7 +336,9 @@ Deno.serve(async (req) => {
         if (!shop || shop.vervallen) continue;
 
         let loc = locaties.find((l) => sameLocation(l, shop));
-        const locKey = normPc(shop.postcode) || norm(shop.naam);
+        // De sleutel verwijst naar de bestaande ledenlocatie. Gebruik daarom de
+        // huidige postcode van die locatie, niet de mogelijk gewijzigde registerpostcode.
+        const locKey = loc ? normPc(loc.postcode) || norm(loc.naam) : normPc(shop.postcode) || norm(shop.naam);
 
         const ubo = uboByRegister.get(rid) ?? [];
 

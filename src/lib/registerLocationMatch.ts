@@ -30,6 +30,7 @@ export function findMemberLocation(
   locaties: MemberLocation[] | undefined | null,
   locationKey: string | null | undefined,
   shop?: RegisterLocationReference | null,
+  alternateKeys: Array<string | null | undefined> = [],
 ): MemberLocation | null {
   const list = Array.isArray(locaties) ? locaties : [];
   const key = normPostcode(locationKey);
@@ -37,7 +38,12 @@ export function findMemberLocation(
     ? list.find((l) => normPostcode(l?.postcode) === key) ??
       list.find((l) => normName(l?.naam) === normName(locationKey))
     : null;
-  if (direct || !shop) return direct ?? null;
+  const alternate = alternateKeys
+    .map(normPostcode)
+    .filter(Boolean)
+    .map((alternateKey) => list.find((l) => normPostcode(l?.postcode) === alternateKey))
+    .find(Boolean);
+  if (direct || alternate || !shop) return direct ?? alternate ?? null;
 
   const shopPostcode = normPostcode(shop.postcode);
   const shopName = normName(shop.naam);
