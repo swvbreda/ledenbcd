@@ -392,7 +392,12 @@ Deno.serve(async (req) => {
                 field,
                 current_value: String(current),
                 proposed_value: String(value),
-                source: field === "oprichtingsDatum" || field === "kvk" ? "kvk" : "register",
+                source:
+                  field === "oprichtingsDatum"
+                    ? "kvk-vestiging"
+                    : field === "kvk"
+                      ? "kvk"
+                      : "register",
               });
             }
           }
