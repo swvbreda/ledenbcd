@@ -43,6 +43,9 @@ const StatCards = ({ members }: StatCardsProps) => {
     representedPerGemeente: repCityCount,
     totaalRepresented,
     fromRegister,
+    dataUpdatedAt,
+    refetch: refetchStats,
+    isFetching: statsFetching,
   } = useRegisterStats();
   const totalNLCities = Object.keys(perStad).length;
   const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
