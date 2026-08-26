@@ -118,6 +118,7 @@ const MemberDetail = () => {
   }, [convertedTo, navigate]);
   const { data: memberContributions } = useMemberContributions(memberId);
   const { data: memberInvoices } = useMemberInvoices(memberId);
+  const { data: memberPayments } = useMemberPayments(memberId);
   const currentYearContrib = useMemo(() => {
     const cy = new Date().getFullYear();
     return (memberContributions ?? []).find((c) => c.year === cy);
