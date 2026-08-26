@@ -18,6 +18,7 @@ import JaarplanPage from "./pages/JaarplanPage";
 import AgendaPage from "./pages/AgendaPage";
 import CoffeeshopRegisterPage from "./pages/CoffeeshopRegisterPage";
 import RegisterGemeenteDetailPage from "./pages/RegisterGemeenteDetailPage";
+import KerngegevensPage from "./pages/KerngegevensPage";
 import LocatiesPage from "./pages/LocatiesPage";
 import GemeenteDetailPage from "./pages/GemeenteDetailPage";
 
@@ -104,6 +105,7 @@ const App = () => (
                   <Route path="/agenda" element={<AgendaPage />} />
                   <Route path="/coffeeshopregister" element={<CoffeeshopRegisterPage />} />
                   <Route path="/coffeeshopregister/gemeente/:gemeente" element={<RegisterGemeenteDetailPage />} />
+                  <Route path="/kerngegevens" element={<KerngegevensPage />} />
                   <Route path="/jaarplan" element={<JaarplanPage />} />
                   <Route path="/email-templates" element={<EmailTemplatesPage />} />
                 </Route>
