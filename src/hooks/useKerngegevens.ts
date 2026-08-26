@@ -221,7 +221,25 @@ export function useKerngegevens(enabled = true) {
       .filter((r) => r.vestigingen > 1)
       .sort((a, b) => b.vestigingen - a.vestigingen);
 
+    // --- Vergunninghoudende ondernemingen (per vestiging, niet per lid) ----
+    const registerById = new Map(register.map((r) => [r.id, r] as const));
+    const bvPerLid = new Map<number, Set<string>>();
+    const alleBvs = new Set<string>();
+    for (const link of bevestigdeLinks) {
+      const shop = registerById.get(link.register_id) as any;
+      const naam = (shop?.vergunninghouder || shop?.exploitant || "").trim();
+      if (!naam) continue;
+      const sleutel = normalizeUbo(naam);
+      alleBvs.add(sleutel);
+      const set = bvPerLid.get(link.member_id) ?? new Set<string>();
+      set.add(sleutel);
+      bvPerLid.set(link.member_id, set);
+    }
+    const uniekeVergunninghouders = alleBvs.size;
+    const ledenMeerdereBvs = Array.from(bvPerLid.values()).filter((s) => s.size > 1).length;
+
     return {
+
       totaalLeden,
       totaalVestigingen,
       gemiddeld,
@@ -240,6 +258,9 @@ export function useKerngegevens(enabled = true) {
       vestigingenMetUbo,
       uboRijen,
       uniekeUbos: uboMap.size,
+      uniekeVergunninghouders,
+      ledenMeerdereBvs,
+
     };
   }, [members, gekoppeldeVestigingen, register, bevestigdeLinks, uboPerRegister]);
 
