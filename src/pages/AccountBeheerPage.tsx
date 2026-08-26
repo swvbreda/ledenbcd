@@ -213,6 +213,14 @@ const AccountBeheerPage = () => {
     });
   }, [users, searchQuery, memberMap]);
 
+  const photoMemberIds = useMemo(
+    () => [...new Set(filteredUsers.flatMap((u) => u.member_ids || (u.member_id ? [u.member_id] : [])))],
+    [filteredUsers],
+  );
+  const { data: contactPhotos = {} } = useContactPhotosBulk(photoMemberIds);
+
+
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
