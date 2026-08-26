@@ -57,9 +57,19 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
       }
     }
 
+    // Datums die bij meerdere vestigingen van hetzelfde lid identiek zijn, komen
+    // vrijwel altijd van de bedrijfsregistratie (niet van de vestiging zelf).
+    // Die tonen we één keer op lidniveau in plaats van per vestiging.
+    const dateCounts = new Map<string, number>();
+    m.locaties?.forEach((loc) => {
+      if (!loc.oprichtingsDatum) return;
+      dateCounts.set(loc.oprichtingsDatum, (dateCounts.get(loc.oprichtingsDatum) ?? 0) + 1);
+    });
+
     // Check each location's oprichtingsDatum
     m.locaties?.forEach((loc) => {
       if (!loc.oprichtingsDatum) return;
+      const shared = (dateCounts.get(loc.oprichtingsDatum) ?? 0) > 1;
       const locYear = new Date(loc.oprichtingsDatum).getFullYear();
       if (isNaN(locYear)) return;
       const jaren = CURRENT_YEAR - locYear;
