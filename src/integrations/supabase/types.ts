@@ -601,6 +601,9 @@ export type Database = {
           kvk_checked_at: string | null
           kvk_nummer: string | null
           kvk_oprichtingsdatum: string | null
+          kvk_vestiging_checked_at: string | null
+          kvk_vestiging_datum: string | null
+          kvk_vestigingsnummer: string | null
           latitude: number | null
           longitude: number | null
           naam: string
@@ -631,6 +634,9 @@ export type Database = {
           kvk_checked_at?: string | null
           kvk_nummer?: string | null
           kvk_oprichtingsdatum?: string | null
+          kvk_vestiging_checked_at?: string | null
+          kvk_vestiging_datum?: string | null
+          kvk_vestigingsnummer?: string | null
           latitude?: number | null
           longitude?: number | null
           naam: string
@@ -661,6 +667,9 @@ export type Database = {
           kvk_checked_at?: string | null
           kvk_nummer?: string | null
           kvk_oprichtingsdatum?: string | null
+          kvk_vestiging_checked_at?: string | null
+          kvk_vestiging_datum?: string | null
+          kvk_vestigingsnummer?: string | null
           latitude?: number | null
           longitude?: number | null
           naam?: string
