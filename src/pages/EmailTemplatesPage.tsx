@@ -43,13 +43,23 @@ const TEMPLATE_LABELS: Record<string, { title: string; description: string }> = 
     title: "Uitnodigingsmail lead",
     description: "Wordt verstuurd wanneer een nieuwe lead wordt toegevoegd.",
   },
+  login_reminder: {
+    title: "Herinnering inloggen",
+    description:
+      "Voor leden die eerder een uitnodiging kregen maar nog geen account hebben aangemaakt. Bevat stap-voor-stap inloginstructies.",
+  },
   account_reminder: {
     title: "Herinnering account aanmaken",
     description: "Voor leden die nog geen account hebben aangemaakt op het ledenportaal.",
   },
 };
 
-const SYSTEM_KEYS = new Set(["member_welcome", "lead_welcome", "account_reminder"]);
+const SYSTEM_KEYS = new Set([
+  "member_welcome",
+  "lead_welcome",
+  "account_reminder",
+  "login_reminder",
+]);
 
 const PLACEHOLDERS = ["{{contactpersoon}}", "{{coffeeshop}}", "{{plaats}}"];
 
@@ -296,8 +306,15 @@ export default function EmailTemplatesPage() {
                     <BulkEmailSend
                       templateKey={tpl.key}
                       template={{ subject: tpl.subject, body: tpl.body }}
+                      emailTemplateName={
+                        tpl.key === "login_reminder" ? "login-reminder" : "member-welcome"
+                      }
                       defaultAudience={
-                        tpl.key === "account_reminder" ? "members_no_account" : "members_all"
+                        tpl.key === "login_reminder"
+                          ? "previously_mailed_no_account"
+                          : tpl.key === "account_reminder"
+                            ? "members_no_account"
+                            : "members_all"
                       }
                     />
                   )}
