@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Banknote,
   Building2,
-  Landmark,
   Link2,
   MapPin,
   Users,
