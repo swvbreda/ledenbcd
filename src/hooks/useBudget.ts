@@ -155,8 +155,8 @@ export function useBudgetCategories(year: number) {
         const { data: exp, error: expError } = await supabase
           .from("budget_expenses")
           .select("*")
-          .in("line_item_id", lineItemIds)
-          .eq("direction", "out");
+          .in("line_item_id", lineItemIds);
+
         if (expError) throw expError;
         expenses = exp || [];
       }
