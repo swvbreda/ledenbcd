@@ -139,11 +139,7 @@ const KerngegevensPage = () => {
         />
       </div>
 
-      <Sectie
-        titel="Bankiert bij"
-        bron={`Afgeleid uit de IBAN's in het ledenbestand — ${k.metIban} van ${k.totaalLeden} leden met bekend IBAN`}
-        className="pt-6"
-      >
+      <Sectie titel="Bankiert bij" className="pt-6">
         {k.bankGroepen.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
         ) : (
