@@ -101,6 +101,7 @@ export function BulkEmailSend({
     { id: number; member_type: string; merged: any; hasAccount: boolean }[]
   >([]);
   const [alreadySent, setAlreadySent] = useState<Set<string>>(new Set());
+  const [loginReminderSent, setLoginReminderSent] = useState<Set<string>>(new Set());
   const [previouslyMailed, setPreviouslyMailed] = useState<Set<string>>(new Set());
   const [skipAlreadySent, setSkipAlreadySent] = useState(true);
   const [sending, setSending] = useState(false);
@@ -111,39 +112,32 @@ export function BulkEmailSend({
     (async () => {
       setLoading(true);
       try {
-        const [mdRes, meRes, mpRes, logRes, allLogRes] = await Promise.all([
+        const [mdRes, meRes, mpRes, allLogRes] = await Promise.all([
           supabase.from("members_data").select("id, member_type, data"),
           supabase.from("member_edits").select("member_id, data"),
           supabase.from("member_profiles").select("member_id"),
           supabase
             .from("email_send_log")
-            .select("recipient_email")
-            .eq("template_name", emailTemplateName)
-            .eq("status", "sent"),
-          supabase
-            .from("email_send_log")
-            .select("recipient_email")
+            .select("recipient_email, template_name")
             .eq("status", "sent"),
         ]);
         if (mdRes.error) throw mdRes.error;
         if (meRes.error) throw meRes.error;
         if (mpRes.error) throw mpRes.error;
-        if (logRes.error) throw logRes.error;
         if (allLogRes.error) throw allLogRes.error;
+        const sentRows = allLogRes.data || [];
+        const normalizeLogEmails = (templateName?: string) =>
+          new Set(
+            sentRows
+              .filter((r: any) => !templateName || r.template_name === templateName)
+              .map((r: any) => (r.recipient_email || "").toString().trim().toLowerCase())
+              .filter(Boolean),
+          );
         setPreviouslyMailed(
-          new Set(
-            (allLogRes.data || [])
-              .map((r: any) => (r.recipient_email || "").toString().trim().toLowerCase())
-              .filter(Boolean),
-          ),
+          normalizeLogEmails(),
         );
-        setAlreadySent(
-          new Set(
-            (logRes.data || [])
-              .map((r: any) => (r.recipient_email || "").toString().trim().toLowerCase())
-              .filter(Boolean),
-          ),
-        );
+        setAlreadySent(normalizeLogEmails(emailTemplateName));
+        setLoginReminderSent(normalizeLogEmails("login-reminder"));
 
         const editsMap = new Map<number, any>();
         (meRes.data || []).forEach((e: any) => editsMap.set(e.member_id, e.data));
@@ -167,6 +161,8 @@ export function BulkEmailSend({
   }, [emailTemplateName]);
 
   const recipients = useMemo<Recipient[]>(() => {
+    const sentForSelection =
+      audience === "previously_mailed_no_account" ? loginReminderSent : alreadySent;
     const filtered = allMembers.filter((m) => {
       switch (audience) {
         case "previously_mailed_no_account":
@@ -192,7 +188,7 @@ export function BulkEmailSend({
         if (seen.has(c.email)) continue;
         if (audience === "previously_mailed_no_account" && !previouslyMailed.has(c.email))
           continue;
-        if (skipAlreadySent && alreadySent.has(c.email)) continue;
+        if (skipAlreadySent && sentForSelection.has(c.email)) continue;
         seen.add(c.email);
         list.push({
           memberId: m.id,
@@ -205,7 +201,7 @@ export function BulkEmailSend({
     }
     list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
     return list;
-  }, [allMembers, audience, alreadySent, previouslyMailed, skipAlreadySent]);
+  }, [allMembers, audience, alreadySent, loginReminderSent, previouslyMailed, skipAlreadySent]);
 
   const fill = (s: string, r: Recipient) =>
     s
@@ -214,6 +210,8 @@ export function BulkEmailSend({
       .split("{{plaats}}").join(r.plaats);
 
   const sendAll = async () => {
+    const selectedTemplateName =
+      audience === "previously_mailed_no_account" ? "login-reminder" : emailTemplateName;
     setSending(true);
     setProgress({ done: 0, total: recipients.length });
     setLog([]);
@@ -228,7 +226,7 @@ export function BulkEmailSend({
       try {
         const { data, error } = await supabase.functions.invoke("send-transactional-email", {
           body: {
-            templateName: emailTemplateName,
+            templateName: selectedTemplateName,
             recipientEmail: r.email,
             idempotencyKey: `${templateKey}-${audience}-${stamp}-${r.memberId}-${r.email}`,
             templateData: {
@@ -341,9 +339,9 @@ export function BulkEmailSend({
               onCheckedChange={(v) => setSkipAlreadySent(v === true)}
             />
             <span>
-              Sla ontvangers over die al een uitnodiging kregen
-              {alreadySent.size > 0 && (
-                <span className="tabular-nums"> ({alreadySent.size} eerder verzonden)</span>
+              Sla ontvangers over die deze {audience === "previously_mailed_no_account" ? "herinnering" : "mail"} al kregen
+              {(audience === "previously_mailed_no_account" ? loginReminderSent.size : alreadySent.size) > 0 && (
+                <span className="tabular-nums"> ({audience === "previously_mailed_no_account" ? loginReminderSent.size : alreadySent.size} eerder verzonden)</span>
               )}
             </span>
           </label>
