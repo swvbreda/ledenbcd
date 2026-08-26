@@ -130,6 +130,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(roles.includes("admin"));
     setIsExtern(roles.includes("extern"));
 
+    // Ontbrekende ledenkoppeling automatisch herstellen op basis van het e-mailadres
+    try {
+      await (supabase as any).rpc("ensure_member_link");
+    } catch (e) {
+      console.warn("ensure_member_link mislukt", e);
+    }
+
     const { data: profileData } = await supabase
       .from("member_profiles")
       .select("member_id")

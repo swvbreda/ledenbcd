@@ -12,6 +12,8 @@ export type VergunninghouderRow = {
   kvk?: string | null;
   vestigingsnummer?: string | null;
   ubo?: { naam: string; soort?: string; niveau?: number; isUiteindelijk?: boolean }[];
+  /** Contactpersonen die specifiek aan deze vestiging gekoppeld zijn. */
+  contacten?: { naam: string; functie?: string }[];
 };
 
 type Props = { rows: VergunninghouderRow[] };
@@ -100,6 +102,13 @@ const VergunninghoudersOverzicht = ({ rows }: Props) => {
                   )}
                   {r.vestigingsnummer && (
                     <span className="ml-1 font-mono text-xs">vest. {r.vestigingsnummer}</span>
+                  )}
+                  {r.contacten && r.contacten.length > 0 && (
+                    <span className="block text-xs">
+                      {r.contacten
+                        .map((p) => p.naam + (p.functie ? ` (${p.functie})` : ""))
+                        .join(", ")}
+                    </span>
                   )}
                 </li>
               ))}

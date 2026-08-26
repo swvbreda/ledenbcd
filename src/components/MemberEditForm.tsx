@@ -84,6 +84,19 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     setContacten((prev) => [...prev, { naam: "", functie: "", telefoon: "", email: "" }]);
   };
 
+  const toggleContactLocation = (idx: number, identity: string) => {
+    setContacten((prev) =>
+      prev.map((c, i) => {
+        if (i !== idx) return c;
+        const current = c.locaties ?? [];
+        const next = current.includes(identity)
+          ? current.filter((k) => k !== identity)
+          : [...current, identity];
+        return { ...c, locaties: next };
+      }),
+    );
+  };
+
   const removeContact = (idx: number) => {
     setContacten((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -264,6 +277,33 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
               <EditableField label="Telefoon" value={c.telefoon} onChange={(v) => updateContact(i, "telefoon", v)} />
               <EditableField label="Verjaardag" value={c.verjaardag || ""} onChange={(v) => updateContact(i, "verjaardag", v)} type="date" />
             </div>
+            {locaties.length > 0 && (
+              <div className="pt-1">
+                <label className="text-xs text-muted-foreground block mb-1">
+                  Geldt voor vestiging(en) — niets aanvinken = alle vestigingen
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {locaties.map((loc, li) => {
+                    const identity = locationIdentity(loc);
+                    const active = (c.locaties ?? []).includes(identity);
+                    return (
+                      <button
+                        key={li}
+                        type="button"
+                        onClick={() => toggleContactLocation(i, identity)}
+                        className={`px-2 py-1 rounded border text-xs transition-colors ${
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {[loc.naam, loc.plaats].filter(Boolean).join(" — ") || `Vestiging ${li + 1}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

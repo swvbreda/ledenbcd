@@ -24,6 +24,7 @@ import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRe
 import VergunninghoudersOverzicht from "@/components/members/VergunninghoudersOverzicht";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
+import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
 import {
@@ -162,6 +163,10 @@ const MemberDetail = () => {
                 niveau: u.niveau,
                 isUiteindelijk: u.uiteindelijkBelanghebbende,
               })),
+        contacten: contactsForLocation((member?.contacten ?? []) as any, loc).map((p) => ({
+          naam: p.naam,
+          functie: p.functie,
+        })),
       };
     });
   }, [member?.locaties, canSeeRegister, linkByLocation, shopById, uboByRegister]);
@@ -609,6 +614,20 @@ const MemberDetail = () => {
                               )}
                             </p>
                             {c.functie && <p className="text-xs text-muted-foreground">{c.functie}</p>}
+                            {(() => {
+                              const own = contactLocations(c, member.locaties || []);
+                              if (own.length === 0) {
+                                return (member.locaties?.length ?? 0) > 1 ? (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">Alle vestigingen</p>
+                                ) : null;
+                              }
+                              return (
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {c.functie?.toLowerCase().includes("eigenaar") ? "Eigenaar van: " : "Vestiging: "}
+                                  <span className="text-foreground">{own.map(locationLabel).join(", ")}</span>
+                                </p>
+                              );
+                            })()}
                             {c.email && (
                               <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:underline mt-1">
                                 <Mail size={13} /> {c.email}
@@ -950,6 +969,18 @@ const MemberDetail = () => {
                     {loc.vergunninghouder && !canSeeRegister && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
+                    {canSeeContacts && (() => {
+                      const people = contactsForLocation(member.contacten || [], loc);
+                      if (people.length === 0) return null;
+                      return (
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Eigenaar/contact: </span>
+                          <span className="text-foreground">
+                            {people.map((p) => p.naam + (p.functie ? ` (${p.functie})` : "")).join(", ")}
+                          </span>
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   {canSeeRegister ? (
