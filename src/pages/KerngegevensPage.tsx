@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
 import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
+import { bankColor, pspColor } from "@/lib/brandColors";
+import { usePinverwerkers } from "@/hooks/usePinverwerkers";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
