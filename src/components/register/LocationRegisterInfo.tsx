@@ -61,7 +61,7 @@ const LocationRegisterInfo = ({
     : "";
 
   return (
-    <div className="mt-3 space-y-3">
+    <div className="mt-3 flex flex-1 flex-col gap-3">
       {/* KvK-gegevens */}
       <div className="border-t border-border pt-2.5 space-y-1">
         <SectionTitle>KvK</SectionTitle>
