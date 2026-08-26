@@ -7,6 +7,22 @@ import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { getMembershipYears } from "@/lib/membership";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemberLogosBulk } from "@/hooks/useMemberMedia";
+
+const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
+  <span
+    className="shrink-0 rounded border border-border bg-muted overflow-hidden inline-flex items-center justify-center"
+    style={{ width: size, height: size }}
+  >
+    {url ? (
+      <img src={url} alt={`Logo van ${naam}`} className="w-full h-full object-contain p-0.5" loading="lazy" />
+    ) : (
+      <span className="text-[9px] font-display font-bold text-muted-foreground">
+        {naam.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
+      </span>
+    )}
+  </span>
+);
 
 interface MemberTableProps {
   members: Member[];
