@@ -159,6 +159,7 @@ export function useSaveMemberEdit() {
       if (!userId) throw new Error("Niet ingelogd");
 
       let finalData: MemberEditData = data;
+      let existingData: MemberEditData = {};
 
       const { data: memberRow } = await supabase
         .from("members_data")
@@ -176,7 +177,7 @@ export function useSaveMemberEdit() {
           .maybeSingle();
 
         if (existing?.data) {
-          const existingData = existing.data as MemberEditData;
+          existingData = existing.data as MemberEditData;
           finalData = {
             ...existingData,
             ...data,
@@ -190,13 +191,13 @@ export function useSaveMemberEdit() {
       if (data.locaties) {
         const previousLocations = mergeMemberLocations(
           baseMember.locaties,
-          finalData === data ? undefined : (finalData.locaties ?? undefined),
-          finalData._verwijderdeLocaties,
+          existingData.locaties,
+          existingData._verwijderdeLocaties,
         );
         const removedNow = previousLocations
           .filter((previous) => !data.locaties?.some((current) => locationIdentity(current) === locationIdentity(previous)))
           .map(locationIdentity);
-        const retainedRemoved = (finalData._verwijderdeLocaties ?? []).filter(
+        const retainedRemoved = (existingData._verwijderdeLocaties ?? []).filter(
           (identity) => !data.locaties?.some((current) => locationIdentity(current) === identity),
         );
         finalData = {
