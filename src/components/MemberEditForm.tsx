@@ -133,9 +133,17 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       telefoon: primaryContact?.telefoon || member.telefoon,
       email: primaryContact?.email || member.email,
       contacten,
-      locaties,
-      aantalLocaties: locaties.length,
+      locaties: validLocaties,
+      aantalLocaties: validLocaties.length,
     };
+
+    if (invalidLocaties.length) {
+      toast.error(
+        `${invalidLocaties.length} locatie(s) niet opgeslagen: ${invalidLocaties
+          .map((l) => l.naam?.trim() || "zonder naam")
+          .join(", ")}. Vul minimaal adres of plaats in.`,
+      );
+    }
 
     if (isAdmin) {
       // Admins: save directly
@@ -143,8 +151,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         { member_id: member.id, data },
         {
           onSuccess: () => {
-            toast.success("Wijzigingen opgeslagen");
-            setEditing(false);
+            toast.success(`Wijzigingen opgeslagen · ${validLocaties.length} locatie(s)`);
+            if (!invalidLocaties.length) setEditing(false);
           },
           onError: (err) => {
             toast.error("Opslaan mislukt: " + (err as Error).message);
@@ -158,7 +166,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         {
           onSuccess: () => {
             toast.success("Wijzigingen ingediend ter goedkeuring door het bestuur");
-            setEditing(false);
+            if (!invalidLocaties.length) setEditing(false);
           },
           onError: (err) => {
             toast.error("Indienen mislukt: " + (err as Error).message);
