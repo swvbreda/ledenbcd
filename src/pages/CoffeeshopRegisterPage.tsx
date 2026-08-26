@@ -174,7 +174,7 @@ const CoffeeshopRegisterPage = () => {
             </Button>
             {syncState?.last_run_at && (
               <p className="text-xs text-muted-foreground">
-                Laatste sync: {new Date(syncState.last_run_at).toLocaleString("nl-NL")} · {syncState.last_status}
+                Bijgewerkt: {new Date(syncState.last_run_at).toLocaleString("nl-NL")}
               </p>
             )}
           </div>

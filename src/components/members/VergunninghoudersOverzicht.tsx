@@ -117,7 +117,7 @@ const VergunninghoudersOverzicht = ({ rows }: Props) => {
             {g.ubo && g.ubo.length > 0 && (
               <div className="mt-3 border-t border-border pt-2">
                 <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Users size={12} className="text-brand-red" /> Eigenaren / UBO
+                  <Users size={12} className="text-brand-red" /> Eigenaren
                 </p>
                 <ul className="space-y-0.5 text-sm">
                   {g.ubo.map((u, i) => (

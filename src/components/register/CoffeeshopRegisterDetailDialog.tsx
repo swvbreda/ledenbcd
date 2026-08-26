@@ -116,7 +116,6 @@ const CoffeeshopRegisterDetailDialog = ({
                     <span className="text-muted-foreground w-6 tabular-nums">{u.niveau}.</span>
                     <span className="font-medium">{u.naam}</span>
                     {u.kvk_nummer && <span className="text-muted-foreground">KvK {u.kvk_nummer}</span>}
-                    {u.is_uiteindelijk && <Badge variant="secondary">UBO</Badge>}
                   </li>
                 ))}
               </ul>

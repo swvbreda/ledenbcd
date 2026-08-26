@@ -55,12 +55,10 @@ const Kaart = ({
 
 const Sectie = ({
   titel,
-  bron,
   children,
   className,
 }: {
   titel: string;
-  bron?: string;
   children: React.ReactNode;
   className?: string;
 }) => (
@@ -72,7 +70,6 @@ const Sectie = ({
   >
     <div>
       <h2 className="font-display text-lg uppercase tracking-tight">{titel}</h2>
-      {bron && <p className="text-xs text-muted-foreground">{bron}</p>}
     </div>
     {children}
   </section>
@@ -257,7 +254,7 @@ const KerngegevensPage = () => {
 
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Sectie titel="Omvang ondernemers" bron="Aantal vestigingen per lid uit het ledenbestand">
+        <Sectie titel="Omvang ondernemers">
           <div className="space-y-2">
             {k.omvang.map((o) => (
               <button
@@ -278,7 +275,7 @@ const KerngegevensPage = () => {
           </div>
         </Sectie>
 
-        <Sectie titel="Grootste leden" bron="Top 10 op aantal vestigingen">
+        <Sectie titel="Grootste leden">
           <div className="divide-y divide-border">
             {k.topLeden.map(({ member, vestigingen }) => (
               <button
@@ -298,7 +295,7 @@ const KerngegevensPage = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Sectie titel="Spreiding over gemeenten" bron="Vestigingen van leden per gemeente">
+        <Sectie titel="Spreiding over gemeenten">
           <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
             {k.gemeenteRijen.map((g) => (
               <div key={g.gemeente} className="px-1">
@@ -317,10 +314,7 @@ const KerngegevensPage = () => {
         </Sectie>
 
         <div className="space-y-4">
-          <Sectie
-            titel="Oprichting vestigingen"
-            bron={`Oprichtingsdata per decennium — ${k.metOprichting} vestigingen met bekende datum`}
-          >
+          <Sectie titel="Oprichting vestigingen">
             <div className="space-y-2">
               {k.decenniaRijen.map((d) => (
                 <div key={d.label}>
@@ -339,10 +333,7 @@ const KerngegevensPage = () => {
             </div>
           </Sectie>
 
-          <Sectie
-            titel="Lidmaatschapsduur"
-            bron={`Gemiddeld ${k.gemiddeldeDuur} jaar lid`}
-          >
+          <Sectie titel="Lidmaatschapsduur">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {k.duurRijen.map((d) => (
                 <div key={d.label} className="rounded-lg border border-border p-2">
@@ -370,14 +361,7 @@ const KerngegevensPage = () => {
           )}
         </Sectie>
 
-        <Sectie
-          titel="Betaalverwerkers"
-          bron={
-            psp?.antwoorden
-              ? `Uit de enquête Pinverwerking & Betaaldienstverlening — ${psp.antwoorden} ingevulde antwoorden`
-              : undefined
-          }
-        >
+        <Sectie titel="Betaalverwerkers">
           {pspItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nog geen enquêteantwoorden over betaalverwerkers.
