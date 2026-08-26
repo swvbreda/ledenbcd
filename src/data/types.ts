@@ -18,6 +18,8 @@ export interface Location {
   vergunninghouder?: string;
   exploitant?: string;
   ubo?: UboEntry[];
+  /** Website van deze specifieke vestiging (niet van het lid als geheel). */
+  website?: string;
 }
 
 
