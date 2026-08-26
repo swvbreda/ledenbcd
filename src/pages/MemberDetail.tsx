@@ -163,6 +163,10 @@ const MemberDetail = () => {
                 niveau: u.niveau,
                 isUiteindelijk: u.uiteindelijkBelanghebbende,
               })),
+        contacten: contactsForLocation((member?.contacten ?? []) as any, loc).map((p) => ({
+          naam: p.naam,
+          functie: p.functie,
+        })),
       };
     });
   }, [member?.locaties, canSeeRegister, linkByLocation, shopById, uboByRegister]);
