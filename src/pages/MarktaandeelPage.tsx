@@ -5,7 +5,6 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
-import { countLocations, memberLocationCount } from "@/lib/locationCount";
 
 
 
@@ -13,8 +12,12 @@ const MarktaandeelPage = () => {
   const navigate = useNavigate();
   const { allRepresented } = useMembersData();
   const { members: represented } = useMergedMembers(allRepresented);
-  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
-  const totalLocaties = countLocations(represented);
+  const {
+    perGemeente: perStad,
+    totaalNL: totalNL,
+    representedPerGemeente: cityCount,
+    totaalRepresented: totalLocaties,
+  } = useRegisterStats();
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -27,11 +30,6 @@ const MarktaandeelPage = () => {
     }
   });
 
-  // Count represented locations per city
-  const cityCount: Record<string, number> = {};
-  represented.forEach((m) => {
-    if (m.plaats) cityCount[m.plaats] = (cityCount[m.plaats] || 0) + memberLocationCount(m);
-  });
 
   // All cities from NL data, enriched with BCD data
   const allCities = Object.entries(perStad)

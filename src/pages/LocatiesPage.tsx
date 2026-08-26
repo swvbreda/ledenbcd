@@ -7,7 +7,6 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
 import DocumentenZoeker from "@/components/DocumentenZoeker";
 import { getGemeente } from "@/data/gemeenteMapping";
-import { countLocations, memberLocationCount } from "@/lib/locationCount";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
 
@@ -63,8 +62,12 @@ const LocatiesPage = () => {
   const navigate = useNavigate();
 
   const { members: represented } = useMergedMembers(allRepresented);
-  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
-  const representedLocaties = countLocations(represented);
+  const {
+    perGemeente: perStad,
+    totaalNL: totalNL,
+    representedPerGemeente: repCityCount,
+    totaalRepresented: representedLocaties,
+  } = useRegisterStats();
   const marketPctNL = totalNL > 0 ? Math.round((representedLocaties / totalNL) * 100) : 0;
 
 
@@ -81,12 +84,6 @@ const LocatiesPage = () => {
     prevHash.current = hash;
   }, [represented]);
 
-  // Count represented locations per city
-  const repCityCount: Record<string, number> = {};
-  represented.forEach((m) => {
-    const gemeente = getGemeente(m.plaats);
-    if (gemeente) repCityCount[gemeente] = (repCityCount[gemeente] || 0) + memberLocationCount(m);
-  });
 
   // G4 stats
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
@@ -133,13 +130,14 @@ const LocatiesPage = () => {
       }
     }
 
-    // Recalculate marktPct consistently from aantalLocaties
+    // Use the same central register-backed total for each municipality.
     for (const city of map.values()) {
+      city.aantalLocaties = repCityCount[city.naam] || 0;
       city.marktPct = city.totaalNL > 0 ? Math.round((city.aantalLocaties / city.totaalNL) * 100) : 0;
     }
 
     return Array.from(map.values());
-  }, [represented, perStad]);
+  }, [represented, perStad, repCityCount]);
 
   const filtered = useMemo(() => {
     let result = cities;

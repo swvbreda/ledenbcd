@@ -44,41 +44,36 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: members, error: mErr } = await supabase
-      .from("members_data")
-      .select("id, data")
-      .in("member_type", ["member", "lead"]);
-    if (mErr) throw mErr;
-
-    // Merge pending member_edits (matches dashboard logic)
-    const { data: edits, error: eErr } = await supabase
-      .from("member_edits")
-      .select("member_id, data");
-    if (eErr) throw eErr;
-    const editsMap = new Map<number, any>();
-    for (const e of edits ?? []) editsMap.set(e.member_id, e.data);
+    const { data: representationRows, error: representationError } = await supabase
+      .rpc("get_representation_stats");
+    if (representationError) throw representationError;
 
     const gemeenten = new Set<string>();
     const provincies = new Set<string>();
     let aantalCoffeeshops = 0;
-    for (const m of members ?? []) {
-      const base = (m.data ?? {}) as any;
-      const edit = editsMap.get((m as any).id) ?? {};
-      const d = { ...base, ...edit };
-      // Arrays merge: prefer edit.locaties when present, else base.locaties
-      d.locaties = Array.isArray(edit?.locaties) ? edit.locaties : base?.locaties;
-      const plaats = d?.plaats as string | undefined;
-      // Match dashboard logic: only count location rows with an adres or plaats
-      const realLocs = Array.isArray(d?.locaties)
-        ? d.locaties.filter((l: any) => (l?.adres ?? "").trim() || (l?.plaats ?? "").trim())
-        : [];
-      const locLen = realLocs.length;
-      const fallback = Number(d?.aantalLocaties);
-      aantalCoffeeshops += locLen > 0 ? locLen : (Number.isFinite(fallback) && fallback > 0 ? fallback : 0);
+    let aantalLandelijk = 0;
+    let gekoppeldeRegistershops = 0;
+    let nietGekoppeldeLocaties = 0;
+    let koppelingenZonderVestiging = 0;
+    const vertegenwoordigingPerGemeente: Record<string, number> = {};
+    const landelijkPerGemeente: Record<string, number> = {};
 
-      if (plaats) {
-        gemeenten.add(plaats);
-        const prov = PLAATS_TO_PROVINCIE[plaats];
+    for (const row of representationRows ?? []) {
+      const gemeente = String(row.gemeente ?? "").trim();
+      if (!gemeente) continue;
+      const vertegenwoordigd = Number(row.vertegenwoordigde_shops ?? 0);
+      const landelijk = Number(row.landelijke_shops ?? 0);
+      vertegenwoordigingPerGemeente[gemeente] = vertegenwoordigd;
+      landelijkPerGemeente[gemeente] = landelijk;
+      aantalCoffeeshops += vertegenwoordigd;
+      aantalLandelijk += landelijk;
+      gekoppeldeRegistershops += Number(row.gekoppelde_registershops ?? 0);
+      nietGekoppeldeLocaties += Number(row.niet_gekoppelde_locaties ?? 0);
+      koppelingenZonderVestiging += Number(row.koppelingen_zonder_vestiging ?? 0);
+
+      if (vertegenwoordigd > 0) {
+        gemeenten.add(gemeente);
+        const prov = PLAATS_TO_PROVINCIE[gemeente];
         if (prov) provincies.add(prov);
       }
     }
@@ -106,10 +101,16 @@ Deno.serve(async (req) => {
 
     const payload = {
       aantal_coffeeshops: aantalCoffeeshops,
+      aantal_landelijk: aantalLandelijk,
       aantal_gemeenten: gemeenten.size,
       aantal_provincies: provincies.size,
       aantal_bestuursleden: board?.length ?? 0,
       oprichtingsjaar: 1994,
+      vertegenwoordiging_per_gemeente: vertegenwoordigingPerGemeente,
+      landelijk_per_gemeente: landelijkPerGemeente,
+      gekoppelde_registershops: gekoppeldeRegistershops,
+      niet_gekoppelde_locaties: nietGekoppeldeLocaties,
+      koppelingen_zonder_vestiging: koppelingenZonderVestiging,
       bestuur,
       laatst_bijgewerkt: new Date().toISOString(),
     };
