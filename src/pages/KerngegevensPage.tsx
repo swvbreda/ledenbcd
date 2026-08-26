@@ -84,6 +84,91 @@ const Balk = ({ pct }: { pct: number }) => (
   </div>
 );
 
+interface DonutItem {
+  label: string;
+  aantal: number;
+  pct: number;
+  color: string;
+  eenheid?: string;
+}
+
+const DonutDiagram = ({
+  items,
+  onSelect,
+}: {
+  items: DonutItem[];
+  onSelect: (label: string) => void;
+}) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+    <div className="h-56">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={items}
+            dataKey="aantal"
+            nameKey="label"
+            cx="50%"
+            cy="50%"
+            innerRadius="55%"
+            outerRadius="85%"
+            paddingAngle={2}
+            onClick={(_, index) => {
+              const it = items[index];
+              if (it) onSelect(it.label);
+            }}
+          >
+            {items.map((it) => (
+              <Cell
+                key={it.label}
+                fill={it.color}
+                stroke="hsl(var(--card))"
+                strokeWidth={2}
+                className="outline-none cursor-pointer transition-opacity hover:opacity-80"
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const p = payload[0].payload as DonutItem;
+              return (
+                <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-sm text-xs">
+                  <div className="font-medium">{p.label}</div>
+                  <div className="text-muted-foreground">
+                    {p.aantal} {p.eenheid ?? ""} · {p.pct}%
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="space-y-2">
+      {items.map((it) => (
+        <button
+          key={it.label}
+          type="button"
+          onClick={() => onSelect(it.label)}
+          className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60 transition-colors text-left"
+        >
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block rounded-sm shrink-0"
+              style={{ width: 14, height: 14, backgroundColor: it.color }}
+            />
+            {it.label}
+          </span>
+          <span className="tabular-nums text-muted-foreground shrink-0">
+            {it.aantal} · {it.pct}%
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+
 const KerngegevensPage = () => {
   const navigate = useNavigate();
   const { isAdmin, isBoard } = useAuth();
