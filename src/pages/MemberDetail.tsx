@@ -965,6 +965,18 @@ const MemberDetail = () => {
                     {loc.vergunninghouder && !canSeeRegister && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
+                    {canSeeContacts && (() => {
+                      const people = contactsForLocation(member.contacten || [], loc);
+                      if (people.length === 0) return null;
+                      return (
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Eigenaar/contact: </span>
+                          <span className="text-foreground">
+                            {people.map((p) => p.naam + (p.functie ? ` (${p.functie})` : "")).join(", ")}
+                          </span>
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   {canSeeRegister ? (
