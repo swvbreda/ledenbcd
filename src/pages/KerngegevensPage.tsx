@@ -174,7 +174,33 @@ const KerngegevensPage = () => {
   const { isAdmin, isBoard } = useAuth();
   const allowed = isAdmin || isBoard;
   const k = useKerngegevens(allowed);
+  const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
+  const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
+
+  const bankItems: DonutItem[] = useMemo(
+    () =>
+      k.bankGroepen.map((b, i) => ({
+        label: b.bank,
+        aantal: b.aantal,
+        pct: b.pct,
+        eenheid: b.aantal === 1 ? "lid" : "leden",
+        color: b.bank === UNKNOWN_BANK ? bankColor(UNKNOWN_BANK) : bankColor(b.bank, i),
+      })),
+    [k.bankGroepen],
+  );
+
+  const pspItems: DonutItem[] = useMemo(
+    () =>
+      (psp?.groepen ?? []).map((p, i) => ({
+        label: p.naam,
+        aantal: p.aantal,
+        pct: p.pct,
+        eenheid: p.aantal === 1 ? "vestiging" : "vestigingen",
+        color: pspColor(p.naam, i),
+      })),
+    [psp],
+  );
 
   const peildatum = useMemo(
     () => new Date().toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }),
