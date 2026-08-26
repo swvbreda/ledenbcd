@@ -271,19 +271,8 @@ export function useResolveProposal() {
 
         const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
         if (proposal.scope === "locatie") {
-          const key = (proposal.location_key ?? "").toUpperCase();
           const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-          const match =
-            locaties.find(
-              (l) => String(l?.postcode ?? "").toUpperCase().replace(/\s+/g, "") === key,
-            ) ??
-            locaties.find(
-              (l) =>
-                String(l?.naam ?? "")
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, " ")
-                  .trim() === (proposal.location_key ?? ""),
-            );
+          const match = findMemberLocation(locaties, proposal.location_key);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;
