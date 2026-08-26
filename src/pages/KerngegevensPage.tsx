@@ -144,33 +144,113 @@ const KerngegevensPage = () => {
       <Sectie
         titel="Bankiert bij"
         bron={`Afgeleid uit de IBAN's in het ledenbestand — ${k.metIban} van ${k.totaalLeden} leden met bekend IBAN`}
+        className="pt-6"
       >
-        <div className="space-y-2">
-          {k.bankGroepen.map((b) => (
-            <button
-              key={b.bank}
-              type="button"
-              onClick={() => setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden })}
-              className="w-full text-left rounded-lg px-2 py-2 hover:bg-muted/60 transition-colors"
-            >
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="flex items-center gap-2">
-                  <Landmark className="h-3.5 w-3.5 text-brand-red" />
-                  {b.bank}
-                </span>
-                <span className="tabular-nums text-muted-foreground">
-                  {b.aantal} · {b.pct}%
-                </span>
-              </div>
-              <div className="mt-1.5">
-                <Balk pct={(b.aantal / maxBank) * 100} />
-              </div>
-            </button>
-          ))}
-          {k.bankGroepen.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
-          )}
-        </div>
+        {k.bankGroepen.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={k.bankGroepen}
+                    dataKey="aantal"
+                    nameKey="bank"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="55%"
+                    outerRadius="85%"
+                    paddingAngle={2}
+                    onClick={(_, index) => {
+                      const b = k.bankGroepen[index];
+                      if (b) setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden });
+                    }}
+                  >
+                    {k.bankGroepen.map((b, i) => {
+                      const fill =
+                        b.bank === UNKNOWN_BANK
+                          ? "hsl(220 14% 75%)"
+                          : i === 0
+                            ? "hsl(0 85% 48%)"
+                            : i === 1
+                              ? "hsl(0 72% 58%)"
+                              : i === 2
+                                ? "hsl(0 60% 70%)"
+                                : i === 3
+                                  ? "hsl(0 48% 80%)"
+                                  : "hsl(0 40% 88%)";
+                      return (
+                        <Cell
+                          key={b.bank}
+                          fill={fill}
+                          stroke="hsl(var(--card))"
+                          strokeWidth={2}
+                          className="outline-none cursor-pointer transition-opacity hover:opacity-80"
+                        />
+                      );
+                    })}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const p = payload[0].payload as {
+                        bank: string;
+                        aantal: number;
+                        pct: number;
+                      };
+                      return (
+                        <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-sm text-xs">
+                          <div className="font-medium">{p.bank}</div>
+                          <div className="text-muted-foreground">
+                            {p.aantal} {p.aantal === 1 ? "lid" : "leden"} · {p.pct}%
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2">
+              {k.bankGroepen.map((b, i) => {
+                const color =
+                  b.bank === UNKNOWN_BANK
+                    ? "hsl(220 14% 75%)"
+                    : i === 0
+                      ? "hsl(0 85% 48%)"
+                      : i === 1
+                        ? "hsl(0 72% 58%)"
+                        : i === 2
+                          ? "hsl(0 60% 70%)"
+                          : i === 3
+                            ? "hsl(0 48% 80%)"
+                            : "hsl(0 40% 88%)";
+                return (
+                  <button
+                    key={b.bank}
+                    type="button"
+                    onClick={() =>
+                      setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden })
+                    }
+                    className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60 transition-colors text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block rounded-sm"
+                        style={{ width: 14, height: 14, backgroundColor: color }}
+                      />
+                      {b.bank}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {b.aantal} · {b.pct}%
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Sectie>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
