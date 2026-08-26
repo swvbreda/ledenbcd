@@ -93,19 +93,34 @@ export function AppSidebar() {
               <SidebarMenu>
                 {navItems.map((item) => {
                   const registerItem = canSeeRegister && item.title === "Ledenbestand" && (
-                    <SidebarMenuItem key="Coffeeshopregister">
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to="/coffeeshopregister"
-                          className="hover:bg-sidebar-accent/50"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                          onClick={closeMobile}
-                        >
-                          <Building2 className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>Coffeeshopregister</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <>
+                      <SidebarMenuItem key="Coffeeshopregister">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/coffeeshopregister"
+                            className="hover:bg-sidebar-accent/50"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                            onClick={closeMobile}
+                          >
+                            <Building2 className="mr-2 h-4 w-4" />
+                            {!collapsed && <span>Coffeeshopregister</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem key="Kerngegevens">
+                        <SidebarMenuButton asChild>
+                          <NavLink
+                            to="/kerngegevens"
+                            className="hover:bg-sidebar-accent/50"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                            onClick={closeMobile}
+                          >
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                            {!collapsed && <span>Kerngegevens</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
                   );
                   return (
                     <>
