@@ -1,12 +1,25 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronRight, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ChevronRight, RefreshCw, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  EnrichmentProposal,
+  useEnrichmentContext,
   useEnrichmentProposals,
   useResolveProposal,
   useRunEnrichment,
 } from "@/hooks/useCoffeeshopRegister";
+import { describeLocation, findMemberLocation } from "@/lib/registerLocationMatch";
 
 const FIELD_LABELS: Record<string, string> = {
   adres: "Adres",
@@ -23,9 +36,21 @@ const FIELD_LABELS: Record<string, string> = {
 /** Velden die als terugval de facturatiegegevens bepalen. */
 const INVOICE_SENSITIVE = new Set(["bedrijfsnaam", "kvk"]);
 
+const fieldLabel = (f: string) => FIELD_LABELS[f] ?? f;
+
 type Props = {
   memberName: Map<number, string>;
   isAdmin: boolean;
+};
+
+type Group = {
+  key: string;
+  isLocation: boolean;
+  title: string;
+  subtitle: string;
+  registerLine: string | null;
+  matched: boolean;
+  items: EnrichmentProposal[];
 };
 
 const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
@@ -33,16 +58,92 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
   const resolve = useResolveProposal();
   const run = useRunEnrichment();
   const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState<
+    | { kind: "single"; proposal: EnrichmentProposal; locationLabel: string }
+    | { kind: "group"; group: Group; memberLabel: string }
+    | null
+  >(null);
+  const [busy, setBusy] = useState(false);
+
+  const memberIds = useMemo(() => proposals.map((p) => p.member_id), [proposals]);
+  const registerIds = useMemo(
+    () => proposals.map((p) => p.register_id).filter((v): v is string => !!v),
+    [proposals],
+  );
+  const { data: ctx } = useEnrichmentContext(memberIds, registerIds, open);
 
   const grouped = useMemo(() => {
-    const map = new Map<number, typeof proposals>();
+    const byMember = new Map<number, EnrichmentProposal[]>();
     for (const p of proposals) {
-      const arr = map.get(p.member_id) ?? [];
+      const arr = byMember.get(p.member_id) ?? [];
       arr.push(p);
-      map.set(p.member_id, arr);
+      byMember.set(p.member_id, arr);
     }
-    return Array.from(map.entries());
-  }, [proposals]);
+
+    return Array.from(byMember.entries()).map(([memberId, items]) => {
+      const locaties = ctx?.locaties.get(memberId) ?? [];
+      const groups = new Map<string, Group>();
+
+      for (const p of items) {
+        const isLocation = p.scope === "locatie";
+        const key = isLocation ? `loc:${p.location_key ?? p.register_id ?? "?"}` : "algemeen";
+        let group = groups.get(key);
+        if (!group) {
+          const loc = isLocation ? findMemberLocation(locaties, p.location_key) : null;
+          const shop = p.register_id ? ctx?.shops.get(p.register_id) : undefined;
+          const shopAddress = shop
+            ? [
+                [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging]
+                  .filter(Boolean)
+                  .join(" ")
+                  .trim(),
+                shop.postcode,
+                shop.plaats,
+              ]
+                .filter(Boolean)
+                .join(", ")
+            : "";
+          group = {
+            key,
+            isLocation,
+            title: isLocation
+              ? loc?.naam || shop?.naam || `Locatie ${p.location_key ?? ""}`
+              : "Algemene ledengegevens",
+            subtitle: isLocation ? describeLocation(loc) || shopAddress : "Geldt voor het hele lid",
+            registerLine:
+              isLocation && shop
+                ? `Register: ${shop.naam}${shopAddress ? ` — ${shopAddress}` : ""}${
+                    shop.vergunninghouder ? ` — ${shop.vergunninghouder}` : ""
+                  }`
+                : null,
+            matched: isLocation ? !!loc : true,
+            items: [],
+          };
+          groups.set(key, group);
+        }
+        group.items.push(p);
+      }
+
+      return {
+        memberId,
+        memberLabel: memberName.get(memberId) ?? `Lid #${memberId}`,
+        groups: Array.from(groups.values()),
+      };
+    });
+  }, [proposals, ctx, memberName]);
+
+  const applyGroup = async (group: Group, apply: boolean) => {
+    setBusy(true);
+    try {
+      for (const p of group.items) {
+        if (apply && !group.matched) continue;
+        await resolve.mutateAsync({ proposal: p, apply });
+      }
+    } finally {
+      setBusy(false);
+      setConfirm(null);
+    }
+  };
 
   return (
     <div className="rounded-lg border bg-card">
@@ -74,56 +175,167 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
               aangevuld vanuit het register.
             </p>
           )}
-          {grouped.map(([memberId, items]) => (
-            <div key={memberId} className="px-4 py-3">
-              <p className="font-medium text-sm mb-2">
-                {memberName.get(memberId) ?? `Lid #${memberId}`}
-              </p>
-              <div className="space-y-2">
-                {items.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 flex-wrap text-sm rounded-md border p-2"
-                  >
-                    <span className="font-medium min-w-32">
-                      {FIELD_LABELS[p.field] ?? p.field}
-                    </span>
-                    <span className="text-muted-foreground line-through">
-                      {p.current_value || "—"}
-                    </span>
-                    <span className="text-muted-foreground">→</span>
-                    <span>{p.proposed_value}</span>
-                    {INVOICE_SENSITIVE.has(p.field) && p.scope !== "locatie" && (
-                      <Badge variant="destructive">beïnvloedt facturatie</Badge>
-                    )}
-                    <Badge variant="secondary" className="ml-auto">
-                      {p.source === "kvk" ? "KvK" : "Register"}
-                    </Badge>
-                    <span className="inline-flex gap-1">
+          {grouped.map(({ memberId, memberLabel, groups }) => (
+            <div key={memberId} className="px-4 py-3 space-y-3">
+              <p className="font-medium text-sm">{memberLabel}</p>
+
+              {groups.map((group) => (
+                <div key={group.key} className="rounded-lg border">
+                  <div className="flex flex-wrap items-start justify-between gap-2 border-b bg-muted/40 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{group.title}</p>
+                      {group.subtitle && (
+                        <p className="text-xs text-muted-foreground break-words">{group.subtitle}</p>
+                      )}
+                      {group.registerLine && (
+                        <p className="text-xs text-muted-foreground break-words">
+                          {group.registerLine}
+                        </p>
+                      )}
+                      {!group.matched && (
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-destructive">
+                          <AlertTriangle className="h-3 w-3" />
+                          Locatie niet teruggevonden bij dit lid — overnemen niet mogelijk
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={resolve.isPending}
-                        onClick={() => resolve.mutate({ proposal: p, apply: true })}
+                        disabled={busy || !group.matched}
+                        onClick={() => setConfirm({ kind: "group", group, memberLabel })}
                       >
-                        <Check className="h-4 w-4" />
+                        Alles overnemen
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
-                        disabled={resolve.isPending}
-                        onClick={() => resolve.mutate({ proposal: p, apply: false })}
+                        disabled={busy}
+                        onClick={() => applyGroup(group, false)}
                       >
-                        <X className="h-4 w-4" />
+                        Alles negeren
                       </Button>
-                    </span>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="divide-y">
+                    {group.items.map((p) => (
+                      <div key={p.id} className="flex items-start gap-3 p-3 text-sm">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{fieldLabel(p.field)}</span>
+                            <Badge variant="secondary">
+                              {p.source === "kvk" ? "KvK" : "Register"}
+                            </Badge>
+                            {INVOICE_SENSITIVE.has(p.field) && p.scope !== "locatie" && (
+                              <Badge variant="destructive">beïnvloedt facturatie</Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 break-words">
+                            <span className="text-muted-foreground line-through">
+                              {p.current_value || "—"}
+                            </span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="font-medium">{p.proposed_value}</span>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy || resolve.isPending || !group.matched}
+                            onClick={() =>
+                              setConfirm({
+                                kind: "single",
+                                proposal: p,
+                                locationLabel: `${group.title}${
+                                  group.subtitle ? ` (${group.subtitle})` : ""
+                                }`,
+                              })
+                            }
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy || resolve.isPending}
+                            onClick={() => resolve.mutate({ proposal: p, apply: false })}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aanvulling overnemen?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {confirm?.kind === "single" && (
+                  <>
+                    <p>
+                      Locatie: <span className="font-medium">{confirm.locationLabel}</span>
+                    </p>
+                    <p>
+                      {fieldLabel(confirm.proposal.field)}:{" "}
+                      <span className="line-through">{confirm.proposal.current_value || "—"}</span> →{" "}
+                      <span className="font-medium">{confirm.proposal.proposed_value}</span>
+                    </p>
+                    {INVOICE_SENSITIVE.has(confirm.proposal.field) &&
+                      confirm.proposal.scope !== "locatie" && (
+                        <p className="text-destructive">Let op: dit beïnvloedt de facturatie.</p>
+                      )}
+                  </>
+                )}
+                {confirm?.kind === "group" && (
+                  <>
+                    <p>
+                      {confirm.memberLabel} — {confirm.group.title}
+                      {confirm.group.subtitle ? ` (${confirm.group.subtitle})` : ""}
+                    </p>
+                    <ul className="list-disc pl-5">
+                      {confirm.group.items.map((p) => (
+                        <li key={p.id}>
+                          {fieldLabel(p.field)}: {p.current_value || "—"} → {p.proposed_value}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!confirm) return;
+                if (confirm.kind === "single") {
+                  resolve.mutate({ proposal: confirm.proposal, apply: true });
+                  setConfirm(null);
+                } else {
+                  void applyGroup(confirm.group, true);
+                }
+              }}
+            >
+              Overnemen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
