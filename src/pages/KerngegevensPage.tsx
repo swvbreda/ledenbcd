@@ -55,12 +55,19 @@ const Sectie = ({
   titel,
   bron,
   children,
+  className,
 }: {
   titel: string;
   bron: string;
   children: React.ReactNode;
+  className?: string;
 }) => (
-  <section className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3">
+  <section
+    className={cn(
+      "rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3",
+      className,
+    )}
+  >
     <div>
       <h2 className="font-display text-lg uppercase tracking-tight">{titel}</h2>
       <p className="text-xs text-muted-foreground">{bron}</p>
