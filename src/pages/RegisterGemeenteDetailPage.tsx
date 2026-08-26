@@ -8,7 +8,7 @@ import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRe
 import { exclusionReason, isActiveShop } from "@/lib/registerActive";
 import { isRealLocation } from "@/lib/locationCount";
 import { findMemberLocation } from "@/lib/registerLocationMatch";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { Badge } from "@/components/ui/badge";
 
 const shopAdres = (s: {
@@ -79,7 +79,7 @@ const RegisterGemeenteDetailPage = () => {
 
     for (const m of members) {
       const locs = (m.locaties ?? []).filter(
-        (l) => isRealLocation(l) && getGemeente(l.plaats || m.plaats || "") === decoded,
+        (l) => isRealLocation(l) && getLocationGemeente(l, m.plaats) === decoded,
       );
       if (!locs.length) continue;
 

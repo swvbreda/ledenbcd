@@ -6,7 +6,7 @@ import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
 
@@ -48,7 +48,12 @@ const StatCards = ({ members }: StatCardsProps) => {
     isFetching: statsFetching,
   } = useRegisterStats();
   const totalNLCities = Object.keys(perStad).length;
-  const representedGemeenten = new Set(allRepresented.map((m) => getGemeente(m.plaats)).filter((g) => g in perStad));
+  const representedGemeenten = new Set(
+    allRepresented.flatMap((m) => {
+      const locaties = m.locaties?.length ? m.locaties : [{ naam: m.naam, plaats: m.plaats }];
+      return locaties.map((l) => getLocationGemeente(l, m.plaats)).filter((g) => g in perStad);
+    })
+  );
   const matchedCities = representedGemeenten.size;
   const cityPct = totalNLCities > 0 ? Math.round((matchedCities / totalNLCities) * 100) : 0;
 

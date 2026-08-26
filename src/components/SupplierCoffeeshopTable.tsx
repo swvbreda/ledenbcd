@@ -2,14 +2,16 @@ import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Store, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { Member } from "@/data/types";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 interface CoffeeshopRow {
   locatieNaam: string;
   plaats: string;
+  gemeente: string;
   stadsdeel: string;
 }
 
-type SortKey = "locatieNaam" | "plaats" | "stadsdeel";
+type SortKey = "locatieNaam" | "gemeente" | "stadsdeel";
 
 const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
   const [sortKey, setSortKey] = useState<SortKey>("locatieNaam");
@@ -21,6 +23,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
       m.locaties.map((l) => ({
         locatieNaam: l.naam || m.naam,
         plaats: l.plaats || m.plaats,
+        gemeente: getLocationGemeente(l, m.plaats),
         stadsdeel: l.stadsdeel || m.stadsdeel || "",
       }))
     ), [members]);
@@ -31,6 +34,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
     return rows.filter(r =>
       r.locatieNaam.toLowerCase().includes(q) ||
       r.plaats.toLowerCase().includes(q) ||
+      r.gemeente.toLowerCase().includes(q) ||
       r.stadsdeel.toLowerCase().includes(q)
     );
   }, [rows, search]);
@@ -80,6 +84,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
               <span className="font-medium text-sm">{row.locatieNaam}</span>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                 <span>{row.plaats}</span>
+                {row.gemeente && row.gemeente !== row.plaats && <span>· gemeente {row.gemeente}</span>}
                 {row.stadsdeel && <span>· {row.stadsdeel}</span>}
               </div>
               
@@ -95,8 +100,8 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("locatieNaam")}>
                   <span className="inline-flex items-center gap-1">Coffeeshop <SortIcon col="locatieNaam" /></span>
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("plaats")}>
-                  <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="plaats" /></span>
+                <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("gemeente")}>
+                  <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="gemeente" /></span>
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground" onClick={() => handleSort("stadsdeel")}>
                   <span className="inline-flex items-center gap-1">Stadsdeel <SortIcon col="stadsdeel" /></span>
@@ -108,7 +113,7 @@ const SupplierCoffeeshopTable = ({ members }: { members: Member[] }) => {
               {sorted.map((row, i) => (
                 <tr key={i} className="border-b border-border hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{row.locatieNaam}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{row.plaats}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.gemeente || row.plaats}</td>
                   <td className="px-4 py-3 text-muted-foreground">{row.stadsdeel || "—"}</td>
                   
                 </tr>

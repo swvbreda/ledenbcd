@@ -8,7 +8,7 @@ import {
   useRegisterUboBulk,
 } from "@/hooks/useCoffeeshopRegister";
 import { isRealLocation, memberLocationCount, countLocations } from "@/lib/locationCount";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { getMembershipYears } from "@/lib/membership";
 import { bankFromIban, UNKNOWN_BANK, normalizeIban } from "@/lib/bankFromIban";
 
@@ -121,7 +121,7 @@ export function useKerngegevens(enabled = true) {
       for (const loc of effectief) {
         const plaats = (loc.plaats || m.plaats || "").trim();
         if (!plaats) continue;
-        const gem = getGemeente(plaats);
+        const gem = getLocationGemeente(loc, m.plaats);
         set.add(gem);
         const entry = perGemeente.get(gem) ?? { vestigingen: 0, leden: new Set<number>() };
         entry.vestigingen += 1;

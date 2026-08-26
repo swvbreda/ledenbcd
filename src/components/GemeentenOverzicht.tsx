@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { pctColor } from "@/lib/pctColor";
 
@@ -50,7 +50,7 @@ const EXPERIMENT_GEMEENTEN = [
 /** Check if a member/location belongs to a gemeente */
 const isInGemeente = (m: Member, gemeente: string): boolean => {
   if (getGemeente(m.plaats) === gemeente) return true;
-  return m.locaties?.some((l) => getGemeente(l.plaats || m.plaats) === gemeente) || false;
+  return m.locaties?.some((l) => getLocationGemeente(l, m.plaats) === gemeente) || false;
 };
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
@@ -152,7 +152,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
               const locs = leden.reduce((s, m) => {
                 const mainMatch = getGemeente(m.plaats) === gemeente;
                 if (mainMatch && (!m.locaties || m.locaties.length === 0)) return s + (m.aantalLocaties || 1);
-                return s + (m.locaties?.filter((l) => getGemeente(l.plaats || m.plaats) === gemeente).length || 0);
+                return s + (m.locaties?.filter((l) => getLocationGemeente(l, m.plaats) === gemeente).length || 0);
               }, 0);
               const total = perStad[gemeente] || 0;
               const hasBcd = leden.length > 0;

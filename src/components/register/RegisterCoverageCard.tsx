@@ -9,7 +9,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useCoffeeshopRegister, useRegisterLinks, type RegisterShop } from "@/hooks/useCoffeeshopRegister";
 import { useRegisterLinkSummary, useRegisterStats } from "@/hooks/useRegisterStats";
 import { isRealLocation, memberLocationCount } from "@/lib/locationCount";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
@@ -138,7 +138,7 @@ const RegisterCoverageCard = () => {
           plaats: l.plaats || m.plaats || "",
           postcode: l.postcode ?? "",
           key,
-          gemeente: getGemeente(l.plaats || m.plaats || ""),
+          gemeente: getLocationGemeente(l, m.plaats),
         });
       }
     }

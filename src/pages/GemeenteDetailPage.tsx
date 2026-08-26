@@ -4,7 +4,7 @@ import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,7 +51,7 @@ const GemeenteDetailPage = () => {
     for (const m of mergedRepresented) {
       for (const l of m.locaties) {
         const plaats = l.plaats || m.plaats;
-        if (getGemeente(plaats) !== decodedGemeente) continue;
+        if (getLocationGemeente(l, m.plaats) !== decodedGemeente) continue;
         // Skip empty placeholder rows (no address and no own place)
         if (!l.naam && !l.adres && !l.plaats) continue;
 

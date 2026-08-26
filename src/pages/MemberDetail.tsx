@@ -35,6 +35,7 @@ import {
 } from "@/hooks/useCoffeeshopRegister";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 const STORAGE_KEY = (memberId: number) => `bcd-contactpersoon-${memberId}`;
 
@@ -948,11 +949,19 @@ const MemberDetail = () => {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium font-display">{loc.naam}</span>
+                    {(() => {
+                      const gemeente = getLocationGemeente(loc, member.plaats);
+                      return gemeente ? (
+                        <span
+                          className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                          onClick={() => navigate(`/locaties/${encodeURIComponent(gemeente)}`)}
+                        >
+                          Gemeente {gemeente}
+                        </span>
+                      ) : null;
+                    })()}
                     {loc.stadsdeel && (
-                      <span
-                        className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
-                        onClick={() => navigate(`/locaties/${encodeURIComponent(loc.plaats || member.plaats)}`)}
-                      >
+                      <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
                         {loc.stadsdeel}
                       </span>
                     )}

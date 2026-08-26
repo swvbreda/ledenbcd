@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { Member } from "@/data/types";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 interface CoffeeshopRow {
   locatieNaam: string;
   lidNaam: string;
   lidId: number;
   plaats: string;
+  gemeente: string;
   stadsdeel: string;
   adres: string;
   postcode: string;
@@ -19,7 +21,7 @@ interface CoffeeshopTableProps {
   leadIds: Set<number>;
 }
 
-type SortKey = "locatieNaam" | "lidNaam" | "plaats" | "stadsdeel";
+type SortKey = "locatieNaam" | "lidNaam" | "gemeente" | "stadsdeel";
 
 const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("locatieNaam");
@@ -32,6 +34,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
       lidNaam: m.naam,
       lidId: m.id,
       plaats: l.plaats || m.plaats,
+      gemeente: getLocationGemeente(l, m.plaats),
       stadsdeel: l.stadsdeel || m.stadsdeel || "",
       adres: l.adres || "",
       postcode: l.postcode || "",
@@ -66,6 +69,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
           <span className="font-medium font-display text-sm">{row.locatieNaam}</span>
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
             <span>{row.plaats}</span>
+            {row.gemeente && row.gemeente !== row.plaats && <span>· gemeente {row.gemeente}</span>}
             {row.stadsdeel && <span>· {row.stadsdeel}</span>}
           </div>
           {row.adres && (
@@ -102,9 +106,9 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
               </th>
               <th
                 className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
-                onClick={() => handleSort("plaats")}
+                onClick={() => handleSort("gemeente")}
               >
-                <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="plaats" /></span>
+                <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="gemeente" /></span>
               </th>
               <th
                 className="px-4 py-3 text-left font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
@@ -132,7 +136,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">{row.plaats}</td>
+                <td className="px-4 py-3 text-muted-foreground">{row.gemeente || row.plaats}</td>
                 <td className="px-4 py-3 text-muted-foreground">{row.stadsdeel || "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{row.adres || "—"}</td>
                 <td className="px-4 py-3 text-center text-muted-foreground tabular-nums">{row.isLead ? "—" : row.lidId}</td>
