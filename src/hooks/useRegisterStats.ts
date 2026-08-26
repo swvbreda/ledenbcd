@@ -22,9 +22,12 @@ export type RegisterStats = {
 export function useRegisterStats() {
   const query = useQuery({
     queryKey: ["register-plaats-stats"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
     queryFn: async (): Promise<RegisterStats> => {
-      const { data, error } = await supabase.functions.invoke("public-stats", { method: "GET" });
+      // cache-bust zodat de edge-cache (max-age 300) verse cijfers teruggeeft na een wijziging
+      const { data, error } = await supabase.functions.invoke(`public-stats?t=${Date.now()}`, {
+        method: "GET",
+      });
       if (error) throw error;
       const payload = (data ?? {}) as Record<string, unknown>;
       const perPlaats = (payload.landelijk_per_gemeente ?? {}) as Record<string, number>;
