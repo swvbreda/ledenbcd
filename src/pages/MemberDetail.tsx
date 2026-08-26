@@ -591,6 +591,14 @@ const MemberDetail = () => {
                               </Tooltip>
                             </TooltipProvider>
                           )}
+                          <MediaUpload
+                            url={contactPhotos[contactSlug(c.naam)] ?? null}
+                            naam={c.naam}
+                            size={44}
+                            canEdit={canEditMedia}
+                            onUpload={(file) => uploadPhoto(c.naam, file)}
+                            onRemove={() => removePhoto(c.naam)}
+                          />
                           <div className="flex-1">
                             <p className="font-medium inline-flex items-center gap-1.5">
                               {c.naam}
