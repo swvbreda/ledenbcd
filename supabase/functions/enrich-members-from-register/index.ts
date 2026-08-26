@@ -336,18 +336,17 @@ Deno.serve(async (req) => {
       const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
       let changed = false;
 
-      // Oude voorstellen van vóór de locatie-verrijking mogen de bedrijfsnaam
-      // van een meerlocatielid niet meer wijzigen. Vergunninghouders horen dan
-      // uitsluitend op de betreffende vestiging te staan.
+      // Oude voorstellen van vóór de locatie-verrijking mogen gegevens van een
+      // meerlocatielid niet meer op lidniveau wijzigen. KvK, vergunninghouders
+      // en bedrijfsnamen horen dan uitsluitend op de betreffende vestiging.
       if (realLocationCount(locaties) > 1) {
         const { error: staleErr } = await db
           .from("register_enrichment_proposals")
           .update({ status: "genegeerd", resolved_at: new Date().toISOString() })
           .eq("member_id", memberId)
-          .eq("scope", "lid")
-          .eq("field", "bedrijfsnaam")
+          .neq("scope", "locatie")
           .eq("status", "open");
-        if (staleErr) console.warn("oude algemene bedrijfsnaamvoorstellen opschonen mislukt:", staleErr.message);
+        if (staleErr) console.warn("oude algemene voorstellen opschonen mislukt:", staleErr.message);
       }
 
       for (const rid of shopIds) {
