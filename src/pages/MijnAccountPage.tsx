@@ -438,6 +438,9 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const [editTelefoon, setEditTelefoon] = useState("");
   const [editEmail2, setEditEmail2] = useState("");
   const [saving, setSaving] = useState(false);
+  const { photos, uploadPhoto, removePhoto } = useContactPhotos(linkedMember?.id);
+  const photoName = linkedMember?.contactpersoon || "";
+
 
   useEffect(() => {
     if (linkedMember) {
