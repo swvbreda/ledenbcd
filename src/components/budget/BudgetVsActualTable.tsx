@@ -95,11 +95,12 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
                 </td>
                 <td className="py-1 text-right tabular-nums">
                   <div className="flex flex-col items-end">
-                    <CurrencyCell value={c.available} />
+                    <CurrencyCell
+                      value={c.available + c.overrun}
+                      className={c.overrun < 0 ? "text-destructive" : ""}
+                    />
                     {c.overrun < 0 && (
-                      <span className="text-destructive text-[10px] tabular-nums">
-                        overschreden <CurrencyText value={c.overrun} className="inline-flex" />
-                      </span>
+                      <span className="text-destructive text-[10px]">overschreden</span>
                     )}
                   </div>
                 </td>
