@@ -81,6 +81,21 @@ const LocationRegisterInfo = ({
         <Row label="KvK-nummer" value={kvk} mono />
         <Row label="Vestigingsnr." value={vestigingsnummer} mono />
         {vestigingDatum && <Row label="Vestiging sinds" value={vestigingDatum} />}
+        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+          <span className="text-muted-foreground">Website</span>
+          {websiteLabel ? (
+            <a
+              href={websiteRaw!.startsWith("http") ? websiteRaw! : `https://${websiteRaw}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 break-words text-foreground hover:underline"
+            >
+              {websiteLabel}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
       </div>
 
       {/* Eigendomsketen */}
