@@ -263,7 +263,31 @@ Deno.serve(async (req) => {
           console.warn("KvK lookup fout", shop.id, String(e));
         }
       }
+
+      // Startdatum per vestiging (vestigingsprofiel), max 40 per run
+      const vestTodo = shops
+        .filter((s) => !s.kvk_vestiging_datum && !s.kvk_vestiging_checked_at)
+        .slice(0, 40);
+      for (const shop of vestTodo) {
+        try {
+          const { vestigingsnummer, datum } = await kvkVestigingLookup(kvkKey, shop);
+          await db
+            .from("coffeeshop_register")
+            .update({
+              kvk_vestigingsnummer: vestigingsnummer,
+              kvk_vestiging_datum: datum,
+              kvk_vestiging_checked_at: new Date().toISOString(),
+            })
+            .eq("id", shop.id);
+          shop.kvk_vestigingsnummer = vestigingsnummer;
+          shop.kvk_vestiging_datum = datum;
+          kvkLookups++;
+        } catch (e) {
+          console.warn("KvK vestiging lookup fout", shop.id, String(e));
+        }
+      }
     }
+
 
     // Openstaande/genegeerde voorstellen zodat we niets dubbel of opnieuw voorstellen
     const { data: existingProposals } = await db
