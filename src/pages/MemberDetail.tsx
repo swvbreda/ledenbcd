@@ -897,7 +897,19 @@ const MemberDetail = () => {
                       />
                     </div>
                   ) : (
-                    loc.kvk && <p className="mt-1 font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                    <div className="mt-1 space-y-0.5">
+                      {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
+                      {loc.website && (
+                        <a
+                          href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-muted-foreground hover:underline"
+                        >
+                          {cleanUrl(loc.website)}
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
                 );
