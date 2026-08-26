@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 type Audience =
+  | "previously_mailed_no_account"
   | "members_no_account"
   | "members_with_account"
   | "members_all"
@@ -33,6 +34,7 @@ type Audience =
   | "old";
 
 const AUDIENCE_LABELS: Record<Audience, string> = {
+  previously_mailed_no_account: "Eerder gemaild, nog geen account",
   members_no_account: "Leden zonder account",
   members_with_account: "Leden met account",
   members_all: "Alle leden",
@@ -86,10 +88,12 @@ export function BulkEmailSend({
   templateKey,
   template,
   defaultAudience = "members_no_account",
+  emailTemplateName = "member-welcome",
 }: {
   templateKey: string;
   template: Tpl;
   defaultAudience?: Audience;
+  emailTemplateName?: string;
 }) {
   const [audience, setAudience] = useState<Audience>(defaultAudience);
   const [loading, setLoading] = useState(true);
@@ -97,6 +101,7 @@ export function BulkEmailSend({
     { id: number; member_type: string; merged: any; hasAccount: boolean }[]
   >([]);
   const [alreadySent, setAlreadySent] = useState<Set<string>>(new Set());
+  const [previouslyMailed, setPreviouslyMailed] = useState<Set<string>>(new Set());
   const [skipAlreadySent, setSkipAlreadySent] = useState(true);
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -106,20 +111,32 @@ export function BulkEmailSend({
     (async () => {
       setLoading(true);
       try {
-        const [mdRes, meRes, mpRes, logRes] = await Promise.all([
+        const [mdRes, meRes, mpRes, logRes, allLogRes] = await Promise.all([
           supabase.from("members_data").select("id, member_type, data"),
           supabase.from("member_edits").select("member_id, data"),
           supabase.from("member_profiles").select("member_id"),
           supabase
             .from("email_send_log")
             .select("recipient_email")
-            .eq("template_name", "member-welcome")
+            .eq("template_name", emailTemplateName)
+            .eq("status", "sent"),
+          supabase
+            .from("email_send_log")
+            .select("recipient_email")
             .eq("status", "sent"),
         ]);
         if (mdRes.error) throw mdRes.error;
         if (meRes.error) throw meRes.error;
         if (mpRes.error) throw mpRes.error;
         if (logRes.error) throw logRes.error;
+        if (allLogRes.error) throw allLogRes.error;
+        setPreviouslyMailed(
+          new Set(
+            (allLogRes.data || [])
+              .map((r: any) => (r.recipient_email || "").toString().trim().toLowerCase())
+              .filter(Boolean),
+          ),
+        );
         setAlreadySent(
           new Set(
             (logRes.data || [])
@@ -147,11 +164,13 @@ export function BulkEmailSend({
         setLoading(false);
       }
     })();
-  }, []);
+  }, [emailTemplateName]);
 
   const recipients = useMemo<Recipient[]>(() => {
     const filtered = allMembers.filter((m) => {
       switch (audience) {
+        case "previously_mailed_no_account":
+          return m.member_type === "member" && !m.hasAccount;
         case "members_no_account":
           return m.member_type === "member" && !m.hasAccount;
         case "members_with_account":
@@ -171,6 +190,8 @@ export function BulkEmailSend({
       const plaats = (m.merged.plaats || "").toString();
       for (const c of collectContactEmails(m.merged)) {
         if (seen.has(c.email)) continue;
+        if (audience === "previously_mailed_no_account" && !previouslyMailed.has(c.email))
+          continue;
         if (skipAlreadySent && alreadySent.has(c.email)) continue;
         seen.add(c.email);
         list.push({
@@ -184,7 +205,7 @@ export function BulkEmailSend({
     }
     list.sort((a, b) => a.coffeeshop.localeCompare(b.coffeeshop));
     return list;
-  }, [allMembers, audience, alreadySent, skipAlreadySent]);
+  }, [allMembers, audience, alreadySent, previouslyMailed, skipAlreadySent]);
 
   const fill = (s: string, r: Recipient) =>
     s
@@ -207,7 +228,7 @@ export function BulkEmailSend({
       try {
         const { data, error } = await supabase.functions.invoke("send-transactional-email", {
           body: {
-            templateName: "member-welcome",
+            templateName: emailTemplateName,
             recipientEmail: r.email,
             idempotencyKey: `${templateKey}-${audience}-${stamp}-${r.memberId}-${r.email}`,
             templateData: {
