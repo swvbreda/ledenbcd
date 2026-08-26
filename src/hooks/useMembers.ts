@@ -5,7 +5,7 @@ import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCat
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 
 export function useMembers() {
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
@@ -73,7 +73,7 @@ export function useMembers() {
         m.locaties.some((l) =>
           l.naam.toLowerCase().includes(q) ||
           (l.plaats || "").toLowerCase().includes(q) ||
-          (getGemeente(l.plaats || m.plaats) || "").toLowerCase().includes(q) ||
+          (getLocationGemeente(l, m.plaats) || "").toLowerCase().includes(q) ||
           (l.adres || "").toLowerCase().includes(q)
         )
     );

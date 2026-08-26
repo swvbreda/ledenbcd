@@ -20,6 +20,16 @@ export const plaatsToGemeente: Record<string, string> = {
 export const getGemeente = (plaats: string): string =>
   plaatsToGemeente[plaats] || plaats;
 
+/** Prefer a stored municipality on a location; fall back to deriving it from the place. */
+export const getLocationGemeente = (
+  locatie: { gemeente?: string | null; plaats?: string | null },
+  fallbackPlaats?: string | null,
+): string => {
+  const explicit = locatie.gemeente?.trim();
+  if (explicit) return explicit;
+  return getGemeente((locatie.plaats || fallbackPlaats || "").trim());
+};
+
 /** Aggregate a per-plaats record into per-gemeente totals */
 export function aggregateByGemeente(perPlaats: Record<string, number>): Record<string, number> {
   const result: Record<string, number> = {};

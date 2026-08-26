@@ -365,7 +365,7 @@ Deno.serve(async (req) => {
           loc = {
             naam: shop.naam,
             plaats: shop.plaats ?? "",
-            stadsdeel: shop.gemeente ?? "",
+            gemeente: shop.gemeente ?? "",
             adres: shopAddress(shop),
             postcode: shop.postcode ?? "",
           };
@@ -392,7 +392,7 @@ Deno.serve(async (req) => {
           ["adres", shopAddress(shop) || null],
           ["postcode", shop.postcode],
           ["plaats", shop.plaats],
-          ["stadsdeel", shop.gemeente],
+          ["gemeente", shop.gemeente],
           ["oprichtingsDatum", shop.kvk_vestiging_datum],
           ["kvk", shop.kvk_nummer],
           ["vergunninghouder", shop.vergunninghouder],

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Member } from "@/data/types";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
@@ -29,7 +29,7 @@ const EXPERIMENT_GEMEENTEN = [
 
 const isInGemeente = (m: Member, gemeente: string): boolean => {
   if (getGemeente(m.plaats) === gemeente) return true;
-  return m.locaties?.some((l) => getGemeente(l.plaats || m.plaats) === gemeente) || false;
+  return m.locaties?.some((l) => getLocationGemeente(l, m.plaats) === gemeente) || false;
 };
 
 const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
@@ -108,7 +108,7 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
                 const locs = leden.reduce((s, m) => {
                   const mainMatch = getGemeente(m.plaats) === gemeente;
                   if (mainMatch && (!m.locaties || m.locaties.length === 0)) return s + (m.aantalLocaties || 1);
-                  return s + (m.locaties?.filter((l) => getGemeente(l.plaats || m.plaats) === gemeente).length || 0);
+                  return s + (m.locaties?.filter((l) => getLocationGemeente(l, m.plaats) === gemeente).length || 0);
                 }, 0);
                 const total = perStad[gemeente] || 0;
                 const hasBcd = leden.length > 0;

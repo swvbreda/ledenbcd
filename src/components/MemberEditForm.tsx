@@ -106,7 +106,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
   };
 
   const addLocation = () => {
-    setLocaties((prev) => [...prev, { naam: "", plaats: "", adres: "", postcode: "" }]);
+    setLocaties((prev) => [...prev, { naam: "", plaats: "", gemeente: "", adres: "", postcode: "" }]);
   };
 
   const removeLocation = (idx: number) => {
@@ -377,6 +377,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <EditableField label="Naam" value={loc.naam} onChange={(v) => updateLocation(i, "naam", v)} />
               <EditableField label="Plaats" value={loc.plaats || ""} onChange={(v) => updateLocation(i, "plaats", v)} />
+              <EditableField label="Gemeente" value={loc.gemeente || ""} onChange={(v) => updateLocation(i, "gemeente", v)} />
               <EditableField label="Adres" value={loc.adres || ""} onChange={(v) => updateLocation(i, "adres", v)} />
               <EditableField label="Postcode" value={loc.postcode || ""} onChange={(v) => updateLocation(i, "postcode", v)} />
               <div>

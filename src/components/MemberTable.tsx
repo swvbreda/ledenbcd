@@ -8,6 +8,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { getMembershipYears } from "@/lib/membership";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemberLogosBulk } from "@/hooks/useMemberMedia";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
   <span
@@ -34,8 +35,8 @@ type SortKey = "id" | "naam" | "oprichtingJaar" | "aantalLocaties" | "gemeenten"
 const getGemeenten = (member: Member): string[] => {
   const set = new Set<string>();
   for (const l of member.locaties) {
-    const plaats = l.plaats || member.plaats;
-    if (plaats) set.add(plaats);
+    const gemeente = getLocationGemeente(l, member.plaats);
+    if (gemeente) set.add(gemeente);
   }
   return Array.from(set);
 };

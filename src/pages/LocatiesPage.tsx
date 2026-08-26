@@ -6,7 +6,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
 import DocumentenZoeker from "@/components/DocumentenZoeker";
-import { getGemeente } from "@/data/gemeenteMapping";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
 
@@ -97,7 +97,7 @@ const LocatiesPage = () => {
     // Count all represented (members + leads) per city for accurate market share
     for (const m of represented) {
       for (const l of m.locaties) {
-        const plaats = getGemeente(l.plaats || m.plaats);
+        const plaats = getLocationGemeente(l, m.plaats);
         if (!plaats) continue;
 
         if (!map.has(plaats)) {
@@ -125,7 +125,7 @@ const LocatiesPage = () => {
 
         if (!city.leden.some((x) => x.id === m.id)) {
           city.aantalLeden++;
-          city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => getGemeente(loc.plaats || m.plaats) === plaats).length });
+          city.leden.push({ id: m.id, naam: m.naam, aantalLocaties: m.locaties.filter((loc) => getLocationGemeente(loc, m.plaats) === plaats).length });
         }
       }
     }

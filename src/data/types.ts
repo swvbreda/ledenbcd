@@ -10,6 +10,7 @@ export interface UboEntry {
 export interface Location {
   naam: string;
   plaats?: string;
+  gemeente?: string;
   stadsdeel?: string;
   adres?: string;
   postcode?: string;
