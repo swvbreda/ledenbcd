@@ -78,7 +78,7 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
       // Skip if same year as member-level jubilee (avoid duplicate)
       if (memberYear && CURRENT_YEAR - memberYear === jaren && !loc.naam) return;
 
-      const key = `loc-${m.id}-${loc.naam}`;
+      const key = shared ? `shared-${m.id}-${loc.oprichtingsDatum}` : `loc-${m.id}-${loc.naam}`;
       if (seen.has(key)) return;
       seen.add(key);
 
@@ -90,8 +90,8 @@ const JubileumOverzicht = ({ members }: { members: Member[] }) => {
       jubilea.push({
         memberId: m.id,
         memberNaam: m.naam,
-        memberPlaats: loc.plaats || m.plaats,
-        locatieNaam: loc.naam,
+        memberPlaats: shared ? m.plaats : loc.plaats || m.plaats,
+        locatieNaam: shared ? undefined : loc.naam,
         jaren,
         oprichtingsDatum: loc.oprichtingsDatum,
         oprichtingJaar: locYear,
