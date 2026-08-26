@@ -67,6 +67,13 @@ const MemberDetail = () => {
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
 
+  // Logo & foto's van contactpersonen
+  const canEditMedia = isAdmin || isBoard || isOwnProfile;
+  const { logoUrl, uploadLogo, removeLogo } = useMemberLogo(memberId);
+  const { photos: contactPhotos, uploadPhoto, removePhoto } = useContactPhotos(canSeeContacts ? memberId : undefined);
+
+
+
   // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
   const canSeeRegister = isAdmin || isBoard;
   const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
