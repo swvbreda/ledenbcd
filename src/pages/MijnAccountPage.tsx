@@ -507,6 +507,24 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
         )}
       </div>
 
+      {linkedMember && photoName && (
+        <div className="flex items-center gap-3 mb-4">
+          <MediaUpload
+            url={photos[contactSlug(photoName)] ?? null}
+            naam={photoName}
+            size={56}
+            canEdit
+            onUpload={(file) => uploadPhoto(photoName, file)}
+            onRemove={() => removePhoto(photoName)}
+          />
+          <div className="text-xs text-muted-foreground">
+            <div className="font-medium text-foreground text-sm">{photoName}</div>
+            Klik op de foto om een profielfoto toe te voegen of te wijzigen.
+          </div>
+        </div>
+      )}
+
+
       {editingProfile && linkedMember ? (
         <div className="space-y-3 max-w-sm">
           <div>
