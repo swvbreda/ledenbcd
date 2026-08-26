@@ -29,6 +29,11 @@ export interface Contact {
   telefoon: string;
   email: string;
   verjaardag?: string;
+  /**
+   * Vestigingen waar deze persoon bij hoort (identiteiten via locationIdentity()).
+   * Leeg of afwezig = geldt voor alle vestigingen van het lid.
+   */
+  locaties?: string[];
 }
 
 export interface Member {
