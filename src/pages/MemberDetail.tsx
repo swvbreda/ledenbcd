@@ -790,7 +790,7 @@ const MemberDetail = () => {
                         <dl className="mt-2 space-y-1 md:hidden">
                           <div className="flex justify-between gap-3">
                             <dt className="text-xs text-muted-foreground">Factuurdatum</dt>
-                            <dd className="tabular-nums">{invoiceDate ? formatDate(invoiceDate) : "—"}</dd>
+                            <dd className="tabular-nums">{fmtDateShort(invoiceDate)}</dd>
                           </div>
                           <div className="flex justify-between gap-3">
                             <dt className="text-xs text-muted-foreground">Factuurnummer</dt>
@@ -804,14 +804,14 @@ const MemberDetail = () => {
                           </div>
                           <div className="flex justify-between gap-3">
                             <dt className="text-xs text-muted-foreground">Betaald op</dt>
-                            <dd className="tabular-nums">{paidDate ? formatDate(paidDate) : "—"}</dd>
+                            <dd className="tabular-nums">{fmtDateShort(paidDate)}</dd>
                           </div>
                         </dl>
 
                         {/* Desktop: kolommen */}
                         <span className="hidden md:block font-semibold tabular-nums">{year}</span>
                         <span className="hidden md:block text-muted-foreground tabular-nums">
-                          {invoiceDate ? formatDate(invoiceDate) : "—"}
+                          {fmtDateShort(invoiceDate)}
                         </span>
                         <div className="hidden md:flex flex-col gap-1 min-w-0">{invoiceNodes}</div>
                         <span className="hidden md:block text-right tabular-nums">
@@ -824,7 +824,7 @@ const MemberDetail = () => {
                           )}
                         </div>
                         <span className="hidden md:block text-right text-muted-foreground tabular-nums">
-                          {paidDate ? formatDate(paidDate) : "—"}
+                          {fmtDateShort(paidDate)}
                         </span>
                       </div>
                     );
