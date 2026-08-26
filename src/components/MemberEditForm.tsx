@@ -313,10 +313,18 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
             <Plus size={12} /> Toevoegen
           </Button>
         </div>
-        {locaties.map((loc, i) => (
-          <div key={i} className="border border-border rounded-md p-3 space-y-2">
+        {locaties.map((loc, i) => {
+          const incomplete = !(loc.adres?.trim() || loc.plaats?.trim());
+          return (
+          <div
+            key={i}
+            className={`border rounded-md p-3 space-y-2 ${incomplete ? "border-destructive bg-destructive/5" : "border-border"}`}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Locatie {i + 1}</span>
+              <span className={`text-xs font-medium ${incomplete ? "text-destructive" : "text-muted-foreground"}`}>
+                Locatie {i + 1}
+                {incomplete && " · vul minimaal adres of plaats in, anders telt deze locatie niet mee"}
+              </span>
               <Button variant="ghost" size="sm" onClick={() => removeLocation(i)} className="h-6 w-6 p-0 text-destructive">
                 <Trash2 size={12} />
               </Button>
