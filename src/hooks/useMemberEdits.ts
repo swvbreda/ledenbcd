@@ -186,6 +186,11 @@ export function useSaveMemberEdit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["member-edits"] });
+      // Tellingen (vertegenwoordiging/register) meteen mee verversen
+      queryClient.invalidateQueries({ queryKey: ["members-data"] });
+      queryClient.invalidateQueries({ queryKey: ["register-plaats-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["register-links"] });
+      queryClient.invalidateQueries({ queryKey: ["register-link-summary"] });
     },
   });
 }
@@ -303,6 +308,8 @@ export function useApproveEditRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["edit-requests"] });
       queryClient.invalidateQueries({ queryKey: ["member-edits"] });
+      queryClient.invalidateQueries({ queryKey: ["members-data"] });
+      queryClient.invalidateQueries({ queryKey: ["register-plaats-stats"] });
     },
   });
 }

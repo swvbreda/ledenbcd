@@ -101,6 +101,9 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
 
   const handleSave = () => {
     const primaryContact = contacten[0];
+    // Locaties zonder adres én zonder plaats worden nergens geteld: expliciet melden i.p.v. stil weggooien.
+    const validLocaties = locaties.filter((l) => !!(l.adres?.trim() || l.plaats?.trim()));
+    const invalidLocaties = locaties.filter((l) => !(l.adres?.trim() || l.plaats?.trim()));
     const data: Partial<Member> = {
       naam,
       plaats,
@@ -133,9 +136,17 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       telefoon: primaryContact?.telefoon || member.telefoon,
       email: primaryContact?.email || member.email,
       contacten,
-      locaties,
-      aantalLocaties: locaties.length,
+      locaties: validLocaties,
+      aantalLocaties: validLocaties.length,
     };
+
+    if (invalidLocaties.length) {
+      toast.error(
+        `${invalidLocaties.length} locatie(s) niet opgeslagen: ${invalidLocaties
+          .map((l) => l.naam?.trim() || "zonder naam")
+          .join(", ")}. Vul minimaal adres of plaats in.`,
+      );
+    }
 
     if (isAdmin) {
       // Admins: save directly
@@ -143,8 +154,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         { member_id: member.id, data },
         {
           onSuccess: () => {
-            toast.success("Wijzigingen opgeslagen");
-            setEditing(false);
+            toast.success(`Wijzigingen opgeslagen · ${validLocaties.length} locatie(s)`);
+            if (!invalidLocaties.length) setEditing(false);
           },
           onError: (err) => {
             toast.error("Opslaan mislukt: " + (err as Error).message);
@@ -158,7 +169,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         {
           onSuccess: () => {
             toast.success("Wijzigingen ingediend ter goedkeuring door het bestuur");
-            setEditing(false);
+            if (!invalidLocaties.length) setEditing(false);
           },
           onError: (err) => {
             toast.error("Indienen mislukt: " + (err as Error).message);
@@ -302,10 +313,18 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
             <Plus size={12} /> Toevoegen
           </Button>
         </div>
-        {locaties.map((loc, i) => (
-          <div key={i} className="border border-border rounded-md p-3 space-y-2">
+        {locaties.map((loc, i) => {
+          const incomplete = !(loc.adres?.trim() || loc.plaats?.trim());
+          return (
+          <div
+            key={i}
+            className={`border rounded-md p-3 space-y-2 ${incomplete ? "border-destructive bg-destructive/5" : "border-border"}`}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Locatie {i + 1}</span>
+              <span className={`text-xs font-medium ${incomplete ? "text-destructive" : "text-muted-foreground"}`}>
+                Locatie {i + 1}
+                {incomplete && " · vul minimaal adres of plaats in, anders telt deze locatie niet mee"}
+              </span>
               <Button variant="ghost" size="sm" onClick={() => removeLocation(i)} className="h-6 w-6 p-0 text-destructive">
                 <Trash2 size={12} />
               </Button>
@@ -335,7 +354,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
               <EditableField label="Oprichtingsdatum" value={loc.oprichtingsDatum || ""} onChange={(v) => updateLocation(i, "oprichtingsDatum", v)} type="date" />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Bottom save */}
