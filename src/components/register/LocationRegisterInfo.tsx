@@ -106,16 +106,13 @@ const LocationRegisterInfo = ({
       {/* Eigendomsketen */}
       {ubo.length > 0 && (
         <div className="border-t border-border pt-2.5 space-y-1">
-          <SectionTitle>Eigendomsketen (UBO)</SectionTitle>
+          <SectionTitle>Eigendomsketen</SectionTitle>
           <ul className="space-y-0.5">
             {ubo.map((u, i) => (
               <li key={i} className="text-xs text-muted-foreground">
                 <span style={{ paddingLeft: `${(u.niveau ?? 0) * 10}px` }}>
                   {u.naam}
                   {u.kvk && <span className="font-mono tabular-nums"> · KvK {u.kvk}</span>}
-                  {u.uiteindelijkBelanghebbende && (
-                    <span className="ml-1 font-medium text-primary">· UBO</span>
-                  )}
                 </span>
               </li>
             ))}
