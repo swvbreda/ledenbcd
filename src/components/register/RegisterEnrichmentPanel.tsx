@@ -107,13 +107,16 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
             title: isLocation
               ? loc?.naam || shop?.naam || `Locatie ${p.location_key ?? ""}`
               : "Algemene ledengegevens",
-            subtitle: isLocation ? describeLocation(loc) || shopAddress : "Geldt voor het hele lid",
-            registerLine:
-              isLocation && shop
-                ? `Register: ${shop.naam}${shopAddress ? ` — ${shopAddress}` : ""}${
-                    shop.vergunninghouder ? ` — ${shop.vergunninghouder}` : ""
-                  }`
-                : null,
+            subtitle: isLocation
+              ? describeLocation(loc) || shopAddress
+              : shop
+                ? "Afkomstig uit één vestiging — zie registerregel"
+                : "Geldt voor het hele lid",
+            registerLine: shop
+              ? `Register: ${shop.naam}${shopAddress ? ` — ${shopAddress}` : ""}${
+                  shop.vergunninghouder ? ` — ${shop.vergunninghouder}` : ""
+                }`
+              : null,
             matched: isLocation ? !!loc : true,
             items: [],
           };
