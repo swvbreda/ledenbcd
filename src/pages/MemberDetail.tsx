@@ -211,6 +211,16 @@ const MemberDetail = () => {
     }
   };
 
+  const fmtEuro = (v: number) =>
+    "€ " + v.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  const fmtDateShort = (dateStr?: string | null) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-6 w-full">
       {/* Terug-knop */}
