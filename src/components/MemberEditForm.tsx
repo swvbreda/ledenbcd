@@ -84,6 +84,19 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     setContacten((prev) => [...prev, { naam: "", functie: "", telefoon: "", email: "" }]);
   };
 
+  const toggleContactLocation = (idx: number, identity: string) => {
+    setContacten((prev) =>
+      prev.map((c, i) => {
+        if (i !== idx) return c;
+        const current = c.locaties ?? [];
+        const next = current.includes(identity)
+          ? current.filter((k) => k !== identity)
+          : [...current, identity];
+        return { ...c, locaties: next };
+      }),
+    );
+  };
+
   const removeContact = (idx: number) => {
     setContacten((prev) => prev.filter((_, i) => i !== idx));
   };
