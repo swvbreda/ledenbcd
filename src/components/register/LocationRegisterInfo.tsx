@@ -5,14 +5,18 @@ import type { UboEntry } from "@/data/types";
 const fmt = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" }) : null;
 
-const Row = ({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) => (
-  <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
-    <span className="text-muted-foreground">{label}</span>
-    <span className={`min-w-0 break-words ${value ? "text-foreground" : "text-muted-foreground"} ${mono ? "font-mono tabular-nums" : ""}`}>
-      {value || "—"}
-    </span>
-  </div>
-);
+const Row = ({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) => {
+  if (!value) return null;
+  return (
+    <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`min-w-0 break-words text-foreground ${mono ? "font-mono tabular-nums" : ""}`}>
+        {value}
+      </span>
+    </div>
+  );
+};
+
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
