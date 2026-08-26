@@ -10,6 +10,10 @@ export const plaatsToGemeente: Record<string, string> = {
   "Westvoorne": "Voorne aan Zee",
   "Hoogezand": "Midden-Groningen",
   "Bussum": "Gooise Meren",
+  "Driebergen": "Utrechtse Heuvelrug",
+  "Driebergen-Rijsenburg": "Utrechtse Heuvelrug",
+  "Mijdrecht": "De Ronde Venen",
+  "Steenwijk": "Steenwijkerland",
 };
 
 /** Get the gemeente for a given plaats */

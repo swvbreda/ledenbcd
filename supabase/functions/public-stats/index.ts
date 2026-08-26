@@ -64,14 +64,16 @@ Deno.serve(async (req) => {
       const vertegenwoordigd = Number(row.vertegenwoordigde_shops ?? 0);
       const landelijk = Number(row.landelijke_shops ?? 0);
       vertegenwoordigingPerGemeente[gemeente] = vertegenwoordigd;
-      landelijkPerGemeente[gemeente] = landelijk;
+      // Alleen gemeenten die in het coffeeshopregister voorkomen tellen mee als
+      // landelijke coffeeshopgemeente (noemer voor "aanwezig in gemeenten").
+      if (landelijk > 0) landelijkPerGemeente[gemeente] = landelijk;
       aantalCoffeeshops += vertegenwoordigd;
       aantalLandelijk += landelijk;
       gekoppeldeRegistershops += Number(row.gekoppelde_registershops ?? 0);
       nietGekoppeldeLocaties += Number(row.niet_gekoppelde_locaties ?? 0);
       koppelingenZonderVestiging += Number(row.koppelingen_zonder_vestiging ?? 0);
 
-      if (vertegenwoordigd > 0) {
+      if (vertegenwoordigd > 0 && landelijk > 0) {
         gemeenten.add(gemeente);
         const prov = PLAATS_TO_PROVINCIE[gemeente];
         if (prov) provincies.add(prov);

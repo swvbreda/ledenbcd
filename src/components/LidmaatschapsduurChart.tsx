@@ -5,11 +5,11 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { getMembershipYears } from "@/lib/membership";
-import { getGemeente } from "@/data/gemeenteMapping";
+
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
-  const { perGemeente: perStad } = useRegisterStats();
+  const { perGemeente: perStad, representedPerGemeente } = useRegisterStats();
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
   const { conversions } = useLeadConversions();
@@ -28,18 +28,13 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
   const longMembers = withYears.filter((x) => x.years >= 20);
   const longPct = allMembers.length ? Math.round((longMembers.length / allMembers.length) * 100) : 0;
 
-  // Cities where BCD is present (at least 1 location)
-  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
-  const unconvertedLeads = mergedLeads.filter((l) => !convertedLeadIds.has(l.id));
-  const represented = [...allMembers, ...unconvertedLeads];
-  const cityCount: Record<string, number> = {};
-  represented.forEach((m) => {
-    const gemeente = getGemeente(m.plaats);
-    if (gemeente) cityCount[gemeente] = (cityCount[gemeente] || 0) + 1;
-  });
-  const citiesPresent = Object.keys(perStad).filter((city) => (cityCount[city] || 0) > 0);
-  const citiesPresentPct = Object.keys(perStad).length > 0
-    ? Math.round((citiesPresent.length / Object.keys(perStad).length) * 100)
+  // Gemeenten uit het coffeeshopregister waar wij vertegenwoordigd zijn
+  const registerGemeenten = Object.keys(perStad);
+  const citiesPresent = registerGemeenten.filter(
+    (gemeente) => (representedPerGemeente[gemeente] || 0) > 0,
+  );
+  const citiesPresentPct = registerGemeenten.length > 0
+    ? Math.round((citiesPresent.length / registerGemeenten.length) * 100)
     : 0;
 
   // New members this year
