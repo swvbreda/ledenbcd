@@ -38,7 +38,7 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
   const totalBudgeted = perCat.reduce((s, c) => s + c.budgeted, 0);
   const totalSpent = perCat.reduce((s, c) => s + c.spent, 0);
   const totalAvailable = perCat.reduce((s, c) => s + c.available, 0);
-  const totalOverrun = perCat.reduce((s, c) => s + c.overrun, 0);
+  
   const over = totalSpent > totalBudgeted && totalBudgeted > 0;
   const pct = totalBudgeted > 0 ? Math.min(100, Math.round((totalSpent / totalBudgeted) * 100)) : 0;
 
