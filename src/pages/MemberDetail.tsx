@@ -120,6 +120,42 @@ const MemberDetail = () => {
     canSeeRegister,
   );
 
+  // Per vestiging de vergunninghoudende onderneming + eigenaren. Binnen één lid
+  // kunnen dat meerdere verschillende B.V.'s zijn.
+  const vergunninghouderRows = useMemo(() => {
+    const locs = (member?.locaties ?? []) as any[];
+    return locs.map((loc) => {
+      const key = locationKey(loc);
+      const link = canSeeRegister ? linkByLocation.get(key) : undefined;
+      const shop = link ? shopById.get(link.register_id) : null;
+      const regUbo = link ? uboByRegister?.get(link.register_id) : null;
+      return {
+        locatie: loc.naam || shop?.naam || "Vestiging",
+        adres: loc.adres || null,
+        plaats: loc.plaats || null,
+        houder: loc.vergunninghouder || shop?.vergunninghouder || null,
+        exploitant: loc.exploitant || shop?.exploitant || null,
+        kvk: loc.kvk || shop?.kvk_nummer || null,
+        vestigingsnummer: shop?.kvk_vestigingsnummer || null,
+        ubo:
+          regUbo && regUbo.length
+            ? regUbo.map((u) => ({
+                naam: u.naam,
+                soort: u.soort,
+                niveau: u.niveau,
+                isUiteindelijk: u.is_uiteindelijk,
+              }))
+            : (loc.ubo ?? []).map((u: any) => ({
+                naam: u.naam,
+                soort: u.soort,
+                niveau: u.niveau,
+                isUiteindelijk: u.uiteindelijkBelanghebbende,
+              })),
+      };
+    });
+  }, [member?.locaties, canSeeRegister, linkByLocation, shopById, uboByRegister]);
+
+
   // Redirect converted leads to their new lidnummer
   const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
   useEffect(() => {
