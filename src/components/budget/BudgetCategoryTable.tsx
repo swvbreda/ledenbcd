@@ -59,10 +59,8 @@ export default function BudgetCategoryTable({
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
     return clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
   };
+  // Netto per categorie: begroot − uitgegeven.
   const totalRemaining = category.line_items.reduce((s, li) => s + remainingOf(li), 0);
-  // Overschrijdingen niet wegstrepen tegen posten die nog ruimte hebben.
-  const availableTotal = category.line_items.reduce((s, li) => s + Math.max(remainingOf(li), 0), 0);
-  const overrunTotal = category.line_items.reduce((s, li) => s + Math.min(remainingOf(li), 0), 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
   const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
