@@ -199,3 +199,22 @@ export function useMemberInvoices(memberId: number) {
     },
   });
 }
+
+export function useMemberPayments(memberId: number) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["contribution-payments", "member", memberId, user?.id],
+    enabled: !!user && !!memberId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("contribution_payments")
+        .select("id,member_id,year,amount,status,payment_method,paid_at,created_at")
+        .eq("member_id", memberId)
+        .order("paid_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ContributionPayment[];
+    },
+  });
+}
+
