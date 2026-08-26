@@ -38,7 +38,7 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
   const totalBudgeted = perCat.reduce((s, c) => s + c.budgeted, 0);
   const totalSpent = perCat.reduce((s, c) => s + c.spent, 0);
   const totalAvailable = perCat.reduce((s, c) => s + c.available, 0);
-  const totalOverrun = perCat.reduce((s, c) => s + c.overrun, 0);
+  
   const over = totalSpent > totalBudgeted && totalBudgeted > 0;
   const pct = totalBudgeted > 0 ? Math.min(100, Math.round((totalSpent / totalBudgeted) * 100)) : 0;
 
@@ -54,14 +54,6 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
           <span className="tabular-nums font-medium text-green-600">
             <CurrencyText value={totalAvailable} />
           </span>
-          {totalOverrun < 0 && (
-            <>
-              {" · overschreden "}
-              <span className="tabular-nums font-medium text-destructive">
-                <CurrencyText value={totalOverrun} />
-              </span>
-            </>
-          )}
         </div>
       </div>
 
@@ -94,16 +86,12 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
                   {c.budgeted > 0 ? `${catPct}%` : "—"}
                 </td>
                 <td className="py-1 text-right tabular-nums">
-                  <div className="flex flex-col items-end">
-                    <CurrencyCell
-                      value={c.available + c.overrun}
-                      className={c.overrun < 0 ? "text-destructive" : ""}
-                    />
-                    {c.overrun < 0 && (
-                      <span className="text-destructive text-[10px]">overschreden</span>
-                    )}
-                  </div>
+                  <CurrencyCell
+                    value={c.available + c.overrun}
+                    className={c.overrun < 0 ? "text-destructive" : ""}
+                  />
                 </td>
+
 
               </tr>
             );
