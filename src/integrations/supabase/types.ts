@@ -3040,6 +3040,12 @@ export type Database = {
       }
       is_board_member: { Args: { _user_id: string }; Returns: boolean }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
+      member_registered_emails: {
+        Args: { _member_id: number }
+        Returns: {
+          email: string
+        }[]
+      }
       merge_member_locations: {
         Args: { _base: Json; _overlay: Json }
         Returns: Json
@@ -3077,6 +3083,10 @@ export type Database = {
       }
       set_vault_secret: {
         Args: { _name: string; _value: string }
+        Returns: undefined
+      }
+      sync_member_allowed_emails: {
+        Args: { _member_id: number }
         Returns: undefined
       }
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
