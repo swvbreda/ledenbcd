@@ -5,10 +5,13 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
+import { locationIdentity, mergeMemberLocations } from "@/lib/memberLocations";
+
+type MemberEditData = Partial<Member> & { _verwijderdeLocaties?: string[] };
 
 interface MemberEdit {
   member_id: number;
-  data: Partial<Member>;
+  data: MemberEditData;
 }
 
 /** Drop placeholder location rows that have neither address nor place */
@@ -23,9 +26,9 @@ export function useMemberEdits() {
         .from("member_edits")
         .select("member_id, data");
       if (error) throw error;
-      const map = new Map<number, Partial<Member>>();
+      const map = new Map<number, MemberEditData>();
       for (const row of data || []) {
-        map.set(row.member_id, row.data as Partial<Member>);
+        map.set(row.member_id, row.data as MemberEditData);
       }
       return map;
     },
@@ -49,7 +52,7 @@ function useOwnPendingEdit(memberId: number) {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data?.data as Partial<Member> | null;
+      return data?.data as MemberEditData | null;
     },
   });
 }
@@ -93,7 +96,9 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   let merged: Member = baseMember;
 
   if (edits) {
-    const mergedLocaties = cleanLocaties(edits.locaties || merged.locaties);
+    const mergedLocaties = cleanLocaties(
+      mergeMemberLocations(merged.locaties, edits.locaties, edits._verwijderdeLocaties),
+    );
     merged = {
       ...merged,
       ...edits,
@@ -104,7 +109,9 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
   }
 
   if (pendingEdit) {
-    const mergedLocaties = cleanLocaties(pendingEdit.locaties || merged.locaties);
+    const mergedLocaties = cleanLocaties(
+      mergeMemberLocations(merged.locaties, pendingEdit.locaties, pendingEdit._verwijderdeLocaties),
+    );
     merged = {
       ...merged,
       ...pendingEdit,
@@ -124,7 +131,9 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
   const merged = useMemo(() => {
     return members.map((m) => {
       const edits = editsMap?.get(m.id);
-      const mergedLocaties = cleanLocaties(edits?.locaties || m.locaties);
+      const mergedLocaties = cleanLocaties(
+        mergeMemberLocations(m.locaties, edits?.locaties, edits?._verwijderdeLocaties),
+      );
       if (!edits && mergedLocaties.length === (m.locaties?.length ?? 0)) return m;
       return {
         ...m,
@@ -149,7 +158,14 @@ export function useSaveMemberEdit() {
       const userId = session?.session?.user?.id;
       if (!userId) throw new Error("Niet ingelogd");
 
-      let finalData = data;
+      let finalData: MemberEditData = data;
+
+      const { data: memberRow } = await supabase
+        .from("members_data")
+        .select("data")
+        .eq("id", member_id)
+        .maybeSingle();
+      const baseMember = (memberRow?.data as Partial<Member> | null) ?? {};
 
       // Merge with existing edits to prevent data loss
       if (!skipMerge) {
@@ -160,7 +176,7 @@ export function useSaveMemberEdit() {
           .maybeSingle();
 
         if (existing?.data) {
-          const existingData = existing.data as Partial<Member>;
+          const existingData = existing.data as MemberEditData;
           finalData = {
             ...existingData,
             ...data,
@@ -169,6 +185,25 @@ export function useSaveMemberEdit() {
             contacten: data.contacten || existingData.contacten,
           };
         }
+      }
+
+      if (data.locaties) {
+        const previousLocations = mergeMemberLocations(
+          baseMember.locaties,
+          finalData === data ? undefined : (finalData.locaties ?? undefined),
+          finalData._verwijderdeLocaties,
+        );
+        const removedNow = previousLocations
+          .filter((previous) => !data.locaties?.some((current) => locationIdentity(current) === locationIdentity(previous)))
+          .map(locationIdentity);
+        const retainedRemoved = (finalData._verwijderdeLocaties ?? []).filter(
+          (identity) => !data.locaties?.some((current) => locationIdentity(current) === identity),
+        );
+        finalData = {
+          ...finalData,
+          locaties: data.locaties,
+          _verwijderdeLocaties: Array.from(new Set([...retainedRemoved, ...removedNow])),
+        };
       }
 
       const { error } = await supabase
@@ -224,7 +259,7 @@ export function useSubmitEditRequest() {
 export interface EditRequest {
   id: string;
   member_id: number;
-  data: Partial<Member>;
+  data: MemberEditData;
   status: "pending" | "approved" | "rejected";
   submitted_by: string;
   reviewed_by: string | null;
@@ -271,7 +306,7 @@ export function useApproveEditRequest() {
         .eq("member_id", request.member_id)
         .maybeSingle();
 
-      const existingData = (existingEdits?.data as Partial<Member>) || {};
+      const existingData = (existingEdits?.data as MemberEditData) || {};
       const mergedData = {
         ...existingData,
         ...request.data,
