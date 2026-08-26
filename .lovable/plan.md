@@ -1,32 +1,43 @@
-# Dubbele locatie Haarlemmerstraat 64 (lid 5, Green House)
+# Coffeeshopbeleid als gezaghebbende bron gebruiken
 
-## Wat er aan de hand is
+## Vastgestelde oorzaak
 
-In het ledenbestand staan bij dit lid twee locaties op hetzelfde adres:
+Het ledenproject haalt nu alleen de losse vergunningregels uit Coffeeshopbeleid op. De synchronisatie neemt de daar vastgelegde relaties, eigendomsketen en UBO-gegevens niet mee wanneer het beveiligde exportpad ontbreekt of niet beschikbaar is.
 
-- **Green House United** — Haarlemmerstraat 64, postcode 1013 ES
-- **Greenhouse Lounge** — Haarlemmerstraat 64, postcode 1013 ET
+Daardoor ontstaan twee problemen:
 
-## Wat het register zegt
+- een zichtbare relatie in Coffeeshopbeleid kan hier als “niet gekoppeld” verschijnen;
+- **Eigendom & UBO** toont hier 0, terwijl Coffeeshopbeleid wel eigendoms- en koppelgegevens bevat.
 
-Op Haarlemmerstraat in Amsterdam staan in het landelijke register vijf zaken. Op **nummer 64** staat er precies één:
+In de lokale database zijn momenteel 138 registershops aan leden gekoppeld, maar staan 0 UBO-regels. De kerngegevenspagina leest bovendien alleen UBO's die al in de locatie-JSON van het lid staan en niet rechtstreeks de registerrelaties.
 
-| Naam | Adres | Postcode | Status |
-|---|---|---|---|
-| Greenhouse Lounge | Haarlemmerstraat 64 | 1013 ET | actief |
+## Aanpak
 
-Verder op die straat: Barney's (102), Popeye (63), CoffeeshopAmsterdam (44, postcode 1013 ES), Green Place (6).
+1. **Niets verwijderen bij Green House**
+   - Green House United en Greenhouse Lounge blijven staan totdat de bronrelatie en historie uit Coffeeshopbeleid volledig zijn overgenomen.
+   - Geen vertegenwoordigingsaantal handmatig verlagen.
 
-Conclusie: er bestaat volgens het register geen tweede vergunde zaak op nummer 64. "Green House United" met postcode 1013 ES is een dubbele regel; die postcode hoort bij Haarlemmerstraat 44. Daarom is Greenhouse Lounge wél gekoppeld aan het register en Green House United niet.
+2. **Bronexport compleet maken**
+   - In Coffeeshopbeleid een beveiligde export gebruiken voor vergunning, actuele naam/adresgegevens, KvK/vestiging, exploitant/vergunninghouder, eigendomsketen en UBO.
+   - Ook expliciete relaties en historische/alternatieve namen meesturen, zodat twee vermeldingen op hetzelfde adres niet automatisch als dubbel worden behandeld.
 
-Dit telt nu als twee vertegenwoordigde vestigingen terwijl het er één is.
+3. **Synchronisatie in het ledenproject corrigeren**
+   - De beveiligde bronexport leidend maken en duidelijk signaleren wanneer alleen de beperkte openbare fallback actief is.
+   - UBO/eigendom per registervestiging opslaan en oude brongegevens veilig bijwerken zonder factuurgegevens of handmatige ledengegevens te overschrijven.
+   - Bestaande bevestigde koppelingen behouden; alleen brongegevens verrijken.
 
-## Voorstel
+4. **Kerngegevens op registerdata baseren**
+   - Eigendom & UBO berekenen uit gekoppelde registervestigingen plus de gesynchroniseerde eigendomsketen.
+   - Namen normaliseren voor de telling, maar originele namen tonen.
+   - Per persoon doorklikbaar tonen aan welke registervestigingen en leden die persoon is verbonden.
 
-1. De regel **Green House United** verwijderen uit de locaties van dit lid (zowel uit de basisgegevens als uit de bewerkte gegevens, zodat hij niet terugkomt via de merge).
-2. De overgebleven regel behouden als **Greenhouse Lounge**, Haarlemmerstraat 64, 1013 ET, stadsdeel Centrum — gekoppeld aan het register.
-3. Daarna de vertegenwoordigingsstatistieken opnieuw laten tellen (die zakken met 1).
+5. **Green House verifiëren**
+   - De bronrecords en relaties voor United/Lounge naast elkaar tonen: actuele naam, eventuele voormalige naam, adres/postcode, vergunning en eigendom.
+   - Alleen als Coffeeshopbeleid zelf aangeeft dat het één actueel dossier met een alias/historische naam is, de ledenlocaties gecontroleerd samenvoegen; anders beide behouden en correct koppelen.
 
-## Vraag voordat ik dit uitvoer
+## Controle
 
-Klopt het dat United en Lounge dezelfde zaak zijn (naamswijziging), of is United een aparte zaak die alleen een verkeerd adres/postcode heeft? In dat tweede geval pas ik het adres van United aan in plaats van hem te verwijderen.
+- Dezelfde gekoppelde vestigingen en relaties zijn zichtbaar in beide projecten.
+- Eigendom & UBO is niet langer 0 wanneer de bron gegevens bevat.
+- Green House wordt niet aangepast op basis van alleen een postcodeverschil.
+- Factuurvelden en handmatig ingevoerde ledengegevens blijven onaangetast.
