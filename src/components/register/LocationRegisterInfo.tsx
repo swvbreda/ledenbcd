@@ -79,28 +79,29 @@ const LocationRegisterInfo = ({
 
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
-      {/* KvK-gegevens */}
-      <div className="border-t border-border pt-2.5 space-y-1">
-        <SectionTitle>KvK</SectionTitle>
-        <Row label="KvK-nummer" value={kvk} mono />
-        <Row label="Vestigingsnr." value={vestigingsnummer} mono />
-        {vestigingDatum && <Row label="Vestiging sinds" value={vestigingDatum} />}
-        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
-          <span className="text-muted-foreground">Website</span>
-          {websiteLabel ? (
-            <a
-              href={websiteRaw!.startsWith("http") ? websiteRaw! : `https://${websiteRaw}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-w-0 break-words text-foreground hover:underline"
-            >
-              {websiteLabel}
-            </a>
-          ) : (
-            <span className="text-muted-foreground">—</span>
+      {/* KvK-gegevens: alleen tonen als we iets weten */}
+      {(kvk || vestigingsnummer || vestigingDatum || websiteLabel) && (
+        <div className="border-t border-border pt-2.5 space-y-1">
+          <SectionTitle>KvK</SectionTitle>
+          <Row label="KvK-nummer" value={kvk} mono />
+          <Row label="Vestigingsnr." value={vestigingsnummer} mono />
+          <Row label="Vestiging sinds" value={vestigingDatum} />
+          {websiteLabel && (
+            <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+              <span className="text-muted-foreground">Website</span>
+              <a
+                href={websiteRaw!.startsWith("http") ? websiteRaw! : `https://${websiteRaw}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 break-words text-foreground hover:underline"
+              >
+                {websiteLabel}
+              </a>
+            </div>
           )}
         </div>
-      </div>
+      )}
+
 
       {/* Eigendomsketen */}
       {ubo.length > 0 && (
