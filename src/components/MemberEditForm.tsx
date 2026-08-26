@@ -8,6 +8,7 @@ import type { Member, Contact, Location } from "@/data/types";
 import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits";
 import { useAuth } from "@/hooks/useAuth";
 import { stadsdeelPerPlaats, alleStadsdelen } from "@/data/stadsdeelPerPlaats";
+import { locationIdentity } from "@/lib/memberLocations";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
@@ -104,7 +105,10 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     // Locaties zonder adres én zonder plaats worden nergens geteld: expliciet melden i.p.v. stil weggooien.
     const validLocaties = locaties.filter((l) => !!(l.adres?.trim() || l.plaats?.trim()));
     const invalidLocaties = locaties.filter((l) => !(l.adres?.trim() || l.plaats?.trim()));
-    const data: Partial<Member> = {
+    const removedLocationIdentities = member.locaties
+      .filter((previous) => !validLocaties.some((current) => locationIdentity(current) === locationIdentity(previous)))
+      .map(locationIdentity);
+    const data: Partial<Member> & { _verwijderdeLocaties?: string[] } = {
       naam,
       plaats,
       bedrijfsnaam,
@@ -138,6 +142,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
       contacten,
       locaties: validLocaties,
       aantalLocaties: validLocaties.length,
+      _verwijderdeLocaties: removedLocationIdentities,
     };
 
     if (invalidLocaties.length) {
