@@ -19,6 +19,8 @@ import ExternToestemmingBeheer from "@/components/ExternToestemmingBeheer";
 import { ContributiePaymentCard } from "@/components/ContributiePaymentCard";
 import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
+import MediaUpload from "@/components/members/MediaUpload";
+import { useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 
 // ── Password Section ──
 function PasswordSection() {
