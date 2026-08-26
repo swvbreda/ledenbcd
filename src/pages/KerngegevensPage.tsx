@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Banknote,
+  CreditCard,
   Building2,
   Link2,
   MapPin,
