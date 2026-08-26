@@ -59,10 +59,8 @@ export default function BudgetCategoryTable({
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
     return clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
   };
+  // Netto per categorie: begroot − uitgegeven.
   const totalRemaining = category.line_items.reduce((s, li) => s + remainingOf(li), 0);
-  // Overschrijdingen niet wegstrepen tegen posten die nog ruimte hebben.
-  const availableTotal = category.line_items.reduce((s, li) => s + Math.max(remainingOf(li), 0), 0);
-  const overrunTotal = category.line_items.reduce((s, li) => s + Math.min(remainingOf(li), 0), 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
   const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
@@ -114,13 +112,11 @@ export default function BudgetCategoryTable({
               {!expanded && (
                 <>
                   <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
-                  <strong className={isIncome ? totalRemainingClass : "text-green-600"}>
-                    <CurrencyText value={isIncome ? totalRemaining : availableTotal} className="justify-end" />
+                  <strong className={totalRemainingClass}>
+                    <CurrencyText value={totalRemaining} className="justify-end" />
                   </strong>
-                  {!isIncome && overrunTotal < 0 && (
-                    <span className="text-destructive text-xs ml-1">
-                      (overschreden <CurrencyText value={overrunTotal} className="inline-flex" />)
-                    </span>
+                  {!isIncome && totalRemaining < 0 && (
+                    <span className="text-destructive text-xs ml-1">(overschreden)</span>
                   )}
                 </>
               )}
@@ -192,27 +188,7 @@ export default function BudgetCategoryTable({
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
               <td className="px-3 py-1.5 font-semibold">
-                {isIncome ? (
-                  <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
-                ) : (
-                  <div className="flex flex-col items-end gap-0.5">
-                    <CurrencyCell value={availableTotal} className="text-green-600" />
-                    {overrunTotal < 0 && (
-                      <>
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          beschikbaar
-                        </span>
-                        <CurrencyCell value={overrunTotal} className="text-destructive text-xs" />
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          overschreden
-                        </span>
-                        <span className="text-[11px] text-muted-foreground tabular-nums">
-                          saldo <CurrencyText value={totalRemaining} className="inline-flex" />
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
+                <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
               </td>
               <td />
             </tr>

@@ -26,14 +26,11 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
         )
       );
       const spent = spentPerLine.reduce((s, v) => s + v, 0);
-      const available = cat.line_items.reduce(
-        (s, li, i) => s + Math.max(Number(li.budgeted_amount || 0) - spentPerLine[i], 0),
-        0
-      );
-      const overrun = cat.line_items.reduce(
-        (s, li, i) => s + Math.min(Number(li.budgeted_amount || 0) - spentPerLine[i], 0),
-        0
-      );
+      // Netto per categorie: overschrijding binnen een post wordt verrekend
+      // met ruimte op andere posten in dezelfde categorie.
+      const net = budgeted - spent;
+      const available = Math.max(net, 0);
+      const overrun = Math.min(net, 0);
       return { id: cat.id, name: cat.name, budgeted, spent, available, overrun };
     })
     .sort((a, b) => b.spent - a.spent);
@@ -98,11 +95,12 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
                 </td>
                 <td className="py-1 text-right tabular-nums">
                   <div className="flex flex-col items-end">
-                    <CurrencyCell value={c.available} />
+                    <CurrencyCell
+                      value={c.available + c.overrun}
+                      className={c.overrun < 0 ? "text-destructive" : ""}
+                    />
                     {c.overrun < 0 && (
-                      <span className="text-destructive text-[10px] tabular-nums">
-                        overschreden <CurrencyText value={c.overrun} className="inline-flex" />
-                      </span>
+                      <span className="text-destructive text-[10px]">overschreden</span>
                     )}
                   </div>
                 </td>
