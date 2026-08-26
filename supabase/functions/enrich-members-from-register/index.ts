@@ -435,29 +435,31 @@ Deno.serve(async (req) => {
         }
 
 
-        // Facturatiegevoelig: nooit stil invullen, altijd als voorstel
-        const sensitive: Array<[string, string | null]> = [
-          ["bedrijfsnaam", shop.vergunninghouder || shop.exploitant || null],
-          ["kvk", shop.kvk_nummer],
-        ];
-        for (const [field, value] of sensitive) {
-          if (!value) continue;
-          const current = data[field];
-          if (current && norm(current) === norm(value)) continue;
-          const key = `${memberId}|${rid}||${field}`;
-          if (knownProposal.has(key)) continue;
-          knownProposal.add(key);
-          proposals.push({
-            member_id: memberId,
-            register_id: rid,
-            scope: "lid",
-            location_key: null,
-            field,
-            current_value: current ? String(current) : null,
-            proposed_value: String(value),
-            source: field === "kvk" ? "kvk" : "register",
-          });
+        // De vergunninghoudende B.V. hoort bij DEZE vestiging (zie candidates:
+        // vergunninghouder/exploitant/kvk op locatieniveau). Alleen als een lid
+        // precies één vestiging heeft én nog geen factuurnaam kent, stellen we
+        // die naam op lidniveau voor.
+        if (locaties.length <= 1) {
+          const factuurnaam = shop.vergunninghouder || shop.exploitant || null;
+          const current = data.bedrijfsnaam;
+          if (factuurnaam && (!current || String(current).trim() === "")) {
+            const key = `${memberId}|${rid}||bedrijfsnaam`;
+            if (!knownProposal.has(key)) {
+              knownProposal.add(key);
+              proposals.push({
+                member_id: memberId,
+                register_id: rid,
+                scope: "lid",
+                location_key: null,
+                field: "bedrijfsnaam",
+                current_value: current ? String(current) : null,
+                proposed_value: String(factuurnaam),
+                source: "register",
+              });
+            }
+          }
         }
+
       }
 
       if (changed) {
