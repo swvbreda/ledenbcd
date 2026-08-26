@@ -34,6 +34,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { invokeWithAuth } from "@/lib/invokeFunction";
+import { findAccountContact, renameMatchedContact, type AccountContactMatch } from "@/lib/accountContact";
 
 async function invokeManageUsers(body: Record<string, unknown>) {
   return await invokeWithAuth("manage-users", { body });
@@ -156,47 +157,50 @@ const AccountBeheerPage = () => {
     setExternalOrgLinksByUser(nextLinks);
   };
 
-  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[]; orgLinks: ExternalOrgLink[] } => {
+  const getDisplayInfo = (u: UserAccount): { label: string; personName: string; isBoard: boolean; memberIds: number[]; orgLinks: ExternalOrgLink[]; contactMatch: AccountContactMatch | null; contactMemberId: number | null } => {
     const ids = u.member_ids || (u.member_id ? [u.member_id] : []);
     const orgLinks = externalOrgLinksByUser[u.id] ?? [];
     if (isBoardEmail(u.email)) {
       const name = boardNameMap.get(u.email.toLowerCase()) || u.email.split("@")[0];
-      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids, orgLinks };
+      return { label: "Bestuur", personName: name, isBoard: true, memberIds: ids, orgLinks, contactMatch: null, contactMemberId: null };
     }
     if (ids.length > 0) {
       const firstMemberRaw = memberMap.get(ids[0]);
-      if (!firstMemberRaw) return { label: "Onbekend lid", personName: "", isBoard: false, memberIds: ids, orgLinks };
+      if (!firstMemberRaw) return { label: "Onbekend lid", personName: u.full_name || "", isBoard: false, memberIds: ids, orgLinks, contactMatch: null, contactMemberId: null };
 
       // Apply pending edits (member_edits) on top of raw member data
       const edits = editsMap?.get(ids[0]) as Partial<typeof firstMemberRaw> | undefined;
       const firstMember = edits ? { ...firstMemberRaw, ...edits } : firstMemberRaw;
 
-      // Match account email to the correct contact person within the member
-      const emailLower = u.email?.toLowerCase() ?? "";
-      let matchedName = "";
+      let contactMatch: AccountContactMatch | null = null;
+      let contactMemberId: number | null = null;
+      for (const memberId of ids) {
+        const rawMember = memberMap.get(memberId);
+        if (!rawMember) continue;
+        const memberEdits = editsMap?.get(memberId) as Partial<typeof rawMember> | undefined;
+        const effectiveMember = memberEdits ? { ...rawMember, ...memberEdits } : rawMember;
+        const match = findAccountContact(effectiveMember, u.email);
+        if (match) {
+          contactMatch = match;
+          contactMemberId = memberId;
+          break;
+        }
+      }
 
-      // Check primary contact
-      if (firstMember.email?.toLowerCase() === emailLower) {
-        matchedName = firstMember.contactpersoon;
-      }
-      // Check secondary contact
-      if (!matchedName && firstMember.email2?.toLowerCase() === emailLower) {
-        matchedName = firstMember.contactpersoon2 || "";
-      }
-      // Check contacts array
-      if (!matchedName && firstMember.contacten?.length) {
-        const match = firstMember.contacten.find((c) => c.email?.toLowerCase() === emailLower);
-        if (match) matchedName = match.naam;
-      }
-      // Fallback to primary contactpersoon
-      if (!matchedName) matchedName = firstMember.contactpersoon || "";
-
-      return { label: firstMember.naam || "Onbekend lid", personName: matchedName, isBoard: false, memberIds: ids, orgLinks };
+      return {
+        label: firstMember.naam || "Onbekend lid",
+        personName: contactMatch?.name || u.full_name || "",
+        isBoard: false,
+        memberIds: ids,
+        orgLinks,
+        contactMatch,
+        contactMemberId,
+      };
     }
     if (orgLinks.length > 0) {
-      return { label: orgLinks[0].name, personName: orgLinks[0].contactName || "", isBoard: false, memberIds: [], orgLinks };
+      return { label: orgLinks[0].name, personName: orgLinks[0].contactName || "", isBoard: false, memberIds: [], orgLinks, contactMatch: null, contactMemberId: null };
     }
-    return { label: "", personName: u.full_name || "", isBoard: false, memberIds: [], orgLinks: [] };
+    return { label: "", personName: u.full_name || "", isBoard: false, memberIds: [], orgLinks: [], contactMatch: null, contactMemberId: null };
   };
 
   const filteredUsers = useMemo(() => {
@@ -320,11 +324,16 @@ const AccountBeheerPage = () => {
       }
     }
 
-    // Save name change
+    // Save name change to the exact contact matched by this account email.
     if (editName.trim() && editName.trim() !== info.personName.trim()) {
-      // Case 1: linked to a member -> save to member_edits.contactpersoon
-      if (info.memberIds.length > 0) {
-        const memberId = info.memberIds[0];
+      if (info.contactMatch && info.contactMemberId) {
+        const memberId = info.contactMemberId;
+        const rawMember = memberMap.get(memberId);
+        if (!rawMember) {
+          setSaving(false);
+          toast.error("Gekoppeld lid niet gevonden");
+          return;
+        }
         const { data: existing } = await supabase
           .from("member_edits")
           .select("data")
@@ -332,7 +341,9 @@ const AccountBeheerPage = () => {
           .maybeSingle();
 
         const existingData = (existing?.data as Record<string, unknown>) || {};
-        const mergedData = { ...existingData, contactpersoon: editName };
+        const effectiveMember = { ...rawMember, ...existingData } as typeof rawMember;
+        const contactUpdate = renameMatchedContact(effectiveMember, info.contactMatch, editName.trim());
+        const mergedData = { ...existingData, ...contactUpdate };
 
         const { error: editError } = await supabase
           .from("member_edits")
