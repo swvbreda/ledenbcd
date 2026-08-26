@@ -155,3 +155,22 @@ export function useMemberLogosBulk(memberIds: number[]) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+/** Contactfoto's van meerdere leden tegelijk: { memberId: { slug: url } }. */
+export function useContactPhotosBulk(memberIds: number[]) {
+  const key = [...new Set(memberIds)].sort((a, b) => a - b).join(",");
+  return useQuery({
+    queryKey: ["contact-photos-bulk", key],
+    queryFn: async () => {
+      const ids = [...new Set(memberIds)];
+      const result: Record<number, Record<string, string>> = {};
+      for (const id of ids) {
+        const folder = await loadFolder(CONTACT_BUCKET, id);
+        if (Object.keys(folder).length) result[id] = folder;
+      }
+      return result;
+    },
+    enabled: memberIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
