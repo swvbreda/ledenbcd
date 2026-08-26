@@ -37,6 +37,13 @@ const norm = (v: unknown) =>
 
 const normPc = (v: unknown) => String(v ?? "").toUpperCase().replace(/\s+/g, "");
 
+/** Verwijdert tracking-parameters en fragmenten uit een URL. */
+const cleanWebsite = (url: string | null | undefined): string | null => {
+  const raw = (url ?? "").trim();
+  if (!raw) return null;
+  return raw.split(/[?#]/)[0].replace(/\/$/, "") || null;
+};
+
 function shopAddress(shop: any): string {
   return [shop.straat, [shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join("")]
     .filter(Boolean)
