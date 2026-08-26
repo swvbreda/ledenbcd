@@ -143,6 +143,12 @@ const GemeenteDetailPage = () => {
             {data.aangesloten} aangesloten coffeeshop{data.aangesloten !== 1 ? "s" : ""}
             {data.totaalNL > 0 && ` van ${data.totaalNL} totaal`}
           </p>
+          <button
+            onClick={() => navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(decodedGemeente)}`)}
+            className="text-xs text-primary hover:underline mt-1"
+          >
+            Bekijk registerdetails van deze gemeente →
+          </button>
         </div>
       </div>
 
