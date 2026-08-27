@@ -280,6 +280,15 @@ export default function ExpenseDialog({
                               {isContribution && (
                                 <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Bijdrage</div>
                               )}
+                              {e._mergedDuplicate && (
+                                <div
+                                  className="inline-block text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 rounded px-1 py-0.5"
+                                  title="Dezelfde betaling stond meerdere keren in het systeem. Die telt hier nog maar één keer mee."
+                                >
+                                  Samengevoegd
+                                </div>
+                              )}
+
                             </div>
                           </td>
                           <td className={`text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums ${isNegative ? "text-green-700" : ""}`}><CurrencyCell value={signedAmount} /></td>
