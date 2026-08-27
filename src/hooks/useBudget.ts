@@ -243,10 +243,14 @@ export function useBudgetCategories(year: number) {
       // Voorkeur: Ponto (live bankkoppeling).
       {
         const isPonto = (e: any) => String(e.id).startsWith("ponto:");
+        // Twee regels uit dezelfde bron zijn altijd twee echte betalingen
+        // (bijv. een maandelijks abonnement dat twee keer in dezelfde week
+        // afschrijft). Alleen Ponto tegenover de oude bankimport kan dubbel zijn.
+        const sameSource = (a: any, b: any) => isPonto(a) === isPonto(b);
         // Sorteer zodat Ponto-regels eerst worden gezien en behouden blijven.
         const sorted = [...bankAsExpenses].sort((a, b) => (isPonto(b) ? 1 : 0) - (isPonto(a) ? 1 : 0));
         const kept: any[] = [];
-        const invSeen = new Map<string, any>();
+        const invSeen: { key: string; entry: any }[] = [];
         const dateSeen: { key: string; day: number; entry: any }[] = [];
         for (const e of sorted) {
           const amtKey = Math.round((Number(e.amount) || 0) * 100);
@@ -254,19 +258,21 @@ export function useBudgetCategories(year: number) {
           const directionKey = e.direction || "out";
           if (invKey) {
             const key = `${directionKey}|${amtKey}|${invKey}`;
-            const prev = invSeen.get(key);
+            const prev = invSeen.find((s) => s.key === key && !sameSource(s.entry, e));
             if (prev) {
-              prev._mergedDuplicate = true;
+              prev.entry._mergedDuplicate = true;
               continue;
             }
-            invSeen.set(key, e);
+            invSeen.push({ key, entry: e });
             kept.push(e);
             continue;
           }
           const cpKey = normalizePartyKey(e.creditor_name || e.description);
           const baseKey = `${directionKey}|${amtKey}|${cpKey}`;
           const day = dayNumber(e.expense_date);
-          const dup = dateSeen.find((d) => d.key === baseKey && Math.abs(d.day - day) <= 4);
+          const dup = dateSeen.find(
+            (d) => d.key === baseKey && Math.abs(d.day - day) <= 4 && !sameSource(d.entry, e),
+          );
           if (dup) {
             dup.entry._mergedDuplicate = true;
             continue;
@@ -276,6 +282,7 @@ export function useBudgetCategories(year: number) {
         }
         bankAsExpenses = kept;
       }
+
 
       // Dedupliceer handmatige/Informer-boekingen tegen bankregels (over alle
       // posten heen): bestaat er een bankbetaling die vrijwel zeker dezelfde
