@@ -318,11 +318,26 @@ export default function ExpenseDialog({
                                   <ArrowDownToLine size={12} />
                                 </button>
                               )}
+                              {isBank && (
+                                <button
+                                  onClick={() => {
+                                    if (!confirm("Deze bankboeking loskoppelen van deze post? De banktransactie blijft bestaan, maar telt niet meer mee in de begroting.")) return;
+                                    const cleanId = e.id.split(":")[1];
+                                    if (e.id.startsWith("ponto:")) onUpdatePontoTransaction?.(cleanId, { budget_line_item_id: null });
+                                    else onUpdateBankTransaction?.(cleanId, { line_item_id: null });
+                                  }}
+                                  className="p-1 text-muted-foreground hover:text-destructive"
+                                  title="Loskoppelen van deze post"
+                                >
+                                  <Unlink size={12} />
+                                </button>
+                              )}
                               {!isBank && (
                                 <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                                   <Trash2 size={12} />
                                 </button>
                               )}
+
                             </div>
                           </td>
                         </tr>
