@@ -498,6 +498,7 @@ export default function FinancienPage() {
                 userId={user?.id || ""}
                 onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie ingediend") })}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
+                onUpdate={(id, fields) => internalMutations.update.mutate({ id, ...fields }, { onSuccess: () => toast.success("Declaratie bijgewerkt") })}
                 onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
               />
