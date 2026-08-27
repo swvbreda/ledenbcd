@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
-import { isSamePayment } from "@/lib/ledgerDedupe";
+import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
 
 
 export interface BudgetCategory {
@@ -311,10 +311,18 @@ export function useBudgetCategories(year: number) {
 
         // Ten slotte handmatige boekingen onderling: dezelfde betaling die twee
         // keer is ingeboekt (bijv. op twee posten) telt nog maar één keer mee.
+        // Verschillende factuurnummers = twee echte facturen: die blijven staan,
+        // ook als bedrag, leverancier en datum toevallig gelijk zijn.
         const keptManual: any[] = [];
         for (const e of expenses) {
           const cand = toLedger(e);
-          const dup = keptManual.find((k) => isSamePayment(toLedger(k), cand, { dayWindow: 3 }));
+          const candKeys = invoiceKeysOf(cand);
+          const dup = keptManual.find((k) => {
+            const kLedger = toLedger(k);
+            const kKeys = invoiceKeysOf(kLedger);
+            if (candKeys.length && kKeys.length && !sharesInvoiceNumber(kLedger, cand)) return false;
+            return isSamePayment(kLedger, cand, { dayWindow: 3 });
+          });
           if (dup) {
             dup._mergedDuplicate = true;
             continue;
@@ -322,6 +330,7 @@ export function useBudgetCategories(year: number) {
           keptManual.push(e);
         }
         expenses = keptManual;
+
       }
 
 
