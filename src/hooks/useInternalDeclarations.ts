@@ -96,5 +96,5 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, remove, approve, reject };
+  return { add, update, remove, approve, reject };
 }
