@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
-import { isSamePayment } from "@/lib/ledgerDedupe";
+import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
 
 
 export interface BudgetCategory {
