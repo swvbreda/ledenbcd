@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, ArrowDownToLine, Pencil, Check, X, UserPlus } from "lucide-react";
+import { Trash2, ArrowDownToLine, Pencil, Check, X, UserPlus, Unlink } from "lucide-react";
 import { useMemo, useState, Fragment } from "react";
 import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
