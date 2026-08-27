@@ -36,7 +36,10 @@ export interface BudgetExpense {
   paid_date: string | null;
   created_at: string;
   direction?: "in" | "out";
+  /** True als er een dubbele boeking van dezelfde betaling is samengevoegd. */
+  _mergedDuplicate?: boolean;
 }
+
 
 export interface BudgetBalanceItem {
   id: string;
@@ -232,65 +235,95 @@ export function useBudgetCategories(year: number) {
         bankAsExpenses = bankAsExpenses.concat(pontoAsExpenses);
       }
 
-      // Dedupliceer bankregels: ABN-import (bank_transactions) en Ponto
-      // (ponto_transactions) kunnen dezelfde betaling bevatten, soms met een
-      // dagverschil (executed_at vs booking date) en verschillende opmaak. We
-      // matchen daarom primair op factuurnummer + bedrag, en pas als er geen
-      // factuurnummer is op datum(±2) + bedrag + tegenpartij. Voorkeur: Ponto.
+      // Dedupliceer bankregels over ALLE begrotingsposten heen: ABN-import
+      // (bank_transactions) en Ponto (ponto_transactions) kunnen dezelfde
+      // betaling bevatten, soms met een dagverschil en andere opmaak, en soms
+      // op twee verschillende posten gekoppeld. We matchen primair op
+      // factuurnummer + bedrag, anders op datum(±4) + bedrag + tegenpartij.
+      // Voorkeur: Ponto (live bankkoppeling).
       {
         const isPonto = (e: any) => String(e.id).startsWith("ponto:");
+        // Twee regels uit dezelfde bron zijn altijd twee echte betalingen
+        // (bijv. een maandelijks abonnement dat twee keer in dezelfde week
+        // afschrijft). Alleen Ponto tegenover de oude bankimport kan dubbel zijn.
+        const sameSource = (a: any, b: any) => isPonto(a) === isPonto(b);
         // Sorteer zodat Ponto-regels eerst worden gezien en behouden blijven.
         const sorted = [...bankAsExpenses].sort((a, b) => (isPonto(b) ? 1 : 0) - (isPonto(a) ? 1 : 0));
         const kept: any[] = [];
-        const invSeen = new Map<string, any>();
+        const invSeen: { key: string; entry: any }[] = [];
         const dateSeen: { key: string; day: number; entry: any }[] = [];
         for (const e of sorted) {
           const amtKey = Math.round((Number(e.amount) || 0) * 100);
           const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
           const directionKey = e.direction || "out";
           if (invKey) {
-            const key = `${e.line_item_id}|${directionKey}|${amtKey}|${invKey}`;
-            if (invSeen.has(key)) continue;
-            invSeen.set(key, e);
+            const key = `${directionKey}|${amtKey}|${invKey}`;
+            const prev = invSeen.find((s) => s.key === key && !sameSource(s.entry, e));
+            if (prev) {
+              prev.entry._mergedDuplicate = true;
+              continue;
+            }
+            invSeen.push({ key, entry: e });
             kept.push(e);
             continue;
           }
           const cpKey = normalizePartyKey(e.creditor_name || e.description);
-          const baseKey = `${e.line_item_id}|${directionKey}|${amtKey}|${cpKey}`;
+          const baseKey = `${directionKey}|${amtKey}|${cpKey}`;
           const day = dayNumber(e.expense_date);
-          const dup = dateSeen.find((d) => d.key === baseKey && Math.abs(d.day - day) <= 4);
-          if (dup) continue;
+          const dup = dateSeen.find(
+            (d) => d.key === baseKey && Math.abs(d.day - day) <= 4 && !sameSource(d.entry, e),
+          );
+          if (dup) {
+            dup.entry._mergedDuplicate = true;
+            continue;
+          }
           dateSeen.push({ key: baseKey, day, entry: e });
           kept.push(e);
         }
         bankAsExpenses = kept;
       }
 
-      // Dedupliceer handmatige/Informer-boekingen tegen bankregels: bestaat er
-      // een bankbetaling die vrijwel zeker dezelfde betaling is (gelijk bedrag +
-      // factuurnummer, of gelijk bedrag + tegenpartij binnen 10 dagen), dan valt
-      // de handmatige versie weg zodat we niet dubbel tellen.
+
+      // Dedupliceer handmatige/Informer-boekingen tegen bankregels (over alle
+      // posten heen): bestaat er een bankbetaling die vrijwel zeker dezelfde
+      // betaling is (gelijk bedrag + factuurnummer, of gelijk bedrag +
+      // tegenpartij binnen 10 dagen), dan valt de handmatige versie weg zodat
+      // we niet dubbel tellen — ook niet als beide op een andere post staan.
       {
-        const bankLike = bankAsExpenses.map((b: any) => ({
-          date: b.expense_date,
-          amount: Number(b.amount) || 0,
-          counterparty: b.creditor_name || b.description,
-          description: b.description,
-          invoice: extractInvoiceReference(b.invoice_reference, b.description) || b.invoice_reference,
-          direction: b.direction || "out",
-        }));
-        expenses = expenses.filter((e: any) => {
-          const cand = {
-            date: e.expense_date,
-            amount: Number(e.amount) || 0,
-            counterparty: e.creditor_name || e.description,
-            description: e.description,
-            invoice: extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference,
-            direction: e.direction || "out",
-          };
-          return !bankLike.some((b) => isSamePayment(b, cand));
+        const toLedger = (e: any) => ({
+          date: e.expense_date,
+          amount: Number(e.amount) || 0,
+          counterparty: e.creditor_name || e.description,
+          description: e.description,
+          invoice: extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference,
+          direction: e.direction || "out",
         });
+        const bankLike = bankAsExpenses.map((b: any) => ({ entry: b, ledger: toLedger(b) }));
+        expenses = expenses.filter((e: any) => {
+          const cand = toLedger(e);
+          const hit = bankLike.find((b) => isSamePayment(b.ledger, cand));
+          if (hit) {
+            hit.entry._mergedDuplicate = true;
+            return false;
+          }
+          return true;
+        });
+
+        // Ten slotte handmatige boekingen onderling: dezelfde betaling die twee
+        // keer is ingeboekt (bijv. op twee posten) telt nog maar één keer mee.
+        const keptManual: any[] = [];
+        for (const e of expenses) {
+          const cand = toLedger(e);
+          const dup = keptManual.find((k) => isSamePayment(toLedger(k), cand, { dayWindow: 3 }));
+          if (dup) {
+            dup._mergedDuplicate = true;
+            continue;
+          }
+          keptManual.push(e);
+        }
+        expenses = keptManual;
       }
+
 
 
       // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen

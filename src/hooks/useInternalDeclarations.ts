@@ -57,6 +57,14 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: async ({ id, ...fields }: { id: string } & Partial<Omit<InternalDeclaration, "id">>) => {
+      const { error } = await supabase.from("internal_declarations").update(fields as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("internal_declarations").delete().eq("id", id);
@@ -64,6 +72,7 @@ export function useInternalDeclarationMutations(year: number) {
     },
     onSuccess: invalidate,
   });
+
 
   const approve = useMutation({
     mutationFn: async ({ id, reviewerId }: { id: string; reviewerId: string }) => {
@@ -87,5 +96,5 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, remove, approve, reject };
+  return { add, update, remove, approve, reject };
 }

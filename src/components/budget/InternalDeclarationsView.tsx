@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Trash2, Plus, Search, Download, ArrowUpDown, Check, X } from "lucide-react";
+import { useState, useMemo, Fragment } from "react";
+import { Trash2, Plus, Search, Download, ArrowUpDown, Check, X, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ interface Props {
   userId: string;
   onAdd: (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (id: string, fields: Partial<Omit<InternalDeclaration, "id">>) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }
@@ -42,14 +43,14 @@ const paidBadge = (paidAt: string | null) => {
 
 type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type" | "status";
 
-export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject }: Props) {
+export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onUpdate, onApprove, onReject }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("expense_date");
   const [sortAsc, setSortAsc] = useState(false);
   const [adding, setAdding] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     board_member_name: "",
     declaration_type: "reiskosten",
     appointment: "",
@@ -60,7 +61,63 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
     bank_account: "",
     account_holder: "",
     max_allowance_note: "",
-  });
+  };
+
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+
+  const startEdit = (d: InternalDeclaration) => {
+    setEditingId(d.id);
+    setEditForm({
+      board_member_name: d.board_member_name || "",
+      declaration_type: d.declaration_type || "reiskosten",
+      appointment: d.appointment || "",
+      trajectory: d.trajectory || "",
+      km_single: d.km_single != null ? String(d.km_single) : "",
+      km_return: d.km_return != null ? String(d.km_return) : "",
+      expense_date: d.expense_date || "",
+      bank_account: d.bank_account || "",
+      account_holder: d.account_holder || "",
+      max_allowance_note: d.max_allowance_note || "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm(emptyForm);
+  };
+
+  const saveEdit = (d: InternalDeclaration) => {
+    if (!onUpdate) return;
+    if (!editForm.board_member_name || !editForm.expense_date) {
+      toast.error("Naam en datum zijn verplicht");
+      return;
+    }
+    const kmSingle = editForm.km_single ? parseFloat(editForm.km_single) : null;
+    const kmReturn = editForm.km_return ? parseFloat(editForm.km_return) : null;
+    let amount = d.amount;
+    if (editForm.declaration_type === "reiskosten") {
+      amount = kmSingle != null ? (kmReturn ?? kmSingle * 2) * (d.km_rate || 0.23) : 0;
+    } else if (editForm.declaration_type === "woordvoering" || editForm.declaration_type === "penningmeester") {
+      amount = 210;
+    }
+    onUpdate(d.id, {
+      board_member_name: editForm.board_member_name,
+      declaration_type: editForm.declaration_type,
+      appointment: editForm.appointment || null,
+      trajectory: editForm.trajectory || null,
+      km_single: kmSingle,
+      km_return: kmReturn,
+      amount: Math.round(amount * 100) / 100,
+      expense_date: editForm.expense_date,
+      bank_account: editForm.bank_account || null,
+      account_holder: editForm.account_holder || null,
+      max_allowance_note: editForm.max_allowance_note || null,
+    });
+    cancelEdit();
+  };
+
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -259,8 +316,13 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
             </tr>
           </thead>
           <tbody>
-            {filtered.map((d) => (
-              <tr key={d.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+            {filtered.map((d) => {
+              const isOwnPending = d.status === "pending" && !d.paid_at && d.submitted_by === userId;
+              const canModify = isAdmin || isOwnPending;
+              const isEditing = editingId === d.id;
+              return (
+              <Fragment key={d.id}>
+              <tr className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                 <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
                 <td className="px-2 py-1.5">{d.board_member_name}</td>
                 <td className="px-2 py-1.5">{d.appointment || ""}</td>
@@ -273,26 +335,60 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
                 <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
                 <td className="px-2 py-1.5 text-center whitespace-nowrap">{paidBadge(d.paid_at)}</td>
                 <td className="px-1 whitespace-nowrap">
-                  {isAdmin && (
-                    <span className="inline-flex gap-0.5">
-                      {d.status !== "approved" && (
-                        <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
-                          <Check size={14} />
-                        </button>
-                      )}
-                      {d.status !== "rejected" && (
-                        <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
-                          <X size={14} />
-                        </button>
-                      )}
+                  <span className="inline-flex gap-0.5">
+                    {isAdmin && d.status !== "approved" && (
+                      <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
+                        <Check size={14} />
+                      </button>
+                    )}
+                    {isAdmin && d.status !== "rejected" && (
+                      <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
+                        <X size={14} />
+                      </button>
+                    )}
+                    {canModify && onUpdate && (
+                      <button onClick={() => (isEditing ? cancelEdit() : startEdit(d))} className="p-1 text-muted-foreground hover:text-foreground" title="Bewerken">
+                        <Pencil size={12} />
+                      </button>
+                    )}
+                    {canModify && (
                       <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                         <Trash2 size={12} />
                       </button>
-                    </span>
-                  )}
+                    )}
+                  </span>
                 </td>
               </tr>
-            ))}
+              {isEditing && (
+                <tr className="border-b border-border bg-muted/20">
+                  <td colSpan={12} className="px-3 py-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <Input placeholder="Naam bestuurslid" value={editForm.board_member_name} onChange={(e) => setEditForm({ ...editForm, board_member_name: e.target.value })} className="h-8 text-sm" />
+                      <select value={editForm.declaration_type} onChange={(e) => setEditForm({ ...editForm, declaration_type: e.target.value })} className="h-8 text-sm rounded-md border border-input bg-background px-2">
+                        <option value="reiskosten">Reiskosten</option>
+                        <option value="woordvoering">Woordvoering</option>
+                        <option value="penningmeester">Penningmeester</option>
+                      </select>
+                      <Input placeholder="Omschrijving" value={editForm.appointment} onChange={(e) => setEditForm({ ...editForm, appointment: e.target.value })} className="h-8 text-sm" />
+                      <Input placeholder="Traject" value={editForm.trajectory} onChange={(e) => setEditForm({ ...editForm, trajectory: e.target.value })} className="h-8 text-sm" />
+                      <Input type="number" placeholder="Km enkel" value={editForm.km_single} onChange={(e) => setEditForm({ ...editForm, km_single: e.target.value })} className="h-8 text-sm" />
+                      <Input type="number" placeholder="Km retour" value={editForm.km_return} onChange={(e) => setEditForm({ ...editForm, km_return: e.target.value })} className="h-8 text-sm" />
+                      <Input type="date" value={editForm.expense_date} onChange={(e) => setEditForm({ ...editForm, expense_date: e.target.value })} className="h-8 text-sm" />
+                      <Input placeholder="Rekeningnummer" value={editForm.bank_account} onChange={(e) => setEditForm({ ...editForm, bank_account: e.target.value })} className="h-8 text-sm" />
+                      <Input placeholder="Rekeninghouder" value={editForm.account_holder} onChange={(e) => setEditForm({ ...editForm, account_holder: e.target.value })} className="h-8 text-sm" />
+                      <Input placeholder="Max vergoeding notitie" value={editForm.max_allowance_note} onChange={(e) => setEditForm({ ...editForm, max_allowance_note: e.target.value })} className="h-8 text-sm" />
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" className="h-8" onClick={() => saveEdit(d)}>Opslaan</Button>
+                      <Button size="sm" variant="ghost" className="h-8" onClick={cancelEdit}>Annuleer</Button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </Fragment>
+              );
+            })}
+
             {filtered.length === 0 && (
               <tr><td colSpan={13} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
             )}

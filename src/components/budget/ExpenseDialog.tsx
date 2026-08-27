@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, ArrowDownToLine, Pencil, Check, X, UserPlus } from "lucide-react";
+import { Trash2, ArrowDownToLine, Pencil, Check, X, UserPlus, Unlink } from "lucide-react";
 import { useMemo, useState, Fragment } from "react";
 import type { BudgetExpense, BudgetCategory } from "@/hooks/useBudget";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
@@ -280,6 +280,15 @@ export default function ExpenseDialog({
                               {isContribution && (
                                 <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Bijdrage</div>
                               )}
+                              {e._mergedDuplicate && (
+                                <div
+                                  className="inline-block text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 rounded px-1 py-0.5"
+                                  title="Dezelfde betaling stond meerdere keren in het systeem. Die telt hier nog maar één keer mee."
+                                >
+                                  Samengevoegd
+                                </div>
+                              )}
+
                             </div>
                           </td>
                           <td className={`text-right px-2 py-1 whitespace-nowrap font-medium tabular-nums ${isNegative ? "text-green-700" : ""}`}><CurrencyCell value={signedAmount} /></td>
@@ -318,11 +327,26 @@ export default function ExpenseDialog({
                                   <ArrowDownToLine size={12} />
                                 </button>
                               )}
+                              {isBank && (
+                                <button
+                                  onClick={() => {
+                                    if (!confirm("Deze bankboeking loskoppelen van deze post? De banktransactie blijft bestaan, maar telt niet meer mee in de begroting.")) return;
+                                    const cleanId = e.id.split(":")[1];
+                                    if (e.id.startsWith("ponto:")) onUpdatePontoTransaction?.(cleanId, { budget_line_item_id: null });
+                                    else onUpdateBankTransaction?.(cleanId, { line_item_id: null });
+                                  }}
+                                  className="p-1 text-muted-foreground hover:text-destructive"
+                                  title="Loskoppelen van deze post"
+                                >
+                                  <Unlink size={12} />
+                                </button>
+                              )}
                               {!isBank && (
                                 <button onClick={() => onDeleteExpense(e.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
                                   <Trash2 size={12} />
                                 </button>
                               )}
+
                             </div>
                           </td>
                         </tr>
