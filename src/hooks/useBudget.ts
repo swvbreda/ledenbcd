@@ -36,7 +36,10 @@ export interface BudgetExpense {
   paid_date: string | null;
   created_at: string;
   direction?: "in" | "out";
+  /** True als er een dubbele boeking van dezelfde betaling is samengevoegd. */
+  _mergedDuplicate?: boolean;
 }
+
 
 export interface BudgetBalanceItem {
   id: string;
