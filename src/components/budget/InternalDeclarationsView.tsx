@@ -43,14 +43,14 @@ const paidBadge = (paidAt: string | null) => {
 
 type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type" | "status";
 
-export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject }: Props) {
+export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onUpdate, onApprove, onReject }: Props) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("expense_date");
   const [sortAsc, setSortAsc] = useState(false);
   const [adding, setAdding] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     board_member_name: "",
     declaration_type: "reiskosten",
     appointment: "",
@@ -61,7 +61,63 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
     bank_account: "",
     account_holder: "",
     max_allowance_note: "",
-  });
+  };
+
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+
+  const startEdit = (d: InternalDeclaration) => {
+    setEditingId(d.id);
+    setEditForm({
+      board_member_name: d.board_member_name || "",
+      declaration_type: d.declaration_type || "reiskosten",
+      appointment: d.appointment || "",
+      trajectory: d.trajectory || "",
+      km_single: d.km_single != null ? String(d.km_single) : "",
+      km_return: d.km_return != null ? String(d.km_return) : "",
+      expense_date: d.expense_date || "",
+      bank_account: d.bank_account || "",
+      account_holder: d.account_holder || "",
+      max_allowance_note: d.max_allowance_note || "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm(emptyForm);
+  };
+
+  const saveEdit = (d: InternalDeclaration) => {
+    if (!onUpdate) return;
+    if (!editForm.board_member_name || !editForm.expense_date) {
+      toast.error("Naam en datum zijn verplicht");
+      return;
+    }
+    const kmSingle = editForm.km_single ? parseFloat(editForm.km_single) : null;
+    const kmReturn = editForm.km_return ? parseFloat(editForm.km_return) : null;
+    let amount = d.amount;
+    if (editForm.declaration_type === "reiskosten") {
+      amount = kmSingle != null ? (kmReturn ?? kmSingle * 2) * (d.km_rate || 0.23) : 0;
+    } else if (editForm.declaration_type === "woordvoering" || editForm.declaration_type === "penningmeester") {
+      amount = 210;
+    }
+    onUpdate(d.id, {
+      board_member_name: editForm.board_member_name,
+      declaration_type: editForm.declaration_type,
+      appointment: editForm.appointment || null,
+      trajectory: editForm.trajectory || null,
+      km_single: kmSingle,
+      km_return: kmReturn,
+      amount: Math.round(amount * 100) / 100,
+      expense_date: editForm.expense_date,
+      bank_account: editForm.bank_account || null,
+      account_holder: editForm.account_holder || null,
+      max_allowance_note: editForm.max_allowance_note || null,
+    });
+    cancelEdit();
+  };
+
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
