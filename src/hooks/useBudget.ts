@@ -314,7 +314,7 @@ export function useBudgetCategories(year: number) {
         const keptManual: any[] = [];
         for (const e of expenses) {
           const cand = toLedger(e);
-          const dup = keptManual.find((k) => isSamePayment(toLedger(k), cand));
+          const dup = keptManual.find((k) => isSamePayment(toLedger(k), cand, { dayWindow: 3 }));
           if (dup) {
             dup._mergedDuplicate = true;
             continue;
