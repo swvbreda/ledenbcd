@@ -14,6 +14,7 @@ interface Props {
   userId: string;
   onAdd: (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (id: string, fields: Partial<Omit<InternalDeclaration, "id">>) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }
