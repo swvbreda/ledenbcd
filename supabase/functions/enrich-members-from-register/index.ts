@@ -209,8 +209,9 @@ Deno.serve(async (req) => {
   try {
     const { data: links, error: linkErr } = await db
       .from("coffeeshop_member_links")
-      .select("register_id, member_id, status")
+      .select("register_id, member_id, status, location_key")
       .eq("status", "bevestigd");
+
     if (linkErr) throw linkErr;
 
     const registerIds = Array.from(new Set((links ?? []).map((l: any) => l.register_id)));
