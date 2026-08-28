@@ -409,8 +409,9 @@ const MemberDetail = () => {
                     >
                       <RefreshCw size={14} className={runEnrichment.isPending ? "animate-spin" : ""} />
                       Bijwerken vanuit register
+                    </Button>
+                  )}
 
-                  </Button>
                   {isAdmin && isLead && member && (
                     <ConvertLeadDialog
                       lead={member}
