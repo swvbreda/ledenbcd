@@ -365,6 +365,8 @@ export function useResolveProposal() {
       toast.success(vars.apply ? "Overgenomen" : "Genegeerd");
       qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
       qc.invalidateQueries({ queryKey: ["members-data"] });
+      qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+
     },
     onError: (e: any) => toast.error(e.message ?? "Bijwerken mislukt"),
   });
