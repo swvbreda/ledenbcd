@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { findMemberLocation } from "@/lib/registerLocationMatch";
+import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
 
 export type RegisterShop = {
   id: string;
