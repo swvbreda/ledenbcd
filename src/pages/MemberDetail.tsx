@@ -90,41 +90,48 @@ const MemberDetail = () => {
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
     [registerLinks, memberId],
   );
-  // Koppeling per vestiging: eerst op vestigingssleutel, daarna terugval op adres/postcode/plaats.
+  // Koppeling per vestiging: eerst op exacte vestigingssleutel, daarna terugval
+  // op de registerregel zelf (postcode + huisnummer, naam + plaats, adres) zodat
+  // een verhuisde of licht afwijkende vestiging niet als "niet gekoppeld" oogt.
   const linkByLocation = useMemo(() => {
     const map = new Map<string, (typeof memberLinks)[number]>();
-    const norm = (v?: string | null) => (v ?? "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
     const locs = (member?.locaties ?? []) as any[];
+    const better = (
+      current: (typeof memberLinks)[number] | undefined,
+      candidate: (typeof memberLinks)[number],
+    ) => !current || (current.status !== "bevestigd" && candidate.status === "bevestigd");
 
+    const assign = (loc: any, link: (typeof memberLinks)[number]) => {
+      const key = locationKey(loc);
+      if (better(map.get(key), link)) map.set(key, link);
+    };
+
+    const pending: typeof memberLinks = [];
+
+    // 1. Exacte sleutel wint altijd.
     memberLinks.forEach((l) => {
-      if (!l.location_key) return;
-      const current = map.get(l.location_key);
-      if (!current || (current.status !== "bevestigd" && l.status === "bevestigd")) {
-        map.set(l.location_key, l);
-      }
+      const exact = l.location_key
+        ? locs.find((loc) => locationKeyOf(loc) === l.location_key!.toLowerCase())
+        : undefined;
+      if (exact) assign(exact, l);
+      else pending.push(l);
     });
 
-    memberLinks
-      .filter((l) => !l.location_key)
-      .forEach((l) => {
-        const shop = shopById.get(l.register_id);
-        if (!shop) return;
-        const shopPc = norm(shop.postcode);
-        const shopAdr = norm([shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].join(" "));
-        const shopPlaats = norm(shop.plaats);
-        const candidates = locs.filter((loc) => {
-          if (shopPc && norm(loc.postcode) === shopPc) return true;
-          if (shopAdr && norm(loc.adres) === shopAdr && norm(loc.plaats) === shopPlaats) return true;
-          return false;
-        });
-        const inPlaats = candidates.length ? candidates : locs.filter((loc) => shopPlaats && norm(loc.plaats) === shopPlaats);
-        if (inPlaats.length !== 1) return;
-        const key = locationKey(inPlaats[0]);
-        if (!map.has(key)) map.set(key, l);
+    // 2. Terugval via gedeelde matchlogica op basis van de registerregel.
+    pending.forEach((l) => {
+      const shop = shopById.get(l.register_id);
+      const taken = new Set(Array.from(map.values()).map((x) => x.id));
+      const free = locs.filter((loc) => {
+        const existing = map.get(locationKey(loc));
+        return !existing || !taken.has(existing.id);
       });
+      const match = findMemberLocation(free.length ? free : locs, l.location_key, shop ?? null);
+      if (match) assign(match, l);
+    });
 
     return map;
   }, [memberLinks, shopById, member?.locaties]);
+
 
   const matchedLinkIds = useMemo(
     () => new Set(Array.from(linkByLocation.values()).map((l) => l.id)),
