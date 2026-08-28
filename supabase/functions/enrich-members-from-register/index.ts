@@ -344,12 +344,23 @@ Deno.serve(async (req) => {
     // Openstaande/genegeerde voorstellen zodat we niets dubbel of opnieuw voorstellen
     const { data: existingProposals } = await db
       .from("register_enrichment_proposals")
-      .select("member_id, register_id, location_key, field, status");
+      .select("id, member_id, register_id, location_key, field, status, scope");
     const knownProposal = new Set(
       (existingProposals ?? []).map(
         (p: any) => `${p.member_id}|${p.register_id ?? ""}|${p.location_key ?? ""}|${p.field}`,
       ),
     );
+    // Een koppeling wijst precies één vestiging aan: dedupliceer daarom op
+    // (lid, registershop, veld). De locatiesleutel verschuift bij een verhuizing
+    // en mag dus geen dubbele of teruggekeerde voorstellen veroorzaken.
+    const knownByLink = new Map<string, any>();
+    for (const p of existingProposals ?? []) {
+      if ((p as any).scope !== "locatie" || !(p as any).register_id) continue;
+      knownByLink.set(`${p.member_id}|${p.register_id}|${p.field}`, p);
+    }
+    /** Voorstellen waarvan de locatiesleutel is verschoven, bijwerken. */
+    const keyFixes: Array<{ id: string; location_key: string }> = [];
+
 
     const byMember = new Map<number, Array<{ rid: string; linkKey: string | null }>>();
     for (const l of links ?? []) {
@@ -458,8 +469,18 @@ Deno.serve(async (req) => {
             changed = true;
           } else if (norm(current) !== norm(value)) {
             const key = `${memberId}|${rid}|${locKey}|${field}`;
-            if (!knownProposal.has(key)) {
+            const linkScoped = `${memberId}|${rid}|${field}`;
+            const prior = knownByLink.get(linkScoped);
+            if (prior) {
+              // Zelfde vestiging, verschoven sleutel: bijwerken i.p.v. dupliceren.
+              if ((prior.location_key ?? "") !== locKey && prior.id) {
+                keyFixes.push({ id: prior.id, location_key: locKey });
+                prior.location_key = locKey;
+              }
+            } else if (!knownProposal.has(key)) {
               knownProposal.add(key);
+              knownByLink.set(linkScoped, { location_key: locKey, field });
+
               proposals.push({
                 member_id: memberId,
                 register_id: rid,
@@ -539,7 +560,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Verschoven locatiesleutels bijwerken zodat de vestiging één groep blijft
+    for (const fix of keyFixes) {
+      const { error } = await db
+        .from("register_enrichment_proposals")
+        .update({ location_key: fix.location_key })
+        .eq("id", fix.id);
+      if (error) console.warn("locatiesleutel bijwerken mislukt:", error.message);
+    }
+
     let proposalsSaved = 0;
+
     for (let i = 0; i < proposals.length; i += 200) {
       const chunk = proposals.slice(i, i + 200);
       const { error } = await db.from("register_enrichment_proposals").insert(chunk);

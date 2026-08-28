@@ -80,7 +80,9 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
 
       for (const p of items) {
         const isLocation = p.scope === "locatie";
-        const key = isLocation ? `loc:${p.location_key ?? p.register_id ?? "?"}` : "algemeen";
+        // Groepeer per registervestiging: de locatiesleutel kan na een
+        // verhuizing verschuiven en zou de vestiging anders opsplitsen.
+        const key = isLocation ? `loc:${p.register_id ?? p.location_key ?? "?"}` : "algemeen";
         let group = groups.get(key);
         if (!group) {
           const shop = p.register_id ? ctx?.shops.get(p.register_id) : undefined;
