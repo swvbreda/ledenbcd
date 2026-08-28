@@ -390,6 +390,30 @@ export function useRunEnrichment() {
   });
 }
 
+/** Start het bijwerken vanuit het register voor één lid of één vestiging. */
+export function useRunEnrichmentScoped() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { memberId?: number | null; registerId?: string | null }) => {
+      const { error } = await supabase.rpc("trigger_register_enrichment_scoped" as any, {
+        _member_id: input.memberId ?? null,
+        _register_id: input.registerId ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Bijwerken gestart — even geduld");
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
+        qc.invalidateQueries({ queryKey: ["members-data"] });
+        qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+      }, 8000);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Bijwerken mislukt"),
+  });
+}
+
+
 /** Context bij verrijkingsvoorstellen: ledenlocaties en de gekoppelde registervestigingen. */
 export function useEnrichmentContext(
   memberIds: number[],
