@@ -476,15 +476,25 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       }
     }
 
-    const lineId = contribLineByYear.get(hit.year);
+    // Ontvangstjaar bepaalt waar de boeking landt. Hoort de betaling bij een
+    // contributiefactuur van een eerder jaar (nabetaling), dan valt zij onder
+    // "Donaties en overige baten" van het ontvangstjaar; anders onder Contributies.
+    const receiptYear = new Date(paidAt).getFullYear() || hit.year;
+    const isNabetaling = hit.year < receiptYear;
+    const lineId = isNabetaling
+      ? donationLineByYear.get(receiptYear) ?? contribLineByYear.get(hit.year)
+      : contribLineByYear.get(hit.year);
     await supabase
       .from("ponto_transactions")
       .update({
         budget_line_item_id: lineId ?? null,
-        dossier: `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
+        dossier: isNabetaling
+          ? `Nabetaling ${hit.year} · #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`
+          : `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
         match_strategy: hit.strategy,
       })
       .eq("id", t.id);
+
 
     // Trigger paidByMemberYear-update zodat volgende iteraties dit meenemen
     const k = `${hit.member_id}|${hit.year}`;
