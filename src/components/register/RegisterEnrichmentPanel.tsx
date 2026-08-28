@@ -200,7 +200,15 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 <div key={group.key} className="rounded-lg border">
                   <div className="flex flex-wrap items-start justify-between gap-2 border-b bg-muted/40 px-3 py-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{group.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        {group.title}
+                        {group.isMove && (
+                          <Badge className="ml-2 align-middle" variant="default">
+                            Verhuizing
+                          </Badge>
+                        )}
+                      </p>
+
                       {group.subtitle && (
                         <p className="text-xs text-muted-foreground break-words">{group.subtitle}</p>
                       )}
