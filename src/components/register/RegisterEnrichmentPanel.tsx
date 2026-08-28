@@ -44,8 +44,13 @@ type Group = {
   subtitle: string;
   registerLine: string | null;
   matched: boolean;
+  isMove: boolean;
   items: EnrichmentProposal[];
 };
+
+/** Adres- en postcodewijzigingen van een gekoppelde vestiging = verhuizing. */
+const MOVE_FIELDS = new Set(["adres", "postcode"]);
+
 
 const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
   const { data: proposals = [], isLoading } = useEnrichmentProposals();
@@ -118,11 +123,22 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 }`
               : null,
             matched: isLocation ? !!loc : true,
+            isMove: false,
+
             items: [],
           };
           groups.set(key, group);
         }
         group.items.push(p);
+      }
+
+      for (const group of groups.values()) {
+        group.isMove =
+          group.isLocation && group.items.some((p) => MOVE_FIELDS.has(p.field));
+        // Adres eerst, dan postcode: zo blijft de vestiging steeds vindbaar.
+        group.items.sort(
+          (a, b) => (a.field === "adres" ? -1 : 0) - (b.field === "adres" ? -1 : 0),
+        );
       }
 
       return {
@@ -131,6 +147,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
         groups: Array.from(groups.values()),
       };
     });
+
   }, [proposals, ctx, memberName]);
 
   const applyGroup = async (group: Group, apply: boolean) => {
@@ -183,7 +200,15 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 <div key={group.key} className="rounded-lg border">
                   <div className="flex flex-wrap items-start justify-between gap-2 border-b bg-muted/40 px-3 py-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{group.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        {group.title}
+                        {group.isMove && (
+                          <Badge className="ml-2 align-middle" variant="default">
+                            Verhuizing
+                          </Badge>
+                        )}
+                      </p>
+
                       {group.subtitle && (
                         <p className="text-xs text-muted-foreground break-words">{group.subtitle}</p>
                       )}
@@ -206,7 +231,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                         disabled={busy || !group.matched}
                         onClick={() => void applyGroup(group, true)}
                       >
-                        Alles overnemen
+                        {group.isMove ? "Verhuizing overnemen" : "Alles overnemen"}
                       </Button>
                       <Button
                         size="sm"

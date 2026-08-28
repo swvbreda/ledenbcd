@@ -60,7 +60,35 @@ function locHouseNumber(adres: string | undefined): string {
   return m ? m[1] : "";
 }
 
+/** Samengestelde koppelsleutel `naam|adres|postcode` van een ledenlocatie. */
+const compactKey = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function locationKeyOf(loc: any): string {
+  return [compactKey(loc?.naam), compactKey(loc?.adres), compactKey(loc?.postcode)].join("|");
+}
+
+/** Vindt de ledenlocatie waar een bevestigde koppeling naar verwijst. */
+function findByLinkKey(locaties: any[], linkKey: string | null | undefined): any | null {
+  const key = String(linkKey ?? "").trim().toLowerCase();
+  if (!key) return null;
+  if (key.includes("|")) {
+    const [n, a, p] = key.split("|");
+    return (
+      locaties.find((l) => locationKeyOf(l) === key) ??
+      locaties.find((l) => !!a && compactKey(l?.adres) === a) ??
+      locaties.find((l) => !!p && compactKey(l?.postcode) === p) ??
+      locaties.find((l) => !!n && compactKey(l?.naam) === n) ??
+      null
+    );
+  }
+  return (
+    locaties.find((l) => normPc(l?.postcode) === normPc(key)) ??
+    locaties.find((l) => norm(l?.naam) === norm(key)) ??
+    null
+  );
+}
+
 /** Bepaalt of een bestaande locatie dezelfde vestiging is als de registershop. */
+
 function sameLocation(loc: any, shop: any): boolean {
   const pcA = normPc(loc?.postcode);
   const pcB = normPc(shop.postcode);
@@ -209,8 +237,9 @@ Deno.serve(async (req) => {
   try {
     const { data: links, error: linkErr } = await db
       .from("coffeeshop_member_links")
-      .select("register_id, member_id, status")
+      .select("register_id, member_id, status, location_key")
       .eq("status", "bevestigd");
+
     if (linkErr) throw linkErr;
 
     const registerIds = Array.from(new Set((links ?? []).map((l: any) => l.register_id)));
@@ -311,12 +340,13 @@ Deno.serve(async (req) => {
       ),
     );
 
-    const byMember = new Map<number, string[]>();
+    const byMember = new Map<number, Array<{ rid: string; linkKey: string | null }>>();
     for (const l of links ?? []) {
       const arr = byMember.get(l.member_id) ?? [];
-      arr.push(l.register_id);
+      arr.push({ rid: l.register_id, linkKey: (l as any).location_key ?? null });
       byMember.set(l.member_id, arr);
     }
+
 
     const proposals: Proposal[] = [];
     let membersUpdated = 0;
@@ -349,14 +379,20 @@ Deno.serve(async (req) => {
         if (staleErr) console.warn("oude algemene voorstellen opschonen mislukt:", staleErr.message);
       }
 
-      for (const rid of shopIds) {
+      for (const { rid, linkKey } of shopIds) {
         const shop = shopById.get(rid);
         if (!shop || shop.vervallen) continue;
 
-        let loc = locaties.find((l) => sameLocation(l, shop));
+        // De bevestigde koppeling is leidend: die wijst de bestaande vestiging
+        // aan, ook wanneer de shop in het register is verhuisd. Pas als de
+        // sleutel niets oplevert, zoeken we op adres/naam.
+        let loc = findByLinkKey(locaties, linkKey) ?? locaties.find((l) => sameLocation(l, shop));
         // De sleutel verwijst naar de bestaande ledenlocatie. Gebruik daarom de
-        // huidige postcode van die locatie, niet de mogelijk gewijzigde registerpostcode.
-        const locKey = loc ? normPc(loc.postcode) || norm(loc.naam) : normPc(shop.postcode) || norm(shop.naam);
+        // huidige gegevens van die locatie, niet het mogelijk gewijzigde registeradres.
+        const locKey = loc
+          ? linkKey || normPc(loc.postcode) || norm(loc.naam)
+          : normPc(shop.postcode) || norm(shop.naam);
+
 
         const ubo = uboByRegister.get(rid) ?? [];
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { findMemberLocation } from "@/lib/registerLocationMatch";
+import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
 
 export type RegisterShop = {
   id: string;
@@ -329,6 +329,17 @@ export function useResolveProposal() {
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;
+
+          // Bij een verhuizing (adres/postcode) verschuift ook de koppeling mee,
+          // zodat de registershop aan dezelfde vestiging gekoppeld blijft.
+          if (proposal.register_id && ["adres", "postcode"].includes(proposal.field)) {
+            const { error: linkErr } = await supabase
+              .from("coffeeshop_member_links")
+              .update({ location_key: locationKeyOf(match) })
+              .eq("register_id", proposal.register_id)
+              .eq("member_id", proposal.member_id);
+            if (linkErr) throw linkErr;
+          }
         } else {
           data[proposal.field] = proposal.proposed_value;
         }
@@ -339,6 +350,7 @@ export function useResolveProposal() {
           .eq("id", proposal.member_id);
         if (upErr) throw upErr;
       }
+
 
       const { error: statusErr } = await supabase
         .from("register_enrichment_proposals" as any)
@@ -353,6 +365,8 @@ export function useResolveProposal() {
       toast.success(vars.apply ? "Overgenomen" : "Genegeerd");
       qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
       qc.invalidateQueries({ queryKey: ["members-data"] });
+      qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
+
     },
     onError: (e: any) => toast.error(e.message ?? "Bijwerken mislukt"),
   });

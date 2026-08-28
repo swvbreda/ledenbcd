@@ -25,7 +25,13 @@ const registerAddress = (shop: RegisterLocationReference) =>
     .filter(Boolean)
     .join(" ");
 
-/** Zoekt de locatie van een lid die bij een `location_key` hoort (postcode of genormaliseerde naam). */
+/** Samengestelde sleutel `naam|adres|postcode` zoals gebruikt in koppelingen. */
+const compact = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+export function locationKeyOf(loc: MemberLocation | null | undefined): string {
+  return [compact(loc?.naam), compact(loc?.adres), compact(loc?.postcode)].join("|");
+}
+
+/** Zoekt de locatie van een lid die bij een `location_key` hoort (samengesteld, postcode of naam). */
 export function findMemberLocation(
   locaties: MemberLocation[] | undefined | null,
   locationKey: string | null | undefined,
@@ -33,17 +39,32 @@ export function findMemberLocation(
   alternateKeys: Array<string | null | undefined> = [],
 ): MemberLocation | null {
   const list = Array.isArray(locaties) ? locaties : [];
-  const key = normPostcode(locationKey);
-  const direct = key
-    ? list.find((l) => normPostcode(l?.postcode) === key) ??
-      list.find((l) => normName(l?.naam) === normName(locationKey))
+  const rawKey = String(locationKey ?? "").trim();
+  const composite = rawKey.includes("|")
+    ? list.find((l) => locationKeyOf(l) === rawKey.toLowerCase()) ??
+      list.find((l) => {
+        const [n, a, p] = rawKey.toLowerCase().split("|");
+        return (
+          (!!p && compact(l?.postcode) === p && (!a || compact(l?.adres) === a)) ||
+          (!!a && compact(l?.adres) === a) ||
+          (!!n && compact(l?.naam) === n)
+        );
+      })
     : null;
+  const key = normPostcode(locationKey);
+  const direct =
+    composite ??
+    (key
+      ? list.find((l) => normPostcode(l?.postcode) === key) ??
+        list.find((l) => normName(l?.naam) === normName(locationKey))
+      : null);
   const alternate = alternateKeys
     .map(normPostcode)
     .filter(Boolean)
     .map((alternateKey) => list.find((l) => normPostcode(l?.postcode) === alternateKey))
     .find(Boolean);
   if (direct || alternate || !shop) return direct ?? alternate ?? null;
+
 
   const shopPostcode = normPostcode(shop.postcode);
   const shopName = normName(shop.naam);
