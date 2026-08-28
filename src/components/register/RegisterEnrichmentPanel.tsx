@@ -132,12 +132,22 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
         group.items.push(p);
       }
 
+      for (const group of groups.values()) {
+        group.isMove =
+          group.isLocation && group.items.some((p) => MOVE_FIELDS.has(p.field));
+        // Adres eerst, dan postcode: zo blijft de vestiging steeds vindbaar.
+        group.items.sort(
+          (a, b) => (a.field === "adres" ? -1 : 0) - (b.field === "adres" ? -1 : 0),
+        );
+      }
+
       return {
         memberId,
         memberLabel: memberName.get(memberId) ?? `Lid #${memberId}`,
         groups: Array.from(groups.values()),
       };
     });
+
   }, [proposals, ctx, memberName]);
 
   const applyGroup = async (group: Group, apply: boolean) => {
