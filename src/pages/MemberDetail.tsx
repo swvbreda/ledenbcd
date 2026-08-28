@@ -32,7 +32,9 @@ import {
   useCoffeeshopRegister,
   useRegisterLinks,
   useRegisterUboBulk,
+  useRunEnrichmentScoped,
 } from "@/hooks/useCoffeeshopRegister";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
