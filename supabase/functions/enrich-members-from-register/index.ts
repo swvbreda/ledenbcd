@@ -469,8 +469,18 @@ Deno.serve(async (req) => {
             changed = true;
           } else if (norm(current) !== norm(value)) {
             const key = `${memberId}|${rid}|${locKey}|${field}`;
-            if (!knownProposal.has(key)) {
+            const linkScoped = `${memberId}|${rid}|${field}`;
+            const prior = knownByLink.get(linkScoped);
+            if (prior) {
+              // Zelfde vestiging, verschoven sleutel: bijwerken i.p.v. dupliceren.
+              if ((prior.location_key ?? "") !== locKey && prior.id) {
+                keyFixes.push({ id: prior.id, location_key: locKey });
+                prior.location_key = locKey;
+              }
+            } else if (!knownProposal.has(key)) {
               knownProposal.add(key);
+              knownByLink.set(linkScoped, { location_key: locKey, field });
+
               proposals.push({
                 member_id: memberId,
                 register_id: rid,
