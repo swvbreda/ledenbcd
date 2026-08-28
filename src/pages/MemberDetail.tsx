@@ -399,6 +399,18 @@ const MemberDetail = () => {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
                     <Pencil size={14} /> {isLoading ? "Laden..." : "Bewerken"}
                   </Button>
+                  {canSeeRegister && memberId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled={runEnrichment.isPending}
+                      onClick={() => runEnrichment.mutate({ memberId })}
+                    >
+                      <RefreshCw size={14} className={runEnrichment.isPending ? "animate-spin" : ""} />
+                      Bijwerken vanuit register
+
+                  </Button>
                   {isAdmin && isLead && member && (
                     <ConvertLeadDialog
                       lead={member}
