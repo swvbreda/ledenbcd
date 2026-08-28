@@ -694,8 +694,10 @@ export type Database = {
         Row: {
           error_message: string | null
           id: number
+          last_push_at: string | null
           last_run_at: string | null
           last_status: string | null
+          last_trigger: string | null
           links_proposed: number
           shops_synced: number
           ubo_synced: number
@@ -704,8 +706,10 @@ export type Database = {
         Insert: {
           error_message?: string | null
           id?: number
+          last_push_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
+          last_trigger?: string | null
           links_proposed?: number
           shops_synced?: number
           ubo_synced?: number
@@ -714,8 +718,10 @@ export type Database = {
         Update: {
           error_message?: string | null
           id?: number
+          last_push_at?: string | null
           last_run_at?: string | null
           last_status?: string | null
+          last_trigger?: string | null
           links_proposed?: number
           shops_synced?: number
           ubo_synced?: number
@@ -3093,6 +3099,10 @@ export type Database = {
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
       trigger_register_enrichment: { Args: never; Returns: number }
+      trigger_register_enrichment_scoped: {
+        Args: { _member_id?: number; _register_id?: string }
+        Returns: number
+      }
       trigger_topical_sync: { Args: never; Returns: number }
     }
     Enums: {
