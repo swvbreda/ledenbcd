@@ -208,17 +208,22 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + Number(p.amount));
   }
 
-  // Contributies line items per jaar
+  // Contributies line items per jaar + "Donaties en overige baten" per jaar
+  // (nabetalingen over een eerder jaar horen daar thuis, niet bij Contributies).
   const { data: liRows } = await supabase
     .from("budget_line_items")
     .select("id, name, category_id, budget_categories:category_id(year, name)");
   const contribLineByYear = new Map<number, string>();
+  const donationLineByYear = new Map<number, string>();
   for (const li of liRows ?? []) {
     const cat = (li as any).budget_categories;
-    if (cat?.name === "Inkomsten" && li.name === "Contributies" && cat?.year != null) {
-      contribLineByYear.set(Number(cat.year), li.id);
+    if (cat?.name !== "Inkomsten" || cat?.year == null) continue;
+    if (li.name === "Contributies") contribLineByYear.set(Number(cat.year), li.id);
+    if (/donaties en overige baten|overige inkomsten/i.test(li.name || "")) {
+      donationLineByYear.set(Number(cat.year), li.id);
     }
   }
+
 
   // Ledenindex voor naam-matching (bedrijfsnaam / coffeeshopnaam / contactpersoon)
   const { data: memberRows } = await supabase
