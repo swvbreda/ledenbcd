@@ -344,12 +344,23 @@ Deno.serve(async (req) => {
     // Openstaande/genegeerde voorstellen zodat we niets dubbel of opnieuw voorstellen
     const { data: existingProposals } = await db
       .from("register_enrichment_proposals")
-      .select("member_id, register_id, location_key, field, status");
+      .select("id, member_id, register_id, location_key, field, status, scope");
     const knownProposal = new Set(
       (existingProposals ?? []).map(
         (p: any) => `${p.member_id}|${p.register_id ?? ""}|${p.location_key ?? ""}|${p.field}`,
       ),
     );
+    // Een koppeling wijst precies één vestiging aan: dedupliceer daarom op
+    // (lid, registershop, veld). De locatiesleutel verschuift bij een verhuizing
+    // en mag dus geen dubbele of teruggekeerde voorstellen veroorzaken.
+    const knownByLink = new Map<string, any>();
+    for (const p of existingProposals ?? []) {
+      if ((p as any).scope !== "locatie" || !(p as any).register_id) continue;
+      knownByLink.set(`${p.member_id}|${p.register_id}|${p.field}`, p);
+    }
+    /** Voorstellen waarvan de locatiesleutel is verschoven, bijwerken. */
+    const keyFixes: Array<{ id: string; location_key: string }> = [];
+
 
     const byMember = new Map<number, Array<{ rid: string; linkKey: string | null }>>();
     for (const l of links ?? []) {
