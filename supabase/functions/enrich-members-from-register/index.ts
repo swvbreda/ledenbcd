@@ -560,7 +560,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Verschoven locatiesleutels bijwerken zodat de vestiging één groep blijft
+    for (const fix of keyFixes) {
+      const { error } = await db
+        .from("register_enrichment_proposals")
+        .update({ location_key: fix.location_key })
+        .eq("id", fix.id);
+      if (error) console.warn("locatiesleutel bijwerken mislukt:", error.message);
+    }
+
     let proposalsSaved = 0;
+
     for (let i = 0; i < proposals.length; i += 200) {
       const chunk = proposals.slice(i, i + 200);
       const { error } = await db.from("register_enrichment_proposals").insert(chunk);
