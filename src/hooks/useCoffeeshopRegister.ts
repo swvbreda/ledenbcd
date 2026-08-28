@@ -329,6 +329,17 @@ export function useResolveProposal() {
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
           match[proposal.field] = proposal.proposed_value;
           data.locaties = locaties;
+
+          // Bij een verhuizing (adres/postcode) verschuift ook de koppeling mee,
+          // zodat de registershop aan dezelfde vestiging gekoppeld blijft.
+          if (proposal.register_id && ["adres", "postcode"].includes(proposal.field)) {
+            const { error: linkErr } = await supabase
+              .from("coffeeshop_member_links")
+              .update({ location_key: locationKeyOf(match) })
+              .eq("register_id", proposal.register_id)
+              .eq("member_id", proposal.member_id);
+            if (linkErr) throw linkErr;
+          }
         } else {
           data[proposal.field] = proposal.proposed_value;
         }
@@ -339,6 +350,7 @@ export function useResolveProposal() {
           .eq("id", proposal.member_id);
         if (upErr) throw upErr;
       }
+
 
       const { error: statusErr } = await supabase
         .from("register_enrichment_proposals" as any)
