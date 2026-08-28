@@ -1019,7 +1019,25 @@ const MemberDetail = () => {
                         memberUbo={loc.ubo}
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
+                      {link && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 h-7 w-fit gap-1.5 px-2 text-xs"
+                          disabled={runEnrichment.isPending}
+                          onClick={() =>
+                            runEnrichment.mutate({ memberId, registerId: link.register_id })
+                          }
+                        >
+                          <RefreshCw
+                            size={12}
+                            className={runEnrichment.isPending ? "animate-spin" : ""}
+                          />
+                          Bijwerken vanuit register
+                        </Button>
+                      )}
                     </div>
+
                   ) : (
                     <div className="mt-1 space-y-0.5">
                       {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
