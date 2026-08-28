@@ -123,6 +123,8 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 }`
               : null,
             matched: isLocation ? !!loc : true,
+            isMove: false,
+
             items: [],
           };
           groups.set(key, group);
