@@ -27,6 +27,8 @@ import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberM
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
+import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
+
 import {
   useAssignLinkLocation,
   useCoffeeshopRegister,
