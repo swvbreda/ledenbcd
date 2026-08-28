@@ -208,17 +208,22 @@ async function matchContributionPayments(supabase: any): Promise<number> {
     paidByMemberYear.set(k, (paidByMemberYear.get(k) ?? 0) + Number(p.amount));
   }
 
-  // Contributies line items per jaar
+  // Contributies line items per jaar + "Donaties en overige baten" per jaar
+  // (nabetalingen over een eerder jaar horen daar thuis, niet bij Contributies).
   const { data: liRows } = await supabase
     .from("budget_line_items")
     .select("id, name, category_id, budget_categories:category_id(year, name)");
   const contribLineByYear = new Map<number, string>();
+  const donationLineByYear = new Map<number, string>();
   for (const li of liRows ?? []) {
     const cat = (li as any).budget_categories;
-    if (cat?.name === "Inkomsten" && li.name === "Contributies" && cat?.year != null) {
-      contribLineByYear.set(Number(cat.year), li.id);
+    if (cat?.name !== "Inkomsten" || cat?.year == null) continue;
+    if (li.name === "Contributies") contribLineByYear.set(Number(cat.year), li.id);
+    if (/donaties en overige baten|overige inkomsten/i.test(li.name || "")) {
+      donationLineByYear.set(Number(cat.year), li.id);
     }
   }
+
 
   // Ledenindex voor naam-matching (bedrijfsnaam / coffeeshopnaam / contactpersoon)
   const { data: memberRows } = await supabase
@@ -471,15 +476,25 @@ async function matchContributionPayments(supabase: any): Promise<number> {
       }
     }
 
-    const lineId = contribLineByYear.get(hit.year);
+    // Ontvangstjaar bepaalt waar de boeking landt. Hoort de betaling bij een
+    // contributiefactuur van een eerder jaar (nabetaling), dan valt zij onder
+    // "Donaties en overige baten" van het ontvangstjaar; anders onder Contributies.
+    const receiptYear = new Date(paidAt).getFullYear() || hit.year;
+    const isNabetaling = hit.year < receiptYear;
+    const lineId = isNabetaling
+      ? donationLineByYear.get(receiptYear) ?? contribLineByYear.get(hit.year)
+      : contribLineByYear.get(hit.year);
     await supabase
       .from("ponto_transactions")
       .update({
         budget_line_item_id: lineId ?? null,
-        dossier: `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
+        dossier: isNabetaling
+          ? `Nabetaling ${hit.year} · #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`
+          : `Contributie #${hit.member_id}${hit.invoice_number ? ` (${hit.invoice_number})` : ""}`,
         match_strategy: hit.strategy,
       })
       .eq("id", t.id);
+
 
     // Trigger paidByMemberYear-update zodat volgende iteraties dit meenemen
     const k = `${hit.member_id}|${hit.year}`;
