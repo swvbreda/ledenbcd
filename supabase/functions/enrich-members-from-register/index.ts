@@ -312,12 +312,13 @@ Deno.serve(async (req) => {
       ),
     );
 
-    const byMember = new Map<number, string[]>();
+    const byMember = new Map<number, Array<{ rid: string; linkKey: string | null }>>();
     for (const l of links ?? []) {
       const arr = byMember.get(l.member_id) ?? [];
-      arr.push(l.register_id);
+      arr.push({ rid: l.register_id, linkKey: (l as any).location_key ?? null });
       byMember.set(l.member_id, arr);
     }
+
 
     const proposals: Proposal[] = [];
     let membersUpdated = 0;
