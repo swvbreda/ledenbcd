@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle, Euro } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle, Euro, RefreshCw } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import ConvertLeadDialog from "@/components/ConvertLeadDialog";
@@ -32,7 +32,9 @@ import {
   useCoffeeshopRegister,
   useRegisterLinks,
   useRegisterUboBulk,
+  useRunEnrichmentScoped,
 } from "@/hooks/useCoffeeshopRegister";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
@@ -82,6 +84,8 @@ const MemberDetail = () => {
   const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
   const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
   const assignLocation = useAssignLinkLocation();
+  const runEnrichment = useRunEnrichmentScoped();
+
   const memberLinks = useMemo(
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
     [registerLinks, memberId],
@@ -395,6 +399,19 @@ const MemberDetail = () => {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
                     <Pencil size={14} /> {isLoading ? "Laden..." : "Bewerken"}
                   </Button>
+                  {canSeeRegister && memberId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled={runEnrichment.isPending}
+                      onClick={() => runEnrichment.mutate({ memberId })}
+                    >
+                      <RefreshCw size={14} className={runEnrichment.isPending ? "animate-spin" : ""} />
+                      Bijwerken vanuit register
+                    </Button>
+                  )}
+
                   {isAdmin && isLead && member && (
                     <ConvertLeadDialog
                       lead={member}
@@ -1002,7 +1019,25 @@ const MemberDetail = () => {
                         memberUbo={loc.ubo}
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
+                      {link && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 h-7 w-fit gap-1.5 px-2 text-xs"
+                          disabled={runEnrichment.isPending}
+                          onClick={() =>
+                            runEnrichment.mutate({ memberId, registerId: link.register_id })
+                          }
+                        >
+                          <RefreshCw
+                            size={12}
+                            className={runEnrichment.isPending ? "animate-spin" : ""}
+                          />
+                          Bijwerken vanuit register
+                        </Button>
+                      )}
                     </div>
+
                   ) : (
                     <div className="mt-1 space-y-0.5">
                       {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}

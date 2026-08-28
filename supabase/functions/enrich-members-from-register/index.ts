@@ -234,13 +234,24 @@ Deno.serve(async (req) => {
   const db = admin();
   const kvkKey = Deno.env.get("KVK_API_KEY") ?? "";
 
+  // Optionele afbakening: één lid en/of één registervestiging bijwerken.
+  const body = await req.json().catch(() => null);
+  const scopeMemberId = Number.isFinite(Number(body?.member_id)) ? Number(body.member_id) : null;
+  const scopeRegisterId = typeof body?.register_id === "string" && body.register_id
+    ? body.register_id
+    : null;
+
   try {
-    const { data: links, error: linkErr } = await db
+    let linkQuery = db
       .from("coffeeshop_member_links")
       .select("register_id, member_id, status, location_key")
       .eq("status", "bevestigd");
+    if (scopeMemberId !== null) linkQuery = linkQuery.eq("member_id", scopeMemberId);
+    if (scopeRegisterId) linkQuery = linkQuery.eq("register_id", scopeRegisterId);
+    const { data: links, error: linkErr } = await linkQuery;
 
     if (linkErr) throw linkErr;
+
 
     const registerIds = Array.from(new Set((links ?? []).map((l: any) => l.register_id)));
     if (registerIds.length === 0) {
