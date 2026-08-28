@@ -231,7 +231,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                         disabled={busy || !group.matched}
                         onClick={() => void applyGroup(group, true)}
                       >
-                        Alles overnemen
+                        {group.isMove ? "Verhuizing overnemen" : "Alles overnemen"}
                       </Button>
                       <Button
                         size="sm"
