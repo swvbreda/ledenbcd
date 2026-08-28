@@ -60,7 +60,35 @@ function locHouseNumber(adres: string | undefined): string {
   return m ? m[1] : "";
 }
 
+/** Samengestelde koppelsleutel `naam|adres|postcode` van een ledenlocatie. */
+const compactKey = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function locationKeyOf(loc: any): string {
+  return [compactKey(loc?.naam), compactKey(loc?.adres), compactKey(loc?.postcode)].join("|");
+}
+
+/** Vindt de ledenlocatie waar een bevestigde koppeling naar verwijst. */
+function findByLinkKey(locaties: any[], linkKey: string | null | undefined): any | null {
+  const key = String(linkKey ?? "").trim().toLowerCase();
+  if (!key) return null;
+  if (key.includes("|")) {
+    const [n, a, p] = key.split("|");
+    return (
+      locaties.find((l) => locationKeyOf(l) === key) ??
+      locaties.find((l) => !!a && compactKey(l?.adres) === a) ??
+      locaties.find((l) => !!p && compactKey(l?.postcode) === p) ??
+      locaties.find((l) => !!n && compactKey(l?.naam) === n) ??
+      null
+    );
+  }
+  return (
+    locaties.find((l) => normPc(l?.postcode) === normPc(key)) ??
+    locaties.find((l) => norm(l?.naam) === norm(key)) ??
+    null
+  );
+}
+
 /** Bepaalt of een bestaande locatie dezelfde vestiging is als de registershop. */
+
 function sameLocation(loc: any, shop: any): boolean {
   const pcA = normPc(loc?.postcode);
   const pcB = normPc(shop.postcode);
