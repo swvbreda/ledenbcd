@@ -44,8 +44,13 @@ type Group = {
   subtitle: string;
   registerLine: string | null;
   matched: boolean;
+  isMove: boolean;
   items: EnrichmentProposal[];
 };
+
+/** Adres- en postcodewijzigingen van een gekoppelde vestiging = verhuizing. */
+const MOVE_FIELDS = new Set(["adres", "postcode"]);
+
 
 const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
   const { data: proposals = [], isLoading } = useEnrichmentProposals();
