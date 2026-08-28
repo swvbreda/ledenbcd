@@ -351,14 +351,20 @@ Deno.serve(async (req) => {
         if (staleErr) console.warn("oude algemene voorstellen opschonen mislukt:", staleErr.message);
       }
 
-      for (const rid of shopIds) {
+      for (const { rid, linkKey } of shopIds) {
         const shop = shopById.get(rid);
         if (!shop || shop.vervallen) continue;
 
-        let loc = locaties.find((l) => sameLocation(l, shop));
+        // De bevestigde koppeling is leidend: die wijst de bestaande vestiging
+        // aan, ook wanneer de shop in het register is verhuisd. Pas als de
+        // sleutel niets oplevert, zoeken we op adres/naam.
+        let loc = findByLinkKey(locaties, linkKey) ?? locaties.find((l) => sameLocation(l, shop));
         // De sleutel verwijst naar de bestaande ledenlocatie. Gebruik daarom de
-        // huidige postcode van die locatie, niet de mogelijk gewijzigde registerpostcode.
-        const locKey = loc ? normPc(loc.postcode) || norm(loc.naam) : normPc(shop.postcode) || norm(shop.naam);
+        // huidige gegevens van die locatie, niet het mogelijk gewijzigde registeradres.
+        const locKey = loc
+          ? linkKey || normPc(loc.postcode) || norm(loc.naam)
+          : normPc(shop.postcode) || norm(shop.naam);
+
 
         const ubo = uboByRegister.get(rid) ?? [];
 
