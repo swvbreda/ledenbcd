@@ -105,7 +105,7 @@ export function dedupeLocations(locations: Location[]): Location[] {
     const merged: Location = { ...secondary };
     for (const [field, value] of Object.entries(primary)) {
       const isEmpty = typeof value === "string" ? value.trim() === "" : value === null || value === undefined;
-      if (!isEmpty) (merged as Record<string, unknown>)[field] = value;
+      if (!isEmpty) (merged as unknown as Record<string, unknown>)[field] = value;
     }
     result[existingIndex] = merged;
   }
