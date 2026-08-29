@@ -67,5 +67,49 @@ export function mergeMemberLocations(
     if (!usedOverlay.has(index) && !deleted.has(locationIdentity(location))) result.push(location);
   });
 
+  return dedupeLocations(result);
+}
+
+/** Sleutel waarop twee vestigingen als dezelfde fysieke locatie gelden. */
+const dedupeKey = (location: Partial<Location>): string | null => {
+  const postcode = normalizePostcode(location.postcode);
+  const address = normalize(location.adres);
+  if (postcode && address) return `${postcode}|${address}`;
+  if (postcode) return `pc:${postcode}`;
+  if (address) return `ad:${address}`;
+  return null;
+};
+
+const filledFields = (location: Partial<Location>) =>
+  Object.values(location ?? {}).filter((value) =>
+    typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined,
+  ).length;
+
+/** Voegt vestigingen met hetzelfde adres samen tot één kaart, met de rijkste gegevens. */
+export function dedupeLocations(locations: Location[]): Location[] {
+  const byKey = new Map<string, number>();
+  const result: Location[] = [];
+
+  for (const location of locations) {
+    const key = dedupeKey(location);
+    const existingIndex = key !== null ? byKey.get(key) : undefined;
+    if (existingIndex === undefined) {
+      if (key !== null) byKey.set(key, result.length);
+      result.push(location);
+      continue;
+    }
+
+    const existing = result[existingIndex];
+    const [primary, secondary] =
+      filledFields(location) > filledFields(existing) ? [location, existing] : [existing, location];
+    const merged: Location = { ...secondary };
+    for (const [field, value] of Object.entries(primary)) {
+      const isEmpty = typeof value === "string" ? value.trim() === "" : value === null || value === undefined;
+      if (!isEmpty) (merged as Record<string, unknown>)[field] = value;
+    }
+    result[existingIndex] = merged;
+  }
+
   return result;
 }
+
