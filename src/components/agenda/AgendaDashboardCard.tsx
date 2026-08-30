@@ -11,6 +11,7 @@ import {
   isUpcoming,
   type AgendaEvent,
 } from "@/hooks/useAgenda";
+import AgendaShareButton from "./AgendaShareButton";
 
 function AgendaPoster({ event }: { event: AgendaEvent }) {
   const { data: url } = useAgendaImageUrl(event.image_path);
@@ -55,7 +56,7 @@ function MetaItem({
 function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
   return (
     <Link
-      to="/agenda"
+      to={`/agenda/${event.id}`}
       className="group flex flex-col gap-4 rounded-2xl border border-transparent bg-muted/40 p-5 transition-all duration-300 hover:border-border hover:bg-muted/70 md:flex-row md:items-center md:justify-between"
     >
       <div className="min-w-0 space-y-2">
@@ -84,7 +85,7 @@ function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
 function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number }) {
   return (
     <Link
-      to="/agenda"
+      to={`/agenda/${event.id}`}
       className="group relative block overflow-hidden rounded-3xl border-2 border-primary bg-card shadow-xl shadow-primary/10 ring-4 ring-primary/5 transition-shadow hover:shadow-2xl hover:shadow-primary/20"
     >
       <div className="flex flex-col md:flex-row">
@@ -162,9 +163,19 @@ export default function AgendaDashboardCard() {
         ) : (
           next.map((e) =>
             e.event_type === "evenement" ? (
-              <EventHighlight key={e.id} event={e} guests={guestsFor(e.id)} />
+              <div key={e.id} className="relative">
+                <EventHighlight event={e} guests={guestsFor(e.id)} />
+                <div className="absolute right-4 top-4 z-10">
+                  <AgendaShareButton event={e} variant="outline" />
+                </div>
+              </div>
             ) : (
-              <MeetingRow key={e.id} event={e} guests={guestsFor(e.id)} />
+              <div key={e.id} className="relative">
+                <MeetingRow event={e} guests={guestsFor(e.id)} />
+                <div className="absolute right-4 top-4 z-10">
+                  <AgendaShareButton event={e} variant="ghost" />
+                </div>
+              </div>
             ),
           )
         )}

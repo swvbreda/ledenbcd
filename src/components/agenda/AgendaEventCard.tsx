@@ -29,6 +29,7 @@ import AttendanceList from "./AttendanceList";
 import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
+import AgendaShareButton from "./AgendaShareButton";
 
 
 interface Props {
@@ -158,6 +159,8 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 {full ? "Volgeboekt" : "Aanmelden"}
               </Button>
             ) : null)}
+
+          {upcoming && <AgendaShareButton event={event} className="w-full md:w-auto" />}
 
           {upcoming && event.meeting_url && (own || isAdmin || isBoard) && (
             <Button asChild variant="outline" className="w-full md:w-auto">
