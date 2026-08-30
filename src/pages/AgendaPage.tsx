@@ -27,11 +27,13 @@ const monthLabel = (date: string) =>
 
 export default function AgendaPage() {
   const { isAdmin, linkedMemberId } = useAuth();
+  const { eventId } = useParams();
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: registrations = [] } = useAgendaRegistrations();
   const { generateMeetings, syncTopical } = useAgendaMutations();
   const [newOpen, setNewOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const focusRef = useRef<HTMLDivElement | null>(null);
 
   const regsByEvent = useMemo(() => {
     const map = new Map<string, typeof registrations>();
@@ -42,8 +44,16 @@ export default function AgendaPage() {
     return map;
   }, [registrations]);
 
-  const upcoming = events.filter(isUpcoming);
-  const past = events.filter((e) => !isUpcoming(e)).reverse();
+  const focused = eventId ? events.find((e) => e.id === eventId) ?? null : null;
+  const rest = eventId ? events.filter((e) => e.id !== eventId) : events;
+  const upcoming = rest.filter(isUpcoming);
+  const past = rest.filter((e) => !isUpcoming(e)).reverse();
+
+  useEffect(() => {
+    if (focused && focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [focused?.id]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, AgendaEvent[]>();
@@ -68,6 +78,22 @@ export default function AgendaPage() {
   return (
     <div className="space-y-6 overflow-x-hidden p-4 sm:p-6">
       <BcdHeroBanner title="Agenda" subtitle="Bestuursvergaderingen en evenementen" />
+
+      {eventId && !isLoading && (
+        <div ref={focusRef}>
+          {focused ? (
+            <div className="rounded-xl border-2 border-primary p-1">{renderCard(focused)}</div>
+          ) : (
+            <div className="rounded-lg border border-border bg-card p-4 text-sm">
+              Dit agenda-item is niet (meer) beschikbaar.{" "}
+              <Link to="/agenda" className="font-semibold text-primary hover:underline">
+                Naar de agenda
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
 
       {isAdmin && (
         <div className="flex flex-wrap items-center gap-2">
