@@ -1,8 +1,10 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { savePostLoginPath } from "@/lib/postLoginPath";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isExtern, mfaStatus } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -12,7 +14,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  const remember = () => savePostLoginPath(location.pathname + location.search);
+
   if (!user) {
+    remember();
     return <Navigate to="/login" replace />;
   }
 
@@ -22,9 +27,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // MFA enforcement
   if (mfaStatus === "needs_setup") {
+    remember();
     return <Navigate to="/mfa-setup" replace />;
   }
   if (mfaStatus === "needs_verify") {
+    remember();
     return <Navigate to="/mfa-verify" replace />;
   }
 

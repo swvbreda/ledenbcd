@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
+import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
@@ -69,7 +70,8 @@ const LoginPage = () => {
       );
     }
     if (isExtern) return <Navigate to="/extern" replace />;
-    return <Navigate to="/" replace />;
+    const next = consumePostLoginPath();
+    return <Navigate to={next ?? "/"} replace />;
   }
 
   const handleRememberMe = (checked: boolean) => {

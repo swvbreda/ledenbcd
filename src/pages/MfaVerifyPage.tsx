@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,7 +30,7 @@ export default function MfaVerifyPage() {
       if (hasPendingRedirect()) {
         void maybeRedirectAfterLogin();
       } else {
-        navigate(isExtern ? "/extern" : "/", { replace: true });
+        navigate(isExtern ? "/extern" : consumePostLoginPath() ?? "/", { replace: true });
       }
     }
   }, [authLoading, isExtern, mfaStatus, navigate, user]);
@@ -79,7 +80,7 @@ export default function MfaVerifyPage() {
       return;
     }
     if (await maybeRedirectAfterLogin()) return;
-    navigate("/", { replace: true });
+    navigate(consumePostLoginPath() ?? "/", { replace: true });
   };
 
   const handleSendEmailCode = async () => {
@@ -126,7 +127,7 @@ export default function MfaVerifyPage() {
 
     toast.success("Verificatie geslaagd!");
     if (await maybeRedirectAfterLogin()) return;
-    navigate("/", { replace: true });
+    navigate(consumePostLoginPath() ?? "/", { replace: true });
   };
 
   const handleSignOut = async () => {
@@ -298,7 +299,7 @@ export default function MfaVerifyPage() {
               onClick={() => {
                 markEmailMfaVerified();
                 toast.info("Verificatie overgeslagen. Dit is tijdelijk.");
-                navigate("/", { replace: true });
+                navigate(consumePostLoginPath() ?? "/", { replace: true });
               }}
               className="text-sm text-primary hover:text-primary/80 transition-colors block w-full"
             >
