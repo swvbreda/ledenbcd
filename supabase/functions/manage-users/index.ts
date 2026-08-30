@@ -145,6 +145,7 @@ Deno.serve(async (req) => {
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
         full_name: (u.user_metadata as Record<string, unknown> | undefined)?.full_name ?? null,
+        is_reviewer: !!((u.user_metadata as Record<string, unknown> | undefined)?.is_reviewer),
         role: roleMap.get(u.id) || "user",
         member_ids: profileMap.get(u.id) || [],
         member_id: (profileMap.get(u.id) || [])[0] || null,
@@ -161,6 +162,7 @@ Deno.serve(async (req) => {
       const email = payload.email as string | undefined;
       const password = payload.password as string | undefined;
       const role = payload.role as string | undefined;
+      const is_reviewer = !!payload.is_reviewer;
 
       if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
         return new Response(JSON.stringify({ error: "Ongeldig e-mailadres" }), {
@@ -183,11 +185,21 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
+      const createPayload: {
+        email: string;
+        password: string;
+        email_confirm: boolean;
+        user_metadata?: Record<string, unknown>;
+      } = {
         email,
         password,
         email_confirm: true,
-      });
+      };
+      if (is_reviewer) {
+        createPayload.user_metadata = { is_reviewer: true };
+      }
+
+      const { data: userData, error: createError } = await adminClient.auth.admin.createUser(createPayload);
       if (createError) throw createError;
 
       if (userData?.user && role) {
