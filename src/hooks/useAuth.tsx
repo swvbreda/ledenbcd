@@ -95,10 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id]);
 
-  const checkMfaStatus = async (userId: string) => {
+  const checkMfaStatus = async (userId: string, reviewer = false) => {
     // Reviewer demo accounts bypass MFA so Apple reviewers can log in
     // without setting up an authenticator app.
-    if (isReviewer) {
+    if (reviewer || isReviewer) {
       setMfaStatus("verified");
       return;
     }
