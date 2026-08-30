@@ -12,6 +12,7 @@ interface AuthContextType {
   isExtern: boolean;
   isInhuur: boolean;
   isBoard: boolean;
+  isReviewer: boolean;
   linkedMemberId: number | null;
   linkedMemberIds: number[];
   mfaStatus: "verified" | "needs_verify" | "needs_setup" | "loading";
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   isExtern: false,
   isInhuur: false,
   isBoard: false,
+  isReviewer: false,
   linkedMemberId: null,
   linkedMemberIds: [],
   mfaStatus: "loading",
@@ -82,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isExtern, setIsExtern] = useState(false);
   const [isBoard, setIsBoard] = useState(false);
+  const [isReviewer, setIsReviewer] = useState(false);
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
 
@@ -92,7 +95,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id]);
 
-  const checkMfaStatus = async (userId: string) => {
+  const checkMfaStatus = async (userId: string, reviewer = false) => {
+    // Reviewer demo accounts bypass MFA so Apple reviewers can log in
+    // without setting up an authenticator app.
+    if (reviewer || isReviewer) {
+      setMfaStatus("verified");
+      return;
+    }
+
     // Check email MFA flag first
     if (checkEmailMfaFlag(userId)) {
       setMfaStatus("verified");
@@ -162,14 +172,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
+    const updateReviewerFlag = (user: User | null) => {
+      const reviewer = !!user?.user_metadata?.is_reviewer;
+      setIsReviewer(reviewer);
+      return reviewer;
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
+      const reviewer = updateReviewerFlag(session?.user ?? null);
       if (session?.user) {
         promotePendingPasskeyMfaFlag(session.user.id);
         // Check email MFA flag synchronously to avoid unnecessary async MFA calls
-        const emailMfaOk = checkEmailMfaFlag(session.user.id);
+        const emailMfaOk = reviewer || checkEmailMfaFlag(session.user.id);
         if (emailMfaOk) {
           setMfaStatus("verified");
         }
@@ -183,6 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAdmin(false);
         setIsExtern(false);
         setIsBoard(false);
+        setIsReviewer(false);
         setLinkedMemberIds([]);
         setMfaStatus("loading");
         setLoading(false);
@@ -193,11 +211,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
+      const reviewer = updateReviewerFlag(session?.user ?? null);
       if (session?.user) {
         promotePendingPasskeyMfaFlag(session.user.id);
+        const emailMfaOk = reviewer || checkEmailMfaFlag(session.user.id);
+        if (emailMfaOk) {
+          setMfaStatus("verified");
+        }
         await Promise.all([
           checkRoleAndProfile(session.user.id),
-          checkMfaStatus(session.user.id),
+          ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
         ]);
       }
       if (mounted) setLoading(false);
@@ -260,7 +283,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isInhuur = !isAdmin && !isExtern && !!user && linkedMemberIds.length === 0;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, isBoard, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, isBoard, isReviewer, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -68,6 +68,11 @@
     overflow-x: hidden;
   }
 
+  /* Safe area insets for native iOS/Android apps */
+  html {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   * {
     @apply border-border;
   }
@@ -76,6 +81,7 @@
     @apply bg-background text-foreground text-[15px] sm:text-sm;
     font-family: var(--font-body);
     -webkit-text-size-adjust: 100%;
+    overscroll-behavior-x: none;
   }
 
   h1, h2, h3, h4, h5, h6 {

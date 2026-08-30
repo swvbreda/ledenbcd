@@ -1,18 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.d12c81b41bf9487c88575f255db26beb',
-  appName: 'ledenbcd',
+  appId: 'nl.bcd.leden',
+  appName: 'BCD leden',
   webDir: 'dist',
-  server: {
-    url: 'https://d12c81b4-1bf9-487c-8857-5f255db26beb.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#2D2D2D',
+      backgroundColor: '#0F172A',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,

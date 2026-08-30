@@ -46,6 +46,7 @@ interface UserAccount {
   created_at: string;
   last_sign_in_at: string | null;
   full_name?: string | null;
+  is_reviewer?: boolean;
   role: string;
   member_id: number | null;
   member_ids: number[];
@@ -68,6 +69,7 @@ const AccountBeheerPage = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("user");
+  const [newIsReviewer, setNewIsReviewer] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [linkDialogUser, setLinkDialogUser] = useState<UserAccount | null>(null);
@@ -109,7 +111,8 @@ const AccountBeheerPage = () => {
     return map;
   }, []);
 
-  const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role: string, isReviewer?: boolean) => {
+    if (isReviewer) return "Reviewer (App Store)";
     if (role === "admin") return "Admin";
     if (role === "extern") return "Extern";
     if (role === "inhuur") return "Inhuur";
@@ -258,12 +261,12 @@ const AccountBeheerPage = () => {
     if (!newEmail || !newPassword) { toast.error("Vul e-mail en wachtwoord in"); return; }
     if (newPassword.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
     setSaving(true);
-    const { error } = await invokeManageUsers({ action: "create", email: newEmail, password: newPassword, role: newRole });
+    const { error } = await invokeManageUsers({ action: "create", email: newEmail, password: newPassword, role: newRole, is_reviewer: newIsReviewer });
     setSaving(false);
     if (error) { toast.error("Fout bij aanmaken: " + error.message); return; }
     toast.success("Account aangemaakt");
     setCreateOpen(false);
-    setNewEmail(""); setNewPassword(""); setNewRole("user");
+    setNewEmail(""); setNewPassword(""); setNewRole("user"); setNewIsReviewer(false);
     fetchUsers();
   };
 
@@ -512,15 +515,17 @@ const AccountBeheerPage = () => {
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                          u.role === "admin"
+                          u.is_reviewer
+                            ? "bg-purple-500/15 text-purple-600"
+                            : u.role === "admin"
                             ? "bg-accent/15 text-accent-foreground"
                             : u.role === "extern" || u.role === "inhuur"
                               ? "bg-primary/10 text-primary"
                               : "bg-muted text-muted-foreground"
                         }`}>
-                          {u.role === "admin" && <Shield size={11} />}
-                          {(u.role === "extern" || u.role === "inhuur") && <Building2 size={11} />}
-                          {getRoleLabel(u.role)}
+                          {u.role === "admin" && !u.is_reviewer && <Shield size={11} />}
+                          {(u.role === "extern" || u.role === "inhuur") && !u.is_reviewer && <Building2 size={11} />}
+                          {getRoleLabel(u.role, u.is_reviewer)}
                         </span>
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground hidden lg:table-cell">{formatDate(u.last_sign_in_at)}</td>
@@ -576,6 +581,15 @@ const AccountBeheerPage = () => {
                 <SelectItem value="admin">Admin (bestuurslid)</SelectItem>
               </SelectContent>
             </Select>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={newIsReviewer}
+                onChange={(e) => setNewIsReviewer(e.target.checked)}
+                className="rounded border-border text-primary focus:ring-primary"
+              />
+              <span>Reviewer-account voor App Store-review (geen MFA)</span>
+            </label>
             <Button onClick={handleCreate} disabled={saving} className="w-full">
               {saving ? "Aanmaken..." : "Account aanmaken"}
             </Button>
