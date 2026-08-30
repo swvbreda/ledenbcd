@@ -211,12 +211,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      updateReviewerFlag(session?.user ?? null);
+      const reviewer = updateReviewerFlag(session?.user ?? null);
       if (session?.user) {
         promotePendingPasskeyMfaFlag(session.user.id);
+        const emailMfaOk = reviewer || checkEmailMfaFlag(session.user.id);
+        if (emailMfaOk) {
+          setMfaStatus("verified");
+        }
         await Promise.all([
           checkRoleAndProfile(session.user.id),
-          checkMfaStatus(session.user.id),
+          ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
         ]);
       }
       if (mounted) setLoading(false);
