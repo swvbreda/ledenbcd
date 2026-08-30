@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,7 +112,7 @@ export default function MfaSetupPage() {
       return;
     }
     toast.success("Dubbele verificatie is ingesteld!");
-    navigate("/");
+    navigate(consumePostLoginPath() ?? "/");
   };
 
   const goToTotpStep2 = () => {
@@ -160,7 +161,7 @@ export default function MfaSetupPage() {
     }
 
     toast.success("E-mail verificatie ingesteld!");
-    navigate("/", { replace: true });
+    navigate(consumePostLoginPath() ?? "/", { replace: true });
   };
 
   if (!user) return null;
@@ -232,7 +233,7 @@ export default function MfaSetupPage() {
                   onClick={() => {
                     markEmailMfaVerified();
                     toast.info("MFA overgeslagen. Je kunt dit later alsnog instellen via je account.");
-                    navigate("/", { replace: true });
+                    navigate(consumePostLoginPath() ?? "/", { replace: true });
                   }}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors block w-full text-center"
                 >
