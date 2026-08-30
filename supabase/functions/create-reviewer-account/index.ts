@@ -1,7 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const EXPECTED_SECRET = "bcd-reviewer-setup-2026";
-const REVIEWER_USER_ID = "9a35c5c8-9928-4b80-8ece-59aeea5601df";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,12 +12,12 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { secret, password } = await req.json().catch(() => ({}));
+  const { secret, email, password } = await req.json().catch(() => ({}));
   if (secret !== EXPECTED_SECRET) {
     return new Response("Unauthorized", { status: 401 });
   }
-  if (!password) {
-    return new Response("Missing password", { status: 400 });
+  if (!email || !password) {
+    return new Response("Missing email or password", { status: 400 });
   }
 
   const supabase = createClient(
@@ -26,7 +25,8 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data, error } = await supabase.auth.admin.updateUserById(REVIEWER_USER_ID, {
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
     password,
     user_metadata: { is_reviewer: true, full_name: "Reviewer Apple" },
     email_confirm: true,
