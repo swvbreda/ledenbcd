@@ -37,28 +37,32 @@ function mergeMember(base: any, overlay: any) {
   return data;
 }
 
+/** Eén record per vestiging, in het formaat dat de Beleidsmonitor verwacht. */
 function buildPayload(rows: any[], edits: Map<number, any>) {
-  return rows.map((row) => {
+  const out: any[] = [];
+  for (const row of rows) {
     const data = mergeMember(row.data, edits.get(row.id));
-    const locaties = (Array.isArray(data.locaties) ? data.locaties : []).map((l: any) => ({
-      naam: l?.naam ?? null,
-      adres: l?.adres ?? null,
-      postcode: l?.postcode ?? null,
-      plaats: l?.plaats ?? null,
-      kvk: l?.kvk ?? null,
-    }));
-    return {
-      lid_id: row.id,
-      type: row.member_type,
-      naam: data.naam ?? data.bedrijfsnaam ?? null,
-      bedrijfsnaam: data.bedrijfsnaam ?? null,
-      plaats: data.plaats ?? null,
-      kvk: data.kvk ?? null,
-      lid_sinds: data.lidSinds ?? null,
-      aantal_locaties: locaties.length || Number(data.aantalLocaties ?? 1),
-      locaties,
-    };
-  });
+    const hoofdnaam = data.naam ?? data.bedrijfsnaam ?? `Lid ${row.id}`;
+    const locaties = Array.isArray(data.locaties) ? data.locaties : [];
+    const lijst = locaties.length ? locaties : [null];
+
+    lijst.forEach((l: any, idx: number) => {
+      out.push({
+        extern_id: locaties.length > 1 ? `${row.id}-${idx + 1}` : String(row.id),
+        naam: (l?.naam || hoofdnaam || `Lid ${row.id}`).toString(),
+        handelsnaam: data.bedrijfsnaam ?? null,
+        adres: l?.adres ?? null,
+        postcode: l?.postcode ?? null,
+        plaats: l?.plaats ?? data.plaats ?? null,
+        gemeente: l?.gemeente ?? null,
+        email: data.email ?? null,
+        telefoon: data.telefoon ?? null,
+        lidstatus: row.member_type,
+        kvk_nummer: (l?.kvk ?? data.kvk) ? String(l?.kvk ?? data.kvk) : null,
+      });
+    });
+  }
+  return out;
 }
 
 Deno.serve(async (req) => {
