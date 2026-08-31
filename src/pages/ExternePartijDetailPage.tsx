@@ -5,12 +5,16 @@ import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowLeft, Building2, Globe, Phone, Mail, MapPin, FileText,
-  Briefcase, Users, Package, ExternalLink,
+  Briefcase, Users, Package, ExternalLink, Plus, Pencil, Trash2, Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Link } from "react-router-dom";
 
@@ -72,49 +76,119 @@ export default function ExternePartijDetailPage() {
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [contactForm, setContactForm] = useState<{ id?: string; name: string; role: string; phone: string; email: string } | null>(null);
+  const [savingContact, setSavingContact] = useState(false);
+  const [invitingEmail, setInvitingEmail] = useState<string | null>(null);
+
+  const loadContacts = async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("external_org_contacts")
+      .select("id, name, role, phone, email")
+      .eq("org_id", id)
+      .order("created_at");
+    setContacts(data ?? []);
+  };
+
+  const loadAccounts = async () => {
+    if (!id) return;
+    const { data: links } = await supabase
+      .from("external_org_users")
+      .select("user_id, created_at")
+      .eq("org_id", id);
+    if (!links || links.length === 0) {
+      setAccounts([]);
+      return;
+    }
+    const { data: usersData } = await invokeWithAuth("manage-users", { body: { action: "list" } });
+    const userMap = new Map<string, string>();
+    if (usersData?.users) {
+      for (const u of usersData.users) userMap.set(u.id, u.email);
+    }
+    setAccounts(
+      links.map((a) => ({
+        user_id: a.user_id,
+        email: userMap.get(a.user_id) || "Onbekend",
+        created_at: a.created_at,
+      }))
+    );
+  };
+
   useEffect(() => {
     if (!isAdmin || !id) return;
 
     const load = async () => {
-      const [orgRes, contactsRes, benefitsRes, accountsRes] = await Promise.all([
+      const [orgRes, benefitsRes] = await Promise.all([
         supabase.from("external_organizations").select("*").eq("id", id).single(),
-        supabase.from("external_org_contacts").select("id, name, role, phone, email").eq("org_id", id),
         supabase.from("member_benefits").select("id, title, category, active, price").eq("supplier_org_id", id),
-        supabase.from("external_org_users").select("user_id, created_at").eq("org_id", id),
       ]);
 
       if (orgRes.data) setOrg(orgRes.data as OrgDetail);
-      setContacts(contactsRes.data ?? []);
       setBenefits(benefitsRes.data ?? []);
-
-      // Fetch emails for linked accounts
-      if (accountsRes.data && accountsRes.data.length > 0) {
-        const { data: usersData } = await invokeWithAuth("manage-users", {
-          body: { action: "list_users" },
-        });
-        const userMap = new Map<string, string>();
-        if (usersData?.users) {
-          for (const u of usersData.users) {
-            userMap.set(u.id, u.email);
-          }
-        }
-        setAccounts(
-          accountsRes.data.map((a) => ({
-            user_id: a.user_id,
-            email: userMap.get(a.user_id) || "Onbekend",
-            created_at: a.created_at,
-          }))
-        );
-      }
+      await Promise.all([loadContacts(), loadAccounts()]);
       setLoading(false);
     };
 
     load();
   }, [isAdmin, id]);
 
+  const saveContact = async () => {
+    if (!contactForm || !id || !contactForm.name.trim()) return;
+    setSavingContact(true);
+    const values = {
+      org_id: id,
+      name: contactForm.name.trim(),
+      role: contactForm.role.trim() || null,
+      phone: contactForm.phone.trim() || null,
+      email: contactForm.email.trim().toLowerCase() || null,
+    };
+    const { error } = contactForm.id
+      ? await supabase.from("external_org_contacts").update(values).eq("id", contactForm.id)
+      : await supabase.from("external_org_contacts").insert(values);
+    if (error) {
+      toast.error("Opslaan mislukt: " + error.message);
+    } else {
+      toast.success("Contactpersoon opgeslagen");
+      setContactForm(null);
+      loadContacts();
+    }
+    setSavingContact(false);
+  };
+
+  const deleteContact = async (contactId: string) => {
+    if (!confirm("Deze contactpersoon verwijderen?")) return;
+    const { error } = await supabase.from("external_org_contacts").delete().eq("id", contactId);
+    if (error) toast.error("Verwijderen mislukt: " + error.message);
+    else {
+      toast.success("Contactpersoon verwijderd");
+      loadContacts();
+    }
+  };
+
+  const inviteContact = async (contact: OrgContact) => {
+    if (!contact.email || !id) return;
+    if (!confirm(`Uitnodiging met inloggegevens sturen naar ${contact.email}?`)) return;
+    setInvitingEmail(contact.email);
+    try {
+      const { data, error } = await invokeWithAuth("invite-extern", {
+        body: { org_id: id, contacts: [{ name: contact.name, email: contact.email, role: contact.role ?? "", phone: contact.phone ?? "" }] },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error && !data?.sent) throw new Error(data.error);
+      toast.success("Uitnodiging verstuurd naar " + contact.email);
+      loadAccounts();
+    } catch (e: any) {
+      toast.error("Uitnodigen mislukt: " + e.message);
+    }
+    setInvitingEmail(null);
+  };
+
   if (authLoading || loading) return <LoadingSpinner />;
   if (!isAdmin) return <Navigate to="/" replace />;
   if (!org) return <div className="p-6 text-muted-foreground">Organisatie niet gevonden.</div>;
+
+  const accountEmails = new Set(accounts.map((a) => a.email.toLowerCase()));
+
 
   const logoUrl = org.logo_path
     ? supabase.storage.from("org-logos").getPublicUrl(org.logo_path).data.publicUrl
@@ -210,28 +284,79 @@ export default function ExternePartijDetailPage() {
 
         {/* Contactpersonen */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" /> Extra contactpersonen ({contacts.length})
+              <Users className="h-4 w-4" /> Contactpersonen ({contacts.length})
             </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => setContactForm({ name: "", role: "", phone: "", email: "" })}
+            >
+              <Plus className="h-3.5 w-3.5" /> Toevoegen
+            </Button>
           </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Geen extra contactpersonen.</p>
+              <p className="text-sm text-muted-foreground">Nog geen contactpersonen.</p>
             ) : (
               <div className="space-y-3">
-                {contacts.map((c) => (
-                  <div key={c.id} className="text-sm space-y-0.5">
-                    <div className="font-medium">{c.name}</div>
-                    {c.role && <div className="text-xs text-muted-foreground">{c.role}</div>}
-                    {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
-                    {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
-                  </div>
-                ))}
+                {contacts.map((c) => {
+                  const hasAccount = !!c.email && accountEmails.has(c.email.toLowerCase());
+                  return (
+                    <div key={c.id} className="flex items-start justify-between gap-2 border-b last:border-0 pb-2 last:pb-0">
+                      <div className="text-sm space-y-0.5 min-w-0">
+                        <div className="font-medium">{c.name}</div>
+                        {c.role && <div className="text-xs text-muted-foreground">{c.role}</div>}
+                        {c.email && <div className="text-xs text-muted-foreground break-all">{c.email}</div>}
+                        {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
+                        {hasAccount && <Badge variant="secondary" className="text-[10px]">Heeft toegang</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.email && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            title={hasAccount ? "Opnieuw uitnodigen" : "Uitnodigen"}
+                            disabled={invitingEmail === c.email}
+                            onClick={() => inviteContact(c)}
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setContactForm({
+                            id: c.id,
+                            name: c.name,
+                            role: c.role ?? "",
+                            phone: c.phone ?? "",
+                            email: c.email ?? "",
+                          })}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-destructive"
+                          onClick={() => deleteContact(c.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
+
       </div>
 
       {/* Gekoppelde producten */}
@@ -296,6 +421,38 @@ export default function ExternePartijDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Contactpersoon dialoog */}
+      <Dialog open={!!contactForm} onOpenChange={(o) => { if (!o && !savingContact) setContactForm(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{contactForm?.id ? "Contactpersoon bewerken" : "Contactpersoon toevoegen"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div>
+              <Label>Naam</Label>
+              <Input value={contactForm?.name ?? ""} onChange={(e) => setContactForm(f => f && { ...f, name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Functie</Label>
+              <Input value={contactForm?.role ?? ""} onChange={(e) => setContactForm(f => f && { ...f, role: e.target.value })} />
+            </div>
+            <div>
+              <Label>E-mail</Label>
+              <Input type="email" value={contactForm?.email ?? ""} onChange={(e) => setContactForm(f => f && { ...f, email: e.target.value })} />
+            </div>
+            <div>
+              <Label>Telefoon</Label>
+              <Input value={contactForm?.phone ?? ""} onChange={(e) => setContactForm(f => f && { ...f, phone: e.target.value })} />
+            </div>
+            <Button className="w-full" disabled={savingContact || !contactForm?.name.trim()} onClick={saveContact}>
+              {savingContact ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
 
       <p className="text-xs text-muted-foreground">
         Aangemeld op {new Date(org.created_at).toLocaleDateString("nl-NL")}

@@ -56,12 +56,40 @@ Deno.serve(async (req) => {
     const orgId = typeof payload.org_id === "string" ? payload.org_id : null;
     const name = String(payload.name ?? "").trim();
     const type = String(payload.type ?? "leverancier").trim();
-    const contactName = String(payload.contact_name ?? "").trim();
-    const email = String(payload.email ?? "").trim().toLowerCase();
 
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      return json({ error: "Ongeldig e-mailadres" }, 400);
+    // Contactpersonen: nieuw formaat `contacts: [{ name, email, role, phone }]`,
+    // met terugvalcompatibiliteit op het oude `contact_name` / `email`.
+    const rawContacts = Array.isArray(payload.contacts) && payload.contacts.length > 0
+      ? payload.contacts
+      : [{ name: payload.contact_name, email: payload.email }];
+
+    const contacts = rawContacts
+      .map((c: Record<string, unknown>) => ({
+        name: String(c?.name ?? "").trim(),
+        email: String(c?.email ?? "").trim().toLowerCase(),
+        role: String(c?.role ?? "").trim(),
+        phone: String(c?.phone ?? "").trim(),
+      }))
+      .filter((c) => c.email.length > 0);
+
+    if (contacts.length === 0) {
+      return json({ error: "Vul minimaal één e-mailadres in" }, 400);
     }
+    for (const c of contacts) {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email)) {
+        return json({ error: `Ongeldig e-mailadres: ${c.email}` }, 400);
+      }
+    }
+    // Ontdubbelen op e-mailadres
+    const seen = new Set<string>();
+    const uniqueContacts = contacts.filter((c) => {
+      if (seen.has(c.email)) return false;
+      seen.add(c.email);
+      return true;
+    });
+
+    const primary = uniqueContacts[0];
+
     if (!orgId && !name) {
       return json({ error: "Naam van de organisatie is verplicht" }, 400);
     }
@@ -88,8 +116,8 @@ Deno.serve(async (req) => {
           approved: true,
           approved_by: userData.user.id,
           approved_at: new Date().toISOString(),
-          contact_email: email,
-          ...(contactName ? { contact_name: contactName } : {}),
+          contact_email: primary.email,
+          ...(primary.name ? { contact_name: primary.name } : {}),
         })
         .eq("id", org.id);
     } else {
@@ -98,8 +126,8 @@ Deno.serve(async (req) => {
         .insert({
           name,
           type,
-          contact_email: email,
-          contact_name: contactName || null,
+          contact_email: primary.email,
+          contact_name: primary.name || null,
           approved: true,
           approved_by: userData.user.id,
           approved_at: new Date().toISOString(),
@@ -110,85 +138,136 @@ Deno.serve(async (req) => {
       org = data as { id: string; name: string };
     }
 
-    // 2. Account aanmaken of hergebruiken
-    const password = tempPassword();
-    let userId: string | null = null;
-    let isNewAccount = true;
+    const results: Array<{ email: string; status: string; error?: string }> = [];
 
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { extern: true, organization_name: org.name },
-    });
+    for (const contact of uniqueContacts) {
+      const email = contact.email;
+      try {
+        // 2. Account aanmaken of hergebruiken
+        const password = tempPassword();
+        let userId: string | null = null;
+        let isNewAccount = true;
 
-    if (createError) {
-      if (!createError.message?.includes("already been registered")) throw createError;
-
-      isNewAccount = false;
-      const { data: list } = await admin.auth.admin.listUsers();
-      const existing = list?.users.find((u) => u.email?.toLowerCase() === email);
-      if (!existing) return json({ error: "Bestaand account kon niet worden gevonden" }, 500);
-      userId = existing.id;
-
-      // Bestaand account: nieuw tijdelijk wachtwoord zetten zodat de uitnodiging klopt
-      const { error: pwError } = await admin.auth.admin.updateUserById(userId, { password });
-      if (pwError) throw pwError;
-    } else {
-      userId = created.user!.id;
-    }
-
-    // 3. Rol en koppeling met organisatie
-    await admin.from("user_roles").upsert({ user_id: userId, role: "extern" }, { onConflict: "user_id,role" });
-
-    const { data: linkExists } = await admin
-      .from("external_org_users")
-      .select("org_id")
-      .eq("org_id", org.id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!linkExists) {
-      await admin.from("external_org_users").insert({ org_id: org.id, user_id: userId });
-    }
-
-    // 4. Uitnodiging mailen
-    const mailRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serviceRoleKey}`,
-      },
-      body: JSON.stringify({
-        templateName: "extern-invite",
-        recipientEmail: email,
-        idempotencyKey: `extern-invite:${org.id}:${email}:${Date.now()}`,
-        templateData: {
-          organisatie: org.name,
-          contactpersoon: contactName || null,
+        const { data: created, error: createError } = await admin.auth.admin.createUser({
           email,
-          wachtwoord: password,
-          loginUrl: LOGIN_URL,
-        },
-      }),
-    });
+          password,
+          email_confirm: true,
+          user_metadata: { extern: true, organization_name: org.name },
+        });
 
-    if (!mailRes.ok) {
-      const detail = await mailRes.text().catch(() => "");
-      console.error("invite-extern mail failed:", mailRes.status, detail.slice(0, 500));
-      return json(
-        {
-          success: false,
-          org_id: org.id,
-          error: "Account is aangemaakt, maar de uitnodigingsmail kon niet worden verstuurd.",
-          detail: detail.slice(0, 300),
-        },
-        502,
-      );
+        if (createError) {
+          if (!createError.message?.includes("already been registered")) throw createError;
+
+          isNewAccount = false;
+          const { data: list } = await admin.auth.admin.listUsers();
+          const existing = list?.users.find((u) => u.email?.toLowerCase() === email);
+          if (!existing) throw new Error("Bestaand account kon niet worden gevonden");
+          userId = existing.id;
+
+          const { error: pwError } = await admin.auth.admin.updateUserById(userId, { password });
+          if (pwError) throw pwError;
+        } else {
+          userId = created.user!.id;
+        }
+
+        // 3. Rol en koppeling met organisatie
+        await admin.from("user_roles").upsert(
+          { user_id: userId, role: "extern" },
+          { onConflict: "user_id,role" },
+        );
+
+        const { data: linkExists } = await admin
+          .from("external_org_users")
+          .select("org_id")
+          .eq("org_id", org.id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (!linkExists) {
+          await admin.from("external_org_users").insert({ org_id: org.id, user_id: userId });
+        }
+
+        // 3b. Contactpersoon vastleggen bij de organisatie
+        const { data: contactExists } = await admin
+          .from("external_org_contacts")
+          .select("id")
+          .eq("org_id", org.id)
+          .ilike("email", email)
+          .maybeSingle();
+
+        if (contactExists) {
+          const updates: Record<string, unknown> = {};
+          if (contact.name) updates.name = contact.name;
+          if (contact.role) updates.role = contact.role;
+          if (contact.phone) updates.phone = contact.phone;
+          if (Object.keys(updates).length > 0) {
+            await admin.from("external_org_contacts").update(updates).eq("id", contactExists.id);
+          }
+        } else {
+          await admin.from("external_org_contacts").insert({
+            org_id: org.id,
+            name: contact.name || email,
+            email,
+            role: contact.role || null,
+            phone: contact.phone || null,
+          });
+        }
+
+        // 4. Uitnodiging mailen
+        const mailRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            templateName: "extern-invite",
+            recipientEmail: email,
+            idempotencyKey: `extern-invite:${org.id}:${email}:${Date.now()}`,
+            templateData: {
+              organisatie: org.name,
+              contactpersoon: contact.name || null,
+              email,
+              wachtwoord: password,
+              loginUrl: LOGIN_URL,
+            },
+          }),
+        });
+
+        if (!mailRes.ok) {
+          const detail = await mailRes.text().catch(() => "");
+          console.error("invite-extern mail failed:", email, mailRes.status, detail.slice(0, 300));
+          results.push({
+            email,
+            status: "mail_failed",
+            error: "Account aangemaakt, maar de uitnodigingsmail kon niet worden verstuurd.",
+          });
+          continue;
+        }
+
+        results.push({ email, status: isNewAccount ? "sent" : "sent_existing_account" });
+      } catch (contactError) {
+        console.error("invite-extern contact failed:", email, contactError);
+        results.push({
+          email,
+          status: "error",
+          error: String((contactError as Error).message ?? contactError),
+        });
+      }
     }
 
-    return json({ success: true, org_id: org.id, user_id: userId, new_account: isNewAccount });
+    const sent = results.filter((r) => r.status.startsWith("sent")).length;
+
+    return json({
+      success: sent > 0,
+      org_id: org.id,
+      sent,
+      total: results.length,
+      results,
+      ...(sent === 0 ? { error: results[0]?.error ?? "Uitnodigen mislukt" } : {}),
+    }, sent > 0 ? 200 : 502);
   } catch (error) {
     console.error("invite-extern error:", error);
     return json({ error: String((error as Error).message ?? error) }, 500);
   }
 });
+
