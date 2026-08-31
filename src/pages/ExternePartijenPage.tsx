@@ -43,38 +43,52 @@ export default function ExternePartijenPage() {
   const [saving, setSaving] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name: "", type: "leverancier", contact_name: "", email: "" });
+  const [inviteForm, setInviteForm] = useState({ name: "", type: "leverancier" });
+  const [inviteContacts, setInviteContacts] = useState<{ name: string; email: string }[]>([
+    { name: "", email: "" },
+  ]);
   const [invitingOrgId, setInvitingOrgId] = useState<string | null>(null);
 
   const sendInvite = async (payload: {
     org_id?: string;
     name?: string;
     type?: string;
-    contact_name?: string;
-    email: string;
+    contacts: { name: string; email: string }[];
   }) => {
     const { data, error } = await invokeWithAuth("invite-extern", { body: payload });
     if (error) throw new Error(error.message);
-    if (data?.error) throw new Error(data.error);
-    return data;
+    if (data?.error && !data?.sent) throw new Error(data.error);
+    return data as { sent?: number; total?: number; results?: { email: string; status: string; error?: string }[] };
+  };
+
+  const reportInvite = (data: { sent?: number; total?: number; results?: { email: string; status: string; error?: string }[] }) => {
+    const sent = data?.sent ?? 0;
+    const total = data?.total ?? sent;
+    toast.success(`${sent} van ${total} uitnodiging(en) verstuurd`);
+    data?.results?.filter(r => !r.status.startsWith("sent")).forEach(r => {
+      toast.error(`${r.email}: ${r.error ?? "mislukt"}`);
+    });
   };
 
   const handleInviteNew = async () => {
-    if (!inviteForm.name.trim() || !inviteForm.email.trim()) {
-      toast.error("Vul een naam en e-mailadres in");
+    const contacts = inviteContacts
+      .map(c => ({ name: c.name.trim(), email: c.email.trim() }))
+      .filter(c => c.email);
+    if (!inviteForm.name.trim() || contacts.length === 0) {
+      toast.error("Vul een organisatienaam en minimaal één e-mailadres in");
       return;
     }
     setInviting(true);
     try {
-      await sendInvite({
+      const data = await sendInvite({
         name: inviteForm.name.trim(),
         type: inviteForm.type,
-        contact_name: inviteForm.contact_name.trim(),
-        email: inviteForm.email.trim(),
+        contacts,
       });
-      toast.success("Uitnodiging verstuurd");
+      reportInvite(data);
       setInviteOpen(false);
-      setInviteForm({ name: "", type: "leverancier", contact_name: "", email: "" });
+      setInviteForm({ name: "", type: "leverancier" });
+      setInviteContacts([{ name: "", email: "" }]);
       loadOrgs();
     } catch (e: any) {
       toast.error("Uitnodigen mislukt: " + e.message);
@@ -90,18 +104,18 @@ export default function ExternePartijenPage() {
     if (!confirm(`Uitnodiging met inloggegevens sturen naar ${org.contact_email}?`)) return;
     setInvitingOrgId(org.id);
     try {
-      await sendInvite({
+      const data = await sendInvite({
         org_id: org.id,
-        contact_name: org.contact_name || "",
-        email: org.contact_email,
+        contacts: [{ name: org.contact_name || "", email: org.contact_email }],
       });
-      toast.success("Uitnodiging verstuurd naar " + org.contact_email);
+      reportInvite(data);
       loadOrgs();
     } catch (e: any) {
       toast.error("Uitnodigen mislukt: " + e.message);
     }
     setInvitingOrgId(null);
   };
+
 
   const loadOrgs = async () => {
     const { data } = await supabase
