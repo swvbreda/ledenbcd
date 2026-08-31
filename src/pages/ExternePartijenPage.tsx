@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Building2, Check, X, Clock, Pencil, Save, Mail, UserPlus } from "lucide-react";
+import { Building2, Check, X, Clock, Pencil, Save, Mail, UserPlus, Plus, Trash2 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
