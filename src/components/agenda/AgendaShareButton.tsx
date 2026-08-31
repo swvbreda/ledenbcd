@@ -16,8 +16,18 @@ interface Props {
   className?: string;
 }
 
+const PUBLIC_BASE_URL = "https://leden.coffeeshopbond.nl";
+
 export function buildEventUrl(eventId: string) {
-  return `${window.location.origin}/agenda/${eventId}`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const proto = typeof window !== "undefined" ? window.location.protocol : "";
+  // In de native app (capacitor:// of localhost) is de huidige origin niet
+  // publiek bereikbaar — gebruik dan altijd het ledenportaal.
+  const isWebOrigin =
+    /^https?:$/.test(proto) &&
+    !origin.includes("localhost") &&
+    !origin.includes("127.0.0.1");
+  return `${isWebOrigin ? origin : PUBLIC_BASE_URL}/agenda/${eventId}`;
 }
 
 function buildShareText(event: AgendaEvent) {
