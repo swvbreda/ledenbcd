@@ -284,28 +284,79 @@ export default function ExternePartijDetailPage() {
 
         {/* Contactpersonen */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" /> Extra contactpersonen ({contacts.length})
+              <Users className="h-4 w-4" /> Contactpersonen ({contacts.length})
             </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              onClick={() => setContactForm({ name: "", role: "", phone: "", email: "" })}
+            >
+              <Plus className="h-3.5 w-3.5" /> Toevoegen
+            </Button>
           </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Geen extra contactpersonen.</p>
+              <p className="text-sm text-muted-foreground">Nog geen contactpersonen.</p>
             ) : (
               <div className="space-y-3">
-                {contacts.map((c) => (
-                  <div key={c.id} className="text-sm space-y-0.5">
-                    <div className="font-medium">{c.name}</div>
-                    {c.role && <div className="text-xs text-muted-foreground">{c.role}</div>}
-                    {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
-                    {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
-                  </div>
-                ))}
+                {contacts.map((c) => {
+                  const hasAccount = !!c.email && accountEmails.has(c.email.toLowerCase());
+                  return (
+                    <div key={c.id} className="flex items-start justify-between gap-2 border-b last:border-0 pb-2 last:pb-0">
+                      <div className="text-sm space-y-0.5 min-w-0">
+                        <div className="font-medium">{c.name}</div>
+                        {c.role && <div className="text-xs text-muted-foreground">{c.role}</div>}
+                        {c.email && <div className="text-xs text-muted-foreground break-all">{c.email}</div>}
+                        {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
+                        {hasAccount && <Badge variant="secondary" className="text-[10px]">Heeft toegang</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.email && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            title={hasAccount ? "Opnieuw uitnodigen" : "Uitnodigen"}
+                            disabled={invitingEmail === c.email}
+                            onClick={() => inviteContact(c)}
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setContactForm({
+                            id: c.id,
+                            name: c.name,
+                            role: c.role ?? "",
+                            phone: c.phone ?? "",
+                            email: c.email ?? "",
+                          })}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-destructive"
+                          onClick={() => deleteContact(c.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
+
       </div>
 
       {/* Gekoppelde producten */}
