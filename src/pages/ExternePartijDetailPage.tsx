@@ -422,6 +422,38 @@ export default function ExternePartijDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Contactpersoon dialoog */}
+      <Dialog open={!!contactForm} onOpenChange={(o) => { if (!o && !savingContact) setContactForm(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{contactForm?.id ? "Contactpersoon bewerken" : "Contactpersoon toevoegen"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div>
+              <Label>Naam</Label>
+              <Input value={contactForm?.name ?? ""} onChange={(e) => setContactForm(f => f && { ...f, name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Functie</Label>
+              <Input value={contactForm?.role ?? ""} onChange={(e) => setContactForm(f => f && { ...f, role: e.target.value })} />
+            </div>
+            <div>
+              <Label>E-mail</Label>
+              <Input type="email" value={contactForm?.email ?? ""} onChange={(e) => setContactForm(f => f && { ...f, email: e.target.value })} />
+            </div>
+            <div>
+              <Label>Telefoon</Label>
+              <Input value={contactForm?.phone ?? ""} onChange={(e) => setContactForm(f => f && { ...f, phone: e.target.value })} />
+            </div>
+            <Button className="w-full" disabled={savingContact || !contactForm?.name.trim()} onClick={saveContact}>
+              {savingContact ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
+
       <p className="text-xs text-muted-foreground">
         Aangemeld op {new Date(org.created_at).toLocaleDateString("nl-NL")}
       </p>
