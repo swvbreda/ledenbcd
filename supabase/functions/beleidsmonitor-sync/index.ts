@@ -12,7 +12,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * Draait dagelijks via pg_cron en kan handmatig gestart worden door een admin.
  */
 
-const BASE_URL = Deno.env.get("BELEIDSMONITOR_BASE_URL") ?? "https://coffeeshopbeleid.nl";
+const BASE_URL = Deno.env.get("BELEIDSMONITOR_BASE_URL") ?? "https://coffeeshopbeleid.lovable.app";
 const BATCH_SIZE = 5000;
 
 function admin() {
