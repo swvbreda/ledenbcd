@@ -133,18 +133,32 @@ Deno.serve(async (req) => {
         fetched_at: new Date().toISOString(),
       };
       });
-      for (let i = 0; i < rows.length; i += 500) {
-        const chunk = rows.slice(i, i + 500);
+      const withId = rows.filter((r) => r.extern_id);
+      const withoutId = rows.filter((r) => !r.extern_id);
+
+      for (let i = 0; i < withId.length; i += 500) {
+        const chunk = withId.slice(i, i + 500);
         const { error } = await db
           .from("beleidsmonitor_dossiers")
-          .upsert(chunk, { onConflict: "extern_id" , ignoreDuplicates: false });
-        if (error) {
-          // Val terug op losse inserts wanneer de bron geen extern id levert
-          for (const row of chunk) {
-            await db.from("beleidsmonitor_dossiers").upsert(row);
-          }
-        }
+          .upsert(chunk, { onConflict: "extern_id", ignoreDuplicates: false });
+        if (error) throw new Error(`opslaan dossiers mislukte: ${error.message}`);
         pulled += chunk.length;
+      }
+
+      // Records zonder extern id: op member_id bijwerken, anders invoegen
+      for (const row of withoutId) {
+        if (row.member_id == null) continue;
+        const { data: existing } = await db
+          .from("beleidsmonitor_dossiers")
+          .select("id")
+          .is("extern_id", null)
+          .eq("member_id", row.member_id)
+          .maybeSingle();
+        const { error } = existing
+          ? await db.from("beleidsmonitor_dossiers").update(row).eq("id", existing.id)
+          : await db.from("beleidsmonitor_dossiers").insert(row);
+        if (error) throw new Error(`opslaan dossier ${row.member_id} mislukte: ${error.message}`);
+        pulled += 1;
       }
     } else if (dossierRes.status !== 404) {
       const body = await dossierRes.text();
