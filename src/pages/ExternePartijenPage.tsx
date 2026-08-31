@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Building2, Check, X, Clock, Pencil, Save } from "lucide-react";
+import { Building2, Check, X, Clock, Pencil, Save, Mail, UserPlus } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,67 @@ export default function ExternePartijenPage() {
   const [editOrg, setEditOrg] = useState<ExternalOrg | null>(null);
   const [editForm, setEditForm] = useState({ name: "", type: "", contact_name: "", contact_email: "", notes: "" });
   const [saving, setSaving] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ name: "", type: "leverancier", contact_name: "", email: "" });
+  const [invitingOrgId, setInvitingOrgId] = useState<string | null>(null);
+
+  const sendInvite = async (payload: {
+    org_id?: string;
+    name?: string;
+    type?: string;
+    contact_name?: string;
+    email: string;
+  }) => {
+    const { data, error } = await invokeWithAuth("invite-extern", { body: payload });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
+
+  const handleInviteNew = async () => {
+    if (!inviteForm.name.trim() || !inviteForm.email.trim()) {
+      toast.error("Vul een naam en e-mailadres in");
+      return;
+    }
+    setInviting(true);
+    try {
+      await sendInvite({
+        name: inviteForm.name.trim(),
+        type: inviteForm.type,
+        contact_name: inviteForm.contact_name.trim(),
+        email: inviteForm.email.trim(),
+      });
+      toast.success("Uitnodiging verstuurd");
+      setInviteOpen(false);
+      setInviteForm({ name: "", type: "leverancier", contact_name: "", email: "" });
+      loadOrgs();
+    } catch (e: any) {
+      toast.error("Uitnodigen mislukt: " + e.message);
+    }
+    setInviting(false);
+  };
+
+  const handleInviteExisting = async (org: ExternalOrg) => {
+    if (!org.contact_email) {
+      toast.error("Deze organisatie heeft geen contact-e-mailadres");
+      return;
+    }
+    if (!confirm(`Uitnodiging met inloggegevens sturen naar ${org.contact_email}?`)) return;
+    setInvitingOrgId(org.id);
+    try {
+      await sendInvite({
+        org_id: org.id,
+        contact_name: org.contact_name || "",
+        email: org.contact_email,
+      });
+      toast.success("Uitnodiging verstuurd naar " + org.contact_email);
+      loadOrgs();
+    } catch (e: any) {
+      toast.error("Uitnodigen mislukt: " + e.message);
+    }
+    setInvitingOrgId(null);
+  };
 
   const loadOrgs = async () => {
     const { data } = await supabase
@@ -193,6 +254,12 @@ export default function ExternePartijenPage() {
     <div className="p-4 sm:p-6 space-y-6 w-full">
       <BcdHeroBanner title="Externe Partijen" subtitle="Beheer toegang voor banken, overheden en leveranciers" />
 
+      <div className="flex justify-end">
+        <Button size="sm" className="gap-2" onClick={() => setInviteOpen(true)}>
+          <UserPlus size={14} /> Organisatie uitnodigen
+        </Button>
+      </div>
+
       {pending.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -236,6 +303,15 @@ export default function ExternePartijenPage() {
                   <Button size="sm" variant="ghost" className="gap-1 h-8 w-8 p-0" onClick={() => openEdit(org)}>
                     <Pencil size={14} />
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    disabled={invitingOrgId === org.id}
+                    onClick={() => handleInviteExisting(org)}
+                  >
+                    <Mail size={14} /> {invitingOrgId === org.id ? "Versturen..." : "Uitnodigen"}
+                  </Button>
                   <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => handleReject(org.id)}>
                     <X size={14} /> Verwijderen
                   </Button>
@@ -245,6 +321,62 @@ export default function ExternePartijenPage() {
           ))
         )}
       </div>
+
+      {/* Invite dialog */}
+      <Dialog open={inviteOpen} onOpenChange={(o) => { if (!inviting) setInviteOpen(o); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Organisatie uitnodigen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-muted-foreground">
+              De organisatie krijgt direct toegang: er wordt een account aangemaakt en een e-mail met
+              inloggegevens verstuurd.
+            </p>
+            <div>
+              <Label>Naam organisatie</Label>
+              <Input
+                value={inviteForm.name}
+                onChange={(e) => setInviteForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Voorbeeld Leverancier B.V."
+              />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <Select value={inviteForm.type} onValueChange={(v) => setInviteForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ORG_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Contactpersoon</Label>
+              <Input
+                value={inviteForm.contact_name}
+                onChange={(e) => setInviteForm(f => ({ ...f, contact_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>E-mailadres</Label>
+              <Input
+                type="email"
+                value={inviteForm.email}
+                onChange={(e) => setInviteForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="contact@organisatie.nl"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setInviteOpen(false)} disabled={inviting}>
+                Annuleren
+              </Button>
+              <Button size="sm" className="gap-1" onClick={handleInviteNew} disabled={inviting}>
+                <Mail size={14} /> {inviting ? "Versturen..." : "Uitnodiging versturen"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit dialog */}
       <Dialog open={!!editOrg} onOpenChange={(o) => { if (!o) setEditOrg(null); }}>
