@@ -72,49 +72,119 @@ export default function ExternePartijDetailPage() {
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [contactForm, setContactForm] = useState<{ id?: string; name: string; role: string; phone: string; email: string } | null>(null);
+  const [savingContact, setSavingContact] = useState(false);
+  const [invitingEmail, setInvitingEmail] = useState<string | null>(null);
+
+  const loadContacts = async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("external_org_contacts")
+      .select("id, name, role, phone, email")
+      .eq("org_id", id)
+      .order("created_at");
+    setContacts(data ?? []);
+  };
+
+  const loadAccounts = async () => {
+    if (!id) return;
+    const { data: links } = await supabase
+      .from("external_org_users")
+      .select("user_id, created_at")
+      .eq("org_id", id);
+    if (!links || links.length === 0) {
+      setAccounts([]);
+      return;
+    }
+    const { data: usersData } = await invokeWithAuth("manage-users", { body: { action: "list" } });
+    const userMap = new Map<string, string>();
+    if (usersData?.users) {
+      for (const u of usersData.users) userMap.set(u.id, u.email);
+    }
+    setAccounts(
+      links.map((a) => ({
+        user_id: a.user_id,
+        email: userMap.get(a.user_id) || "Onbekend",
+        created_at: a.created_at,
+      }))
+    );
+  };
+
   useEffect(() => {
     if (!isAdmin || !id) return;
 
     const load = async () => {
-      const [orgRes, contactsRes, benefitsRes, accountsRes] = await Promise.all([
+      const [orgRes, benefitsRes] = await Promise.all([
         supabase.from("external_organizations").select("*").eq("id", id).single(),
-        supabase.from("external_org_contacts").select("id, name, role, phone, email").eq("org_id", id),
         supabase.from("member_benefits").select("id, title, category, active, price").eq("supplier_org_id", id),
-        supabase.from("external_org_users").select("user_id, created_at").eq("org_id", id),
       ]);
 
       if (orgRes.data) setOrg(orgRes.data as OrgDetail);
-      setContacts(contactsRes.data ?? []);
       setBenefits(benefitsRes.data ?? []);
-
-      // Fetch emails for linked accounts
-      if (accountsRes.data && accountsRes.data.length > 0) {
-        const { data: usersData } = await invokeWithAuth("manage-users", {
-          body: { action: "list_users" },
-        });
-        const userMap = new Map<string, string>();
-        if (usersData?.users) {
-          for (const u of usersData.users) {
-            userMap.set(u.id, u.email);
-          }
-        }
-        setAccounts(
-          accountsRes.data.map((a) => ({
-            user_id: a.user_id,
-            email: userMap.get(a.user_id) || "Onbekend",
-            created_at: a.created_at,
-          }))
-        );
-      }
+      await Promise.all([loadContacts(), loadAccounts()]);
       setLoading(false);
     };
 
     load();
   }, [isAdmin, id]);
 
+  const saveContact = async () => {
+    if (!contactForm || !id || !contactForm.name.trim()) return;
+    setSavingContact(true);
+    const values = {
+      org_id: id,
+      name: contactForm.name.trim(),
+      role: contactForm.role.trim() || null,
+      phone: contactForm.phone.trim() || null,
+      email: contactForm.email.trim().toLowerCase() || null,
+    };
+    const { error } = contactForm.id
+      ? await supabase.from("external_org_contacts").update(values).eq("id", contactForm.id)
+      : await supabase.from("external_org_contacts").insert(values);
+    if (error) {
+      toast.error("Opslaan mislukt: " + error.message);
+    } else {
+      toast.success("Contactpersoon opgeslagen");
+      setContactForm(null);
+      loadContacts();
+    }
+    setSavingContact(false);
+  };
+
+  const deleteContact = async (contactId: string) => {
+    if (!confirm("Deze contactpersoon verwijderen?")) return;
+    const { error } = await supabase.from("external_org_contacts").delete().eq("id", contactId);
+    if (error) toast.error("Verwijderen mislukt: " + error.message);
+    else {
+      toast.success("Contactpersoon verwijderd");
+      loadContacts();
+    }
+  };
+
+  const inviteContact = async (contact: OrgContact) => {
+    if (!contact.email || !id) return;
+    if (!confirm(`Uitnodiging met inloggegevens sturen naar ${contact.email}?`)) return;
+    setInvitingEmail(contact.email);
+    try {
+      const { data, error } = await invokeWithAuth("invite-extern", {
+        body: { org_id: id, contacts: [{ name: contact.name, email: contact.email, role: contact.role ?? "", phone: contact.phone ?? "" }] },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error && !data?.sent) throw new Error(data.error);
+      toast.success("Uitnodiging verstuurd naar " + contact.email);
+      loadAccounts();
+    } catch (e: any) {
+      toast.error("Uitnodigen mislukt: " + e.message);
+    }
+    setInvitingEmail(null);
+  };
+
   if (authLoading || loading) return <LoadingSpinner />;
   if (!isAdmin) return <Navigate to="/" replace />;
   if (!org) return <div className="p-6 text-muted-foreground">Organisatie niet gevonden.</div>;
+
+  const accountEmails = new Set(accounts.map((a) => a.email.toLowerCase()));
+
 
   const logoUrl = org.logo_path
     ? supabase.storage.from("org-logos").getPublicUrl(org.logo_path).data.publicUrl
