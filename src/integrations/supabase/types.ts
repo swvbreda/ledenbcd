@@ -220,6 +220,75 @@ export type Database = {
           },
         ]
       }
+      beleidsmonitor_dossiers: {
+        Row: {
+          created_at: string
+          data: Json
+          extern_id: string | null
+          fetched_at: string
+          gemeente: string | null
+          id: string
+          member_id: number | null
+          naam: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          extern_id?: string | null
+          fetched_at?: string
+          gemeente?: string | null
+          id?: string
+          member_id?: number | null
+          naam?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          extern_id?: string | null
+          fetched_at?: string
+          gemeente?: string | null
+          id?: string
+          member_id?: number | null
+          naam?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      beleidsmonitor_sync_state: {
+        Row: {
+          id: number
+          last_error: string | null
+          last_pull_at: string | null
+          last_pull_count: number
+          last_push_at: string | null
+          last_push_count: number
+          last_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_error?: string | null
+          last_pull_at?: string | null
+          last_pull_count?: number
+          last_push_at?: string | null
+          last_push_count?: number
+          last_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_error?: string | null
+          last_pull_at?: string | null
+          last_pull_count?: number
+          last_push_at?: string | null
+          last_push_count?: number
+          last_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       benefit_images: {
         Row: {
           benefit_id: string
@@ -3096,6 +3165,7 @@ export type Database = {
         Args: { _member_id: number }
         Returns: undefined
       }
+      trigger_beleidsmonitor_sync: { Args: never; Returns: number }
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
       trigger_register_enrichment: { Args: never; Returns: number }
