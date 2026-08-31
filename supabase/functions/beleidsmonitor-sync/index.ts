@@ -131,7 +131,8 @@ Deno.serve(async (req) => {
         gemeente: d.gemeente ?? d.plaats ?? null,
         data: d,
         fetched_at: new Date().toISOString(),
-      }));
+      };
+      });
       for (let i = 0; i < rows.length; i += 500) {
         const chunk = rows.slice(i, i + 500);
         const { error } = await db
