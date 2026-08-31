@@ -364,22 +364,52 @@ export default function ExternePartijenPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Contactpersoon</Label>
-              <Input
-                value={inviteForm.contact_name}
-                onChange={(e) => setInviteForm(f => ({ ...f, contact_name: e.target.value }))}
-              />
+            <div className="space-y-2">
+              <Label>Contactpersonen</Label>
+              <p className="text-xs text-muted-foreground">
+                Iedere contactpersoon krijgt een eigen account voor deze organisatie.
+              </p>
+              {inviteContacts.map((c, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      value={c.name}
+                      placeholder="Naam"
+                      onChange={(e) =>
+                        setInviteContacts(list => list.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
+                      }
+                    />
+                    <Input
+                      type="email"
+                      value={c.email}
+                      placeholder="contact@organisatie.nl"
+                      onChange={(e) =>
+                        setInviteContacts(list => list.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)))
+                      }
+                    />
+                  </div>
+                  {inviteContacts.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive shrink-0"
+                      onClick={() => setInviteContacts(list => list.filter((_, j) => j !== i))}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setInviteContacts(list => [...list, { name: "", email: "" }])}
+              >
+                <Plus size={14} /> Contactpersoon toevoegen
+              </Button>
             </div>
-            <div>
-              <Label>E-mailadres</Label>
-              <Input
-                type="email"
-                value={inviteForm.email}
-                onChange={(e) => setInviteForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="contact@organisatie.nl"
-              />
-            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" size="sm" onClick={() => setInviteOpen(false)} disabled={inviting}>
                 Annuleren
