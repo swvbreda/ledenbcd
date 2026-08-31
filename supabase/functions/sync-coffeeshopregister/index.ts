@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
   let linksProposed = 0;
 
   try {
-    const secret = Deno.env.get("COFFEESHOPBELEID_API_SECRET");
+    const secret = Deno.env.get("COFFEESHOPBELEID_API_SECRET") ?? Deno.env.get("BCD_KOPPEL_SLEUTEL");
     let shops: SourceShop[] | null = null;
     let linkedDossiers: any[] = [];
     let uboBron: "export" | "geen" = "geen";
