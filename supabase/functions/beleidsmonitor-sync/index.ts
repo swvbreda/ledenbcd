@@ -121,9 +121,12 @@ Deno.serve(async (req) => {
     if (dossierRes.ok) {
       const body = await dossierRes.json();
       const dossiers: any[] = body.leden ?? body.data ?? [];
-      const rows = dossiers.map((d) => ({
-        member_id: Number.isFinite(Number(d.lid_id)) ? Number(d.lid_id) : null,
-        extern_id: d.id ? String(d.id) : null,
+      const rows = dossiers.map((d) => {
+        const ext = d.extern_id ?? d.id ?? null;
+        const lid = d.lid_id ?? (ext ? String(ext).split("-")[0] : null);
+        return {
+        member_id: Number.isFinite(Number(lid)) ? Number(lid) : null,
+        extern_id: ext != null ? String(ext) : null,
         naam: d.naam ?? null,
         gemeente: d.gemeente ?? d.plaats ?? null,
         data: d,
