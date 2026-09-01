@@ -186,17 +186,104 @@ const CoffeeshopRegisterPage = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Vergunde coffeeshops in NL", value: actief.length },
-          { label: "Gekoppeld aan leden", value: bevestigd },
-          { label: "Voorstellen te bevestigen", value: voorstellen },
-          { label: "Gemeenten", value: gemeentenVergund },
-        ].map((k) => (
-          <div key={k.label} className="rounded-lg border bg-card p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
-            <p className="text-2xl font-display tabular-nums mt-1">{k.value}</p>
-          </div>
-        ))}
+          { label: "Vergunde coffeeshops in NL", value: actief.length, filter: "alle" as Koppeling },
+          { label: "Gekoppeld aan leden", value: bevestigd, filter: "lid" as Koppeling },
+          { label: "Voorstellen te bevestigen", value: voorstellen, filter: "voorstel" as Koppeling },
+          { label: "Gemeenten", value: gemeentenVergund, filter: null },
+        ].map((k) => {
+          const actiefFilter = k.filter !== null && koppeling === k.filter;
+          const clickable = k.filter !== null;
+          return (
+            <button
+              key={k.label}
+              type="button"
+              disabled={!clickable}
+              onClick={() => k.filter && setKoppeling(k.filter)}
+              className={`rounded-lg border bg-card p-4 text-left transition-colors ${
+                clickable ? "hover:border-primary cursor-pointer" : "cursor-default"
+              } ${actiefFilter ? "border-primary ring-1 ring-primary" : ""}`}
+            >
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
+              <p className="text-2xl font-display tabular-nums mt-1">{k.value}</p>
+            </button>
+          );
+        })}
       </div>
+
+      {voorstelShops.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display uppercase text-sm">Te bevestigen voorstellen</h2>
+            <Badge variant="secondary">{voorstelShops.length}</Badge>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {voorstelShops.map((s) => {
+              const link = linkByShop.get(s.id)!;
+              const adres = [s.straat, s.huisnummer, s.huisnummer_toevoeging].filter(Boolean).join(" ");
+              return (
+                <div key={s.id} className="rounded-md border bg-card p-3 space-y-2">
+                  <div>
+                    <p className="font-medium">{s.naam}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {[adres, s.postcode, s.plaats].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <p className="text-sm">
+                    Voorstel:{" "}
+                    <span className="font-medium">
+                      {memberName.get(link.member_id) ?? `Lid #${link.member_id}`}
+                    </span>
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      (link.score ?? 0) < 0.7
+                        ? "text-amber-700 dark:text-amber-400"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {link.reden ?? "onbekende reden"}
+                    {link.score != null && ` · ${Math.round(link.score * 100)}%`}
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setConfirmTarget({
+                          shop: s,
+                          proposal: {
+                            linkId: link.id,
+                            memberId: link.member_id,
+                            reden: link.reden,
+                            score: link.score,
+                          },
+                        })
+                      }
+                    >
+                      <Check className="mr-1 h-4 w-4" /> Controleren en bevestigen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setLink.mutate({
+                          register_id: s.id,
+                          member_id: link.member_id,
+                          status: "afgewezen",
+                          existingId: link.id,
+                        })
+                      }
+                    >
+                      <X className="mr-1 h-4 w-4" /> Afwijzen
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+
 
 
       <RegisterEnrichmentPanel memberName={memberName} isAdmin={isAdmin} />
