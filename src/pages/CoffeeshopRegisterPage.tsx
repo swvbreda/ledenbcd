@@ -129,10 +129,12 @@ const CoffeeshopRegisterPage = () => {
     () => actief.filter((s) => linkByShop.get(s.id)?.status === "bevestigd").length,
     [actief, linkByShop],
   );
-  const voorstellen = useMemo(
-    () => actief.filter((s) => linkByShop.get(s.id)?.status === "voorstel").length,
+  const voorstelShops = useMemo(
+    () => actief.filter((s) => linkByShop.get(s.id)?.status === "voorstel"),
     [actief, linkByShop],
   );
+  const voorstellen = voorstelShops.length;
+
 
 
   if (!allowed) {
