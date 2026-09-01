@@ -75,10 +75,25 @@ const CoffeeshopRegisterDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display uppercase">{shop.naam}</DialogTitle>
-          <DialogDescription>
-            {shop.gemeente ? `Gemeente ${shop.gemeente}` : "Coffeeshopregister"}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            {shop.logo_url && (
+              <img
+                src={shop.logo_url}
+                alt={`Logo ${shop.naam}`}
+                loading="lazy"
+                className="h-12 w-12 rounded-md border border-border object-contain bg-background"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )}
+            <div className="min-w-0">
+              <DialogTitle className="font-display uppercase">{shop.naam}</DialogTitle>
+              <DialogDescription>
+                {shop.gemeente ? `Gemeente ${shop.gemeente}` : "Coffeeshopregister"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -89,6 +104,13 @@ const CoffeeshopRegisterDetailDialog = ({
             <Row label="Provincie" value={shop.provincie} />
             <Row label="Telefoon" value={shop.telefoon} />
             <Row label="Website" value={shop.website} />
+            <Row label="Shopcode" value={shop.shopcode} />
+            <Row
+              label="Opgericht"
+              value={shop.oprichtingsdatum ? new Date(shop.oprichtingsdatum).toLocaleDateString("nl-NL") : null}
+            />
+            <Row label="Instagram" value={shop.socials?.instagram} />
+            <Row label="Facebook" value={shop.socials?.facebook} />
           </section>
 
           <section>
