@@ -659,6 +659,8 @@ export type Database = {
       }
       coffeeshop_register: {
         Row: {
+          bag_pand_id: string | null
+          bag_verblijfsobject_id: string | null
           bron_id: string
           created_at: string
           einddatum: string | null
@@ -674,12 +676,18 @@ export type Database = {
           kvk_vestiging_datum: string | null
           kvk_vestigingsnummer: string | null
           latitude: number | null
+          logo_pad: string | null
+          logo_url: string | null
           longitude: number | null
           naam: string
+          oprichtingsdatum: string | null
+          oprichtingsdatum_bron: string | null
           plaats: string | null
           postcode: string | null
           provincie: string | null
           raw: Json
+          shopcode: string | null
+          socials: Json | null
           status: string
           straat: string | null
           synced_at: string
@@ -688,10 +696,13 @@ export type Database = {
           vergunninghouder: string | null
           vergunningnummer: string | null
           vergunningverlening: string | null
+          verrijkt_op: string | null
           vervallen: boolean
           website: string | null
         }
         Insert: {
+          bag_pand_id?: string | null
+          bag_verblijfsobject_id?: string | null
           bron_id: string
           created_at?: string
           einddatum?: string | null
@@ -707,12 +718,18 @@ export type Database = {
           kvk_vestiging_datum?: string | null
           kvk_vestigingsnummer?: string | null
           latitude?: number | null
+          logo_pad?: string | null
+          logo_url?: string | null
           longitude?: number | null
           naam: string
+          oprichtingsdatum?: string | null
+          oprichtingsdatum_bron?: string | null
           plaats?: string | null
           postcode?: string | null
           provincie?: string | null
           raw?: Json
+          shopcode?: string | null
+          socials?: Json | null
           status?: string
           straat?: string | null
           synced_at?: string
@@ -721,10 +738,13 @@ export type Database = {
           vergunninghouder?: string | null
           vergunningnummer?: string | null
           vergunningverlening?: string | null
+          verrijkt_op?: string | null
           vervallen?: boolean
           website?: string | null
         }
         Update: {
+          bag_pand_id?: string | null
+          bag_verblijfsobject_id?: string | null
           bron_id?: string
           created_at?: string
           einddatum?: string | null
@@ -740,12 +760,18 @@ export type Database = {
           kvk_vestiging_datum?: string | null
           kvk_vestigingsnummer?: string | null
           latitude?: number | null
+          logo_pad?: string | null
+          logo_url?: string | null
           longitude?: number | null
           naam?: string
+          oprichtingsdatum?: string | null
+          oprichtingsdatum_bron?: string | null
           plaats?: string | null
           postcode?: string | null
           provincie?: string | null
           raw?: Json
+          shopcode?: string | null
+          socials?: Json | null
           status?: string
           straat?: string | null
           synced_at?: string
@@ -754,6 +780,7 @@ export type Database = {
           vergunninghouder?: string | null
           vergunningnummer?: string | null
           vergunningverlening?: string | null
+          verrijkt_op?: string | null
           vervallen?: boolean
           website?: string | null
         }
