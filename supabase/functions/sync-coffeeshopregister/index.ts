@@ -13,7 +13,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SOURCE_URL = "https://dilxcjjsvpxrkjrnivla.supabase.co";
 const SOURCE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpbHhjampzdnB4cmtqcm5pdmxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjcxNzgsImV4cCI6MjA5NDM0MzE3OH0.l7dN6P3FmCN-pD7ev5bqc46ZH7hjWaRq1YNhrN3NWRM";
-const SOURCE_APP_URL = "https://coffeeshopbeleid.nl";
+// Instelbaar; het .nl-domein serveert een certificaat dat daar niet geldig voor is.
+const SOURCE_APP_URL = (
+  Deno.env.get("BELEIDSMONITOR_BASE_URL") ?? "https://coffeeshopbeleid.com"
+).replace(/\/+$/, "");
 const PAGE_SIZE = 500;
 
 type SourceShop = Record<string, any>;
@@ -156,9 +159,20 @@ Deno.serve(async (req) => {
     let uboBron: "export" | "geen" = "geen";
 
     if (secret) {
-      shops = await fetchSecureExport(secret);
-      if (shops) uboBron = "export";
-      linkedDossiers = await fetchLinkedDossiers(secret);
+      // Bij een netwerk-/certificaatfout vallen we terug op de publieke REST-route.
+      try {
+        shops = await fetchSecureExport(secret);
+        if (shops) uboBron = "export";
+      } catch (e) {
+        console.warn("Beveiligde export niet bereikbaar, terugval op publieke bron:", e);
+        shops = null;
+      }
+      try {
+        linkedDossiers = await fetchLinkedDossiers(secret);
+      } catch (e) {
+        console.warn("Ledendossier-endpoint niet bereikbaar:", e);
+        linkedDossiers = [];
+      }
     }
 
     let gemeenteById = new Map<string, { naam: string; provincie: string | null }>();
