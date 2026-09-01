@@ -349,7 +349,9 @@ const CoffeeshopRegisterPage = () => {
                 return (
                   <tr
                     key={s.id}
-                    className="border-t hover:bg-muted/30 cursor-pointer"
+                    className={`border-t hover:bg-muted/30 cursor-pointer ${
+                      link?.status === "voorstel" ? "bg-amber-50/60 dark:bg-amber-950/20" : ""
+                    }`}
                     onClick={() => setDetail(s)}
                   >
                     <td className="px-3 py-2 font-medium">{s.naam}</td>
