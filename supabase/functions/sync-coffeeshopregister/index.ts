@@ -159,9 +159,20 @@ Deno.serve(async (req) => {
     let uboBron: "export" | "geen" = "geen";
 
     if (secret) {
-      shops = await fetchSecureExport(secret);
-      if (shops) uboBron = "export";
-      linkedDossiers = await fetchLinkedDossiers(secret);
+      // Bij een netwerk-/certificaatfout vallen we terug op de publieke REST-route.
+      try {
+        shops = await fetchSecureExport(secret);
+        if (shops) uboBron = "export";
+      } catch (e) {
+        console.warn("Beveiligde export niet bereikbaar, terugval op publieke bron:", e);
+        shops = null;
+      }
+      try {
+        linkedDossiers = await fetchLinkedDossiers(secret);
+      } catch (e) {
+        console.warn("Ledendossier-endpoint niet bereikbaar:", e);
+        linkedDossiers = [];
+      }
     }
 
     let gemeenteById = new Map<string, { naam: string; provincie: string | null }>();
