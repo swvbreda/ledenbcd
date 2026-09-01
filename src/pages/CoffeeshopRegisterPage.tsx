@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
-import BeleidsmonitorSyncPanel from "@/components/register/BeleidsmonitorSyncPanel";
+
 import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
 import {
   AlertDialog,
@@ -196,7 +196,6 @@ const CoffeeshopRegisterPage = () => {
         ))}
       </div>
 
-      <BeleidsmonitorSyncPanel isAdmin={isAdmin} />
 
       <RegisterEnrichmentPanel memberName={memberName} isAdmin={isAdmin} />
 
