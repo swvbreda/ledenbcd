@@ -13,7 +13,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SOURCE_URL = "https://dilxcjjsvpxrkjrnivla.supabase.co";
 const SOURCE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpbHhjampzdnB4cmtqcm5pdmxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjcxNzgsImV4cCI6MjA5NDM0MzE3OH0.l7dN6P3FmCN-pD7ev5bqc46ZH7hjWaRq1YNhrN3NWRM";
-const SOURCE_APP_URL = "https://coffeeshopbeleid.nl";
+// Instelbaar; het .nl-domein serveert een certificaat dat daar niet geldig voor is.
+const SOURCE_APP_URL = (
+  Deno.env.get("BELEIDSMONITOR_BASE_URL") ?? "https://coffeeshopbeleid.com"
+).replace(/\/+$/, "");
 const PAGE_SIZE = 500;
 
 type SourceShop = Record<string, any>;
