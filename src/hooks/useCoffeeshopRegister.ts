@@ -29,6 +29,12 @@ export type RegisterShop = {
   kvk_oprichtingsdatum?: string | null;
   kvk_vestigingsnummer?: string | null;
   kvk_vestiging_datum?: string | null;
+  /** Verrijking uit de Beleidsmonitor. */
+  logo_url?: string | null;
+  socials?: Record<string, string | null> | null;
+  oprichtingsdatum?: string | null;
+  oprichtingsdatum_bron?: string | null;
+  shopcode?: string | null;
   /** Ruwe registervelden (o.a. is_ruis, ruis_reden, gesloten_op). */
   raw?: Record<string, unknown> | null;
 };

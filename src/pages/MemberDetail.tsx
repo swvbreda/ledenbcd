@@ -1025,6 +1025,7 @@ const MemberDetail = () => {
                         shop={shop}
                         memberKvk={loc.kvk}
                         memberWebsite={loc.website}
+                        memberLogo={loc.logo}
                         memberUbo={loc.ubo}
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />

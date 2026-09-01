@@ -21,6 +21,12 @@ export interface Location {
   ubo?: UboEntry[];
   /** Website van deze specifieke vestiging (niet van het lid als geheel). */
   website?: string;
+  /** Telefoonnummer van deze vestiging. */
+  telefoon?: string;
+  /** Logo-URL van deze vestiging (verrijkt vanuit het register). */
+  logo?: string;
+  instagram?: string;
+  facebook?: string;
 }
 
 
