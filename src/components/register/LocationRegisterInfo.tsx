@@ -33,6 +33,8 @@ export type LocationRegisterInfoProps = {
   memberKvk?: string | null;
   /** Website van deze vestiging zoals vastgelegd bij het lid (heeft voorrang). */
   memberWebsite?: string | null;
+  /** Logo zoals vastgelegd bij het lid (heeft voorrang op het registerlogo). */
+  memberLogo?: string | null;
 };
 
 /** Toont een nette URL zonder protocol, trailing slash en tracking-parameters. */
@@ -54,12 +56,17 @@ const LocationRegisterInfo = ({
   registerUbo,
   memberKvk,
   memberWebsite,
+  memberLogo,
 }: LocationRegisterInfoProps) => {
   const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
   const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
   const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
   const websiteRaw = memberWebsite?.trim() || shop?.website || null;
   const websiteLabel = cleanUrl(websiteRaw);
+  const logo = memberLogo?.trim() || shop?.logo_url || null;
+  const socials = shop?.socials ?? null;
+  const instagram = socials?.instagram ?? null;
+  const facebook = socials?.facebook ?? null;
 
   const ubo: UboEntry[] =
     memberUbo && memberUbo.length > 0
@@ -79,6 +86,17 @@ const LocationRegisterInfo = ({
 
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
+      {logo && (
+        <img
+          src={logo}
+          alt="Logo vestiging"
+          loading="lazy"
+          className="h-10 w-auto max-w-[9rem] self-start object-contain"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      )}
       {/* KvK-gegevens: alleen tonen als we iets weten */}
       {(kvk || vestigingsnummer || vestigingDatum || websiteLabel) && (
         <div className="border-t border-border pt-2.5 space-y-1">
@@ -102,6 +120,27 @@ const LocationRegisterInfo = ({
         </div>
       )}
 
+
+      {(instagram || facebook) && (
+        <div className="border-t border-border pt-2.5 space-y-1">
+          <SectionTitle>Social media</SectionTitle>
+          {[["Instagram", instagram], ["Facebook", facebook]].map(([label, url]) =>
+            url ? (
+              <div key={label} className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
+                <span className="text-muted-foreground">{label}</span>
+                <a
+                  href={url as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 break-words text-foreground hover:underline"
+                >
+                  {cleanUrl(url as string)}
+                </a>
+              </div>
+            ) : null,
+          )}
+        </div>
+      )}
 
       {/* Eigendomsketen */}
       {ubo.length > 0 && (
