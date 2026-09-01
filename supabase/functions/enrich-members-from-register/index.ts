@@ -418,6 +418,12 @@ Deno.serve(async (req) => {
 
         const ubo = uboByRegister.get(rid) ?? [];
 
+        // Extra verrijking uit het register: logo, socials en telefoon
+        const socials = (shop.socials ?? {}) as Record<string, string | null>;
+        const shopLogo = typeof shop.logo_url === "string" && /^https?:\/\//i.test(shop.logo_url)
+          ? shop.logo_url
+          : null;
+
         if (!loc) {
           loc = {
             naam: shop.naam,
@@ -431,6 +437,10 @@ Deno.serve(async (req) => {
           if (shop.kvk_nummer) loc.kvk = shop.kvk_nummer;
           if (shop.vergunninghouder) loc.vergunninghouder = shop.vergunninghouder;
           if (shop.exploitant) loc.exploitant = shop.exploitant;
+          if (shopLogo) loc.logo = shopLogo;
+          if (shop.telefoon) loc.telefoon = shop.telefoon;
+          if (socials.instagram) loc.instagram = socials.instagram;
+          if (socials.facebook) loc.facebook = socials.facebook;
           if (ubo.length) loc.ubo = ubo;
           locaties.push(loc);
           locationsAdded++;
@@ -456,6 +466,10 @@ Deno.serve(async (req) => {
           ["exploitant", shop.exploitant],
           // De website hoort bij DEZE vestiging, niet bij het lid als geheel
           ["website", cleanWebsite(shop.website)],
+          ["telefoon", shop.telefoon ?? null],
+          ["logo", shopLogo],
+          ["instagram", socials.instagram ?? null],
+          ["facebook", socials.facebook ?? null],
         ];
 
 
