@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RegisterLink, RegisterShop, RegisterUbo } from "@/hooks/useCoffeeshopRegister";
 import type { UboEntry } from "@/data/types";
@@ -94,10 +95,6 @@ const LocationRegisterInfo = ({
           toelichting: u.toelichting,
         }));
 
-  const adres = shop
-    ? [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join(" ")
-    : "";
-
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
       {logo && (
@@ -186,9 +183,13 @@ const LocationRegisterInfo = ({
         <div className="flex flex-wrap items-center gap-2">
           <SectionTitle>Register</SectionTitle>
           {link && shop ? (
-            <Badge variant={link.status === "bevestigd" ? "default" : "secondary"} className="text-[10px]">
-              {link.status === "bevestigd" ? "Bevestigd" : "Voorstel"}
-            </Badge>
+            link.status === "bevestigd" ? (
+              <Check size={14} className="text-brand-red" aria-label="Geverifieerd via register" />
+            ) : (
+              <Badge variant="secondary" className="text-[10px]">
+                Voorstel
+              </Badge>
+            )
           ) : (
             <Badge variant="outline" className="text-[10px]">
               Niet gekoppeld
@@ -198,11 +199,6 @@ const LocationRegisterInfo = ({
 
         {link && shop && (
           <>
-            <Row
-              label="Dossier"
-              value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ") || null}
-            />
-
             <Row
               label="Vergunning"
               value={
