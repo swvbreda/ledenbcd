@@ -62,11 +62,17 @@ const LocationRegisterInfo = ({
   memberUbo,
   registerUbo,
   memberKvk,
+  memberVergunninghouder,
+  memberExploitant,
+  memberVestigingsnummer,
   memberWebsite,
   memberLogo,
 }: LocationRegisterInfoProps) => {
   const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
-  const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
+  const vergunninghouder = memberVergunninghouder?.trim() || shop?.vergunninghouder || null;
+  const exploitantRaw = memberExploitant?.trim() || shop?.exploitant || null;
+  const exploitant = exploitantRaw && exploitantRaw !== vergunninghouder ? exploitantRaw : null;
+  const vestigingsnummer = memberVestigingsnummer?.trim() || shop?.kvk_vestigingsnummer || null;
   const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
   const websiteRaw = memberWebsite?.trim() || shop?.website || null;
   const websiteLabel = cleanUrl(websiteRaw);
@@ -74,6 +80,7 @@ const LocationRegisterInfo = ({
   const socials = shop?.socials ?? null;
   const instagram = socials?.instagram ?? null;
   const facebook = socials?.facebook ?? null;
+
 
   const ubo: UboEntry[] =
     memberUbo && memberUbo.length > 0
