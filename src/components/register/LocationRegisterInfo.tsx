@@ -31,11 +31,18 @@ export type LocationRegisterInfoProps = {
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
+  /** Vergunninghoudende onderneming zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberVergunninghouder?: string | null;
+  /** Exploitant zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberExploitant?: string | null;
+  /** Vestigingsnummer zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberVestigingsnummer?: string | null;
   /** Website van deze vestiging zoals vastgelegd bij het lid (heeft voorrang). */
   memberWebsite?: string | null;
   /** Logo zoals vastgelegd bij het lid (heeft voorrang op het registerlogo). */
   memberLogo?: string | null;
 };
+
 
 /** Toont een nette URL zonder protocol, trailing slash en tracking-parameters. */
 export const cleanUrl = (url?: string | null) => {
