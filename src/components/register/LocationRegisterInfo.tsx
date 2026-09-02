@@ -111,13 +111,21 @@ const LocationRegisterInfo = ({
           }}
         />
       )}
-      {/* KvK-gegevens: alleen tonen als we iets weten */}
-      {(kvk || vestigingsnummer || vestigingDatum || websiteLabel) && (
+      {/* Onderneming: de B.V. achter deze vestiging */}
+      <div className="border-t border-border pt-2.5 space-y-1">
+        <SectionTitle>Onderneming</SectionTitle>
+        <Row label="Vergunninghouder" value={vergunninghouder ?? "Onbekend"} />
+        <Row label="Exploitant" value={exploitant} />
+        <Row label="KvK-nummer" value={kvk} mono />
+        <Row label="Vestigingsnr." value={vestigingsnummer} mono />
+        <Row label="Vestiging sinds" value={vestigingDatum} />
+      </div>
+
+      {/* Contactgegevens van deze vestiging */}
+      {websiteLabel && (
         <div className="border-t border-border pt-2.5 space-y-1">
-          <SectionTitle>KvK</SectionTitle>
-          <Row label="KvK-nummer" value={kvk} mono />
-          <Row label="Vestigingsnr." value={vestigingsnummer} mono />
-          <Row label="Vestiging sinds" value={vestigingDatum} />
+          <SectionTitle>Contact</SectionTitle>
+
           {websiteLabel && (
             <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
               <span className="text-muted-foreground">Website</span>
