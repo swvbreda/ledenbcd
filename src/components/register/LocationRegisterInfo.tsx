@@ -31,11 +31,18 @@ export type LocationRegisterInfoProps = {
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
+  /** Vergunninghoudende onderneming zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberVergunninghouder?: string | null;
+  /** Exploitant zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberExploitant?: string | null;
+  /** Vestigingsnummer zoals vastgelegd bij de locatie (heeft voorrang). */
+  memberVestigingsnummer?: string | null;
   /** Website van deze vestiging zoals vastgelegd bij het lid (heeft voorrang). */
   memberWebsite?: string | null;
   /** Logo zoals vastgelegd bij het lid (heeft voorrang op het registerlogo). */
   memberLogo?: string | null;
 };
+
 
 /** Toont een nette URL zonder protocol, trailing slash en tracking-parameters. */
 export const cleanUrl = (url?: string | null) => {
@@ -55,11 +62,17 @@ const LocationRegisterInfo = ({
   memberUbo,
   registerUbo,
   memberKvk,
+  memberVergunninghouder,
+  memberExploitant,
+  memberVestigingsnummer,
   memberWebsite,
   memberLogo,
 }: LocationRegisterInfoProps) => {
   const kvk = memberKvk?.trim() || shop?.kvk_nummer || null;
-  const vestigingsnummer = shop?.kvk_vestigingsnummer || null;
+  const vergunninghouder = memberVergunninghouder?.trim() || shop?.vergunninghouder || null;
+  const exploitantRaw = memberExploitant?.trim() || shop?.exploitant || null;
+  const exploitant = exploitantRaw && exploitantRaw !== vergunninghouder ? exploitantRaw : null;
+  const vestigingsnummer = memberVestigingsnummer?.trim() || shop?.kvk_vestigingsnummer || null;
   const vestigingDatum = fmt(shop?.kvk_vestiging_datum);
   const websiteRaw = memberWebsite?.trim() || shop?.website || null;
   const websiteLabel = cleanUrl(websiteRaw);
@@ -67,6 +80,7 @@ const LocationRegisterInfo = ({
   const socials = shop?.socials ?? null;
   const instagram = socials?.instagram ?? null;
   const facebook = socials?.facebook ?? null;
+
 
   const ubo: UboEntry[] =
     memberUbo && memberUbo.length > 0
@@ -97,13 +111,21 @@ const LocationRegisterInfo = ({
           }}
         />
       )}
-      {/* KvK-gegevens: alleen tonen als we iets weten */}
-      {(kvk || vestigingsnummer || vestigingDatum || websiteLabel) && (
+      {/* Onderneming: de B.V. achter deze vestiging */}
+      <div className="border-t border-border pt-2.5 space-y-1">
+        <SectionTitle>Onderneming</SectionTitle>
+        <Row label="Vergunninghouder" value={vergunninghouder ?? "Onbekend"} />
+        <Row label="Exploitant" value={exploitant} />
+        <Row label="KvK-nummer" value={kvk} mono />
+        <Row label="Vestigingsnr." value={vestigingsnummer} mono />
+        <Row label="Vestiging sinds" value={vestigingDatum} />
+      </div>
+
+      {/* Contactgegevens van deze vestiging */}
+      {websiteLabel && (
         <div className="border-t border-border pt-2.5 space-y-1">
-          <SectionTitle>KvK</SectionTitle>
-          <Row label="KvK-nummer" value={kvk} mono />
-          <Row label="Vestigingsnr." value={vestigingsnummer} mono />
-          <Row label="Vestiging sinds" value={vestigingDatum} />
+          <SectionTitle>Contact</SectionTitle>
+
           {websiteLabel && (
             <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2 text-xs">
               <span className="text-muted-foreground">Website</span>
@@ -180,10 +202,7 @@ const LocationRegisterInfo = ({
               label="Dossier"
               value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ") || null}
             />
-            <Row label="Vergunninghouder" value={shop.vergunninghouder} />
-            {shop.exploitant && shop.exploitant !== shop.vergunninghouder && (
-              <Row label="Exploitant" value={shop.exploitant} />
-            )}
+
             <Row
               label="Vergunning"
               value={
