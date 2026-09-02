@@ -186,9 +186,15 @@ const LocationRegisterInfo = ({
         <div className="flex flex-wrap items-center gap-2">
           <SectionTitle>Register</SectionTitle>
           {link && shop ? (
-            <Badge variant={link.status === "bevestigd" ? "default" : "secondary"} className="text-[10px]">
-              {link.status === "bevestigd" ? "Bevestigd" : "Voorstel"}
-            </Badge>
+            link.status === "bevestigd" ? (
+              <Check size={14} className="text-brand-red" aria-label="Geverifieerd via register">
+                <title>Geverifieerd via register</title>
+              </Check>
+            ) : (
+              <Badge variant="secondary" className="text-[10px]">
+                Voorstel
+              </Badge>
+            )
           ) : (
             <Badge variant="outline" className="text-[10px]">
               Niet gekoppeld
@@ -198,11 +204,6 @@ const LocationRegisterInfo = ({
 
         {link && shop && (
           <>
-            <Row
-              label="Dossier"
-              value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ") || null}
-            />
-
             <Row
               label="Vergunning"
               value={
