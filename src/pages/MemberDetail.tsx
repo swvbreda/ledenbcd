@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle, Euro, RefreshCw } from "lucide-react";
+import { ArrowLeft, MapPin, Mail, Phone, FileText, Users, Calendar, Hash, Globe, Instagram, ExternalLink, Shield, Lock, UserCheck, Archive, ArchiveRestore, Link2, Pencil, MessageSquare, Send, Trash2, Store, Clock, CheckCircle2, AlertCircle, Euro } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import ConvertLeadDialog from "@/components/ConvertLeadDialog";
@@ -33,7 +33,6 @@ import {
   useCoffeeshopRegister,
   useRegisterLinks,
   useRegisterUboBulk,
-  useRunEnrichmentScoped,
 } from "@/hooks/useCoffeeshopRegister";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,7 +84,6 @@ const MemberDetail = () => {
   const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
   const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
   const assignLocation = useAssignLinkLocation();
-  const runEnrichment = useRunEnrichmentScoped();
 
   const memberLinks = useMemo(
     () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
