@@ -194,10 +194,7 @@ const LocationRegisterInfo = ({
               label="Dossier"
               value={[shop.naam, adres || null, shop.plaats].filter(Boolean).join(" · ") || null}
             />
-            <Row label="Vergunninghouder" value={shop.vergunninghouder} />
-            {shop.exploitant && shop.exploitant !== shop.vergunninghouder && (
-              <Row label="Exploitant" value={shop.exploitant} />
-            )}
+
             <Row
               label="Vergunning"
               value={
