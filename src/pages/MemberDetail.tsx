@@ -21,7 +21,6 @@ import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
-import VergunninghoudersOverzicht from "@/components/members/VergunninghoudersOverzicht";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
@@ -988,6 +987,8 @@ const MemberDetail = () => {
                         link={link}
                         shop={shop}
                         memberKvk={loc.kvk}
+                        memberVergunninghouder={loc.vergunninghouder}
+                        memberExploitant={loc.exploitant}
                         memberWebsite={loc.website}
                         memberLogo={loc.logo}
                         memberUbo={loc.ubo}
@@ -1072,8 +1073,6 @@ const MemberDetail = () => {
             </div>
           </div>
 
-          {/* Vergunninghouders & eigenaren per vestiging */}
-          <VergunninghoudersOverzicht rows={vergunninghouderRows} />
 
 
           {/* Aanverwante leden */}
