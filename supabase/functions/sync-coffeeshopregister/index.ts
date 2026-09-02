@@ -178,10 +178,33 @@ Deno.serve(async (req) => {
     let gemeenteById = new Map<string, { naam: string; provincie: string | null }>();
     if (!shops) {
       // Terugval: openbare registergegevens zonder UBO.
-      const [bronShops, gemeenten] = await Promise.all([
-        fetchAllPublic("coffeeshop_vergunningen", "*"),
-        fetchAllPublic("gemeenten", "id,naam,provincie"),
-      ]);
+      let bronShops: any[];
+      let gemeenten: any[];
+      try {
+        [bronShops, gemeenten] = await Promise.all([
+          fetchAllPublic("coffeeshop_vergunningen", "*"),
+          fetchAllPublic("gemeenten", "id,naam,provincie"),
+        ]);
+      } catch (error) {
+        const message = String(error instanceof Error ? error.message : error).slice(0, 500);
+        console.warn("Registerbron tijdelijk niet toegankelijk; bestaande gegevens blijven behouden:", message);
+        await db.from("coffeeshop_register_sync_state").update({
+          last_run_at: new Date().toISOString(),
+          last_status: "overgeslagen (bron niet toegankelijk)",
+          error_message: message,
+          updated_at: new Date().toISOString(),
+        }).eq("id", 1);
+
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            degraded: true,
+            preservedExistingData: true,
+            reason: "Registerbron tijdelijk niet toegankelijk",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       gemeenteById = new Map(
         gemeenten.map((g: any) => [g.id, { naam: g.naam, provincie: g.provincie ?? null }]),
       );
