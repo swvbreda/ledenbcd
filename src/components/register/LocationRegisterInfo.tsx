@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RegisterLink, RegisterShop, RegisterUbo } from "@/hooks/useCoffeeshopRegister";
 import type { UboEntry } from "@/data/types";
@@ -94,10 +95,6 @@ const LocationRegisterInfo = ({
           toelichting: u.toelichting,
         }));
 
-  const adres = shop
-    ? [shop.straat, shop.huisnummer, shop.huisnummer_toevoeging].filter(Boolean).join(" ")
-    : "";
-
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
       {logo && (
@@ -187,9 +184,7 @@ const LocationRegisterInfo = ({
           <SectionTitle>Register</SectionTitle>
           {link && shop ? (
             link.status === "bevestigd" ? (
-              <Check size={14} className="text-brand-red" aria-label="Geverifieerd via register">
-                <title>Geverifieerd via register</title>
-              </Check>
+              <Check size={14} className="text-brand-red" aria-label="Geverifieerd via register" />
             ) : (
               <Badge variant="secondary" className="text-[10px]">
                 Voorstel
