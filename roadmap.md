@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Open
-- [ ] Coffeeshopregister-sync: Beleidsmonitor moet het export-endpoint `/api/public/hooks/bcd-register-export` publiceren, óf in het bronproject weer leestoegang tot `coffeeshop_vergunningen` en `gemeenten` geven. Tot die tijd slaat de sync de run veilig over en bewaart hij bestaande registergegevens.
 
 ## Klaar
+- [x] Coffeeshopregister-sync gebruikt het beveiligde export-endpoint met de juiste sleutelheader en antwoordvelden; publieke tabeltoegang is niet meer nodig
 - [x] Push-/koppelsleutels opnieuw ingevoerd (REGISTER_PUSH_SECRET, COFFEESHOPBELEID_API_SECRET, BCD_KOPPEL_SLEUTEL)
 - [x] Certificaatfout `coffeeshopbeleid.nl` opgelost: basisadres instelbaar (standaard `.com`) + terugval bij netwerkfouten
 - [x] Beleidsmonitor-sync (leden push/dossiers) werkt: 173 verstuurd, 174 dossiers

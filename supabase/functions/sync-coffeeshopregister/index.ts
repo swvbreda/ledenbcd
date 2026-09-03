@@ -5,9 +5,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
  * Haalt het landelijke coffeeshopregister op uit het project "Coffeeshopbeleid"
  * en zet het om naar lokale tabellen, inclusief automatische matching op leden.
  *
- * Zonder COFFEESHOPBELEID_API_SECRET gebruikt de functie de openbaar leesbare
- * REST-tabellen (zonder UBO-keten). Met het geheim wordt het beveiligde
- * export-eindpunt gebruikt, dat ook de eigendomsketen teruggeeft.
+ * Met BCD_KOPPEL_SLEUTEL wordt het beveiligde export-eindpunt gebruikt.
+ * Alleen wanneer dat eindpunt niet bestaat, wordt de openbare REST-route
+ * geprobeerd. Autorisatiefouten mogen niet stil naar die route terugvallen.
  */
 
 const SOURCE_URL = "https://dilxcjjsvpxrkjrnivla.supabase.co";
@@ -92,25 +92,26 @@ async function fetchAllPublic(table: string, select: string): Promise<any[]> {
   return rows;
 }
 
-/** Beveiligd export-eindpunt (inclusief UBO) van het bronproject. */
-async function fetchSecureExport(secret: string): Promise<SourceShop[] | null> {
-  const shops: SourceShop[] = [];
-  for (let page = 0; ; page++) {
-    const res = await fetch(
-      `${SOURCE_APP_URL}/api/public/hooks/bcd-register-export?page=${page}&limit=${PAGE_SIZE}`,
-      { headers: { "x-bcd-secret": secret } },
-    );
-    if (res.status === 404) return null; // eindpunt bestaat nog niet
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Export-eindpunt gaf ${res.status}: ${body.slice(0, 300)}`);
-    }
-    const json = await res.json();
-    const batch: SourceShop[] = json.shops ?? json.data ?? [];
-    shops.push(...batch);
-    if (batch.length < PAGE_SIZE) break;
+type SecureExport = {
+  shops: SourceShop[];
+  gemeenten: Array<{ id: string; naam: string; provincie: string | null }>;
+};
+
+/** Beveiligd export-eindpunt van Coffeeshopbeleid. */
+async function fetchSecureExport(secret: string): Promise<SecureExport | null> {
+  const res = await fetch(`${SOURCE_APP_URL}/api/public/hooks/bcd-register-export`, {
+    headers: { "x-bcd-sleutel": secret },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Export-eindpunt gaf ${res.status}: ${body.slice(0, 300)}`);
   }
-  return shops;
+  const json = await res.json();
+  return {
+    shops: json.coffeeshops ?? json.shops ?? json.data ?? [],
+    gemeenten: json.gemeenten ?? [],
+  };
 }
 
 /**
@@ -153,20 +154,17 @@ Deno.serve(async (req) => {
   let linksProposed = 0;
 
   try {
-    const secret = Deno.env.get("COFFEESHOPBELEID_API_SECRET") ?? Deno.env.get("BCD_KOPPEL_SLEUTEL");
+    const secret = Deno.env.get("BCD_KOPPEL_SLEUTEL") ?? Deno.env.get("COFFEESHOPBELEID_API_SECRET");
     let shops: SourceShop[] | null = null;
+    let secureGemeenten: SecureExport["gemeenten"] = [];
     let linkedDossiers: any[] = [];
     let uboBron: "export" | "geen" = "geen";
 
     if (secret) {
-      // Bij een netwerk-/certificaatfout vallen we terug op de publieke REST-route.
-      try {
-        shops = await fetchSecureExport(secret);
-        if (shops) uboBron = "export";
-      } catch (e) {
-        console.warn("Beveiligde export niet bereikbaar, terugval op publieke bron:", e);
-        shops = null;
-      }
+      const secureExport = await fetchSecureExport(secret);
+      shops = secureExport?.shops ?? null;
+      secureGemeenten = secureExport?.gemeenten ?? [];
+      if (shops) uboBron = "export";
       try {
         linkedDossiers = await fetchLinkedDossiers(secret);
       } catch (e) {
@@ -210,17 +208,14 @@ Deno.serve(async (req) => {
       );
       shops = bronShops;
     } else {
-      gemeenteById = new Map(
-        shops
-          .filter((s) => s.gemeente_id && s.gemeente)
-          .map((s) => [
-            s.gemeente_id,
-            {
-              naam: typeof s.gemeente === "string" ? s.gemeente : s.gemeente?.naam,
-              provincie: typeof s.gemeente === "object" ? s.gemeente?.provincie ?? null : s.provincie ?? null,
-            },
-          ]),
-      );
+      gemeenteById = new Map(secureGemeenten.map((g) => [g.id, { naam: g.naam, provincie: g.provincie ?? null }]));
+      for (const s of shops) {
+        if (!s.gemeente_id || gemeenteById.has(s.gemeente_id) || !s.gemeente) continue;
+        gemeenteById.set(s.gemeente_id, {
+          naam: typeof s.gemeente === "string" ? s.gemeente : s.gemeente?.naam,
+          provincie: typeof s.gemeente === "object" ? s.gemeente?.provincie ?? null : s.provincie ?? null,
+        });
+      }
     }
 
     const rows = shops.map((s) => {
@@ -229,7 +224,7 @@ Deno.serve(async (req) => {
       return {
         bron_id: s.id,
         naam: s.naam_coffeeshop ?? s.naam ?? "Onbekend",
-        straat: s.straat ?? null,
+        straat: s.straat ?? s.adres ?? null,
         huisnummer: s.huisnummer ?? null,
         huisnummer_toevoeging: s.huisnummer_toevoeging ?? null,
         postcode: s.postcode ?? null,
