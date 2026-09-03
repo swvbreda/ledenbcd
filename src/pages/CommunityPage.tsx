@@ -32,9 +32,6 @@ const CommunityPage = () => {
           <TabsTrigger value="aanmeldingen" className="gap-1.5">
             <Inbox size={14} /> Aanmeldingen
           </TabsTrigger>
-          <TabsTrigger value="aanmeldingen" className="gap-1.5">
-            <Inbox size={14} /> Aanmeldingen
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="lijst">
           <CommunityDeelnemersLijst />
