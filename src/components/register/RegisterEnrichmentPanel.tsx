@@ -125,7 +125,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 }`
               : null,
             matched: isLocation ? !!loc : true,
-            isMove: false,
+            changeKind: null,
 
             items: [],
           };
