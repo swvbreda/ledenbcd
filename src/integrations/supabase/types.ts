@@ -878,6 +878,60 @@ export type Database = {
           },
         ]
       }
+      community_self_links: {
+        Row: {
+          city: string | null
+          coffeeshop_name: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          member_id: number | null
+          note: string | null
+          participant_id: string | null
+          phone: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+          whatsapp_name: string | null
+        }
+        Insert: {
+          city?: string | null
+          coffeeshop_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          member_id?: number | null
+          note?: string | null
+          participant_id?: string | null
+          phone: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_name?: string | null
+        }
+        Update: {
+          city?: string | null
+          coffeeshop_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          member_id?: number | null
+          note?: string | null
+          participant_id?: string | null
+          phone?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_name?: string | null
+        }
+        Relationships: []
+      }
       contribution_invoices: {
         Row: {
           amount: number | null
