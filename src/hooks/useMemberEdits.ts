@@ -5,7 +5,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
-import { locationIdentity, mergeMemberLocations } from "@/lib/memberLocations";
+import { isLocationDeleted, locationDeletionIdentity, mergeMemberLocations } from "@/lib/memberLocations";
 
 type MemberEditData = Partial<Member> & { _verwijderdeLocaties?: string[] };
 
@@ -195,10 +195,10 @@ export function useSaveMemberEdit() {
           existingData._verwijderdeLocaties,
         );
         const removedNow = previousLocations
-          .filter((previous) => !data.locaties?.some((current) => locationIdentity(current) === locationIdentity(previous)))
-          .map(locationIdentity);
+          .filter((previous) => !data.locaties?.some((current) => locationDeletionIdentity(current) === locationDeletionIdentity(previous)))
+          .map(locationDeletionIdentity);
         const retainedRemoved = (existingData._verwijderdeLocaties ?? []).filter(
-          (identity) => !data.locaties?.some((current) => locationIdentity(current) === identity),
+          (identity) => !data.locaties?.some((current) => isLocationDeleted(current, [identity])),
         );
         finalData = {
           ...finalData,

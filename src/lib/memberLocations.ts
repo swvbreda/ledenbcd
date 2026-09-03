@@ -18,6 +18,23 @@ export const locationIdentity = (location: Partial<Location>): string => {
   return `naam:${normalize(location.naam)}|plaats:${normalize(location.plaats)}`;
 };
 
+/** Adres-specifieke sleutel voor verwijderingen; contactkoppelingen houden hun bestaande sleutel. */
+export const locationDeletionIdentity = (location: Partial<Location>): string => {
+  const postcode = normalizePostcode(location.postcode);
+  const address = normalize(location.adres);
+  if (postcode && address) return `locatie:${postcode}|${address}`;
+  if (address) return `locatie:adres:${address}`;
+  return locationIdentity(location);
+};
+
+export const isLocationDeleted = (
+  location: Partial<Location>,
+  deletedIdentities: string[],
+): boolean => {
+  const deleted = new Set(deletedIdentities);
+  return deleted.has(locationDeletionIdentity(location)) || deleted.has(locationIdentity(location));
+};
+
 const locationsMatch = (left: Partial<Location>, right: Partial<Location>): boolean => {
   const leftPostcode = normalizePostcode(left.postcode);
   const rightPostcode = normalizePostcode(right.postcode);
@@ -43,13 +60,12 @@ export function mergeMemberLocations(
   overlay: Location[] | null | undefined,
   deletedIdentities: string[] = [],
 ): Location[] {
-  const deleted = new Set(deletedIdentities);
   const overlayLocations = Array.isArray(overlay) ? overlay : [];
   const usedOverlay = new Set<number>();
   const result: Location[] = [];
 
   for (const baseLocation of Array.isArray(base) ? base : []) {
-    if (deleted.has(locationIdentity(baseLocation))) continue;
+    if (isLocationDeleted(baseLocation, deletedIdentities)) continue;
 
     const overlayIndex = overlayLocations.findIndex(
       (candidate, index) => !usedOverlay.has(index) && locationsMatch(baseLocation, candidate),
@@ -64,7 +80,7 @@ export function mergeMemberLocations(
   }
 
   overlayLocations.forEach((location, index) => {
-    if (!usedOverlay.has(index) && !deleted.has(locationIdentity(location))) result.push(location);
+    if (!usedOverlay.has(index) && !isLocationDeleted(location, deletedIdentities)) result.push(location);
   });
 
   return dedupeLocations(result);

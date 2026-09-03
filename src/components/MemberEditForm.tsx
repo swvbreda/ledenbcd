@@ -8,7 +8,7 @@ import type { Member, Contact, Location } from "@/data/types";
 import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits";
 import { useAuth } from "@/hooks/useAuth";
 import { stadsdeelPerPlaats, alleStadsdelen } from "@/data/stadsdeelPerPlaats";
-import { locationIdentity } from "@/lib/memberLocations";
+import { locationDeletionIdentity, locationIdentity } from "@/lib/memberLocations";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
@@ -119,8 +119,8 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
     const validLocaties = locaties.filter((l) => !!(l.adres?.trim() || l.plaats?.trim()));
     const invalidLocaties = locaties.filter((l) => !(l.adres?.trim() || l.plaats?.trim()));
     const removedLocationIdentities = member.locaties
-      .filter((previous) => !validLocaties.some((current) => locationIdentity(current) === locationIdentity(previous)))
-      .map(locationIdentity);
+      .filter((previous) => !validLocaties.some((current) => locationDeletionIdentity(current) === locationDeletionIdentity(previous)))
+      .map(locationDeletionIdentity);
     const data: Partial<Member> & { _verwijderdeLocaties?: string[] } = {
       naam,
       plaats,
