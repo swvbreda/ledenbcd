@@ -44,7 +44,7 @@ type Group = {
   subtitle: string;
   registerLine: string | null;
   matched: boolean;
-  isMove: boolean;
+  changeKind: "move" | "correction" | null;
   items: EnrichmentProposal[];
 };
 
