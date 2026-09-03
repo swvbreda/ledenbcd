@@ -409,7 +409,7 @@ function DebtorLinkDialog({
     const prev = mapping[debtorId];
     if (!memberIdRaw) {
       const { error } = await supabase.from("informer_debtor_map").delete().eq("informer_debtor_id", debtorId);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       const next = { ...mapping }; delete next[debtorId]; setMapping(next);
       onLinked();
       return;

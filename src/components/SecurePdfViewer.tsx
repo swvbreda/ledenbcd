@@ -664,7 +664,7 @@ function OutlineList({
   onSelectDest: (dest: any) => void;
   depth: number;
   activeEntry: any;
-  activeRef: React.RefObject<HTMLLIElement>;
+  activeRef: React.RefObject<HTMLLIElement | null>;
 }) {
   return (
     <ul className="space-y-0.5">
@@ -696,7 +696,7 @@ function OutlineItem({
   onSelectDest: (dest: any) => void;
   depth: number;
   activeEntry: any;
-  activeRef: React.RefObject<HTMLLIElement>;
+  activeRef: React.RefObject<HTMLLIElement | null>;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = Array.isArray(item.items) && item.items.length > 0;

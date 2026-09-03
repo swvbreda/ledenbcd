@@ -282,7 +282,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 </td>
                 {canSeeDetails && (() => {
                     const boardEntries = boardMembersByLid.get(member.id) || [];
-                    const eigenaarMatch = eigenaar && boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
+                    const eigenaarMatch = eigenaar ? boardEntries.find(bn => eigenaar.toLowerCase().includes(bn.naam) || bn.naam.includes(eigenaar.toLowerCase()));
                     const cpMatch = contactpersoon && boardEntries.find(bn => contactpersoon.toLowerCase().includes(bn.naam) || bn.naam.includes(contactpersoon.toLowerCase()));
                     const showCpIcon = cpMatch && !(eigenaar && contactpersoon && eigenaar.toLowerCase() === contactpersoon.toLowerCase() && eigenaarMatch);
                     return (
