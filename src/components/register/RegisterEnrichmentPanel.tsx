@@ -222,9 +222,12 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">
                         {group.title}
-                        {group.isMove && (
-                          <Badge className="ml-2 align-middle" variant="default">
-                            Verhuizing
+                        {group.changeKind && (
+                          <Badge
+                            className="ml-2 align-middle"
+                            variant={group.changeKind === "move" ? "default" : "secondary"}
+                          >
+                            {group.changeKind === "move" ? "Verhuizing" : "Adrescorrectie"}
                           </Badge>
                         )}
                       </p>
