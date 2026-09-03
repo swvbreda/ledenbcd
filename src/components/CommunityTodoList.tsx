@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Check, ChevronsUpDown, Mail, MailCheck, Phone, Trash2, User, UserX } from "lucide-react";
+import { AlertCircle, Check, ChevronsUpDown, Link2, Mail, MailCheck, Phone, Sparkles, Trash2, User, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +19,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { matchParticipants, type MatchResult } from "@/lib/communityMatch";
 
 type Participant = {
   id: string;
@@ -47,6 +48,8 @@ const CommunityTodoList = () => {
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [searchFor, setSearchFor] = useState<Record<string, string>>({});
+  const [suggestions, setSuggestions] = useState<MatchResult[]>([]);
+  const [isMatching, setIsMatching] = useState(false);
 
   const load = async () => {
     const { data } = await supabase
@@ -55,6 +58,45 @@ const CommunityTodoList = () => {
       .order("sort_key");
     setParticipants((data || []) as Participant[]);
     setIsLoading(false);
+  };
+
+  const applyLinks = async (matches: MatchResult[]) => {
+    let ok = 0;
+    for (const m of matches) {
+      const { error } = await supabase
+        .from("whatsapp_participants")
+        .update({ member_id: m.memberId })
+        .eq("id", m.participantId);
+      if (!error) ok++;
+    }
+    if (ok > 0) {
+      const linked = new Set(matches.map((m) => m.participantId));
+      setParticipants((prev) => prev.filter((p) => !linked.has(p.id)));
+      setSuggestions((prev) => prev.filter((s) => !linked.has(s.participantId)));
+    }
+    return ok;
+  };
+
+  const runAutoMatch = async () => {
+    setIsMatching(true);
+    try {
+      await refetchMembers();
+      const { certain, suggested } = matchParticipants(
+        participants.filter((p) => !p.member_id),
+        allMembers,
+      );
+      const applied = certain.length > 0 ? await applyLinks(certain) : 0;
+      setSuggestions(suggested);
+      toast({
+        title: `${applied} automatisch gekoppeld`,
+        description:
+          suggested.length > 0
+            ? `${suggested.length} voorstel(len) op naam — controleer en bevestig hieronder.`
+            : "Geen extra voorstellen op naam gevonden.",
+      });
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   const isNotified = (note: string | null) =>
@@ -154,6 +196,79 @@ const CommunityTodoList = () => {
           </p>
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={runAutoMatch}
+          disabled={isMatching}
+          className="gap-1.5 bg-brand-red hover:bg-brand-red/90 text-white"
+          size="sm"
+        >
+          <Sparkles size={14} />
+          {isMatching ? "Bezig met koppelen…" : "Automatisch koppelen"}
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Koppelt op telefoonnummer en doet voorstellen op naam.
+        </span>
+      </div>
+
+      {suggestions.length > 0 && (
+        <div className="border border-border rounded-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-border bg-muted/40">
+            <p className="text-sm font-semibold">
+              {suggestions.length} voorstel(len) op naam
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={async () => {
+                const n = await applyLinks(suggestions);
+                toast({ title: `${n} koppeling(en) bevestigd` });
+              }}
+            >
+              <Check size={14} /> Alles bevestigen
+            </Button>
+          </div>
+          <ul className="divide-y divide-border">
+            {suggestions.map((s) => (
+              <li key={s.participantId} className="p-3 flex items-center gap-3 text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">{s.participantName}</div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Link2 size={12} />
+                    <span className="truncate">{s.memberLabel}</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={async () => {
+                    const n = await applyLinks([s]);
+                    if (n) toast({ title: "Gekoppeld" });
+                  }}
+                >
+                  <Check size={14} /> Bevestigen
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() =>
+                    setSuggestions((prev) =>
+                      prev.filter((x) => x.participantId !== s.participantId),
+                    )
+                  }
+                  title="Voorstel negeren"
+                >
+                  <X size={14} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Input
         placeholder="Zoek op naam of nummer"
