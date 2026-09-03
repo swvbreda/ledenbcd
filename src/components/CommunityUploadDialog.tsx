@@ -211,22 +211,30 @@ export default function CommunityUploadDialog({
     setIsImporting(true);
 
     try {
-      const toUpdate: { id: string; display_name: string; phone: string | null; member_id: number | null; note: string | null; sort_key: string }[] = [];
+      const toUpdate: { id: string; update: Record<string, unknown> }[] = [];
       const toInsert: { display_name: string; phone: string | null; member_id: number | null; note: string | null; sort_key: string }[] = [];
 
       for (const row of parsedRows) {
         const canonical = normalizePhone(row.phone);
-        const payload = {
-          display_name: row.display_name,
-          phone: row.phone,
-          member_id: row.member_id,
-          note: row.note,
-          sort_key: row.display_name.toLowerCase().trim(),
-        };
         if (canonical && existingPhones.has(canonical)) {
-          toUpdate.push({ id: existingPhones.get(canonical)!, ...payload });
+          // Alleen niet-lege waarden overschrijven: bestaande koppelingen en
+          // notities blijven behouden als de CSV die kolom niet vult.
+          const update: Record<string, unknown> = {
+            display_name: row.display_name,
+            sort_key: row.display_name.toLowerCase().trim(),
+          };
+          if (row.phone) update.phone = row.phone;
+          if (row.member_id != null) update.member_id = row.member_id;
+          if (row.note) update.note = row.note;
+          toUpdate.push({ id: existingPhones.get(canonical)!, update });
         } else {
-          toInsert.push(payload);
+          toInsert.push({
+            display_name: row.display_name,
+            phone: row.phone,
+            member_id: row.member_id,
+            note: row.note,
+            sort_key: row.display_name.toLowerCase().trim(),
+          });
         }
       }
 
@@ -245,13 +253,7 @@ export default function CommunityUploadDialog({
       for (const row of toUpdate) {
         const { error } = await supabase
           .from("whatsapp_participants")
-          .update({
-            display_name: row.display_name,
-            phone: row.phone,
-            member_id: row.member_id,
-            note: row.note,
-            sort_key: row.sort_key,
-          })
+          .update(row.update)
           .eq("id", row.id);
         if (error) throw error;
         updated++;
