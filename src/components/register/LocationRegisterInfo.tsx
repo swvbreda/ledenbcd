@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RegisterLink, RegisterShop, RegisterUbo } from "@/hooks/useCoffeeshopRegister";
 import type { UboEntry } from "@/data/types";
+import { statusLabel } from "@/lib/registerActive";
 
 const fmt = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" }) : null;
