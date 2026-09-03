@@ -44,12 +44,24 @@ type Group = {
   subtitle: string;
   registerLine: string | null;
   matched: boolean;
-  isMove: boolean;
+  changeKind: "move" | "correction" | null;
   items: EnrichmentProposal[];
 };
 
 /** Adres- en postcodewijzigingen van een gekoppelde vestiging = verhuizing. */
 const MOVE_FIELDS = new Set(["adres", "postcode"]);
+
+const normalizeValue = (value: unknown) =>
+  String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
+/** Alleen schrijfwijze verschilt (spaties/leestekens) = adrescorrectie, geen verhuizing. */
+const isCosmeticChange = (current: unknown, proposed: unknown) => {
+  const a = normalizeValue(current);
+  const b = normalizeValue(proposed);
+  return !!a && a === b;
+};
 
 
 const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
@@ -125,7 +137,7 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                 }`
               : null,
             matched: isLocation ? !!loc : true,
-            isMove: false,
+            changeKind: null,
 
             items: [],
           };
@@ -135,8 +147,14 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
       }
 
       for (const group of groups.values()) {
-        group.isMove =
-          group.isLocation && group.items.some((p) => MOVE_FIELDS.has(p.field));
+        const addressItems = group.isLocation
+          ? group.items.filter((p) => MOVE_FIELDS.has(p.field))
+          : [];
+        group.changeKind = addressItems.length
+          ? addressItems.every((p) => isCosmeticChange(p.current_value, p.proposed_value))
+            ? "correction"
+            : "move"
+          : null;
         // Adres eerst, dan postcode: zo blijft de vestiging steeds vindbaar.
         group.items.sort(
           (a, b) => (a.field === "adres" ? -1 : 0) - (b.field === "adres" ? -1 : 0),
@@ -204,9 +222,12 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">
                         {group.title}
-                        {group.isMove && (
-                          <Badge className="ml-2 align-middle" variant="default">
-                            Verhuizing
+                        {group.changeKind && (
+                          <Badge
+                            className="ml-2 align-middle"
+                            variant={group.changeKind === "move" ? "default" : "secondary"}
+                          >
+                            {group.changeKind === "move" ? "Verhuizing" : "Adrescorrectie"}
                           </Badge>
                         )}
                       </p>
@@ -233,7 +254,11 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
                         disabled={busy || !group.matched}
                         onClick={() => void applyGroup(group, true)}
                       >
-                        {group.isMove ? "Verhuizing overnemen" : "Alles overnemen"}
+                        {group.changeKind === "move"
+                          ? "Verhuizing overnemen"
+                          : group.changeKind === "correction"
+                            ? "Correctie overnemen"
+                            : "Alles overnemen"}
                       </Button>
                       <Button
                         size="sm"
