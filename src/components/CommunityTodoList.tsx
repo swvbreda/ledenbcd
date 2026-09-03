@@ -19,7 +19,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { matchParticipants, type MatchResult } from "@/lib/communityMatch";
+import { matchParticipants, type MatchResult, type MatchSuggestion } from "@/lib/communityMatch";
 
 type Participant = {
   id: string;
