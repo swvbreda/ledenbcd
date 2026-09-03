@@ -54,7 +54,7 @@ export default function AgendaShareButton({
   size = "sm",
   className,
 }: Props) {
-  const url = typeof window !== "undefined" ? buildEventUrl(event.id) : "";
+  const url = buildShareUrl(event);
   const text = buildShareText(event);
 
   const copy = async () => {
