@@ -37,11 +37,11 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
     return { hasError: true };
   }
 
-  componentDidCatch(error: unknown) {
+  override componentDidCatch(error: unknown) {
     console.error("Locatieskaart kon niet worden geladen", error);
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div className="bg-card rounded-lg border border-border p-4 text-sm text-muted-foreground">
@@ -82,6 +82,7 @@ const LocatiesPage = () => {
       return () => clearTimeout(t);
     }
     prevHash.current = hash;
+    return undefined;
   }, [represented]);
 
 
