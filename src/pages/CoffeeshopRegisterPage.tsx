@@ -184,6 +184,62 @@ const CoffeeshopRegisterPage = () => {
         )}
       </div>
 
+      {syncState && (() => {
+        const status: string = syncState.last_status ?? "onbekend";
+        const ok = status.startsWith("ok");
+        const metUbo = status.includes("UBO");
+        return (
+          <div
+            className={`rounded-lg border p-4 space-y-2 ${
+              ok
+                ? "border-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20"
+                : "border-amber-300 bg-amber-50/60 dark:bg-amber-950/20"
+            }`}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display uppercase text-sm">Status registerkoppeling</h2>
+              <Badge variant={ok ? "default" : "secondary"}>
+                {ok
+                  ? metUbo
+                    ? "Actief — beveiligde export (incl. UBO)"
+                    : "Actief — openbare bron (zonder UBO)"
+                  : status === "fout"
+                    ? "Fout bij synchroniseren"
+                    : "Bron niet bereikbaar"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Laatste run</p>
+                <p className="tabular-nums">
+                  {syncState.last_run_at
+                    ? new Date(syncState.last_run_at).toLocaleString("nl-NL")
+                    : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Vergunningen bijgewerkt</p>
+                <p className="tabular-nums">{syncState.shops_synced ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">UBO-gegevens</p>
+                <p className="tabular-nums">{syncState.ubo_synced ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Nieuwe voorstellen</p>
+                <p className="tabular-nums">{syncState.links_proposed ?? 0}</p>
+              </div>
+            </div>
+            {syncState.error_message && (
+              <p className="text-xs text-muted-foreground break-words">
+                Melding: {syncState.error_message}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Vergunde coffeeshops in NL", value: actief.length, filter: "alle" as Koppeling },
