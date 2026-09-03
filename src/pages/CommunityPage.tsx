@@ -1,9 +1,10 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState } from "react";
-import { ListChecks, List } from "lucide-react";
+import { ListChecks, List, Inbox } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import CommunityTodoList from "@/components/CommunityTodoList";
+import CommunitySelfLinkList from "@/components/CommunitySelfLinkList";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "@/lib/router-compat";
 
