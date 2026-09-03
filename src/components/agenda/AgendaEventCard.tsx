@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Clock, MapPin, Pencil, Trash2, Users, Video } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Users, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
 import AgendaShareButton from "./AgendaShareButton";
+import AgendaAnnounceDialog from "./AgendaAnnounceDialog";
 
 
 interface Props {
@@ -51,6 +52,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const [registerOpen, setRegisterOpen] = useState(false);
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [announceOpen, setAnnounceOpen] = useState(false);
 
   const isEvent = event.event_type === "evenement";
   const upcoming = isUpcoming(event);
@@ -178,6 +180,12 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
           <Button variant="outline" size="sm" onClick={() => setDeelnemersOpen(true)}>
             Deelnemers
           </Button>
+          {isEvent && upcoming && (
+            <Button variant="outline" size="sm" onClick={() => setAnnounceOpen(true)}>
+              <Megaphone className="mr-1 h-4 w-4 text-brand-red" />
+              Aankondiging versturen
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
             <Pencil className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -187,6 +195,8 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
         </div>
       )}
 
+
+      <AgendaAnnounceDialog open={announceOpen} onOpenChange={setAnnounceOpen} event={event} />
 
       <AgendaEventDialog open={editOpen} onOpenChange={setEditOpen} event={event} />
 

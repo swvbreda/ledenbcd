@@ -27,6 +27,7 @@ import {
   type AgendaEvent,
   type AgendaEventType,
 } from "@/hooks/useAgenda";
+import AgendaAnnounceDialog from "./AgendaAnnounceDialog";
 
 interface Props {
   open: boolean;
@@ -54,6 +55,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [announceEvent, setAnnounceEvent] = useState<AgendaEvent | null>(null);
   const { data: existingImageUrl } = useAgendaImageUrl(form.image_path || null);
   const localPreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   const previewUrl = localPreview ?? existingImageUrl ?? null;
@@ -117,9 +119,12 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
         is_published: form.is_published,
       },
       {
-        onSuccess: () => {
+        onSuccess: (saved) => {
           toast.success(event ? "Agenda-item bijgewerkt" : "Agenda-item toegevoegd");
           onOpenChange(false);
+          if (!event && saved.event_type === "evenement" && saved.is_published) {
+            setAnnounceEvent(saved);
+          }
         },
         onError: (e: any) => toast.error(e?.message || "Opslaan mislukt"),
       },
@@ -127,8 +132,10 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
   };
 
 
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{event ? "Agenda-item bewerken" : "Nieuw agenda-item"}</DialogTitle>
@@ -297,6 +304,12 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
 
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <AgendaAnnounceDialog
+        open={!!announceEvent}
+        onOpenChange={(v) => !v && setAnnounceEvent(null)}
+        event={announceEvent}
+      />
+    </>
   );
 }
