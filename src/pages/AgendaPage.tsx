@@ -27,7 +27,7 @@ const monthLabel = (date: string) =>
 
 export default function AgendaPage() {
   const { isAdmin, linkedMemberId } = useAuth();
-  const { eventId } = useParams();
+  const { eventId, shareCode } = useParams();
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: registrations = [] } = useAgendaRegistrations();
   const { generateMeetings, syncTopical } = useAgendaMutations();
@@ -44,8 +44,12 @@ export default function AgendaPage() {
     return map;
   }, [registrations]);
 
-  const focused = eventId ? events.find((e) => e.id === eventId) ?? null : null;
-  const rest = eventId ? events.filter((e) => e.id !== eventId) : events;
+  const focused = shareCode
+    ? events.find((e) => (e.share_code ?? "").toUpperCase() === shareCode.toUpperCase()) ?? null
+    : eventId
+      ? events.find((e) => e.id === eventId) ?? null
+      : null;
+  const rest = focused ? events.filter((e) => e.id !== focused.id) : events;
   const upcoming = rest.filter(isUpcoming);
   const past = rest.filter((e) => !isUpcoming(e)).reverse();
 
@@ -79,7 +83,7 @@ export default function AgendaPage() {
     <div className="space-y-6 overflow-x-hidden p-4 sm:p-6">
       <BcdHeroBanner title="Agenda" subtitle="Bestuursvergaderingen en evenementen" />
 
-      {eventId && !isLoading && (
+      {(eventId || shareCode) && !isLoading && (
         <div ref={focusRef}>
           {focused ? (
             <div className="rounded-xl border-2 border-primary p-1">{renderCard(focused)}</div>

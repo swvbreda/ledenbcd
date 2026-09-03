@@ -19,6 +19,7 @@ export interface AgendaEvent {
   external_source?: string | null;
   external_event_id?: string | null;
   external_synced_at?: string | null;
+  share_code?: string | null;
 
   created_by: string | null;
   created_at: string;
@@ -34,6 +35,7 @@ export type AgendaEventInput = Omit<
   | "external_source"
   | "external_event_id"
   | "external_synced_at"
+  | "share_code"
 >;
 
 export interface AgendaRegistration {
