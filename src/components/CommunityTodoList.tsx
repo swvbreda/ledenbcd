@@ -19,7 +19,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { matchParticipants, type MatchResult } from "@/lib/communityMatch";
+import { matchParticipants, type MatchResult, type MatchSuggestion } from "@/lib/communityMatch";
 
 type Participant = {
   id: string;
@@ -48,7 +48,7 @@ const CommunityTodoList = () => {
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [searchFor, setSearchFor] = useState<Record<string, string>>({});
-  const [suggestions, setSuggestions] = useState<MatchResult[]>([]);
+  const [suggestions, setSuggestions] = useState<MatchSuggestion[]>([]);
   const [isMatching, setIsMatching] = useState(false);
 
   const load = async () => {
@@ -223,47 +223,72 @@ const CommunityTodoList = () => {
               variant="outline"
               className="gap-1.5"
               onClick={async () => {
-                const n = await applyLinks(suggestions);
+                const clear = suggestions.filter((s) => s.isClear).map((s) => s.candidates[0]);
+                const n = await applyLinks(clear);
                 toast({ title: `${n} koppeling(en) bevestigd` });
               }}
             >
-              <Check size={14} /> Alles bevestigen
+              <Check size={14} /> Duidelijke bevestigen
             </Button>
           </div>
           <ul className="divide-y divide-border">
             {suggestions.map((s) => (
-              <li key={s.participantId} className="p-3 flex items-center gap-3 text-sm">
-                <div className="flex-1 min-w-0">
-                  <div className="truncate font-medium">{s.participantName}</div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Link2 size={12} />
-                    <span className="truncate">{s.memberLabel}</span>
+              <li key={s.participantId} className="p-3 flex flex-col gap-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate font-medium">{s.participantName}</div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Link2 size={12} />
+                      <span className="truncate">
+                        {s.candidates[0].memberLabel} — {s.candidates[0].detail}
+                      </span>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={async () => {
+                      const n = await applyLinks([s.candidates[0]]);
+                      if (n) toast({ title: "Gekoppeld" });
+                    }}
+                  >
+                    <Check size={14} /> Bevestigen
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-muted-foreground"
+                    onClick={() =>
+                      setSuggestions((prev) =>
+                        prev.filter((x) => x.participantId !== s.participantId),
+                      )
+                    }
+                    title="Voorstel negeren"
+                  >
+                    <X size={14} />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={async () => {
-                    const n = await applyLinks([s]);
-                    if (n) toast({ title: "Gekoppeld" });
-                  }}
-                >
-                  <Check size={14} /> Bevestigen
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  onClick={() =>
-                    setSuggestions((prev) =>
-                      prev.filter((x) => x.participantId !== s.participantId),
-                    )
-                  }
-                  title="Voorstel negeren"
-                >
-                  <X size={14} />
-                </Button>
+                {s.candidates.length > 1 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                    <span className="text-xs text-muted-foreground">Of:</span>
+                    {s.candidates.slice(1).map((c) => (
+                      <Button
+                        key={c.memberId}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={async () => {
+                          const n = await applyLinks([c]);
+                          if (n) toast({ title: "Gekoppeld" });
+                        }}
+                        title={c.detail}
+                      >
+                        {c.memberLabel}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
