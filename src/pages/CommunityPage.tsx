@@ -1,13 +1,14 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useState } from "react";
-import { ListChecks, List } from "lucide-react";
+import { ListChecks, List, Inbox } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import CommunityTodoList from "@/components/CommunityTodoList";
+import CommunitySelfLinkList from "@/components/CommunitySelfLinkList";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "@/lib/router-compat";
 
-type CommunitySubTab = "lijst" | "todo";
+type CommunitySubTab = "lijst" | "todo" | "aanmeldingen";
 
 const CommunityPage = () => {
   const { isAdmin, isBoard } = useAuth();
@@ -28,12 +29,18 @@ const CommunityPage = () => {
           <TabsTrigger value="todo" className="gap-1.5">
             <ListChecks size={14} /> Te doen
           </TabsTrigger>
+          <TabsTrigger value="aanmeldingen" className="gap-1.5">
+            <Inbox size={14} /> Aanmeldingen
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="lijst">
           <CommunityDeelnemersLijst />
         </TabsContent>
         <TabsContent value="todo">
           <CommunityTodoList />
+        </TabsContent>
+        <TabsContent value="aanmeldingen">
+          <CommunitySelfLinkList />
         </TabsContent>
       </Tabs>
     </div>

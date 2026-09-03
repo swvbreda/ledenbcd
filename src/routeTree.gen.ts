@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/_dashboard'
 import { Route as ExternLoginRouteImport } from './routes/extern-login'
+import { Route as KoppelenRouteImport } from './routes/koppelen'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MfaSetupRouteImport } from './routes/mfa-setup'
 import { Route as MfaVerifyRouteImport } from './routes/mfa-verify'
@@ -58,6 +59,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ExternLoginRoute = ExternLoginRouteImport.update({
   id: '/extern-login',
   path: '/extern-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KoppelenRoute = KoppelenRouteImport.update({
+  id: '/koppelen',
+  path: '/koppelen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -269,6 +275,7 @@ const DashboardEnquetesIdBeheerRoute =
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
   '/extern-login': typeof ExternLoginRoute
+  '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/extern-login': typeof ExternLoginRoute
+  '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dashboard': typeof DashboardRouteWithChildren
   '/extern-login': typeof ExternLoginRoute
+  '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/extern-login'
+    | '/koppelen'
     | '/login'
     | '/mfa-setup'
     | '/mfa-verify'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/extern-login'
+    | '/koppelen'
     | '/login'
     | '/mfa-setup'
     | '/mfa-verify'
@@ -483,6 +494,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_dashboard'
     | '/extern-login'
+    | '/koppelen'
     | '/login'
     | '/mfa-setup'
     | '/mfa-verify'
@@ -527,6 +539,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   ExternLoginRoute: typeof ExternLoginRoute
+  KoppelenRoute: typeof KoppelenRoute
   LoginRoute: typeof LoginRoute
   MfaSetupRoute: typeof MfaSetupRoute
   MfaVerifyRoute: typeof MfaVerifyRoute
@@ -555,6 +568,13 @@ declare module '@tanstack/react-router' {
       path: '/extern-login'
       fullPath: '/extern-login'
       preLoaderRoute: typeof ExternLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/koppelen': {
+      id: '/koppelen'
+      path: '/koppelen'
+      fullPath: '/koppelen'
+      preLoaderRoute: typeof KoppelenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -901,6 +921,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   ExternLoginRoute: ExternLoginRoute,
+  KoppelenRoute: KoppelenRoute,
   LoginRoute: LoginRoute,
   MfaSetupRoute: MfaSetupRoute,
   MfaVerifyRoute: MfaVerifyRoute,
