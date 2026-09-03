@@ -1,7 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
-import { NativeBiometric, BiometryType } from "capacitor-native-biometric";
 import { supabase } from "@/integrations/supabase/client";
+
+const BiometryType = {
+  NONE: 0,
+  TOUCH_ID: 1,
+  FACE_ID: 2,
+  FINGERPRINT: 3,
+  FACE_AUTHENTICATION: 4,
+  IRIS_AUTHENTICATION: 5,
+} as const;
+
+type BiometryTypeValue = (typeof BiometryType)[keyof typeof BiometryType];
+type NativeBiometricModule = typeof import("capacitor-native-biometric");
+
+const loadNativeBiometric = async (): Promise<NativeBiometricModule["NativeBiometric"]> => {
+  const module = await import("capacitor-native-biometric");
+  return module.NativeBiometric;
+};
 
 const BIOMETRIC_SERVER = "leden.coffeeshopbond.nl";
 
@@ -11,7 +27,7 @@ interface BiometricState {
   /** There are saved credentials we can use */
   hasCredentials: boolean;
   /** Type of biometry (faceId, touchId, etc.) */
-  biometryType: BiometryType;
+  biometryType: BiometryTypeValue;
   /** Human-readable label for the biometry type */
   biometryLabel: string;
 }
@@ -38,6 +54,7 @@ export function useBiometricAuth() {
 
     (async () => {
       try {
+        const NativeBiometric = await loadNativeBiometric();
         const result = await NativeBiometric.isAvailable();
         const biometryType = result.biometryType;
         const label = biometryType === BiometryType.FACE_ID
@@ -79,6 +96,7 @@ export function useBiometricAuth() {
   const saveCredentials = useCallback(async (email: string, password: string) => {
     if (!isNative) return;
     try {
+      const NativeBiometric = await loadNativeBiometric();
       await NativeBiometric.setCredentials({
         username: email,
         password,
@@ -98,6 +116,7 @@ export function useBiometricAuth() {
     if (!isNative) return { success: false, error: "Niet beschikbaar" };
     setLoading(true);
     try {
+      const NativeBiometric = await loadNativeBiometric();
       // Prompt biometric verification
       await NativeBiometric.verifyIdentity({
         reason: "Log in met " + state.biometryLabel,
@@ -144,6 +163,7 @@ export function useBiometricAuth() {
   const deleteCredentials = useCallback(async () => {
     if (!isNative) return;
     try {
+      const NativeBiometric = await loadNativeBiometric();
       await NativeBiometric.deleteCredentials({ server: BIOMETRIC_SERVER });
       setState((prev) => ({ ...prev, hasCredentials: false }));
     } catch {
