@@ -135,8 +135,14 @@ const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
       }
 
       for (const group of groups.values()) {
-        group.isMove =
-          group.isLocation && group.items.some((p) => MOVE_FIELDS.has(p.field));
+        const addressItems = group.isLocation
+          ? group.items.filter((p) => MOVE_FIELDS.has(p.field))
+          : [];
+        group.changeKind = addressItems.length
+          ? addressItems.every((p) => isCosmeticChange(p.current_value, p.proposed_value))
+            ? "correction"
+            : "move"
+          : null;
         // Adres eerst, dan postcode: zo blijft de vestiging steeds vindbaar.
         group.items.sort(
           (a, b) => (a.field === "adres" ? -1 : 0) - (b.field === "adres" ? -1 : 0),
