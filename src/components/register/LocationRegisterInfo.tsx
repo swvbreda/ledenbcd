@@ -207,7 +207,7 @@ const LocationRegisterInfo = ({
                   .join(" · ") || null
               }
             />
-            <Row label="Status" value={shop.status} />
+            <Row label="Status" value={statusLabel(shop.status)} />
           </>
         )}
 

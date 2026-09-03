@@ -118,7 +118,7 @@ const CoffeeshopRegisterDetailDialog = ({
             <Row label="Vergunninghouder" value={shop.vergunninghouder} />
             <Row label="Exploitant" value={shop.exploitant} />
             <Row label="Vergunningnummer" value={shop.vergunningnummer} />
-            <Row label="Status" value={shop.status} />
+            <Row label="Status" value={statusLabel(shop.status)} />
             <Row
               label="Verleend"
               value={shop.vergunningverlening ? new Date(shop.vergunningverlening).toLocaleDateString("nl-NL") : null}
