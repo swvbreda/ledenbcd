@@ -55,7 +55,7 @@ const ResetPasswordPage = () => {
   if (!isRecovery) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-sm bg-card rounded-lg border border-border p-8 shadow-sm text-center">
+        <div className="w-full max-w-sm bg-card rounded-lg border border-border p-8 shadow-xs text-center">
           <p className="text-muted-foreground">Ongeldige of verlopen link.</p>
           <button
             onClick={() => navigate("/login")}
@@ -71,7 +71,7 @@ const ResetPasswordPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
+        <div className="bg-card rounded-lg border border-border p-8 shadow-xs">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold font-display">Nieuw wachtwoord</h1>
             <p className="text-sm text-muted-foreground mt-1">Voer je nieuwe wachtwoord in</p>
@@ -94,7 +94,7 @@ const ResetPasswordPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -109,7 +109,7 @@ const ResetPasswordPage = () => {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>

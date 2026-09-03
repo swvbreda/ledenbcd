@@ -228,7 +228,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
                   fileInputRefs.current[bl.naam]?.click();
                 }}
                 disabled={uploading === bl.naam}
-                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
+                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-xs"
                 title="Foto uploaden"
               >
                 <Camera size={10} />

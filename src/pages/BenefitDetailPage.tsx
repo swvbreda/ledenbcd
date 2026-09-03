@@ -296,7 +296,7 @@ export default function BenefitDetailPage() {
                     <p className="text-xs text-muted-foreground">{p.provider_name}</p>
                     <h4 className="font-semibold text-sm line-clamp-2">{p.title}</h4>
                     {p.price != null && (
-                      <div className="inline-block rounded bg-primary px-2 py-0.5">
+                      <div className="inline-block rounded-sm bg-primary px-2 py-0.5">
                         <span className="text-sm font-bold text-primary-foreground">
                           €{p.price.toLocaleString("nl-NL", { minimumFractionDigits: 2 })}
                         </span>

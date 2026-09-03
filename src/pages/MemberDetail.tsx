@@ -298,7 +298,7 @@ const MemberDetail = () => {
                 />
                 <div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">Lidnr. {member.id}</span>
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-sm text-xs font-semibold font-mono">Lidnr. {member.id}</span>
                   <h2 className="text-lg sm:text-2xl font-bold font-display">{member.naam}</h2>
                   {member.oprichter && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 rounded-md text-[11px] sm:text-xs font-semibold">
@@ -338,13 +338,13 @@ const MemberDetail = () => {
                       stadsdelen.push(member.stadsdeel);
                     }
                     return stadsdelen.map((sd) => (
-                      <span key={sd} className="px-2 py-0.5 bg-muted rounded text-xs">{sd}</span>
+                      <span key={sd} className="px-2 py-0.5 bg-muted rounded-sm text-xs">{sd}</span>
                     ));
                   })()}
                   {(() => {
                     const jarenLid = getMembershipYears(member);
                     return jarenLid !== null ? (
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${
                         jarenLid >= 30
                           ? "bg-success/10 text-success"
                           : jarenLid >= 10
@@ -356,7 +356,7 @@ const MemberDetail = () => {
                     ) : null;
                   })()}
                   {archived && (
-                    <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded text-xs font-medium">
+                    <span className="px-2 py-0.5 bg-destructive/10 text-destructive rounded-sm text-xs font-medium">
                       Gearchiveerd
                     </span>
                   )}
@@ -584,7 +584,7 @@ const MemberDetail = () => {
                             <p className="font-medium inline-flex items-center gap-1.5">
                               {c.naam}
                               {isSelected && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-semibold uppercase tracking-wide">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded-sm text-[10px] font-semibold uppercase tracking-wide">
                                   <UserCheck size={10} /> Contactpersoon
                                 </span>
                               )}
@@ -928,7 +928,7 @@ const MemberDetail = () => {
                       const gemeente = getLocationGemeente(loc, member.plaats);
                       return gemeente ? (
                         <span
-                          className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
+                          className="px-2 py-0.5 bg-muted rounded-sm text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
                           onClick={() => navigate(`/locaties/${encodeURIComponent(gemeente)}`)}
                         >
                           Gemeente {gemeente}
@@ -936,7 +936,7 @@ const MemberDetail = () => {
                       ) : null;
                     })()}
                     {loc.stadsdeel && (
-                      <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
+                      <span className="px-2 py-0.5 bg-muted rounded-sm text-xs text-muted-foreground">
                         {loc.stadsdeel}
                       </span>
                     )}
@@ -1012,7 +1012,7 @@ const MemberDetail = () => {
                       <div key={l.id} className="border border-dashed border-border rounded-md p-4 bg-muted/10">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium font-display">{shop.naam}</span>
-                          <span className="px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground">
+                          <span className="px-2 py-0.5 bg-muted rounded-sm text-xs text-muted-foreground">
                             Alleen in register
                           </span>
                         </div>
@@ -1060,7 +1060,7 @@ const MemberDetail = () => {
                       className="flex items-center gap-3 p-3 border border-border rounded-md hover:bg-muted/20 transition-colors cursor-pointer"
                       onClick={() => navigate(`/leden/${relId}`)}
                     >
-                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-semibold font-mono">
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-sm text-xs font-semibold font-mono">
                         {rel.id}
                       </span>
                       <span className="font-medium font-display">{rel.naam}</span>

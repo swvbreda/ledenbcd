@@ -160,7 +160,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
               return (
                 <div
                   key={gemeente}
-                  className={`flex items-center justify-between text-sm px-3 py-1.5 rounded ${
+                  className={`flex items-center justify-between text-sm px-3 py-1.5 rounded-sm ${
                     hasBcd ? "bg-success/10" : "bg-muted/30"
                   }`}
                 >
@@ -185,7 +185,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
               );
             })}
           </div>
-          <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
+          <div className="mt-3 px-3 py-2 bg-muted/30 rounded-sm text-xs text-muted-foreground">
             In{" "}
             <span className="font-medium text-foreground">
               {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => isInGemeente(m, g))).length}/10

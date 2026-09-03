@@ -272,17 +272,17 @@ export default function ExpenseDialog({
                             {fmtDate(e.expense_date)}
                             <div className="mt-1 flex flex-wrap gap-1">
                               {isBank && (
-                                <div className="inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded px-1 py-0.5">Bank</div>
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-primary/10 text-primary rounded-sm px-1 py-0.5">Bank</div>
                               )}
                               {isRefund && (
-                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Terugstorting</div>
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded-sm px-1 py-0.5">Terugstorting</div>
                               )}
                               {isContribution && (
-                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded px-1 py-0.5">Bijdrage</div>
+                                <div className="inline-block text-[10px] uppercase tracking-wide bg-green-100 text-green-700 rounded-sm px-1 py-0.5">Bijdrage</div>
                               )}
                               {e._mergedDuplicate && (
                                 <div
-                                  className="inline-block text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 rounded px-1 py-0.5"
+                                  className="inline-block text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 rounded-sm px-1 py-0.5"
                                   title="Dezelfde betaling stond meerdere keren in het systeem. Die telt hier nog maar één keer mee."
                                 >
                                   Samengevoegd
@@ -353,7 +353,7 @@ export default function ExpenseDialog({
                         {isEditing && (
                           <tr className="bg-muted/20 border-b border-border">
                             <td colSpan={5} className="px-3 py-3">
-                              <div className="mb-3 rounded border border-border bg-background p-3 space-y-1 text-xs">
+                              <div className="mb-3 rounded-sm border border-border bg-background p-3 space-y-1 text-xs">
                                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                                   <div><span className="text-muted-foreground">Datum: </span><span className="font-medium">{fmtDate(e.expense_date) || "—"}</span></div>
                                   <div><span className="text-muted-foreground">Bedrag: </span><span className="font-medium tabular-nums">€ {(Number(e.amount) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
@@ -363,7 +363,7 @@ export default function ExpenseDialog({
                                 {e.description && (
                                   <div>
                                     <div className="text-muted-foreground mb-0.5">Volledige omschrijving:</div>
-                                    <div className="whitespace-pre-wrap break-words font-mono text-[11px] bg-muted/40 rounded p-2">{e.description}</div>
+                                    <div className="whitespace-pre-wrap break-words font-mono text-[11px] bg-muted/40 rounded-sm p-2">{e.description}</div>
                                   </div>
                                 )}
                               </div>

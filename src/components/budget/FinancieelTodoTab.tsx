@@ -606,7 +606,7 @@ export default function FinancieelTodoTab({ year }: Props) {
                       {expandedNotes.has(todo.id) && (
                         <div className="mt-1.5">
                           {todo.notes && editingNoteId !== todo.id && (
-                            <div className="text-xs bg-muted/40 rounded p-1.5 mb-1 cursor-pointer hover:bg-muted/60" onClick={() => { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); }}>
+                            <div className="text-xs bg-muted/40 rounded-sm p-1.5 mb-1 cursor-pointer hover:bg-muted/60" onClick={() => { setEditingNoteId(todo.id); setNoteText(todo.notes || ""); }}>
                               <span>{todo.notes}</span>
                               {todo.notes_by && <span className="text-muted-foreground italic ml-1">— {todo.notes_by}</span>}
                             </div>

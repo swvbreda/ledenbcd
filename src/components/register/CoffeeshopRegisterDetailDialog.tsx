@@ -217,7 +217,7 @@ const CoffeeshopRegisterDetailDialog = ({
                 {kandidaten.map((m) => (
                   <button
                     key={m.id}
-                    className="w-full text-left px-3 py-2 rounded border hover:bg-muted/50 text-sm"
+                    className="w-full text-left px-3 py-2 rounded-sm border hover:bg-muted/50 text-sm"
                     onClick={() => {
                       setLink.mutate({ register_id: shop.id, member_id: m.id, status: "bevestigd" });
                       setZoek("");

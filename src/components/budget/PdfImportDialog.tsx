@@ -692,7 +692,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
             {/* Table */}
             <div className="flex-1 overflow-auto border border-border rounded-lg">
               <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-muted/50 backdrop-blur">
+                <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
                   <tr className="border-b border-border">
                     <th className="px-2 py-1.5 w-8">
                       <Checkbox
@@ -730,7 +730,7 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                            title={entry.direction === "in"
                              ? "Bijschrijvingen kunnen niet als uitgave worden geboekt"
                              : "Klik om deze afschrijving om te zetten naar een bijschrijving"}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-medium border ${
                             entry.direction === "in"
                               ? "bg-green-600/10 text-green-700 border-green-600/40"
                               : "bg-destructive/10 text-destructive border-destructive/40"
@@ -756,13 +756,13 @@ export default function PdfImportDialog({ open, onOpenChange, categories, member
                       <td className="px-2 py-1">
                         {entry.already_present ? (
                           <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-green-600/15 text-green-700 border-green-600/40"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-medium border bg-green-600/15 text-green-700 border-green-600/40"
                             title={entry.existing_description || "Komt overeen met een bestaande dashboardregel"}
                           >
                             <Check size={10} /> Al aanwezig
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-amber-500/15 text-amber-700 border-amber-500/40">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-medium border bg-amber-500/15 text-amber-700 border-amber-500/40">
                             Nieuw
                           </span>
                         )}

@@ -132,7 +132,7 @@ export default function EnquetesPage() {
           {surveys.map((s) => {
             const completed = completions.includes(s.id);
             return (
-              <Card key={s.id} className="hover:shadow-sm transition-shadow">
+              <Card key={s.id} className="hover:shadow-xs transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

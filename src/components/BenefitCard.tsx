@@ -44,7 +44,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
             <Star className="h-3 w-3" /> Uitgelicht
           </Badge>
         )}
-        <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{benefit.category}</Badge>
+        <Badge variant="secondary" className="absolute top-2 right-2 shadow-xs">{benefit.category}</Badge>
         {isAdmin && onEdit && (
           <Button
             variant="secondary"
@@ -80,7 +80,7 @@ export default function BenefitCard({ benefit, onEdit, isAdmin }: Props) {
         {/* Price display */}
         {benefit.price != null && (
           <div className="mt-3 space-y-1">
-            <div className="inline-block rounded bg-primary px-2.5 py-1">
+            <div className="inline-block rounded-sm bg-primary px-2.5 py-1">
               <span className="text-lg font-black text-primary-foreground leading-none">
                 €{benefit.price.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>

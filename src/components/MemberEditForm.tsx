@@ -291,7 +291,7 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
                         key={li}
                         type="button"
                         onClick={() => toggleContactLocation(i, identity)}
-                        className={`px-2 py-1 rounded border text-xs transition-colors ${
+                        className={`px-2 py-1 rounded-sm border text-xs transition-colors ${
                           active
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border text-muted-foreground hover:bg-muted"

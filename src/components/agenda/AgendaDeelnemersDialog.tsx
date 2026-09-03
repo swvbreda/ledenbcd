@@ -260,7 +260,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-semibold">{rowLabel(r)}</span>
-                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                              <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
                                 {r.board_member_id ? "Bestuur" : "Lid"}
                               </span>
                               <span className="text-sm text-muted-foreground tabular-nums">
@@ -399,7 +399,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-[--radix-popover-trigger-width] p-0"
+                      className="w-[var(--radix-popover-trigger-width)] p-0"
                       align="start"
                     >
                       <Command>
@@ -433,7 +433,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                     {b.functie}
                                   </span>
                                 )}
-                                <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                                <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase">
                                   Bestuur
                                 </span>
                               </CommandItem>
@@ -464,7 +464,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                   </span>
                                 )}
                                 {m.isLead && (
-                                  <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                                  <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase">
                                     Lead
                                   </span>
                                 )}

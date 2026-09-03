@@ -131,7 +131,7 @@ const CoffeeshopTable = ({ members, leadIds }: CoffeeshopTableProps) => {
                 <td className="px-4 py-3 font-medium font-display whitespace-nowrap">
                   {row.locatieNaam}
                   {row.isLead && (
-                    <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
+                    <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded-sm text-[10px] font-semibold uppercase tracking-wide">
                       Lead
                     </span>
                   )}

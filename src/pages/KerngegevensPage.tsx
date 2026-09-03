@@ -123,7 +123,7 @@ const DonutDiagram = ({
                 fill={it.color}
                 stroke="hsl(var(--card))"
                 strokeWidth={2}
-                className="outline-none cursor-pointer transition-opacity hover:opacity-80"
+                className="outline-hidden cursor-pointer transition-opacity hover:opacity-80"
               />
             ))}
           </Pie>
@@ -132,7 +132,7 @@ const DonutDiagram = ({
               if (!active || !payload?.length) return null;
               const p = payload[0].payload as DonutItem;
               return (
-                <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-sm text-xs">
+                <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-xs text-xs">
                   <div className="font-medium">{p.label}</div>
                   <div className="text-muted-foreground">
                     {p.aantal} {p.eenheid ?? ""} · {p.pct}%

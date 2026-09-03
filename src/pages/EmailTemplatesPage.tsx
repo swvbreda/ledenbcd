@@ -216,7 +216,7 @@ export default function EmailTemplatesPage() {
       <p className="text-sm text-muted-foreground">
         Pas onderwerp en bericht aan. Beschikbare placeholders:{" "}
         {PLACEHOLDERS.map((p) => (
-          <code key={p} className="mx-1 px-1 py-0.5 rounded bg-muted text-xs">{p}</code>
+          <code key={p} className="mx-1 px-1 py-0.5 rounded-sm bg-muted text-xs">{p}</code>
         ))}
       </p>
       {loading ? (

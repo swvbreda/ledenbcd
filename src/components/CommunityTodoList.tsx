@@ -182,7 +182,7 @@ const CommunityTodoList = () => {
                   <User size={13} className="text-muted-foreground/60" />
                   <span className="truncate">{p.display_name}</span>
                   {oldMember && (
-                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
+                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-sm bg-destructive/10 text-destructive">
                       Oud-lid
                     </span>
                   )}

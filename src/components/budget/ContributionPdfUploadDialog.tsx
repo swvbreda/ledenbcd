@@ -220,7 +220,7 @@ export default function ContributionPdfUploadDialog({ open, onOpenChange, member
 
             <div className="flex-1 overflow-auto border border-border rounded-lg">
               <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-muted/50 backdrop-blur">
+                <thead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
                   <tr className="border-b border-border">
                     <th className="px-2 py-1.5 w-8">
                       <Checkbox

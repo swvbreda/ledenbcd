@@ -75,7 +75,7 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
                 {(newVal as any[]).map((loc, i) => {
                   const isNew = i >= oldLocs.length;
                   return (
-                    <div key={i} className={`text-xs rounded px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
+                    <div key={i} className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
                       {isNew && <span className="font-medium mr-1">Nieuw:</span>}
                       {loc.naam} — {loc.plaats || "?"}, {loc.adres || ""}
                     </div>
@@ -95,7 +95,7 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
                 {(newVal as any[]).map((c, i) => {
                   const isNew = i >= oldContacts.length;
                   return (
-                    <div key={i} className={`text-xs rounded px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
+                    <div key={i} className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
                       {isNew && <span className="font-medium mr-1">Nieuw:</span>}
                       {c.naam} ({c.functie}) — {c.email}
                     </div>
@@ -385,7 +385,7 @@ export default function GoedkeuringenPage() {
                   {s.phone && <div className="flex items-center gap-1.5"><Phone size={12} className="text-muted-foreground" /><a href={`tel:${s.phone}`} className="hover:underline">{s.phone}</a></div>}
                 </div>
                 {s.message && (
-                  <p className="text-sm bg-muted/50 rounded p-2 whitespace-pre-wrap">{s.message}</p>
+                  <p className="text-sm bg-muted/50 rounded-sm p-2 whitespace-pre-wrap">{s.message}</p>
                 )}
                 {s.status === "new" && (
                   <div className="flex items-center gap-2 pt-2 border-t border-border">

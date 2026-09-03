@@ -400,7 +400,7 @@ export default function MfaSetupPage() {
                             Lukt het scannen niet? Voer deze code handmatig in:
                           </p>
                           <div className="flex items-center justify-center gap-2">
-                            <code className="text-xs font-mono bg-background px-2 py-1 rounded border select-all break-all">
+                            <code className="text-xs font-mono bg-background px-2 py-1 rounded-sm border select-all break-all">
                               {secret}
                             </code>
                             <button type="button" onClick={handleCopySecret}

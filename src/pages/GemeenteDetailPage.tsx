@@ -246,7 +246,7 @@ const GemeenteDetailPage = () => {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       {loc.adres && <span className="truncate">{loc.adres}</span>}
                       {loc.stadsdeel && (
-                        <span className="shrink-0 px-1.5 py-0.5 bg-muted rounded text-[10px] font-medium uppercase tracking-wider">
+                        <span className="shrink-0 px-1.5 py-0.5 bg-muted rounded-sm text-[10px] font-medium uppercase tracking-wider">
                           {loc.stadsdeel}
                         </span>
                       )}

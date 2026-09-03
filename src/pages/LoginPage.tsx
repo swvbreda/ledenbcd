@@ -273,7 +273,7 @@ const LoginPage = () => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
       <div className="w-full max-w-sm">
-        <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
+        <div className="bg-card rounded-lg border border-border p-8 shadow-xs">
           <div className="text-center mb-6">
             <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-12 w-auto mx-auto mb-4" />
             <h1 className="text-2xl font-bold font-display">Ledenportaal</h1>
@@ -382,7 +382,7 @@ const LoginPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="naam@voorbeeld.nl"
                     required
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -399,7 +399,7 @@ const LoginPage = () => {
                       placeholder={registerMode ? "Kies minimaal 8 tekens" : "••••••••"}
                       required
                       minLength={8}
-                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -417,7 +417,7 @@ const LoginPage = () => {
                       placeholder="••••••••"
                       required
                       minLength={8}
-                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -429,7 +429,7 @@ const LoginPage = () => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => handleRememberMe(e.target.checked)}
-                    className="rounded border-input h-4 w-4 text-primary focus:ring-ring"
+                    className="rounded-sm border-input h-4 w-4 text-primary focus:ring-ring"
                   />
                   <span className="text-sm text-muted-foreground">Onthoud mij</span>
                 </label>
