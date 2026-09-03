@@ -140,6 +140,7 @@ export default function DossierDetailDialog({
         id: `dossier-${dossier.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`,
         date: null,
         invoiceDate: null,
+        invoiceAmount: null,
         paymentDate: null,
         counterparty: "",
         description: "",

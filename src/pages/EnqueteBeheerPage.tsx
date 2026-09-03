@@ -348,7 +348,7 @@ export default function EnqueteBeheerPage() {
                       )}
                       {result?.type === "choice" && (
                         <div className="space-y-1">
-                          {Object.entries(result.counts).sort(([, a], [, b]) => (b as number) - (a as number)).map(([option, count]) => (
+                          {Object.entries(result.counts ?? {}).sort(([, a], [, b]) => (b as number) - (a as number)).map(([option, count]) => (
                             <div key={option} className="flex items-center gap-2">
                               <div className="flex-1">
                                 <div className="flex justify-between text-xs mb-0.5">

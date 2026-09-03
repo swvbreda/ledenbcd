@@ -111,10 +111,10 @@ export default function EmailTemplatesPage() {
 
   const createTemplate = async () => {
     const key = newTpl.key.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_");
-    if (!key) return toast.error("Sleutel is verplicht");
-    if (templates.some((t) => t.key === key)) return toast.error("Sleutel bestaat al");
+    if (!key) { toast.error("Sleutel is verplicht"); return; }
+    if (templates.some((t) => t.key === key)) { toast.error("Sleutel bestaat al"); return; }
     if (!newTpl.subject.trim() || !newTpl.body.trim())
-      return toast.error("Onderwerp en bericht zijn verplicht");
+      { toast.error("Onderwerp en bericht zijn verplicht"); return; }
     setCreating(true);
     const { error } = await supabase.from("email_templates").insert({
       key,
@@ -122,7 +122,7 @@ export default function EmailTemplatesPage() {
       body: newTpl.body,
     });
     setCreating(false);
-    if (error) return toast.error("Aanmaken mislukt: " + error.message);
+    if (error) { toast.error("Aanmaken mislukt: " + error.message); return; }
     if (newTpl.title.trim()) {
       TEMPLATE_LABELS[key] = { title: newTpl.title.trim(), description: "" };
     }
@@ -136,7 +136,7 @@ export default function EmailTemplatesPage() {
 
   const deleteTemplate = async (key: string) => {
     const { error } = await supabase.from("email_templates").delete().eq("key", key);
-    if (error) return toast.error("Verwijderen mislukt: " + error.message);
+    if (error) { toast.error("Verwijderen mislukt: " + error.message); return; }
     setTemplates((prev) => {
       const next = prev.filter((t) => t.key !== key);
       if (activeKey === key && next.length > 0) setActiveKey(next[0].key);

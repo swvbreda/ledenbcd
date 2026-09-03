@@ -68,6 +68,7 @@ async function callFunction<T>(
 ): Promise<InvokeResult<T>> {
   return (await supabase.functions.invoke(functionName, {
     ...options,
+    body: options.body as Record<string, unknown> | undefined,
     headers: {
       ...(options.headers || {}),
       Authorization: `Bearer ${token}`,
