@@ -232,27 +232,30 @@ export function useAgendaMutations() {
   };
 
   const saveEvent = useMutation({
-    mutationFn: async (event: AgendaEventInput & { id?: string }) => {
+    mutationFn: async (event: AgendaEventInput & { id?: string }): Promise<AgendaEvent> => {
       const { id, ...fields } = event;
       if (id) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("agenda_events" as any)
           .update(fields as any)
-          .eq("id", id);
+          .eq("id", id)
+          .select("*")
+          .single();
         if (error) throw error;
-        return id;
+        return data as unknown as AgendaEvent;
       }
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("agenda_events" as any)
         .insert({ ...fields, created_by: userData.user?.id ?? null } as any)
-        .select("id")
+        .select("*")
         .single();
       if (error) throw error;
-      return (data as any).id as string;
+      return data as unknown as AgendaEvent;
     },
     onSuccess: invalidate,
   });
+
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
