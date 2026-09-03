@@ -17,7 +17,9 @@ interface Props {
 }
 
 const PUBLIC_BASE_URL = "https://leden.coffeeshopbond.nl";
+const SHARE_BASE_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/agenda-share`;
 
+/** Directe portaal-link (fallback zonder deelcode). */
 export function buildEventUrl(eventId: string) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const proto = typeof window !== "undefined" ? window.location.protocol : "";
@@ -28,6 +30,14 @@ export function buildEventUrl(eventId: string) {
     !origin.includes("localhost") &&
     !origin.includes("127.0.0.1");
   return `${isWebOrigin ? origin : PUBLIC_BASE_URL}/agenda/${eventId}`;
+}
+
+/**
+ * Deel-link: korte code via het preview-endpoint, zodat WhatsApp titel, datum
+ * en locatie toont. Zonder deelcode valt hij terug op de portaal-link.
+ */
+export function buildShareUrl(event: { id: string; share_code?: string | null }) {
+  return event.share_code ? `${SHARE_BASE_URL}/${event.share_code}` : buildEventUrl(event.id);
 }
 
 function buildShareText(event: AgendaEvent) {
