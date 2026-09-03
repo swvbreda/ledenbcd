@@ -117,14 +117,18 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
         is_published: form.is_published,
       },
       {
-        onSuccess: () => {
+        onSuccess: (saved) => {
           toast.success(event ? "Agenda-item bijgewerkt" : "Agenda-item toegevoegd");
           onOpenChange(false);
+          if (!event && saved.event_type === "evenement" && saved.is_published) {
+            setAnnounceEvent(saved);
+          }
         },
         onError: (e: any) => toast.error(e?.message || "Opslaan mislukt"),
       },
     );
   };
+
 
 
   return (
