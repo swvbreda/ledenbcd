@@ -48,7 +48,7 @@ const CommunityTodoList = () => {
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [searchFor, setSearchFor] = useState<Record<string, string>>({});
-  const [suggestions, setSuggestions] = useState<MatchResult[]>([]);
+  const [suggestions, setSuggestions] = useState<MatchSuggestion[]>([]);
   const [isMatching, setIsMatching] = useState(false);
 
   const load = async () => {
