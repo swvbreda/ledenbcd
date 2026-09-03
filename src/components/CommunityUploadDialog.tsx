@@ -109,6 +109,7 @@ export default function CommunityUploadDialog({
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [existingPhones, setExistingPhones] = useState<ExistingMap>(new Map());
+  const [hasMemberColumn, setHasMemberColumn] = useState(true);
 
   const reset = () => {
     setFile(null);
@@ -117,6 +118,7 @@ export default function CommunityUploadDialog({
     setIsParsing(false);
     setIsImporting(false);
     setExistingPhones(new Map());
+    setHasMemberColumn(true);
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -159,6 +161,8 @@ export default function CommunityUploadDialog({
       if (nameIdx < 0) {
         throw new Error("Geen 'Naam'-kolom gevonden. Verwachte kolommen: Naam, Telefoon, Lidnummer, Notitie.");
       }
+
+      setHasMemberColumn(memberIdx >= 0);
 
       const existing = await loadExistingPhones();
       setExistingPhones(existing);
@@ -315,6 +319,15 @@ export default function CommunityUploadDialog({
             </div>
           )}
 
+          {parsedRows.length > 0 && !hasMemberColumn && (
+            <div className="flex items-start gap-2 p-3 rounded-md border border-amber-300 bg-amber-50 text-sm text-amber-900">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>
+                Dit bestand bevat geen kolom "Lidnummer". Bestaande koppelingen met leden blijven behouden — er wordt niets ontkoppeld.
+              </span>
+            </div>
+          )}
+
           {parsedRows.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 text-xs">
@@ -346,7 +359,7 @@ export default function CommunityUploadDialog({
                         status = "Geen telefoon";
                         statusClass = "text-amber-700";
                       } else if (existingPhones.has(canonical)) {
-                        status = "Bijwerken";
+                        status = hasMemberColumn ? "Bijwerken" : "Bijwerken (koppeling blijft)";
                         statusClass = "text-blue-700";
                       }
                       return (
