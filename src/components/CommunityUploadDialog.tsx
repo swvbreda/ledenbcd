@@ -211,7 +211,14 @@ export default function CommunityUploadDialog({
     setIsImporting(true);
 
     try {
-      const toUpdate: { id: string; update: Record<string, unknown> }[] = [];
+      type UpdatePayload = {
+        display_name: string;
+        sort_key: string;
+        phone?: string;
+        member_id?: number;
+        note?: string;
+      };
+      const toUpdate: { id: string; update: UpdatePayload }[] = [];
       const toInsert: { display_name: string; phone: string | null; member_id: number | null; note: string | null; sort_key: string }[] = [];
 
       for (const row of parsedRows) {
@@ -219,7 +226,7 @@ export default function CommunityUploadDialog({
         if (canonical && existingPhones.has(canonical)) {
           // Alleen niet-lege waarden overschrijven: bestaande koppelingen en
           // notities blijven behouden als de CSV die kolom niet vult.
-          const update: Record<string, unknown> = {
+          const update: UpdatePayload = {
             display_name: row.display_name,
             sort_key: row.display_name.toLowerCase().trim(),
           };
