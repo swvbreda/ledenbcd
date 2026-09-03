@@ -80,7 +80,7 @@ export function useBiometricAuth() {
         setState({
           isAvailable: result.isAvailable,
           hasCredentials,
-          biometryType,
+          biometryType: biometryType as BiometryTypeValue,
           biometryLabel: label,
         });
       } catch {
