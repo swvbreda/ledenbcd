@@ -125,6 +125,7 @@ export function matchParticipants(
 
     const hits = new Map<number, Member>();
     for (const entry of nameIndex) {
+      if (entry.name.length < 4) continue;
       if (entry.name === nm || entry.name.includes(nm) || nm.includes(entry.name)) {
         hits.set(entry.member.id, entry.member);
       }
