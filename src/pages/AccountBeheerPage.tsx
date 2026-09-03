@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
@@ -473,7 +473,7 @@ const AccountBeheerPage = () => {
                                   </button>
                                   <button
                                     onClick={() => handleUnlink(u.id, mid)}
-                                    className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors hidden sm:inline-flex"
+                                    className="p-0.5 rounded-sm hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-colors hidden sm:inline-flex"
                                     title="Koppeling verwijderen"
                                   >
                                     <Unlink size={10} />
@@ -497,7 +497,7 @@ const AccountBeheerPage = () => {
                             <span className="text-muted-foreground italic">Geen koppeling</span>
                           )}
                           {u.id === user?.id && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded font-semibold w-fit">Jij</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-sm font-semibold w-fit">Jij</span>
                           )}
                         </div>
                       </td>
@@ -514,7 +514,7 @@ const AccountBeheerPage = () => {
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground break-all hidden sm:table-cell">{u.email}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 hidden md:table-cell">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-medium ${
                           u.is_reviewer
                             ? "bg-purple-500/15 text-purple-600"
                             : u.role === "admin"
@@ -533,7 +533,7 @@ const AccountBeheerPage = () => {
                         <div className="flex items-center gap-0.5 sm:gap-1">
                           <button
                             onClick={() => { setEditUser(u); setEditEmail(u.email); setEditRole(u.role); setEditName(getDisplayInfo(u).personName); }}
-                            className="p-1 sm:p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            className="p-1 sm:p-1.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             title="Bewerken"
                           >
                             <Pencil size={12} className="sm:hidden" /><Pencil size={14} className="hidden sm:block" />
@@ -541,7 +541,7 @@ const AccountBeheerPage = () => {
                           {u.id !== user?.id && (
                             <button
                               onClick={() => setDeleteId(u.id)}
-                              className="p-1 sm:p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              className="p-1 sm:p-1.5 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                             >
                               <Trash2 size={12} className="sm:hidden" /><Trash2 size={14} className="hidden sm:block" />
                             </button>
@@ -586,7 +586,7 @@ const AccountBeheerPage = () => {
                 type="checkbox"
                 checked={newIsReviewer}
                 onChange={(e) => setNewIsReviewer(e.target.checked)}
-                className="rounded border-border text-primary focus:ring-primary"
+                className="rounded-sm border-border text-primary focus:ring-primary"
               />
               <span>Reviewer-account voor App Store-review (geen MFA)</span>
             </label>
@@ -744,7 +744,7 @@ const AccountBeheerPage = () => {
                             </button>
                             <button
                               onClick={() => handleUnlink(editUser.id, mid)}
-                              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                              className="p-1 rounded-sm hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                               title="Ontkoppelen"
                             >
                               <Unlink size={12} />

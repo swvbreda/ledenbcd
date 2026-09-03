@@ -369,7 +369,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       {/* Table */}
       <div className="border border-border rounded-lg overflow-auto max-h-[65vh]">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+          <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
             <tr className="border-b border-border">
               <SortHeader label="Type" field="type" className="text-left w-[70px]" />
               <SortHeader label="Datum" field="date" className="text-left" />
@@ -475,7 +475,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
                       <>
                         <button
                           onClick={() => startEdit(row)}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-border bg-background text-[10px] font-medium hover:bg-accent"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border border-border bg-background text-[10px] font-medium hover:bg-accent"
                           title="Begrotingspost en dossier wijzigen"
                         >
                           <Pencil size={10} /> Bewerk

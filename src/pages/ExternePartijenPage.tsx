@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "@/lib/router-compat";
 import { Building2, Check, X, Clock, Pencil, Save, Mail, UserPlus, Plus, Trash2 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Button } from "@/components/ui/button";
@@ -250,7 +250,7 @@ export default function ExternePartijenPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <Building2 size={14} className="text-muted-foreground shrink-0" />
             <span className="font-semibold text-sm hover:underline">{org.name}</span>
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{typeLabel(org.type)}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-sm">{typeLabel(org.type)}</span>
           </div>
           {org.contact_name && <p className="text-xs text-muted-foreground">Contactpersoon: {org.contact_name}</p>}
           {org.contact_email && <p className="text-xs text-muted-foreground">{org.contact_email}</p>}

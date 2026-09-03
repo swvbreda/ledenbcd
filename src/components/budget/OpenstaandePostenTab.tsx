@@ -63,7 +63,7 @@ export default function OpenstaandePostenTab({ categories, contributions, member
         </div>
         <div className="border border-border rounded-lg overflow-hidden max-h-[65vh] overflow-y-auto">
           <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+            <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
               <tr className="border-b border-border">
                 <th className="px-2 py-1.5 w-8" />
                 <th className="px-2 py-1.5 text-left font-medium">Datum</th>
@@ -115,7 +115,7 @@ export default function OpenstaandePostenTab({ categories, contributions, member
         </div>
         <div className="border border-border rounded-lg overflow-hidden max-h-[65vh] overflow-y-auto">
           <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+            <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
               <tr className="border-b border-border">
                 <th className="px-2 py-1.5 text-left font-medium">Lid</th>
                 <th className="px-2 py-1.5 text-right font-medium">Bedrag</th>

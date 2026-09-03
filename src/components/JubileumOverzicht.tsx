@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { Award } from "lucide-react";
 import type { Member } from "@/data/types";
 

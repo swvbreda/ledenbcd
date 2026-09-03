@@ -286,7 +286,7 @@ export default function InformerSyncTab() {
             </div>
             <div className="flex gap-2">
               <input
-                className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background font-mono"
+                className="flex-1 border border-border rounded-sm px-3 py-1.5 text-sm bg-background font-mono"
                 placeholder="Optioneel: nieuwe INFORMER_ADMINISTRATION_ID"
                 value={verifyCode}
                 onChange={(e) => setVerifyCode(e.target.value)}
@@ -444,7 +444,7 @@ function DebtorLinkDialog({
         </DialogHeader>
         <div className="flex items-center gap-2 py-2">
           <input
-            className="flex-1 border border-border rounded px-3 py-1.5 text-sm bg-background"
+            className="flex-1 border border-border rounded-sm px-3 py-1.5 text-sm bg-background"
             placeholder="Zoek op naam, e-mail, KvK of plaats…"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -479,7 +479,7 @@ function DebtorLinkDialog({
                     <td className="px-3 py-2 text-xs">{d.city ?? "—"}</td>
                     <td className="px-3 py-2">
                       <select
-                        className="border border-border rounded px-2 py-1 text-sm bg-background w-full max-w-xs"
+                        className="border border-border rounded-sm px-2 py-1 text-sm bg-background w-full max-w-xs"
                         value={mapping[d.id] ?? ""}
                         onChange={(e) => setLink(d.id, e.target.value)}
                       >

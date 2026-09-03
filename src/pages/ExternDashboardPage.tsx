@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Building2, LogOut, ShieldCheck, ShieldX, Users, Package, Plus, Pencil, Trash2, Mail, Store, MapPin, Eye } from "lucide-react";
@@ -318,7 +318,7 @@ const ExternDashboardPage = () => {
                             ) : (
                               <div className="text-5xl font-bold text-muted-foreground/40">{b.title.charAt(0)}</div>
                             )}
-                            <Badge variant="secondary" className="absolute top-2 right-2 shadow-sm">{b.category}</Badge>
+                            <Badge variant="secondary" className="absolute top-2 right-2 shadow-xs">{b.category}</Badge>
                             {!b.active && (
                               <Badge variant="outline" className="absolute top-2 left-2 bg-background/80">Inactief</Badge>
                             )}

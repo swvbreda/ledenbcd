@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "@/lib/router-compat";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -310,25 +310,25 @@ export default function FinancienPage() {
 
         <Tabs defaultValue="dashboard" className="space-y-1">
           <TabsList className="bg-muted/60 h-10">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Declaraties
             </TabsTrigger>
-            <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Inkomsten / Uitgaven
             </TabsTrigger>
-            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Dossiers
             </TabsTrigger>
-            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               To Do
             </TabsTrigger>
-            <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+            <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
               Informer
             </TabsTrigger>
 

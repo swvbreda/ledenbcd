@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { ChevronDown, ChevronUp, ExternalLink, Shield } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +12,7 @@ import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
   <span
-    className="shrink-0 rounded border border-border bg-muted overflow-hidden inline-flex items-center justify-center"
+    className="shrink-0 rounded-sm border border-border bg-muted overflow-hidden inline-flex items-center justify-center"
     style={{ width: size, height: size }}
   >
     {url ? (
@@ -165,7 +165,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
             {jarenLid !== null && (() => {
               const tier = getJubileumTier(jarenLid);
               return (
-                <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${tier.bg} ${tier.text}`}>{jarenLid}jr</span>
+                <span className={`px-1.5 py-0.5 rounded-sm text-[11px] font-medium ${tier.bg} ${tier.text}`}>{jarenLid}jr</span>
               );
             })()}
             <span className="text-[11px] tabular-nums text-muted-foreground whitespace-nowrap">{m.aantalLocaties} loc.</span>
@@ -253,7 +253,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                     <LogoThumb url={logos[member.id]} naam={member.naam} />
                     {member.naam}
                     {memberIsLead && isAdmin && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-muted text-muted-foreground rounded-sm text-[10px] font-semibold uppercase tracking-wide">
                         Lead
                       </span>
                     )}
@@ -266,7 +266,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${tier.bg} ${tier.text}`}>
+                            <span className={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${tier.bg} ${tier.text}`}>
                               {jarenLid} jr
                             </span>
                           </TooltipTrigger>

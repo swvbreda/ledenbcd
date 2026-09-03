@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import type { Member } from "@/data/types";
 import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
@@ -114,7 +114,7 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
                 const hasBcd = leden.length > 0;
 
                 return (
-                  <div key={gemeente} className={`flex items-center justify-between text-sm px-3 py-1.5 rounded cursor-pointer ${hasBcd ? "bg-success/10 hover:bg-success/20" : "bg-muted/30 hover:bg-muted/50"} transition-colors`}
+                  <div key={gemeente} className={`flex items-center justify-between text-sm px-3 py-1.5 rounded-sm cursor-pointer ${hasBcd ? "bg-success/10 hover:bg-success/20" : "bg-muted/30 hover:bg-muted/50"} transition-colors`}
                     onClick={() => navigate(`/extern/gemeente/${encodeURIComponent(gemeente)}`)}
                   >
                     <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ const SupplierGemeentenOverzicht = ({ members }: { members: Member[] }) => {
                 );
               })}
             </div>
-            <div className="mt-3 px-3 py-2 bg-muted/30 rounded text-xs text-muted-foreground">
+            <div className="mt-3 px-3 py-2 bg-muted/30 rounded-sm text-xs text-muted-foreground">
               In <span className="font-medium text-foreground">{EXPERIMENT_GEMEENTEN.filter((g) => members.some((m) => isInGemeente(m, g))).length}/10</span> gemeenten vertegenwoordigd
             </div>
           </div>

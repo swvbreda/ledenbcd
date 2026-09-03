@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { AlertCircle, X, FileWarning, UserX } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";
@@ -64,7 +64,7 @@ function AlertForMember({ memberId }: AlertForMemberProps) {
     <div className="relative rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 p-1 rounded hover:bg-amber-500/20 transition-colors text-amber-700 dark:text-amber-400"
+        className="absolute top-3 right-3 p-1 rounded-sm hover:bg-amber-500/20 transition-colors text-amber-700 dark:text-amber-400"
       >
         <X size={16} />
       </button>

@@ -24,9 +24,9 @@ const LedenPerStadOverzicht = ({ members }: { members: Member[] }) => {
             <span className="w-28 shrink-0 text-right text-muted-foreground truncate" title={city}>
               {city}
             </span>
-            <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
+            <div className="flex-1 h-6 bg-muted rounded-sm overflow-hidden">
               <div
-                className="h-full bg-primary rounded transition-all"
+                className="h-full bg-primary rounded-sm transition-all"
                 style={{ width: `${(count / max) * 100}%` }}
               />
             </div>

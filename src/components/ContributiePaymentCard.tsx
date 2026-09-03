@@ -114,7 +114,7 @@ export function ContributiePaymentCard() {
       ) : (
         <div className="space-y-2">
           {!stripeReady && (
-            <div className="text-xs text-muted-foreground p-2 rounded bg-muted/30">
+            <div className="text-xs text-muted-foreground p-2 rounded-sm bg-muted/30">
               Online betalen is nog niet geactiveerd. Maak het bedrag handmatig over of neem contact op met het bestuur.
             </div>
           )}
@@ -130,7 +130,7 @@ export function ContributiePaymentCard() {
           )}
           {totals.hasFirstInstallment && !totals.hasSecondInstallment && (
             <>
-              <div className="flex items-center gap-2 text-sm text-emerald-700 p-2 rounded bg-emerald-50">
+              <div className="flex items-center gap-2 text-sm text-emerald-700 p-2 rounded-sm bg-emerald-50">
                 <CheckCircle2 size={16} /> Eerste termijn (€ 1.500) is voldaan.
               </div>
               <Button className="w-full gap-2" onClick={() => openCheckout("installment", 2)} disabled={!stripeReady}>

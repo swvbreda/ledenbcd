@@ -309,11 +309,11 @@ export default function CommunityUploadDialog({
           {parsedRows.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 text-xs">
-                <span className="px-2 py-1 rounded bg-muted">Totaal: {stats.total}</span>
-                <span className="px-2 py-1 rounded bg-green-100 text-green-800">Nieuw: {stats.newCount}</span>
-                <span className="px-2 py-1 rounded bg-blue-100 text-blue-800">Bijwerken: {stats.existingCount}</span>
+                <span className="px-2 py-1 rounded-sm bg-muted">Totaal: {stats.total}</span>
+                <span className="px-2 py-1 rounded-sm bg-green-100 text-green-800">Nieuw: {stats.newCount}</span>
+                <span className="px-2 py-1 rounded-sm bg-blue-100 text-blue-800">Bijwerken: {stats.existingCount}</span>
                 {stats.noPhoneCount > 0 && (
-                  <span className="px-2 py-1 rounded bg-amber-100 text-amber-800">Geen telefoon: {stats.noPhoneCount}</span>
+                  <span className="px-2 py-1 rounded-sm bg-amber-100 text-amber-800">Geen telefoon: {stats.noPhoneCount}</span>
                 )}
               </div>
 

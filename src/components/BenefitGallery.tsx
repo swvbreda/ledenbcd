@@ -85,7 +85,7 @@ export default function BenefitGallery({ mainImagePath, galleryImages, alt }: Pr
 
         {/* Counter */}
         {allImages.length > 1 && (
-          <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-xs font-medium px-2 py-1 rounded-full border border-border">
+          <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-xs text-xs font-medium px-2 py-1 rounded-full border border-border">
             {activeIndex + 1} / {allImages.length}
           </div>
         )}

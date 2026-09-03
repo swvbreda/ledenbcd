@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,7 @@ export default function EnqueteReviewPage() {
       }))
     );
 
-    // Group responses by respondent_email + submitted_at (rounded to minute)
+    // Group responses by respondent_email + submitted_at (rounded-sm to minute)
     const rows = (r ?? []) as any[];
     const grouped: Record<string, ResponseGroup> = {};
     for (const row of rows) {
@@ -348,7 +348,7 @@ export default function EnqueteReviewPage() {
                       {result?.type === "text" && (
                         <div className="space-y-1 max-h-40 overflow-y-auto">
                           {(result.texts as string[]).map((t, i) => (
-                            <p key={i} className="text-xs bg-muted/50 rounded px-2 py-1">{t}</p>
+                            <p key={i} className="text-xs bg-muted/50 rounded-sm px-2 py-1">{t}</p>
                           ))}
                         </div>
                       )}

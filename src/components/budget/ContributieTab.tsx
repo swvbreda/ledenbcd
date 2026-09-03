@@ -8,7 +8,7 @@ import {
   type ContributionInvoice,
 } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { AlertCircle, FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -137,7 +137,7 @@ export default function ContributieTab({ year }: Props) {
                 <button
                   key={m.id}
                   onClick={() => navigate(`/leden/${m.id}`)}
-                  className="text-xs px-2 py-1 rounded border border-amber-300 bg-white hover:bg-amber-100 transition-colors"
+                  className="text-xs px-2 py-1 rounded-sm border border-amber-300 bg-white hover:bg-amber-100 transition-colors"
                   title={`${m.naam} — ${m.plaats}`}
                 >
                   <span className="text-muted-foreground mr-1">#{m.id}</span>

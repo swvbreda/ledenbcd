@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -291,7 +291,7 @@ export default function EnqueteBeheerPage() {
                       type="checkbox"
                       checked={qRequired}
                       onChange={(e) => setQRequired(e.target.checked)}
-                      className="rounded"
+                      className="rounded-sm"
                     />
                     Verplicht
                   </label>
@@ -371,7 +371,7 @@ export default function EnqueteBeheerPage() {
                       {result?.type === "text" && (
                         <div className="space-y-1 max-h-40 overflow-y-auto">
                           {(result.texts as string[]).map((t, i) => (
-                            <p key={i} className="text-xs bg-muted/50 rounded px-2 py-1">{t}</p>
+                            <p key={i} className="text-xs bg-muted/50 rounded-sm px-2 py-1">{t}</p>
                           ))}
                         </div>
                       )}

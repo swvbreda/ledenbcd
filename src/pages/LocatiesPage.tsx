@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
@@ -181,7 +181,7 @@ const LocatiesPage = () => {
             placeholder="Zoek stad..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full pl-9 pr-8 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">

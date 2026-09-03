@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, LogIn, Building2, UserPlus, User, Eye, EyeOff } from "lucide-react";
@@ -101,7 +101,7 @@ const ExternLoginPage = () => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
       <div className="w-full max-w-sm">
-        <div className="bg-card rounded-lg border border-border p-8 shadow-sm">
+        <div className="bg-card rounded-lg border border-border p-8 shadow-xs">
           <div className="text-center mb-6">
             <img src={bcdLogo} alt="Bond van Cannabis Detaillisten" className="h-12 w-auto mx-auto mb-4" />
             <h1 className="text-2xl font-bold font-display">Extern Portaal</h1>
@@ -141,7 +141,7 @@ const ExternLoginPage = () => {
                         onChange={(e) => setOrgName(e.target.value)}
                         placeholder="Naam van uw organisatie"
                         required
-                        className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -151,7 +151,7 @@ const ExternLoginPage = () => {
                     <select
                       value={orgType}
                       onChange={(e) => setOrgType(e.target.value)}
-                      className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                     >
                       <option value="bank">Bank</option>
                       <option value="overheid">Overheid</option>
@@ -170,7 +170,7 @@ const ExternLoginPage = () => {
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder="Uw volledige naam"
                         required
-                        className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -187,7 +187,7 @@ const ExternLoginPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="naam@organisatie.nl"
                     required
-                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -205,7 +205,7 @@ const ExternLoginPage = () => {
                     placeholder={mode === "register" ? "Minimaal 8 tekens" : "••••••••"}
                     required
                     minLength={8}
-                    className="w-full pl-9 pr-10 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full pl-9 pr-10 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                   <button
                     type="button"
@@ -230,7 +230,7 @@ const ExternLoginPage = () => {
                       placeholder="••••••••"
                       required
                       minLength={8}
-                      className="w-full pl-9 pr-10 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="w-full pl-9 pr-10 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                     />
                     <button
                       type="button"
@@ -253,7 +253,7 @@ const ExternLoginPage = () => {
                       setRememberMe(e.target.checked);
                       try { localStorage.setItem("remember_me", String(e.target.checked)); } catch {}
                     }}
-                    className="rounded border-input h-4 w-4 text-primary focus:ring-ring"
+                    className="rounded-sm border-input h-4 w-4 text-primary focus:ring-ring"
                   />
                   <span className="text-sm text-muted-foreground">Onthoud mij</span>
                 </label>

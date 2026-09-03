@@ -234,7 +234,7 @@ export default function MailingExportButton({ members }: Props) {
           readOnly
           value={dialogEmails}
           onFocus={(e) => e.currentTarget.select()}
-          className="w-full h-64 p-3 text-sm font-mono border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-brand-red"
+          className="w-full h-64 p-3 text-sm font-mono border rounded-md resize-none focus:outline-hidden focus:ring-2 focus:ring-brand-red"
         />
         <DialogFooter className="gap-2 sm:gap-2 flex-wrap">
           <Button variant="outline" onClick={handleDialogDownload}>Download .txt</Button>

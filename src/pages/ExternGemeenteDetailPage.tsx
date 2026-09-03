@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@/lib/router-compat";
 import { ArrowLeft, MapPin } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 

@@ -340,7 +340,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         }
       `}</style>
 
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
@@ -517,7 +517,7 @@ function Thumbnail({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full rounded border-2 transition ${active ? "border-primary" : "border-transparent hover:border-primary/40"}`}
+      className={`block w-full rounded-sm border-2 transition ${active ? "border-primary" : "border-transparent hover:border-primary/40"}`}
       aria-label={`Ga naar pagina ${pageNum}`}
     >
       <canvas ref={ref} className="block w-full bg-white" />
@@ -705,7 +705,7 @@ function OutlineItem({
   return (
     <li ref={isActive ? activeRef : undefined}>
       <div
-        className={`flex items-start gap-1 rounded ${isActive ? "border-l-4 border-primary bg-primary/10" : "border-l-4 border-transparent"}`}
+        className={`flex items-start gap-1 rounded-sm ${isActive ? "border-l-4 border-primary bg-primary/10" : "border-l-4 border-transparent"}`}
         style={{ paddingLeft: depth * 8 + 4 }}
       >
         {hasChildren ? (

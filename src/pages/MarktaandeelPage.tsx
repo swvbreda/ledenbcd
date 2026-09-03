@@ -3,7 +3,7 @@ import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 
@@ -99,7 +99,7 @@ const MarktaandeelPage = () => {
               placeholder="Zoek een stad..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+              className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/50 border border-border rounded-md focus:outline-hidden focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ const MarktaandeelPage = () => {
             {extraCities.map(({ city, bcd }) => (
               <div
                 key={city}
-                className="flex items-center justify-between text-sm px-3 py-1.5 bg-muted/50 rounded cursor-pointer hover:bg-muted/70 transition-colors"
+                className="flex items-center justify-between text-sm px-3 py-1.5 bg-muted/50 rounded-sm cursor-pointer hover:bg-muted/70 transition-colors"
                 onClick={() => toggleCity(expandedCity === city ? "" : city)}
               >
                 <span className="text-muted-foreground">{city}</span>
@@ -208,7 +208,7 @@ const MarktaandeelPage = () => {
             ))}
           </div>
           {expandedCity && representedByCity[expandedCity] && !perStad[expandedCity] && (
-            <div className="mt-3 bg-card rounded border border-border/50 divide-y divide-border/30">
+            <div className="mt-3 bg-card rounded-sm border border-border/50 divide-y divide-border/30">
               {representedByCity[expandedCity].map((m) => (
                 <div
                   key={m.id}

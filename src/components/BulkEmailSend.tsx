@@ -403,7 +403,7 @@ export function BulkEmailSend({
                   <Download size={14} /> CSV
                 </Button>
               </div>
-              <div className="max-h-64 overflow-auto rounded border bg-background">
+              <div className="max-h-64 overflow-auto rounded-sm border bg-background">
                 <table className="w-full text-xs">
                   <thead className="bg-muted/50 sticky top-0">
                     <tr className="text-left">

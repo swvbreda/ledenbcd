@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Search, Phone, User, AlertCircle, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -165,12 +165,12 @@ const CommunityDeelnemersLijst = () => {
                               </span>
                             )}
                             {type === "lead" && (
-                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-sm bg-amber-100 text-amber-800">
                                 Lead
                               </span>
                             )}
                             {type === "old" && (
-                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
+                              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-sm bg-destructive/10 text-destructive">
                                 Oud-lid
                               </span>
                             )}

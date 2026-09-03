@@ -1,0 +1,295 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * BCD Ledenportaal design system — ported from the pre-migration src/index.css
+ * and tailwind.config.ts during the TanStack Start migration.
+ *
+ * Tokens stay as HSL triplets (e.g. `0 85% 48%`) because the codebase uses the
+ * `hsl(var(--token))` pattern in component CSS and inline styles. The
+ * @theme inline block wraps each triplet in hsl() so Tailwind utilities
+ * (bg-primary, text-brand-red, …) keep resolving to the same colors.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-ring-offset-background: hsl(var(--background));
+
+  --color-brand-navy: hsl(var(--brand-navy));
+  --color-brand-navy-foreground: hsl(var(--brand-navy-foreground));
+  --color-brand-navy-glow: hsl(var(--brand-navy-glow));
+  --color-brand-red: hsl(var(--brand-red));
+  --color-brand-red-foreground: hsl(var(--brand-red-foreground));
+
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+
+  --font-display: 'Archivo Black', 'Barlow', system-ui, sans-serif;
+  --font-body: 'Barlow', 'Inter', system-ui, sans-serif;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 220 8% 19%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 220 8% 19%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 8% 19%;
+
+  --primary: 0 85% 48%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 8% 95%;
+  --secondary-foreground: 220 8% 19%;
+
+  --muted: 220 8% 96%;
+  --muted-foreground: 220 6% 44%;
+
+  --accent: 220 8% 95%;
+  --accent-foreground: 220 8% 19%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 142 52% 50%;
+  --success-foreground: 0 0% 100%;
+
+  --border: 220 8% 89%;
+  --input: 220 8% 89%;
+  --ring: 0 85% 48%;
+
+  --radius: 0.5rem;
+
+  --sidebar-background: 225 60% 12%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 0 85% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 225 55% 20%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 225 45% 22%;
+  --sidebar-ring: 0 85% 48%;
+  --sidebar-muted: 225 25% 65%;
+
+  --font-display: 'Archivo Black', 'Barlow', system-ui, sans-serif;
+  --font-body: 'Barlow', 'Inter', system-ui, sans-serif;
+
+  /* Brand navy — afgestemd op publieke coffeeshopbond.nl */
+  --brand-navy: 225 60% 12%;
+  --brand-navy-foreground: 0 0% 100%;
+  --brand-navy-glow: 225 70% 22%;
+
+  /* BCD rood — gereserveerd voor iconen en kleine accenten */
+  --brand-red: 0 85% 38%;
+  --brand-red-foreground: 0 0% 100%;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Safe area insets for native iOS/Android apps */
+  html {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 15px;
+    font-family: var(--font-body);
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-x: none;
+  }
+
+  @media (min-width: 640px) {
+    body {
+      font-size: 0.875rem;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Improve mobile readability */
+  @media (max-width: 639px) {
+    .text-xs {
+      font-size: 0.8125rem;
+      line-height: 1.25rem;
+    }
+    .text-sm {
+      font-size: 0.9375rem;
+      line-height: 1.375rem;
+    }
+    .text-muted-foreground {
+      color: hsl(var(--muted-foreground) / 0.85);
+    }
+  }
+}
+
+/* Benefit detail markdown content */
+.benefit-detail-prose {
+  @apply max-w-none text-sm leading-relaxed;
+  color: hsl(var(--muted-foreground));
+}
+
+.benefit-detail-prose h2 {
+  @apply text-lg font-bold tracking-tight mt-8 mb-3 pb-2;
+  color: hsl(var(--foreground));
+  border-bottom: 2px solid hsl(var(--primary) / 0.3);
+}
+
+.benefit-detail-prose h3 {
+  @apply text-base font-semibold mt-6 mb-2;
+  color: hsl(var(--foreground));
+}
+
+.benefit-detail-prose p {
+  @apply mb-3 leading-relaxed;
+}
+
+.benefit-detail-prose a {
+  color: hsl(var(--primary));
+  @apply font-medium no-underline;
+}
+.benefit-detail-prose a:hover {
+  @apply underline;
+}
+
+.benefit-detail-prose strong {
+  color: hsl(var(--foreground));
+  @apply font-semibold;
+}
+
+.benefit-detail-prose ul,
+.benefit-detail-prose ol {
+  @apply my-3 pl-5;
+}
+
+.benefit-detail-prose ul {
+  list-style: none;
+  @apply pl-0;
+}
+
+.benefit-detail-prose ul li {
+  @apply my-1.5 pl-5 relative;
+}
+
+.benefit-detail-prose ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+}
+
+.benefit-detail-prose ol {
+  @apply list-decimal;
+}
+
+.benefit-detail-prose li {
+  @apply my-1;
+}
+
+.benefit-detail-prose hr {
+  @apply my-6;
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+.benefit-detail-prose table {
+  @apply w-full text-sm border-collapse rounded-lg overflow-hidden my-4;
+  border: 2px solid hsl(var(--primary) / 0.6);
+}
+
+.benefit-detail-prose th {
+  @apply px-4 py-2.5 text-left text-xs font-semibold;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-bottom: 2px solid hsl(var(--primary));
+}
+
+.benefit-detail-prose td {
+  @apply px-4 py-2.5 text-sm;
+  border-top: 1px solid hsl(var(--primary) / 0.15);
+  color: hsl(var(--muted-foreground));
+}
+
+.benefit-detail-prose tr:nth-child(even) td {
+  background: hsl(var(--primary) / 0.04);
+}
+
+.benefit-detail-prose img {
+  @apply rounded-lg my-4;
+  border: 2px solid hsl(var(--primary) / 0.6);
+}

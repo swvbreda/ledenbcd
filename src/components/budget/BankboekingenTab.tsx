@@ -313,7 +313,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
                   </td>
                   <td className="px-3 py-2">
                     <select
-                      className="border border-border rounded px-2 py-1 text-xs bg-background w-full max-w-[220px]"
+                      className="border border-border rounded-sm px-2 py-1 text-xs bg-background w-full max-w-[220px]"
                       value={isExcludedDossier(t.dossier) ? "__excluded__" : (t.budget_line_item_id ?? "")}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -370,7 +370,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
                       </div>
                     ) : (
                       <select
-                        className="border border-border rounded px-2 py-1 text-xs bg-background w-full max-w-[180px]"
+                        className="border border-border rounded-sm px-2 py-1 text-xs bg-background w-full max-w-[180px]"
                         value={t.dossier ?? ""}
                         onChange={(e) => {
                           const v = e.target.value;
@@ -454,7 +454,7 @@ export default function BankboekingenTab({ year }: { year: number }) {
                     </td>
                     <td className="px-3 py-1.5 text-xs">{meta!.invoice || "—"}</td>
                     <td className="px-3 py-1.5">
-                      <span className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${cls}`}>
+                      <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs ${cls}`}>
                         {label}
                       </span>
                     </td>
