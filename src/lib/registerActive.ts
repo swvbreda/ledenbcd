@@ -30,3 +30,18 @@ export function exclusionReason(shop: RegisterStatusLike): string | null {
   if (closedAt) return `Gesloten op ${closedAt}`;
   return "Gesloten";
 }
+
+/**
+ * Leesbaar label voor de vergunningsstatus uit het register.
+ * Ruwe waarden zoals "actief" of "in_behandeling" zeggen weinig over de
+ * vergunningssituatie; we vertalen ze naar vergund / aangevraagd / geweigerd.
+ */
+export function statusLabel(status?: string | null): string | null {
+  const s = String(status ?? "").toLowerCase().trim();
+  if (!s) return null;
+  if (["actief", "verleend", "verlengd"].includes(s)) return "Vergund";
+  if (["aangevraagd", "in_behandeling", "in behandeling"].includes(s)) return "Aangevraagd";
+  if (["geweigerd", "ingetrokken", "verlopen", "gesloten"].includes(s)) return "Geweigerd / vervallen";
+  const pretty = s.replace(/_/g, " ");
+  return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+}

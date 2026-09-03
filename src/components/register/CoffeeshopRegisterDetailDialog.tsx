@@ -28,6 +28,7 @@ import {
   useSetRegisterLink,
   type RegisterShop,
 } from "@/hooks/useCoffeeshopRegister";
+import { statusLabel } from "@/lib/registerActive";
 
 const Row = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="flex justify-between gap-4 py-1.5 border-b last:border-0 text-sm">
@@ -118,7 +119,7 @@ const CoffeeshopRegisterDetailDialog = ({
             <Row label="Vergunninghouder" value={shop.vergunninghouder} />
             <Row label="Exploitant" value={shop.exploitant} />
             <Row label="Vergunningnummer" value={shop.vergunningnummer} />
-            <Row label="Status" value={shop.status} />
+            <Row label="Status" value={statusLabel(shop.status)} />
             <Row
               label="Verleend"
               value={shop.vergunningverlening ? new Date(shop.vergunningverlening).toLocaleDateString("nl-NL") : null}
