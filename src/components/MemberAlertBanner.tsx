@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { AlertCircle, X, FileWarning, UserX } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";

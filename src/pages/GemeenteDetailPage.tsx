@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "@/lib/router-compat";
 import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";

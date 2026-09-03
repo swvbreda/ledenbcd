@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "@/lib/router-compat";
 import { CalendarPlus, Plus, RefreshCw } from "lucide-react";
 
 import { toast } from "sonner";

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "@/lib/router-compat";
 import { ArrowLeft, Building2, MapPin, MinusCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembersData } from "@/contexts/MembersDataContext";

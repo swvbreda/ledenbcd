@@ -8,7 +8,7 @@ import {
   type ContributionInvoice,
 } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { AlertCircle, FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

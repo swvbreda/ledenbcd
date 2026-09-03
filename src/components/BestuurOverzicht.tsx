@@ -1,5 +1,5 @@
 import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";

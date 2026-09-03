@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";

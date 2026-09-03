@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommunityDeelnemersLijst from "@/components/CommunityDeelnemersLijst";
 import CommunityTodoList from "@/components/CommunityTodoList";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "@/lib/router-compat";
 
 type CommunitySubTab = "lijst" | "todo";
 

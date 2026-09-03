@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import type { Member } from "@/data/types";
 import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";

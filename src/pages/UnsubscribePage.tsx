@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;

@@ -3,7 +3,7 @@ import type { Member } from "@/data/types";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 
 

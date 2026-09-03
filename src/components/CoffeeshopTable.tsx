@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { Member } from "@/data/types";
 import { getLocationGemeente } from "@/data/gemeenteMapping";

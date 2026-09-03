@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Pencil } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import type { Benefit } from "@/hooks/useBenefits";
 import { getBenefitImageUrl } from "@/hooks/useBenefits";
 import { Button } from "@/components/ui/button";
