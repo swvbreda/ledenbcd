@@ -31,6 +31,7 @@ export type Database = {
           location: string | null
           max_seats: number | null
           meeting_url: string | null
+          share_code: string | null
           start_time: string | null
           title: string
           updated_at: string
@@ -51,6 +52,7 @@ export type Database = {
           location?: string | null
           max_seats?: number | null
           meeting_url?: string | null
+          share_code?: string | null
           start_time?: string | null
           title: string
           updated_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           location?: string | null
           max_seats?: number | null
           meeting_url?: string | null
+          share_code?: string | null
           start_time?: string | null
           title?: string
           updated_at?: string
@@ -3069,6 +3072,7 @@ export type Database = {
         Returns: number
       }
       ensure_member_link: { Args: never; Returns: number }
+      generate_agenda_share_code: { Args: never; Returns: string }
       get_agenda_board_attendance: {
         Args: never
         Returns: {
@@ -3076,6 +3080,18 @@ export type Database = {
           functie: string
           guests: number
           naam: string
+        }[]
+      }
+      get_agenda_share: {
+        Args: { _code: string }
+        Returns: {
+          end_time: string
+          event_date: string
+          event_type: string
+          id: string
+          location: string
+          start_time: string
+          title: string
         }[]
       }
       get_board_members_public: {
