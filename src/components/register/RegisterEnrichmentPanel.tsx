@@ -51,6 +51,18 @@ type Group = {
 /** Adres- en postcodewijzigingen van een gekoppelde vestiging = verhuizing. */
 const MOVE_FIELDS = new Set(["adres", "postcode"]);
 
+const normalizeValue = (value: unknown) =>
+  String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
+/** Alleen schrijfwijze verschilt (spaties/leestekens) = adrescorrectie, geen verhuizing. */
+const isCosmeticChange = (current: unknown, proposed: unknown) => {
+  const a = normalizeValue(current);
+  const b = normalizeValue(proposed);
+  return !!a && a === b;
+};
+
 
 const RegisterEnrichmentPanel = ({ memberName, isAdmin }: Props) => {
   const { data: proposals = [], isLoading } = useEnrichmentProposals();
