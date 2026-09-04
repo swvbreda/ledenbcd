@@ -51,6 +51,7 @@ import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id
 import { Route as DashboardCoffeeshopregisterGemeenteGemeenteRouteImport } from './routes/_dashboard/coffeeshopregister.gemeente.$gemeente'
 import { Route as DashboardEnquetesIdIndexRouteImport } from './routes/_dashboard/enquetes.$id.index'
 import { Route as DashboardEnquetesIdBeheerRouteImport } from './routes/_dashboard/enquetes.$id.beheer'
+import { Route as ApiPublicAgendaImageCodeRouteImport } from './routes/api/public/agenda-image.$code'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/_dashboard',
@@ -271,6 +272,12 @@ const DashboardEnquetesIdBeheerRoute =
     path: '/enquetes/$id/beheer',
     getParentRoute: () => DashboardRoute,
   } as any)
+const ApiPublicAgendaImageCodeRoute =
+  ApiPublicAgendaImageCodeRouteImport.update({
+    id: '/api/public/agenda-image/$code',
+    path: '/api/public/agenda-image/$code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/locaties/': typeof DashboardLocatiesIndexRoute
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
+  '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -356,6 +364,7 @@ export interface FileRoutesByTo {
   '/locaties': typeof DashboardLocatiesIndexRoute
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
+  '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/enquetes/$id': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRoutesById {
@@ -401,6 +410,7 @@ export interface FileRoutesById {
   '/_dashboard/locaties/': typeof DashboardLocatiesIndexRoute
   '/_dashboard/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/_dashboard/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
+  '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/_dashboard/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/locaties/'
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
+    | '/api/public/agenda-image/$code'
     | '/enquetes/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/locaties'
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
+    | '/api/public/agenda-image/$code'
     | '/enquetes/$id'
   id:
     | '__root__'
@@ -533,6 +545,7 @@ export interface FileRouteTypes {
     | '/_dashboard/locaties/'
     | '/_dashboard/coffeeshopregister/gemeente/$gemeente'
     | '/_dashboard/enquetes/$id/beheer'
+    | '/api/public/agenda-image/$code'
     | '/_dashboard/enquetes/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -553,6 +566,7 @@ export interface RootRouteChildren {
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
+  ApiPublicAgendaImageCodeRoute: typeof ApiPublicAgendaImageCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -851,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEnquetesIdBeheerRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/agenda-image/$code': {
+      id: '/api/public/agenda-image/$code'
+      path: '/api/public/agenda-image/$code'
+      fullPath: '/api/public/agenda-image/$code'
+      preLoaderRoute: typeof ApiPublicAgendaImageCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -934,6 +955,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,
+  ApiPublicAgendaImageCodeRoute: ApiPublicAgendaImageCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
