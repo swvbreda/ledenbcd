@@ -28,11 +28,11 @@ import { Route as DashboardJaarplanRouteImport } from './routes/_dashboard/jaarp
 import { Route as DashboardKerngegevensRouteImport } from './routes/_dashboard/kerngegevens'
 import { Route as DashboardLedenBetalingenRouteImport } from './routes/_dashboard/leden-betalingen'
 import { Route as DashboardMijnAccountRouteImport } from './routes/_dashboard/mijn-account'
+import { Route as AShareCodeRouteImport } from './routes/a.$shareCode'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
 import { Route as EnqueteExternIdRouteImport } from './routes/enquete-extern.$id'
 import { Route as ExternIndexRouteImport } from './routes/extern/index'
 import { Route as ExternProfielRouteImport } from './routes/extern/profiel'
-import { Route as DashboardAShareCodeRouteImport } from './routes/_dashboard/a.$shareCode'
 import { Route as DashboardAgendaIndexRouteImport } from './routes/_dashboard/agenda.index'
 import { Route as DashboardAgendaEventIdRouteImport } from './routes/_dashboard/agenda.$eventId'
 import { Route as DashboardCoffeeshopregisterIndexRouteImport } from './routes/_dashboard/coffeeshopregister.index'
@@ -147,6 +147,11 @@ const DashboardMijnAccountRoute = DashboardMijnAccountRouteImport.update({
   path: '/mijn-account',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AShareCodeRoute = AShareCodeRouteImport.update({
+  id: '/a/$shareCode',
+  path: '/a/$shareCode',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -166,11 +171,6 @@ const ExternProfielRoute = ExternProfielRouteImport.update({
   id: '/extern/profiel',
   path: '/extern/profiel',
   getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardAShareCodeRoute = DashboardAShareCodeRouteImport.update({
-  id: '/a/$shareCode',
-  path: '/a/$shareCode',
-  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAgendaIndexRoute = DashboardAgendaIndexRouteImport.update({
   id: '/agenda/',
@@ -291,11 +291,11 @@ export interface FileRoutesByFullPath {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
   '/extern/profiel': typeof ExternProfielRoute
   '/extern/': typeof ExternIndexRoute
-  '/a/$shareCode': typeof DashboardAShareCodeRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -333,12 +333,12 @@ export interface FileRoutesByTo {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
   '/extern/profiel': typeof ExternProfielRoute
   '/': typeof DashboardIndexRoute
   '/extern': typeof ExternIndexRoute
-  '/a/$shareCode': typeof DashboardAShareCodeRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -378,12 +378,12 @@ export interface FileRoutesById {
   '/_dashboard/kerngegevens': typeof DashboardKerngegevensRoute
   '/_dashboard/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/_dashboard/mijn-account': typeof DashboardMijnAccountRoute
+  '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
   '/extern/profiel': typeof ExternProfielRoute
   '/_dashboard/': typeof DashboardIndexRoute
   '/extern/': typeof ExternIndexRoute
-  '/_dashboard/a/$shareCode': typeof DashboardAShareCodeRoute
   '/_dashboard/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/_dashboard/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
@@ -424,11 +424,11 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
     | '/extern/profiel'
     | '/extern/'
-    | '/a/$shareCode'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -466,12 +466,12 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
     | '/extern/profiel'
     | '/'
     | '/extern'
-    | '/a/$shareCode'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -510,12 +510,12 @@ export interface FileRouteTypes {
     | '/_dashboard/kerngegevens'
     | '/_dashboard/leden-betalingen'
     | '/_dashboard/mijn-account'
+    | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
     | '/extern/profiel'
     | '/_dashboard/'
     | '/extern/'
-    | '/_dashboard/a/$shareCode'
     | '/_dashboard/agenda/$eventId'
     | '/_dashboard/externe-partijen/$id'
     | '/_dashboard/leden/$id'
@@ -545,6 +545,7 @@ export interface RootRouteChildren {
   MfaVerifyRoute: typeof MfaVerifyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AShareCodeRoute: typeof AShareCodeRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
   ExternProfielRoute: typeof ExternProfielRoute
@@ -689,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMijnAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/a/$shareCode': {
+      id: '/a/$shareCode'
+      path: '/a/$shareCode'
+      fullPath: '/a/$shareCode'
+      preLoaderRoute: typeof AShareCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -716,13 +724,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/extern/profiel'
       preLoaderRoute: typeof ExternProfielRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_dashboard/a/$shareCode': {
-      id: '/_dashboard/a/$shareCode'
-      path: '/a/$shareCode'
-      fullPath: '/a/$shareCode'
-      preLoaderRoute: typeof DashboardAShareCodeRouteImport
-      parentRoute: typeof DashboardRoute
     }
     '/_dashboard/agenda/': {
       id: '/_dashboard/agenda/'
@@ -865,7 +866,6 @@ interface DashboardRouteChildren {
   DashboardLedenBetalingenRoute: typeof DashboardLedenBetalingenRoute
   DashboardMijnAccountRoute: typeof DashboardMijnAccountRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
-  DashboardAShareCodeRoute: typeof DashboardAShareCodeRoute
   DashboardAgendaEventIdRoute: typeof DashboardAgendaEventIdRoute
   DashboardExternePartijenIdRoute: typeof DashboardExternePartijenIdRoute
   DashboardLedenIdRoute: typeof DashboardLedenIdRoute
@@ -895,7 +895,6 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardLedenBetalingenRoute: DashboardLedenBetalingenRoute,
   DashboardMijnAccountRoute: DashboardMijnAccountRoute,
   DashboardIndexRoute: DashboardIndexRoute,
-  DashboardAShareCodeRoute: DashboardAShareCodeRoute,
   DashboardAgendaEventIdRoute: DashboardAgendaEventIdRoute,
   DashboardExternePartijenIdRoute: DashboardExternePartijenIdRoute,
   DashboardLedenIdRoute: DashboardLedenIdRoute,
@@ -927,6 +926,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaVerifyRoute: MfaVerifyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AShareCodeRoute: AShareCodeRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EnqueteExternIdRoute: EnqueteExternIdRoute,
   ExternProfielRoute: ExternProfielRoute,
