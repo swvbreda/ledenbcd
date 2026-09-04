@@ -157,8 +157,24 @@ const CommunityTodoList = () => {
       return;
     }
     setParticipants((prev) => prev.filter((p) => p.id !== participantId));
+    setSuggestions((prev) => prev.filter((s) => s.participantId !== participantId));
     toast({ title: "Gekoppeld" });
   };
+
+  /** Vraagt eerst wat er bij het lid moet worden opgeslagen, koppelt daarna. */
+  const requestLink = (participantId: string, memberId: number) => {
+    const p = participants.find((x) => x.id === participantId);
+    setOpenFor(null);
+    setPending({
+      participantId,
+      link: {
+        memberId,
+        naam: p?.display_name ?? "",
+        telefoon: p?.phone ?? null,
+      },
+    });
+  };
+
 
   const removeParticipant = async (participantId: string) => {
     if (!confirm("Deze deelnemer verwijderen uit de community-lijst?")) return;
