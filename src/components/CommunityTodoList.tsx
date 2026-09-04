@@ -20,6 +20,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { matchParticipants, type MatchResult, type MatchSuggestion } from "@/lib/communityMatch";
+import SaveContactToMemberDialog, {
+  type PendingContactLink,
+} from "@/components/community/SaveContactToMemberDialog";
+
 
 type Participant = {
   id: string;
@@ -51,6 +55,10 @@ const CommunityTodoList = () => {
   const [suggestions, setSuggestions] = useState<MatchSuggestion[]>([]);
   const [isMatching, setIsMatching] = useState(false);
   const [chosenFor, setChosenFor] = useState<Record<string, number>>({});
+  const [pending, setPending] = useState<{ participantId: string; link: PendingContactLink } | null>(
+    null,
+  );
+
 
 
   const load = async () => {
