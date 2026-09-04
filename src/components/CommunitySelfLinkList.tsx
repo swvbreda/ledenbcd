@@ -274,7 +274,7 @@ const CommunitySelfLinkList = () => {
                       size="sm"
                       className="gap-1.5 bg-brand-red hover:bg-brand-red/90 text-white"
                       disabled={busyId === row.id}
-                      onClick={() => link(row, s.memberId)}
+                      onClick={() => requestLink(row, s.memberId)}
                     >
                       <Check size={14} /> Koppel
                     </Button>
@@ -303,7 +303,7 @@ const CommunitySelfLinkList = () => {
                               <CommandItem
                                 key={m.id}
                                 value={`${memberLabel(m)} ${m.plaats || ""} ${m.bedrijfsnaam || ""}`}
-                                onSelect={() => link(row, m.id)}
+                                onSelect={() => requestLink(row, m.id)}
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="truncate">{memberLabel(m)}</div>
