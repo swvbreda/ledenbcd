@@ -20,6 +20,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { matchParticipants, type MatchResult, type MatchSuggestion } from "@/lib/communityMatch";
+import SaveContactToMemberDialog, {
+  type PendingContactLink,
+} from "@/components/community/SaveContactToMemberDialog";
+
 
 type Participant = {
   id: string;
@@ -51,6 +55,10 @@ const CommunityTodoList = () => {
   const [suggestions, setSuggestions] = useState<MatchSuggestion[]>([]);
   const [isMatching, setIsMatching] = useState(false);
   const [chosenFor, setChosenFor] = useState<Record<string, number>>({});
+  const [pending, setPending] = useState<{ participantId: string; link: PendingContactLink } | null>(
+    null,
+  );
+
 
 
   const load = async () => {
@@ -157,8 +165,24 @@ const CommunityTodoList = () => {
       return;
     }
     setParticipants((prev) => prev.filter((p) => p.id !== participantId));
+    setSuggestions((prev) => prev.filter((s) => s.participantId !== participantId));
     toast({ title: "Gekoppeld" });
   };
+
+  /** Vraagt eerst wat er bij het lid moet worden opgeslagen, koppelt daarna. */
+  const requestLink = (participantId: string, memberId: number) => {
+    const p = participants.find((x) => x.id === participantId);
+    setOpenFor(null);
+    setPending({
+      participantId,
+      link: {
+        memberId,
+        naam: p?.display_name ?? "",
+        telefoon: p?.phone ?? null,
+      },
+    });
+  };
+
 
   const removeParticipant = async (participantId: string) => {
     if (!confirm("Deze deelnemer verwijderen uit de community-lijst?")) return;
@@ -293,10 +317,8 @@ const CommunityTodoList = () => {
                         size="sm"
                         variant="outline"
                         className="gap-1.5"
-                        onClick={async () => {
-                          const n = await applyLinks([chosen]);
-                          if (n) toast({ title: `Gekoppeld aan ${chosen.memberLabel}` });
-                        }}
+                        onClick={() => requestLink(s.participantId, chosen.memberId)}
+
                       >
                         <Check size={14} /> Koppel aan {chosen.memberLabel}
                       </Button>
@@ -417,7 +439,7 @@ const CommunityTodoList = () => {
                               <CommandItem
                                 key={m.id}
                                 value={`${label} ${m.plaats || ""} ${m.bedrijfsnaam || ""}`}
-                                onSelect={() => linkToMember(p.id, m.id)}
+                                onSelect={() => requestLink(p.id, m.id)}
                               >
                                 <Check className={cn("mr-2 h-3 w-3 opacity-0")} />
                                 <div className="flex-1 min-w-0">
@@ -474,8 +496,20 @@ const CommunityTodoList = () => {
           })}
         </ul>
       )}
+
+      <SaveContactToMemberDialog
+        pending={pending?.link ?? null}
+        onCancel={() => setPending(null)}
+        onConfirm={async () => {
+          if (!pending) return;
+          const { participantId, link } = pending;
+          setPending(null);
+          await linkToMember(participantId, link.memberId);
+        }}
+      />
     </div>
   );
+
 };
 
 export default CommunityTodoList;

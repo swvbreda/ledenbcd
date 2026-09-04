@@ -27,6 +27,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { normalizePhone, formatPhone } from "@/lib/phoneMatch";
 import { matchParticipants, memberLabel } from "@/lib/communityMatch";
+import SaveContactToMemberDialog, {
+  type PendingContactLink,
+} from "@/components/community/SaveContactToMemberDialog";
+
 
 type SelfLink = {
   id: string;
@@ -50,6 +54,22 @@ const CommunitySelfLinkList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openFor, setOpenFor] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ row: SelfLink; link: PendingContactLink } | null>(null);
+
+  /** Vraagt eerst wat er bij het lid moet worden opgeslagen, koppelt daarna. */
+  const requestLink = (row: SelfLink, memberId: number) => {
+    setOpenFor(null);
+    setPending({
+      row,
+      link: {
+        memberId,
+        naam: row.full_name,
+        telefoon: row.phone,
+        email: row.email,
+      },
+    });
+  };
+
 
   const load = async () => {
     const { data } = await supabase
@@ -254,7 +274,7 @@ const CommunitySelfLinkList = () => {
                       size="sm"
                       className="gap-1.5 bg-brand-red hover:bg-brand-red/90 text-white"
                       disabled={busyId === row.id}
-                      onClick={() => link(row, s.memberId)}
+                      onClick={() => requestLink(row, s.memberId)}
                     >
                       <Check size={14} /> Koppel
                     </Button>
@@ -283,7 +303,7 @@ const CommunitySelfLinkList = () => {
                               <CommandItem
                                 key={m.id}
                                 value={`${memberLabel(m)} ${m.plaats || ""} ${m.bedrijfsnaam || ""}`}
-                                onSelect={() => link(row, m.id)}
+                                onSelect={() => requestLink(row, m.id)}
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="truncate">{memberLabel(m)}</div>
@@ -355,7 +375,19 @@ const CommunitySelfLinkList = () => {
           </ul>
         </div>
       )}
+
+      <SaveContactToMemberDialog
+        pending={pending?.link ?? null}
+        onCancel={() => setPending(null)}
+        onConfirm={async () => {
+          if (!pending) return;
+          const { row, link: l } = pending;
+          setPending(null);
+          await link(row, l.memberId);
+        }}
+      />
     </div>
+
   );
 };
 
