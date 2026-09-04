@@ -439,7 +439,7 @@ const CommunityTodoList = () => {
                               <CommandItem
                                 key={m.id}
                                 value={`${label} ${m.plaats || ""} ${m.bedrijfsnaam || ""}`}
-                                onSelect={() => linkToMember(p.id, m.id)}
+                                onSelect={() => requestLink(p.id, m.id)}
                               >
                                 <Check className={cn("mr-2 h-3 w-3 opacity-0")} />
                                 <div className="flex-1 min-w-0">
