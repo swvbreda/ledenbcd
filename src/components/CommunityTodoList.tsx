@@ -507,8 +507,9 @@ const CommunityTodoList = () => {
           await linkToMember(participantId, link.memberId);
         }}
       />
-
+    </div>
   );
+
 };
 
 export default CommunityTodoList;
