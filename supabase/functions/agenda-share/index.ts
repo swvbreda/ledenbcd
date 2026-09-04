@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
   if (error || !ev) return redirectTo("/agenda");
 
   const target = `${PORTAL}/a/${code.toUpperCase()}`;
+  const image = ev.image_path
+    ? `${PORTAL}/api/public/agenda-image/${code.toUpperCase()}`
+    : OG_IMAGE;
   const time = [fmtTime(ev.start_time), fmtTime(ev.end_time)].filter(Boolean).join(" - ");
   const description = [fmtDate(ev.event_date), time || null, ev.location || null]
     .filter(Boolean)
