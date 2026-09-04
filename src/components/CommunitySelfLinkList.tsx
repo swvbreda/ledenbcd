@@ -375,7 +375,19 @@ const CommunitySelfLinkList = () => {
           </ul>
         </div>
       )}
+
+      <SaveContactToMemberDialog
+        pending={pending?.link ?? null}
+        onCancel={() => setPending(null)}
+        onConfirm={async () => {
+          if (!pending) return;
+          const { row, link: l } = pending;
+          setPending(null);
+          await link(row, l.memberId);
+        }}
+      />
     </div>
+
   );
 };
 
