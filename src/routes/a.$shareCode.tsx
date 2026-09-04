@@ -49,6 +49,9 @@ export const Route = createFileRoute("/a/$shareCode")({
       .filter(Boolean)
       .join(" · ");
     const title = `${loaderData.title} — BCD Ledenportaal`;
+    const image = loaderData.image_path
+      ? `${PORTAL}/api/public/agenda-image/${code}`
+      : `${PORTAL}/og-image.png`;
     return {
       meta: [
         { title },
@@ -59,11 +62,11 @@ export const Route = createFileRoute("/a/$shareCode")({
         { property: "og:title", content: loaderData.title },
         { property: "og:description", content: description },
         { property: "og:url", content: url },
-        { property: "og:image", content: `${PORTAL}/og-image.png` },
+        { property: "og:image", content: image },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: loaderData.title },
         { name: "twitter:description", content: description },
-        { name: "twitter:image", content: `${PORTAL}/og-image.png` },
+        { name: "twitter:image", content: image },
       ],
       links: [{ rel: "canonical", href: url }],
     };
@@ -73,6 +76,7 @@ export const Route = createFileRoute("/a/$shareCode")({
 
 function AgendaSharePage() {
   const event = Route.useLoaderData();
+  const { shareCode } = Route.useParams();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
 
@@ -115,8 +119,16 @@ function AgendaSharePage() {
 
   return (
     <main className="min-h-screen bg-background flex items-start sm:items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-lg rounded-xl border-2 border-primary/50 bg-card p-5 sm:p-7 space-y-5">
+      <div className="w-full max-w-lg overflow-hidden rounded-xl border-2 border-primary/50 bg-card space-y-5 p-5 sm:p-7">
+        {event.image_path && (
+          <img
+            src={`/api/public/agenda-image/${shareCode.toUpperCase()}`}
+            alt={event.title}
+            className="-mx-5 -mt-5 sm:-mx-7 sm:-mt-7 mb-1 w-[calc(100%+2.5rem)] sm:w-[calc(100%+3.5rem)] max-w-none object-cover aspect-[16/9]"
+          />
+        )}
         <div className="flex items-center gap-3">
+
           <img src={logo} alt="Bond van Cannabis Detaillisten" className="h-10 w-auto" />
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Uitnodiging · Bond van Cannabis Detaillisten

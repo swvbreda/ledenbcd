@@ -10,6 +10,7 @@ export interface AgendaSharePreview {
   end_time: string | null;
   location: string | null;
   event_type: string | null;
+  image_path: string | null;
 }
 
 /**
@@ -51,5 +52,6 @@ export const getAgendaSharePreview = createServerFn({ method: "GET" })
       end_time: ev.end_time ?? null,
       location: ev.location ?? null,
       event_type: ev.event_type ?? null,
+      image_path: (ev as { image_path?: string | null }).image_path ?? null,
     };
   });

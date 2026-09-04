@@ -3143,6 +3143,7 @@ export type Database = {
           event_date: string
           event_type: string
           id: string
+          image_path: string
           location: string
           start_time: string
           title: string

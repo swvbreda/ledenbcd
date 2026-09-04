@@ -44,6 +44,9 @@ Deno.serve(async (req) => {
   if (error || !ev) return redirectTo("/agenda");
 
   const target = `${PORTAL}/a/${code.toUpperCase()}`;
+  const image = ev.image_path
+    ? `${PORTAL}/api/public/agenda-image/${code.toUpperCase()}`
+    : OG_IMAGE;
   const time = [fmtTime(ev.start_time), fmtTime(ev.end_time)].filter(Boolean).join(" - ");
   const description = [fmtDate(ev.event_date), time || null, ev.location || null]
     .filter(Boolean)
@@ -62,11 +65,11 @@ Deno.serve(async (req) => {
 <meta property="og:title" content="${esc(ev.title)}" />
 <meta property="og:description" content="${esc(description)}" />
 <meta property="og:url" content="${esc(target)}" />
-<meta property="og:image" content="${OG_IMAGE}" />
+<meta property="og:image" content="${esc(image)}" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${esc(ev.title)}" />
 <meta name="twitter:description" content="${esc(description)}" />
-<meta name="twitter:image" content="${OG_IMAGE}" />
+<meta name="twitter:image" content="${esc(image)}" />
 <link rel="canonical" href="${esc(target)}" />
 <meta http-equiv="refresh" content="0; url=${esc(target)}" />
 <script>window.location.replace(${JSON.stringify(target)});</script>
