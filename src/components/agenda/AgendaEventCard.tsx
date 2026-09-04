@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Users, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
 
   const isEvent = event.event_type === "evenement";
   const upcoming = isUpcoming(event);
@@ -160,7 +162,39 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               <Button className="w-full md:w-auto" disabled={full} onClick={() => setDeelnemersOpen(true)}>
                 {full ? "Volgeboekt" : "Aanmelden"}
               </Button>
-            ) : null)}
+            ) : (
+              <div className="space-y-1 md:text-right">
+                <Button
+                  className="w-full md:w-auto"
+                  disabled={linking}
+                  onClick={async () => {
+                    setLinking(true);
+                    try {
+                      const { data, error } = await (supabase as any).rpc("ensure_member_link");
+                      if (error) throw error;
+                      if ((data ?? 0) > 0) {
+                        toast.success("Je account is gekoppeld — je kunt je nu aanmelden");
+                        window.location.reload();
+                      } else {
+                        toast.error(
+                          "Je account is nog niet aan een lid gekoppeld — neem contact op met het secretariaat",
+                        );
+                      }
+                    } catch (e: any) {
+                      toast.error(e?.message || "Koppeling herstellen mislukt");
+                    } finally {
+                      setLinking(false);
+                    }
+                  }}
+                >
+                  {linking ? "Bezig..." : "Aanmelden"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Lukt aanmelden niet? Je account is dan nog niet aan een lid gekoppeld — neem
+                  contact op met het secretariaat.
+                </p>
+              </div>
+            ))}
 
           {upcoming && <AgendaShareButton event={event} className="w-full md:w-auto" />}
 
