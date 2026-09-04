@@ -122,8 +122,12 @@ export default function AgendaShareButton({
           Delen
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent align="end" className="w-64">
+        <div className="px-2 pb-1 pt-1.5 text-xs text-muted-foreground break-all">
+          {prettyUrl(url)}
+        </div>
         <DropdownMenuItem onSelect={() => void copy()}>
+
           <Link2 className="mr-2 h-4 w-4 text-brand-red" />
           Link kopiëren
         </DropdownMenuItem>
