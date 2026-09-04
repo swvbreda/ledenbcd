@@ -10,6 +10,7 @@ export interface AgendaSharePreview {
   end_time: string | null;
   location: string | null;
   event_type: string | null;
+  image_path: string | null;
 }
 
 /**
