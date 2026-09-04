@@ -317,10 +317,8 @@ const CommunityTodoList = () => {
                         size="sm"
                         variant="outline"
                         className="gap-1.5"
-                        onClick={async () => {
-                          const n = await applyLinks([chosen]);
-                          if (n) toast({ title: `Gekoppeld aan ${chosen.memberLabel}` });
-                        }}
+                        onClick={() => requestLink(s.participantId, chosen.memberId)}
+
                       >
                         <Check size={14} /> Koppel aan {chosen.memberLabel}
                       </Button>
@@ -498,7 +496,18 @@ const CommunityTodoList = () => {
           })}
         </ul>
       )}
-    </div>
+
+      <SaveContactToMemberDialog
+        pending={pending?.link ?? null}
+        onCancel={() => setPending(null)}
+        onConfirm={async () => {
+          if (!pending) return;
+          const { participantId, link } = pending;
+          setPending(null);
+          await linkToMember(participantId, link.memberId);
+        }}
+      />
+
   );
 };
 
