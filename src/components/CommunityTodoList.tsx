@@ -50,6 +50,8 @@ const CommunityTodoList = () => {
   const [searchFor, setSearchFor] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<MatchSuggestion[]>([]);
   const [isMatching, setIsMatching] = useState(false);
+  const [chosenFor, setChosenFor] = useState<Record<string, number>>({});
+
 
   const load = async () => {
     const { data } = await supabase
