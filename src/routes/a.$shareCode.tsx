@@ -49,6 +49,9 @@ export const Route = createFileRoute("/a/$shareCode")({
       .filter(Boolean)
       .join(" · ");
     const title = `${loaderData.title} — BCD Ledenportaal`;
+    const image = loaderData.image_path
+      ? `${PORTAL}/api/public/agenda-image/${code}`
+      : `${PORTAL}/og-image.png`;
     return {
       meta: [
         { title },
@@ -59,11 +62,11 @@ export const Route = createFileRoute("/a/$shareCode")({
         { property: "og:title", content: loaderData.title },
         { property: "og:description", content: description },
         { property: "og:url", content: url },
-        { property: "og:image", content: `${PORTAL}/og-image.png` },
+        { property: "og:image", content: image },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: loaderData.title },
         { name: "twitter:description", content: description },
-        { name: "twitter:image", content: `${PORTAL}/og-image.png` },
+        { name: "twitter:image", content: image },
       ],
       links: [{ rel: "canonical", href: url }],
     };
