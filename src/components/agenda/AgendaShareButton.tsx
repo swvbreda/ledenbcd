@@ -50,6 +50,12 @@ function buildShareText(event: AgendaEvent) {
   return parts.join(" — ");
 }
 
+/** Nette weergave van de link, zonder https:// */
+function prettyUrl(url: string) {
+  return url.replace(/^https?:\/\//, "");
+}
+
+
 export default function AgendaShareButton({
   event,
   variant = "outline",
