@@ -232,66 +232,90 @@ const CommunityTodoList = () => {
             </Button>
           </div>
           <ul className="divide-y divide-border">
-            {suggestions.map((s) => (
-              <li key={s.participantId} className="p-3 flex flex-col gap-2 text-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="truncate font-medium">{s.participantName}</div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Link2 size={12} />
-                      <span className="truncate">
-                        {s.candidates[0].memberLabel} — {s.candidates[0].detail}
-                      </span>
+            {suggestions.map((s) => {
+              const chosenId = chosenFor[s.participantId] ?? s.candidates[0].memberId;
+              const chosen =
+                s.candidates.find((c) => c.memberId === chosenId) ?? s.candidates[0];
+              return (
+                <li key={s.participantId} className="p-3 flex flex-col gap-2 text-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-muted-foreground">
+                        Deelnemer{" "}
+                        <span className="font-medium text-foreground">{s.participantName}</span>{" "}
+                        koppelen aan:
+                      </div>
+                      <div className="mt-1.5 space-y-1">
+                        {s.candidates.map((c) => {
+                          const m = allMembers.find((x) => x.id === c.memberId);
+                          const active = c.memberId === chosen.memberId;
+                          return (
+                            <label
+                              key={c.memberId}
+                              className={cn(
+                                "flex items-start gap-2 rounded-md px-2 py-1.5 cursor-pointer",
+                                active ? "bg-muted" : "hover:bg-muted/50",
+                              )}
+                            >
+                              <input
+                                type="radio"
+                                name={`kandidaat-${s.participantId}`}
+                                className="mt-1 accent-[hsl(0_85%_48%)]"
+                                checked={active}
+                                onChange={() =>
+                                  setChosenFor((prev) => ({
+                                    ...prev,
+                                    [s.participantId]: c.memberId,
+                                  }))
+                                }
+                              />
+                              <span className="min-w-0">
+                                <span className="font-medium">{c.memberLabel}</span>{" "}
+                                <span className="text-xs text-muted-foreground">
+                                  · #{c.memberId}
+                                  {m?.plaats ? ` · ${m.plaats}` : ""}
+                                </span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {c.detail}
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5"
-                    onClick={async () => {
-                      const n = await applyLinks([s.candidates[0]]);
-                      if (n) toast({ title: "Gekoppeld" });
-                    }}
-                  >
-                    <Check size={14} /> Bevestigen
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-muted-foreground"
-                    onClick={() =>
-                      setSuggestions((prev) =>
-                        prev.filter((x) => x.participantId !== s.participantId),
-                      )
-                    }
-                    title="Voorstel negeren"
-                  >
-                    <X size={14} />
-                  </Button>
-                </div>
-                {s.candidates.length > 1 && (
-                  <div className="flex flex-wrap items-center gap-1.5 pl-1">
-                    <span className="text-xs text-muted-foreground">Of:</span>
-                    {s.candidates.slice(1).map((c) => (
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
-                        key={c.memberId}
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={async () => {
+                          const n = await applyLinks([chosen]);
+                          if (n) toast({ title: `Gekoppeld aan ${chosen.memberLabel}` });
+                        }}
+                      >
+                        <Check size={14} /> Koppel aan {chosen.memberLabel}
+                      </Button>
+                      <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 text-xs"
-                        onClick={async () => {
-                          const n = await applyLinks([c]);
-                          if (n) toast({ title: "Gekoppeld" });
-                        }}
-                        title={c.detail}
+                        className="text-muted-foreground"
+                        onClick={() =>
+                          setSuggestions((prev) =>
+                            prev.filter((x) => x.participantId !== s.participantId),
+                          )
+                        }
+                        title="Voorstel negeren"
                       >
-                        {c.memberLabel}
+                        <X size={14} />
                       </Button>
-                    ))}
+                    </div>
                   </div>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
+
         </div>
       )}
 
