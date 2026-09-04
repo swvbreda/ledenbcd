@@ -37,7 +37,9 @@ export function buildEventUrl(eventId: string) {
  * en locatie toont. Zonder deelcode valt hij terug op de portaal-link.
  */
 export function buildShareUrl(event: { id: string; share_code?: string | null }) {
-  return event.share_code ? `${SHARE_BASE_URL}/${event.share_code}` : buildEventUrl(event.id);
+  return event.share_code
+    ? `${PUBLIC_BASE_URL}/a/${event.share_code.toUpperCase()}`
+    : buildEventUrl(event.id);
 }
 
 function buildShareText(event: AgendaEvent) {
