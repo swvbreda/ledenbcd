@@ -17,7 +17,7 @@ interface Props {
 }
 
 const PUBLIC_BASE_URL = "https://leden.coffeeshopbond.nl";
-const SHARE_BASE_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/agenda-share`;
+
 
 /** Directe portaal-link (fallback zonder deelcode). */
 export function buildEventUrl(eventId: string) {
@@ -37,7 +37,9 @@ export function buildEventUrl(eventId: string) {
  * en locatie toont. Zonder deelcode valt hij terug op de portaal-link.
  */
 export function buildShareUrl(event: { id: string; share_code?: string | null }) {
-  return event.share_code ? `${SHARE_BASE_URL}/${event.share_code}` : buildEventUrl(event.id);
+  return event.share_code
+    ? `${PUBLIC_BASE_URL}/a/${event.share_code.toUpperCase()}`
+    : buildEventUrl(event.id);
 }
 
 function buildShareText(event: AgendaEvent) {
