@@ -54,6 +54,22 @@ const CommunitySelfLinkList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [openFor, setOpenFor] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ row: SelfLink; link: PendingContactLink } | null>(null);
+
+  /** Vraagt eerst wat er bij het lid moet worden opgeslagen, koppelt daarna. */
+  const requestLink = (row: SelfLink, memberId: number) => {
+    setOpenFor(null);
+    setPending({
+      row,
+      link: {
+        memberId,
+        naam: row.full_name,
+        telefoon: row.phone,
+        email: row.email,
+      },
+    });
+  };
+
 
   const load = async () => {
     const { data } = await supabase
