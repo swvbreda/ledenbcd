@@ -224,14 +224,16 @@ const CommunityTodoList = () => {
               size="sm"
               variant="outline"
               className="gap-1.5"
+              title="Koppelt alleen voorstellen met één duidelijke kandidaat; voorstellen met meerdere kandidaten worden overgeslagen."
               onClick={async () => {
                 const clear = suggestions.filter((s) => s.isClear).map((s) => s.candidates[0]);
                 const n = await applyLinks(clear);
                 toast({ title: `${n} koppeling(en) bevestigd` });
               }}
             >
-              <Check size={14} /> Duidelijke bevestigen
+              <Check size={14} /> Alleen eenduidige voorstellen bevestigen
             </Button>
+
           </div>
           <ul className="divide-y divide-border">
             {suggestions.map((s) => {
