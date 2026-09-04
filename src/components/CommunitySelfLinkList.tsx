@@ -27,6 +27,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { normalizePhone, formatPhone } from "@/lib/phoneMatch";
 import { matchParticipants, memberLabel } from "@/lib/communityMatch";
+import SaveContactToMemberDialog, {
+  type PendingContactLink,
+} from "@/components/community/SaveContactToMemberDialog";
+
 
 type SelfLink = {
   id: string;
