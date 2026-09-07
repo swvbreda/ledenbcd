@@ -162,7 +162,8 @@ export function useAgendaEvents() {
         .order("event_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: true });
       if (error) throw error;
-      return (data ?? []) as unknown as AgendaEvent[];
+      return sortAgendaEvents((data ?? []) as unknown as AgendaEvent[]);
+
     },
   });
 }
