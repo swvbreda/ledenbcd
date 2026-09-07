@@ -51,9 +51,10 @@ export default function AgendaPage() {
     : eventId
       ? events.find((e) => e.id === eventId) ?? null
       : null;
-  const rest = focused ? events.filter((e) => e.id !== focused.id) : events;
+  const rest = sortAgendaEvents(focused ? events.filter((e) => e.id !== focused.id) : events);
   const upcoming = rest.filter(isUpcoming);
   const past = rest.filter((e) => !isUpcoming(e)).reverse();
+
 
   useEffect(() => {
     if (focused && focusRef.current) {
