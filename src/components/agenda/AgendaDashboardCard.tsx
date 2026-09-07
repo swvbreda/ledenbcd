@@ -9,7 +9,9 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  sortAgendaEvents,
   type AgendaEvent,
+
 } from "@/hooks/useAgenda";
 import AgendaShareButton from "./AgendaShareButton";
 
@@ -133,7 +135,7 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
 export default function AgendaDashboardCard() {
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: registrations = [] } = useAgendaRegistrations();
-  const next = events.filter(isUpcoming).slice(0, 3);
+  const next = sortAgendaEvents(events.filter(isUpcoming)).slice(0, 3);
 
   const guestsFor = (eventId: string) =>
     registrations.filter((r) => r.event_id === eventId).reduce((s, r) => s + r.guests, 0);

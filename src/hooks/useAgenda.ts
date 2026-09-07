@@ -162,7 +162,8 @@ export function useAgendaEvents() {
         .order("event_date", { ascending: true })
         .order("start_time", { ascending: true, nullsFirst: true });
       if (error) throw error;
-      return (data ?? []) as unknown as AgendaEvent[];
+      return sortAgendaEvents((data ?? []) as unknown as AgendaEvent[]);
+
     },
   });
 }
@@ -396,3 +397,14 @@ export const isUpcoming = (event: AgendaEvent) => {
   today.setHours(0, 0, 0, 0);
   return new Date(event.event_date + "T00:00:00") >= today;
 };
+
+/** Chronologisch: op datum, daarna op begintijd (lege tijd achteraan). */
+export const compareAgendaEvents = (a: AgendaEvent, b: AgendaEvent) => {
+  if (a.event_date !== b.event_date) return a.event_date < b.event_date ? -1 : 1;
+  const t = (v: string | null | undefined) => (v ? v.slice(0, 8) : "99:99:99");
+  return t(a.start_time).localeCompare(t(b.start_time));
+};
+
+export const sortAgendaEvents = (events: AgendaEvent[]) =>
+  [...events].sort(compareAgendaEvents);
+
