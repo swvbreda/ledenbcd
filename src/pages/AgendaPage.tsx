@@ -17,7 +17,9 @@ import {
   useAgendaRegistrations,
   useAgendaMutations,
   isUpcoming,
+  sortAgendaEvents,
   type AgendaEvent,
+
 } from "@/hooks/useAgenda";
 import AgendaEventCard from "@/components/agenda/AgendaEventCard";
 import AgendaEventDialog from "@/components/agenda/AgendaEventDialog";

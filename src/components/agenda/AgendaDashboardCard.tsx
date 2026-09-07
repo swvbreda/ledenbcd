@@ -9,7 +9,9 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  sortAgendaEvents,
   type AgendaEvent,
+
 } from "@/hooks/useAgenda";
 import AgendaShareButton from "./AgendaShareButton";
 
