@@ -977,7 +977,7 @@ const MemberDetail = () => {
                         memberExploitant={loc.exploitant}
                         memberWebsite={loc.website}
                         memberLogo={loc.logo}
-                        memberUbo={loc.ubo}
+                        
                         registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
                     </div>
