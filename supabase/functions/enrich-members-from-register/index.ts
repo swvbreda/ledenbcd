@@ -441,19 +441,19 @@ Deno.serve(async (req) => {
           if (shop.telefoon) loc.telefoon = shop.telefoon;
           if (socials.instagram) loc.instagram = socials.instagram;
           if (socials.facebook) loc.facebook = socials.facebook;
-          if (ubo.length) loc.ubo = ubo;
           locaties.push(loc);
           locationsAdded++;
           changed = true;
           continue;
         }
 
-        // Eigendomsketen altijd bijwerken vanuit de bron (register is leidend)
-        if (ubo.length && JSON.stringify(loc.ubo ?? []) !== JSON.stringify(ubo)) {
-          loc.ubo = ubo;
-          fieldsFilled++;
+        // Eigendomsketen wordt bewust NIET bij het lid opgeslagen: die blijft
+        // alleen in het register staan (uitsluitend leesbaar voor bestuur/beheer).
+        if (loc.ubo) {
+          delete loc.ubo;
           changed = true;
         }
+
 
         const candidates: Array<[string, string | null]> = [
           ["adres", shopAddress(shop) || null],

@@ -27,9 +27,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 export type LocationRegisterInfoProps = {
   link?: RegisterLink | null;
   shop?: RegisterShop | null;
-  /** UBO-keten die bij het lid is opgeslagen. */
-  memberUbo?: UboEntry[] | null;
-  /** UBO-keten uit het register voor de gekoppelde vestiging. */
+  /** UBO-keten uit het register voor de gekoppelde vestiging (bestuur/beheer). */
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
@@ -61,7 +59,6 @@ export const cleanUrl = (url?: string | null) => {
 const LocationRegisterInfo = ({
   link,
   shop,
-  memberUbo,
   registerUbo,
   memberKvk,
   memberVergunninghouder,
@@ -84,17 +81,16 @@ const LocationRegisterInfo = ({
   const facebook = socials?.facebook ?? null;
 
 
-  const ubo: UboEntry[] =
-    memberUbo && memberUbo.length > 0
-      ? memberUbo
-      : (registerUbo ?? []).map((u) => ({
-          naam: u.naam,
-          kvk: u.kvk_nummer,
-          niveau: u.niveau,
-          soort: u.soort,
-          uiteindelijkBelanghebbende: u.is_uiteindelijk,
-          toelichting: u.toelichting,
-        }));
+  // Eigendomsketen komt uitsluitend uit het register (bestuur/beheer),
+  // nooit uit de bij het lid opgeslagen gegevens.
+  const ubo: UboEntry[] = (registerUbo ?? []).map((u) => ({
+    naam: u.naam,
+    kvk: u.kvk_nummer,
+    niveau: u.niveau,
+    soort: u.soort,
+    uiteindelijkBelanghebbende: u.is_uiteindelijk,
+    toelichting: u.toelichting,
+  }));
 
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
