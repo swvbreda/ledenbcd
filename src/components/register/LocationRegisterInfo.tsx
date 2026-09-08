@@ -59,7 +59,6 @@ export const cleanUrl = (url?: string | null) => {
 const LocationRegisterInfo = ({
   link,
   shop,
-  memberUbo,
   registerUbo,
   memberKvk,
   memberVergunninghouder,
