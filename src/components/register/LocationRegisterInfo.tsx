@@ -81,17 +81,16 @@ const LocationRegisterInfo = ({
   const facebook = socials?.facebook ?? null;
 
 
-  const ubo: UboEntry[] =
-    memberUbo && memberUbo.length > 0
-      ? memberUbo
-      : (registerUbo ?? []).map((u) => ({
-          naam: u.naam,
-          kvk: u.kvk_nummer,
-          niveau: u.niveau,
-          soort: u.soort,
-          uiteindelijkBelanghebbende: u.is_uiteindelijk,
-          toelichting: u.toelichting,
-        }));
+  // Eigendomsketen komt uitsluitend uit het register (bestuur/beheer),
+  // nooit uit de bij het lid opgeslagen gegevens.
+  const ubo: UboEntry[] = (registerUbo ?? []).map((u) => ({
+    naam: u.naam,
+    kvk: u.kvk_nummer,
+    niveau: u.niveau,
+    soort: u.soort,
+    uiteindelijkBelanghebbende: u.is_uiteindelijk,
+    toelichting: u.toelichting,
+  }));
 
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
