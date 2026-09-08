@@ -441,7 +441,6 @@ Deno.serve(async (req) => {
           if (shop.telefoon) loc.telefoon = shop.telefoon;
           if (socials.instagram) loc.instagram = socials.instagram;
           if (socials.facebook) loc.facebook = socials.facebook;
-          if (ubo.length) loc.ubo = ubo;
           locaties.push(loc);
           locationsAdded++;
           changed = true;
