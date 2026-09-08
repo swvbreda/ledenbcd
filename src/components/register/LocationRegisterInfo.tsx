@@ -27,9 +27,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 export type LocationRegisterInfoProps = {
   link?: RegisterLink | null;
   shop?: RegisterShop | null;
-  /** UBO-keten die bij het lid is opgeslagen. */
-  memberUbo?: UboEntry[] | null;
-  /** UBO-keten uit het register voor de gekoppelde vestiging. */
+  /** UBO-keten uit het register voor de gekoppelde vestiging (bestuur/beheer). */
   registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
