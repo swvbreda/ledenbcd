@@ -87,13 +87,24 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-base uppercase">{event.title}</h3>
+            <h3
+              className={`font-display text-base uppercase ${cancelled ? "text-muted-foreground line-through" : ""}`}
+            >
+              {event.title}
+            </h3>
             <Badge variant={isEvent ? "default" : "secondary"}>
               {isEvent ? "Evenement" : "Bestuursvergadering"}
             </Badge>
             {!event.is_published && <Badge variant="outline">Concept</Badge>}
-            {full && <Badge variant="destructive">Volgeboekt</Badge>}
+            {cancelled && <Badge variant="destructive">Geannuleerd</Badge>}
+            {!cancelled && full && <Badge variant="destructive">Volgeboekt</Badge>}
           </div>
+          {cancelled && (
+            <p className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              Dit {isEvent ? "evenement" : "agenda-item"} gaat niet door
+              {event.cancel_reason ? `: ${event.cancel_reason}` : "."}
+            </p>
+          )}
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="h-3.5 w-3.5 text-brand-red" />
