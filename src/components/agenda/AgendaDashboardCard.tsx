@@ -149,8 +149,15 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
         </div>
 
         <div className="flex items-center justify-center border-border bg-muted/30 p-6 md:border-l">
-          <span className="w-full rounded-xl bg-primary px-6 py-3 text-center text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/25 transition-transform group-hover:scale-105 md:w-auto">
-            Aanmelden
+          <span
+            className={cn(
+              "w-full rounded-xl px-6 py-3 text-center text-sm font-bold uppercase tracking-wider shadow-lg transition-transform group-hover:scale-105 md:w-auto",
+              isCancelled(event)
+                ? "bg-muted text-muted-foreground shadow-none"
+                : "bg-primary text-primary-foreground shadow-primary/25",
+            )}
+          >
+            {isCancelled(event) ? "Geannuleerd" : "Aanmelden"}
           </span>
         </div>
       </div>
@@ -193,9 +200,11 @@ export default function AgendaDashboardCard() {
             e.event_type === "evenement" ? (
               <div key={e.id} className="relative">
                 <EventHighlight event={e} guests={guestsFor(e.id)} />
-                <div className="absolute right-4 top-4 z-10">
-                  <AgendaShareButton event={e} variant="outline" />
-                </div>
+                {!isCancelled(e) && (
+                  <div className="absolute right-4 top-4 z-10">
+                    <AgendaShareButton event={e} variant="outline" />
+                  </div>
+                )}
               </div>
             ) : (
               <div key={e.id} className="relative">
