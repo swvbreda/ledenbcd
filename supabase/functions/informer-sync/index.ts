@@ -1543,6 +1543,22 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Contributiefacturen klaarzetten (concept) voor leden zonder factuur dit jaar.
+  if (action === "prepare_invoices") {
+    const memberParam = url.searchParams.get("member_id");
+    const memberId = memberParam ? Number(memberParam) : undefined;
+    const dryRun = ["1", "true", "yes"].includes((url.searchParams.get("dry_run") ?? "").toLowerCase());
+    const result = await prepareInvoices(supabase, {
+      memberId: Number.isInteger(memberId) && (memberId as number) > 0 ? memberId : undefined,
+      dryRun,
+    });
+    if (!dryRun) await logResult(supabase, result);
+    return new Response(JSON.stringify({ success: result.success, results: [result] }), {
+      status: result.success ? 200 : 207,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const results: ActionResult[] = [];
   try {
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
