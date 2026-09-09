@@ -21,6 +21,55 @@ function generateToken(): string {
     .join('')
 }
 
+/**
+ * Bouwt een agenda-bestand (.ics) voor een agenda-item, zodat de ontvanger het
+ * evenement met één klik in zijn eigen agenda kan zetten.
+ * Verwacht templateData.icsEvent = { uid, title, date, start, end, location, description }
+ */
+function buildIcs(ics: Record<string, any>): string | null {
+  const date = String(ics?.date ?? '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+  const time = (v: unknown, fallback: string) => {
+    const t = String(v ?? '').slice(0, 5)
+    return /^\d{2}:\d{2}$/.test(t) ? t : fallback
+  }
+  const start = time(ics.start, '09:00')
+  let end = time(ics.end, '')
+  if (!end || end <= start) {
+    const [h, m] = start.split(':').map(Number)
+    const total = h * 60 + m + 60
+    end = `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+  }
+  const stamp = (d: string, t: string) => `${d.replaceAll('-', '')}T${t.replace(':', '')}00`
+  const esc = (v: unknown) =>
+    String(v ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\r?\n/g, '\\n')
+  const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//BCD//Ledenportaal//NL',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${esc(ics.uid ?? crypto.randomUUID())}@leden.coffeeshopbond.nl`,
+    `DTSTAMP:${now}`,
+    `DTSTART;TZID=Europe/Amsterdam:${stamp(date, start)}`,
+    `DTEND;TZID=Europe/Amsterdam:${stamp(date, end)}`,
+    `SUMMARY:${esc(ics.title)}`,
+    ics.location ? `LOCATION:${esc(ics.location)}` : '',
+    ics.description ? `DESCRIPTION:${esc(ics.description)}` : '',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ]
+    .filter(Boolean)
+    .join('\r\n')
+}
+
 // Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
 // gateway validates the caller's JWT (anon or service_role) before the request
 // reaches this code. No in-function auth check is needed.
@@ -365,6 +414,12 @@ Deno.serve(async (req) => {
 
   const textWithFooter = `${plainText}\n\n---\nUitschrijven: ${unsubscribeUrl}\n`
 
+  // Agenda-bijlage voor agenda-mails (alleen wanneer de aanroeper de gegevens meestuurt).
+  const icsContent =
+    templateData?.icsEvent && typeof templateData.icsEvent === 'object'
+      ? buildIcs(templateData.icsEvent as Record<string, any>)
+      : null
+
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: templateName,
@@ -404,6 +459,17 @@ Deno.serve(async (req) => {
         subject: resolvedSubject,
         html: htmlWithFooter,
         text: textWithFooter,
+        ...(icsContent
+          ? {
+              attachments: [
+                {
+                  filename: 'agenda.ics',
+                  content: btoa(unescape(encodeURIComponent(icsContent))),
+                  content_type: 'text/calendar; charset=utf-8; method=PUBLISH',
+                },
+              ],
+            }
+          : {}),
         headers: {
           'List-Unsubscribe': `<${unsubscribeUrl}>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

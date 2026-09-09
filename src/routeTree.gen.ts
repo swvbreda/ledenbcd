@@ -45,6 +45,7 @@ import { Route as DashboardLedenvoordelenIndexRouteImport } from './routes/_dash
 import { Route as DashboardLedenvoordelenIdRouteImport } from './routes/_dashboard/ledenvoordelen.$id'
 import { Route as DashboardLocatiesIndexRouteImport } from './routes/_dashboard/locaties.index'
 import { Route as DashboardLocatiesGemeenteRouteImport } from './routes/_dashboard/locaties.$gemeente'
+import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
 import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id'
@@ -239,6 +240,12 @@ const DashboardLocatiesGemeenteRoute =
     path: '/locaties/$gemeente',
     getParentRoute: () => DashboardRoute,
   } as any)
+const ApiPublicAgendaOutlookSyncRoute =
+  ApiPublicAgendaOutlookSyncRouteImport.update({
+    id: '/api/public/agenda-outlook-sync',
+    path: '/api/public/agenda-outlook-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EnquetesIdReviewRoute = EnquetesIdReviewRouteImport.update({
   id: '/enquetes/$id/review',
   path: '/enquetes/$id/review',
@@ -308,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -352,6 +360,7 @@ export interface FileRoutesByTo {
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -398,6 +407,7 @@ export interface FileRoutesById {
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
   '/_dashboard/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/_dashboard/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/leden/$id'
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
+    | '/api/public/agenda-outlook-sync'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -488,6 +499,7 @@ export interface FileRouteTypes {
     | '/leden/$id'
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
+    | '/api/public/agenda-outlook-sync'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -533,6 +545,7 @@ export interface FileRouteTypes {
     | '/_dashboard/leden/$id'
     | '/_dashboard/ledenvoordelen/$id'
     | '/_dashboard/locaties/$gemeente'
+    | '/api/public/agenda-outlook-sync'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -563,6 +576,7 @@ export interface RootRouteChildren {
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
   ExternProfielRoute: typeof ExternProfielRoute
   ExternIndexRoute: typeof ExternIndexRoute
+  ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
@@ -823,6 +837,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLocatiesGemeenteRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/agenda-outlook-sync': {
+      id: '/api/public/agenda-outlook-sync'
+      path: '/api/public/agenda-outlook-sync'
+      fullPath: '/api/public/agenda-outlook-sync'
+      preLoaderRoute: typeof ApiPublicAgendaOutlookSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquetes/$id/review': {
       id: '/enquetes/$id/review'
       path: '/enquetes/$id/review'
@@ -952,6 +973,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnqueteExternIdRoute: EnqueteExternIdRoute,
   ExternProfielRoute: ExternProfielRoute,
   ExternIndexRoute: ExternIndexRoute,
+  ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,

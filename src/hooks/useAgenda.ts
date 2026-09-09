@@ -24,6 +24,10 @@ export interface AgendaEvent {
   cancelled_at?: string | null;
   cancel_reason?: string | null;
   cancelled_by?: string | null;
+  outlook_event_id?: string | null;
+  outlook_synced_at?: string | null;
+  outlook_error?: string | null;
+
 
   created_by: string | null;
   created_at: string;
@@ -43,6 +47,9 @@ export type AgendaEventInput = Omit<
   | "cancelled_at"
   | "cancel_reason"
   | "cancelled_by"
+  | "outlook_event_id"
+  | "outlook_synced_at"
+  | "outlook_error"
 >;
 
 export const isCancelled = (event: AgendaEvent) => !!event.cancelled_at;
@@ -56,6 +63,9 @@ export interface AgendaRegistration {
   note: string | null;
   attendee_names: string[] | null;
   registered_by: string | null;
+  outlook_attendee_email?: string | null;
+  outlook_state?: string | null;
+  outlook_error?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +123,16 @@ async function sendRegistrationConfirmation(args: {
     note: args.note ?? "",
     description: e.description ?? "",
     eventUrl: `${window.location.origin}/agenda`,
+    // Agendabijlage (.ics) zodat de deelnemer het item in zijn eigen agenda zet.
+    icsEvent: {
+      uid: args.eventId,
+      title: e.title,
+      date: e.event_date,
+      start: e.start_time,
+      end: e.end_time,
+      location: e.location ?? "",
+      description: e.description ?? "",
+    },
   };
 
   let sent = 0;
@@ -441,6 +461,20 @@ export function useAgendaMutations() {
     },
   });
 
+  /** Werkt de Outlook-afspraak en de genodigden van een evenement bij. */
+  const syncOutlook = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase.rpc("trigger_agenda_outlook_sync" as any, {
+        _event_id: eventId,
+        _action: "sync",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setTimeout(invalidate, 4000);
+    },
+  });
+
   /** Annuleert een agenda-item en informeert desgewenst de aangemelde leden. */
   const cancelEvent = useMutation({
     mutationFn: async (input: {
@@ -488,6 +522,7 @@ export function useAgendaMutations() {
     unregister,
     generateMeetings,
     syncTopical,
+    syncOutlook,
   };
 }
 
