@@ -64,10 +64,22 @@ function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
     >
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="text-base font-bold text-foreground">{event.title}</h3>
+          <h3
+            className={cn(
+              "text-base font-bold text-foreground",
+              isCancelled(event) && "text-muted-foreground line-through",
+            )}
+          >
+            {event.title}
+          </h3>
           <span className="rounded-lg bg-muted px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Vergadering
           </span>
+          {isCancelled(event) && (
+            <span className="rounded-lg bg-destructive px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-destructive-foreground">
+              Geannuleerd
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-muted-foreground">
           <span className="text-foreground/80">{formatEventDate(event.event_date)}</span>
@@ -96,13 +108,26 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 p-6">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-display text-xl leading-tight text-foreground md:text-2xl">
+            <h3
+              className={cn(
+                "font-display text-xl leading-tight text-foreground md:text-2xl",
+                isCancelled(event) && "text-muted-foreground line-through",
+              )}
+            >
               {event.title}
             </h3>
             <span className="rounded-full bg-primary px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/20">
               Evenement
             </span>
+            {isCancelled(event) && (
+              <span className="rounded-full bg-destructive px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-destructive-foreground">
+                Geannuleerd
+              </span>
+            )}
           </div>
+          {isCancelled(event) && event.cancel_reason && (
+            <p className="text-sm font-semibold text-destructive">{event.cancel_reason}</p>
+          )}
           <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm font-semibold text-muted-foreground md:grid-cols-2">
             <MetaItem icon={CalendarDays} boxed highlight>
               {formatEventDate(event.event_date)}
