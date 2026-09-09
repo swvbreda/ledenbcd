@@ -1240,7 +1240,9 @@ async function createDraftSalesInvoice(
   }
   const inv = firstInformerItem(call.response_body, ["sales", "invoice", "invoices", "data"]) ?? call.response_body;
   const invoiceNumber = (inv as any)?.invoice_number ?? (inv as any)?.number ?? null;
-  const externalId = (inv as any)?.id != null ? String((inv as any).id) : null;
+  const externalId = (inv as any)?.id != null
+    ? String((inv as any).id)
+    : (informerIdFromUrl((call.response_body as any)?.url) || null);
   return { invoiceNumber: invoiceNumber ? String(invoiceNumber) : null, externalId, date };
 }
 
