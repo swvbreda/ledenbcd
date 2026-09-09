@@ -146,6 +146,10 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
 
 export function Navigate({ to, replace, state }: { to: string; replace?: boolean; state?: unknown }) {
   const { pathname, search, hash } = parseTo(to);
+  const loc = tsLocation();
+  // Al op de doelbestemming? Dan niet opnieuw navigeren — anders blijft de
+  // router zichzelf opnieuw plannen (React: "Maximum update depth exceeded").
+  if (loc.pathname === pathname && !search && !hash) return null;
   return <TSNavigate to={pathname as never} search={search as never} hash={hash} state={state as never} replace={replace} />;
 }
 
