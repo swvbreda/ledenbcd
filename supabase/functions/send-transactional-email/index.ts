@@ -453,6 +453,17 @@ Deno.serve(async (req) => {
         subject: resolvedSubject,
         html: htmlWithFooter,
         text: textWithFooter,
+        ...(icsContent
+          ? {
+              attachments: [
+                {
+                  filename: 'agenda.ics',
+                  content: btoa(unescape(encodeURIComponent(icsContent))),
+                  content_type: 'text/calendar; charset=utf-8; method=PUBLISH',
+                },
+              ],
+            }
+          : {}),
         headers: {
           'List-Unsubscribe': `<${unsubscribeUrl}>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
