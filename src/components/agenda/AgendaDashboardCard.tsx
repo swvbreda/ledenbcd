@@ -9,6 +9,7 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  isCancelled,
   sortAgendaEvents,
   type AgendaEvent,
 
