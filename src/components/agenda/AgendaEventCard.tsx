@@ -280,6 +280,15 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
 
       <AgendaAnnounceDialog open={announceOpen} onOpenChange={setAnnounceOpen} event={event} />
 
+      {isAdmin && (
+        <AgendaCancelDialog
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          event={event}
+          attendeeCount={totalGuests}
+        />
+      )}
+
       <AgendaEventDialog open={editOpen} onOpenChange={setEditOpen} event={event} />
 
       {memberId != null && (
