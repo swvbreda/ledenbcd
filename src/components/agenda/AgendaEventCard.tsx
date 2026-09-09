@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Users, Video } from "lucide-react";
+import { Ban, CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Undo2, Users, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { handleRpcAuthError } from "@/lib/invokeFunction";
@@ -23,6 +23,7 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  isCancelled,
   type AgendaEvent,
   type AgendaRegistration,
 } from "@/hooks/useAgenda";
@@ -33,6 +34,7 @@ import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
 import AgendaShareButton from "./AgendaShareButton";
 import AgendaAnnounceDialog from "./AgendaAnnounceDialog";
+import AgendaCancelDialog from "./AgendaCancelDialog";
 
 
 interface Props {
@@ -43,7 +45,7 @@ interface Props {
 }
 
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
-  const { unregister, deleteEvent } = useAgendaMutations();
+  const { unregister, deleteEvent, uncancelEvent } = useAgendaMutations();
   const { isBoard } = useAuth();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
@@ -55,10 +57,12 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [linking, setLinking] = useState(false);
 
   const isEvent = event.event_type === "evenement";
-  const upcoming = isUpcoming(event);
+  const cancelled = isCancelled(event);
+  const upcoming = isUpcoming(event) && !cancelled;
   const own = memberId != null ? registrations.find((r) => r.member_id === memberId) : undefined;
   const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
   const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
@@ -83,13 +87,24 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-base uppercase">{event.title}</h3>
+            <h3
+              className={`font-display text-base uppercase ${cancelled ? "text-muted-foreground line-through" : ""}`}
+            >
+              {event.title}
+            </h3>
             <Badge variant={isEvent ? "default" : "secondary"}>
               {isEvent ? "Evenement" : "Bestuursvergadering"}
             </Badge>
             {!event.is_published && <Badge variant="outline">Concept</Badge>}
-            {full && <Badge variant="destructive">Volgeboekt</Badge>}
+            {cancelled && <Badge variant="destructive">Geannuleerd</Badge>}
+            {!cancelled && full && <Badge variant="destructive">Volgeboekt</Badge>}
           </div>
+          {cancelled && (
+            <p className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              Dit {isEvent ? "evenement" : "agenda-item"} gaat niet door
+              {event.cancel_reason ? `: ${event.cancel_reason}` : "."}
+            </p>
+          )}
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="h-3.5 w-3.5 text-brand-red" />
@@ -200,7 +215,9 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               </div>
             ))}
 
-          {upcoming && <AgendaShareButton event={event} className="w-full md:w-auto" />}
+          {isUpcoming(event) && !cancelled && (
+            <AgendaShareButton event={event} className="w-full md:w-auto" />
+          )}
 
           {upcoming && event.meeting_url && (own || isAdmin || isBoard) && (
             <Button asChild variant="outline" className="w-full md:w-auto">
@@ -224,6 +241,33 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               Aankondiging versturen
             </Button>
           )}
+          {isUpcoming(event) && !cancelled && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive"
+              onClick={() => setCancelOpen(true)}
+            >
+              <Ban className="mr-1 h-4 w-4" />
+              {isEvent ? "Evenement annuleren" : "Annuleren"}
+            </Button>
+          )}
+          {cancelled && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={uncancelEvent.isPending}
+              onClick={() =>
+                uncancelEvent.mutate(event.id, {
+                  onSuccess: () => toast.success("Annulering ongedaan gemaakt"),
+                  onError: (e: any) => toast.error(e?.message || "Wijzigen mislukt"),
+                })
+              }
+            >
+              <Undo2 className="mr-1 h-4 w-4 text-brand-red" />
+              Annulering ongedaan maken
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
             <Pencil className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -235,6 +279,15 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
 
 
       <AgendaAnnounceDialog open={announceOpen} onOpenChange={setAnnounceOpen} event={event} />
+
+      {isAdmin && (
+        <AgendaCancelDialog
+          open={cancelOpen}
+          onOpenChange={setCancelOpen}
+          event={event}
+          attendeeCount={totalGuests}
+        />
+      )}
 
       <AgendaEventDialog open={editOpen} onOpenChange={setEditOpen} event={event} />
 

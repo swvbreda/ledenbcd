@@ -21,6 +21,9 @@ export interface AgendaEvent {
   external_event_id?: string | null;
   external_synced_at?: string | null;
   share_code?: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
+  cancelled_by?: string | null;
 
   created_by: string | null;
   created_at: string;
@@ -37,7 +40,12 @@ export type AgendaEventInput = Omit<
   | "external_event_id"
   | "external_synced_at"
   | "share_code"
+  | "cancelled_at"
+  | "cancel_reason"
+  | "cancelled_by"
 >;
+
+export const isCancelled = (event: AgendaEvent) => !!event.cancelled_at;
 
 export interface AgendaRegistration {
   id: string;
@@ -123,6 +131,56 @@ async function sendRegistrationConfirmation(args: {
   return sent > 0;
 }
 
+/** Informeert aangemelde leden dat een agenda-item is geannuleerd. */
+async function sendCancellationEmails(eventId: string, reason: string): Promise<number> {
+  const { data: ev } = await supabase
+    .from("agenda_events" as any)
+    .select("title, event_date, start_time, end_time, location")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!ev) return 0;
+
+  const { data: regs } = await supabase
+    .from("agenda_registrations" as any)
+    .select("member_id")
+    .eq("event_id", eventId);
+
+  const memberIds = [
+    ...new Set(
+      ((regs ?? []) as any[]).map((r) => r.member_id).filter((id): id is number => id != null),
+    ),
+  ];
+
+  const e = ev as any;
+  const templateData = {
+    eventTitle: e.title,
+    eventDate: formatEventDate(e.event_date),
+    eventTime: formatTimeRange(e.start_time, e.end_time),
+    location: e.location ?? "",
+    reason,
+    eventUrl: `${window.location.origin}/agenda`,
+  };
+
+  let sent = 0;
+  const seen = new Set<string>();
+  for (const memberId of memberIds) {
+    for (const recipientEmail of await memberEmails(memberId)) {
+      if (seen.has(recipientEmail)) continue;
+      seen.add(recipientEmail);
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "agenda-event-cancelled",
+          recipientEmail,
+          idempotencyKey: `agenda-cancel-${eventId}-${recipientEmail}`,
+          templateData,
+        },
+      });
+      if (!error) sent++;
+      else console.error("Annuleringsmail agenda mislukt:", error);
+    }
+  }
+  return sent;
+}
 
 /** Upload een afbeelding naar de agenda-bucket en geeft het pad terug. */
 export async function uploadAgendaImage(file: File) {
@@ -383,7 +441,54 @@ export function useAgendaMutations() {
     },
   });
 
-  return { saveEvent, deleteEvent, register, unregister, generateMeetings, syncTopical };
+  /** Annuleert een agenda-item en informeert desgewenst de aangemelde leden. */
+  const cancelEvent = useMutation({
+    mutationFn: async (input: {
+      id: string;
+      reason: string;
+      notify: boolean;
+    }): Promise<{ emailed: number }> => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("agenda_events" as any)
+        .update({
+          cancelled_at: new Date().toISOString(),
+          cancel_reason: input.reason.trim() || null,
+          cancelled_by: userData.user?.id ?? null,
+        } as any)
+        .eq("id", input.id);
+      if (error) throw error;
+
+      const emailed = input.notify
+        ? await sendCancellationEmails(input.id, input.reason.trim())
+        : 0;
+      return { emailed };
+    },
+    onSuccess: invalidate,
+  });
+
+  /** Maakt een annulering ongedaan. */
+  const uncancelEvent = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("agenda_events" as any)
+        .update({ cancelled_at: null, cancel_reason: null, cancelled_by: null } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return {
+    saveEvent,
+    deleteEvent,
+    cancelEvent,
+    uncancelEvent,
+    register,
+    unregister,
+    generateMeetings,
+    syncTopical,
+  };
 }
 
 export const formatEventDate = (date: string) =>

@@ -41,14 +41,16 @@ export const Route = createFileRoute("/a/$shareCode")({
         ],
       };
     }
+    const cancelled = !!loaderData.cancelled_at;
     const description = [
+      cancelled ? "GEANNULEERD" : null,
       fmtDate(loaderData.event_date),
       timeRange(loaderData.start_time, loaderData.end_time) || null,
       loaderData.location || null,
     ]
       .filter(Boolean)
       .join(" · ");
-    const title = `${loaderData.title} — BCD Ledenportaal`;
+    const title = `${cancelled ? "Geannuleerd: " : ""}${loaderData.title} — BCD Ledenportaal`;
     const image = loaderData.image_path
       ? `${PORTAL}/api/public/agenda-image/${code}`
       : `${PORTAL}/og-image.png`;
@@ -59,12 +61,12 @@ export const Route = createFileRoute("/a/$shareCode")({
         { name: "robots", content: "noindex" },
         { property: "og:type", content: "article" },
         { property: "og:site_name", content: "BCD Ledenportaal" },
-        { property: "og:title", content: loaderData.title },
+        { property: "og:title", content: `${cancelled ? "Geannuleerd: " : ""}${loaderData.title}` },
         { property: "og:description", content: description },
         { property: "og:url", content: url },
         { property: "og:image", content: image },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: loaderData.title },
+        { name: "twitter:title", content: `${cancelled ? "Geannuleerd: " : ""}${loaderData.title}` },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
       ],
@@ -116,6 +118,7 @@ function AgendaSharePage() {
   }
 
   const time = timeRange(event.start_time, event.end_time);
+  const cancelled = !!event.cancelled_at;
 
   return (
     <main className="min-h-screen bg-background flex items-start sm:items-center justify-center p-4 sm:p-6">
@@ -139,6 +142,14 @@ function AgendaSharePage() {
           {event.title}
         </h1>
 
+        {cancelled && (
+          <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm font-semibold text-destructive">
+            Dit evenement is geannuleerd
+            {event.cancel_reason ? `: ${event.cancel_reason}` : "."}
+          </p>
+        )}
+
+
         <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-brand-red" />
@@ -160,12 +171,14 @@ function AgendaSharePage() {
 
         <div className="space-y-2">
           <Button className="w-full" onClick={goLogin} disabled={checking}>
-            Inloggen en aanmelden
+            {cancelled ? "Naar het ledenportaal" : "Inloggen en aanmelden"}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je direct
-            bij deze uitnodiging uit.
-          </p>
+          {!cancelled && (
+            <p className="text-xs text-muted-foreground">
+              Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je
+              direct bij deze uitnodiging uit.
+            </p>
+          )}
         </div>
       </div>
     </main>

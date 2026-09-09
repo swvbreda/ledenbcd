@@ -9,6 +9,7 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  isCancelled,
   sortAgendaEvents,
   type AgendaEvent,
 
@@ -63,10 +64,22 @@ function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
     >
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="text-base font-bold text-foreground">{event.title}</h3>
+          <h3
+            className={cn(
+              "text-base font-bold text-foreground",
+              isCancelled(event) && "text-muted-foreground line-through",
+            )}
+          >
+            {event.title}
+          </h3>
           <span className="rounded-lg bg-muted px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Vergadering
           </span>
+          {isCancelled(event) && (
+            <span className="rounded-lg bg-destructive px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-destructive-foreground">
+              Geannuleerd
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-muted-foreground">
           <span className="text-foreground/80">{formatEventDate(event.event_date)}</span>
@@ -95,13 +108,26 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 p-6">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-display text-xl leading-tight text-foreground md:text-2xl">
+            <h3
+              className={cn(
+                "font-display text-xl leading-tight text-foreground md:text-2xl",
+                isCancelled(event) && "text-muted-foreground line-through",
+              )}
+            >
               {event.title}
             </h3>
             <span className="rounded-full bg-primary px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/20">
               Evenement
             </span>
+            {isCancelled(event) && (
+              <span className="rounded-full bg-destructive px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-destructive-foreground">
+                Geannuleerd
+              </span>
+            )}
           </div>
+          {isCancelled(event) && event.cancel_reason && (
+            <p className="text-sm font-semibold text-destructive">{event.cancel_reason}</p>
+          )}
           <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm font-semibold text-muted-foreground md:grid-cols-2">
             <MetaItem icon={CalendarDays} boxed highlight>
               {formatEventDate(event.event_date)}
@@ -123,8 +149,15 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
         </div>
 
         <div className="flex items-center justify-center border-border bg-muted/30 p-6 md:border-l">
-          <span className="w-full rounded-xl bg-primary px-6 py-3 text-center text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/25 transition-transform group-hover:scale-105 md:w-auto">
-            Aanmelden
+          <span
+            className={cn(
+              "w-full rounded-xl px-6 py-3 text-center text-sm font-bold uppercase tracking-wider shadow-lg transition-transform group-hover:scale-105 md:w-auto",
+              isCancelled(event)
+                ? "bg-muted text-muted-foreground shadow-none"
+                : "bg-primary text-primary-foreground shadow-primary/25",
+            )}
+          >
+            {isCancelled(event) ? "Geannuleerd" : "Aanmelden"}
           </span>
         </div>
       </div>
@@ -167,9 +200,11 @@ export default function AgendaDashboardCard() {
             e.event_type === "evenement" ? (
               <div key={e.id} className="relative">
                 <EventHighlight event={e} guests={guestsFor(e.id)} />
-                <div className="absolute right-4 top-4 z-10">
-                  <AgendaShareButton event={e} variant="outline" />
-                </div>
+                {!isCancelled(e) && (
+                  <div className="absolute right-4 top-4 z-10">
+                    <AgendaShareButton event={e} variant="outline" />
+                  </div>
+                )}
               </div>
             ) : (
               <div key={e.id} className="relative">
