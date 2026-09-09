@@ -118,6 +118,7 @@ function AgendaSharePage() {
   }
 
   const time = timeRange(event.start_time, event.end_time);
+  const cancelled = !!event.cancelled_at;
 
   return (
     <main className="min-h-screen bg-background flex items-start sm:items-center justify-center p-4 sm:p-6">
@@ -140,6 +141,14 @@ function AgendaSharePage() {
         <h1 className="font-display uppercase text-2xl sm:text-3xl text-primary leading-tight">
           {event.title}
         </h1>
+
+        {cancelled && (
+          <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm font-semibold text-destructive">
+            Dit evenement is geannuleerd
+            {event.cancel_reason ? `: ${event.cancel_reason}` : "."}
+          </p>
+        )}
+
 
         <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
