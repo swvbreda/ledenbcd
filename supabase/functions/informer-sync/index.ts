@@ -1213,19 +1213,31 @@ async function createDraftSalesInvoice(
     ? `Contributie ${candidate.year}`
     : `Contributie ${candidate.year} (vanaf ${MONTH_NAMES[candidate.start_month - 1]}, ${candidate.months}/12)`;
 
+  // Standaardwaarden overgenomen van de bestaande contributiefacturen in Informer;
+  // via secrets te overschrijven als de administratie wijzigt.
+  const templateId = Number(Deno.env.get("INFORMER_TEMPLATE_ID") ?? 547800);
+  const paymentConditionId = Number(Deno.env.get("INFORMER_PAYMENT_CONDITION_ID") ?? 707750);
+  const currencyId = Number(Deno.env.get("INFORMER_CURRENCY_ID") ?? 126685);
+  const vatId = Number(Deno.env.get("INFORMER_VAT_ID") ?? 1485201);
+  const ledgerId = Number(Deno.env.get("INFORMER_LEDGER_ID") ?? 15391256);
+
   const body = {
     relation_id: relationId,
-    date,
+    invoice_date: date,
+    template_id: templateId,
+    payment_condition_id: paymentConditionId,
+    currency_id: currencyId,
+    vat_option: "excl",
+    concept: true,
     reference: `Contributie ${candidate.year}`,
-    description,
-    status: "concept",
     lines: [
       {
+        info: false,
+        qty: 1,
         description,
-        quantity: 1,
-        price: candidate.amount,
-        price_excl_tax: candidate.amount,
-        tax_percentage: 0,
+        amount: candidate.amount,
+        vat_id: vatId,
+        ledger_id: ledgerId,
       },
     ],
   };
