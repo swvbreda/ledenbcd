@@ -1180,7 +1180,13 @@ async function ensureDebtorForMember(
     };
   }
   const created = firstInformerItem(call.response_body, ["relation", "relations", "data"]);
-  const newId = informerRelationId(created) || String((call.response_body as any)?.id ?? "");
+  // Informer geeft bij een POST alleen { success, url: ".../relations/<id>" } terug.
+  const urlId = informerIdFromUrl((call.response_body as any)?.url);
+  let newId = informerRelationId(created) || String((call.response_body as any)?.id ?? "") || urlId;
+  if (!newId) {
+    const lookup = await fetchInformerRelationByNumber(String(memberId), api_calls);
+    newId = lookup ? informerRelationId(lookup) : "";
+  }
   if (!newId) return { relationId: null, created: false, error: "debiteur aangemaakt maar geen relatie-id ontvangen" };
 
   await supabase.from("informer_debtor_map").upsert(
