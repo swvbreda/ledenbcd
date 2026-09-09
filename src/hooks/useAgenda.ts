@@ -522,6 +522,7 @@ export function useAgendaMutations() {
     unregister,
     generateMeetings,
     syncTopical,
+    syncOutlook,
   };
 }
 
