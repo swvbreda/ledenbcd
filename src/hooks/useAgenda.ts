@@ -21,6 +21,9 @@ export interface AgendaEvent {
   external_event_id?: string | null;
   external_synced_at?: string | null;
   share_code?: string | null;
+  cancelled_at?: string | null;
+  cancel_reason?: string | null;
+  cancelled_by?: string | null;
 
   created_by: string | null;
   created_at: string;
@@ -37,7 +40,12 @@ export type AgendaEventInput = Omit<
   | "external_event_id"
   | "external_synced_at"
   | "share_code"
+  | "cancelled_at"
+  | "cancel_reason"
+  | "cancelled_by"
 >;
+
+export const isCancelled = (event: AgendaEvent) => !!event.cancelled_at;
 
 export interface AgendaRegistration {
   id: string;
