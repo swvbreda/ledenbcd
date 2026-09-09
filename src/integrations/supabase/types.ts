@@ -34,6 +34,9 @@ export type Database = {
           location: string | null
           max_seats: number | null
           meeting_url: string | null
+          outlook_error: string | null
+          outlook_event_id: string | null
+          outlook_synced_at: string | null
           share_code: string | null
           start_time: string | null
           title: string
@@ -58,6 +61,9 @@ export type Database = {
           location?: string | null
           max_seats?: number | null
           meeting_url?: string | null
+          outlook_error?: string | null
+          outlook_event_id?: string | null
+          outlook_synced_at?: string | null
           share_code?: string | null
           start_time?: string | null
           title: string
@@ -82,6 +88,9 @@ export type Database = {
           location?: string | null
           max_seats?: number | null
           meeting_url?: string | null
+          outlook_error?: string | null
+          outlook_event_id?: string | null
+          outlook_synced_at?: string | null
           share_code?: string | null
           start_time?: string | null
           title?: string
@@ -99,6 +108,9 @@ export type Database = {
           id: string
           member_id: number | null
           note: string | null
+          outlook_attendee_email: string | null
+          outlook_error: string | null
+          outlook_state: string | null
           registered_by: string | null
           updated_at: string
         }
@@ -111,6 +123,9 @@ export type Database = {
           id?: string
           member_id?: number | null
           note?: string | null
+          outlook_attendee_email?: string | null
+          outlook_error?: string | null
+          outlook_state?: string | null
           registered_by?: string | null
           updated_at?: string
         }
@@ -123,6 +138,9 @@ export type Database = {
           id?: string
           member_id?: number | null
           note?: string | null
+          outlook_attendee_email?: string | null
+          outlook_error?: string | null
+          outlook_state?: string | null
           registered_by?: string | null
           updated_at?: string
         }
@@ -3124,6 +3142,10 @@ export type Database = {
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }
+      agenda_outlook_dispatch: {
+        Args: { _action: string; _event_id: string }
+        Returns: undefined
+      }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -3273,6 +3295,10 @@ export type Database = {
       sync_member_allowed_emails: {
         Args: { _member_id: number }
         Returns: undefined
+      }
+      trigger_agenda_outlook_sync: {
+        Args: { _action?: string; _event_id: string }
+        Returns: number
       }
       trigger_beleidsmonitor_sync: { Args: never; Returns: number }
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
