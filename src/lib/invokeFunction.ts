@@ -36,6 +36,34 @@ function dispatchSessionExpired() {
 
 export const SESSION_EXPIRED_EVENT_NAME = SESSION_EXPIRED_EVENT;
 
+/**
+ * Meldt een verlopen/ongeldige sessie zodat de gebruiker netjes wordt
+ * uitgelogd en naar de loginpagina gaat.
+ */
+export function reportSessionExpired() {
+  dispatchSessionExpired();
+}
+
+/**
+ * Herkent database-fouten die duiden op een verlopen sessie (de client valt
+ * dan terug op de anon-rol, waardoor beveiligde functies 'permission denied'
+ * geven). Geeft true terug wanneer de sessie ongeldig blijkt.
+ */
+export function handleRpcAuthError(
+  error: { code?: string; message?: string } | null | undefined,
+): boolean {
+  if (!error) return false;
+  const msg = (error.message || "").toLowerCase();
+  const isPermission =
+    error.code === "42501" ||
+    msg.includes("permission denied") ||
+    msg.includes("jwt expired") ||
+    msg.includes("invalid claim");
+  if (!isPermission) return false;
+  dispatchSessionExpired();
+  return true;
+}
+
 async function getAccessToken(forceRefresh = false): Promise<string | null> {
   if (forceRefresh) {
     const { data, error } = await supabase.auth.refreshSession();
