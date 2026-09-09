@@ -10,6 +10,7 @@ export interface TemplateEntry {
 }
 
 import { template as memberWelcome } from './member-welcome.tsx'
+import { template as memberWelcomeSteps } from './member-welcome-steps.tsx'
 import { template as membershipRequest } from './membership-request.tsx'
 import { template as agendaRegistrationConfirmation } from './agenda-registration-confirmation.tsx'
 import { template as agendaEventAnnouncement } from './agenda-event-announcement.tsx'
@@ -19,6 +20,7 @@ import { template as externInvite } from './extern-invite.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'member-welcome': memberWelcome,
+  'member-welcome-steps': memberWelcomeSteps,
   'membership-request': membershipRequest,
   'agenda-registration-confirmation': agendaRegistrationConfirmation,
   'agenda-event-announcement': agendaEventAnnouncement,
