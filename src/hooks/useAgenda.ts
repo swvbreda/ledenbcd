@@ -24,6 +24,10 @@ export interface AgendaEvent {
   cancelled_at?: string | null;
   cancel_reason?: string | null;
   cancelled_by?: string | null;
+  outlook_event_id?: string | null;
+  outlook_synced_at?: string | null;
+  outlook_error?: string | null;
+
 
   created_by: string | null;
   created_at: string;
@@ -43,6 +47,9 @@ export type AgendaEventInput = Omit<
   | "cancelled_at"
   | "cancel_reason"
   | "cancelled_by"
+  | "outlook_event_id"
+  | "outlook_synced_at"
+  | "outlook_error"
 >;
 
 export const isCancelled = (event: AgendaEvent) => !!event.cancelled_at;
@@ -56,6 +63,9 @@ export interface AgendaRegistration {
   note: string | null;
   attendee_names: string[] | null;
   registered_by: string | null;
+  outlook_attendee_email?: string | null;
+  outlook_state?: string | null;
+  outlook_error?: string | null;
   created_at: string;
   updated_at: string;
 }
