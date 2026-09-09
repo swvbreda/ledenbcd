@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         : [
             `Beste ${naam || "aanmelder"},`,
             `Bedankt voor je aanmelding bij de Bond van Cannabis Detaillisten namens ${shop}. We hebben je aanvraag goed ontvangen.`,
-            `Wat gebeurt er nu?\n• Je account is automatisch aangemaakt en je toegang tot het ledenportaal wordt geregeld.\n• Het secretariaat controleert je gegevens en neemt binnen enkele werkdagen contact met je op voor de laatste stappen (contributie en bevestiging).\n• Zodra alles rond is, ontvang je een aparte mail met je inloggegevens voor leden.coffeeshopbond.nl.`,
+            `Wat gebeurt er nu?\n• Je kunt direct zelf een account aanmaken voor het ledenportaal — hieronder lees je hoe.\n• Het secretariaat controleert je gegevens en neemt binnen enkele werkdagen contact met je op voor de laatste stappen (contributie en bevestiging).`,
             `Heb je in de tussentijd vragen? Mail gerust naar info@coffeeshopbond.nl.`,
             `Met vriendelijke groet,\nBestuur BCD`,
           ].join("\n\n");
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${SERVICE_KEY}`,
           },
           body: JSON.stringify({
-            templateName: "member-welcome",
+            templateName: "member-welcome-steps",
             recipientEmail: r.email,
             idempotencyKey: `membership-request-confirm-${r.id}`,
             templateData: {
@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
                 ? "Kennismakingsverzoek ontvangen — Bond van Cannabis Detaillisten"
                 : "Aanmelding ontvangen — Bond van Cannabis Detaillisten",
               body,
+              showSteps: !isLead,
             },
           }),
         });
