@@ -171,12 +171,14 @@ function AgendaSharePage() {
 
         <div className="space-y-2">
           <Button className="w-full" onClick={goLogin} disabled={checking}>
-            Inloggen en aanmelden
+            {cancelled ? "Naar het ledenportaal" : "Inloggen en aanmelden"}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je direct
-            bij deze uitnodiging uit.
-          </p>
+          {!cancelled && (
+            <p className="text-xs text-muted-foreground">
+              Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je
+              direct bij deze uitnodiging uit.
+            </p>
+          )}
         </div>
       </div>
     </main>
