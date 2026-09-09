@@ -41,14 +41,16 @@ export const Route = createFileRoute("/a/$shareCode")({
         ],
       };
     }
+    const cancelled = !!loaderData.cancelled_at;
     const description = [
+      cancelled ? "GEANNULEERD" : null,
       fmtDate(loaderData.event_date),
       timeRange(loaderData.start_time, loaderData.end_time) || null,
       loaderData.location || null,
     ]
       .filter(Boolean)
       .join(" · ");
-    const title = `${loaderData.title} — BCD Ledenportaal`;
+    const title = `${cancelled ? "Geannuleerd: " : ""}${loaderData.title} — BCD Ledenportaal`;
     const image = loaderData.image_path
       ? `${PORTAL}/api/public/agenda-image/${code}`
       : `${PORTAL}/og-image.png`;
