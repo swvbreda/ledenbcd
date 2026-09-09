@@ -215,7 +215,9 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
               </div>
             ))}
 
-          {upcoming && <AgendaShareButton event={event} className="w-full md:w-auto" />}
+          {isUpcoming(event) && !cancelled && (
+            <AgendaShareButton event={event} className="w-full md:w-auto" />
+          )}
 
           {upcoming && event.meeting_url && (own || isAdmin || isBoard) && (
             <Button asChild variant="outline" className="w-full md:w-auto">
@@ -237,6 +239,33 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
             <Button variant="outline" size="sm" onClick={() => setAnnounceOpen(true)}>
               <Megaphone className="mr-1 h-4 w-4 text-brand-red" />
               Aankondiging versturen
+            </Button>
+          )}
+          {isUpcoming(event) && !cancelled && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive"
+              onClick={() => setCancelOpen(true)}
+            >
+              <Ban className="mr-1 h-4 w-4" />
+              {isEvent ? "Evenement annuleren" : "Annuleren"}
+            </Button>
+          )}
+          {cancelled && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={uncancelEvent.isPending}
+              onClick={() =>
+                uncancelEvent.mutate(event.id, {
+                  onSuccess: () => toast.success("Annulering ongedaan gemaakt"),
+                  onError: (e: any) => toast.error(e?.message || "Wijzigen mislukt"),
+                })
+              }
+            >
+              <Undo2 className="mr-1 h-4 w-4 text-brand-red" />
+              Annulering ongedaan maken
             </Button>
           )}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditOpen(true)}>
