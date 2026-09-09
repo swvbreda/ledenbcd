@@ -11,6 +11,8 @@ export interface AgendaSharePreview {
   location: string | null;
   event_type: string | null;
   image_path: string | null;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
 }
 
 /**
@@ -53,5 +55,7 @@ export const getAgendaSharePreview = createServerFn({ method: "GET" })
       location: ev.location ?? null,
       event_type: ev.event_type ?? null,
       image_path: (ev as { image_path?: string | null }).image_path ?? null,
+      cancelled_at: (ev as { cancelled_at?: string | null }).cancelled_at ?? null,
+      cancel_reason: (ev as { cancel_reason?: string | null }).cancel_reason ?? null,
     };
   });
