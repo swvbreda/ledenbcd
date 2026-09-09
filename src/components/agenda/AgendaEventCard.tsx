@@ -45,7 +45,7 @@ interface Props {
 }
 
 export default function AgendaEventCard({ event, registrations, isAdmin, memberId }: Props) {
-  const { unregister, deleteEvent } = useAgendaMutations();
+  const { unregister, deleteEvent, uncancelEvent } = useAgendaMutations();
   const { isBoard } = useAuth();
   const { data: imageUrl } = useAgendaImageUrl(event.image_path);
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
@@ -57,10 +57,12 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const [deelnemersOpen, setDeelnemersOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [linking, setLinking] = useState(false);
 
   const isEvent = event.event_type === "evenement";
-  const upcoming = isUpcoming(event);
+  const cancelled = isCancelled(event);
+  const upcoming = isUpcoming(event) && !cancelled;
   const own = memberId != null ? registrations.find((r) => r.member_id === memberId) : undefined;
   const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
   const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
