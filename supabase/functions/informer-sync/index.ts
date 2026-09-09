@@ -1139,19 +1139,35 @@ async function ensureDebtorForMember(
   }
 
   const d = memberData ?? {};
+  const firstLocation = Array.isArray(d.locaties) ? (d.locaties[0] ?? {}) : {};
+  const addressLine = String(d.factuurAdres || d.adres || firstLocation.adres || "").trim();
+  const zip = String(d.factuurPostcode || d.postcode || firstLocation.postcode || "").trim();
+  const city = String(d.factuurPlaats || d.plaats || firstLocation.plaats || "").trim();
+  const addressMatch = addressLine.match(/^(.*?)[\s,]+(\d+[A-Za-z]?(?:[-\s]?\d+)?)$/);
+  const street = (addressMatch?.[1] ?? addressLine).trim();
+  const houseNumber = (addressMatch?.[2] ?? "").trim();
+
+  if (!street || !houseNumber || !zip || !city) {
+    return {
+      relationId: null,
+      created: false,
+      error: "debiteur aanmaken mislukt: adresgegevens (straat, huisnummer, postcode, plaats) ontbreken bij het lid",
+    };
+  }
+
   const body = {
     relation_number: String(memberId),
+    relation_type: "company",
     company_name: d.factuurBedrijfsnaam || d.bedrijfsnaam || d.naam || `Lid ${memberId}`,
-    name: d.factuurBedrijfsnaam || d.bedrijfsnaam || d.naam || `Lid ${memberId}`,
     email: d.factuurEmail || d.email || undefined,
     email_invoice: d.factuurEmail || d.email || undefined,
     phone: d.factuurTelefoon || d.telefoon || undefined,
-    address: d.factuurAdres || d.adres || undefined,
-    postcode: d.factuurPostcode || d.postcode || undefined,
-    city: d.factuurPlaats || d.plaats || undefined,
+    street,
+    house_number: houseNumber,
+    zip,
+    city,
     coc: d.factuurKvk || d.kvk || undefined,
     country: "NL",
-    is_debtor: true,
   };
 
   const call = await informerCall("/relations", { method: "POST", body: JSON.stringify(body) }, api_calls);
