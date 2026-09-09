@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { handleRpcAuthError } from "@/lib/invokeFunction";
 
 export type AgendaEventType = "bestuursvergadering" | "evenement";
 
