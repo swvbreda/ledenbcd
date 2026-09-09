@@ -1091,6 +1091,13 @@ async function _pullBankBalances(supabase: any): Promise<ActionResult> {
 // Contributiefactuur klaarzetten voor (nieuwe) leden
 // ---------------------------------------------------------------------------
 
+// Informer geeft bij POST-acties alleen een url terug (".../relations/xyLlj2").
+function informerIdFromUrl(url: unknown): string {
+  if (typeof url !== "string") return "";
+  const match = url.match(/\/([A-Za-z0-9_-]+)\/?$/);
+  return match?.[1] ?? "";
+}
+
 function proRataContribution(yearAmount: number, startMonth: number): number {
   const month = Math.min(Math.max(Math.round(startMonth), 1), 12);
   const months = 12 - month + 1;
