@@ -441,7 +441,54 @@ export function useAgendaMutations() {
     },
   });
 
-  return { saveEvent, deleteEvent, register, unregister, generateMeetings, syncTopical };
+  /** Annuleert een agenda-item en informeert desgewenst de aangemelde leden. */
+  const cancelEvent = useMutation({
+    mutationFn: async (input: {
+      id: string;
+      reason: string;
+      notify: boolean;
+    }): Promise<{ emailed: number }> => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("agenda_events" as any)
+        .update({
+          cancelled_at: new Date().toISOString(),
+          cancel_reason: input.reason.trim() || null,
+          cancelled_by: userData.user?.id ?? null,
+        } as any)
+        .eq("id", input.id);
+      if (error) throw error;
+
+      const emailed = input.notify
+        ? await sendCancellationEmails(input.id, input.reason.trim())
+        : 0;
+      return { emailed };
+    },
+    onSuccess: invalidate,
+  });
+
+  /** Maakt een annulering ongedaan. */
+  const uncancelEvent = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("agenda_events" as any)
+        .update({ cancelled_at: null, cancel_reason: null, cancelled_by: null } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  return {
+    saveEvent,
+    deleteEvent,
+    cancelEvent,
+    uncancelEvent,
+    register,
+    unregister,
+    generateMeetings,
+    syncTopical,
+  };
 }
 
 export const formatEventDate = (date: string) =>
