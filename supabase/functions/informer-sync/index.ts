@@ -1157,7 +1157,7 @@ async function ensureDebtorForMember(
 
   const body = {
     relation_number: String(memberId),
-    relation_type: "company",
+    relation_type: 1,
     company_name: d.factuurBedrijfsnaam || d.bedrijfsnaam || d.naam || `Lid ${memberId}`,
     email: d.factuurEmail || d.email || undefined,
     email_invoice: d.factuurEmail || d.email || undefined,
