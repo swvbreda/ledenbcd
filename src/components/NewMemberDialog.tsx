@@ -117,10 +117,14 @@ export default function NewMemberDialog({ type }: Props) {
               .split("{{plaats}}").join(plaats.trim());
           const { error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
             body: {
-              templateName: "member-welcome",
+              templateName: "member-welcome-steps",
               recipientEmail: email.trim(),
               idempotencyKey: `welcome-${type}-${nextId}`,
-              templateData: { subject: fill(tpl.subject), body: fill(tpl.body) },
+              templateData: {
+                subject: fill(tpl.subject),
+                body: fill(tpl.body),
+                showSteps: type === "member",
+              },
             },
           });
           if (mailErr) toast.error("Welkomstmail mislukt: " + mailErr.message);
