@@ -3277,6 +3277,10 @@ export type Database = {
       trigger_beleidsmonitor_sync: { Args: never; Returns: number }
       trigger_coffeeshopregister_sync: { Args: never; Returns: number }
       trigger_informer_sync: { Args: { _action?: string }; Returns: number }
+      trigger_prepare_contribution_invoices: {
+        Args: { _dry_run?: boolean; _member_id?: number }
+        Returns: number
+      }
       trigger_register_enrichment: { Args: never; Returns: number }
       trigger_register_enrichment_scoped: {
         Args: { _member_id?: number; _register_id?: string }
