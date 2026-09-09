@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Users, Video } from "lucide-react";
+import { Ban, CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Undo2, Users, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { handleRpcAuthError } from "@/lib/invokeFunction";
@@ -23,6 +23,7 @@ import {
   formatEventDate,
   formatTimeRange,
   isUpcoming,
+  isCancelled,
   type AgendaEvent,
   type AgendaRegistration,
 } from "@/hooks/useAgenda";
@@ -33,6 +34,7 @@ import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
 import AgendaShareButton from "./AgendaShareButton";
 import AgendaAnnounceDialog from "./AgendaAnnounceDialog";
+import AgendaCancelDialog from "./AgendaCancelDialog";
 
 
 interface Props {
