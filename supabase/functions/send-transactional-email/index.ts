@@ -414,6 +414,12 @@ Deno.serve(async (req) => {
 
   const textWithFooter = `${plainText}\n\n---\nUitschrijven: ${unsubscribeUrl}\n`
 
+  // Agenda-bijlage voor agenda-mails (alleen wanneer de aanroeper de gegevens meestuurt).
+  const icsContent =
+    templateData?.icsEvent && typeof templateData.icsEvent === 'object'
+      ? buildIcs(templateData.icsEvent as Record<string, any>)
+      : null
+
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: templateName,
