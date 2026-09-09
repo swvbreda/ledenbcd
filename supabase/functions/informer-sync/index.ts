@@ -1550,6 +1550,16 @@ Deno.serve(async (req) => {
   }
 
   // Read-only helper: haalt debiteuren op uit Informer, met bestaande koppelingen.
+  // Read-only diagnose: haalt een willekeurig Informer-GET-pad op (alleen intern).
+  if (action === "peek") {
+    const api_calls: ApiCall[] = [];
+    const path = url.searchParams.get("path") ?? "/invoices/sales?records=1&page=0";
+    const call = await informerCall(path, { method: "GET" }, api_calls);
+    return new Response(JSON.stringify({ success: call.ok, body: call.response_body }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
