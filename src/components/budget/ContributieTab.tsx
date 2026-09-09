@@ -16,6 +16,7 @@ import CsvImportDialog from "@/components/CsvImportDialog";
 import ContributionPdfUploadDialog from "@/components/budget/ContributionPdfUploadDialog";
 import { useBankStatement } from "@/hooks/useBudget";
 import FacturenOverzichtTab from "@/components/budget/FacturenOverzichtTab";
+import PrepareInvoicesDialog from "@/components/budget/PrepareInvoicesDialog";
 
 const FIXED_AMOUNT = 3000;
 
