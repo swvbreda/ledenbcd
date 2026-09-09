@@ -1087,6 +1087,324 @@ async function _pullBankBalances(supabase: any): Promise<ActionResult> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Contributiefactuur klaarzetten voor (nieuwe) leden
+// ---------------------------------------------------------------------------
+
+// Informer geeft bij POST-acties alleen een url terug (".../relations/xyLlj2").
+function informerIdFromUrl(url: unknown): string {
+  if (typeof url !== "string") return "";
+  const match = url.match(/\/([A-Za-z0-9_-]+)\/?$/);
+  return match?.[1] ?? "";
+}
+
+function proRataContribution(yearAmount: number, startMonth: number): number {
+  const month = Math.min(Math.max(Math.round(startMonth), 1), 12);
+  const months = 12 - month + 1;
+  return Math.round((yearAmount * months) / 12);
+}
+
+const MONTH_NAMES = [
+  "januari", "februari", "maart", "april", "mei", "juni",
+  "juli", "augustus", "september", "oktober", "november", "december",
+];
+
+type PrepareCandidate = {
+  member_id: number;
+  naam: string;
+  year: number;
+  start_month: number;
+  months: number;
+  amount: number;
+  invoice_number?: string | null;
+  status: "gepland" | "aangemaakt" | "mislukt";
+  error?: string;
+};
+
+async function ensureDebtorForMember(
+  supabase: any,
+  memberId: number,
+  memberData: any,
+  api_calls: ApiCall[],
+): Promise<{ relationId: string | null; created: boolean; error?: string }> {
+  const { data: mapRow } = await supabase
+    .from("informer_debtor_map")
+    .select("informer_debtor_id")
+    .eq("member_id", memberId)
+    .maybeSingle();
+  if (mapRow?.informer_debtor_id) return { relationId: String(mapRow.informer_debtor_id), created: false };
+
+  // Bestaat de relatie al in Informer met het lidnummer als relatienummer?
+  const existing = await fetchInformerRelationByNumber(String(memberId), api_calls);
+  const existingId = existing ? informerRelationId(existing) : "";
+  if (existingId) {
+    await supabase.from("informer_debtor_map").upsert(
+      { member_id: memberId, informer_debtor_id: existingId, matched_by: "auto_relation_number", updated_at: new Date().toISOString() },
+      { onConflict: "member_id" },
+    );
+    return { relationId: existingId, created: false };
+  }
+
+  const d = memberData ?? {};
+  const firstLocation = Array.isArray(d.locaties) ? (d.locaties[0] ?? {}) : {};
+  const addressLine = String(d.factuurAdres || d.adres || firstLocation.adres || "").trim();
+  const zip = String(d.factuurPostcode || d.postcode || firstLocation.postcode || "").trim();
+  const city = String(d.factuurPlaats || d.plaats || firstLocation.plaats || "").trim();
+  const addressMatch = addressLine.match(/^(.*?)[\s,]+(\d+[A-Za-z]?(?:[-\s]?\d+)?)$/);
+  const street = (addressMatch?.[1] ?? addressLine).trim();
+  const houseNumber = (addressMatch?.[2] ?? "").trim();
+
+  if (!street || !houseNumber || !zip || !city) {
+    return {
+      relationId: null,
+      created: false,
+      error: "debiteur aanmaken mislukt: adresgegevens (straat, huisnummer, postcode, plaats) ontbreken bij het lid",
+    };
+  }
+
+  const body = {
+    relation_number: String(memberId),
+    relation_type: 0,
+    company_name: d.factuurBedrijfsnaam || d.bedrijfsnaam || d.naam || `Lid ${memberId}`,
+    email: d.factuurEmail || d.email || undefined,
+    email_invoice: d.factuurEmail || d.email || undefined,
+    phone: d.factuurTelefoon || d.telefoon || undefined,
+    street,
+    house_number: houseNumber,
+    zip,
+    city,
+    coc: d.factuurKvk || d.kvk || undefined,
+    country: "NL",
+  };
+
+  const call = await informerCall("/relations", { method: "POST", body: JSON.stringify(body) }, api_calls);
+  const apiError = hasInformerError(call.response_body);
+  if (call.error || !call.ok || apiError) {
+    return {
+      relationId: null,
+      created: false,
+      error: `debiteur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`,
+    };
+  }
+  const created = firstInformerItem(call.response_body, ["relation", "relations", "data"]);
+  // Informer geeft bij een POST alleen { success, url: ".../relations/<id>" } terug.
+  const urlId = informerIdFromUrl((call.response_body as any)?.url);
+  let newId = informerRelationId(created) || String((call.response_body as any)?.id ?? "") || urlId;
+  if (!newId) {
+    const lookup = await fetchInformerRelationByNumber(String(memberId), api_calls);
+    newId = lookup ? informerRelationId(lookup) : "";
+  }
+  if (!newId) return { relationId: null, created: false, error: "debiteur aangemaakt maar geen relatie-id ontvangen" };
+
+  await supabase.from("informer_debtor_map").upsert(
+    { member_id: memberId, informer_debtor_id: newId, matched_by: "auto_created", updated_at: new Date().toISOString() },
+    { onConflict: "member_id" },
+  );
+  return { relationId: newId, created: true };
+}
+
+async function createDraftSalesInvoice(
+  relationId: string,
+  candidate: PrepareCandidate,
+  api_calls: ApiCall[],
+): Promise<{ invoiceNumber: string | null; externalId: string | null; date: string; error?: string }> {
+  const date = new Date().toISOString().slice(0, 10);
+  const description = candidate.months === 12
+    ? `Contributie ${candidate.year}`
+    : `Contributie ${candidate.year} (vanaf ${MONTH_NAMES[candidate.start_month - 1]}, ${candidate.months}/12)`;
+
+  // Standaardwaarden overgenomen van de bestaande contributiefacturen in Informer;
+  // via secrets te overschrijven als de administratie wijzigt.
+  const templateId = Number(Deno.env.get("INFORMER_TEMPLATE_ID") ?? 547800);
+  const paymentConditionId = Number(Deno.env.get("INFORMER_PAYMENT_CONDITION_ID") ?? 707750);
+  const currencyId = Number(Deno.env.get("INFORMER_CURRENCY_ID") ?? 126685);
+  const vatId = Number(Deno.env.get("INFORMER_VAT_ID") ?? 1485201);
+  const ledgerId = Number(Deno.env.get("INFORMER_LEDGER_ID") ?? 15391256);
+
+  const body = {
+    relation_id: relationId,
+    invoice_date: date,
+    template_id: templateId,
+    payment_condition_id: paymentConditionId,
+    currency_id: currencyId,
+    vat_option: "excl",
+    reference: `Contributie ${candidate.year}`,
+    lines: [
+      {
+        info: false,
+        qty: 1,
+        description,
+        amount: candidate.amount,
+        vat_id: vatId,
+        ledger_id: ledgerId,
+      },
+    ],
+  };
+
+  const call = await informerCall("/invoices/sales", { method: "POST", body: JSON.stringify(body) }, api_calls);
+  const apiError = hasInformerError(call.response_body);
+  if (call.error || !call.ok || apiError) {
+    return {
+      invoiceNumber: null, externalId: null, date,
+      error: `factuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`,
+    };
+  }
+  const inv = firstInformerItem(call.response_body, ["sales", "invoice", "invoices", "data"]) ?? call.response_body;
+  const invoiceNumber = (inv as any)?.invoice_number ?? (inv as any)?.number ?? null;
+  const externalId = (inv as any)?.id != null
+    ? String((inv as any).id)
+    : (informerIdFromUrl((call.response_body as any)?.url) || null);
+  return { invoiceNumber: invoiceNumber ? String(invoiceNumber) : null, externalId, date };
+}
+
+async function prepareInvoices(
+  supabase: any,
+  opts: { memberId?: number; dryRun: boolean },
+): Promise<ActionResult> {
+  const action = "prepare_invoices";
+  const api_calls: ApiCall[] = [];
+  try {
+    const year = new Date().getFullYear();
+    const { data: settings } = await supabase
+      .from("budget_year_settings")
+      .select("contribution_amount")
+      .eq("year", year)
+      .maybeSingle();
+    const yearAmount = Number(settings?.contribution_amount ?? 3000) || 3000;
+
+    let memberQuery = supabase.from("members_data").select("id, data").eq("member_type", "member");
+    if (opts.memberId) memberQuery = memberQuery.eq("id", opts.memberId);
+    const { data: members, error: memberErr } = await memberQuery;
+    if (memberErr) throw memberErr;
+
+    const { data: invoiceRows } = await supabase
+      .from("contribution_invoices")
+      .select("member_id")
+      .eq("year", year);
+    const invoiced = new Set<number>((invoiceRows ?? []).map((r: any) => Number(r.member_id)));
+
+    const { data: contribRows } = await supabase
+      .from("member_contributions")
+      .select("member_id, invoice_number")
+      .eq("year", year);
+    for (const r of (contribRows ?? [])) {
+      if (r.invoice_number) invoiced.add(Number(r.member_id));
+    }
+
+    // Startmaand: leden van vóór dit jaar betalen het volledige jaar; nieuwe
+    // leden vanaf de maand waarin hun aanmelding is binnengekomen.
+    const { data: todoRows } = await supabase
+      .from("finance_todos")
+      .select("member_id, created_at")
+      .eq("todo_type", "new_member_invoice")
+      .eq("year", year);
+    const firstTodoByMember = new Map<number, any>();
+    for (const t of (todoRows ?? [])) {
+      const key = Number(t.member_id);
+      const prev = firstTodoByMember.get(key);
+      if (!prev || new Date(t.created_at) < new Date(prev.created_at)) firstTodoByMember.set(key, t);
+    }
+
+    const candidates: PrepareCandidate[] = [];
+    for (const m of (members ?? [])) {
+      const memberId = Number(m.id);
+      if (invoiced.has(memberId)) continue;
+      const data = (m.data ?? {}) as any;
+      const lidSinds = Number(data.lidSinds ?? 0);
+      let startMonth = 1;
+      if (!lidSinds || lidSinds >= year) {
+        const todo = firstTodoByMember.get(memberId);
+        const ref = todo?.created_at ? new Date(todo.created_at) : new Date();
+        startMonth = ref.getFullYear() === year ? ref.getMonth() + 1 : 1;
+      }
+      const amount = proRataContribution(yearAmount, startMonth);
+      candidates.push({
+        member_id: memberId,
+        naam: data.naam ?? data.bedrijfsnaam ?? `Lid ${memberId}`,
+        year,
+        start_month: startMonth,
+        months: 12 - startMonth + 1,
+        amount,
+        status: "gepland",
+      });
+    }
+    candidates.sort((a, b) => a.member_id - b.member_id);
+
+    if (opts.dryRun) {
+      return {
+        action, success: true, items_processed: 0, api_calls,
+        details: { dry_run: true, year, year_amount: yearAmount, candidates },
+      };
+    }
+
+    let processed = 0;
+    const errors: string[] = [];
+    for (const candidate of candidates) {
+      const member = (members ?? []).find((m: any) => Number(m.id) === candidate.member_id);
+      const debtor = await ensureDebtorForMember(supabase, candidate.member_id, member?.data, api_calls);
+      if (!debtor.relationId) {
+        candidate.status = "mislukt";
+        candidate.error = debtor.error ?? "geen debiteur";
+        errors.push(`lid #${candidate.member_id}: ${candidate.error}`);
+        continue;
+      }
+
+      const invoice = await createDraftSalesInvoice(debtor.relationId, candidate, api_calls);
+      if (invoice.error) {
+        candidate.status = "mislukt";
+        candidate.error = invoice.error;
+        errors.push(`lid #${candidate.member_id}: ${invoice.error}`);
+        continue;
+      }
+
+      candidate.status = "aangemaakt";
+      candidate.invoice_number = invoice.invoiceNumber;
+
+      await supabase.from("member_contributions").upsert(
+        {
+          member_id: candidate.member_id,
+          year: candidate.year,
+          amount: candidate.amount,
+          paid: false,
+          invoice_number: invoice.invoiceNumber,
+          invoice_date: invoice.date,
+          external_invoice_id: invoice.externalId,
+        },
+        { onConflict: "member_id,year" },
+      );
+
+      await supabase.from("contribution_invoices").insert({
+        member_id: candidate.member_id,
+        year: candidate.year,
+        invoice_number: invoice.invoiceNumber,
+        amount: candidate.amount,
+        invoice_date: invoice.date,
+      });
+
+      await supabase
+        .from("finance_todos")
+        .update({ status: "done", completed_at: new Date().toISOString() })
+        .eq("todo_type", "new_member_invoice")
+        .eq("member_id", candidate.member_id)
+        .eq("year", candidate.year)
+        .eq("status", "pending");
+
+      processed++;
+    }
+
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: processed,
+      error_message: errors.join(" | ") || undefined,
+      details: { year, year_amount: yearAmount, candidates },
+      api_calls,
+    };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -1243,6 +1561,16 @@ Deno.serve(async (req) => {
   }
 
   // Read-only helper: haalt debiteuren op uit Informer, met bestaande koppelingen.
+  // Read-only diagnose: haalt een willekeurig Informer-GET-pad op (alleen intern).
+  if (action === "peek") {
+    const api_calls: ApiCall[] = [];
+    const path = url.searchParams.get("path") ?? "/invoices/sales?records=1&page=0";
+    const call = await informerCall(path, { method: "GET" }, api_calls);
+    return new Response(JSON.stringify({ success: call.ok, body: call.response_body }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   if (action === "list_debtors") {
     const api_calls: ApiCall[] = [];
     try {
@@ -1265,6 +1593,22 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+  }
+
+  // Contributiefacturen klaarzetten (concept) voor leden zonder factuur dit jaar.
+  if (action === "prepare_invoices") {
+    const memberParam = url.searchParams.get("member_id");
+    const memberId = memberParam ? Number(memberParam) : undefined;
+    const dryRun = ["1", "true", "yes"].includes((url.searchParams.get("dry_run") ?? "").toLowerCase());
+    const result = await prepareInvoices(supabase, {
+      memberId: Number.isInteger(memberId) && (memberId as number) > 0 ? memberId : undefined,
+      dryRun,
+    });
+    if (!dryRun) await logResult(supabase, result);
+    return new Response(JSON.stringify({ success: result.success, results: [result] }), {
+      status: result.success ? 200 : 207,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const results: ActionResult[] = [];
