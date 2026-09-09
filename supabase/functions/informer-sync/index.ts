@@ -1228,7 +1228,6 @@ async function createDraftSalesInvoice(
     payment_condition_id: paymentConditionId,
     currency_id: currencyId,
     vat_option: "excl",
-    concept: true,
     reference: `Contributie ${candidate.year}`,
     lines: [
       {
