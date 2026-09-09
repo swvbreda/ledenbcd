@@ -149,7 +149,8 @@ export default function ContributieTab({ year }: Props) {
         </Card>
       )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        <PrepareInvoicesDialog />
         <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setPdfDialogOpen(true)}>
           <FileText size={12} /> PDF uploaden
         </Button>
