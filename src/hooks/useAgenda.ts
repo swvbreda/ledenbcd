@@ -131,6 +131,56 @@ async function sendRegistrationConfirmation(args: {
   return sent > 0;
 }
 
+/** Informeert aangemelde leden dat een agenda-item is geannuleerd. */
+async function sendCancellationEmails(eventId: string, reason: string): Promise<number> {
+  const { data: ev } = await supabase
+    .from("agenda_events" as any)
+    .select("title, event_date, start_time, end_time, location")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!ev) return 0;
+
+  const { data: regs } = await supabase
+    .from("agenda_registrations" as any)
+    .select("member_id")
+    .eq("event_id", eventId);
+
+  const memberIds = [
+    ...new Set(
+      ((regs ?? []) as any[]).map((r) => r.member_id).filter((id): id is number => id != null),
+    ),
+  ];
+
+  const e = ev as any;
+  const templateData = {
+    eventTitle: e.title,
+    eventDate: formatEventDate(e.event_date),
+    eventTime: formatTimeRange(e.start_time, e.end_time),
+    location: e.location ?? "",
+    reason,
+    eventUrl: `${window.location.origin}/agenda`,
+  };
+
+  let sent = 0;
+  const seen = new Set<string>();
+  for (const memberId of memberIds) {
+    for (const recipientEmail of await memberEmails(memberId)) {
+      if (seen.has(recipientEmail)) continue;
+      seen.add(recipientEmail);
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "agenda-event-cancelled",
+          recipientEmail,
+          idempotencyKey: `agenda-cancel-${eventId}-${recipientEmail}`,
+          templateData,
+        },
+      });
+      if (!error) sent++;
+      else console.error("Annuleringsmail agenda mislukt:", error);
+    }
+  }
+  return sent;
+}
 
 /** Upload een afbeelding naar de agenda-bucket en geeft het pad terug. */
 export async function uploadAgendaImage(file: File) {
