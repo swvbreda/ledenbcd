@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CalendarDays, Clock, MapPin, Megaphone, Pencil, Trash2, Users, Video } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +172,10 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                     setLinking(true);
                     try {
                       const { data, error } = await (supabase as any).rpc("ensure_member_link");
-                      if (error) throw error;
+                      if (error) {
+                        if (handleRpcAuthError(error)) return;
+                        throw error;
+                      }
                       if ((data ?? 0) > 0) {
                         toast.success("Je account is gekoppeld — je kunt je nu aanmelden");
                         window.location.reload();

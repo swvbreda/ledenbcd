@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { handleRpcAuthError } from "@/lib/invokeFunction";
 
 export type AgendaEventType = "bestuursvergadering" | "evenement";
 
@@ -195,10 +196,19 @@ export function useAgendaBoardAttendance() {
   return useQuery({
     queryKey: ["agenda-board-attendance"],
     queryFn: async () => {
+      // Alleen bevragen met een geldige sessie; anders valt de client terug op
+      // de anon-rol en geeft de beveiligde functie 'permission denied'.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return [] as BoardAttendance[];
+
       const { data, error } = await supabase.rpc("get_agenda_board_attendance" as any);
-      if (error) throw error;
+      if (error) {
+        if (handleRpcAuthError(error)) return [] as BoardAttendance[];
+        throw error;
+      }
       return (data ?? []) as unknown as BoardAttendance[];
     },
+    retry: false,
   });
 }
 

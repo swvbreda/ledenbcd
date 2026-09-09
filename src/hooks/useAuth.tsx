@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { SESSION_EXPIRED_EVENT_NAME } from "@/lib/invokeFunction";
+import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 
 interface AuthContextType {
@@ -142,7 +142,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Ontbrekende ledenkoppeling automatisch herstellen op basis van het e-mailadres
     try {
-      await (supabase as any).rpc("ensure_member_link");
+      const { error: linkError } = await (supabase as any).rpc("ensure_member_link");
+      if (linkError && handleRpcAuthError(linkError)) return;
     } catch (e) {
       console.warn("ensure_member_link mislukt", e);
     }
