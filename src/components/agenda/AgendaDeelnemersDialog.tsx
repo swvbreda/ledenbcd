@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Minus, Pencil, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import {
+  CalendarCheck,
+  Check,
+  ChevronsUpDown,
+  Minus,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +96,7 @@ function Stepper({
 export default function AgendaDeelnemersDialog({ open, onOpenChange, event, registrations }: Props) {
   const { rawMembers, rawLeads } = useMembersData();
   const { data: boardMembers = [] } = useBoardMemberOptions();
-  const { register, unregister } = useAgendaMutations();
+  const { register, unregister, syncOutlook } = useAgendaMutations();
   const [selection, setSelection] = useState<Selection>(null);
   const [guests, setGuests] = useState(1);
   const [names, setNames] = useState<string[]>([""]);
