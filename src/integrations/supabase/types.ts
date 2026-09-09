@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       agenda_events: {
         Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -37,6 +40,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -58,6 +64,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -3139,6 +3148,8 @@ export type Database = {
       get_agenda_share: {
         Args: { _code: string }
         Returns: {
+          cancel_reason: string
+          cancelled_at: string
           end_time: string
           event_date: string
           event_type: string
