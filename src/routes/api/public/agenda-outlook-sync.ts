@@ -305,6 +305,32 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
               .eq("id", u.id);
           }
 
+          // Controle: staat de afspraak echt verzonden klaar bij Microsoft?
+          let verify: Record<string, unknown> | null = null;
+          if (outlookId) {
+            try {
+              const v = (await graph(
+                token,
+                "GET",
+                `/users/${encodeURIComponent(mailbox)}/events/${outlookId}?$select=isDraft,responseRequested,attendees`,
+              )) as {
+                isDraft?: boolean;
+                responseRequested?: boolean;
+                attendees?: { emailAddress?: { address?: string }; status?: { response?: string } }[];
+              };
+              verify = {
+                isDraft: v.isDraft ?? null,
+                responseRequested: v.responseRequested ?? null,
+                attendee_responses: (v.attendees ?? []).map((a) => [
+                  a.emailAddress?.address ?? "",
+                  a.status?.response ?? "",
+                ]),
+              };
+            } catch (e) {
+              verify = { verify_error: (e as Error).message };
+            }
+          }
+
           log["status"] = "success";
           log["finished_at"] = new Date().toISOString();
           log["details"] = {
@@ -312,6 +338,7 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
             outlook_event_id: outlookId,
             attendees: attendees.length,
             zonder_email: regUpdates.filter((u) => u.state === "no_email").length,
+            verify,
           };
           await supabaseAdmin.from("outlook_sync_log").insert(log as never);
 
