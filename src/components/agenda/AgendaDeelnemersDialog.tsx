@@ -585,6 +585,50 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                   </Popover>
                 </div>
 
+                {selection?.kind === "member" && (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs uppercase text-muted-foreground">
+                        Contactpersoon (ontvangt de bevestiging)
+                      </Label>
+                      <Select value={contactChoice} onValueChange={setContactChoice}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Kies een contactpersoon" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {memberContacts
+                            .filter((c) => c.email)
+                            .map((c) => (
+                              <SelectItem key={c.email} value={c.email}>
+                                {c.naam} — {c.email}
+                              </SelectItem>
+                            ))}
+                          <SelectItem value="__anders__">Iemand anders…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!selectedContact && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          value={customContactName}
+                          placeholder="Naam contactpersoon"
+                          className="bg-background"
+                          onChange={(e) => setCustomContactName(e.target.value)}
+                        />
+                        <Input
+                          type="email"
+                          value={customContactEmail}
+                          placeholder="naam@voorbeeld.nl"
+                          className="bg-background"
+                          onChange={(e) => setCustomContactEmail(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
+
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs uppercase text-muted-foreground">
