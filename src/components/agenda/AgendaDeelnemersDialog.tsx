@@ -265,8 +265,22 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
               </Button>
             )}
           </div>
-          {event.outlook_error && (
-            <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
+          {isAdmin && event.event_type === "evenement" && (
+            <>
+              {event.outlook_error ? (
+                <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
+              ) : event.outlook_synced_at ? (
+                <p className="pt-2 text-xs text-muted-foreground">
+                  Outlook: laatst bijgewerkt om{" "}
+                  {new Date(event.outlook_synced_at).toLocaleString("nl-NL", {
+                    day: "numeric",
+                    month: "long",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              ) : null}
+            </>
           )}
         </DialogHeader>
 
