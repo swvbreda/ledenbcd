@@ -384,6 +384,12 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                 )}
                               </p>
                             )}
+                            {editId !== r.id && (r.contact_name || r.contact_email) && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Bevestiging naar {r.contact_name}
+                                {r.contact_email ? ` (${r.contact_email})` : ""}
+                              </p>
+                            )}
                             {editId !== r.id && r.note && (
                               <p className="mt-1 text-xs text-muted-foreground">{r.note}</p>
                             )}
