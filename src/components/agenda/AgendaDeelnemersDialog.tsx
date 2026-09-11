@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarCheck,
   Check,
   ChevronsUpDown,
   Minus,
   Pencil,
   Plus,
-  RefreshCw,
   Search,
   Trash2,
   UserPlus,
@@ -105,7 +103,7 @@ function Stepper({
 export default function AgendaDeelnemersDialog({ open, onOpenChange, event, registrations }: Props) {
   const { rawMembers, rawLeads } = useMembersData();
   const { data: boardMembers = [] } = useBoardMemberOptions();
-  const { register, unregister, syncOutlook } = useAgendaMutations();
+  const { register, unregister } = useAgendaMutations();
   const { isAdmin } = useAuth();
   const [selection, setSelection] = useState<Selection>(null);
   const [guests, setGuests] = useState(1);
@@ -301,42 +299,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 {event.max_seats != null && ` van ${event.max_seats}`}
               </span>
             </span>
-            {isAdmin && event.event_type === "evenement" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-full"
-                disabled={syncOutlook.isPending}
-                onClick={() =>
-                  syncOutlook.mutate(event.id, {
-                    onSuccess: () =>
-                      toast.success("Outlook wordt bijgewerkt — de uitnodigingen volgen zo"),
-                    onError: (e: any) => toast.error(e?.message || "Bijwerken mislukt"),
-                  })
-                }
-              >
-                <RefreshCw className="mr-1.5 h-4 w-4" />
-                Outlook bijwerken
-              </Button>
-            )}
           </div>
-          {isAdmin && event.event_type === "evenement" && (
-            <>
-              {event.outlook_error ? (
-                <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
-              ) : event.outlook_synced_at ? (
-                <p className="pt-2 text-xs text-muted-foreground">
-                  Outlook: laatst bijgewerkt om{" "}
-                  {new Date(event.outlook_synced_at).toLocaleString("nl-NL", {
-                    day: "numeric",
-                    month: "long",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              ) : null}
-            </>
-          )}
         </DialogHeader>
 
         <ScrollArea className="max-h-[65vh]">
@@ -368,20 +331,11 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                               <span className="text-sm text-muted-foreground tabular-nums">
                                 {r.guests} pers.
                               </span>
-                              {event.event_type === "evenement" &&
-                                (r.outlook_state === "invited" ? (
-                                  <span
-                                    className="flex items-center gap-1 text-[10px] font-medium uppercase text-muted-foreground"
-                                    title={r.outlook_attendee_email ?? undefined}
-                                  >
-                                    <CalendarCheck className="h-3.5 w-3.5 text-primary" />
-                                    In Outlook
-                                  </span>
-                                ) : r.outlook_state === "no_email" ? (
-                                  <span className="text-[10px] font-medium uppercase text-destructive">
-                                    Geen e-mailadres
-                                  </span>
-                                ) : null)}
+                              {r.outlook_state === "no_email" && (
+                                <span className="text-[10px] font-medium uppercase text-destructive">
+                                  Geen e-mailadres
+                                </span>
+                              )}
                             </div>
                             {editId !== r.id && (
                               <p className="mt-1 text-sm text-muted-foreground">
