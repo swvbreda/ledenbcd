@@ -319,6 +319,72 @@ export function useBoardMemberOptions() {
   });
 }
 
+export interface MemberContactOption {
+  naam: string;
+  email: string;
+  functie: string | null;
+}
+
+/**
+ * Contactpersonen van één lid: de actuele lijst uit `member_edits` (indien
+ * aanwezig) aangevuld met e-mailadressen/functies uit `members_data`.
+ */
+export function useMemberContactOptions(memberId: number | null | undefined) {
+  return useQuery({
+    queryKey: ["member-contact-options", memberId ?? null],
+    enabled: memberId != null,
+    queryFn: async (): Promise<MemberContactOption[]> => {
+      const [mdRes, meRes] = await Promise.all([
+        supabase.from("members_data").select("data").eq("id", memberId as number).maybeSingle(),
+        supabase
+          .from("member_edits")
+          .select("data")
+          .eq("member_id", memberId as number)
+          .maybeSingle(),
+      ]);
+      const base = ((mdRes.data as any)?.data ?? {}) as any;
+      const edit = ((meRes.data as any)?.data ?? {}) as any;
+
+      const baseContacts: any[] = Array.isArray(base.contacten) ? base.contacten : [];
+      const editContacts: any[] = Array.isArray(edit.contacten) ? edit.contacten : [];
+      const source = editContacts.length ? editContacts : baseContacts;
+
+      const byName = new Map<string, any>();
+      for (const c of baseContacts) {
+        const n = (c?.naam ?? "").trim().toLowerCase();
+        if (n) byName.set(n, c);
+      }
+
+      const out: MemberContactOption[] = [];
+      const seen = new Set<string>();
+      for (const c of source) {
+        const naam = (c?.naam ?? "").trim();
+        if (!naam) continue;
+        const fallback = byName.get(naam.toLowerCase()) ?? {};
+        const email = ((c?.email ?? "").trim() || (fallback.email ?? "").trim()).toLowerCase();
+        const key = `${naam.toLowerCase()}|${email}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          naam,
+          email,
+          functie: ((c?.functie ?? "").trim() || (fallback.functie ?? "").trim()) || null,
+        });
+      }
+
+      // Hoofd-e-mailadres van het lid als extra keuze, als het nog niet voorkomt.
+      const mainEmail = ((edit.email ?? base.email ?? "") as string).trim().toLowerCase();
+      const mainName = ((edit.contactpersoon ?? base.contactpersoon ?? "") as string).trim();
+      if (mainEmail && !out.some((o) => o.email === mainEmail)) {
+        out.push({ naam: mainName || mainEmail, email: mainEmail, functie: null });
+      }
+      return out;
+    },
+  });
+}
+
+
+
 export function useAgendaMutations() {
   const qc = useQueryClient();
   const invalidate = () => {
