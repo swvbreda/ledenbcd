@@ -481,7 +481,31 @@ export function useAgendaMutations() {
       const contactName = (input.contact_name ?? "").trim() || null;
       const contactEmail = (input.contact_email ?? "").trim().toLowerCase() || null;
       const { data: userData } = await supabase.auth.getUser();
+      const signature = (r: {
+        guests: number;
+        note: string | null;
+        attendee_names: string[];
+        contact_name: string | null;
+        contact_email: string | null;
+      }) =>
+        JSON.stringify([
+          r.guests,
+          (r.note ?? "").trim(),
+          r.attendee_names,
+          (r.contact_name ?? "").trim().toLowerCase(),
+          (r.contact_email ?? "").trim().toLowerCase(),
+        ]);
+
       if (input.id) {
+        // Alleen mailen wanneer er inhoudelijk iets verandert.
+        const { data: before } = await supabase
+          .from("agenda_registrations" as any)
+          .select(
+            "member_id, board_member_id, guests, note, attendee_names, contact_name, contact_email",
+          )
+          .eq("id", input.id)
+          .maybeSingle();
+
         const { error } = await supabase
           .from("agenda_registrations" as any)
           .update({
@@ -493,7 +517,39 @@ export function useAgendaMutations() {
           } as any)
           .eq("id", input.id);
         if (error) throw error;
-        return { emailed: false };
+
+        const prev = before as any;
+        if (!prev) return { emailed: false };
+        const beforeSig = signature({
+          guests: prev.guests,
+          note: prev.note ?? null,
+          attendee_names: (prev.attendee_names ?? []) as string[],
+          contact_name: prev.contact_name ?? null,
+          contact_email: prev.contact_email ?? null,
+        });
+        const afterSig = signature({
+          guests: input.guests,
+          note: input.note ?? null,
+          attendee_names: cleanNames,
+          contact_name: contactName,
+          contact_email: contactEmail,
+        });
+        if (beforeSig === afterSig) return { emailed: false };
+
+        const emailed = await sendRegistrationConfirmation({
+          registrationId: input.id,
+          eventId: input.event_id,
+          memberId: prev.member_id ?? input.member_id ?? null,
+          boardMemberId: prev.board_member_id ?? input.board_member_id ?? null,
+          guests: input.guests,
+          note: input.note ?? null,
+          attendeeNames: cleanNames,
+          contactName,
+          contactEmail,
+          mode: "updated",
+          changeKey: simpleHash(afterSig),
+        });
+        return { emailed };
       }
       const { data: created, error } = await supabase
         .from("agenda_registrations" as any)
@@ -512,17 +568,19 @@ export function useAgendaMutations() {
         .single();
       if (error) throw error;
 
-      if (input.board_member_id || !input.member_id) return { emailed: false };
+      if (!input.board_member_id && !input.member_id) return { emailed: false };
 
       const emailed = await sendRegistrationConfirmation({
         registrationId: (created as any)?.id as string,
         eventId: input.event_id,
-        memberId: input.member_id,
+        memberId: input.member_id ?? null,
+        boardMemberId: input.board_member_id ?? null,
         guests: input.guests,
         note: input.note ?? null,
         attendeeNames: cleanNames,
         contactName,
         contactEmail,
+        mode: "new",
       });
       return { emailed };
     },
