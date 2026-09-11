@@ -250,7 +250,22 @@ async function sendCancellationEmails(eventId: string, reason: string): Promise<
           templateName: "agenda-event-cancelled",
           recipientEmail,
           idempotencyKey: `agenda-cancel-${eventId}-${recipientEmail}`,
-          templateData,
+          templateData: {
+            ...templateData,
+            // Annulering ook als agenda-update, zodat het item uit de agenda verdwijnt.
+            icsEvent: {
+              uid: eventId,
+              method: "CANCEL",
+              sequence: 2,
+              title: e.title,
+              date: e.event_date,
+              start: e.start_time,
+              end: e.end_time,
+              location: e.location ?? "",
+              description: reason,
+              attendeeEmail: recipientEmail,
+            },
+          },
         },
       });
       if (!error) sent++;
