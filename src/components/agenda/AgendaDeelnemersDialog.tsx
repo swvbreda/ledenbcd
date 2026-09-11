@@ -112,6 +112,31 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const [names, setNames] = useState<string[]>([""]);
   const [note, setNote] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [contactChoice, setContactChoice] = useState<string>("__anders__");
+  const [customContactName, setCustomContactName] = useState("");
+  const [customContactEmail, setCustomContactEmail] = useState("");
+
+  const selectedMemberId = selection?.kind === "member" ? selection.id : null;
+  const { data: memberContacts = [] } = useMemberContactOptions(selectedMemberId);
+  const selectedContact = memberContacts.find((c) => c.email === contactChoice) ?? null;
+  const contactName = selectedContact ? selectedContact.naam : customContactName.trim();
+  const contactEmail = selectedContact
+    ? selectedContact.email
+    : customContactEmail.trim().toLowerCase();
+
+  // Zodra een lid gekozen is, staat de eerste contactpersoon voorgeselecteerd.
+  useEffect(() => {
+    const first = memberContacts.find((c) => c.email);
+    setContactChoice(first ? first.email : "__anders__");
+    setCustomContactName("");
+    setCustomContactEmail("");
+  }, [selectedMemberId, memberContacts.length]);
+
+  // De naam van de contactpersoon vult automatisch het eerste naamveld.
+  useEffect(() => {
+    if (!contactName) return;
+    setNames((prev) => prev.map((v, i) => (i === 0 && !v.trim() ? contactName : v)));
+  }, [contactName]);
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editGuests, setEditGuests] = useState(1);
