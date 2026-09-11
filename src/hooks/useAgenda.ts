@@ -173,16 +173,6 @@ async function sendRegistrationConfirmation(args: {
     note: args.note ?? "",
     description: e.description ?? "",
     eventUrl: `${window.location.origin}/agenda`,
-    // Agendabijlage (.ics) zodat de deelnemer het item in zijn eigen agenda zet.
-    icsEvent: {
-      uid: args.eventId,
-      title: e.title,
-      date: e.event_date,
-      start: e.start_time,
-      end: e.end_time,
-      location: e.location ?? "",
-      description: e.description ?? "",
-    },
   };
 
   let sent = 0;
@@ -194,7 +184,23 @@ async function sendRegistrationConfirmation(args: {
         idempotencyKey: `agenda-reg-${args.registrationId}-${
           isUpdate ? `upd-${args.changeKey ?? ""}` : "new"
         }-${recipientEmail}`,
-        templateData,
+        templateData: {
+          ...templateData,
+          // Echte agenda-uitnodiging (.ics) zodat het item in de eigen agenda komt.
+          icsEvent: {
+            uid: args.eventId,
+            method: "REQUEST",
+            sequence: isUpdate ? 1 : 0,
+            title: e.title,
+            date: e.event_date,
+            start: e.start_time,
+            end: e.end_time,
+            location: e.location ?? "",
+            description: e.description ?? "",
+            attendeeEmail: recipientEmail,
+            attendeeName: recipientName,
+          },
+        },
       },
     });
     if (!error) sent++;
