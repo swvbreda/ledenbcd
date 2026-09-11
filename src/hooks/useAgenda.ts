@@ -369,11 +369,15 @@ export function useAgendaMutations() {
       guests: number;
       note?: string | null;
       attendee_names?: string[] | null;
+      contact_name?: string | null;
+      contact_email?: string | null;
       id?: string;
     }): Promise<{ emailed: boolean }> => {
       const cleanNames = (input.attendee_names ?? [])
         .map((n) => n.trim())
         .filter((n) => n.length > 0);
+      const contactName = (input.contact_name ?? "").trim() || null;
+      const contactEmail = (input.contact_email ?? "").trim().toLowerCase() || null;
       const { data: userData } = await supabase.auth.getUser();
       if (input.id) {
         const { error } = await supabase
@@ -382,6 +386,8 @@ export function useAgendaMutations() {
             guests: input.guests,
             note: input.note ?? null,
             attendee_names: cleanNames,
+            contact_name: contactName,
+            contact_email: contactEmail,
           } as any)
           .eq("id", input.id);
         if (error) throw error;
@@ -396,6 +402,8 @@ export function useAgendaMutations() {
           guests: input.guests,
           note: input.note ?? null,
           attendee_names: cleanNames,
+          contact_name: contactName,
+          contact_email: contactEmail,
           registered_by: userData.user?.id ?? null,
         } as any)
         .select("id")
@@ -411,6 +419,8 @@ export function useAgendaMutations() {
         guests: input.guests,
         note: input.note ?? null,
         attendeeNames: cleanNames,
+        contactName,
+        contactEmail,
       });
       return { emailed };
     },
