@@ -35,11 +35,19 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useAgendaMutations,
   useBoardMemberOptions,
+  useMemberContactOptions,
   formatEventDate,
   type AgendaEvent,
   type AgendaRegistration,
