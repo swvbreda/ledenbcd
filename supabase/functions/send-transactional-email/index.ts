@@ -480,7 +480,7 @@ Deno.serve(async (req) => {
                 {
                   filename: 'agenda.ics',
                   content: btoa(unescape(encodeURIComponent(icsContent))),
-                  content_type: 'text/calendar; charset=utf-8; method=PUBLISH',
+                  content_type: `text/calendar; charset=utf-8; method=${icsMethod}`,
                 },
               ],
             }
