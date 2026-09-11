@@ -254,6 +254,9 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
             ...eventTimes(ev),
             attendees,
             allowNewTimeProposals: false,
+            // Zonder dit verstuurt Microsoft geen uitnodigingsmail naar de genodigden.
+            responseRequested: true,
+            isReminderOn: true,
           };
           if (ev.location) payload["location"] = { displayName: ev.location };
 
