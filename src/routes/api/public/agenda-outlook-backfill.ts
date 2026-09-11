@@ -125,23 +125,7 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
           outlook_event_id: string | null;
         }[]) {
           try {
-            // 1. Huidige staat bij Microsoft ophalen.
-            const current = (await graph(
-              token,
-              "GET",
-              `/users/${encodeURIComponent(mailbox)}/events/${ev.outlook_event_id}?$select=id,responseRequested,attendees`,
-            )) as {
-              responseRequested?: boolean;
-              attendees?: { status?: { response?: string } }[];
-            };
 
-            const anyResponse = (current.attendees ?? []).some(
-              (a) => (a.status?.response ?? "none") !== "none",
-            );
-            if (current.responseRequested === true && anyResponse) {
-              results.push({ event: ev.title, skipped: "uitnodigingen al bezorgd" });
-              continue;
-            }
 
             // 2. Deelnemers opnieuw opbouwen uit de aanmeldingen.
             const { data: regs } = await supabaseAdmin
