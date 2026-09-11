@@ -227,17 +227,21 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
               continue;
             }
 
-            // 3. Oude afspraak weg, nieuwe afspraak mét uitnodigingsverzoek.
+            // 3. Oude afspraak weg, nieuwe afspraak als bevestiging.
+            const intro =
+              `<p>Je aanmelding voor <strong>${ev.title}</strong> is bevestigd. ` +
+              `Deze afspraak staat nu in je agenda.</p>`;
             const payload: Record<string, unknown> = {
-              subject: ev.title,
+              subject: `Bevestiging aanmelding — ${ev.title}`,
               body: {
                 contentType: "HTML",
-                content: (ev.description ?? "").replace(/\n/g, "<br/>"),
+                content: intro + (ev.description ?? "").replace(/\n/g, "<br/>"),
               },
               ...eventTimes(ev),
               attendees,
               allowNewTimeProposals: false,
-              responseRequested: true,
+              // Bevestiging, geen RSVP-vraag.
+              responseRequested: false,
               isReminderOn: true,
             };
             if (ev.location) payload["location"] = { displayName: ev.location };
