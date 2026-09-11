@@ -246,7 +246,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 {event.max_seats != null && ` van ${event.max_seats}`}
               </span>
             </span>
-            {event.event_type === "evenement" && (
+            {isAdmin && event.event_type === "evenement" && (
               <Button
                 variant="outline"
                 size="sm"
