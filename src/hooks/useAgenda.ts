@@ -62,6 +62,8 @@ export interface AgendaRegistration {
   guests: number;
   note: string | null;
   attendee_names: string[] | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
   registered_by: string | null;
   outlook_attendee_email?: string | null;
   outlook_state?: string | null;
@@ -101,6 +103,8 @@ async function sendRegistrationConfirmation(args: {
   guests: number;
   note: string | null;
   attendeeNames?: string[] | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
@@ -109,12 +113,15 @@ async function sendRegistrationConfirmation(args: {
     .maybeSingle();
   if (!ev) return false;
 
-  const recipients = await memberEmails(args.memberId);
+  // Is er een contactpersoon gekozen, dan gaat de bevestiging alleen daarheen.
+  const chosen = (args.contactEmail ?? "").trim().toLowerCase();
+  const recipients = chosen ? [chosen] : await memberEmails(args.memberId);
   if (recipients.length === 0) return false;
 
   const e = ev as any;
   const templateData = {
     eventTitle: e.title,
+    recipientName: (args.contactName ?? "").trim(),
     eventDate: formatEventDate(e.event_date),
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
@@ -312,6 +319,72 @@ export function useBoardMemberOptions() {
   });
 }
 
+export interface MemberContactOption {
+  naam: string;
+  email: string;
+  functie: string | null;
+}
+
+/**
+ * Contactpersonen van één lid: de actuele lijst uit `member_edits` (indien
+ * aanwezig) aangevuld met e-mailadressen/functies uit `members_data`.
+ */
+export function useMemberContactOptions(memberId: number | null | undefined) {
+  return useQuery({
+    queryKey: ["member-contact-options", memberId ?? null],
+    enabled: memberId != null,
+    queryFn: async (): Promise<MemberContactOption[]> => {
+      const [mdRes, meRes] = await Promise.all([
+        supabase.from("members_data").select("data").eq("id", memberId as number).maybeSingle(),
+        supabase
+          .from("member_edits")
+          .select("data")
+          .eq("member_id", memberId as number)
+          .maybeSingle(),
+      ]);
+      const base = ((mdRes.data as any)?.data ?? {}) as any;
+      const edit = ((meRes.data as any)?.data ?? {}) as any;
+
+      const baseContacts: any[] = Array.isArray(base.contacten) ? base.contacten : [];
+      const editContacts: any[] = Array.isArray(edit.contacten) ? edit.contacten : [];
+      const source = editContacts.length ? editContacts : baseContacts;
+
+      const byName = new Map<string, any>();
+      for (const c of baseContacts) {
+        const n = (c?.naam ?? "").trim().toLowerCase();
+        if (n) byName.set(n, c);
+      }
+
+      const out: MemberContactOption[] = [];
+      const seen = new Set<string>();
+      for (const c of source) {
+        const naam = (c?.naam ?? "").trim();
+        if (!naam) continue;
+        const fallback = byName.get(naam.toLowerCase()) ?? {};
+        const email = ((c?.email ?? "").trim() || (fallback.email ?? "").trim()).toLowerCase();
+        const key = `${naam.toLowerCase()}|${email}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          naam,
+          email,
+          functie: ((c?.functie ?? "").trim() || (fallback.functie ?? "").trim()) || null,
+        });
+      }
+
+      // Hoofd-e-mailadres van het lid als extra keuze, als het nog niet voorkomt.
+      const mainEmail = ((edit.email ?? base.email ?? "") as string).trim().toLowerCase();
+      const mainName = ((edit.contactpersoon ?? base.contactpersoon ?? "") as string).trim();
+      if (mainEmail && !out.some((o) => o.email === mainEmail)) {
+        out.push({ naam: mainName || mainEmail, email: mainEmail, functie: null });
+      }
+      return out;
+    },
+  });
+}
+
+
+
 export function useAgendaMutations() {
   const qc = useQueryClient();
   const invalidate = () => {
@@ -362,11 +435,15 @@ export function useAgendaMutations() {
       guests: number;
       note?: string | null;
       attendee_names?: string[] | null;
+      contact_name?: string | null;
+      contact_email?: string | null;
       id?: string;
     }): Promise<{ emailed: boolean }> => {
       const cleanNames = (input.attendee_names ?? [])
         .map((n) => n.trim())
         .filter((n) => n.length > 0);
+      const contactName = (input.contact_name ?? "").trim() || null;
+      const contactEmail = (input.contact_email ?? "").trim().toLowerCase() || null;
       const { data: userData } = await supabase.auth.getUser();
       if (input.id) {
         const { error } = await supabase
@@ -375,6 +452,8 @@ export function useAgendaMutations() {
             guests: input.guests,
             note: input.note ?? null,
             attendee_names: cleanNames,
+            contact_name: contactName,
+            contact_email: contactEmail,
           } as any)
           .eq("id", input.id);
         if (error) throw error;
@@ -389,6 +468,8 @@ export function useAgendaMutations() {
           guests: input.guests,
           note: input.note ?? null,
           attendee_names: cleanNames,
+          contact_name: contactName,
+          contact_email: contactEmail,
           registered_by: userData.user?.id ?? null,
         } as any)
         .select("id")
@@ -404,6 +485,8 @@ export function useAgendaMutations() {
         guests: input.guests,
         note: input.note ?? null,
         attendeeNames: cleanNames,
+        contactName,
+        contactEmail,
       });
       return { emailed };
     },

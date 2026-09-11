@@ -35,11 +35,19 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useAgendaMutations,
   useBoardMemberOptions,
+  useMemberContactOptions,
   formatEventDate,
   type AgendaEvent,
   type AgendaRegistration,
@@ -104,6 +112,31 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const [names, setNames] = useState<string[]>([""]);
   const [note, setNote] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [contactChoice, setContactChoice] = useState<string>("__anders__");
+  const [customContactName, setCustomContactName] = useState("");
+  const [customContactEmail, setCustomContactEmail] = useState("");
+
+  const selectedMemberId = selection?.kind === "member" ? selection.id : null;
+  const { data: memberContacts = [] } = useMemberContactOptions(selectedMemberId);
+  const selectedContact = memberContacts.find((c) => c.email === contactChoice) ?? null;
+  const contactName = selectedContact ? selectedContact.naam : customContactName.trim();
+  const contactEmail = selectedContact
+    ? selectedContact.email
+    : customContactEmail.trim().toLowerCase();
+
+  // Zodra een lid gekozen is, staat de eerste contactpersoon voorgeselecteerd.
+  useEffect(() => {
+    const first = memberContacts.find((c) => c.email);
+    setContactChoice(first ? first.email : "__anders__");
+    setCustomContactName("");
+    setCustomContactEmail("");
+  }, [selectedMemberId, memberContacts.length]);
+
+  // De naam van de contactpersoon vult automatisch het eerste naamveld.
+  useEffect(() => {
+    if (!contactName) return;
+    setNames((prev) => prev.map((v, i) => (i === 0 && !v.trim() ? contactName : v)));
+  }, [contactName]);
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editGuests, setEditGuests] = useState(1);
@@ -173,6 +206,16 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
       toast.error("Kies eerst een deelnemer");
       return;
     }
+    if (selection.kind === "member") {
+      if (!contactName) {
+        toast.error("Vul de naam in van de persoon die komt");
+        return;
+      }
+      if (!contactEmail) {
+        toast.error("Vul een e-mailadres in voor de bevestiging");
+        return;
+      }
+    }
     register.mutate(
       {
         event_id: event.id,
@@ -181,12 +224,14 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         guests,
         note: note.trim() || null,
         attendee_names: names,
+        contact_name: selection.kind === "member" ? contactName : null,
+        contact_email: selection.kind === "member" ? contactEmail : null,
       },
       {
         onSuccess: (res) => {
           toast.success(
             res?.emailed
-              ? "Aangemeld — bevestiging verstuurd"
+              ? `Aangemeld — bevestiging verstuurd naar ${contactEmail}`
               : "Aangemeld (geen bevestigingsmail verstuurd)",
           );
           resetForm();
@@ -337,6 +382,12 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                 ) : (
                                   <span className="italic">Geen namen ingevuld</span>
                                 )}
+                              </p>
+                            )}
+                            {editId !== r.id && (r.contact_name || r.contact_email) && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Bevestiging naar {r.contact_name}
+                                {r.contact_email ? ` (${r.contact_email})` : ""}
                               </p>
                             )}
                             {editId !== r.id && r.note && (
@@ -539,6 +590,50 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                     </PopoverContent>
                   </Popover>
                 </div>
+
+                {selection?.kind === "member" && (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs uppercase text-muted-foreground">
+                        Contactpersoon (ontvangt de bevestiging)
+                      </Label>
+                      <Select value={contactChoice} onValueChange={setContactChoice}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Kies een contactpersoon" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {memberContacts
+                            .filter((c) => c.email)
+                            .map((c) => (
+                              <SelectItem key={c.email} value={c.email}>
+                                {c.naam} — {c.email}
+                              </SelectItem>
+                            ))}
+                          <SelectItem value="__anders__">Iemand anders…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!selectedContact && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          value={customContactName}
+                          placeholder="Naam contactpersoon"
+                          className="bg-background"
+                          onChange={(e) => setCustomContactName(e.target.value)}
+                        />
+                        <Input
+                          type="email"
+                          value={customContactEmail}
+                          placeholder="naam@voorbeeld.nl"
+                          className="bg-background"
+                          onChange={(e) => setCustomContactEmail(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-1.5">

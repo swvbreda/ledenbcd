@@ -7,6 +7,7 @@ import type { TemplateEntry } from './registry.ts'
 
 interface Props {
   siteName?: string
+  recipientName?: string
   eventTitle?: string
   eventDate?: string
   eventTime?: string
@@ -27,6 +28,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 
 const AgendaRegistrationConfirmation = ({
   siteName = 'Bond van Cannabisdetaillisten (BCD)',
+  recipientName,
   eventTitle = 'Agenda-item',
   eventDate,
   eventTime,
@@ -44,9 +46,13 @@ const AgendaRegistrationConfirmation = ({
       <Container style={container}>
         <Heading style={h1}>Aanmelding bevestigd</Heading>
         <Text style={text}>
+          {(recipientName || '').trim() ? `Beste ${String(recipientName).trim()},` : 'Beste lid,'}
+        </Text>
+        <Text style={text}>
           Je aanmelding voor <strong>{eventTitle}</strong> is ontvangen. Hieronder vind je de
           gegevens.
         </Text>
+
 
         <Section style={card}>
           {eventDate ? <Row label="Datum" value={eventDate} /> : null}
@@ -95,6 +101,7 @@ export const template = {
     `Aanmelding bevestigd: ${data.eventTitle || 'agenda-item'}`,
   displayName: 'Bevestiging aanmelding agenda',
   previewData: {
+    recipientName: 'Sander Roos',
     eventTitle: 'Open dag Tweede Kamer',
     eventDate: 'zaterdag 12 september 2026',
     eventTime: '11:00 – 16:00',
