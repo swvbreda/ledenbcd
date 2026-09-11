@@ -245,17 +245,20 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           }
 
           // --- Afspraak aanmaken of bijwerken ---------------------------------
+          const intro =
+            `<p>Je aanmelding voor <strong>${ev.title}</strong> is bevestigd. ` +
+            `Deze afspraak staat nu in je agenda.</p>`;
           const payload: Record<string, unknown> = {
-            subject: ev.title,
+            subject: `Bevestiging aanmelding — ${ev.title}`,
             body: {
               contentType: "HTML",
-              content: (ev.description ?? "").replace(/\n/g, "<br/>"),
+              content: intro + (ev.description ?? "").replace(/\n/g, "<br/>"),
             },
             ...eventTimes(ev),
             attendees,
             allowNewTimeProposals: false,
-            // Zonder dit verstuurt Microsoft geen uitnodigingsmail naar de genodigden.
-            responseRequested: true,
+            // Deelnemers hebben zich al aangemeld: bevestiging, geen RSVP-vraag.
+            responseRequested: false,
             isReminderOn: true,
           };
           if (ev.location) payload["location"] = { displayName: ev.location };
