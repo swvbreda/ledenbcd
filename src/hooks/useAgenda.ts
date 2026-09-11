@@ -121,6 +121,7 @@ async function sendRegistrationConfirmation(args: {
   const e = ev as any;
   const templateData = {
     eventTitle: e.title,
+    recipientName: (args.contactName ?? "").trim(),
     eventDate: formatEventDate(e.event_date),
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
