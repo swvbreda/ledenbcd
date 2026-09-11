@@ -102,6 +102,8 @@ export type Database = {
         Row: {
           attendee_names: string[]
           board_member_id: string | null
+          contact_email: string | null
+          contact_name: string | null
           created_at: string
           event_id: string
           guests: number
@@ -117,6 +119,8 @@ export type Database = {
         Insert: {
           attendee_names?: string[]
           board_member_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
           event_id: string
           guests?: number
@@ -132,6 +136,8 @@ export type Database = {
         Update: {
           attendee_names?: string[]
           board_member_id?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
           created_at?: string
           event_id?: string
           guests?: number
