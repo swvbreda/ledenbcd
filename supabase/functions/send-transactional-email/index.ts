@@ -434,6 +434,9 @@ Deno.serve(async (req) => {
     templateData?.icsEvent && typeof templateData.icsEvent === 'object'
       ? buildIcs(templateData.icsEvent as Record<string, any>)
       : null
+  const icsMethod = String(
+    (templateData?.icsEvent as Record<string, any> | undefined)?.method ?? 'REQUEST',
+  ).toUpperCase()
 
   await supabase.from('email_send_log').insert({
     message_id: messageId,
