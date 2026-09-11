@@ -101,6 +101,7 @@ export const template = {
     `Aanmelding bevestigd: ${data.eventTitle || 'agenda-item'}`,
   displayName: 'Bevestiging aanmelding agenda',
   previewData: {
+    recipientName: 'Sander Roos',
     eventTitle: 'Open dag Tweede Kamer',
     eventDate: 'zaterdag 12 september 2026',
     eventTime: '11:00 – 16:00',
