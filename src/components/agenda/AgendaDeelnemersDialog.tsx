@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useAuth } from "@/hooks/useAuth";
 import {
   useAgendaMutations,
   useBoardMemberOptions,
