@@ -113,7 +113,9 @@ const AgendaRegistrationConfirmation = ({
 export const template = {
   component: AgendaRegistrationConfirmation,
   subject: (data: Record<string, any>) =>
-    `Aanmelding bevestigd: ${data.eventTitle || 'agenda-item'}`,
+    `${data.isUpdate ? 'Aanmelding bijgewerkt' : 'Aanmelding bevestigd'}: ${
+      data.eventTitle || 'agenda-item'
+    }`,
   displayName: 'Bevestiging aanmelding agenda',
   previewData: {
     recipientName: 'Sander Roos',
