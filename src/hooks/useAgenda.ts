@@ -62,6 +62,8 @@ export interface AgendaRegistration {
   guests: number;
   note: string | null;
   attendee_names: string[] | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
   registered_by: string | null;
   outlook_attendee_email?: string | null;
   outlook_state?: string | null;
@@ -101,6 +103,8 @@ async function sendRegistrationConfirmation(args: {
   guests: number;
   note: string | null;
   attendeeNames?: string[] | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
@@ -109,7 +113,9 @@ async function sendRegistrationConfirmation(args: {
     .maybeSingle();
   if (!ev) return false;
 
-  const recipients = await memberEmails(args.memberId);
+  // Is er een contactpersoon gekozen, dan gaat de bevestiging alleen daarheen.
+  const chosen = (args.contactEmail ?? "").trim().toLowerCase();
+  const recipients = chosen ? [chosen] : await memberEmails(args.memberId);
   if (recipients.length === 0) return false;
 
   const e = ev as any;
