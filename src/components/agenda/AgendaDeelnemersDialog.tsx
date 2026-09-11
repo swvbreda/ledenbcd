@@ -97,6 +97,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const { rawMembers, rawLeads } = useMembersData();
   const { data: boardMembers = [] } = useBoardMemberOptions();
   const { register, unregister, syncOutlook } = useAgendaMutations();
+  const { isAdmin } = useAuth();
   const [selection, setSelection] = useState<Selection>(null);
   const [guests, setGuests] = useState(1);
   const [names, setNames] = useState<string[]>([""]);
