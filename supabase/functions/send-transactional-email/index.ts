@@ -49,20 +49,35 @@ function buildIcs(ics: Record<string, any>): string | null {
       .replace(/\r?\n/g, '\\n')
   const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
 
+  const rawMethod = String(ics.method ?? 'REQUEST').toUpperCase()
+  const method = ['REQUEST', 'CANCEL', 'PUBLISH'].includes(rawMethod) ? rawMethod : 'REQUEST'
+  const organizerEmail = String(ics.organizerEmail ?? 'simone@coffeeshopbond.nl')
+  const organizerName = String(ics.organizerName ?? 'Bond van Cannabisdetaillisten')
+  const attendeeEmail = String(ics.attendeeEmail ?? '')
+  const attendeeName = String(ics.attendeeName ?? attendeeEmail)
+  const sequence = Number.isFinite(Number(ics.sequence)) ? Number(ics.sequence) : 0
+
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//BCD//Ledenportaal//NL',
     'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
+    `METHOD:${method}`,
     'BEGIN:VEVENT',
     `UID:${esc(ics.uid ?? crypto.randomUUID())}@leden.coffeeshopbond.nl`,
     `DTSTAMP:${now}`,
+    `SEQUENCE:${sequence}`,
     `DTSTART;TZID=Europe/Amsterdam:${stamp(date, start)}`,
     `DTEND;TZID=Europe/Amsterdam:${stamp(date, end)}`,
     `SUMMARY:${esc(ics.title)}`,
     ics.location ? `LOCATION:${esc(ics.location)}` : '',
     ics.description ? `DESCRIPTION:${esc(ics.description)}` : '',
+    `ORGANIZER;CN=${esc(organizerName)}:mailto:${organizerEmail}`,
+    attendeeEmail
+      ? `ATTENDEE;CN=${esc(attendeeName)};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${attendeeEmail}`
+      : '',
+    method === 'CANCEL' ? 'STATUS:CANCELLED' : 'STATUS:CONFIRMED',
+    'TRANSP:OPAQUE',
     'END:VEVENT',
     'END:VCALENDAR',
   ]
