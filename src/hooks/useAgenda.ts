@@ -182,7 +182,9 @@ async function sendRegistrationConfirmation(args: {
       body: {
         templateName: "agenda-registration-confirmation",
         recipientEmail,
-        idempotencyKey: `agenda-reg-${args.registrationId}-${recipientEmail}`,
+        idempotencyKey: `agenda-reg-${args.registrationId}-${
+          isUpdate ? `upd-${args.changeKey ?? ""}` : "new"
+        }-${recipientEmail}`,
         templateData,
       },
     });
