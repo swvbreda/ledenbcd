@@ -301,42 +301,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 {event.max_seats != null && ` van ${event.max_seats}`}
               </span>
             </span>
-            {isAdmin && event.event_type === "evenement" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-full"
-                disabled={syncOutlook.isPending}
-                onClick={() =>
-                  syncOutlook.mutate(event.id, {
-                    onSuccess: () =>
-                      toast.success("Outlook wordt bijgewerkt — de uitnodigingen volgen zo"),
-                    onError: (e: any) => toast.error(e?.message || "Bijwerken mislukt"),
-                  })
-                }
-              >
-                <RefreshCw className="mr-1.5 h-4 w-4" />
-                Outlook bijwerken
-              </Button>
-            )}
           </div>
-          {isAdmin && event.event_type === "evenement" && (
-            <>
-              {event.outlook_error ? (
-                <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
-              ) : event.outlook_synced_at ? (
-                <p className="pt-2 text-xs text-muted-foreground">
-                  Outlook: laatst bijgewerkt om{" "}
-                  {new Date(event.outlook_synced_at).toLocaleString("nl-NL", {
-                    day: "numeric",
-                    month: "long",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              ) : null}
-            </>
-          )}
         </DialogHeader>
 
         <ScrollArea className="max-h-[65vh]">
