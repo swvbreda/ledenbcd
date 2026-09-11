@@ -8,6 +8,7 @@ import type { TemplateEntry } from './registry.ts'
 interface Props {
   siteName?: string
   recipientName?: string
+  isUpdate?: boolean
   eventTitle?: string
   eventDate?: string
   eventTime?: string
