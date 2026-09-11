@@ -74,7 +74,10 @@ function buildIcs(ics: Record<string, any>): string | null {
     ics.description ? `DESCRIPTION:${esc(ics.description)}` : '',
     `ORGANIZER;CN=${esc(organizerName)}:mailto:${organizerEmail}`,
     attendeeEmail
-      ? `ATTENDEE;CN=${esc(attendeeName)};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${attendeeEmail}`
+      ? method === 'CANCEL'
+        ? `ATTENDEE;CN=${esc(attendeeName)};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE:mailto:${attendeeEmail}`
+        : // Deelnemer heeft zich al aangemeld: bevestigd in de agenda, geen RSVP-vraag.
+          `ATTENDEE;CN=${esc(attendeeName)};ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE:mailto:${attendeeEmail}`
       : '',
     method === 'CANCEL' ? 'STATUS:CANCELLED' : 'STATUS:CONFIRMED',
     'TRANSP:OPAQUE',
