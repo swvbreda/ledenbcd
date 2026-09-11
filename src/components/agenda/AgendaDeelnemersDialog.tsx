@@ -333,20 +333,11 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                               <span className="text-sm text-muted-foreground tabular-nums">
                                 {r.guests} pers.
                               </span>
-                              {event.event_type === "evenement" &&
-                                (r.outlook_state === "invited" ? (
-                                  <span
-                                    className="flex items-center gap-1 text-[10px] font-medium uppercase text-muted-foreground"
-                                    title={r.outlook_attendee_email ?? undefined}
-                                  >
-                                    <CalendarCheck className="h-3.5 w-3.5 text-primary" />
-                                    In Outlook
-                                  </span>
-                                ) : r.outlook_state === "no_email" ? (
-                                  <span className="text-[10px] font-medium uppercase text-destructive">
-                                    Geen e-mailadres
-                                  </span>
-                                ) : null)}
+                              {r.outlook_state === "no_email" && (
+                                <span className="text-[10px] font-medium uppercase text-destructive">
+                                  Geen e-mailadres
+                                </span>
+                              )}
                             </div>
                             {editId !== r.id && (
                               <p className="mt-1 text-sm text-muted-foreground">
