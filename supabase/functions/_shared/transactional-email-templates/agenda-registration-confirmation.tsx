@@ -8,6 +8,7 @@ import type { TemplateEntry } from './registry.ts'
 interface Props {
   siteName?: string
   recipientName?: string
+  isUpdate?: boolean
   eventTitle?: string
   eventDate?: string
   eventTime?: string
@@ -29,6 +30,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 const AgendaRegistrationConfirmation = ({
   siteName = 'Bond van Cannabisdetaillisten (BCD)',
   recipientName,
+  isUpdate,
   eventTitle = 'Agenda-item',
   eventDate,
   eventTime,
@@ -41,16 +43,29 @@ const AgendaRegistrationConfirmation = ({
 }: Props) => (
   <Html lang="nl" dir="ltr">
     <Head />
-    <Preview>{`Aanmelding bevestigd: ${eventTitle}`}</Preview>
+    <Preview>{`${
+      isUpdate ? 'Aanmelding bijgewerkt' : 'Aanmelding bevestigd'
+    }: ${eventTitle}`}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Aanmelding bevestigd</Heading>
+        <Heading style={h1}>
+          {isUpdate ? 'Aanmelding bijgewerkt' : 'Aanmelding bevestigd'}
+        </Heading>
         <Text style={text}>
           {(recipientName || '').trim() ? `Beste ${String(recipientName).trim()},` : 'Beste lid,'}
         </Text>
         <Text style={text}>
-          Je aanmelding voor <strong>{eventTitle}</strong> is ontvangen. Hieronder vind je de
-          gegevens.
+          {isUpdate ? (
+            <>
+              Je aanmelding voor <strong>{eventTitle}</strong> is bijgewerkt. Hieronder vind je de
+              actuele gegevens.
+            </>
+          ) : (
+            <>
+              Je aanmelding voor <strong>{eventTitle}</strong> is ontvangen. Hieronder vind je de
+              gegevens.
+            </>
+          )}
         </Text>
 
 
@@ -98,7 +113,9 @@ const AgendaRegistrationConfirmation = ({
 export const template = {
   component: AgendaRegistrationConfirmation,
   subject: (data: Record<string, any>) =>
-    `Aanmelding bevestigd: ${data.eventTitle || 'agenda-item'}`,
+    `${data.isUpdate ? 'Aanmelding bijgewerkt' : 'Aanmelding bevestigd'}: ${
+      data.eventTitle || 'agenda-item'
+    }`,
   displayName: 'Bevestiging aanmelding agenda',
   previewData: {
     recipientName: 'Sander Roos',

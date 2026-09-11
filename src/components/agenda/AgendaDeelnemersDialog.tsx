@@ -250,6 +250,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
 
   const saveEdit = () => {
     if (!editId) return;
+    const current = registrations.find((r) => r.id === editId);
     register.mutate(
       {
         id: editId,
@@ -257,10 +258,17 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         guests: editGuests,
         note: editNote.trim() || null,
         attendee_names: editNames,
+        // Contactpersoon blijft ongewijzigd bij het bijwerken van deze rij.
+        contact_name: current?.contact_name ?? null,
+        contact_email: current?.contact_email ?? null,
       },
       {
-        onSuccess: () => {
-          toast.success("Aanmelding bijgewerkt");
+        onSuccess: (res: any) => {
+          toast.success(
+            res?.emailed
+              ? "Aanmelding bijgewerkt — bericht verstuurd"
+              : "Aanmelding bijgewerkt",
+          );
           setEditId(null);
         },
         onError: (e: any) => toast.error(e?.message || "Wijzigen mislukt"),

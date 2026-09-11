@@ -95,16 +95,44 @@ async function memberEmails(memberId: number): Promise<string[]> {
   return [...emails];
 }
 
+/** Korte, stabiele hash voor idempotency keys. */
+function simpleHash(value: string): string {
+  let h = 0;
+  for (let i = 0; i < value.length; i++) {
+    h = (h * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36);
+}
+
+/** Zoekt het e-mailadres en de naam van een bestuurslid op. */
+async function boardMemberRecipient(
+  boardMemberId: string,
+): Promise<{ email: string; naam: string } | null> {
+  const { data } = await supabase
+    .from("board_members" as any)
+    .select("naam, email, bond_email")
+    .eq("id", boardMemberId)
+    .maybeSingle();
+  if (!data) return null;
+  const b = data as any;
+  const email = ((b.bond_email || b.email || "") as string).trim().toLowerCase();
+  if (!email) return null;
+  return { email, naam: ((b.naam ?? "") as string).trim() };
+}
+
 /** Stuurt de bevestigingsmail; geeft terug of er minstens één mail is verstuurd. */
 async function sendRegistrationConfirmation(args: {
   registrationId: string;
   eventId: string;
-  memberId: number;
+  memberId?: number | null;
+  boardMemberId?: string | null;
   guests: number;
   note: string | null;
   attendeeNames?: string[] | null;
   contactName?: string | null;
   contactEmail?: string | null;
+  mode?: "new" | "updated";
+  changeKey?: string;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
@@ -113,15 +141,30 @@ async function sendRegistrationConfirmation(args: {
     .maybeSingle();
   if (!ev) return false;
 
+  const isUpdate = args.mode === "updated";
+
   // Is er een contactpersoon gekozen, dan gaat de bevestiging alleen daarheen.
   const chosen = (args.contactEmail ?? "").trim().toLowerCase();
-  const recipients = chosen ? [chosen] : await memberEmails(args.memberId);
+  let recipients: string[] = [];
+  let recipientName = (args.contactName ?? "").trim();
+  if (chosen) {
+    recipients = [chosen];
+  } else if (args.boardMemberId) {
+    const b = await boardMemberRecipient(args.boardMemberId);
+    if (b) {
+      recipients = [b.email];
+      if (!recipientName) recipientName = b.naam;
+    }
+  } else if (args.memberId != null) {
+    recipients = await memberEmails(args.memberId);
+  }
   if (recipients.length === 0) return false;
 
   const e = ev as any;
   const templateData = {
     eventTitle: e.title,
-    recipientName: (args.contactName ?? "").trim(),
+    recipientName,
+    isUpdate,
     eventDate: formatEventDate(e.event_date),
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
@@ -148,7 +191,9 @@ async function sendRegistrationConfirmation(args: {
       body: {
         templateName: "agenda-registration-confirmation",
         recipientEmail,
-        idempotencyKey: `agenda-reg-${args.registrationId}-${recipientEmail}`,
+        idempotencyKey: `agenda-reg-${args.registrationId}-${
+          isUpdate ? `upd-${args.changeKey ?? ""}` : "new"
+        }-${recipientEmail}`,
         templateData,
       },
     });
@@ -445,7 +490,31 @@ export function useAgendaMutations() {
       const contactName = (input.contact_name ?? "").trim() || null;
       const contactEmail = (input.contact_email ?? "").trim().toLowerCase() || null;
       const { data: userData } = await supabase.auth.getUser();
+      const signature = (r: {
+        guests: number;
+        note: string | null;
+        attendee_names: string[];
+        contact_name: string | null;
+        contact_email: string | null;
+      }) =>
+        JSON.stringify([
+          r.guests,
+          (r.note ?? "").trim(),
+          r.attendee_names,
+          (r.contact_name ?? "").trim().toLowerCase(),
+          (r.contact_email ?? "").trim().toLowerCase(),
+        ]);
+
       if (input.id) {
+        // Alleen mailen wanneer er inhoudelijk iets verandert.
+        const { data: before } = await supabase
+          .from("agenda_registrations" as any)
+          .select(
+            "member_id, board_member_id, guests, note, attendee_names, contact_name, contact_email",
+          )
+          .eq("id", input.id)
+          .maybeSingle();
+
         const { error } = await supabase
           .from("agenda_registrations" as any)
           .update({
@@ -457,7 +526,39 @@ export function useAgendaMutations() {
           } as any)
           .eq("id", input.id);
         if (error) throw error;
-        return { emailed: false };
+
+        const prev = before as any;
+        if (!prev) return { emailed: false };
+        const beforeSig = signature({
+          guests: prev.guests,
+          note: prev.note ?? null,
+          attendee_names: (prev.attendee_names ?? []) as string[],
+          contact_name: prev.contact_name ?? null,
+          contact_email: prev.contact_email ?? null,
+        });
+        const afterSig = signature({
+          guests: input.guests,
+          note: input.note ?? null,
+          attendee_names: cleanNames,
+          contact_name: contactName,
+          contact_email: contactEmail,
+        });
+        if (beforeSig === afterSig) return { emailed: false };
+
+        const emailed = await sendRegistrationConfirmation({
+          registrationId: input.id,
+          eventId: input.event_id,
+          memberId: prev.member_id ?? input.member_id ?? null,
+          boardMemberId: prev.board_member_id ?? input.board_member_id ?? null,
+          guests: input.guests,
+          note: input.note ?? null,
+          attendeeNames: cleanNames,
+          contactName,
+          contactEmail,
+          mode: "updated",
+          changeKey: simpleHash(afterSig),
+        });
+        return { emailed };
       }
       const { data: created, error } = await supabase
         .from("agenda_registrations" as any)
@@ -476,17 +577,19 @@ export function useAgendaMutations() {
         .single();
       if (error) throw error;
 
-      if (input.board_member_id || !input.member_id) return { emailed: false };
+      if (!input.board_member_id && !input.member_id) return { emailed: false };
 
       const emailed = await sendRegistrationConfirmation({
         registrationId: (created as any)?.id as string,
         eventId: input.event_id,
-        memberId: input.member_id,
+        memberId: input.member_id ?? null,
+        boardMemberId: input.board_member_id ?? null,
         guests: input.guests,
         note: input.note ?? null,
         attendeeNames: cleanNames,
         contactName,
         contactEmail,
+        mode: "new",
       });
       return { emailed };
     },
