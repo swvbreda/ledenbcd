@@ -221,11 +221,14 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           const regUpdates: { id: string; email: string | null; state: string }[] = [];
 
           for (const r of rows) {
-            const email = r.board_member_id
-              ? emailByBoard.get(r.board_member_id) ?? null
-              : r.member_id != null
-                ? emailByMember.get(r.member_id) ?? null
-                : null;
+            const chosen = (r.contact_email ?? "").trim().toLowerCase();
+            const email = chosen
+              ? chosen
+              : r.board_member_id
+                ? emailByBoard.get(r.board_member_id) ?? null
+                : r.member_id != null
+                  ? emailByMember.get(r.member_id) ?? null
+                  : null;
             if (!email) {
               regUpdates.push({ id: r.id, email: null, state: "no_email" });
               continue;
@@ -234,8 +237,9 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
             if (seen.has(email)) continue;
             seen.add(email);
             const name =
-              (r.attendee_names ?? []).find((n) => n && n.trim()) ??
-              (r.board_member_id ? nameByBoard.get(r.board_member_id) : null) ??
+              (r.contact_name ?? "").trim() ||
+              (r.attendee_names ?? []).find((n) => n && n.trim()) ||
+              (r.board_member_id ? nameByBoard.get(r.board_member_id) : null) ||
               email;
             attendees.push({ emailAddress: { address: email, name }, type: "required" });
           }
