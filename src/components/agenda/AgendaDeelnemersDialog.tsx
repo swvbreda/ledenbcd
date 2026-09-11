@@ -206,6 +206,16 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
       toast.error("Kies eerst een deelnemer");
       return;
     }
+    if (selection.kind === "member") {
+      if (!contactName) {
+        toast.error("Vul de naam in van de persoon die komt");
+        return;
+      }
+      if (!contactEmail) {
+        toast.error("Vul een e-mailadres in voor de bevestiging");
+        return;
+      }
+    }
     register.mutate(
       {
         event_id: event.id,
@@ -214,12 +224,14 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         guests,
         note: note.trim() || null,
         attendee_names: names,
+        contact_name: selection.kind === "member" ? contactName : null,
+        contact_email: selection.kind === "member" ? contactEmail : null,
       },
       {
         onSuccess: (res) => {
           toast.success(
             res?.emailed
-              ? "Aangemeld — bevestiging verstuurd"
+              ? `Aangemeld — bevestiging verstuurd naar ${contactEmail}`
               : "Aangemeld (geen bevestigingsmail verstuurd)",
           );
           resetForm();
