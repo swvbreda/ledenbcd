@@ -56,8 +56,9 @@ async function graph(token: string, method: string, path: string, body?: unknown
   const text = await res.text();
   if (!res.ok) {
     if (res.status === 403 || text.includes("Access is denied")) {
+      console.error(`Outlook-agenda weigerde schrijven (${res.status}): ${text}`);
       throw new Error(
-        "Geen schrijfrechten op de Outlook-agenda. De Azure app-registratie heeft de permissie 'Calendars.ReadWrite' nodig (met admin consent).",
+        "Outlook-agenda geeft nog geen toestemming — de beheerder moet dit eenmalig goedkeuren.",
       );
     }
     throw new Error(`Graph ${method} ${path} -> ${res.status}: ${text}`);

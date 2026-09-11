@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { useAuth } from "@/hooks/useAuth";
 import {
   useAgendaMutations,
   useBoardMemberOptions,
@@ -97,6 +98,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const { rawMembers, rawLeads } = useMembersData();
   const { data: boardMembers = [] } = useBoardMemberOptions();
   const { register, unregister, syncOutlook } = useAgendaMutations();
+  const { isAdmin } = useAuth();
   const [selection, setSelection] = useState<Selection>(null);
   const [guests, setGuests] = useState(1);
   const [names, setNames] = useState<string[]>([""]);
@@ -246,7 +248,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 {event.max_seats != null && ` van ${event.max_seats}`}
               </span>
             </span>
-            {event.event_type === "evenement" && (
+            {isAdmin && event.event_type === "evenement" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -265,8 +267,22 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
               </Button>
             )}
           </div>
-          {event.outlook_error && (
-            <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
+          {isAdmin && event.event_type === "evenement" && (
+            <>
+              {event.outlook_error ? (
+                <p className="pt-2 text-xs text-destructive">Outlook: {event.outlook_error}</p>
+              ) : event.outlook_synced_at ? (
+                <p className="pt-2 text-xs text-muted-foreground">
+                  Outlook: laatst bijgewerkt om{" "}
+                  {new Date(event.outlook_synced_at).toLocaleString("nl-NL", {
+                    day: "numeric",
+                    month: "long",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              ) : null}
+            </>
           )}
         </DialogHeader>
 
