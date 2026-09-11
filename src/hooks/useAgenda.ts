@@ -95,16 +95,35 @@ async function memberEmails(memberId: number): Promise<string[]> {
   return [...emails];
 }
 
+/** Zoekt het e-mailadres en de naam van een bestuurslid op. */
+async function boardMemberRecipient(
+  boardMemberId: string,
+): Promise<{ email: string; naam: string } | null> {
+  const { data } = await supabase
+    .from("board_members" as any)
+    .select("naam, email, bond_email")
+    .eq("id", boardMemberId)
+    .maybeSingle();
+  if (!data) return null;
+  const b = data as any;
+  const email = ((b.bond_email || b.email || "") as string).trim().toLowerCase();
+  if (!email) return null;
+  return { email, naam: ((b.naam ?? "") as string).trim() };
+}
+
 /** Stuurt de bevestigingsmail; geeft terug of er minstens één mail is verstuurd. */
 async function sendRegistrationConfirmation(args: {
   registrationId: string;
   eventId: string;
-  memberId: number;
+  memberId?: number | null;
+  boardMemberId?: string | null;
   guests: number;
   note: string | null;
   attendeeNames?: string[] | null;
   contactName?: string | null;
   contactEmail?: string | null;
+  mode?: "new" | "updated";
+  changeKey?: string;
 }): Promise<boolean> {
   const { data: ev } = await supabase
     .from("agenda_events" as any)
@@ -113,15 +132,30 @@ async function sendRegistrationConfirmation(args: {
     .maybeSingle();
   if (!ev) return false;
 
+  const isUpdate = args.mode === "updated";
+
   // Is er een contactpersoon gekozen, dan gaat de bevestiging alleen daarheen.
   const chosen = (args.contactEmail ?? "").trim().toLowerCase();
-  const recipients = chosen ? [chosen] : await memberEmails(args.memberId);
+  let recipients: string[] = [];
+  let recipientName = (args.contactName ?? "").trim();
+  if (chosen) {
+    recipients = [chosen];
+  } else if (args.boardMemberId) {
+    const b = await boardMemberRecipient(args.boardMemberId);
+    if (b) {
+      recipients = [b.email];
+      if (!recipientName) recipientName = b.naam;
+    }
+  } else if (args.memberId != null) {
+    recipients = await memberEmails(args.memberId);
+  }
   if (recipients.length === 0) return false;
 
   const e = ev as any;
   const templateData = {
     eventTitle: e.title,
-    recipientName: (args.contactName ?? "").trim(),
+    recipientName,
+    isUpdate,
     eventDate: formatEventDate(e.event_date),
     eventTime: formatTimeRange(e.start_time, e.end_time),
     location: e.location ?? "",
