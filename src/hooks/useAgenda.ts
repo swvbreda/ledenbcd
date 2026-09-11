@@ -95,6 +95,15 @@ async function memberEmails(memberId: number): Promise<string[]> {
   return [...emails];
 }
 
+/** Korte, stabiele hash voor idempotency keys. */
+function simpleHash(value: string): string {
+  let h = 0;
+  for (let i = 0; i < value.length; i++) {
+    h = (h * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36);
+}
+
 /** Zoekt het e-mailadres en de naam van een bestuurslid op. */
 async function boardMemberRecipient(
   boardMemberId: string,
