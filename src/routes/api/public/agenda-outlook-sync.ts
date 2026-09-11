@@ -149,7 +149,7 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           // --- Deelnemers bepalen --------------------------------------------
           const { data: regs, error: regErr } = await supabaseAdmin
             .from("agenda_registrations")
-            .select("id, member_id, board_member_id, attendee_names")
+            .select("id, member_id, board_member_id, attendee_names, contact_name, contact_email")
             .eq("event_id", ev.id);
           if (regErr) throw regErr;
 
@@ -158,6 +158,8 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
             member_id: number | null;
             board_member_id: string | null;
             attendee_names: string[] | null;
+            contact_name: string | null;
+            contact_email: string | null;
           }[];
 
           const memberIds = [
