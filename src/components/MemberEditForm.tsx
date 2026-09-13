@@ -148,12 +148,14 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         );
         return cleaned.length ? cleaned : undefined;
       })(),
-      // Contactgegevens volgen altijd de actuele lijst: is die leeg, dan blijven
-      // er geen namen van verwijderde contactpersonen achter.
-      contactpersoon: contacten.length ? primaryContact?.naam ?? "" : "",
-      functie: contacten.length ? primaryContact?.functie ?? "" : "",
-      telefoon: contacten.length ? primaryContact?.telefoon ?? "" : "",
-      email: contacten.length ? primaryContact?.email ?? "" : "",
+      // Contactgegevens volgen de actuele lijst: is die leeg, dan blijven er geen
+      // namen van verwijderde contactpersonen achter. Zijn er wél contacten maar
+      // heeft de eerste geen e-mail/telefoon, dan blijft de bestaande waarde staan.
+      contactpersoon: contacten.length ? primaryContact?.naam?.trim() || member.contactpersoon || "" : "",
+      functie: contacten.length ? primaryContact?.functie?.trim() || member.functie || "" : "",
+      telefoon: contacten.length ? primaryContact?.telefoon?.trim() || member.telefoon || "" : "",
+      email: contacten.length ? primaryContact?.email?.trim() || member.email || "" : "",
+
       contacten,
       locaties: validLocaties,
       aantalLocaties: validLocaties.length,
