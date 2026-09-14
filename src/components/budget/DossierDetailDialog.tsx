@@ -190,7 +190,7 @@ export default function DossierDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl">
+        <DialogContent className="w-[min(96vw,72rem)] max-w-none overflow-hidden">
           <DialogHeader>
             <DialogTitle>{dossier}</DialogTitle>
             <DialogDescription>
