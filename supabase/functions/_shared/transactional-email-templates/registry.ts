@@ -28,4 +28,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'agenda-event-cancelled': agendaEventCancelled,
   'login-reminder': loginReminder,
   'extern-invite': externInvite,
+  'contact-details-changed': contactDetailsChanged,
 }
