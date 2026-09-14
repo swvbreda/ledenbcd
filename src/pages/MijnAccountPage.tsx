@@ -432,6 +432,68 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
   );
 }
 
+/**
+ * Stuurt het lid een bevestiging van de gewijzigde contactgegevens, met een
+ * agendabestand (.ics) zodat de wijziging in de eigen agenda kan worden gezet.
+ * Fouten worden alleen gelogd — het opslaan zelf is al gelukt.
+ */
+async function sendContactChangeConfirmation(
+  member: Member,
+  changes: { label: string; oud: string; nieuw: string }[],
+  newEmail: string,
+  pending: boolean,
+) {
+  if (changes.length === 0) return;
+  const recipient = (newEmail || member.email || "").trim();
+  if (!recipient) return;
+
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const start = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const endDate = new Date(now.getTime() + 15 * 60 * 1000);
+  const end = `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
+  const changedAt = now.toLocaleString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  try {
+    const { error } = await supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "contact-details-changed",
+        recipientEmail: recipient,
+        idempotencyKey: `contact-change-${member.id}-${date}-${start}`,
+        templateData: {
+          memberName: member.contactpersoon || member.naam || "",
+          changes,
+          changedAt,
+          pending,
+          loginUrl: "https://leden.coffeeshopbond.nl",
+          icsEvent: {
+            uid: `contact-change-${member.id}-${now.getTime()}`,
+            method: "PUBLISH",
+            title: "Gegevens gewijzigd — Ledenportaal BCD",
+            date,
+            start,
+            end,
+            description: changes
+              .map((c) => `${c.label}: ${c.oud || "leeg"} → ${c.nieuw || "leeg"}`)
+              .join("\n"),
+          },
+        },
+      },
+    });
+    if (error) console.error("Bevestigingsmail contactwijziging mislukt", error);
+  } catch (e) {
+    console.error("Bevestigingsmail contactwijziging mislukt", e);
+  }
+}
+
 // ── Profile Card ──
 function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const { user, isAdmin } = useAuth();
