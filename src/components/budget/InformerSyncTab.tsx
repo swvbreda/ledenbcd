@@ -278,6 +278,15 @@ export default function InformerSyncTab() {
                   ? formatDistanceToNow(new Date((state as any).last_ponto_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
               </div>
+              {docStatus && (
+                <div>
+                  Factuurbestanden:{" "}
+                  {docStatus.stored > 0
+                    ? `${docStatus.stored} van ${docStatus.checked} opgehaald`
+                    : `${docStatus.checked} facturen bekeken, Informer levert geen bestanden — handmatig uploaden blijft nodig`}
+                  {" "}({formatDistanceToNow(new Date(docStatus.runAt), { addSuffix: true, locale: nl })})
+                </div>
+              )}
               <div className="pt-1 text-[11px]">
                 Automatisch: bank 06:00 en 18:00, Informer 04:30 (dagelijks).
               </div>
