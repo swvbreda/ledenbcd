@@ -305,6 +305,9 @@ export default function InformerSyncTab() {
             <Button variant="outline" onClick={runBankSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Banksaldi
             </Button>
+            <Button variant="outline" onClick={runDocPull} disabled={syncing}>
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Facturen ophalen
+            </Button>
             <Button variant="outline" onClick={runPontoSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Live saldi
             </Button>
