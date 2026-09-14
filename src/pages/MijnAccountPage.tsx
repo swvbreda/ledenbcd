@@ -467,6 +467,15 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
       return;
     }
 
+    // Alleen contactgegevens (e-mail / telefoon) leiden tot een bevestiging.
+    const contactChanges: { label: string; oud: string; nieuw: string }[] = [];
+    if ("email" in editData) {
+      contactChanges.push({ label: "E-mailadres", oud: linkedMember.email || "", nieuw: editEmail2 });
+    }
+    if ("telefoon" in editData) {
+      contactChanges.push({ label: "Telefoonnummer", oud: linkedMember.telefoon || "", nieuw: editTelefoon });
+    }
+
     if (isAdmin) {
       // Admin: save directly
       const { data: existing } = await supabase
@@ -486,6 +495,7 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
       setSaving(false);
       if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
       toast.success("Gegevens opgeslagen");
+      void sendContactChangeConfirmation(linkedMember, contactChanges, editEmail2, false);
     } else {
       // Member: submit edit request
       const { error } = await supabase
@@ -494,6 +504,7 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
       setSaving(false);
       if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
       toast.success("Wijziging ingediend ter goedkeuring");
+      void sendContactChangeConfirmation(linkedMember, contactChanges, editEmail2, true);
     }
     setEditingProfile(false);
   };
