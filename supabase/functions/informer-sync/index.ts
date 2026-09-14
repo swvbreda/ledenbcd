@@ -222,17 +222,34 @@ async function fetchPurchaseInvoiceFile(externalId: string, inv: any): Promise<D
     `${INFORMER_BASE}/attachments?invoice_id=${id}`,
   );
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // Informer hanteert een aanvraaglimiet; bij een 429 kort wachten en opnieuw
+  // proberen, anders geeft elk volgend adres een limietfout in plaats van een
+  // echt antwoord.
+  const fetchWithRetry = async (url: string) => {
+    let res = await fetch(url, {
+      headers: { ...informerHeaders(), Accept: "application/pdf, application/json, */*" },
+    });
+    for (let i = 0; i < 3 && res.status === 429; i++) {
+      const retryAfter = Number(res.headers.get("retry-after"));
+      await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1500 * (i + 1));
+      res = await fetch(url, {
+        headers: { ...informerHeaders(), Accept: "application/pdf, application/json, */*" },
+      });
+    }
+    return res;
+  };
+
   const seen = new Set<string>();
   for (const url of candidates) {
     if (seen.has(url)) continue;
     seen.add(url);
     try {
-      const res = await fetch(url, {
-        headers: { ...informerHeaders(), Accept: "application/pdf, application/json, */*" },
-      });
+      const res = await fetchWithRetry(url);
       const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
       if (!res.ok) {
         attempts.push({ url: shortUrl(url), status: res.status });
+        await sleep(400);
         continue;
       }
       const buffer = new Uint8Array(await res.arrayBuffer());
