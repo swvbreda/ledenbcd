@@ -183,6 +183,41 @@ export default function InformerSyncTab() {
     [logs],
   );
 
+  // Uitkomst van de laatste poging om factuurbestanden bij Informer op te halen.
+  const docStatus = useMemo(() => {
+    const log = (logs ?? []).find(
+      (l: any) =>
+        (l.action === "pull_invoice_documents" || l.action === "pull_creditors") &&
+        l.details && (l.details as any).invoices_checked != null,
+    ) as any;
+    if (!log) return null;
+    const d = log.details as any;
+    return {
+      runAt: log.run_at as string,
+      checked: Number(d.invoices_checked ?? 0),
+      stored: Number(d.documents_stored ?? 0),
+    };
+  }, [logs]);
+
+  const runDocPull = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await invokeWithAuth("informer-sync?action=pull_invoice_documents", { method: "POST" });
+      if (error) throw new Error(error.message);
+      const r = ((data as any)?.results ?? [])[0];
+      const stored = r?.details?.documents_stored ?? 0;
+      const checked = r?.details?.invoices_checked ?? 0;
+      if (stored > 0) toast.success(`${stored} factuurbestand(en) opgehaald`);
+      else toast.info(`${checked} facturen bekeken, Informer levert geen bestanden`);
+      qc.invalidateQueries({ queryKey: ["informer_sync_log"] });
+      qc.invalidateQueries({ queryKey: ["expense_documents"] });
+    } catch (e) {
+      toast.error(`Facturen ophalen mislukt: ${(e as Error).message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="mt-4 space-y-4">
       {(staleSources.length > 0 || lastFailure) && (
