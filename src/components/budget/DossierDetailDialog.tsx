@@ -85,6 +85,7 @@ export default function DossierDetailDialog({
   onRemoveFromDossier,
 }: Props) {
   const { upload, remove, relink } = useExpenseDocumentActions();
+  const { save: saveSplits } = useDossierSplitActions();
   const [viewing, setViewing] = useState<ExpenseDocument | null>(null);
   const [uploadTarget, setUploadTarget] = useState<DossierMutation | null>(null);
   const [linking, setLinking] = useState<ExpenseDocument | null>(null);
