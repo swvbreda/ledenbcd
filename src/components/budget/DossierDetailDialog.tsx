@@ -14,6 +14,8 @@ import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import DossierInvoiceThumb, { useDocumentUrl } from "@/components/budget/DossierInvoiceThumb";
 import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
 import {
+  duplicateAllocationKeys,
+  useDossierSplitActions,
   useExpenseDocumentActions,
   type DossierMutation,
   type DossierEntry,
@@ -124,6 +126,18 @@ export default function DossierDetailDialog({
 
   const entryForDoc = (doc: ExpenseDocument) =>
     entries.find((e) => [e.key, ...(e.sources || []).map((s) => s.key)].includes(doc.entry_key));
+
+  const duplicates = useMemo(() => duplicateAllocationKeys(entries), [entries]);
+
+  const dropSplit = (e: DetailEntry) => {
+    saveSplits.mutate(
+      { entryKey: e.key, splits: (e.splits || []).filter((s) => s.dossier !== dossier), year },
+      {
+        onSuccess: () => toast.success("Toewijzing verwijderd"),
+        onError: (err: any) => toast.error(err?.message || "Verwijderen mislukt"),
+      },
+    );
+  };
 
   const totals = useMemo(() => {
     const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
