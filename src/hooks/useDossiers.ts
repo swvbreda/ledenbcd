@@ -75,6 +75,31 @@ export function groupByDossier(mutations: DossierMutation[]) {
   return map;
 }
 
+/**
+ * Vindt toewijzingen die hetzelfde factuurnummer binnen één dossier dubbel laten
+ * meetellen: een verdeeld deel van een betaling én een losse betaling met
+ * hetzelfde factuurnummer. Geeft de sleutels van de verdeelde regels terug.
+ */
+export function duplicateAllocationKeys(entries: { key: string; shared?: boolean; splits?: { dossier: string }[]; invoice: string; description: string; date: string | null; amount: number }[]): Set<string> {
+  const numbersOf = (e: { invoice: string; description: string }) =>
+    new Set([...invoiceNumbersIn(e.invoice), ...invoiceNumbersIn(e.description)].map((n) => n.toLowerCase()));
+  const flagged = new Set<string>();
+  for (const e of entries) {
+    const isSplit = (e.splits?.length || 0) > 0;
+    if (!isSplit) continue;
+    const mine = numbersOf(e);
+    if (mine.size === 0) continue;
+    for (const other of entries) {
+      if (other.key === e.key) continue;
+      if ((other.splits?.length || 0) > 0) continue;
+      for (const n of numbersOf(other)) {
+        if (mine.has(n)) flagged.add(e.key);
+      }
+    }
+  }
+  return flagged;
+}
+
 /** True als deze mutatie aan geen enkel dossier hangt (ook niet via een verdeling). */
 export function isUnassigned(m: DossierMutation) {
   return !m.dossier && (!m.splits || m.splits.length === 0);

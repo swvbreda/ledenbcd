@@ -183,6 +183,41 @@ export default function InformerSyncTab() {
     [logs],
   );
 
+  // Uitkomst van de laatste poging om factuurbestanden bij Informer op te halen.
+  const docStatus = useMemo(() => {
+    const log = (logs ?? []).find(
+      (l: any) =>
+        (l.action === "pull_invoice_documents" || l.action === "pull_creditors") &&
+        l.details && (l.details as any).invoices_checked != null,
+    ) as any;
+    if (!log) return null;
+    const d = log.details as any;
+    return {
+      runAt: log.run_at as string,
+      checked: Number(d.invoices_checked ?? 0),
+      stored: Number(d.documents_stored ?? 0),
+    };
+  }, [logs]);
+
+  const runDocPull = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await invokeWithAuth("informer-sync?action=pull_invoice_documents", { method: "POST" });
+      if (error) throw new Error(error.message);
+      const r = ((data as any)?.results ?? [])[0];
+      const stored = r?.details?.documents_stored ?? 0;
+      const checked = r?.details?.invoices_checked ?? 0;
+      if (stored > 0) toast.success(`${stored} factuurbestand(en) opgehaald`);
+      else toast.info(`${checked} facturen bekeken, Informer levert geen bestanden`);
+      qc.invalidateQueries({ queryKey: ["informer_sync_log"] });
+      qc.invalidateQueries({ queryKey: ["expense_documents"] });
+    } catch (e) {
+      toast.error(`Facturen ophalen mislukt: ${(e as Error).message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="mt-4 space-y-4">
       {(staleSources.length > 0 || lastFailure) && (
@@ -243,6 +278,15 @@ export default function InformerSyncTab() {
                   ? formatDistanceToNow(new Date((state as any).last_ponto_sync_at), { addSuffix: true, locale: nl })
                   : "nog niet gedraaid"}
               </div>
+              {docStatus && (
+                <div>
+                  Factuurbestanden:{" "}
+                  {docStatus.stored > 0
+                    ? `${docStatus.stored} van ${docStatus.checked} opgehaald`
+                    : `${docStatus.checked} facturen bekeken, Informer levert geen bestanden — handmatig uploaden blijft nodig`}
+                  {" "}({formatDistanceToNow(new Date(docStatus.runAt), { addSuffix: true, locale: nl })})
+                </div>
+              )}
               <div className="pt-1 text-[11px]">
                 Automatisch: bank 06:00 en 18:00, Informer 04:30 (dagelijks).
               </div>
@@ -260,6 +304,9 @@ export default function InformerSyncTab() {
             </Button>
             <Button variant="outline" onClick={runBankSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Banksaldi
+            </Button>
+            <Button variant="outline" onClick={runDocPull} disabled={syncing}>
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Facturen ophalen
             </Button>
             <Button variant="outline" onClick={runPontoSync} disabled={syncing}>
               <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Live saldi

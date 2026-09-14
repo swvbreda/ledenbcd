@@ -9,11 +9,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import DossierInvoiceThumb, { useDocumentUrl } from "@/components/budget/DossierInvoiceThumb";
 import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
 import {
+  duplicateAllocationKeys,
+  useDossierSplitActions,
   useExpenseDocumentActions,
   type DossierMutation,
   type DossierEntry,
@@ -83,6 +85,7 @@ export default function DossierDetailDialog({
   onRemoveFromDossier,
 }: Props) {
   const { upload, remove, relink } = useExpenseDocumentActions();
+  const { save: saveSplits } = useDossierSplitActions();
   const [viewing, setViewing] = useState<ExpenseDocument | null>(null);
   const [uploadTarget, setUploadTarget] = useState<DossierMutation | null>(null);
   const [linking, setLinking] = useState<ExpenseDocument | null>(null);
@@ -124,6 +127,18 @@ export default function DossierDetailDialog({
 
   const entryForDoc = (doc: ExpenseDocument) =>
     entries.find((e) => [e.key, ...(e.sources || []).map((s) => s.key)].includes(doc.entry_key));
+
+  const duplicates = useMemo(() => duplicateAllocationKeys(entries), [entries]);
+
+  const dropSplit = (e: DetailEntry) => {
+    saveSplits.mutate(
+      { entryKey: e.key, splits: (e.splits || []).filter((s) => s.dossier !== dossier), year },
+      {
+        onSuccess: () => toast.success("Toewijzing verwijderd"),
+        onError: (err: any) => toast.error(err?.message || "Verwijderen mislukt"),
+      },
+    );
+  };
 
   const totals = useMemo(() => {
     const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
@@ -190,7 +205,7 @@ export default function DossierDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl">
+        <DialogContent className="w-[min(96vw,72rem)] max-w-none overflow-hidden">
           <DialogHeader>
             <DialogTitle>{dossier}</DialogTitle>
             <DialogDescription>
@@ -199,7 +214,7 @@ export default function DossierDetailDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               { label: "Uitgaven", value: totals.out, cls: "text-destructive" },
               { label: "Inkomsten", value: totals.income, cls: "text-green-600" },
@@ -214,8 +229,15 @@ export default function DossierDetailDialog({
             ))}
           </div>
 
-          <ScrollArea className="max-h-[45vh] rounded-md border border-border">
-            <table className="w-full text-xs">
+          {duplicates.size > 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Let op: {duplicates.size} verdeeld deel telt hetzelfde factuurnummer mee als een losse betaling in dit
+              dossier. Controleer de gemarkeerde regels hieronder.
+            </div>
+          )}
+
+          <div className="max-h-[45vh] overflow-auto rounded-md border border-border">
+            <table className="w-full min-w-[64rem] text-xs">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr className="border-b border-border/60">
                   <th className="px-3 py-1.5 text-left font-medium">Factuurdatum</th>
@@ -234,7 +256,12 @@ export default function DossierDetailDialog({
                 {entries.map((e) => {
                   const docs = docsForEntry(e);
                   return (
-                    <tr key={e.key} className="group border-b border-border/30 hover:bg-muted/20">
+                    <tr
+                      key={e.key}
+                      className={`group border-b border-border/30 hover:bg-muted/20 ${
+                        duplicates.has(e.key) ? "bg-amber-50/70" : ""
+                      }`}
+                    >
                       <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.invoiceDate) || "—"}</td>
                       <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
                       <td className="px-3 py-1">{e.counterparty || "—"}</td>
@@ -248,6 +275,20 @@ export default function DossierDetailDialog({
                         )}
                         {e.note && (
                           <span className="block text-[10px] font-normal text-amber-600">{e.note}</span>
+                        )}
+                        {duplicates.has(e.key) && (
+                          <span className="mt-0.5 block text-[10px] font-normal text-amber-700">
+                            Dubbel: ook los betaald in dit dossier
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className="ml-1 underline"
+                                onClick={() => dropSplit(e)}
+                              >
+                                toewijzing verwijderen
+                              </button>
+                            )}
+                          </span>
                         )}
                       </td>
                       <td className="px-3 py-1 text-muted-foreground">
@@ -318,7 +359,7 @@ export default function DossierDetailDialog({
                 })}
               </tbody>
             </table>
-          </ScrollArea>
+          </div>
 
           <div>
             <div className="mb-2 flex items-center justify-between">
