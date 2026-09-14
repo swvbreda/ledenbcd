@@ -276,6 +276,20 @@ export default function DossierDetailDialog({
                         {e.note && (
                           <span className="block text-[10px] font-normal text-amber-600">{e.note}</span>
                         )}
+                        {duplicates.has(e.key) && (
+                          <span className="mt-0.5 block text-[10px] font-normal text-amber-700">
+                            Dubbel: ook los betaald in dit dossier
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className="ml-1 underline"
+                                onClick={() => dropSplit(e)}
+                              >
+                                toewijzing verwijderen
+                              </button>
+                            )}
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-1 text-muted-foreground">
                         {e.lineItemName ? `${e.categoryName} / ${e.lineItemName}` : "Niet gekoppeld"}
