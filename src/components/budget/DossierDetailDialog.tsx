@@ -199,7 +199,7 @@ export default function DossierDetailDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               { label: "Uitgaven", value: totals.out, cls: "text-destructive" },
               { label: "Inkomsten", value: totals.income, cls: "text-green-600" },
@@ -214,8 +214,15 @@ export default function DossierDetailDialog({
             ))}
           </div>
 
-          <ScrollArea className="max-h-[45vh] rounded-md border border-border">
-            <table className="w-full text-xs">
+          {duplicates.size > 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Let op: {duplicates.size} verdeeld deel telt hetzelfde factuurnummer mee als een losse betaling in dit
+              dossier. Controleer de gemarkeerde regels hieronder.
+            </div>
+          )}
+
+          <div className="max-h-[45vh] overflow-auto rounded-md border border-border">
+            <table className="w-full min-w-[64rem] text-xs">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr className="border-b border-border/60">
                   <th className="px-3 py-1.5 text-left font-medium">Factuurdatum</th>
