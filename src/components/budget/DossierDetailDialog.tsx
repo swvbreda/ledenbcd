@@ -241,7 +241,12 @@ export default function DossierDetailDialog({
                 {entries.map((e) => {
                   const docs = docsForEntry(e);
                   return (
-                    <tr key={e.key} className="group border-b border-border/30 hover:bg-muted/20">
+                    <tr
+                      key={e.key}
+                      className={`group border-b border-border/30 hover:bg-muted/20 ${
+                        duplicates.has(e.key) ? "bg-amber-50/70" : ""
+                      }`}
+                    >
                       <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.invoiceDate) || "—"}</td>
                       <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
                       <td className="px-3 py-1">{e.counterparty || "—"}</td>
@@ -325,7 +330,7 @@ export default function DossierDetailDialog({
                 })}
               </tbody>
             </table>
-          </ScrollArea>
+          </div>
 
           <div>
             <div className="mb-2 flex items-center justify-between">
