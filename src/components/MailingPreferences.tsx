@@ -90,7 +90,7 @@ export default function MailingPreferences({ member, canEdit }: Props) {
         toast.error("Fout bij opslaan: " + error.message);
         return;
       }
-      newSet.add(email);
+      newSet.add(key);
     }
 
     setSelectedEmails(newSet);
