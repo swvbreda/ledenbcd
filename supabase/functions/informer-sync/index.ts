@@ -1149,7 +1149,11 @@ async function ensureDebtorForMember(
     .select("informer_debtor_id")
     .eq("member_id", memberId)
     .maybeSingle();
-  if (mapRow?.informer_debtor_id) return { relationId: String(mapRow.informer_debtor_id), created: false };
+  // Alleen numerieke id's zijn bruikbaar voor de facturen-API; slugs opnieuw opzoeken.
+  if (mapRow?.informer_debtor_id && /^\d+$/.test(String(mapRow.informer_debtor_id))) {
+    return { relationId: String(mapRow.informer_debtor_id), created: false };
+  }
+
 
   // Bestaat de relatie al in Informer met het lidnummer als relatienummer?
   const existing = await fetchInformerRelationByNumber(String(memberId), api_calls);
@@ -1207,11 +1211,16 @@ async function ensureDebtorForMember(
   // Informer geeft bij een POST alleen { success, url: ".../relations/<id>" } terug.
   const urlId = informerIdFromUrl((call.response_body as any)?.url);
   let newId = informerRelationId(created) || String((call.response_body as any)?.id ?? "") || urlId;
-  if (!newId) {
+  // Informer verwacht bij facturen een numeriek relatie-id; de URL-slug is dat niet.
+  if (!newId || !/^\d+$/.test(newId)) {
     const lookup = await fetchInformerRelationByNumber(String(memberId), api_calls);
-    newId = lookup ? informerRelationId(lookup) : "";
+    const lookupId = lookup ? informerRelationId(lookup) : "";
+    if (lookupId && /^\d+$/.test(lookupId)) newId = lookupId;
   }
-  if (!newId) return { relationId: null, created: false, error: "debiteur aangemaakt maar geen relatie-id ontvangen" };
+  if (!newId || !/^\d+$/.test(newId)) {
+    return { relationId: null, created: false, error: "debiteur aangemaakt maar geen bruikbaar relatie-id ontvangen" };
+  }
+
 
   await supabase.from("informer_debtor_map").upsert(
     { member_id: memberId, informer_debtor_id: newId, matched_by: "auto_created", updated_at: new Date().toISOString() },
@@ -1239,7 +1248,7 @@ async function createDraftSalesInvoice(
   const ledgerId = Number(Deno.env.get("INFORMER_LEDGER_ID") ?? 15391256);
 
   const body = {
-    relation_id: relationId,
+    relation_id: /^\d+$/.test(String(relationId)) ? Number(relationId) : relationId,
     invoice_date: date,
     template_id: templateId,
     payment_condition_id: paymentConditionId,
