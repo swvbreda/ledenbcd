@@ -171,6 +171,8 @@ const RegisterCoverageCard = () => {
       .slice(0, 6);
   };
 
+  if (!allowed) return null;
+
   return (
     <div className="rounded-lg border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 p-4">
