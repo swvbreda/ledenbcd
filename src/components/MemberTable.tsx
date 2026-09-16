@@ -11,15 +11,15 @@ import { useMemberLogosBulk } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 
-const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
+const LogoThumb = ({ url, naam, size = 36 }: { url?: string; naam: string; size?: number }) => (
   <span
-    className="shrink-0 rounded-sm border border-border bg-muted overflow-hidden inline-flex items-center justify-center"
+    className="shrink-0 rounded-sm border border-border bg-background overflow-hidden inline-flex items-center justify-center"
     style={{ width: size, height: size }}
   >
     {url ? (
-      <img src={url} alt={`Logo van ${naam}`} className="w-full h-full object-contain p-0.5" loading="lazy" />
+      <img src={url} alt={`Logo van ${naam}`} className="w-full h-full object-contain p-1" loading="lazy" />
     ) : (
-      <span className="text-[9px] font-display font-bold text-muted-foreground">
+      <span className="text-[10px] font-display font-bold text-muted-foreground">
         {naam.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
       </span>
     )}
