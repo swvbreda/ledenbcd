@@ -59,3 +59,75 @@ export const getAgendaSharePreview = createServerFn({ method: "GET" })
       cancel_reason: (ev as { cancel_reason?: string | null }).cancel_reason ?? null,
     };
   });
+
+export interface GuestSignupResult {
+  ok: boolean;
+  message: string;
+}
+
+/**
+ * Aanmelding van een niet-lid via de publieke deellink. Validatie gebeurt op
+ * basis van de deelcode: alleen een bestaand, niet-geannuleerd en toekomstig
+ * agendapunt accepteert aanmeldingen. Wegschrijven gaat met de serverclient,
+ * zodat anonieme bezoekers geen directe tabeltoegang nodig hebben.
+ */
+export const registerAgendaGuest = createServerFn({ method: "POST" })
+  .inputValidator((data: {
+    code: string;
+    naam: string;
+    email: string;
+    organisatie?: string;
+    telefoon?: string;
+    guests?: number;
+    note?: string;
+  }) => ({
+    code: (data?.code ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 12).toUpperCase(),
+    naam: (data?.naam ?? "").trim().slice(0, 120),
+    email: (data?.email ?? "").trim().toLowerCase().slice(0, 160),
+    organisatie: (data?.organisatie ?? "").trim().slice(0, 160),
+    telefoon: (data?.telefoon ?? "").trim().slice(0, 40),
+    guests: Math.min(Math.max(Number(data?.guests ?? 1) || 1, 1), 20),
+    note: (data?.note ?? "").trim().slice(0, 500),
+  }))
+  .handler(async ({ data }): Promise<GuestSignupResult> => {
+    if (!data.code) return { ok: false, message: "Deze uitnodiging is niet geldig." };
+    if (data.naam.length < 2) return { ok: false, message: "Vul je naam in." };
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) {
+      return { ok: false, message: "Vul een geldig e-mailadres in." };
+    }
+
+    const preview = await getAgendaSharePreview({ data: { code: data.code } });
+    if (!preview) return { ok: false, message: "Deze uitnodiging is niet (meer) beschikbaar." };
+    if (preview.cancelled_at) return { ok: false, message: "Dit evenement is geannuleerd." };
+    const vandaag = new Date().toISOString().slice(0, 10);
+    if (preview.event_date < vandaag) {
+      return { ok: false, message: "Dit evenement is al geweest." };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("agenda_guest_registrations")
+      .upsert(
+        {
+          event_id: preview.id,
+          naam: data.naam,
+          email: data.email,
+          organisatie: data.organisatie || null,
+          telefoon: data.telefoon || null,
+          guests: data.guests,
+          note: data.note || null,
+        },
+        { onConflict: "event_id,email" },
+      );
+
+    if (error) {
+      // Dubbele aanmelding op hetzelfde e-mailadres is geen fout voor de bezoeker.
+      if (error.code === "23505") {
+        return { ok: true, message: "Je was al aangemeld. We hebben je gegevens bijgewerkt." };
+      }
+      console.error("registerAgendaGuest", error);
+      return { ok: false, message: "Aanmelden lukte niet. Probeer het later opnieuw." };
+    }
+
+    return { ok: true, message: "Je aanmelding is ontvangen. Je hoort van ons." };
+  });

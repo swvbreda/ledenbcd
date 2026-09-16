@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { savePostLoginPath } from "@/lib/postLoginPath";
-import { getAgendaSharePreview } from "@/lib/agendaShare.functions";
+import { getAgendaSharePreview, registerAgendaGuest } from "@/lib/agendaShare.functions";
 import logo from "@/assets/bcd-logo.png";
 
 const PORTAL = "https://leden.coffeeshopbond.nl";
@@ -81,6 +83,42 @@ function AgendaSharePage() {
   const { shareCode } = Route.useParams();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+
+  // Aanmelding voor niet-leden
+  const [naam, setNaam] = useState("");
+  const [email, setEmail] = useState("");
+  const [organisatie, setOrganisatie] = useState("");
+  const [telefoon, setTelefoon] = useState("");
+  const [guests, setGuests] = useState("1");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+  const [foutmelding, setFoutmelding] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setFoutmelding(null);
+    try {
+      const res = await registerAgendaGuest({
+        data: {
+          code: shareCode,
+          naam,
+          email,
+          organisatie,
+          telefoon,
+          guests: Number(guests) || 1,
+          note,
+        },
+      });
+      if (res.ok) setSent(res.message);
+      else setFoutmelding(res.message);
+    } catch {
+      setFoutmelding("Aanmelden lukte niet. Probeer het later opnieuw.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -175,11 +213,77 @@ function AgendaSharePage() {
           </Button>
           {!cancelled && (
             <p className="text-xs text-muted-foreground">
-              Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je
-              direct bij deze uitnodiging uit.
+              Ben je lid? Log in met je account van het ledenportaal — je komt direct bij deze
+              uitnodiging uit.
             </p>
           )}
         </div>
+
+        {!cancelled && (
+          <div className="border-t pt-5">
+            {sent ? (
+              <p className="rounded-md border border-primary/40 bg-primary/5 px-3 py-3 text-sm">
+                {sent}
+              </p>
+            ) : (
+              <form className="space-y-3" onSubmit={onSubmit}>
+                <div>
+                  <h2 className="font-display uppercase text-base text-primary">
+                    Geen lid? Meld je hier aan
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Laat je gegevens achter, dan zetten wij je op de deelnemerslijst.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input
+                    required
+                    placeholder="Naam *"
+                    value={naam}
+                    onChange={(e) => setNaam(e.target.value)}
+                  />
+                  <Input
+                    required
+                    type="email"
+                    placeholder="E-mailadres *"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Bedrijf / organisatie"
+                    value={organisatie}
+                    onChange={(e) => setOrganisatie(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Telefoonnummer"
+                    value={telefoon}
+                    onChange={(e) => setTelefoon(e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    placeholder="Aantal personen"
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                  />
+                </div>
+                <Textarea
+                  rows={2}
+                  placeholder="Opmerking (optioneel)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                {foutmelding && (
+                  <p className="text-sm text-destructive">{foutmelding}</p>
+                )}
+                <Button type="submit" variant="outline" className="w-full" disabled={busy}>
+                  {busy ? "Bezig met aanmelden…" : "Aanmelden"}
+                </Button>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
