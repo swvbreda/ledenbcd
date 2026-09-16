@@ -1135,6 +1135,8 @@ type PrepareCandidate = {
   amount: number;
   invoice_number?: string | null;
   status: "gepland" | "aangemaakt" | "mislukt";
+  sent_to?: string | null;
+  send_error?: string;
   error?: string;
 };
 
@@ -1276,12 +1278,95 @@ async function createDraftSalesInvoice(
     };
   }
   const inv = firstInformerItem(call.response_body, ["sales", "invoice", "invoices", "data"]) ?? call.response_body;
-  const invoiceNumber = (inv as any)?.invoice_number ?? (inv as any)?.number ?? null;
-  const externalId = (inv as any)?.id != null
+  let invoiceNumber = (inv as any)?.invoice_number ?? (inv as any)?.number ?? null;
+  let externalId = (inv as any)?.id != null
     ? String((inv as any).id)
     : (informerIdFromUrl((call.response_body as any)?.url) || null);
+
+  // Informer geeft bij een POST soms alleen een URL-slug terug; voor versturen
+  // is het numerieke factuur-id nodig, dus zoeken we de zojuist aangemaakte
+  // conceptfactuur op bij de relatie.
+  if (!externalId || !/^\d+$/.test(externalId)) {
+    const lookup = await fetchLatestSalesInvoiceForRelation(relationId, api_calls);
+    if (lookup?.id) {
+      externalId = String(lookup.id);
+      invoiceNumber = invoiceNumber ?? lookup.number ?? null;
+    }
+  }
   return { invoiceNumber: invoiceNumber ? String(invoiceNumber) : null, externalId, date };
 }
+
+async function fetchLatestSalesInvoiceForRelation(
+  relationId: string,
+  api_calls: ApiCall[],
+): Promise<{ id: string; number: string | null } | null> {
+  const call = await informerCall(
+    `/invoices/sales?relation_id=${encodeURIComponent(relationId)}&records=5&page=0&sort=created.desc`,
+    {},
+    api_calls,
+  );
+  const items = normalizeInformerList(call.response_body, ["sales", "invoices", "data"]);
+  const first = items.find((i: any) => i?.id != null);
+  if (!first) return null;
+  return { id: String(first.id), number: first.number ? String(first.number) : null };
+}
+
+async function fetchSalesInvoiceById(
+  externalId: string,
+  api_calls: ApiCall[],
+): Promise<{ number: string | null; raw: any } | null> {
+  const call = await informerCall(`/invoices/sales/${encodeURIComponent(externalId)}`, {}, api_calls);
+  const inv = firstInformerItem(call.response_body, ["sales", "invoice", "invoices", "data"]) ?? call.response_body;
+  const number = (inv as any)?.number ?? (inv as any)?.invoice_number ?? null;
+  return { number: number ? String(number) : null, raw: inv };
+}
+
+/** Informer markeert conceptfacturen met concept="1" en status "Draft". */
+function isConceptInvoice(inv: any): boolean {
+  const concept = (inv as any)?.concept;
+  if (concept === true || concept === 1 || concept === "1") return true;
+  const status = String((inv as any)?.status?.status ?? (inv as any)?.status ?? "").toLowerCase();
+  return status.includes("concept") || status.includes("draft");
+}
+
+/** Informer accepteert alleen adressen die bij de relatie horen. */
+function allowedSendEmails(inv: any): string[] {
+  const raw = (inv as any)?.send_options?.email;
+  const list = Array.isArray(raw) ? raw : (raw && typeof raw === "object" ? Object.values(raw) : []);
+  return list.map((e) => String(e).trim().toLowerCase()).filter((e) => e.includes("@"));
+}
+
+/** Finaliseert de factuur in Informer en mailt hem naar het lid. */
+async function sendSalesInvoice(
+  externalId: string,
+  emailAddress: string,
+  api_calls: ApiCall[],
+  invoiceDetail?: any,
+): Promise<{ sent: boolean; email?: string; error?: string }> {
+  if (!/^\d+$/.test(String(externalId))) {
+    return { sent: false, error: "versturen mislukt: geen bruikbaar factuur-id" };
+  }
+  const allowed = allowedSendEmails(invoiceDetail);
+  const preferred = String(emailAddress ?? "").trim().toLowerCase();
+  const target = preferred && (allowed.length === 0 || allowed.includes(preferred))
+    ? preferred
+    : (allowed[0] ?? "");
+  if (!target) {
+    return { sent: false, error: "versturen mislukt: geen e-mailadres bij het lid" };
+  }
+  const call = await informerCall(
+    `/invoices/sales/send/${externalId}`,
+    { method: "POST", body: JSON.stringify({ method: "email", email_address: target }) },
+    api_calls,
+  );
+  const apiError = hasInformerError(call.response_body);
+  if (call.error || !call.ok || apiError) {
+    return { sent: false, error: `versturen mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}` };
+  }
+  return { sent: true, email: target };
+}
+
+
 
 async function prepareInvoices(
   supabase: any,
@@ -1386,13 +1471,35 @@ async function prepareInvoices(
       candidate.status = "aangemaakt";
       candidate.invoice_number = invoice.invoiceNumber;
 
+      // Factuur direct finaliseren en mailen, zodat er geen concept blijft staan.
+      const md = (member?.data ?? {}) as any;
+      const invoiceEmail = String(md.factuurEmail || md.email || md.email2 || "").trim();
+      let invoiceNumber = invoice.invoiceNumber;
+      if (invoice.externalId) {
+        const detail = await fetchSalesInvoiceById(invoice.externalId, api_calls);
+        const sendResult = await sendSalesInvoice(invoice.externalId, invoiceEmail, api_calls, detail?.raw);
+        if (sendResult.sent) {
+          candidate.sent_to = sendResult.email ?? invoiceEmail;
+          // Na finaliseren krijgt de factuur pas haar definitieve nummer.
+          const finalized = await fetchSalesInvoiceById(invoice.externalId, api_calls);
+          if (finalized?.number) invoiceNumber = finalized.number;
+        } else {
+          candidate.send_error = sendResult.error;
+          errors.push(`lid #${candidate.member_id}: ${sendResult.error}`);
+        }
+      } else {
+        candidate.send_error = "versturen mislukt: geen factuur-id ontvangen";
+        errors.push(`lid #${candidate.member_id}: ${candidate.send_error}`);
+      }
+      candidate.invoice_number = invoiceNumber;
+
       await supabase.from("member_contributions").upsert(
         {
           member_id: candidate.member_id,
           year: candidate.year,
           amount: candidate.amount,
           paid: false,
-          invoice_number: invoice.invoiceNumber,
+          invoice_number: invoiceNumber,
           invoice_date: invoice.date,
           external_invoice_id: invoice.externalId,
         },
@@ -1402,10 +1509,11 @@ async function prepareInvoices(
       await supabase.from("contribution_invoices").insert({
         member_id: candidate.member_id,
         year: candidate.year,
-        invoice_number: invoice.invoiceNumber,
+        invoice_number: invoiceNumber,
         amount: candidate.amount,
         invoice_date: invoice.date,
       });
+
 
       await supabase
         .from("finance_todos")
@@ -1621,7 +1729,58 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Nog openstaande conceptcontributiefacturen alsnog finaliseren en mailen.
+  if (action === "send_pending_invoices") {
+    const api_calls: ApiCall[] = [];
+    const year = new Date().getFullYear();
+    const sent: any[] = [];
+    const errors: string[] = [];
+    const { data: rows } = await supabase
+      .from("member_contributions")
+      .select("member_id, external_invoice_id, invoice_number")
+      .eq("year", year)
+      .not("external_invoice_id", "is", null);
+    for (const row of (rows ?? [])) {
+      const externalId = String(row.external_invoice_id ?? "");
+      if (!/^\d+$/.test(externalId)) continue;
+      const detail = await fetchSalesInvoiceById(externalId, api_calls);
+      const inv = detail?.raw;
+      if (!inv || !isConceptInvoice(inv)) continue;
+      const { data: member } = await supabase
+        .from("members_data").select("data").eq("id", row.member_id).maybeSingle();
+      const md = (member?.data ?? {}) as any;
+      const email = String(md.factuurEmail || md.email || md.email2 || "").trim();
+      const result = await sendSalesInvoice(externalId, email, api_calls, inv);
+      if (!result.sent) {
+        errors.push(`lid #${row.member_id}: ${result.error}`);
+        continue;
+      }
+      const finalized = await fetchSalesInvoiceById(externalId, api_calls);
+      if (finalized?.number) {
+        await supabase.from("member_contributions")
+          .update({ invoice_number: finalized.number })
+          .eq("member_id", row.member_id).eq("year", year);
+      }
+      sent.push({ member_id: row.member_id, email: result.email ?? email, invoice_number: finalized?.number ?? row.invoice_number });
+
+    }
+    const result: ActionResult = {
+      action: "send_pending_invoices",
+      success: errors.length === 0,
+      items_processed: sent.length,
+      error_message: errors.join(" | ") || undefined,
+      details: { year, sent },
+      api_calls,
+    };
+    await logResult(supabase, result);
+    return new Response(JSON.stringify({ success: result.success, results: [result] }), {
+      status: result.success ? 200 : 207,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Contributiefacturen klaarzetten (concept) voor leden zonder factuur dit jaar.
+
   if (action === "prepare_invoices") {
     const memberParam = url.searchParams.get("member_id");
     const memberId = memberParam ? Number(memberParam) : undefined;
