@@ -233,9 +233,9 @@ const KerngegevensPage = () => {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <Kaart
           icon={Users}
-          label="Vertegenwoordigde coffeeshops"
+          label="Aangesloten coffeeshops"
           waarde={String(totaalRepresented)}
-          hint="incl. leads · zelfde telling als dashboard"
+          hint="vertegenwoordigd via het register"
         />
         <Kaart icon={Users} label="Leden" waarde={String(k.totaalLeden)} />
         <Kaart

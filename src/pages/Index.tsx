@@ -1,5 +1,6 @@
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import StatCards from "@/components/StatCards";
+import KerngegevensSummary from "@/components/KerngegevensSummary";
 import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import GemeentenOverzicht from "@/components/GemeentenOverzicht";
@@ -38,6 +39,8 @@ const Index = () => {
       <AgendaDashboardCard />
 
       <StatCards members={members} />
+
+      <KerngegevensSummary />
 
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
