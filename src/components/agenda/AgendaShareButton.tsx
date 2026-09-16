@@ -76,7 +76,9 @@ export default function AgendaShareButton({
 
   const nativeShare = async () => {
     try {
-      await navigator.share({ title: event.title, text, url });
+      // Alleen titel + url: sommige apps plakken 'text' én 'url' achter elkaar,
+      // waardoor de link dubbel in het bericht komt te staan.
+      await navigator.share({ title: event.title, url });
       return true;
     } catch {
       return false;
