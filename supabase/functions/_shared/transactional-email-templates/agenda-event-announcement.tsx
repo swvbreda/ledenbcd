@@ -169,3 +169,4 @@ const button = {
 }
 const hr = { borderColor: '#e5e5e5', margin: '24px 0 16px' }
 const footer = { fontSize: '12px', color: '#6b7280', lineHeight: '1.6' }
+const inlineLink = { color: '#A31621', textDecoration: 'underline' }
