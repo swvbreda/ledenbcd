@@ -24,6 +24,38 @@ const Row = ({ label, value }: { label: string; value: string }) => (
   </Text>
 )
 
+const LINK_PATTERN =
+  /((?:https?:\/\/|www\.)[^\s<>()]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(?:[A-Za-z0-9-]+\.)+(?:nl|com|org|net|be|de|eu|io|app|info)(?:\/[^\s<>()]*)?)/g
+const TRAILING = /[.,;:!?'")\]]+$/
+
+const linkify = (line: string) => {
+  const nodes: React.ReactNode[] = []
+  let last = 0
+  let key = 0
+  for (const match of line.matchAll(LINK_PATTERN)) {
+    const start = match.index ?? 0
+    let token = match[0]
+    const trailing = token.match(TRAILING)?.[0] ?? ''
+    if (trailing) token = token.slice(0, token.length - trailing.length)
+    if (!token) continue
+    if (start > last) nodes.push(line.slice(last, start))
+    const isEmail = token.includes('@') && !token.startsWith('http')
+    const href = isEmail
+      ? `mailto:${token}`
+      : token.startsWith('http')
+        ? token
+        : `https://${token}`
+    nodes.push(
+      <a key={`l${key++}`} href={href} style={inlineLink}>
+        {token}
+      </a>,
+    )
+    last = start + token.length
+  }
+  if (last < line.length) nodes.push(line.slice(last))
+  return nodes
+}
+
 const paragraphs = (value: string) =>
   String(value)
     .split(/\n{2,}/)
@@ -31,7 +63,7 @@ const paragraphs = (value: string) =>
       <Text key={i} style={text}>
         {p.split('\n').map((line, j, arr) => (
           <React.Fragment key={j}>
-            {line}
+            {linkify(line)}
             {j < arr.length - 1 ? <br /> : null}
           </React.Fragment>
         ))}
