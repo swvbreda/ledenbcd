@@ -219,7 +219,10 @@ export function useSaveMemberEdit() {
           { onConflict: "member_id" }
         );
       if (error) throw error;
+
+      await inviteNewContacts(member_id, { ...baseMember, ...existingData }, finalData);
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["member-edits"] });
       // Tellingen (vertegenwoordiging/register) meteen mee verversen
