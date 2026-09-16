@@ -40,6 +40,8 @@ const Index = () => {
 
       <StatCards members={members} />
 
+      <KerngegevensSummary />
+
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
         <VerloopChart />
