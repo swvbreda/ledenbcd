@@ -536,15 +536,15 @@ const MemberDetail = () => {
                 Apart lidmaatschap, zelfde eigenaren of hetzelfde pand.
               </p>
               <div className="flex flex-wrap gap-2">
-                {gelieerdeLeden.map((m) => (
-                  <Link
-                    key={m.id}
-                    to="/leden/$id"
-                    params={{ id: String(m.id) }}
+                {gelieerdeLeden.map((rel) => (
+                  <button
+                    key={rel.id}
+                    type="button"
+                    onClick={() => navigate(`/leden/${rel.id}`)}
                     className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
                   >
-                    {m.naam}
-                  </Link>
+                    {rel.naam}
+                  </button>
                 ))}
               </div>
             </div>
