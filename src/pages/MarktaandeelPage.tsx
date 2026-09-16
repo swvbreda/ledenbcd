@@ -5,6 +5,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "@/lib/router-compat";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
