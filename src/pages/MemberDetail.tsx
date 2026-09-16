@@ -32,7 +32,6 @@ import {
   useAssignLinkLocation,
   useCoffeeshopRegister,
   useRegisterLinks,
-  useRegisterUboBulk,
 } from "@/hooks/useCoffeeshopRegister";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
