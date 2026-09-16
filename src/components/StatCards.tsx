@@ -106,14 +106,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         </div>
         <div className="mt-auto pt-3 text-center">
           <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{representedLocations}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
-          </p>
-          {isAdmin && fromRegister && (
-            <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
-              {gekoppeldeRegistershops} via register · {nietGekoppeldeLocaties} uit ledenbestand
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground mt-1">aangesloten coffeeshops</p>
           {dataUpdatedAt > 0 && (
             <button
               onClick={(e) => {
