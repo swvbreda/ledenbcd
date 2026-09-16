@@ -19,6 +19,9 @@ const MarktaandeelPage = () => {
     representedPerGemeente: cityCount,
     totaalRepresented: totalLocaties,
   } = useRegisterStats();
+  const { isAdmin, isBoard } = useAuth();
+  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
+  const canSeeRegister = isAdmin || isBoard;
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
