@@ -42,6 +42,8 @@ const StatCards = ({ members }: StatCardsProps) => {
     totaalNL: totalNL,
     representedPerGemeente: repCityCount,
     totaalRepresented,
+    gekoppeldeRegistershops,
+    nietGekoppeldeLocaties,
     fromRegister,
     dataUpdatedAt,
     refetch: refetchStats,
