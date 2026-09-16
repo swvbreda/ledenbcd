@@ -304,6 +304,45 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
 
         <ScrollArea className="max-h-[65vh]">
           <div className="space-y-8 p-6">
+            {gasten.length > 0 && (
+              <section>
+                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Aanmeldingen via de deellink (geen leden)
+                </h3>
+                <div className="space-y-3">
+                  {gasten.map((g) => (
+                    <div key={g.id} className="rounded-xl border border-border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold">{g.naam}</span>
+                            <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                              Gast
+                            </span>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {g.guests} persone{g.guests === 1 ? "" : "n"}
+                            </span>
+                          </div>
+                          <p className="mt-1 break-words text-xs text-muted-foreground">
+                            {[g.organisatie, g.email, g.telefoon].filter(Boolean).join(" · ")}
+                          </p>
+                          {g.note && <p className="mt-1 text-xs italic">{g.note}</p>}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Aanmelding verwijderen"
+                          onClick={() => deleteGuest.mutate(g.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section>
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Huidige deelnemers
