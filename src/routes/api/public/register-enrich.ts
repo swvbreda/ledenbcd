@@ -245,7 +245,7 @@ async function storeLogo(db: any, shopId: string, logoUrl: string) {
   const type = (res.headers.get("content-type") ?? "").split(";")[0] ?? "";
   if (!/^image\//i.test(type)) return null;
   const buf = new Uint8Array(await res.arrayBuffer());
-  if (buf.byteLength < 200 || buf.byteLength > 3_000_000) return null;
+  if (buf.byteLength < 500 || buf.byteLength > 3_000_000) return null;
 
   const ext = type.includes("png")
     ? "png"
