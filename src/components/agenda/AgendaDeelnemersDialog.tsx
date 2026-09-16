@@ -172,7 +172,11 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
     return map;
   }, [boardMembers]);
 
-  const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
+  const { data: gastenData } = useAgendaGuests(event.id, open);
+  const gasten = gastenData ?? [];
+  const deleteGuest = useDeleteAgendaGuest();
+  const totalGuests =
+    registrations.reduce((s, r) => s + r.guests, 0) + gasten.reduce((s, g) => s + g.guests, 0);
   const takenMembers = new Set(registrations.map((r) => r.member_id).filter(Boolean) as number[]);
   const takenBoard = new Set(
     registrations.map((r) => r.board_member_id).filter(Boolean) as string[],
