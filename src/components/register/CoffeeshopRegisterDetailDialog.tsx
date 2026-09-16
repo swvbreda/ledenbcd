@@ -126,6 +126,20 @@ const CoffeeshopRegisterDetailDialog = ({
             />
           </section>
 
+          {(shop.lid_kvk_nummer || shop.lid_vergunninghouder || shop.lid_exploitant) && (
+            <section>
+              <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Opgave van het lid</h3>
+              <Row label="KvK" value={shop.lid_kvk_nummer} />
+              <Row label="Vergunninghouder" value={shop.lid_vergunninghouder} />
+              <Row label="Exploitant" value={shop.lid_exploitant} />
+              {shop.lid_opgave_bijgewerkt_op && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bijgewerkt op {new Date(shop.lid_opgave_bijgewerkt_op).toLocaleDateString("nl-NL")}
+                </p>
+              )}
+            </section>
+          )}
+
           <section>
             <h3 className="text-sm font-semibold uppercase tracking-wide mb-2">Eigendomsketen</h3>
             {ubo.length === 0 ? (
