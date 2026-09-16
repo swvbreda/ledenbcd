@@ -175,6 +175,8 @@ const KerngegevensPage = () => {
   const { isAdmin, isBoard } = useAuth();
   const allowed = isAdmin || isBoard;
   const k = useKerngegevens(allowed);
+  // Zelfde bron als de dashboardkaart, zodat beide pagina's hetzelfde getal tonen.
+  const { totaalRepresented } = useRegisterStats();
   const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
   const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
