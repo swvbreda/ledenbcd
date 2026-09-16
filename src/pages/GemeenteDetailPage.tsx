@@ -22,6 +22,9 @@ const GemeenteDetailPage = () => {
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
   const { perGemeente: perStad } = useRegisterStats();
+  const { isAdmin, isBoard } = useAuth();
+  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
+  const canSeeRegister = isAdmin || isBoard;
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
