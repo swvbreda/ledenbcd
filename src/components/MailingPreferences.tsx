@@ -15,15 +15,13 @@ export default function MailingPreferences({ member, canEdit }: Props) {
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Collect all unique emails from the member
-  const allEmails = Array.from(
-    new Set([
-      member.email,
-      ...(member.contacten || []).map((c) => c.email).filter(Boolean),
-      member.factuurEmail,
-      member.email2,
-    ].filter(Boolean) as string[])
-  );
+  // Collect all unique, valid emails from the member (combined values split up)
+  const allEmails = cleanEmailList([
+    member.email,
+    ...(member.contacten || []).map((c) => c.email),
+    member.factuurEmail,
+    member.email2,
+  ]);
 
   useEffect(() => {
     const fetchPrefs = async () => {
