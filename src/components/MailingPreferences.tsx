@@ -119,7 +119,7 @@ export default function MailingPreferences({ member, canEdit }: Props) {
               }`}
             >
               <Checkbox
-                checked={selectedEmails.has(email)}
+                checked={selectedEmails.has(email.toLowerCase())}
                 onCheckedChange={() => toggleEmail(email)}
                 disabled={!canEdit}
               />
