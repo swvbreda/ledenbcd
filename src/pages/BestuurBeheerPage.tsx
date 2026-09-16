@@ -48,6 +48,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "@/lib/router-compat";
+import LidnummerOverzicht from "@/components/beheer/LidnummerOverzicht";
 
 interface BoardMember {
   id: string;
@@ -272,6 +273,10 @@ export default function BestuurBeheerPage() {
           <Plus size={14} /> Toevoegen
         </Button>
       </BcdHeroBanner>
+
+      <LidnummerOverzicht />
+
+
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         {bestuursleden.length > 0 && (

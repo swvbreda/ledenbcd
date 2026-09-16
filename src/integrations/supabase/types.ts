@@ -3227,6 +3227,10 @@ export type Database = {
         Args: { _member_id: number }
         Returns: number
       }
+      archive_member_with_renumber: {
+        Args: { _member_id: number }
+        Returns: number
+      }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
       delete_email: {
@@ -3356,6 +3360,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_member_number: { Args: never; Returns: number }
       normalize_gemeente: { Args: { _naam: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
