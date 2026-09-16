@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
+import KoppelingenAuditPanel from "@/components/register/KoppelingenAuditPanel";
 
 import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
 import {
@@ -341,6 +342,8 @@ const CoffeeshopRegisterPage = () => {
 
 
 
+
+      <KoppelingenAuditPanel shops={shops} links={links} members={rawMembers} />
 
       <RegisterEnrichmentPanel memberName={memberName} isAdmin={isAdmin} />
 
