@@ -1149,7 +1149,11 @@ async function ensureDebtorForMember(
     .select("informer_debtor_id")
     .eq("member_id", memberId)
     .maybeSingle();
-  if (mapRow?.informer_debtor_id) return { relationId: String(mapRow.informer_debtor_id), created: false };
+  // Alleen numerieke id's zijn bruikbaar voor de facturen-API; slugs opnieuw opzoeken.
+  if (mapRow?.informer_debtor_id && /^\d+$/.test(String(mapRow.informer_debtor_id))) {
+    return { relationId: String(mapRow.informer_debtor_id), created: false };
+  }
+
 
   // Bestaat de relatie al in Informer met het lidnummer als relatienummer?
   const existing = await fetchInformerRelationByNumber(String(memberId), api_calls);
