@@ -1729,6 +1729,84 @@ Deno.serve(async (req) => {
     }
   }
 
+  /**
+   * Zet het relatienummer in Informer gelijk aan het (nieuwe) lidnummer.
+   * Lukt dat niet, dan komt er een taak in Financiën zodat het handmatig kan.
+   */
+  if (action === "rename_relation") {
+    const api_calls: ApiCall[] = [];
+    const body: any = await req.json().catch(() => ({}));
+    const oldId = Number(body?.old_member_id);
+    const newId = Number(body?.new_member_id);
+    if (!Number.isFinite(oldId) || !Number.isFinite(newId)) {
+      return new Response(JSON.stringify({ error: "old_member_id en new_member_id zijn verplicht" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: mapRow } = await supabase
+      .from("informer_debtor_map")
+      .select("informer_debtor_id")
+      .eq("member_id", newId)
+      .maybeSingle();
+
+    const relationId = (mapRow as any)?.informer_debtor_id ?? null;
+    let ok = false;
+    let reason = "geen relatie in Informer gevonden";
+
+    if (relationId) {
+      // Informer verwacht bij een PUT de volledige relatie, niet alleen het veld.
+      const huidig = await fetchInformerRelationById(String(relationId), api_calls);
+      const isBedrijf = String((huidig as any)?.relation_type ?? "0") === "0";
+      const velden = [
+        "relation_type",
+        ...(isBedrijf ? ["company_name"] : ["firstname", "surname_prefix", "surname"]),
+        "street", "house_number", "house_number_suffix", "zip", "city", "country",
+        "phone", "web", "email", "email_invoice", "coc", "vat", "iban",
+      ];
+      const payload: Record<string, unknown> = { relation_number: String(newId) };
+      for (const veld of velden) {
+        const waarde = (huidig as any)?.[veld];
+        if (waarde !== undefined && waarde !== null && waarde !== "") payload[veld] = waarde;
+      }
+
+      const call = await informerCall(
+        `/relations/${encodeURIComponent(String(relationId))}`,
+        { method: "PUT", body: JSON.stringify(payload) },
+        api_calls,
+      );
+      ok = call.ok;
+      if (!ok) {
+        const melding = typeof call.response_body === "string"
+          ? call.response_body.slice(0, 200)
+          : JSON.stringify(call.response_body ?? {}).slice(0, 200);
+        reason = `Informer weigerde de wijziging (${call.status ?? "onbekend"}): ${melding}`;
+      }
+    }
+
+    if (!ok) {
+      await supabase.from("finance_todos").upsert(
+        {
+          todo_type: "informer_relation_number",
+          title: `Relatienummer aanpassen in Informer: ${oldId} → ${newId}`,
+          description:
+            `Het lidnummer is gewijzigd van ${oldId} naar ${newId}. ` +
+            `Pas het relatienummer in Informer handmatig aan (${reason}).`,
+          member_id: newId,
+          reference_id: `relation-${oldId}-${newId}`,
+          status: "pending",
+        } as any,
+        { onConflict: "todo_type,member_id,year" },
+      );
+    }
+
+    return new Response(JSON.stringify({ success: ok, reason: ok ? null : reason, api_calls }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+
+
   // Nog openstaande conceptcontributiefacturen alsnog finaliseren en mailen.
   if (action === "send_pending_invoices") {
     const api_calls: ApiCall[] = [];

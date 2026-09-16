@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { nextMemberNumber } from "@/lib/memberNumber";
 
 interface Props {
   type: "member" | "lead";
@@ -43,8 +44,7 @@ export default function NewMemberDialog({ type }: Props) {
     if (!naam.trim()) { toast.error("Naam is verplicht"); return; }
     setSaving(true);
     try {
-      const allIds = [...rawMembers, ...rawLeads, ...rawOldMembers].map((m) => m.id);
-      const nextId = allIds.length ? Math.max(...allIds) + 1 : 1;
+      const nextId = await nextMemberNumber();
 
       const data = {
         id: nextId,

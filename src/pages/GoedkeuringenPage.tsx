@@ -20,6 +20,7 @@ import {
   type MembershipRequest,
 } from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
+import { nextMemberNumber } from "@/lib/memberNumber";
 import RegisterLinkApprovals from "@/components/register/RegisterLinkApprovals";
 import type { Member } from "@/data/types";
 
@@ -245,8 +246,7 @@ export default function GoedkeuringenPage() {
   const handleAddAsMember = async (s: MembershipRequest) => {
     setAddingId(s.id);
     try {
-      const allIds = [...rawMembers, ...rawLeads, ...rawOldMembers].map((m) => m.id);
-      const nextId = allIds.length ? Math.max(...allIds) + 1 : 1;
+      const nextId = await nextMemberNumber();
       const naam = s.coffeeshop_name.trim();
       const plaats = s.city.trim();
       const contactNaam = s.full_name.trim();

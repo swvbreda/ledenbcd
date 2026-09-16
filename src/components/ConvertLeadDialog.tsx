@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { nextMemberNumber } from "@/lib/memberNumber";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,22 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
 
   const [open, setOpen] = useState(false);
   const [lidnummer, setLidnummer] = useState(suggestedLidnummer);
+
+  // Bij openen het laagste vrije lidnummer voorstellen (gaten worden opgevuld).
+  useEffect(() => {
+    if (!open) return;
+    let actief = true;
+    nextMemberNumber()
+      .then((nummer) => {
+        if (actief) setLidnummer(nummer);
+      })
+      .catch(() => {
+        /* valt terug op het voorstel op basis van het hoogste nummer */
+      });
+    return () => {
+      actief = false;
+    };
+  }, [open]);
   const [lidSinds, setLidSinds] = useState(new Date().getFullYear());
   const [factuurBedrijfsnaam, setFactuurBedrijfsnaam] = useState(lead.factuurBedrijfsnaam || lead.bedrijfsnaam || "");
   const [factuurKvk, setFactuurKvk] = useState(lead.factuurKvk || lead.kvk || "");
