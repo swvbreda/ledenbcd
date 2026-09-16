@@ -119,8 +119,20 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
 
   const handleSave = () => {
     const primaryContact = contacten[0];
-    const fromContacts = (field: "telefoon" | "email") =>
+    const fromContacts = (field: "naam" | "functie" | "telefoon" | "email") =>
       contacten.map((c) => (c[field] ?? "").trim()).find((v) => v) ?? "";
+    /**
+     * Waarde op lidniveau bepalen: eerst de eerste contactpersoon, dan een andere
+     * contactpersoon. Levert dat niets op, dan alleen wissen wanneer de waarde
+     * eerder wél bij een contactpersoon stond (bewust verwijderd of leeggemaakt);
+     * anders blijft de bestaande waarde van het lid behouden.
+     */
+    const contactField = (field: "naam" | "functie" | "telefoon" | "email", huidig?: string) => {
+      const uitContacten = (primaryContact?.[field] ?? "").trim() || fromContacts(field);
+      if (uitContacten) return uitContacten;
+      const stondBijContact = initieleContacten.some((c) => (c[field] ?? "").trim());
+      return stondBijContact ? "" : (huidig ?? "").trim();
+    };
     // Locaties zonder adres én zonder plaats worden nergens geteld: expliciet melden i.p.v. stil weggooien.
     const validLocaties = locaties.filter((l) => !!(l.adres?.trim() || l.plaats?.trim()));
     const invalidLocaties = locaties.filter((l) => !(l.adres?.trim() || l.plaats?.trim()));
