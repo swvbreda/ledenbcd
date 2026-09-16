@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { savePostLoginPath } from "@/lib/postLoginPath";
-import { getAgendaSharePreview } from "@/lib/agendaShare.functions";
+import { getAgendaSharePreview, registerAgendaGuest } from "@/lib/agendaShare.functions";
 import logo from "@/assets/bcd-logo.png";
 
 const PORTAL = "https://leden.coffeeshopbond.nl";
