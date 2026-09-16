@@ -175,11 +175,74 @@ function AgendaSharePage() {
           </Button>
           {!cancelled && (
             <p className="text-xs text-muted-foreground">
-              Aanmelden kan alleen met een account van het ledenportaal. Na het inloggen kom je
-              direct bij deze uitnodiging uit.
+              Ben je lid? Log in met je account van het ledenportaal — je komt direct bij deze
+              uitnodiging uit.
             </p>
           )}
         </div>
+
+        {!cancelled && (
+          <div className="border-t pt-5">
+            {sent ? (
+              <p className="rounded-md border border-primary/40 bg-primary/5 px-3 py-3 text-sm">
+                {sent}
+              </p>
+            ) : (
+              <form className="space-y-3" onSubmit={onSubmit}>
+                <div>
+                  <h2 className="font-display uppercase text-base text-primary">
+                    Geen lid? Meld je hier aan
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Laat je gegevens achter, dan zetten wij je op de deelnemerslijst.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input
+                    required
+                    placeholder="Naam *"
+                    value={naam}
+                    onChange={(e) => setNaam(e.target.value)}
+                  />
+                  <Input
+                    required
+                    type="email"
+                    placeholder="E-mailadres *"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Bedrijf / organisatie"
+                    value={organisatie}
+                    onChange={(e) => setOrganisatie(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Telefoonnummer"
+                    value={telefoon}
+                    onChange={(e) => setTelefoon(e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    placeholder="Aantal personen"
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                  />
+                </div>
+                <Textarea
+                  rows={2}
+                  placeholder="Opmerking (optioneel)"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+                <Button type="submit" variant="outline" className="w-full" disabled={busy}>
+                  {busy ? "Bezig met aanmelden…" : "Aanmelden"}
+                </Button>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
