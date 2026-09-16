@@ -24,6 +24,7 @@ import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRe
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
+import { useMemberAffiliations } from "@/hooks/useMemberAffiliations";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
@@ -70,6 +71,14 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+  const { data: affiliations } = useMemberAffiliations();
+  /** Leden met een apart lidmaatschap maar dezelfde eigenaren of hetzelfde pand. */
+  const gelieerdeLeden = useMemo(() => {
+    const ids = new Set(
+      (affiliations ?? []).filter((a) => a.member_id === memberId).map((a) => a.related_member_id),
+    );
+    return allMembersAndLeads.filter((m) => ids.has(m.id));
+  }, [affiliations, allMembersAndLeads, memberId]);
 
   // Logo & foto's van contactpersonen
   const canEditMedia = isAdmin || isBoard || isOwnProfile;
@@ -526,6 +535,29 @@ const MemberDetail = () => {
               </>
             )}
           </div>
+
+          {gelieerdeLeden.length > 0 && (
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-2">
+                <Users size={16} className="text-brand-red" /> Gelieerd aan
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Apart lidmaatschap, zelfde eigenaren of hetzelfde pand.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {gelieerdeLeden.map((rel) => (
+                  <button
+                    key={rel.id}
+                    type="button"
+                    onClick={() => navigate(`/leden/${rel.id}`)}
+                    className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
+                  >
+                    {rel.naam}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {canSeeContacts ? (
             <div className={`grid grid-cols-1 ${canSeeFinance ? 'lg:grid-cols-2' : ''} gap-4`}>

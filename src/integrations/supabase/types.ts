@@ -1824,6 +1824,57 @@ export type Database = {
         }
         Relationships: []
       }
+      location_duplicate_dismissals: {
+        Row: {
+          door: string | null
+          groep_sleutel: string
+          id: string
+          op: string
+          reden: string | null
+        }
+        Insert: {
+          door?: string | null
+          groep_sleutel: string
+          id?: string
+          op?: string
+          reden?: string | null
+        }
+        Update: {
+          door?: string | null
+          groep_sleutel?: string
+          id?: string
+          op?: string
+          reden?: string | null
+        }
+        Relationships: []
+      }
+      member_affiliations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: number
+          notitie: string | null
+          related_member_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: number
+          notitie?: string | null
+          related_member_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: number
+          notitie?: string | null
+          related_member_id?: number
+        }
+        Relationships: []
+      }
       member_allowed_emails: {
         Row: {
           email: string

@@ -113,6 +113,10 @@ const SOCIAL_HOSTS: Array<[string, RegExp]> = [
 
 const GENERIC_SOCIAL = /\/(sharer|share|intent|login|signup|plugins|tr|policies|help)/i;
 
+/**
+ * Zoekt het logo van de site. Een echte logo-afbeelding gaat vóór de
+ * deelafbeelding (og:image), want dat is meestal een sfeerfoto van de zaak.
+ */
 function parseSite(html: string, baseUrl: string) {
   const abs = (u: string | null) => {
     if (!u) return null;
@@ -124,12 +128,35 @@ function parseSite(html: string, baseUrl: string) {
   };
   const pick = (re: RegExp) => html.match(re)?.[1] ?? null;
 
-  const logo =
+  // 1. Een <img> waarvan de bestandsnaam, het bijschrift of de klasse "logo" zegt.
+  let imgLogo: string | null = null;
+  for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/logo/i.test(tag)) continue;
+    if (/sprite|placeholder|loading|lazy-?placeholder/i.test(tag)) continue;
+    const src =
+      tag.match(/\bsrc=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ??
+      tag.match(/\bsrcset=["']([^"'\s,]+)/i)?.[1] ??
+      null;
+    if (!src || src.startsWith("data:")) continue;
+    imgLogo = src;
+    break;
+  }
+
+  const ogLogo = abs(pick(/<meta[^>]+property=["']og:logo["'][^>]+content=["']([^"']+)["']/i));
+  const appleIcon = abs(
+    pick(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i),
+  );
+  const icon = abs(pick(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i));
+  const ogImage =
     abs(pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)) ??
-    abs(pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)) ??
-    abs(pick(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i)) ??
-    abs(pick(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i)) ??
-    abs("/favicon.ico");
+    abs(pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i));
+
+  const logo =
+    ogLogo ?? abs(imgLogo) ?? appleIcon ?? icon ?? abs("/favicon.ico") ?? ogImage;
+  // Alleen de deelafbeelding gevonden? Dan is het waarschijnlijk een foto.
+  const logoSoort = logo && logo === ogImage && !ogLogo && !imgLogo ? "foto" : "logo";
 
   const socials: Record<string, string> = {};
   for (const [key, re] of SOCIAL_HOSTS) {
@@ -139,7 +166,7 @@ function parseSite(html: string, baseUrl: string) {
     if (GENERIC_SOCIAL.test(url)) continue;
     socials[key] = url;
   }
-  return { logo, socials };
+  return { logo, logoSoort, socials };
 }
 
 async function fetchHtml(website: string) {
@@ -218,7 +245,7 @@ async function storeLogo(db: any, shopId: string, logoUrl: string) {
   const type = (res.headers.get("content-type") ?? "").split(";")[0] ?? "";
   if (!/^image\//i.test(type)) return null;
   const buf = new Uint8Array(await res.arrayBuffer());
-  if (buf.byteLength < 200 || buf.byteLength > 3_000_000) return null;
+  if (buf.byteLength < 500 || buf.byteLength > 3_000_000) return null;
 
   const ext = type.includes("png")
     ? "png"
@@ -381,7 +408,7 @@ export const Route = createFileRoute("/api/public/register-enrich")({
                   if (stored?.url) {
                     patch["logo_url"] = stored.url;
                     patch["logo_pad"] = stored.path;
-                    patch["logo_bron"] = "website";
+                    patch["logo_bron"] = info.logoSoort === "foto" ? "foto" : "logo";
                     logosStored++;
                   }
                 }
