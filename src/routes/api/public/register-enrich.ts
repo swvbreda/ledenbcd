@@ -408,7 +408,7 @@ export const Route = createFileRoute("/api/public/register-enrich")({
                   if (stored?.url) {
                     patch["logo_url"] = stored.url;
                     patch["logo_pad"] = stored.path;
-                    patch["logo_bron"] = "website";
+                    patch["logo_bron"] = info.logoSoort === "foto" ? "foto" : "logo";
                     logosStored++;
                   }
                 }
