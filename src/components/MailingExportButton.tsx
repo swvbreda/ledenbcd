@@ -26,11 +26,7 @@ interface Props {
 const MAIL_SEPARATOR = ";";
 
 const getUniqueEmails = (data: { email: string | null }[]) =>
-  [...new Set(
-    data
-      .map((r) => (r.email || "").trim().replace(/^[,;\s]+|[,;\s]+$/g, ""))
-      .filter(Boolean)
-  )];
+  cleanEmailList(data.map((r) => r.email));
 
 export default function MailingExportButton({ members }: Props) {
   const [loading, setLoading] = useState(false);
