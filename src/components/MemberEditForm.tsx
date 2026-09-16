@@ -9,6 +9,7 @@ import { useSaveMemberEdit, useSubmitEditRequest } from "@/hooks/useMemberEdits"
 import { useAuth } from "@/hooks/useAuth";
 import { stadsdeelPerPlaats, alleStadsdelen } from "@/data/stadsdeelPerPlaats";
 import { locationDeletionIdentity, locationIdentity } from "@/lib/memberLocations";
+import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 const FUNCTIE_OPTIONS = ["Eigenaar", "Bestuurder", "Manager", "Bedrijfsleider", "Contactpersoon", "Bestuur"] as const;
 
