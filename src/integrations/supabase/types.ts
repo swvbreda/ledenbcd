@@ -767,6 +767,7 @@ export type Database = {
           lid_opgave_bijgewerkt_op: string | null
           lid_opgave_member_id: number | null
           lid_vergunninghouder: string | null
+          logo_bron: string | null
           logo_pad: string | null
           logo_url: string | null
           longitude: number | null
@@ -789,6 +790,7 @@ export type Database = {
           vergunningverlening: string | null
           verrijkt_op: string | null
           vervallen: boolean
+          web_checked_at: string | null
           website: string | null
         }
         Insert: {
@@ -814,6 +816,7 @@ export type Database = {
           lid_opgave_bijgewerkt_op?: string | null
           lid_opgave_member_id?: number | null
           lid_vergunninghouder?: string | null
+          logo_bron?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
@@ -836,6 +839,7 @@ export type Database = {
           vergunningverlening?: string | null
           verrijkt_op?: string | null
           vervallen?: boolean
+          web_checked_at?: string | null
           website?: string | null
         }
         Update: {
@@ -861,6 +865,7 @@ export type Database = {
           lid_opgave_bijgewerkt_op?: string | null
           lid_opgave_member_id?: number | null
           lid_vergunninghouder?: string | null
+          logo_bron?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
@@ -883,6 +888,7 @@ export type Database = {
           vergunningverlening?: string | null
           verrijkt_op?: string | null
           vervallen?: boolean
+          web_checked_at?: string | null
           website?: string | null
         }
         Relationships: []
@@ -3386,6 +3392,10 @@ export type Database = {
       trigger_register_enrichment: { Args: never; Returns: number }
       trigger_register_enrichment_scoped: {
         Args: { _member_id?: number; _register_id?: string }
+        Returns: number
+      }
+      trigger_register_shop_enrichment: {
+        Args: { _only_members?: boolean }
         Returns: number
       }
       trigger_topical_sync: { Args: never; Returns: number }

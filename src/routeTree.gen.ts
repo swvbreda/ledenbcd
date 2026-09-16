@@ -47,6 +47,7 @@ import { Route as DashboardLocatiesIndexRouteImport } from './routes/_dashboard/
 import { Route as DashboardLocatiesGemeenteRouteImport } from './routes/_dashboard/locaties.$gemeente'
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
+import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
 import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id'
@@ -54,6 +55,7 @@ import { Route as DashboardCoffeeshopregisterGemeenteGemeenteRouteImport } from 
 import { Route as DashboardEnquetesIdIndexRouteImport } from './routes/_dashboard/enquetes.$id.index'
 import { Route as DashboardEnquetesIdBeheerRouteImport } from './routes/_dashboard/enquetes.$id.beheer'
 import { Route as ApiPublicAgendaImageCodeRouteImport } from './routes/api/public/agenda-image.$code'
+import { Route as ApiPublicShopLogoIdRouteImport } from './routes/api/public/shop-logo.$id'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/_dashboard',
@@ -253,6 +255,11 @@ const ApiPublicAgendaOutlookSyncRoute =
     path: '/api/public/agenda-outlook-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
+  id: '/api/public/register-enrich',
+  path: '/api/public/register-enrich',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnquetesIdReviewRoute = EnquetesIdReviewRouteImport.update({
   id: '/enquetes/$id/review',
   path: '/enquetes/$id/review',
@@ -292,6 +299,11 @@ const ApiPublicAgendaImageCodeRoute =
     path: '/api/public/agenda-image/$code',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicShopLogoIdRoute = ApiPublicShopLogoIdRouteImport.update({
+  id: '/api/public/shop-logo/$id',
+  path: '/api/public/shop-logo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
@@ -324,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -337,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -370,6 +384,7 @@ export interface FileRoutesByTo {
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -383,6 +398,7 @@ export interface FileRoutesByTo {
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRoutesById {
@@ -418,6 +434,7 @@ export interface FileRoutesById {
   '/_dashboard/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -431,6 +448,7 @@ export interface FileRoutesById {
   '/_dashboard/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/_dashboard/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/_dashboard/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -466,6 +484,7 @@ export interface FileRouteTypes {
     | '/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -479,6 +498,7 @@ export interface FileRouteTypes {
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/shop-logo/$id'
     | '/enquetes/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -512,6 +532,7 @@ export interface FileRouteTypes {
     | '/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -525,6 +546,7 @@ export interface FileRouteTypes {
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/shop-logo/$id'
     | '/enquetes/$id'
   id:
     | '__root__'
@@ -559,6 +581,7 @@ export interface FileRouteTypes {
     | '/_dashboard/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -572,6 +595,7 @@ export interface FileRouteTypes {
     | '/_dashboard/coffeeshopregister/gemeente/$gemeente'
     | '/_dashboard/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/shop-logo/$id'
     | '/_dashboard/enquetes/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -591,10 +615,12 @@ export interface RootRouteChildren {
   ExternIndexRoute: typeof ExternIndexRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
+  ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
   ApiPublicAgendaImageCodeRoute: typeof ApiPublicAgendaImageCodeRoute
+  ApiPublicShopLogoIdRoute: typeof ApiPublicShopLogoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -865,6 +891,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgendaOutlookSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/register-enrich': {
+      id: '/api/public/register-enrich'
+      path: '/api/public/register-enrich'
+      fullPath: '/api/public/register-enrich'
+      preLoaderRoute: typeof ApiPublicRegisterEnrichRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquetes/$id/review': {
       id: '/enquetes/$id/review'
       path: '/enquetes/$id/review'
@@ -912,6 +945,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/agenda-image/$code'
       fullPath: '/api/public/agenda-image/$code'
       preLoaderRoute: typeof ApiPublicAgendaImageCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shop-logo/$id': {
+      id: '/api/public/shop-logo/$id'
+      path: '/api/public/shop-logo/$id'
+      fullPath: '/api/public/shop-logo/$id'
+      preLoaderRoute: typeof ApiPublicShopLogoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -996,10 +1036,12 @@ const rootRouteChildren: RootRouteChildren = {
   ExternIndexRoute: ExternIndexRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
+  ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,
   ApiPublicAgendaImageCodeRoute: ApiPublicAgendaImageCodeRoute,
+  ApiPublicShopLogoIdRoute: ApiPublicShopLogoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
