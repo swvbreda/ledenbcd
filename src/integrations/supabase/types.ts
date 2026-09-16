@@ -3169,7 +3169,7 @@ export type Database = {
       }
       apply_member_register_opgave: {
         Args: { _member_id: number }
-        Returns: undefined
+        Returns: number
       }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
