@@ -341,7 +341,15 @@ export const Route = createFileRoute("/api/public/register-enrich")({
           }
 
           // Shops zonder logo: bekende website eerst, daarna zelf een website zoeken.
-          const webTodo = ordered.filter((s) => !s.web_checked_at && !s.logo_url).slice(0, webLimit);
+          // Shops die eerder niets opleverden, worden na 60 dagen opnieuw bekeken.
+          const herkans = Date.now() - 60 * 24 * 60 * 60 * 1000;
+          const webTodo = ordered
+            .filter(
+              (s) =>
+                !s.logo_url &&
+                (!s.web_checked_at || new Date(s.web_checked_at).getTime() < herkans),
+            )
+            .slice(0, webLimit);
 
           let websitesFound = 0;
 
