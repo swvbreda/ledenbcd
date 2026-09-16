@@ -383,8 +383,16 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <EditableField label="Naam" value={loc.naam} onChange={(v) => updateLocation(i, "naam", v)} />
-              <EditableField label="Plaats" value={loc.plaats || ""} onChange={(v) => updateLocation(i, "plaats", v)} />
-              <EditableField label="Gemeente" value={loc.gemeente || ""} onChange={(v) => updateLocation(i, "gemeente", v)} />
+              <div>
+                <EditableField label="Plaats" value={loc.plaats || ""} onChange={(v) => updateLocation(i, "plaats", v)} />
+                {(() => {
+                  const afgeleid = getLocationGemeente(loc, plaats);
+                  const plaatsWaarde = (loc.plaats || "").trim();
+                  if (!afgeleid || afgeleid.toLowerCase() === plaatsWaarde.toLowerCase()) return null;
+                  return <span className="text-[11px] text-muted-foreground block mt-0.5">Gemeente: {afgeleid}</span>;
+                })()}
+              </div>
+
               <EditableField label="Adres" value={loc.adres || ""} onChange={(v) => updateLocation(i, "adres", v)} />
               <EditableField label="Postcode" value={loc.postcode || ""} onChange={(v) => updateLocation(i, "postcode", v)} />
               <div>
