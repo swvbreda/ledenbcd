@@ -228,9 +228,20 @@ const KerngegevensPage = () => {
 
       <p className="text-xs text-muted-foreground">Peildatum {peildatum}</p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <Kaart
+          icon={Users}
+          label="Vertegenwoordigde coffeeshops"
+          waarde={String(totaalRepresented)}
+          hint="incl. leads · zelfde telling als dashboard"
+        />
         <Kaart icon={Users} label="Leden" waarde={String(k.totaalLeden)} />
-        <Kaart icon={Building2} label="Vestigingen" waarde={String(k.totaalVestigingen)} />
+        <Kaart
+          icon={Building2}
+          label="Vestigingen (ledenbestand)"
+          waarde={String(k.totaalVestigingen)}
+          hint="alleen leden, zoals ingevuld"
+        />
         <Kaart
           icon={Building2}
           label="Gem. per lid"
