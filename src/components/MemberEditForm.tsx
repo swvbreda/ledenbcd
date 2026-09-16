@@ -154,14 +154,14 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
         );
         return cleaned.length ? cleaned : undefined;
       })(),
-      // Contactgegevens volgen altijd de actuele contactenlijst. Heeft de eerste
-      // contactpersoon geen telefoon of e-mail, dan pakken we die van een andere
-      // contactpersoon uit de lijst — nooit een oude waarde van een verwijderde of
-      // bewust leeggemaakte contactpersoon.
-      contactpersoon: primaryContact?.naam?.trim() || "",
-      functie: primaryContact?.functie?.trim() || "",
-      telefoon: primaryContact?.telefoon?.trim() || fromContacts("telefoon"),
-      email: primaryContact?.email?.trim() || fromContacts("email"),
+      // Contactgegevens volgen de actuele contactenlijst. Is een waarde bewust
+      // leeggemaakt of hoorde die bij een verwijderde contactpersoon, dan wordt
+      // hij ook op lidniveau gewist. Stond hij nooit bij een contactpersoon
+      // (alleen op het lid zelf), dan blijft de bestaande waarde staan.
+      contactpersoon: contactField("naam", member.contactpersoon),
+      functie: contactField("functie", member.functie),
+      telefoon: contactField("telefoon", member.telefoon),
+      email: contactField("email", member.email),
 
       contacten,
       locaties: validLocaties,
