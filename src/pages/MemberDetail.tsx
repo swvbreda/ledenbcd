@@ -411,9 +411,16 @@ const MemberDetail = () => {
                                   setArchived(false);
                                   toast.success(`${member.naam} is hersteld`);
                                 } else {
-                                  await archiveMember(member.id);
+                                  const nieuwNummer = await archiveMember(member.id);
                                   setArchived(true);
-                                  toast.success(`${member.naam} is gearchiveerd`);
+                                  toast.success(
+                                    nieuwNummer !== member.id
+                                      ? `${member.naam} is gearchiveerd. Lidnummer ${member.id} is weer vrij; het archief staat onder ${nieuwNummer}.`
+                                      : `${member.naam} is gearchiveerd`,
+                                  );
+                                  refetchMembers();
+                                  navigate("/leden");
+                                  return;
                                 }
                                 refetchMembers();
                               } catch (err) {
