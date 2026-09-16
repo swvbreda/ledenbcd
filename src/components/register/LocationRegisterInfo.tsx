@@ -1,7 +1,6 @@
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { RegisterLink, RegisterShop, RegisterUbo } from "@/hooks/useCoffeeshopRegister";
-import type { UboEntry } from "@/data/types";
+import type { RegisterLink, RegisterShop } from "@/hooks/useCoffeeshopRegister";
 import { statusLabel } from "@/lib/registerActive";
 
 const fmt = (d: string | null | undefined) =>
@@ -27,8 +26,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 export type LocationRegisterInfoProps = {
   link?: RegisterLink | null;
   shop?: RegisterShop | null;
-  /** UBO-keten uit het register voor de gekoppelde vestiging (bestuur/beheer). */
-  registerUbo?: RegisterUbo[] | null;
   /** KvK-nummer zoals handmatig vastgelegd bij de locatie (heeft voorrang). */
   memberKvk?: string | null;
   /** Vergunninghoudende onderneming zoals vastgelegd bij de locatie (heeft voorrang). */
@@ -59,7 +56,7 @@ export const cleanUrl = (url?: string | null) => {
 const LocationRegisterInfo = ({
   link,
   shop,
-  registerUbo,
+  
   memberKvk,
   memberVergunninghouder,
   memberExploitant,
@@ -81,16 +78,8 @@ const LocationRegisterInfo = ({
   const facebook = socials?.facebook ?? null;
 
 
-  // Eigendomsketen komt uitsluitend uit het register (bestuur/beheer),
-  // nooit uit de bij het lid opgeslagen gegevens.
-  const ubo: UboEntry[] = (registerUbo ?? []).map((u) => ({
-    naam: u.naam,
-    kvk: u.kvk_nummer,
-    niveau: u.niveau,
-    soort: u.soort,
-    uiteindelijkBelanghebbende: u.is_uiteindelijk,
-    toelichting: u.toelichting,
-  }));
+  // Eigendomsketen wordt bewust niet getoond in ledenprofielen; alleen op de registerpagina.
+
 
   return (
     <div className="mt-3 flex flex-1 flex-col gap-3">
@@ -158,22 +147,6 @@ const LocationRegisterInfo = ({
         </div>
       )}
 
-      {/* Eigendomsketen */}
-      {ubo.length > 0 && (
-        <div className="border-t border-border pt-2.5 space-y-1">
-          <SectionTitle>Eigendomsketen</SectionTitle>
-          <ul className="space-y-0.5">
-            {ubo.map((u, i) => (
-              <li key={i} className="text-xs text-muted-foreground">
-                <span style={{ paddingLeft: `${(u.niveau ?? 0) * 10}px` }}>
-                  {u.naam}
-                  {u.kvk && <span className="font-mono tabular-nums"> · KvK {u.kvk}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Register */}
       <div className="mt-auto border-t border-border pt-2.5 space-y-1">

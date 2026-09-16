@@ -32,7 +32,6 @@ import {
   useAssignLinkLocation,
   useCoffeeshopRegister,
   useRegisterLinks,
-  useRegisterUboBulk,
 } from "@/hooks/useCoffeeshopRegister";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -137,11 +136,7 @@ const MemberDetail = () => {
     [linkByLocation],
   );
 
-  // UBO-ketens van alle gekoppelde registerdossiers in één query.
-  const { data: uboByRegister } = useRegisterUboBulk(
-    memberLinks.map((l) => l.register_id),
-    canSeeRegister,
-  );
+  // Eigendomsketen (UBO) hoort uitsluitend op de registerpagina, niet in ledenprofielen.
 
 
 
@@ -977,8 +972,6 @@ const MemberDetail = () => {
                         memberExploitant={loc.exploitant}
                         memberWebsite={loc.website}
                         memberLogo={loc.logo}
-                        
-                        registerUbo={link ? uboByRegister?.get(link.register_id) : null}
                       />
                     </div>
 
