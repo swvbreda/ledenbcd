@@ -47,6 +47,7 @@ import { Route as DashboardLocatiesIndexRouteImport } from './routes/_dashboard/
 import { Route as DashboardLocatiesGemeenteRouteImport } from './routes/_dashboard/locaties.$gemeente'
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
+import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
@@ -256,6 +257,11 @@ const ApiPublicAgendaOutlookSyncRoute =
     path: '/api/public/agenda-outlook-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicLedenLogosRoute = ApiPublicLedenLogosRouteImport.update({
+  id: '/api/public/leden-logos',
+  path: '/api/public/leden-logos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   id: '/api/public/register-enrich',
   path: '/api/public/register-enrich',
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -391,6 +398,7 @@ export interface FileRoutesByTo {
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -442,6 +450,7 @@ export interface FileRoutesById {
   '/_dashboard/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/leden-logos'
     | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/leden-logos'
     | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/_dashboard/locaties/$gemeente'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/leden-logos'
     | '/api/public/register-enrich'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -627,6 +639,7 @@ export interface RootRouteChildren {
   ExternIndexRoute: typeof ExternIndexRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
+  ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
@@ -904,6 +917,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgendaOutlookSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/leden-logos': {
+      id: '/api/public/leden-logos'
+      path: '/api/public/leden-logos'
+      fullPath: '/api/public/leden-logos'
+      preLoaderRoute: typeof ApiPublicLedenLogosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/register-enrich': {
       id: '/api/public/register-enrich'
       path: '/api/public/register-enrich'
@@ -1056,6 +1076,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExternIndexRoute: ExternIndexRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
+  ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
