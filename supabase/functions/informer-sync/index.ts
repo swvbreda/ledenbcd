@@ -1244,7 +1244,7 @@ async function createDraftSalesInvoice(
   const ledgerId = Number(Deno.env.get("INFORMER_LEDGER_ID") ?? 15391256);
 
   const body = {
-    relation_id: relationId,
+    relation_id: /^\d+$/.test(String(relationId)) ? Number(relationId) : relationId,
     invoice_date: date,
     template_id: templateId,
     payment_condition_id: paymentConditionId,
