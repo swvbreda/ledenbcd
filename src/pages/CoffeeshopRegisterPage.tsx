@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import CoffeeshopRegisterDetailDialog from "@/components/register/CoffeeshopRegisterDetailDialog";
 import RegisterEnrichmentPanel from "@/components/register/RegisterEnrichmentPanel";
+import KoppelingenAuditPanel from "@/components/register/KoppelingenAuditPanel";
 
 import ConfirmLinkDialog from "@/components/register/ConfirmLinkDialog";
 import {
