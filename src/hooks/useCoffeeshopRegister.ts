@@ -37,6 +37,12 @@ export type RegisterShop = {
   shopcode?: string | null;
   /** Ruwe registervelden (o.a. is_ruis, ruis_reden, gesloten_op). */
   raw?: Record<string, unknown> | null;
+  /** Opgave van het gekoppelde lid zelf; staat los van de bronregistratie. */
+  lid_kvk_nummer?: string | null;
+  lid_vergunninghouder?: string | null;
+  lid_exploitant?: string | null;
+  lid_opgave_member_id?: number | null;
+  lid_opgave_bijgewerkt_op?: string | null;
 };
 
 export type RegisterUbo = {
