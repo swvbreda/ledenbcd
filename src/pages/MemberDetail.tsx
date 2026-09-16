@@ -24,6 +24,7 @@ import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRe
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
+import { useMemberAffiliations } from "@/hooks/useMemberAffiliations";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
