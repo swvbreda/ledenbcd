@@ -386,7 +386,16 @@ export function useApproveEditRequest() {
         })
         .eq("id", request.id);
       if (error) throw error;
+
+      const { data: memberRow } = await supabase
+        .from("members_data")
+        .select("data")
+        .eq("id", request.member_id)
+        .maybeSingle();
+      const baseMember = (memberRow?.data as Partial<Member> | null) ?? {};
+      await inviteNewContacts(request.member_id, { ...baseMember, ...existingData }, mergedData);
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["edit-requests"] });
       queryClient.invalidateQueries({ queryKey: ["member-edits"] });
