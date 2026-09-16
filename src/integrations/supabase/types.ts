@@ -98,6 +98,56 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_guest_registrations: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          guests: number
+          id: string
+          naam: string
+          note: string | null
+          organisatie: string | null
+          status: string
+          telefoon: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          guests?: number
+          id?: string
+          naam: string
+          note?: string | null
+          organisatie?: string | null
+          status?: string
+          telefoon?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          guests?: number
+          id?: string
+          naam?: string
+          note?: string | null
+          organisatie?: string | null
+          status?: string
+          telefoon?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_guest_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agenda_registrations: {
         Row: {
           attendee_names: string[]
