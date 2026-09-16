@@ -18,6 +18,7 @@ import {
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 import { bankColor, pspColor } from "@/lib/brandColors";
@@ -174,6 +175,8 @@ const KerngegevensPage = () => {
   const { isAdmin, isBoard } = useAuth();
   const allowed = isAdmin || isBoard;
   const k = useKerngegevens(allowed);
+  // Zelfde bron als de dashboardkaart, zodat beide pagina's hetzelfde getal tonen.
+  const { totaalRepresented } = useRegisterStats();
   const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
   const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
@@ -227,9 +230,20 @@ const KerngegevensPage = () => {
 
       <p className="text-xs text-muted-foreground">Peildatum {peildatum}</p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <Kaart
+          icon={Users}
+          label="Vertegenwoordigde coffeeshops"
+          waarde={String(totaalRepresented)}
+          hint="incl. leads · zelfde telling als dashboard"
+        />
         <Kaart icon={Users} label="Leden" waarde={String(k.totaalLeden)} />
-        <Kaart icon={Building2} label="Vestigingen" waarde={String(k.totaalVestigingen)} />
+        <Kaart
+          icon={Building2}
+          label="Vestigingen (ledenbestand)"
+          waarde={String(k.totaalVestigingen)}
+          hint="alleen leden, zoals ingevuld"
+        />
         <Kaart
           icon={Building2}
           label="Gem. per lid"
