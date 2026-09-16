@@ -109,6 +109,11 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-xs text-muted-foreground mt-1">
             {isAdmin ? `${totalMembers + activeLeadsCount} leden & leads` : `${totalMembers} leden`}
           </p>
+          {isAdmin && fromRegister && (
+            <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+              {gekoppeldeRegistershops} via register · {nietGekoppeldeLocaties} uit ledenbestand
+            </p>
+          )}
           {dataUpdatedAt > 0 && (
             <button
               onClick={(e) => {
