@@ -18,6 +18,7 @@ import {
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
+import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 import { bankColor, pspColor } from "@/lib/brandColors";
