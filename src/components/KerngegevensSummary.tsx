@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "@/lib/router-compat";
-import { Building2, Link2, MapPin, Store, Users } from "lucide-react";
+import { MapPin, Store, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
