@@ -84,6 +84,42 @@ function AgendaSharePage() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
 
+  // Aanmelding voor niet-leden
+  const [naam, setNaam] = useState("");
+  const [email, setEmail] = useState("");
+  const [organisatie, setOrganisatie] = useState("");
+  const [telefoon, setTelefoon] = useState("");
+  const [guests, setGuests] = useState("1");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+  const [foutmelding, setFoutmelding] = useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setFoutmelding(null);
+    try {
+      const res = await registerAgendaGuest({
+        data: {
+          code: shareCode,
+          naam,
+          email,
+          organisatie,
+          telefoon,
+          guests: Number(guests) || 1,
+          note,
+        },
+      });
+      if (res.ok) setSent(res.message);
+      else setFoutmelding(res.message);
+    } catch {
+      setFoutmelding("Aanmelden lukte niet. Probeer het later opnieuw.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
     let active = true;
     void (async () => {
