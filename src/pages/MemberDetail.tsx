@@ -70,6 +70,14 @@ const MemberDetail = () => {
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
   const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+  const { data: affiliations } = useMemberAffiliations();
+  /** Leden met een apart lidmaatschap maar dezelfde eigenaren of hetzelfde pand. */
+  const gelieerdeLeden = useMemo(() => {
+    const ids = new Set(
+      (affiliations ?? []).filter((a) => a.member_id === memberId).map((a) => a.related_member_id),
+    );
+    return allMembersAndLeads.filter((m) => ids.has(m.id));
+  }, [affiliations, allMembersAndLeads, memberId]);
 
   // Logo & foto's van contactpersonen
   const canEditMedia = isAdmin || isBoard || isOwnProfile;
