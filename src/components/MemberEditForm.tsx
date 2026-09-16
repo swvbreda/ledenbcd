@@ -73,6 +73,9 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
 
   // Contacten
   const [contacten, setContacten] = useState<Contact[]>([...member.contacten]);
+  // Uitgangssituatie: nodig om bij opslaan te zien of een lege waarde een
+  // bewuste wissing is of gewoon nooit bij een contactpersoon heeft gestaan.
+  const [initieleContacten] = useState<Contact[]>([...member.contacten]);
 
   // Locaties
   const [locaties, setLocaties] = useState<Location[]>([...member.locaties]);
