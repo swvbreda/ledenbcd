@@ -6,6 +6,7 @@ import { handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LinkedText } from "@/components/ui/LinkedText";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,7 +136,10 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
           <AttendanceList label="Aangemeld" entries={attendeeEntries} />
 
           {event.description && (
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed">{event.description}</p>
+            <LinkedText
+              text={event.description}
+              className="mt-3 whitespace-pre-line text-sm leading-relaxed"
+            />
           )}
         </div>
 
