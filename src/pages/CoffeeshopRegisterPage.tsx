@@ -342,6 +342,8 @@ const CoffeeshopRegisterPage = () => {
 
 
 
+      <KoppelingenAuditPanel shops={shops} links={links} members={rawMembers} />
+
       <RegisterEnrichmentPanel memberName={memberName} isAdmin={isAdmin} />
 
       <div className="flex flex-col sm:flex-row gap-3">
