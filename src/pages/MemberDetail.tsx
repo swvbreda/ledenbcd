@@ -23,6 +23,7 @@ import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
+import { useRegisterLogos } from "@/hooks/useRegisterLogos";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKey } from "@/components/register/RegisterCoverageCard";
@@ -73,6 +74,7 @@ const MemberDetail = () => {
   // Logo & foto's van contactpersonen
   const canEditMedia = isAdmin || isBoard || isOwnProfile;
   const { logoUrl, uploadLogo, removeLogo } = useMemberLogo(memberId);
+  const { data: registerLogos } = useRegisterLogos();
   const { photos: contactPhotos, uploadPhoto, removePhoto } = useContactPhotos(canSeeContacts ? memberId : undefined);
 
 
@@ -283,7 +285,7 @@ const MemberDetail = () => {
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex items-start gap-4">
                 <MediaUpload
-                  url={logoUrl}
+                  url={logoUrl ?? registerLogos?.byMember.get(member.id) ?? null}
                   naam={member.naam}
                   round={false}
                   size={64}
@@ -971,23 +973,38 @@ const MemberDetail = () => {
                         memberVergunninghouder={loc.vergunninghouder}
                         memberExploitant={loc.exploitant}
                         memberWebsite={loc.website}
-                        memberLogo={loc.logo}
+                        memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
                       />
                     </div>
 
                   ) : (
-                    <div className="mt-1 space-y-0.5">
-                      {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
-                      {loc.website && (
-                        <a
-                          href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block text-xs text-muted-foreground hover:underline"
-                        >
-                          {cleanUrl(loc.website)}
-                        </a>
-                      )}
+                    <div className="mt-1 flex items-start gap-3">
+                      {(() => {
+                        const vestigingLogo =
+                          loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc));
+                        if (!vestigingLogo) return null;
+                        return (
+                          <img
+                            src={vestigingLogo}
+                            alt={`Logo ${loc.naam || member.naam}`}
+                            loading="lazy"
+                            className="h-10 w-10 rounded-md border border-border object-contain bg-background"
+                          />
+                        );
+                      })()}
+                      <div className="space-y-0.5">
+                        {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
+                        {loc.website && (
+                          <a
+                            href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-xs text-muted-foreground hover:underline"
+                          >
+                            {cleanUrl(loc.website)}
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

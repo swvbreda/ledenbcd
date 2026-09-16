@@ -142,7 +142,7 @@ function parseSite(html: string, baseUrl: string) {
   return { logo, socials };
 }
 
-async function fetchSiteInfo(website: string) {
+async function fetchHtml(website: string) {
   const url = website.startsWith("http") ? website : `https://${website}`;
   const res = await withTimeout(
     (signal) =>
@@ -151,7 +151,62 @@ async function fetchSiteInfo(website: string) {
   );
   if (!res.ok) return null;
   const html = (await res.text()).slice(0, 400_000);
-  return parseSite(html, res.url || url);
+  return { html, url: res.url || url };
+}
+
+async function fetchSiteInfo(website: string) {
+  const page = await fetchHtml(website);
+  if (!page) return null;
+  return parseSite(page.html, page.url);
+}
+
+const PARKED = /(domein|domain)[^<]{0,40}(te koop|for sale)|this domain is for sale|parkeerpagina/i;
+
+/**
+ * Zoekt de website van een shop zonder website: probeert een paar voor de hand
+ * liggende domeinnamen op basis van de shopnaam en accepteert die alleen als de
+ * pagina echt over deze coffeeshop gaat (naam of plaats komt erin voor).
+ */
+async function discoverWebsite(shop: any): Promise<{ website: string; html: string; url: string } | null> {
+  const woorden = String(shop.naam ?? "")
+    .toLowerCase()
+    .replace(/coffeeshop|coffee shop|the\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!woorden.length) return null;
+
+  const basis = woorden.join("");
+  if (basis.length < 4) return null;
+  const metStreepjes = woorden.join("-");
+  const kandidaten = Array.from(
+    new Set([
+      `https://${basis}.nl`,
+      metStreepjes !== basis ? `https://${metStreepjes}.nl` : null,
+      `https://coffeeshop${basis}.nl`,
+    ].filter(Boolean) as string[]),
+  ).slice(0, 3);
+
+  const plaats = compact(shop.plaats);
+  for (const kandidaat of kandidaten) {
+    try {
+      const page = await fetchHtml(kandidaat);
+      if (!page) continue;
+      const tekst = page.html.toLowerCase();
+      if (PARKED.test(tekst)) continue;
+      const platte = compact(tekst);
+      const naamHit = woorden.every((w) => platte.includes(w));
+      const plaatsHit = !!plaats && platte.includes(plaats);
+      const coffeeshopHit = /coffeeshop|cannabis|wietmenu|weed/i.test(tekst);
+      if (naamHit && (plaatsHit || coffeeshopHit)) {
+        return { website: kandidaat, html: page.html, url: page.url };
+      }
+    } catch {
+      // domein bestaat niet of reageert niet — gewoon doorgaan
+    }
+  }
+  return null;
 }
 
 async function storeLogo(db: any, shopId: string, logoUrl: string) {
@@ -285,9 +340,18 @@ export const Route = createFileRoute("/api/public/register-enrich")({
             }
           }
 
+          // Shops zonder logo: bekende website eerst, daarna zelf een website zoeken.
+          // Shops die eerder niets opleverden, worden na 60 dagen opnieuw bekeken.
+          const herkans = Date.now() - 60 * 24 * 60 * 60 * 1000;
           const webTodo = ordered
-            .filter((s) => !s.web_checked_at && (s.website || websiteByShop.has(s.id)))
+            .filter(
+              (s) =>
+                !s.logo_url &&
+                (!s.web_checked_at || new Date(s.web_checked_at).getTime() < herkans),
+            )
             .slice(0, webLimit);
+
+          let websitesFound = 0;
 
           for (const shop of webTodo) {
             const website = String(shop.website ?? websiteByShop.get(shop.id) ?? "").trim();
@@ -298,7 +362,15 @@ export const Route = createFileRoute("/api/public/register-enrich")({
             if (!shop.website && website) patch["website"] = website;
             try {
               sitesChecked++;
-              const info = website ? await fetchSiteInfo(website) : null;
+              let info = website ? await fetchSiteInfo(website) : null;
+              if (!info) {
+                const gevonden = await discoverWebsite(shop);
+                if (gevonden) {
+                  patch["website"] = gevonden.website;
+                  websitesFound++;
+                  info = parseSite(gevonden.html, gevonden.url);
+                }
+              }
               if (info) {
                 if (Object.keys(info.socials).length) {
                   patch["socials"] = { ...(shop.socials ?? {}), ...info.socials };
@@ -329,6 +401,7 @@ export const Route = createFileRoute("/api/public/register-enrich")({
             sitesChecked,
             logosStored,
             socialsFound,
+            websitesFound,
           });
         } catch (err: any) {
           console.error("register-enrich mislukt:", err?.message ?? err);
