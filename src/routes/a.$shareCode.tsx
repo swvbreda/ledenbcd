@@ -274,6 +274,9 @@ function AgendaSharePage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
+                {foutmelding && (
+                  <p className="text-sm text-destructive">{foutmelding}</p>
+                )}
                 <Button type="submit" variant="outline" className="w-full" disabled={busy}>
                   {busy ? "Bezig met aanmelden…" : "Aanmelden"}
                 </Button>
