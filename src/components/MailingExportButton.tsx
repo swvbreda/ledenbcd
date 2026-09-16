@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { Member } from "@/data/types";
+import { cleanEmailList } from "@/lib/emailList";
 
 interface Props {
   members: Member[];
@@ -26,11 +27,7 @@ interface Props {
 const MAIL_SEPARATOR = ";";
 
 const getUniqueEmails = (data: { email: string | null }[]) =>
-  [...new Set(
-    data
-      .map((r) => (r.email || "").trim().replace(/^[,;\s]+|[,;\s]+$/g, ""))
-      .filter(Boolean)
-  )];
+  cleanEmailList(data.map((r) => r.email));
 
 export default function MailingExportButton({ members }: Props) {
   const [loading, setLoading] = useState(false);

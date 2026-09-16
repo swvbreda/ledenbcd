@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Member } from "@/data/types";
+import { cleanEmailList } from "@/lib/emailList";
 
 interface Props {
   member: Member;
@@ -14,15 +15,13 @@ export default function MailingPreferences({ member, canEdit }: Props) {
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  // Collect all unique emails from the member
-  const allEmails = Array.from(
-    new Set([
-      member.email,
-      ...(member.contacten || []).map((c) => c.email).filter(Boolean),
-      member.factuurEmail,
-      member.email2,
-    ].filter(Boolean) as string[])
-  );
+  // Collect all unique, valid emails from the member (combined values split up)
+  const allEmails = cleanEmailList([
+    member.email,
+    ...(member.contacten || []).map((c) => c.email),
+    member.factuurEmail,
+    member.email2,
+  ]);
 
   useEffect(() => {
     const fetchPrefs = async () => {
@@ -31,31 +30,40 @@ export default function MailingPreferences({ member, canEdit }: Props) {
         .select("email")
         .eq("member_id", member.id);
       if (!error && data) {
-        setSelectedEmails(new Set(data.map((r) => r.email).filter((e) => e && e.length > 0)));
+        // Compare case-insensitively so "Naam@..." and "naam@..." are one address.
+        setSelectedEmails(
+          new Set(
+            data
+              .map((r) => (r.email || "").trim().toLowerCase())
+              .filter((e) => e.length > 0)
+          )
+        );
       }
       setLoading(false);
     };
     fetchPrefs();
   }, [member.id]);
 
-  const toggleEmail = async (email: string) => {
+  const toggleEmail = async (rawEmail: string) => {
     if (!canEdit) return;
 
-    const isSelected = selectedEmails.has(email);
+    const email = rawEmail.trim();
+    const key = email.toLowerCase();
+    const isSelected = selectedEmails.has(key);
     const newSet = new Set(selectedEmails);
 
     if (isSelected) {
-      // Remove
+      // Remove (case-insensitive, so old spellings disappear too)
       const { error } = await supabase
         .from("member_mailing_preferences")
         .delete()
         .eq("member_id", member.id)
-        .eq("email", email);
+        .ilike("email", email);
       if (error) {
         toast.error("Fout bij opslaan: " + error.message);
         return;
       }
-      newSet.delete(email);
+      newSet.delete(key);
       // If this was the last selected email, insert a sentinel row so the
       // export knows this member is explicitly opted out (rather than never
       // configured). getUniqueEmails filters empty strings out of the export.
@@ -82,7 +90,7 @@ export default function MailingPreferences({ member, canEdit }: Props) {
         toast.error("Fout bij opslaan: " + error.message);
         return;
       }
-      newSet.add(email);
+      newSet.add(key);
     }
 
     setSelectedEmails(newSet);
@@ -111,7 +119,7 @@ export default function MailingPreferences({ member, canEdit }: Props) {
               }`}
             >
               <Checkbox
-                checked={selectedEmails.has(email)}
+                checked={selectedEmails.has(email.toLowerCase())}
                 onCheckedChange={() => toggleEmail(email)}
                 disabled={!canEdit}
               />
