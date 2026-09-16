@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { Member } from "@/data/types";
+import { cleanEmailList } from "@/lib/emailList";
 
 interface Props {
   members: Member[];
