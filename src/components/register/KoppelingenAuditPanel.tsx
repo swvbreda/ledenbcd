@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, Link2, Merge, Search } from "lucide-react";
+import { AlertTriangle, Check, Link2, Merge, Search, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import type { Member, Location } from "@/data/types";
 import type { RegisterLink, RegisterShop } from "@/hooks/useCoffeeshopRegister";
 import { useAssignLinkLocation } from "@/hooks/useCoffeeshopRegister";
 import { useMergeDuplicateLocations } from "@/hooks/useKoppelingenAudit";
+import { useMemberAffiliations, useSetAffiliation } from "@/hooks/useMemberAffiliations";
+import { useDismissDuplicate, useDuplicateDismissals } from "@/hooks/useDuplicateDismissals";
 import { locationKeyOf } from "@/lib/registerLocationMatch";
 import { isActiveShop } from "@/lib/registerActive";
 
@@ -16,6 +18,14 @@ const adresKey = (adres?: string | null, postcode?: string | null) =>
 
 const locatieOmschrijving = (loc: Location) =>
   [loc.naam, loc.adres, loc.plaats].filter(Boolean).join(" · ");
+
+/** Lijken de namen genoeg op elkaar om het als dezelfde zaak te zien? */
+const zelfdeNaam = (a?: string | null, b?: string | null) => {
+  const x = compact(a);
+  const y = compact(b);
+  if (!x || !y) return true;
+  return x === y || x.includes(y) || y.includes(x);
+};
 
 /** Hoeveel is er ingevuld bij deze vestiging? Bepaalt welke regel blijft staan. */
 const volledigheid = (loc: Location) =>
@@ -30,13 +40,18 @@ type Props = {
 
 /**
  * Overzicht per coffeeshop van de koppeling met een lid, met daarboven de
- * dubbelingen die automatisch kunnen worden opgelost.
+ * gevallen die controle vragen. Hetzelfde adres is niet per se een fout:
+ * gelieerde leden en overgenomen zaken mogen naast elkaar bestaan.
  */
 const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
   const [zoek, setZoek] = useState("");
   const [toonAlles, setToonAlles] = useState(false);
   const mergeLocations = useMergeDuplicateLocations();
   const assignLocation = useAssignLinkLocation();
+  const { data: affiliations } = useMemberAffiliations();
+  const setAffiliation = useSetAffiliation();
+  const { data: beoordeeld } = useDuplicateDismissals();
+  const dismiss = useDismissDuplicate();
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
 
@@ -46,6 +61,14 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
     () => links.filter((l) => l.status === "bevestigd"),
     [links],
   );
+
+  const gelieerd = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of affiliations ?? []) {
+      set.add(`${a.member_id}-${a.related_member_id}`);
+    }
+    return set;
+  }, [affiliations]);
 
   /** Alle vestigingen van alle leden, met hun sleutels. */
   const vestigingen = useMemo(() => {
@@ -63,8 +86,8 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
     return list;
   }, [members]);
 
-  /** Dubbele vestigingen op hetzelfde adres. */
-  const dubbelGroepen = useMemo(() => {
+  /** Vestigingen op hetzelfde adres, verdeeld over drie soorten gevallen. */
+  const groepen = useMemo(() => {
     const groups = new Map<string, typeof vestigingen>();
     for (const v of vestigingen) {
       if (!compact(v.loc.adres)) continue;
@@ -72,17 +95,34 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
       list.push(v);
       groups.set(v.adres, list);
     }
-    return Array.from(groups.entries())
-      .filter(([, list]) => list.length > 1)
-      .map(([adres, list]) => ({
-        adres,
-        list,
-        zelfdeLid: new Set(list.map((v) => v.member.id)).size === 1,
-      }));
-  }, [vestigingen]);
+    const eenduidig: Array<{ key: string; adres: string; list: typeof vestigingen }> = [];
+    const controleren: Array<{ key: string; adres: string; list: typeof vestigingen }> = [];
+    const overLeden: Array<{ key: string; adres: string; list: typeof vestigingen }> = [];
 
-  const binnenLid = dubbelGroepen.filter((g) => g.zelfdeLid);
-  const tussenLeden = dubbelGroepen.filter((g) => !g.zelfdeLid);
+    for (const [adres, list] of groups) {
+      if (list.length < 2) continue;
+      const lidIds = new Set(list.map((v) => v.member.id));
+      if (lidIds.size === 1) {
+        const key = `lid:${list[0]!.member.id}|${adres}`;
+        if (beoordeeld?.has(key)) continue;
+        const namenGelijk = list.every((v) => zelfdeNaam(v.loc.naam, list[0]!.loc.naam));
+        const postcodesGelijk = new Set(list.map((v) => compact(v.loc.postcode))).size === 1;
+        (namenGelijk && postcodesGelijk ? eenduidig : controleren).push({ key, adres, list });
+        continue;
+      }
+      const ids = Array.from(lidIds).sort((a, b) => a - b);
+      const key = `leden:${ids.join("-")}|${adres}`;
+      if (beoordeeld?.has(key)) continue;
+      // Gelieerde leden op hetzelfde adres zijn geen melding.
+      const allesGelieerd = ids.every((a) => ids.every((b) => a === b || gelieerd.has(`${a}-${b}`)));
+      if (allesGelieerd) continue;
+      overLeden.push({ key, adres, list });
+    }
+    return { eenduidig, controleren, overLeden };
+  }, [vestigingen, beoordeeld, gelieerd]);
+
+  const { eenduidig, controleren, overLeden } = groepen;
+  const teControleren = eenduidig.length + controleren.length + overLeden.length;
 
   /** Bevestigde koppelingen zonder vestiging, waarbij het lid maar één vestiging heeft. */
   const zonderVestiging = useMemo(() => {
@@ -125,11 +165,16 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
       .sort((a, b) => a.shop.naam.localeCompare(b.shop.naam));
   }, [actieveShops, bevestigd, memberById, zoek, toonAlles]);
 
-  const mergeGroep = (groep: (typeof dubbelGroepen)[number]) => {
+  const mergeGroep = (
+    groep: { list: typeof vestigingen },
+    keepKeyOverride?: string,
+  ) => {
     const gesorteerd = [...groep.list].sort((a, b) => volledigheid(b.loc) - volledigheid(a.loc));
-    const keep = gesorteerd[0]!;
+    const keep = keepKeyOverride
+      ? gesorteerd.find((v) => v.key === keepKeyOverride) ?? gesorteerd[0]!
+      : gesorteerd[0]!;
     const removeKeys = gesorteerd
-      .slice(1)
+      .filter((v) => v !== keep)
       .map((v) => v.key)
       .filter((k) => k !== keep.key);
     if (!removeKeys.length) return;
@@ -142,48 +187,56 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
         <Link2 className="h-4 w-4 text-brand-red" />
         <h2 className="font-display uppercase text-sm">Koppelingen per coffeeshop</h2>
         <Badge variant="secondary">{bevestigd.length} gekoppeld</Badge>
-        {(binnenLid.length > 0 || tussenLeden.length > 0) && (
-          <Badge variant="destructive">
-            {binnenLid.length + tussenLeden.length} dubbel
-          </Badge>
-        )}
+        {teControleren > 0 && <Badge variant="secondary">{teControleren} te controleren</Badge>}
       </div>
 
-      {binnenLid.length > 0 && (
+      {eenduidig.length > 0 && (
         <div className="rounded-md border border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 p-3 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <p className="text-sm font-medium">
-              Dubbele vestigingen bij hetzelfde lid ({binnenLid.length})
+              Zelfde zaak twee keer bij hetzelfde lid ({eenduidig.length})
             </p>
             <Button
               size="sm"
               className="ml-auto"
               disabled={mergeLocations.isPending}
-              onClick={() => binnenLid.forEach(mergeGroep)}
+              onClick={() => eenduidig.forEach((g) => mergeGroep(g))}
             >
               <Merge className="mr-1 h-4 w-4" /> Alles samenvoegen
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Zelfde adres, zelfde postcode en dezelfde naam — dit kan veilig worden samengevoegd.
+          </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {binnenLid.map((g) => {
+            {eenduidig.map((g) => {
               const lid = g.list[0]!.member;
               return (
-                <div key={g.adres} className="rounded-md border bg-card p-3 space-y-2">
+                <div key={g.key} className="rounded-md border bg-card p-3 space-y-2">
                   <p className="font-medium">{lid.naam}</p>
                   <ul className="text-sm text-muted-foreground space-y-0.5">
                     {g.list.map((v, i) => (
                       <li key={`${v.key}-${i}`}>{locatieOmschrijving(v.loc)}</li>
                     ))}
                   </ul>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={mergeLocations.isPending}
-                    onClick={() => mergeGroep(g)}
-                  >
-                    <Merge className="mr-1 h-4 w-4" /> Samenvoegen tot één vestiging
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={mergeLocations.isPending}
+                      onClick={() => mergeGroep(g)}
+                    >
+                      <Merge className="mr-1 h-4 w-4" /> Samenvoegen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => dismiss.mutate({ key: g.key, reden: "twee zaken" })}
+                    >
+                      <X className="mr-1 h-4 w-4" /> Dit zijn twee zaken
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -191,31 +244,92 @@ const KoppelingenAuditPanel = ({ shops, links, members }: Props) => {
         </div>
       )}
 
-      {tussenLeden.length > 0 && (
+      {controleren.length > 0 && (
         <div className="rounded-md border p-3 space-y-3">
           <p className="text-sm font-medium">
-            Zelfde adres bij verschillende leden ({tussenLeden.length})
+            Zelfde adres bij één lid, andere naam of postcode ({controleren.length})
           </p>
           <p className="text-xs text-muted-foreground">
-            Dit gaat niet vanzelf: kies zelf welk lid deze vestiging houdt, dan verdwijnt de regel
-            bij de andere leden.
+            Bijvoorbeeld een overgenomen of hernoemde zaak. Kies welke regel blijft staan — de
+            gegevens van de andere regel worden daarbij aangevuld.
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {tussenLeden.map((g) => (
-              <div key={g.adres} className="rounded-md border bg-card p-3 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {g.list[0]!.loc.adres} · {g.list[0]!.loc.plaats}
-                </p>
+            {controleren.map((g) => (
+              <div key={g.key} className="rounded-md border bg-card p-3 space-y-2">
+                <p className="font-medium">{g.list[0]!.member.naam}</p>
                 <ul className="space-y-1">
                   {g.list.map((v, i) => (
-                    <li key={`${v.member.id}-${v.key}-${i}`} className="text-sm">
-                      <span className="font-medium">{v.member.naam}</span>{" "}
-                      <span className="text-muted-foreground">— {v.loc.naam}</span>
+                    <li key={`${v.key}-${i}`} className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">{locatieOmschrijving(v.loc)}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={mergeLocations.isPending}
+                        onClick={() => mergeGroep(g, v.key)}
+                      >
+                        Deze houden
+                      </Button>
                     </li>
                   ))}
                 </ul>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => dismiss.mutate({ key: g.key, reden: "twee zaken" })}
+                >
+                  <X className="mr-1 h-4 w-4" /> Dit zijn twee zaken
+                </Button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {overLeden.length > 0 && (
+        <div className="rounded-md border p-3 space-y-3">
+          <p className="text-sm font-medium">
+            Zelfde adres bij verschillende leden ({overLeden.length})
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Dit hoeft niet fout te zijn: leden met dezelfde eigenaren of hetzelfde pand hebben vaak
+            een eigen lidmaatschap. Leg ze vast als gelieerd, dan verdwijnt deze melding.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {overLeden.map((g) => {
+              const ids = Array.from(new Set(g.list.map((v) => v.member.id)));
+              return (
+                <div key={g.key} className="rounded-md border bg-card p-3 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {g.list[0]!.loc.adres} · {g.list[0]!.loc.plaats}
+                  </p>
+                  <ul className="space-y-1">
+                    {g.list.map((v, i) => (
+                      <li key={`${v.member.id}-${v.key}-${i}`} className="text-sm">
+                        <span className="font-medium">{v.member.naam}</span>{" "}
+                        <span className="text-muted-foreground">— {v.loc.naam}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={setAffiliation.isPending}
+                      onClick={() => setAffiliation.mutate({ memberIds: ids })}
+                    >
+                      <Users className="mr-1 h-4 w-4" /> Gelieerde leden
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => dismiss.mutate({ key: g.key, reden: "klopt" })}
+                    >
+                      <Check className="mr-1 h-4 w-4" /> Dit klopt
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
