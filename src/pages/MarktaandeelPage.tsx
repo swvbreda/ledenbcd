@@ -133,16 +133,18 @@ const MarktaandeelPage = () => {
                     >
                       <td className="px-3 py-1.5 font-medium truncate">
                         <span>{city}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(city)}`);
-                          }}
-                          className="ml-2 text-xs text-primary hover:underline"
-                          title="Bekijk registerdetails"
-                        >
-                          register
-                        </button>
+                        {canSeeRegister && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(city)}`);
+                            }}
+                            className="ml-2 text-xs text-primary hover:underline"
+                            title="Bekijk registerdetails"
+                          >
+                            register
+                          </button>
+                        )}
                       </td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
