@@ -151,15 +151,13 @@ export function useMemberLogosBulk(memberIds: number[]) {
         const logo = (files || []).find((f) => f.id && f.name.startsWith("logo."));
         if (logo) paths.push(`${folder}/${logo.name}`);
       }
-      if (paths.length === 0) return {} as Record<number, string>;
-      const { data: signed } = await supabase.storage.from(LOGO_BUCKET).createSignedUrls(paths, 3600);
       const map: Record<number, string> = {};
-      (signed || []).forEach((s) => {
-        if (!s.signedUrl || !s.path) return;
-        const id = Number(s.path.split("/")[0]);
-        if (!Number.isNaN(id)) map[id] = s.signedUrl;
-      });
+      for (const path of paths) {
+        const id = Number(path.split("/")[0]);
+        if (!Number.isNaN(id)) map[id] = memberLogoUrl(id);
+      }
       return map;
+
     },
     enabled: memberIds.length > 0,
     staleTime: 5 * 60 * 1000,
