@@ -2832,6 +2832,41 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_logo_optout: {
+        Row: {
+          created_at: string
+          member_id: number | null
+          register_id: string
+          uitgezet_door: string | null
+          uitgezet_op: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          member_id?: number | null
+          register_id: string
+          uitgezet_door?: string | null
+          uitgezet_op?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          member_id?: number | null
+          register_id?: string
+          uitgezet_door?: string | null
+          uitgezet_op?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_logo_optout_register_id_fkey"
+            columns: ["register_id"]
+            isOneToOne: true
+            referencedRelation: "coffeeshop_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
