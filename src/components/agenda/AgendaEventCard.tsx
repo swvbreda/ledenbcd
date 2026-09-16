@@ -6,6 +6,7 @@ import { handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LinkedText } from "@/components/ui/LinkedText";
 import {
   AlertDialog,
   AlertDialogAction,
