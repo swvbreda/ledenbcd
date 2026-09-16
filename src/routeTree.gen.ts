@@ -55,6 +55,7 @@ import { Route as DashboardCoffeeshopregisterGemeenteGemeenteRouteImport } from 
 import { Route as DashboardEnquetesIdIndexRouteImport } from './routes/_dashboard/enquetes.$id.index'
 import { Route as DashboardEnquetesIdBeheerRouteImport } from './routes/_dashboard/enquetes.$id.beheer'
 import { Route as ApiPublicAgendaImageCodeRouteImport } from './routes/api/public/agenda-image.$code'
+import { Route as ApiPublicMemberLogoIdRouteImport } from './routes/api/public/member-logo.$id'
 import { Route as ApiPublicShopLogoIdRouteImport } from './routes/api/public/shop-logo.$id'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -299,6 +300,11 @@ const ApiPublicAgendaImageCodeRoute =
     path: '/api/public/agenda-image/$code',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMemberLogoIdRoute = ApiPublicMemberLogoIdRouteImport.update({
+  id: '/api/public/member-logo/$id',
+  path: '/api/public/member-logo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicShopLogoIdRoute = ApiPublicShopLogoIdRouteImport.update({
   id: '/api/public/shop-logo/$id',
   path: '/api/public/shop-logo/$id',
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id': typeof DashboardEnquetesIdIndexRoute
 }
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/_dashboard/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/_dashboard/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
+  '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/_dashboard/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
@@ -498,6 +507,7 @@ export interface FileRouteTypes {
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/enquetes/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -546,6 +556,7 @@ export interface FileRouteTypes {
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/enquetes/$id'
   id:
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/_dashboard/coffeeshopregister/gemeente/$gemeente'
     | '/_dashboard/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
+    | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/_dashboard/enquetes/$id/'
   fileRoutesById: FileRoutesById
@@ -620,6 +632,7 @@ export interface RootRouteChildren {
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
   ApiPublicAgendaImageCodeRoute: typeof ApiPublicAgendaImageCodeRoute
+  ApiPublicMemberLogoIdRoute: typeof ApiPublicMemberLogoIdRoute
   ApiPublicShopLogoIdRoute: typeof ApiPublicShopLogoIdRoute
 }
 
@@ -947,6 +960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgendaImageCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/member-logo/$id': {
+      id: '/api/public/member-logo/$id'
+      path: '/api/public/member-logo/$id'
+      fullPath: '/api/public/member-logo/$id'
+      preLoaderRoute: typeof ApiPublicMemberLogoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/shop-logo/$id': {
       id: '/api/public/shop-logo/$id'
       path: '/api/public/shop-logo/$id'
@@ -1041,6 +1061,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,
   ApiPublicAgendaImageCodeRoute: ApiPublicAgendaImageCodeRoute,
+  ApiPublicMemberLogoIdRoute: ApiPublicMemberLogoIdRoute,
   ApiPublicShopLogoIdRoute: ApiPublicShopLogoIdRoute,
 }
 export const routeTree = rootRouteImport
