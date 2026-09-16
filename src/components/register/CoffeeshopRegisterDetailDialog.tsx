@@ -29,6 +29,7 @@ import {
   type RegisterShop,
 } from "@/hooks/useCoffeeshopRegister";
 import { statusLabel } from "@/lib/registerActive";
+import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
 
 const Row = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="flex justify-between gap-4 py-1.5 border-b last:border-0 text-sm">
@@ -242,6 +243,7 @@ const CoffeeshopRegisterDetailDialog = ({
                 ))}
               </div>
             )}
+            <ShopLogoOptoutToggle registerId={shop.id} memberId={link?.member_id ?? null} />
           </section>
         </div>
       </DialogContent>

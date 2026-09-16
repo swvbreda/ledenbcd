@@ -21,6 +21,7 @@ import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
+import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
@@ -1014,6 +1015,9 @@ const MemberDetail = () => {
                         memberWebsite={loc.website}
                         memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
                       />
+                      {isAdmin && link && (
+                        <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
+                      )}
                     </div>
 
                   ) : (
