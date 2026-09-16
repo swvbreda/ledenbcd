@@ -527,6 +527,29 @@ const MemberDetail = () => {
             )}
           </div>
 
+          {gelieerdeLeden.length > 0 && (
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="text-sm font-semibold font-display flex items-center gap-2 mb-2">
+                <Users size={16} className="text-brand-red" /> Gelieerd aan
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Apart lidmaatschap, zelfde eigenaren of hetzelfde pand.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {gelieerdeLeden.map((m) => (
+                  <Link
+                    key={m.id}
+                    to="/leden/$id"
+                    params={{ id: String(m.id) }}
+                    className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted"
+                  >
+                    {m.naam}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {canSeeContacts ? (
             <div className={`grid grid-cols-1 ${canSeeFinance ? 'lg:grid-cols-2' : ''} gap-4`}>
               {/* Contactpersonen */}
