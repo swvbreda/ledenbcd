@@ -504,6 +504,8 @@ Deno.serve(async (req) => {
 
     // Ronde 1: vanuit elke registershop het best passende lid zoeken.
     for (const s of shopInfos) {
+      // Shop heeft al een bevestigde koppeling met een lid: niet nog eens koppelen.
+      if (claimedShops.has(s.id)) continue;
       let best: { k: Kandidaat; score: number; reden: string } | null = null;
       let besteLeden = new Set<number>(); // leden met dezelfde topscore (uniciteitscheck)
       for (const k of kandidaten) {
