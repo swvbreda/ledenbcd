@@ -252,40 +252,35 @@ export const Route = createFileRoute("/api/public/register-enrich")({
           let socialsFound = 0;
 
           if (kvkKey) {
-            for (const shop of ordered.filter((s) => !s.kvk_checked_at).slice(0, kvkLimit)) {
+            const todo = ordered
+              .filter((s) => !s.kvk_checked_at || !s.kvk_vestiging_checked_at)
+              .slice(0, kvkLimit);
+            for (const shop of todo) {
               try {
-                const { kvkNummer, datum, handelsnaam } = await kvkLookup(kvkKey, shop);
+                const { kvkNummer, handelsnaam, vestigingsnummer, vestigingDatum, bedrijfDatum } =
+                  await kvkLookup(kvkKey, shop);
+                const now = new Date().toISOString();
                 const patch: Record<string, unknown> = {
                   kvk_nummer: kvkNummer ?? shop.kvk_nummer ?? null,
-                  kvk_oprichtingsdatum: datum ?? shop.kvk_oprichtingsdatum ?? null,
-                  kvk_checked_at: new Date().toISOString(),
+                  kvk_oprichtingsdatum: bedrijfDatum ?? shop.kvk_oprichtingsdatum ?? null,
+                  kvk_checked_at: now,
+                  kvk_vestigingsnummer: vestigingsnummer ?? shop.kvk_vestigingsnummer ?? null,
+                  kvk_vestiging_datum: vestigingDatum ?? shop.kvk_vestiging_datum ?? null,
+                  kvk_vestiging_checked_at: now,
                 };
                 if (!shop.exploitant && handelsnaam) patch["exploitant"] = handelsnaam;
-                await db.from("coffeeshop_register").update(patch as any).eq("id", shop.id);
-                Object.assign(shop, patch);
-                kvkLookups++;
-              } catch (e) {
-                console.warn("KvK lookup fout", shop.id, String(e));
-              }
-            }
-
-            for (const shop of ordered.filter((s) => !s.kvk_vestiging_checked_at).slice(0, kvkLimit)) {
-              try {
-                const { vestigingsnummer, datum } = await kvkVestigingLookup(kvkKey, shop);
-                const patch: Record<string, unknown> = {
-                  kvk_vestigingsnummer: vestigingsnummer ?? shop.kvk_vestigingsnummer ?? null,
-                  kvk_vestiging_datum: datum ?? shop.kvk_vestiging_datum ?? null,
-                  kvk_vestiging_checked_at: new Date().toISOString(),
-                };
-                if (!shop.oprichtingsdatum && datum) {
-                  patch["oprichtingsdatum"] = datum;
-                  patch["oprichtingsdatum_bron"] = "kvk-vestiging";
+                // De startdatum van deze vestiging is leidend voor het register
+                const opricht = vestigingDatum ?? bedrijfDatum;
+                if (!shop.oprichtingsdatum && opricht) {
+                  patch["oprichtingsdatum"] = opricht;
+                  patch["oprichtingsdatum_bron"] = vestigingDatum ? "kvk-vestiging" : "kvk";
                 }
                 await db.from("coffeeshop_register").update(patch as any).eq("id", shop.id);
                 Object.assign(shop, patch);
-                vestigingLookups++;
+                kvkLookups++;
+                if (vestigingsnummer) vestigingLookups++;
               } catch (e) {
-                console.warn("KvK vestiging fout", shop.id, String(e));
+                console.warn("KvK lookup fout", shop.id, String(e));
               }
             }
           }
