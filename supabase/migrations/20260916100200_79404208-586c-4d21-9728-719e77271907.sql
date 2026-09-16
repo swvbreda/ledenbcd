@@ -1,0 +1,1 @@
+select cron.schedule('informer-send-pending-invoices-daily', '50 4 * * *', $$select public.trigger_informer_sync('send_pending_invoices');$$);
