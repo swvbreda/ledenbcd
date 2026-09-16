@@ -69,12 +69,21 @@ async function removeFile(bucket: string, memberId: number, base: string) {
   }
 }
 
+/** Openbaar adres van het logo van een lid (werkt ook zonder inloggen). */
+export const memberLogoUrl = (memberId: number, version?: string | number) =>
+  `/api/public/member-logo/${memberId}${version ? `?v=${version}` : ""}`;
+
 /** Logo van een lid (één per lid). */
 export function useMemberLogo(memberId: number | undefined) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["member-logo", memberId],
-    queryFn: async () => (await loadFolder(LOGO_BUCKET, memberId!))["logo"] ?? null,
+    queryFn: async () => {
+      const { data } = await supabase.storage.from(LOGO_BUCKET).list(String(memberId), { limit: 20 });
+      const logo = (data || []).find((f) => f.id && f.name.startsWith("logo."));
+      if (!logo) return null;
+      return memberLogoUrl(memberId!, logo.updated_at ?? logo.created_at ?? undefined);
+    },
     enabled: !!memberId,
     staleTime: 5 * 60 * 1000,
   });
@@ -97,6 +106,7 @@ export function useMemberLogo(memberId: number | undefined) {
     },
   };
 }
+
 
 /** Foto's van alle contactpersonen van een lid, gekeyed op contactSlug(naam). */
 export function useContactPhotos(memberId: number | undefined) {
