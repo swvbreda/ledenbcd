@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "@/lib/router-compat";
-import { Building2, Link2, MapPin, Store, Users } from "lucide-react";
+import { MapPin, Store, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
@@ -54,18 +54,11 @@ const KerngegevensSummary = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Kaart
           icon={Store}
           label="Aangesloten coffeeshops"
           waarde={String(totaalRepresented)}
-          hint="vertegenwoordigd via het register"
-        />
-        <Kaart
-          icon={Building2}
-          label="Vestigingen"
-          waarde={String(k.totaalVestigingen)}
-          hint="zoals ingevuld in het ledenbestand"
         />
         <Kaart
           icon={Users}
@@ -77,12 +70,6 @@ const KerngegevensSummary = () => {
           icon={MapPin}
           label="Gemeenten"
           waarde={String(k.gemeenteRijen.length)}
-        />
-        <Kaart
-          icon={Link2}
-          label="Gekoppeld aan register"
-          waarde={String(k.gekoppeldeVestigingen)}
-          hint="bevestigde koppelingen"
         />
       </div>
 
