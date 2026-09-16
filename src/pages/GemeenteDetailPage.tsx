@@ -6,6 +6,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
+import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,6 +22,9 @@ const GemeenteDetailPage = () => {
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
   const { perGemeente: perStad } = useRegisterStats();
+  const { isAdmin, isBoard } = useAuth();
+  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
+  const canSeeRegister = isAdmin || isBoard;
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
@@ -143,12 +147,14 @@ const GemeenteDetailPage = () => {
             {data.aangesloten} aangesloten coffeeshop{data.aangesloten !== 1 ? "s" : ""}
             {data.totaalNL > 0 && ` van ${data.totaalNL} totaal`}
           </p>
-          <button
-            onClick={() => navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(decodedGemeente)}`)}
-            className="text-xs text-primary hover:underline mt-1"
-          >
-            Bekijk registerdetails van deze gemeente →
-          </button>
+          {canSeeRegister && (
+            <button
+              onClick={() => navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(decodedGemeente)}`)}
+              className="text-xs text-primary hover:underline mt-1"
+            >
+              Bekijk registerdetails van deze gemeente →
+            </button>
+          )}
         </div>
       </div>
 

@@ -88,6 +88,7 @@ const RegisterCoverageCard = () => {
   const [shopQuery, setShopQuery] = useState<Record<string, string>>({});
 
   const totalLocations = representation.totaalRepresented || represented.reduce((s, m) => s + memberLocationCount(m), 0);
+  // Registerkoppelingen zijn nooit zichtbaar voor gewone leden.
   const linked = summary?.bevestigde_koppelingen ?? 0;
 
   const statusKeys = useMemo(
@@ -169,6 +170,8 @@ const RegisterCoverageCard = () => {
       })
       .slice(0, 6);
   };
+
+  if (!allowed) return null;
 
   return (
     <div className="rounded-lg border bg-card">

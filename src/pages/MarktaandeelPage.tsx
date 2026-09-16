@@ -5,6 +5,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { ArrowLeft, ExternalLink, Search } from "lucide-react";
 import { useNavigate } from "@/lib/router-compat";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
@@ -18,6 +19,9 @@ const MarktaandeelPage = () => {
     representedPerGemeente: cityCount,
     totaalRepresented: totalLocaties,
   } = useRegisterStats();
+  const { isAdmin, isBoard } = useAuth();
+  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
+  const canSeeRegister = isAdmin || isBoard;
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -129,16 +133,18 @@ const MarktaandeelPage = () => {
                     >
                       <td className="px-3 py-1.5 font-medium truncate">
                         <span>{city}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(city)}`);
-                          }}
-                          className="ml-2 text-xs text-primary hover:underline"
-                          title="Bekijk registerdetails"
-                        >
-                          register
-                        </button>
+                        {canSeeRegister && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(city)}`);
+                            }}
+                            className="ml-2 text-xs text-primary hover:underline"
+                            title="Bekijk registerdetails"
+                          >
+                            register
+                          </button>
+                        )}
                       </td>
                       <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{total}</td>
                       <td className="px-3 py-1.5 text-right tabular-nums">{bcd}</td>
