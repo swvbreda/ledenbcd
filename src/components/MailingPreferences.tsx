@@ -30,7 +30,14 @@ export default function MailingPreferences({ member, canEdit }: Props) {
         .select("email")
         .eq("member_id", member.id);
       if (!error && data) {
-        setSelectedEmails(new Set(data.map((r) => r.email).filter((e) => e && e.length > 0)));
+        // Compare case-insensitively so "Naam@..." and "naam@..." are one address.
+        setSelectedEmails(
+          new Set(
+            data
+              .map((r) => (r.email || "").trim().toLowerCase())
+              .filter((e) => e.length > 0)
+          )
+        );
       }
       setLoading(false);
     };
