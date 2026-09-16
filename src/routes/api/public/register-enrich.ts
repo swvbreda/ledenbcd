@@ -25,7 +25,16 @@ const UA = "Mozilla/5.0 (compatible; BCD-Ledenbestand/1.0; +https://leden.coffee
 const normPc = (v: unknown) => String(v ?? "").toUpperCase().replace(/\s+/g, "");
 const compact = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const shopHouseNumber = (shop: any) => String(shop.huisnummer ?? "").replace(/\D+/g, "");
+/**
+ * Huisnummer van de shop. Het register levert het huisnummer meestal niet apart
+ * aan, maar als onderdeel van de straat ("Marnixstraat 333").
+ */
+const shopHouseNumber = (shop: any) => {
+  const direct = String(shop.huisnummer ?? "").replace(/\D+/g, "");
+  if (direct) return direct;
+  const m = String(shop.straat ?? "").match(/(\d+)\s*[a-zA-Z]?\s*$/);
+  return m?.[1] ?? "";
+};
 
 function toIsoDate(raw: unknown): string | null {
   const s = String(raw ?? "").replace(/-/g, "");
@@ -43,62 +52,56 @@ async function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms: numbe
   }
 }
 
-/** Onderneming + oprichtingsdatum bij de KvK. */
+/**
+ * Zoekt de vestiging op postcode + huisnummer en levert onderneming,
+ * vestigingsnummer, handelsnaam en startdatums. Alleen bij precies één
+ * vestiging op dat adres, anders blijft het leeg (liever niets dan fout).
+ */
 async function kvkLookup(apiKey: string, shop: any) {
-  const headers = { apikey: apiKey, Accept: "application/json" };
-  let kvkNummer: string | null = shop.kvk_nummer ?? null;
-  let handelsnaam: string | null = null;
-
-  if (!kvkNummer) {
-    const params = new URLSearchParams();
-    const naam = shop.vergunninghouder || shop.exploitant || shop.naam;
-    if (naam) params.set("naam", String(naam));
-    if (shop.postcode) params.set("postcode", normPc(shop.postcode));
-    if (shopHouseNumber(shop)) params.set("huisnummer", shopHouseNumber(shop));
-    if (!params.toString()) return { kvkNummer: null, datum: null, handelsnaam: null };
-
-    const res = await fetch(`${KVK_SEARCH}?${params}`, { headers });
-    if (!res.ok) return { kvkNummer: null, datum: null, handelsnaam: null };
-    const json: any = await res.json().catch(() => null);
-    const items: any[] = json?.resultaten ?? [];
-    if (items.length !== 1) return { kvkNummer: null, datum: null, handelsnaam: null };
-    kvkNummer = items[0]?.kvkNummer ?? null;
-    handelsnaam = items[0]?.naam ?? null;
-  }
-  if (!kvkNummer) return { kvkNummer: null, datum: null, handelsnaam: null };
-
-  const res = await fetch(`${KVK_PROFILE}/${kvkNummer}`, { headers });
-  if (!res.ok) return { kvkNummer, datum: null, handelsnaam };
-  const prof: any = await res.json().catch(() => null);
-  const datum = toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang);
-  return { kvkNummer, datum, handelsnaam: handelsnaam ?? prof?.naam ?? null };
-}
-
-/** Vestigingsnummer + startdatum van DEZE vestiging. */
-async function kvkVestigingLookup(apiKey: string, shop: any) {
+  const leeg = {
+    kvkNummer: null as string | null,
+    handelsnaam: null as string | null,
+    vestigingsnummer: null as string | null,
+    vestigingDatum: null as string | null,
+    bedrijfDatum: null as string | null,
+  };
   const headers = { apikey: apiKey, Accept: "application/json" };
   const postcode = normPc(shop.postcode);
   const huisnummer = shopHouseNumber(shop);
-  if (!postcode || !huisnummer) return { vestigingsnummer: null, datum: null };
+  if (!postcode || !huisnummer) return leeg;
 
-  const params = new URLSearchParams({ postcode, huisnummer, type: "hoofdvestiging,nevenvestiging" });
-  if (shop.kvk_nummer) params.set("kvkNummer", String(shop.kvk_nummer));
-
+  const params = new URLSearchParams({ postcode, huisnummer });
   const res = await fetch(`${KVK_SEARCH}?${params}`, { headers });
-  if (!res.ok) return { vestigingsnummer: null, datum: null };
+  if (!res.ok) return leeg;
   const json: any = await res.json().catch(() => null);
-  const items: any[] = (json?.resultaten ?? []).filter((r: any) => r?.vestigingsnummer);
-  const uniek = Array.from(new Set(items.map((r: any) => String(r.vestigingsnummer))));
-  if (uniek.length !== 1) return { vestigingsnummer: null, datum: null };
 
-  const vestigingsnummer = uniek[0]!;
-  const profRes = await fetch(`${KVK_VESTIGING}/${vestigingsnummer}`, { headers });
-  if (!profRes.ok) return { vestigingsnummer, datum: null };
-  const prof: any = await profRes.json().catch(() => null);
-  return {
-    vestigingsnummer,
-    datum: toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang),
-  };
+  // Alleen echte vestigingen; rechtspersonen en VvE's op hetzelfde adres negeren.
+  const items: any[] = (json?.resultaten ?? []).filter((r: any) => r?.vestigingsnummer);
+  const uniek = Array.from(new Map(items.map((r: any) => [String(r.vestigingsnummer), r])).values());
+  if (uniek.length !== 1) return leeg;
+
+  const hit: any = uniek[0];
+  const kvkNummer = hit?.kvkNummer ? String(hit.kvkNummer) : null;
+  const vestigingsnummer = String(hit.vestigingsnummer);
+  const handelsnaam = hit?.naam ? String(hit.naam) : null;
+
+  let vestigingDatum: string | null = null;
+  const vestRes = await fetch(`${KVK_VESTIGING}/${vestigingsnummer}`, { headers });
+  if (vestRes.ok) {
+    const prof: any = await vestRes.json().catch(() => null);
+    vestigingDatum = toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang);
+  }
+
+  let bedrijfDatum: string | null = null;
+  if (kvkNummer) {
+    const profRes = await fetch(`${KVK_PROFILE}/${kvkNummer}`, { headers });
+    if (profRes.ok) {
+      const prof: any = await profRes.json().catch(() => null);
+      bedrijfDatum = toIsoDate(prof?.formeleRegistratiedatum ?? prof?.materieleRegistratie?.datumAanvang);
+    }
+  }
+
+  return { kvkNummer, handelsnaam, vestigingsnummer, vestigingDatum, bedrijfDatum };
 }
 
 const SOCIAL_HOSTS: Array<[string, RegExp]> = [
