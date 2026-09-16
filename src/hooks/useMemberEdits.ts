@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { isLocationDeleted, locationDeletionIdentity, mergeMemberLocations } from "@/lib/memberLocations";
+import { newContactEmails, sendContactInvites } from "@/lib/contactInvites";
+import { toast } from "sonner";
 
 type MemberEditData = Partial<Member> & { _verwijderdeLocaties?: string[] };
 
@@ -13,6 +15,47 @@ interface MemberEdit {
   member_id: number;
   data: MemberEditData;
 }
+
+/**
+ * Nodigt nieuw toegevoegde contactpersonen automatisch uit voor een account.
+ * Faalt zacht: een mislukte mail blokkeert het opslaan niet.
+ */
+async function inviteNewContacts(
+  memberId: number,
+  previous: Partial<Member>,
+  next: Partial<Member>,
+) {
+  try {
+    const emails = newContactEmails(previous, next);
+    if (emails.length === 0) return;
+
+    const { data: row } = await supabase
+      .from("members_data")
+      .select("member_type, data")
+      .eq("id", memberId)
+      .maybeSingle();
+    const base = (row?.data as Partial<Member> | null) ?? {};
+    const memberType = row?.member_type === "lead" ? "lead" : "member";
+
+    const results = await sendContactInvites(
+      memberId,
+      { ...base, ...next },
+      emails,
+      memberType,
+    );
+    const sent = results.filter((r) => r.status === "sent").map((r) => r.email);
+    const failed = results.filter((r) => r.status === "error");
+    if (sent.length > 0) toast.success(`Uitnodiging verstuurd naar ${sent.join(", ")}`);
+    if (failed.length > 0) {
+      toast.warning(
+        `Uitnodiging mislukt voor ${failed.map((f) => `${f.email} (${f.reason})`).join(", ")}`,
+      );
+    }
+  } catch (err) {
+    console.error("Automatische uitnodiging mislukt", err);
+  }
+}
+
 
 /** Drop placeholder location rows that have neither address nor place */
 const cleanLocaties = <T extends { naam?: string; adres?: string; plaats?: string }>(locaties: T[]): T[] =>
