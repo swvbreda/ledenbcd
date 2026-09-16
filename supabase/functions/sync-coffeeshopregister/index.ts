@@ -478,10 +478,22 @@ Deno.serve(async (req) => {
       if (s.postcode && k.postcode && s.postcode === k.postcode && s.nummer && k.huisnummer === s.nummer) {
         return { score: 0.95, reden: "Adres (postcode + huisnummer)" };
       }
-      if (kvkHit) return { score: 0.95, reden: `KvK ${s.kvkLabel}` };
+
+      // Plaats of postcode spreken elkaar tegen: nooit automatisch bevestigen.
+      // Zulke matches (zelfde KvK/exploitant, andere stad) zijn vaak een tweede
+      // vestiging van dezelfde eigenaar en moeten met de hand beoordeeld worden.
+      const plaatsConflict = !!s.plaats && !!k.plaats && s.plaats !== k.plaats && s.gemeente !== k.plaats;
+      const postcodeConflict = !!s.postcode && !!k.postcode && s.postcode !== k.postcode;
+      const twijfel = plaatsConflict || postcodeConflict;
+      const cap = (score: number, reden: string) =>
+        twijfel
+          ? { score: Math.min(score, 0.7), reden: `${reden} — let op: andere plaats/postcode` }
+          : { score, reden };
+
+      if (kvkHit) return cap(0.95, `KvK ${s.kvkLabel}`);
       if (zelfdeNaam && zelfdePlaats) return { score: 0.9, reden: "Naam + plaats" };
-      if (bedrijfHit) return { score: 0.85, reden: s.bedrijven.get(bedrijfHit)! };
-      if (uboKvkHit || uboNaamHit) return { score: 0.75, reden: "UBO/eigendomsketen komt overeen" };
+      if (bedrijfHit) return cap(0.85, s.bedrijven.get(bedrijfHit)!);
+      if (uboKvkHit || uboNaamHit) return cap(0.75, "UBO/eigendomsketen komt overeen");
       // Zelfde naam maar andere plaats: geen voorstel (te veel valse matches).
       return { score: 0, reden: "" };
     };
