@@ -3284,6 +3284,14 @@ export type Database = {
         }[]
       }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
+      get_member_register_logos: {
+        Args: never
+        Returns: {
+          location_key: string
+          logo_url: string
+          member_id: number
+        }[]
+      }
       get_members_for_extern: { Args: { _org_id: string }; Returns: Json }
       get_membership_request_status: {
         Args: { _email: string }

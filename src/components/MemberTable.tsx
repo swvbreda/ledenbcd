@@ -8,6 +8,7 @@ import { useMembersData } from "@/contexts/MembersDataContext";
 import { getMembershipYears } from "@/lib/membership";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemberLogosBulk } from "@/hooks/useMemberMedia";
+import { useRegisterLogos } from "@/hooks/useRegisterLogos";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 const LogoThumb = ({ url, naam, size = 28 }: { url?: string; naam: string; size?: number }) => (
@@ -124,7 +125,13 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   };
 
   const displayMembers = compact ? sorted.slice(0, 10) : sorted;
-  const { data: logos = {} } = useMemberLogosBulk(displayMembers.map((m) => m.id));
+  const { data: uploadedLogos = {} } = useMemberLogosBulk(displayMembers.map((m) => m.id));
+  const { data: registerLogos } = useRegisterLogos();
+  /** Zelf geüpload logo heeft voorrang; anders het logo uit het register. */
+  const logos: Record<number, string | undefined> = {};
+  displayMembers.forEach((m) => {
+    logos[m.id] = uploadedLogos[m.id] ?? registerLogos?.byMember.get(m.id);
+  });
 
   // Mobile card view
   const MobileCard = ({ member: m }: { member: Member }) => {
