@@ -59,6 +59,8 @@ function buildPayload(rows: any[], edits: Map<number, any>) {
         telefoon: data.telefoon ?? null,
         lidstatus: row.member_type,
         kvk_nummer: (l?.kvk ?? data.kvk) ? String(l?.kvk ?? data.kvk) : null,
+        vergunninghouder: l?.vergunninghouder ?? data.vergunninghouder ?? null,
+        exploitant: l?.exploitant ?? data.exploitant ?? l?.bedrijfsnaam ?? data.bedrijfsnaam ?? null,
       });
     });
   }

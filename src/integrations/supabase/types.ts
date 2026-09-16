@@ -712,6 +712,11 @@ export type Database = {
           kvk_vestiging_datum: string | null
           kvk_vestigingsnummer: string | null
           latitude: number | null
+          lid_exploitant: string | null
+          lid_kvk_nummer: string | null
+          lid_opgave_bijgewerkt_op: string | null
+          lid_opgave_member_id: number | null
+          lid_vergunninghouder: string | null
           logo_pad: string | null
           logo_url: string | null
           longitude: number | null
@@ -754,6 +759,11 @@ export type Database = {
           kvk_vestiging_datum?: string | null
           kvk_vestigingsnummer?: string | null
           latitude?: number | null
+          lid_exploitant?: string | null
+          lid_kvk_nummer?: string | null
+          lid_opgave_bijgewerkt_op?: string | null
+          lid_opgave_member_id?: number | null
+          lid_vergunninghouder?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
@@ -796,6 +806,11 @@ export type Database = {
           kvk_vestiging_datum?: string | null
           kvk_vestigingsnummer?: string | null
           latitude?: number | null
+          lid_exploitant?: string | null
+          lid_kvk_nummer?: string | null
+          lid_opgave_bijgewerkt_op?: string | null
+          lid_opgave_member_id?: number | null
+          lid_vergunninghouder?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
@@ -3152,7 +3167,12 @@ export type Database = {
         Args: { _action: string; _event_id: string }
         Returns: undefined
       }
+      apply_member_register_opgave: {
+        Args: { _member_id: number }
+        Returns: number
+      }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
+      compact_key: { Args: { _v: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
