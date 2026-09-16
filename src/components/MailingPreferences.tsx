@@ -44,24 +44,26 @@ export default function MailingPreferences({ member, canEdit }: Props) {
     fetchPrefs();
   }, [member.id]);
 
-  const toggleEmail = async (email: string) => {
+  const toggleEmail = async (rawEmail: string) => {
     if (!canEdit) return;
 
-    const isSelected = selectedEmails.has(email);
+    const email = rawEmail.trim();
+    const key = email.toLowerCase();
+    const isSelected = selectedEmails.has(key);
     const newSet = new Set(selectedEmails);
 
     if (isSelected) {
-      // Remove
+      // Remove (case-insensitive, so old spellings disappear too)
       const { error } = await supabase
         .from("member_mailing_preferences")
         .delete()
         .eq("member_id", member.id)
-        .eq("email", email);
+        .ilike("email", email);
       if (error) {
         toast.error("Fout bij opslaan: " + error.message);
         return;
       }
-      newSet.delete(email);
+      newSet.delete(key);
       // If this was the last selected email, insert a sentinel row so the
       // export knows this member is explicitly opted out (rather than never
       // configured). getUniqueEmails filters empty strings out of the export.
