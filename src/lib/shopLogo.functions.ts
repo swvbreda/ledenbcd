@@ -40,6 +40,79 @@ export const getShopLogoStatus = createServerFn({ method: "GET" })
     return (row as ShopLogoStatus) ?? null;
   });
 
+export type ShopLogoReviewItem = {
+  register_id: string;
+  naam: string;
+  plaats: string;
+  lid_id: number | null;
+  lid_naam: string | null;
+  logo_gecontroleerd: boolean;
+};
+
+/** Lijst met logo's van aangesloten coffeeshops om te beoordelen. */
+export const listShopLogosForReview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { approved?: boolean }) => ({ approved: data?.approved === true }))
+  .handler(async ({ data, context }): Promise<ShopLogoReviewItem[]> => {
+    await assertBeheer(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("coffeeshop_member_links")
+      .select(
+        "member_id, register_id, coffeeshop_register(id, naam, plaats, logo_pad, logo_url, vervallen, logo_gecontroleerd)",
+      )
+      .eq("status", "bevestigd");
+    if (error) throw new Error(error.message);
+
+    const perShop = new Map<string, ShopLogoReviewItem>();
+    for (const row of rows ?? []) {
+      const shop = (row as unknown as {
+        coffeeshop_register: {
+          id: string;
+          naam: string | null;
+          plaats: string | null;
+          logo_pad: string | null;
+          logo_url: string | null;
+          vervallen: boolean | null;
+          logo_gecontroleerd: boolean | null;
+        } | null;
+        member_id: number | null;
+      }).coffeeshop_register;
+      if (!shop || shop.vervallen) continue;
+      if (!shop.logo_pad && !shop.logo_url) continue;
+      if (!!shop.logo_gecontroleerd !== data.approved) continue;
+      if (perShop.has(shop.id)) continue;
+      perShop.set(shop.id, {
+        register_id: shop.id,
+        naam: shop.naam ?? "",
+        plaats: shop.plaats ?? "",
+        lid_id: (row as unknown as { member_id: number | null }).member_id ?? null,
+        lid_naam: null,
+        logo_gecontroleerd: !!shop.logo_gecontroleerd,
+      });
+    }
+
+    const items = [...perShop.values()];
+    const ids = [...new Set(items.map((i) => i.lid_id).filter((v): v is number => v != null))];
+    if (ids.length) {
+      const { data: leden } = await supabaseAdmin
+        .from("members_data")
+        .select("id, data")
+        .in("id", ids);
+      const namen = new Map<number, string>();
+      for (const lid of leden ?? []) {
+        const naam = (lid as unknown as { data: { naam?: string } | null }).data?.naam;
+        if (naam) namen.set((lid as unknown as { id: number }).id, naam);
+      }
+      for (const item of items) {
+        if (item.lid_id != null) item.lid_naam = namen.get(item.lid_id) ?? null;
+      }
+    }
+
+    return items.sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
+  });
+
 export const setShopLogoApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { register_id: string; approved: boolean }) => ({

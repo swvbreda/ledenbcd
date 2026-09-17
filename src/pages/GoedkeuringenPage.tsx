@@ -22,6 +22,7 @@ import {
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { nextMemberNumber } from "@/lib/memberNumber";
 import RegisterLinkApprovals from "@/components/register/RegisterLinkApprovals";
+import LogoGoedkeuringPanel from "@/components/register/LogoGoedkeuringPanel";
 import type { Member } from "@/data/types";
 
 const fieldLabels: Record<string, string> = {
@@ -333,6 +334,9 @@ export default function GoedkeuringenPage() {
           {showAll ? "Alleen openstaand" : "Toon alles"}
         </Button>
       </BcdHeroBanner>
+
+      {/* Logo's van coffeeshops beoordelen */}
+      <LogoGoedkeuringPanel />
 
       {/* Koppelvoorstellen coffeeshopregister */}
       <RegisterLinkApprovals />
