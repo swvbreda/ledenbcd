@@ -49,6 +49,7 @@ const LogoGoedkeuringPanel = () => {
   const [donkerPerLogo, setDonkerPerLogo] = useState<Record<string, boolean>>({});
   const [cacheBust, setCacheBust] = useState(() => Date.now());
   const [uploadVoor, setUploadVoor] = useState<string | null>(null);
+  const [verdacht, setVerdacht] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: items = [], isLoading, isError, error, refetch } = useQuery({
