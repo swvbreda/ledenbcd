@@ -217,6 +217,11 @@ const LogoGoedkeuringPanel = () => {
                         alt={`Logo van ${item.naam}`}
                         loading="lazy"
                         className="max-h-full max-w-full object-contain"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          const klein = img.naturalWidth === img.naturalHeight && img.naturalWidth <= 320;
+                          if (klein) setVerdacht((prev) => ({ ...prev, [item.register_id]: true }));
+                        }}
                       />
                     </div>
                     <Button
