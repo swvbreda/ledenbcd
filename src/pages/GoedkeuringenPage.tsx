@@ -334,6 +334,9 @@ export default function GoedkeuringenPage() {
         </Button>
       </BcdHeroBanner>
 
+      {/* Logo's van coffeeshops beoordelen */}
+      <LogoGoedkeuringPanel />
+
       {/* Koppelvoorstellen coffeeshopregister */}
       <RegisterLinkApprovals />
 
