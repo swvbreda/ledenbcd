@@ -1016,7 +1016,10 @@ const MemberDetail = () => {
                         memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
                       />
                       {isAdmin && link && (
-                        <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
+                        <>
+                          <ShopLogoReview registerId={link.register_id} />
+                          <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
+                        </>
                       )}
                     </div>
 
