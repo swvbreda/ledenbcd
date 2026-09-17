@@ -282,6 +282,14 @@ const LogoGoedkeuringPanel = () => {
                 >
                   <Upload size={14} /> Uploaden
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => opnieuw.mutate(item.register_id)}
+                >
+                  <RefreshCw size={14} /> Opnieuw ophalen
+                </Button>
               </div>
             </Card>
           ))}
