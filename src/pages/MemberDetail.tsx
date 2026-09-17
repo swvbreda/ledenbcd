@@ -22,6 +22,7 @@ import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
 import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
+import ShopLogoReview from "@/components/register/ShopLogoReview";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
@@ -1016,7 +1017,10 @@ const MemberDetail = () => {
                         memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
                       />
                       {isAdmin && link && (
-                        <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
+                        <>
+                          <ShopLogoReview registerId={link.register_id} />
+                          <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
+                        </>
                       )}
                     </div>
 

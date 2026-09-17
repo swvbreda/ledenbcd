@@ -20,6 +20,7 @@ type ShopRow = {
   logo_pad: string | null;
   logo_url: string | null;
   vervallen: boolean | null;
+  logo_gecontroleerd: boolean | null;
 };
 
 export const Route = createFileRoute("/api/public/leden-logos")({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/api/public/leden-logos")({
             supabaseAdmin
               .from("coffeeshop_member_links")
               .select(
-                "register_id, coffeeshop_register(id, naam, plaats, logo_pad, logo_url, vervallen)",
+                "register_id, coffeeshop_register(id, naam, plaats, logo_pad, logo_url, vervallen, logo_gecontroleerd)",
               )
               .eq("status", "bevestigd"),
             supabaseAdmin.from("shop_logo_optout").select("register_id"),
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/api/public/leden-logos")({
           const shop = (link as unknown as { coffeeshop_register: ShopRow | null })
             .coffeeshop_register;
           if (!shop || shop.vervallen) continue;
+          if (!shop.logo_gecontroleerd) continue;
           if (!shop.logo_pad && !shop.logo_url) continue;
           if (uitgezet.has(shop.id) || perShop.has(shop.id)) continue;
           perShop.set(shop.id, {

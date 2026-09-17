@@ -768,6 +768,9 @@ export type Database = {
           lid_opgave_member_id: number | null
           lid_vergunninghouder: string | null
           logo_bron: string | null
+          logo_gecontroleerd: boolean
+          logo_gecontroleerd_door: string | null
+          logo_gecontroleerd_op: string | null
           logo_pad: string | null
           logo_url: string | null
           longitude: number | null
@@ -817,6 +820,9 @@ export type Database = {
           lid_opgave_member_id?: number | null
           lid_vergunninghouder?: string | null
           logo_bron?: string | null
+          logo_gecontroleerd?: boolean
+          logo_gecontroleerd_door?: string | null
+          logo_gecontroleerd_op?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
@@ -866,6 +872,9 @@ export type Database = {
           lid_opgave_member_id?: number | null
           lid_vergunninghouder?: string | null
           logo_bron?: string | null
+          logo_gecontroleerd?: boolean
+          logo_gecontroleerd_door?: string | null
+          logo_gecontroleerd_op?: string | null
           logo_pad?: string | null
           logo_url?: string | null
           longitude?: number | null
