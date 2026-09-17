@@ -56,6 +56,7 @@ export const Route = createFileRoute("/api/public/leden-logos")({
           const shop = (link as unknown as { coffeeshop_register: ShopRow | null })
             .coffeeshop_register;
           if (!shop || shop.vervallen) continue;
+          if (!shop.logo_gecontroleerd) continue;
           if (!shop.logo_pad && !shop.logo_url) continue;
           if (uitgezet.has(shop.id) || perShop.has(shop.id)) continue;
           perShop.set(shop.id, {
