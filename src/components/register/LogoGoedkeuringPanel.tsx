@@ -43,6 +43,8 @@ const LogoGoedkeuringPanel = () => {
   const uploadFn = useServerFn(uploadShopLogo);
 
   const [toonGoedgekeurd, setToonGoedgekeurd] = useState(false);
+  const [donkereAchtergrond, setDonkereAchtergrond] = useState(false);
+  const [donkerPerLogo, setDonkerPerLogo] = useState<Record<string, boolean>>({});
   const [cacheBust, setCacheBust] = useState(() => Date.now());
   const [uploadVoor, setUploadVoor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
