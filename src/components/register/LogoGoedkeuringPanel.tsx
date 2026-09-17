@@ -187,7 +187,7 @@ const LogoGoedkeuringPanel = () => {
                 return (
                   <div className="relative">
                     <div
-                      className="flex h-36 items-center justify-center overflow-hidden rounded-md border border-border"
+                      className="flex h-36 items-center justify-center overflow-hidden rounded-md border border-border p-2"
                       style={
                         donker
                           ? { background: "hsl(220 25% 12%)" }
@@ -203,7 +203,7 @@ const LogoGoedkeuringPanel = () => {
                         src={`/api/public/shop-logo/${item.register_id}?v=${cacheBust}`}
                         alt={`Logo van ${item.naam}`}
                         loading="lazy"
-                        className="h-full w-full object-contain p-2"
+                        className="max-h-full max-w-full object-contain"
                       />
                     </div>
                     <Button
