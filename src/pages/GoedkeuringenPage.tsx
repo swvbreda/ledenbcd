@@ -22,6 +22,7 @@ import {
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { nextMemberNumber } from "@/lib/memberNumber";
 import RegisterLinkApprovals from "@/components/register/RegisterLinkApprovals";
+import LogoGoedkeuringPanel from "@/components/register/LogoGoedkeuringPanel";
 import type { Member } from "@/data/types";
 
 const fieldLabels: Record<string, string> = {
