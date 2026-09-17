@@ -113,7 +113,17 @@ const LogoGoedkeuringPanel = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const busy = approve.isPending || upload.isPending || approveAll.isPending;
+  const opnieuw = useMutation({
+    mutationFn: (registerId: string) => refetchLogoFn({ data: { register_id: registerId } }),
+    onSuccess: () => {
+      refresh();
+      toast.success("Logo opnieuw opgehaald van de website");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy =
+    approve.isPending || upload.isPending || approveAll.isPending || opnieuw.isPending;
 
   return (
     <section className="space-y-2">
