@@ -122,6 +122,17 @@ const LogoGoedkeuringPanel = () => {
           )}
         </h2>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDonkereAchtergrond(!donkereAchtergrond);
+              setDonkerPerLogo({});
+            }}
+          >
+            <Contrast size={14} />
+            {donkereAchtergrond ? "Lichte achtergrond" : "Donkere achtergrond"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setToonGoedgekeurd(!toonGoedgekeurd)}>
             {toonGoedgekeurd ? "Toon te beoordelen" : "Toon goedgekeurde"}
           </Button>
