@@ -203,7 +203,7 @@ const LogoGoedkeuringPanel = () => {
                         src={`/api/public/shop-logo/${item.register_id}?v=${cacheBust}`}
                         alt={`Logo van ${item.naam}`}
                         loading="lazy"
-                        className="h-full w-full object-contain p-2"
+                        className="max-h-full max-w-full object-contain"
                       />
                     </div>
                     <Button
