@@ -145,6 +145,45 @@ export const setShopLogoApproval = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Haalt het logo opnieuw op van de website van de coffeeshop, met voorrang
+ * voor een echt (niet-vierkant) logobestand boven een website-icoontje.
+ */
+export const refetchShopLogo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { register_id: string }) => ({ register_id: uuid(data?.register_id) }))
+  .handler(async ({ data, context }) => {
+    await assertBeheer(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchAndStoreLogo } = await import("./shopLogoFetch.server");
+
+    const { data: shop, error } = await supabaseAdmin
+      .from("coffeeshop_register")
+      .select("id, website")
+      .eq("id", data.register_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const website = String((shop as { website?: string | null } | null)?.website ?? "").trim();
+    if (!website) throw new Error("Geen website bekend voor deze coffeeshop");
+
+    const stored = await fetchAndStoreLogo(supabaseAdmin, data.register_id, website);
+    if (!stored) throw new Error("Geen bruikbaar logo gevonden op de website");
+
+    const { error: updErr } = await supabaseAdmin
+      .from("coffeeshop_register")
+      .update({
+        logo_pad: stored.path,
+        logo_url: `https://leden.coffeeshopbond.nl/api/public/shop-logo/${data.register_id}`,
+        logo_bron: stored.bron,
+        logo_gecontroleerd: false,
+        logo_gecontroleerd_op: null,
+        logo_gecontroleerd_door: null,
+      })
+      .eq("id", data.register_id);
+    if (updErr) throw new Error(updErr.message);
+    return { ok: true, bron: stored.bron };
+  });
+
 export const uploadShopLogo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(

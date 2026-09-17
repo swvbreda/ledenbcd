@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, X, Upload, ImageIcon, Contrast } from "lucide-react";
+import { Check, X, Upload, ImageIcon, Contrast, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   listShopLogosForReview,
+  refetchShopLogo,
   setShopLogoApproval,
   uploadShopLogo,
   type ShopLogoReviewItem,
@@ -41,12 +42,14 @@ const LogoGoedkeuringPanel = () => {
   const listFn = useServerFn(listShopLogosForReview);
   const approveFn = useServerFn(setShopLogoApproval);
   const uploadFn = useServerFn(uploadShopLogo);
+  const refetchLogoFn = useServerFn(refetchShopLogo);
 
   const [toonGoedgekeurd, setToonGoedgekeurd] = useState(false);
   const [donkereAchtergrond, setDonkereAchtergrond] = useState(false);
   const [donkerPerLogo, setDonkerPerLogo] = useState<Record<string, boolean>>({});
   const [cacheBust, setCacheBust] = useState(() => Date.now());
   const [uploadVoor, setUploadVoor] = useState<string | null>(null);
+  const [verdacht, setVerdacht] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: items = [], isLoading, isError, error, refetch } = useQuery({
@@ -110,7 +113,17 @@ const LogoGoedkeuringPanel = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const busy = approve.isPending || upload.isPending || approveAll.isPending;
+  const opnieuw = useMutation({
+    mutationFn: (registerId: string) => refetchLogoFn({ data: { register_id: registerId } }),
+    onSuccess: () => {
+      refresh();
+      toast.success("Logo opnieuw opgehaald van de website");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy =
+    approve.isPending || upload.isPending || approveAll.isPending || opnieuw.isPending;
 
   return (
     <section className="space-y-2">
@@ -204,6 +217,11 @@ const LogoGoedkeuringPanel = () => {
                         alt={`Logo van ${item.naam}`}
                         loading="lazy"
                         className="max-h-full max-w-full object-contain"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          const klein = img.naturalWidth === img.naturalHeight && img.naturalWidth <= 320;
+                          if (klein) setVerdacht((prev) => ({ ...prev, [item.register_id]: true }));
+                        }}
                       />
                     </div>
                     <Button
@@ -228,6 +246,11 @@ const LogoGoedkeuringPanel = () => {
                   {item.plaats}
                   {item.lid_naam ? ` · ${item.lid_naam}` : ""}
                 </p>
+                {verdacht[item.register_id] && (
+                  <Badge variant="outline" className="mt-1 text-[11px] text-destructive">
+                    mogelijk bijgesneden
+                  </Badge>
+                )}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {!item.logo_gecontroleerd && (
@@ -258,6 +281,14 @@ const LogoGoedkeuringPanel = () => {
                   }}
                 >
                   <Upload size={14} /> Uploaden
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => opnieuw.mutate(item.register_id)}
+                >
+                  <RefreshCw size={14} /> Opnieuw ophalen
                 </Button>
               </div>
             </Card>

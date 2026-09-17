@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  bestLogoImage,
+  parseLogoKandidaten,
+  saveLogoBytes,
+} from "@/lib/shopLogoFetch.server";
 
 /**
  * Vult het coffeeshopregister zelf aan, omdat de levering vanuit de
@@ -104,69 +109,15 @@ async function kvkLookup(apiKey: string, shop: any) {
   return { kvkNummer, handelsnaam, vestigingsnummer, vestigingDatum, bedrijfDatum };
 }
 
-const SOCIAL_HOSTS: Array<[string, RegExp]> = [
-  ["instagram", /instagram\.com\/[^"'\s?#<>]+/i],
-  ["facebook", /facebook\.com\/[^"'\s?#<>]+/i],
-  ["linkedin", /linkedin\.com\/[^"'\s?#<>]+/i],
-  ["x", /(?:twitter|x)\.com\/[^"'\s?#<>]+/i],
-];
-
-const GENERIC_SOCIAL = /\/(sharer|share|intent|login|signup|plugins|tr|policies|help)/i;
-
 /**
- * Zoekt het logo van de site. Een echte logo-afbeelding gaat vóór de
- * deelafbeelding (og:image), want dat is meestal een sfeerfoto van de zaak.
+ * Zoekt de logo-kandidaten en socials van de site. De keuze zelf gebeurt in
+ * `bestLogoImage`: een echt (niet-vierkant) logo gaat vóór een website-icoontje.
  */
 function parseSite(html: string, baseUrl: string) {
-  const abs = (u: string | null) => {
-    if (!u) return null;
-    try {
-      return new URL(u, baseUrl).toString();
-    } catch {
-      return null;
-    }
-  };
-  const pick = (re: RegExp) => html.match(re)?.[1] ?? null;
-
-  // 1. Een <img> waarvan de bestandsnaam, het bijschrift of de klasse "logo" zegt.
-  let imgLogo: string | null = null;
-  for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
-    const tag = m[0];
-    if (!/logo/i.test(tag)) continue;
-    if (/sprite|placeholder|loading|lazy-?placeholder/i.test(tag)) continue;
-    const src =
-      tag.match(/\bsrc=["']([^"']+)["']/i)?.[1] ??
-      tag.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ??
-      tag.match(/\bsrcset=["']([^"'\s,]+)/i)?.[1] ??
-      null;
-    if (!src || src.startsWith("data:")) continue;
-    imgLogo = src;
-    break;
-  }
-
-  const ogLogo = abs(pick(/<meta[^>]+property=["']og:logo["'][^>]+content=["']([^"']+)["']/i));
-  const appleIcon = abs(
-    pick(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i),
-  );
-  const icon = abs(pick(/<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i));
-  const ogImage =
-    abs(pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)) ??
-    abs(pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i));
-
-  const logo =
-    ogLogo ?? abs(imgLogo) ?? appleIcon ?? icon ?? abs("/favicon.ico") ?? ogImage;
-  // Alleen de deelafbeelding gevonden? Dan is het waarschijnlijk een foto.
-  const logoSoort = logo && logo === ogImage && !ogLogo && !imgLogo ? "foto" : "logo";
-
-  const socials: Record<string, string> = {};
-  for (const [key, re] of SOCIAL_HOSTS) {
-    const m = html.match(re);
-    if (!m) continue;
-    const url = `https://${m[0].replace(/^https?:\/\//, "")}`;
-    if (GENERIC_SOCIAL.test(url)) continue;
-    socials[key] = url;
-  }
-  return { logo, logoSoort, socials };
+  const info = parseLogoKandidaten(html, baseUrl);
+  const kandidaten = info.kandidaten.length ? info.kandidaten : info.fotoUrl ? [info.fotoUrl] : [];
+  const logoSoort = info.kandidaten.length ? "logo" : "foto";
+  return { kandidaten, logoSoort, socials: info.socials };
 }
 
 async function fetchHtml(website: string) {
@@ -236,34 +187,16 @@ async function discoverWebsite(shop: any): Promise<{ website: string; html: stri
   return null;
 }
 
-async function storeLogo(db: any, shopId: string, logoUrl: string) {
-  const res = await withTimeout(
-    (signal) => fetch(logoUrl, { headers: { "User-Agent": UA }, signal, redirect: "follow" }),
-    9000,
-  );
-  if (!res.ok) return null;
-  const type = (res.headers.get("content-type") ?? "").split(";")[0] ?? "";
-  if (!/^image\//i.test(type)) return null;
-  const buf = new Uint8Array(await res.arrayBuffer());
-  if (buf.byteLength < 500 || buf.byteLength > 3_000_000) return null;
-
-  const ext = type.includes("png")
-    ? "png"
-    : type.includes("svg")
-      ? "svg"
-      : type.includes("webp")
-        ? "webp"
-        : type.includes("icon")
-          ? "ico"
-          : "jpg";
-  const path = `${shopId}.${ext}`;
-  const { error } = await db.storage.from(BUCKET).upload(path, buf, { contentType: type, upsert: true });
-  if (error) {
-    console.warn("logo opslaan mislukt", shopId, error.message);
-    return null;
-  }
-  // De bucket is privé; het logo wordt geleverd via de openbare afbeeldingsroute.
-  return { url: `${SITE_URL}/api/public/shop-logo/${shopId}`, path };
+/**
+ * Kiest het beste logo uit de kandidaten en slaat het op. De bucket is privé;
+ * het logo wordt geleverd via de openbare afbeeldingsroute.
+ */
+async function storeLogo(db: any, shopId: string, kandidaten: string[]) {
+  const img = await bestLogoImage(kandidaten);
+  if (!img) return null;
+  const path = await saveLogoBytes(db, shopId, img.bytes, img.type);
+  if (!path) return null;
+  return { url: `${SITE_URL}/api/public/shop-logo/${shopId}`, path, verdacht: img.verdacht };
 }
 
 export const Route = createFileRoute("/api/public/register-enrich")({
@@ -403,12 +336,13 @@ export const Route = createFileRoute("/api/public/register-enrich")({
                   patch["socials"] = { ...(shop.socials ?? {}), ...info.socials };
                   socialsFound++;
                 }
-                if (info.logo && !shop.logo_url) {
-                  const stored = await storeLogo(db, shop.id, info.logo);
+                if (info.kandidaten.length && !shop.logo_url) {
+                  const stored = await storeLogo(db, shop.id, info.kandidaten);
                   if (stored?.url) {
                     patch["logo_url"] = stored.url;
                     patch["logo_pad"] = stored.path;
-                    patch["logo_bron"] = info.logoSoort === "foto" ? "foto" : "logo";
+                    patch["logo_bron"] =
+                      info.logoSoort === "foto" ? "foto" : stored.verdacht ? "icoon" : "logo";
                     logosStored++;
                   }
                 }
