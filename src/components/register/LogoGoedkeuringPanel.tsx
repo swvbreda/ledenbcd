@@ -152,6 +152,15 @@ const LogoGoedkeuringPanel = () => {
 
       {isLoading ? (
         <div className="py-4 text-sm text-muted-foreground">Laden...</div>
+      ) : isError ? (
+        <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center text-sm">
+          <p className="text-destructive">
+            De logo's konden niet worden opgehaald. {(error as Error)?.message}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => refetch()}>
+            Opnieuw proberen
+          </Button>
+        </div>
       ) : items.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-6 text-center text-sm text-muted-foreground">
           {toonGoedgekeurd ? "Nog geen goedgekeurde logo's" : "Geen logo's die wachten op goedkeuring"}
