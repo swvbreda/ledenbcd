@@ -182,14 +182,46 @@ const LogoGoedkeuringPanel = () => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <Card key={item.register_id} className="flex flex-col gap-2 p-3">
-              <div className="flex h-28 items-center justify-center overflow-hidden rounded-md border border-border bg-background">
-                <img
-                  src={`/api/public/shop-logo/${item.register_id}?v=${cacheBust}`}
-                  alt={`Logo van ${item.naam}`}
-                  loading="lazy"
-                  className="h-full w-full object-contain p-2"
-                />
-              </div>
+              {(() => {
+                const donker = donkerPerLogo[item.register_id] ?? donkereAchtergrond;
+                return (
+                  <div className="relative">
+                    <div
+                      className="flex h-36 items-center justify-center overflow-hidden rounded-md border border-border"
+                      style={
+                        donker
+                          ? { background: "hsl(220 25% 12%)" }
+                          : {
+                              backgroundColor: "hsl(0 0% 100%)",
+                              backgroundImage:
+                                "conic-gradient(hsl(0 0% 90%) 0 25%, transparent 0 50%, hsl(0 0% 90%) 0 75%, transparent 0)",
+                              backgroundSize: "16px 16px",
+                            }
+                      }
+                    >
+                      <img
+                        src={`/api/public/shop-logo/${item.register_id}?v=${cacheBust}`}
+                        alt={`Logo van ${item.naam}`}
+                        loading="lazy"
+                        className="h-full w-full object-contain p-2"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      className="absolute right-1 top-1 h-7 w-7 opacity-80"
+                      aria-label={donker ? "Lichte achtergrond voor dit logo" : "Donkere achtergrond voor dit logo"}
+                      title={donker ? "Lichte achtergrond" : "Donkere achtergrond"}
+                      onClick={() =>
+                        setDonkerPerLogo((prev) => ({ ...prev, [item.register_id]: !donker }))
+                      }
+                    >
+                      <Contrast size={14} />
+                    </Button>
+                  </div>
+                );
+              })()}
               <div className="min-w-0">
                 <p className="truncate font-display text-sm font-semibold">{item.naam}</p>
                 <p className="truncate text-xs text-muted-foreground">
