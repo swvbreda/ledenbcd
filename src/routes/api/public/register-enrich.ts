@@ -336,12 +336,13 @@ export const Route = createFileRoute("/api/public/register-enrich")({
                   patch["socials"] = { ...(shop.socials ?? {}), ...info.socials };
                   socialsFound++;
                 }
-                if (info.logo && !shop.logo_url) {
-                  const stored = await storeLogo(db, shop.id, info.logo);
+                if (info.kandidaten.length && !shop.logo_url) {
+                  const stored = await storeLogo(db, shop.id, info.kandidaten);
                   if (stored?.url) {
                     patch["logo_url"] = stored.url;
                     patch["logo_pad"] = stored.path;
-                    patch["logo_bron"] = info.logoSoort === "foto" ? "foto" : "logo";
+                    patch["logo_bron"] =
+                      info.logoSoort === "foto" ? "foto" : stored.verdacht ? "icoon" : "logo";
                     logosStored++;
                   }
                 }
