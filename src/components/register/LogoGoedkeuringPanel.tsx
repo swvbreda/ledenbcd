@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   listShopLogosForReview,
+  refetchShopLogo,
   setShopLogoApproval,
   uploadShopLogo,
   type ShopLogoReviewItem,
