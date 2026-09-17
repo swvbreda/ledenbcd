@@ -187,7 +187,7 @@ const LogoGoedkeuringPanel = () => {
                 return (
                   <div className="relative">
                     <div
-                      className="flex h-36 items-center justify-center overflow-hidden rounded-md border border-border"
+                      className="flex h-36 items-center justify-center overflow-hidden rounded-md border border-border p-2"
                       style={
                         donker
                           ? { background: "hsl(220 25% 12%)" }
