@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/leden-logos")({
             supabaseAdmin
               .from("coffeeshop_member_links")
               .select(
-                "register_id, coffeeshop_register(id, naam, plaats, logo_pad, logo_url, vervallen)",
+                "register_id, coffeeshop_register(id, naam, plaats, logo_pad, logo_url, vervallen, logo_gecontroleerd)",
               )
               .eq("status", "bevestigd"),
             supabaseAdmin.from("shop_logo_optout").select("register_id"),
