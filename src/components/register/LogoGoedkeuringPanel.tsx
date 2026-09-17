@@ -42,6 +42,7 @@ const LogoGoedkeuringPanel = () => {
   const listFn = useServerFn(listShopLogosForReview);
   const approveFn = useServerFn(setShopLogoApproval);
   const uploadFn = useServerFn(uploadShopLogo);
+  const refetchLogoFn = useServerFn(refetchShopLogo);
 
   const [toonGoedgekeurd, setToonGoedgekeurd] = useState(false);
   const [donkereAchtergrond, setDonkereAchtergrond] = useState(false);
