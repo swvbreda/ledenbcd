@@ -243,6 +243,7 @@ const CoffeeshopRegisterDetailDialog = ({
                 ))}
               </div>
             )}
+            <ShopLogoReview registerId={shop.id} />
             <ShopLogoOptoutToggle registerId={shop.id} memberId={link?.member_id ?? null} />
           </section>
         </div>
