@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  bestLogoImage,
+  parseLogoKandidaten,
+  saveLogoBytes,
+} from "@/lib/shopLogoFetch.server";
 
 /**
  * Vult het coffeeshopregister zelf aan, omdat de levering vanuit de
