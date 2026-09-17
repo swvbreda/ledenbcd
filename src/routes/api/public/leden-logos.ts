@@ -20,6 +20,7 @@ type ShopRow = {
   logo_pad: string | null;
   logo_url: string | null;
   vervallen: boolean | null;
+  logo_gecontroleerd: boolean | null;
 };
 
 export const Route = createFileRoute("/api/public/leden-logos")({
