@@ -246,6 +246,11 @@ const LogoGoedkeuringPanel = () => {
                   {item.plaats}
                   {item.lid_naam ? ` · ${item.lid_naam}` : ""}
                 </p>
+                {verdacht[item.register_id] && (
+                  <Badge variant="outline" className="mt-1 text-[11px] text-destructive">
+                    mogelijk bijgesneden
+                  </Badge>
+                )}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {!item.logo_gecontroleerd && (
