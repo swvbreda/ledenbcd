@@ -182,34 +182,16 @@ async function discoverWebsite(shop: any): Promise<{ website: string; html: stri
   return null;
 }
 
-async function storeLogo(db: any, shopId: string, logoUrl: string) {
-  const res = await withTimeout(
-    (signal) => fetch(logoUrl, { headers: { "User-Agent": UA }, signal, redirect: "follow" }),
-    9000,
-  );
-  if (!res.ok) return null;
-  const type = (res.headers.get("content-type") ?? "").split(";")[0] ?? "";
-  if (!/^image\//i.test(type)) return null;
-  const buf = new Uint8Array(await res.arrayBuffer());
-  if (buf.byteLength < 500 || buf.byteLength > 3_000_000) return null;
-
-  const ext = type.includes("png")
-    ? "png"
-    : type.includes("svg")
-      ? "svg"
-      : type.includes("webp")
-        ? "webp"
-        : type.includes("icon")
-          ? "ico"
-          : "jpg";
-  const path = `${shopId}.${ext}`;
-  const { error } = await db.storage.from(BUCKET).upload(path, buf, { contentType: type, upsert: true });
-  if (error) {
-    console.warn("logo opslaan mislukt", shopId, error.message);
-    return null;
-  }
-  // De bucket is privé; het logo wordt geleverd via de openbare afbeeldingsroute.
-  return { url: `${SITE_URL}/api/public/shop-logo/${shopId}`, path };
+/**
+ * Kiest het beste logo uit de kandidaten en slaat het op. De bucket is privé;
+ * het logo wordt geleverd via de openbare afbeeldingsroute.
+ */
+async function storeLogo(db: any, shopId: string, kandidaten: string[]) {
+  const img = await bestLogoImage(kandidaten);
+  if (!img) return null;
+  const path = await saveLogoBytes(db, shopId, img.bytes, img.type);
+  if (!path) return null;
+  return { url: `${SITE_URL}/api/public/shop-logo/${shopId}`, path, verdacht: img.verdacht };
 }
 
 export const Route = createFileRoute("/api/public/register-enrich")({
