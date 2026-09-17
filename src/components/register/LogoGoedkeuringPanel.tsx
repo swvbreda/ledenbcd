@@ -47,7 +47,7 @@ const LogoGoedkeuringPanel = () => {
   const [uploadVoor, setUploadVoor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: items = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["shop-logo-review", toonGoedgekeurd],
     queryFn: () => listFn({ data: { approved: toonGoedgekeurd } }),
   });
