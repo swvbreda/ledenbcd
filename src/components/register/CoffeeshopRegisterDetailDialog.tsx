@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useCoffeeshopRegister";
 import { statusLabel } from "@/lib/registerActive";
 import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
+import ShopLogoReview from "@/components/register/ShopLogoReview";
 
 const Row = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="flex justify-between gap-4 py-1.5 border-b last:border-0 text-sm">
