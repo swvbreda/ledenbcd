@@ -15,18 +15,25 @@ export const Route = createFileRoute("/api/public/shop-logo/$id")({
 
         const { data: shop } = await supabaseAdmin
           .from("coffeeshop_register")
-          .select("logo_pad")
+          .select("logo_pad, logo_url")
           .eq("id", id)
           .maybeSingle();
         const path = shop?.logo_pad;
-        if (!path) return new Response("Not found", { status: 404 });
 
-        const { data: signed } = await supabaseAdmin.storage
-          .from("shop-logos")
-          .createSignedUrl(path, 120);
-        if (!signed?.signedUrl) return new Response("Not found", { status: 404 });
+        // Sommige shops hebben alleen een logo-webadres uit het register en geen
+        // opgeslagen bestand; dan halen we het logo rechtstreeks bij die bron op.
+        let bronUrl: string | null = null;
+        if (path) {
+          const { data: signed } = await supabaseAdmin.storage
+            .from("shop-logos")
+            .createSignedUrl(path, 120);
+          bronUrl = signed?.signedUrl ?? null;
+        } else if (shop?.logo_url && /^https?:\/\//i.test(shop.logo_url)) {
+          bronUrl = shop.logo_url;
+        }
+        if (!bronUrl) return new Response("Not found", { status: 404 });
 
-        const upstream = await fetch(signed.signedUrl);
+        const upstream = await fetch(bronUrl);
         if (!upstream.ok) return new Response("Not found", { status: 404 });
 
         return new Response(await upstream.arrayBuffer(), {
