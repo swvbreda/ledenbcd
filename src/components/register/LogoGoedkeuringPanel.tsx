@@ -33,6 +33,59 @@ const toBase64 = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const isLightTransparentLogo = (image: CanvasImageSource, width: number, height: number) => {
+  const scale = Math.min(1, 400 / Math.max(width, height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return false;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  let transparent = 0;
+  let visible = 0;
+  let light = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const alpha = pixels[i + 3] ?? 0;
+    if (alpha < 240) transparent++;
+    if (alpha <= 16) continue;
+    visible++;
+    const red = pixels[i] ?? 0;
+    const green = pixels[i + 1] ?? 0;
+    const blue = pixels[i + 2] ?? 0;
+    if (red > 225 && green > 225 && blue > 225) light++;
+  }
+
+  const total = pixels.length / 4;
+  return total > 0 && visible > 0 && transparent / total > 0.05 && light / visible > 0.55;
+};
+
+const makePublicLogoFile = async (registerId: string, cacheBust: number) => {
+  const image = new Image();
+  image.src = `/api/public/shop-logo/${registerId}?v=${cacheBust}`;
+  await image.decode();
+  if (!isLightTransparentLogo(image, image.naturalWidth, image.naturalHeight)) return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Logo kon niet geschikt worden gemaakt voor de website");
+  const brandNavy = getComputedStyle(document.documentElement).getPropertyValue("--brand-navy").trim();
+  context.fillStyle = `hsl(${brandNavy})`;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0);
+
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (result) => (result ? resolve(result) : reject(new Error("Logo kon niet worden opgeslagen"))),
+      "image/png",
+    ),
+  );
+  return new File([blob], `${registerId}-website.png`, { type: "image/png" });
+};
+
 /**
  * Beoordelen van alle logo's van aangesloten coffeeshops op één plek.
  * Alleen goedgekeurde logo's verschijnen op coffeeshopbond.nl.
@@ -50,6 +103,7 @@ const LogoGoedkeuringPanel = () => {
   const [cacheBust, setCacheBust] = useState(() => Date.now());
   const [uploadVoor, setUploadVoor] = useState<string | null>(null);
   const [verdacht, setVerdacht] = useState<Record<string, boolean>>({});
+  const [lichtTransparant, setLichtTransparant] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: items = [], isLoading, isError, error, refetch } = useQuery({
@@ -65,11 +119,35 @@ const LogoGoedkeuringPanel = () => {
   };
 
   const approve = useMutation({
-    mutationFn: (v: { registerId: string; approved: boolean }) =>
-      approveFn({ data: { register_id: v.registerId, approved: v.approved } }),
-    onSuccess: (_d, v) => {
+    mutationFn: async (v: { registerId: string; approved: boolean }) => {
+      if (!v.approved) {
+        await approveFn({ data: { register_id: v.registerId, approved: false } });
+        return { achtergrondToegevoegd: false };
+      }
+      const publicLogo = await makePublicLogoFile(v.registerId, cacheBust);
+      if (!publicLogo) {
+        await approveFn({ data: { register_id: v.registerId, approved: true } });
+        return { achtergrondToegevoegd: false };
+      }
+      await uploadFn({
+        data: {
+          register_id: v.registerId,
+          filename: publicLogo.name,
+          contentType: publicLogo.type,
+          base64: await toBase64(publicLogo),
+        },
+      });
+      return { achtergrondToegevoegd: true };
+    },
+    onSuccess: (result, v) => {
       refresh();
-      toast.success(v.approved ? "Logo goedgekeurd" : "Logo afgekeurd en verwijderd");
+      toast.success(
+        !v.approved
+          ? "Logo afgekeurd en verwijderd"
+          : result.achtergrondToegevoegd
+            ? "Logo goedgekeurd met donkere achtergrond"
+            : "Logo goedgekeurd",
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -81,7 +159,19 @@ const LogoGoedkeuringPanel = () => {
         while (rij.length) {
           const item = rij.shift();
           if (!item) return;
-          await approveFn({ data: { register_id: item.register_id, approved: true } });
+          const publicLogo = await makePublicLogoFile(item.register_id, cacheBust);
+          if (publicLogo) {
+            await uploadFn({
+              data: {
+                register_id: item.register_id,
+                filename: publicLogo.name,
+                contentType: publicLogo.type,
+                base64: await toBase64(publicLogo),
+              },
+            });
+          } else {
+            await approveFn({ data: { register_id: item.register_id, approved: true } });
+          }
         }
       };
       await Promise.all([worker(), worker(), worker()]);
@@ -221,6 +311,9 @@ const LogoGoedkeuringPanel = () => {
                           const img = e.currentTarget;
                           const klein = img.naturalWidth === img.naturalHeight && img.naturalWidth <= 320;
                           if (klein) setVerdacht((prev) => ({ ...prev, [item.register_id]: true }));
+                          if (isLightTransparentLogo(img, img.naturalWidth, img.naturalHeight)) {
+                            setLichtTransparant((prev) => ({ ...prev, [item.register_id]: true }));
+                          }
                         }}
                       />
                     </div>
@@ -249,6 +342,11 @@ const LogoGoedkeuringPanel = () => {
                 {verdacht[item.register_id] && (
                   <Badge variant="outline" className="mt-1 text-[11px] text-destructive">
                     mogelijk bijgesneden
+                  </Badge>
+                )}
+                {lichtTransparant[item.register_id] && (
+                  <Badge variant="secondary" className="mt-1 text-[11px]">
+                    donkere achtergrond wordt toegevoegd
                   </Badge>
                 )}
               </div>
