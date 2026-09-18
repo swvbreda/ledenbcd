@@ -113,6 +113,7 @@ const LogoGoedkeuringPanel = () => {
 
   const refresh = () => {
     setCacheBust(Date.now());
+    setLichtTransparant({});
     queryClient.invalidateQueries({ queryKey: ["shop-logo-review"] });
     queryClient.invalidateQueries({ queryKey: ["shop-logo-status"] });
     queryClient.invalidateQueries({ queryKey: ["member-register-logos"] });
