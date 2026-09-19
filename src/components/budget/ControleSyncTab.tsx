@@ -71,6 +71,15 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
     return Math.abs(parsed - actual) < 0.011;
   };
 
+  // Toelichting bij overige inkomsten: welke relaties het betreft (herleidbaar).
+  const otherNames = Array.from(
+    new Set(
+      totals.revenueSplit.other.entries
+        .map((e) => String(e.relation_name ?? "").trim())
+        .filter(Boolean),
+    ),
+  ).join(", ");
+
   const expensesOk = compare(expensesInput, totals.totalExpenses);
   const revenueOk = compare(revenueInput, totals.totalRevenue);
 
