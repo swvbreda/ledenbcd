@@ -913,6 +913,7 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
     const errors: string[] = [];
 
     let fetchedById = 0;
+    const ledgerNames = await fetchLedgerNames(api_calls);
     for (const src of sources) {
       let invoices: any[] = [];
       try {
@@ -986,7 +987,7 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
           relation_name: String(inv?.relation?.company_name ?? inv?.relation_name ?? inv?.company_name ?? "") || null,
           relation_number: String(inv?.relation?.relation_number ?? inv?.relation_number ?? "") || null,
           invoice_number: String(inv?.invoice_number ?? inv?.number ?? "") || null,
-          ledger_account: ledgerAccountOf(inv),
+          ledger_account: ledgerAccountOf(inv, ledgerNames),
           description: String(inv?.description ?? inv?.reference ?? "") || null,
           currency: String(inv?.currency ?? "EUR"),
           raw: inv,
