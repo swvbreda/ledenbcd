@@ -318,7 +318,7 @@ export default function DossierOverzichtTab({ year }: Props) {
                     <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
                     <td className="px-3 py-1">
                       {e.counterparty || e.description}
-                      {e.unlinked && (
+                      {isUnlinkedOnly(e) && (
                         <span className="ml-1 whitespace-nowrap rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-700">
                           nog niet gekoppeld aan Informer
                         </span>
