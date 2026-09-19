@@ -3,6 +3,8 @@
 // Dit bestand bevat uitsluitend pure functies, zodat totalen in begroting,
 // resultaat en dossiers gegarandeerd uit dezelfde berekening komen.
 
+import { isExcludedDossier } from "@/lib/budgetExclusions";
+
 export type LedgerDocType = "sales_invoice" | "purchase_invoice";
 export type LedgerStatus = "draft" | "open" | "paid" | "cancelled" | "unprocessed";
 
