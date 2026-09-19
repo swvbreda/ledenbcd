@@ -52,6 +52,15 @@ export function isSyntheticPlaceholder(r: {
   );
 }
 
+export type MatchMethod = "external_id" | "invoice" | "document" | "payment" | "combined";
+
+export interface CombinedPayment {
+  /** De lokale betaling (meestal een bankmutatie) die meerdere facturen dekt. */
+  legacyKey: string;
+  /** Informer-regelsleutels die samen exact deze betaling vormen. */
+  entryKeys: string[];
+}
+
 export interface LegacyMatchResult {
   /** Informer-regelsleutel ("purchase_invoice:123") → bestaande administratie. */
   byEntryKey: Map<string, LegacyRecord>;
@@ -62,7 +71,19 @@ export interface LegacyMatchResult {
   aliasesByEntryKey: Map<string, LegacyRecord[]>;
   /** Administratieve regels die (nog) niet aan een Informer-regel hangen. */
   unmatched: LegacyRecord[];
-  matchedBy: Map<string, "external_id" | "invoice" | "payment">;
+  matchedBy: Map<string, MatchMethod>;
+  /** Eén betaling die exact meerdere Informer-facturen dekt. */
+  combined: CombinedPayment[];
+  /** Informer-regelsleutel → de gecombineerde betaling waar hij in zit. */
+  combinedByEntryKey: Map<string, LegacyRecord>;
+}
+
+/** Factuurnummers die uit documenten bij een lokale mutatie bekend zijn. */
+export type DocumentHints = Map<string, string[]>;
+
+export interface MatchOptions {
+  /** legacy key ("ponto:uuid") → factuurnummers uit expense_documents. */
+  documentHints?: DocumentHints;
 }
 
 /** Genormaliseerde tegenpartijsleutel voor de conservatieve postfallback. */
