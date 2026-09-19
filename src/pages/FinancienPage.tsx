@@ -351,20 +351,20 @@ export default function FinancienPage() {
 
               {/* Left: Budget categories */}
               <div className="space-y-3">
+                {/* Los, compact controleblok: de rubriektitels zelf blijven
+                    exact de door de leden goedgekeurde namen. */}
+                <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-[11px] leading-snug text-muted-foreground">
+                  Begrotingsstructuur en postnamen zijn de goedgekeurde begroting. Werkelijke bedragen,
+                  facturen en betaalstatus komen uit de boekhouding (Informer API):{" "}
+                  {fmt(financialResult?.contributionIncome ?? 0)} contributiefacturen +{" "}
+                  {fmt(financialResult?.otherIncome ?? 0)} overige verkoopfacturen ={" "}
+                  {fmt((financialResult?.contributionIncome ?? 0) + (financialResult?.otherIncome ?? 0))} totale
+                  opbrengsten; {fmt(financialResult?.openSales ?? 0)} openstaand.
+                </p>
                 {(categories || []).map((cat) => (
                   <BudgetCategoryTable
                     key={cat.id}
                     category={cat}
-                    titleOverride={
-                      /inkomst|contribut|subsid|opbreng/i.test(cat.name)
-                        ? `${cat.name} — volgens ledenregister (operationele controle, telt niet mee in boekhoudkundig resultaat)`
-                        : undefined
-                    }
-                    subtitle={
-                      /inkomst|contribut|subsid|opbreng/i.test(cat.name)
-                        ? `Informer API: ${fmt(financialResult?.contributionIncome ?? 0)} contributiefacturen + ${fmt(financialResult?.otherIncome ?? 0)} overige verkoopfacturen = ${fmt((financialResult?.contributionIncome ?? 0) + (financialResult?.otherIncome ?? 0))} totale opbrengsten; ${fmt(financialResult?.openSales ?? 0)} openstaand.`
-                        : undefined
-                    }
                     onAddLineItem={(catId, name, amount) =>
                       mutations.addLineItem.mutate({ categoryId: catId, name, amount }, {
                         onSuccess: () => toast.success("Post toegevoegd"),
