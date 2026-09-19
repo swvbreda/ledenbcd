@@ -27,6 +27,7 @@ import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
+import { buildCanonicalInvoiceRows, sumCanonicalInvoiceRows } from "@/lib/contributionInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -245,6 +246,18 @@ export default function FinancienPage() {
     return map;
   }, [contributionPayments]);
 
+  const paymentsByMemberInfo = useMemo(() => {
+    const map = new Map<number, { amount: number; paidDate: string | null }>();
+    (contributionPayments ?? []).forEach((p) => {
+      const current = map.get(p.member_id) ?? { amount: 0, paidDate: null };
+      const paidDate = p.paid_at
+        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
+        : current.paidDate;
+      map.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
+    });
+    return map;
+  }, [contributionPayments]);
+
   const contributionStats = useMemo(() => {
     const contribs = contributions ?? [];
     const totalMembers = yearSettings?.budgeted_member_count
@@ -387,18 +400,21 @@ export default function FinancienPage() {
                       // moet z'n eigen banktransacties tonen, niet de ontvangen
                       // ledencontributies.
                       if (li.name.trim().toLowerCase() === "contributies") {
-                        const invs = contributionInvoices ?? [];
-                        const paidTotal = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-                        const openTotal = invs.reduce((s, i) => {
-                          const paid = paidByMember.get(i.member_id) ?? 0;
-                          return s + Math.max(0, (Number(i.amount) || 0) - paid);
-                        }, 0);
+                        // Zelfde canonieke bron als de breakdown-dialog:
+                        // Informer-snapshot wint, lokale placeholders tellen niet mee.
+                        const totals = sumCanonicalInvoiceRows(
+                          buildCanonicalInvoiceRows({
+                            contributions: contributions ?? [],
+                            invoices: contributionInvoices ?? [],
+                            paymentsByMember: paymentsByMemberInfo,
+                          }),
+                        );
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
                           remaining: () => setContributieBreakdown("unpaid"),
-                          spentValue: paidTotal,
-                          remainingValue: openTotal,
+                          spentValue: totals.paid,
+                          remainingValue: totals.open,
                           remainingLabel: "openstaand",
                         };
                       }
