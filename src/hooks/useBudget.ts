@@ -207,8 +207,10 @@ export function useBudgetCategories(year: number) {
       });
 
       const expensesByLineItem: Record<string, any[]> = {};
-      for (const [lineItemId, list] of Object.entries(buckets.byLineItem)) {
-        expensesByLineItem[lineItemId] = list.map((e) => toRow(e, lineItemId));
+      for (const lineItemId of Object.keys(buckets.byLineItem)) {
+        expensesByLineItem[lineItemId] = (buckets.byLineItem[lineItemId] ?? []).map(
+          (e: LedgerEntry) => toRow(e, lineItemId),
+        );
       }
       const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
 
