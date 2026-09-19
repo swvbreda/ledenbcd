@@ -246,3 +246,94 @@ describe("herstel van bestaande begrotingsmutaties", () => {
     expect(res.unmatched).toHaveLength(0);
   });
 });
+
+describe("documenthints en gecombineerde betalingen", () => {
+  const e1 = entry({
+    informer_id: "16626051",
+    invoice_number: "20260688",
+    amount_incl: 7158.19,
+    entry_date: "2026-06-15",
+    relation_name: "Bureau Brandeis B.V.",
+  });
+  const e2 = entry({
+    informer_id: "16626058",
+    invoice_number: "20260767",
+    amount_incl: 125.69,
+    entry_date: "2026-06-25",
+    relation_name: "Bureau Brandeis B.V.",
+  });
+  const payment = legacy({
+    key: "ponto:2fbff297",
+    kind: "ponto",
+    id: "2fbff297",
+    invoice: null,
+    externalId: null,
+    counterparty: "Bureau Brandeis",
+    description: "fac nrs 202506096+202506105",
+    date: "2026-06-24",
+    amount: 7283.88,
+    lineItemId: "li-1",
+    dossier: "Worldline",
+  });
+
+  it("koppelt één bankbetaling aan meerdere facturen die exact optellen", () => {
+    const res = matchLegacyRecords([e1, e2], [payment]);
+    expect(res.combined).toHaveLength(1);
+    expect(res.combined[0].entryKeys.sort()).toEqual([
+      "purchase_invoice:16626051",
+      "purchase_invoice:16626058",
+    ]);
+    expect(res.unmatched).toHaveLength(0);
+    const assign = buildLegacyAssignments([e1, e2], [payment], res);
+    expect(assign.get("purchase_invoice:16626051")?.dossier).toBe("Worldline");
+    expect(assign.get("purchase_invoice:16626058")?.lineItemId).toBe("li-1");
+    // Bedrag blijft uit Informer; de betaling telt niet nogmaals mee.
+    expect(res.combinedByEntryKey.size).toBe(2);
+  });
+
+  it("gebruikt een factuurnummer uit een document als koppelhint", () => {
+    const only = entry({
+      informer_id: "999",
+      invoice_number: "20260688",
+      amount_incl: 7158.19,
+      relation_name: "Bureau Brandeis B.V.",
+    });
+    const rec = legacy({
+      key: "ponto:x",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "Andere naam",
+      date: "2026-09-01",
+      amount: 12,
+      lineItemId: "li-2",
+      dossier: "Worldline",
+    });
+    const hints = new Map([["ponto:x", ["20260688"]]]);
+    const res = matchLegacyRecords([only], [rec], { documentHints: hints });
+    expect(res.matchedBy.get("purchase_invoice:999")).toBe("document");
+    expect(res.byEntryKey.get("purchase_invoice:999")?.dossier).toBe("Worldline");
+  });
+
+  it("koppelt niet gecombineerd wanneer de som niet exact klopt", () => {
+    const res = matchLegacyRecords([e1, e2], [legacy({ ...payment, amount: 7000 })]);
+    expect(res.combined).toHaveLength(0);
+    expect(res.unmatched).toHaveLength(1);
+  });
+
+  it("laat een echt ongekoppelde mutatie met toewijzing als lokale mutatie over", () => {
+    const rec = legacy({
+      key: "ponto:z",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "Onbekend B.V.",
+      date: "2026-02-02",
+      amount: 55,
+      lineItemId: "li-2",
+      dossier: "Worldline",
+    });
+    const res = matchLegacyRecords([e1], [rec]);
+    expect(res.unmatched.map((r) => r.key)).toEqual(["ponto:z"]);
+  });
+});
