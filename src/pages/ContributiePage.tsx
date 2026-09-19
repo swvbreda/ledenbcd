@@ -35,6 +35,7 @@ const ContributiePage = () => {
   const upsert = useUpsertContribution();
   const { data: yearSettings } = useBudgetYearSettings(selectedYear);
   const contributionAmount = yearSettings?.contribution_amount ?? DEFAULT_AMOUNT;
+  const { data: exemptions } = useContributionExemptions(selectedYear);
 
   const contribMap = useMemo(() => {
     const map = new Map<number, Contribution>();
