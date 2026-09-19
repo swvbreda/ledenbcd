@@ -5,14 +5,16 @@ const config: CapacitorConfig = {
   appName: 'BCD leden',
   webDir: 'capacitor-web',
   server: {
-    url: 'https://ledenbcd.lovable.app',
+    // Use the canonical production host directly. The old Lovable URL now
+    // redirects to this host, which can leave Capacitor's WKWebView blank.
+    url: 'https://leden.coffeeshopbond.nl',
     cleartext: false,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 800,
       launchAutoHide: true,
-      backgroundColor: '#0F172A',
+      backgroundColor: '#FFFFFF',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
