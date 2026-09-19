@@ -17,6 +17,7 @@ import ContributionPdfUploadDialog from "@/components/budget/ContributionPdfUplo
 import { useBankStatement } from "@/hooks/useBudget";
 import FacturenOverzichtTab from "@/components/budget/FacturenOverzichtTab";
 import PrepareInvoicesDialog from "@/components/budget/PrepareInvoicesDialog";
+import { hasCanonicalInvoice } from "@/lib/contributionInvoice";
 
 const FIXED_AMOUNT = 3000;
 
