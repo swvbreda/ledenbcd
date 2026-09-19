@@ -314,34 +314,30 @@ export default function FinancienPage() {
         <>
 
         <Tabs defaultValue="dashboard" className="min-w-0 space-y-1">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:inline-flex sm:h-10 sm:w-auto sm:flex-nowrap sm:gap-0">
-            <TabsTrigger value="dashboard" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-7">
+            <TabsTrigger value="dashboard" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="intern" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+            <TabsTrigger value="intern" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Declaraties
             </TabsTrigger>
-            <TabsTrigger value="contributie" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+            <TabsTrigger value="contributie" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="boekingen" className="min-w-0 whitespace-normal px-2 py-2 leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+            <TabsTrigger value="boekingen" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Inkomsten / Uitgaven
             </TabsTrigger>
-            <TabsTrigger value="dossiers" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+            <TabsTrigger value="dossiers" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dossiers
             </TabsTrigger>
-            <TabsTrigger value="todo" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
+            <TabsTrigger value="todo" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               To Do
             </TabsTrigger>
-            <TabsTrigger value="informer" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
-              Informer
-            </TabsTrigger>
-            <TabsTrigger value="controle" className="col-span-2 min-w-0 whitespace-normal px-2 py-2 leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1 sm:px-4 sm:py-1.5">
+            <TabsTrigger value="controle" className="col-span-2 h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1">
               Controle &amp; sync
             </TabsTrigger>
-
-
           </TabsList>
+
 
           <TabsContent value="dashboard">
             <BankBalancesCard />
