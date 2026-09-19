@@ -52,7 +52,9 @@ export default function BalancePanel({
     .filter((i) => i.section === "middelen" && i.side === "left" && /reserve|reservering/i.test(i.name))
     .reduce((sum, item) => sum + item.amount, 0);
   const openingBalance = openingBalanceItem?.amount ?? 0;
-  const contributionIncome = financialResult?.contributionIncome ?? contributionStats?.totalReceived ?? 0;
+  // Boekhoudkundige bedragen komen uitsluitend uit de Informer-facturen.
+  // Lokale ledenregister- of bankbedragen mogen hier nooit voor doorgaan.
+  const contributionIncome = financialResult?.contributionIncome ?? 0;
   const otherIncome = financialResult?.otherIncome ?? 0;
   const resultExpenses = financialResult?.totalExpenses ?? totalSpent;
   const availableBankBalance = openingBalance + contributionIncome + otherIncome - resultExpenses;
