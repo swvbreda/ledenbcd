@@ -105,7 +105,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
           r.member.bedrijfsnaam.toLowerCase().includes(q) ||
           r.member.plaats.toLowerCase().includes(q) ||
           String(r.member.id).includes(q) ||
-          r.invoices.some((i) => (i.invoice_number ?? "").toLowerCase().includes(q))
+          r.resolved.invoiceNumbers.some((n) => n.toLowerCase().includes(q))
       );
     }
     return list;
