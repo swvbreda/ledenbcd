@@ -6,14 +6,13 @@ import {
   ExternalLink,
   FileText,
   Loader2,
-  LockKeyhole,
   Search,
 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Accordion,
@@ -48,21 +47,30 @@ function matchesSearch(dossier: KnowledgeDossier, query: string) {
   return haystack.includes(query);
 }
 
-function DossierCard({ dossier }: { dossier: KnowledgeDossier }) {
+function DossierItem({ dossier }: { dossier: KnowledgeDossier }) {
   return (
-    <Card className="min-w-0 overflow-hidden border-border/80">
-      <CardHeader className="space-y-3 bg-gradient-to-br from-[#0b1d4d] to-[#17327a] text-white">
-        <Badge className="w-fit max-w-full whitespace-normal bg-white/15 text-white hover:bg-white/15">
-          {dossier.thema}
-        </Badge>
-        <CardTitle className="break-words font-display text-2xl leading-tight">
-          {dossier.titel}
-        </CardTitle>
-        <p className="text-sm leading-relaxed text-white/85">
-          {dossier.beschrijving}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-5 p-4 sm:p-6">
+    <AccordionItem
+      value={dossier.slug}
+      className="min-w-0 overflow-hidden rounded-xl border border-border/80 bg-card px-4 sm:px-5"
+    >
+      <AccordionTrigger className="gap-3 py-4 text-left hover:no-underline">
+        <div className="min-w-0 space-y-2 pr-2">
+          <Badge
+            variant="secondary"
+            className="w-fit max-w-full whitespace-normal"
+          >
+            {dossier.thema}
+          </Badge>
+          <h2 className="break-words font-display text-xl leading-tight sm:text-2xl">
+            {dossier.titel}
+          </h2>
+          <p className="line-clamp-2 break-words text-sm font-normal leading-relaxed text-muted-foreground">
+            {dossier.beschrijving}
+          </p>
+          <p className="text-xs font-medium text-brand-red">Bekijk dossier</p>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent className="space-y-5 pb-5 pt-1">
         <div className="rounded-lg border-l-4 border-brand-red bg-muted/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
             Standpunt BCD
@@ -157,8 +165,8 @@ function DossierCard({ dossier }: { dossier: KnowledgeDossier }) {
             <ExternalLink className="h-4 w-4" />
           </a>
         </Button>
-      </CardContent>
-    </Card>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -186,72 +194,77 @@ function DocumentsPanel({ documenten }: { documenten: KnowledgeDocument[] }) {
 
   return (
     <Card className="min-w-0 overflow-hidden border-brand-red/25">
-      <CardHeader className="bg-brand-red/5">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-red/10 text-brand-red">
-            <LockKeyhole className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
-              Alleen voor leden
-            </p>
-            <CardTitle className="mt-1 break-words font-display text-2xl">
-              Brieven en bestanden
-            </CardTitle>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Vertrouwelijke brieven, juridische analyses en interne notities
-              uit de kennisbank.
-            </p>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ul className="divide-y">
-          {[...documenten]
-            .sort((a, b) => b.datum.localeCompare(a.datum))
-            .map((document) => (
-              <li key={document.id} className="min-w-0 p-4 sm:p-5">
-                <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <FileText className="h-4 w-4 shrink-0 text-brand-red" />
-                      <span>{document.datumLabel}</span>
-                      {document.soort === "notitie" && (
-                        <Badge variant="secondary">Interne notitie</Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 break-words font-semibold leading-snug">
-                      {document.titel}
-                    </p>
-                    {(document.aan || document.van) && (
-                      <p className="mt-1 break-words text-xs text-muted-foreground">
-                        {document.aan
-                          ? `Aan: ${document.aan}`
-                          : `Van: ${document.van}`}
-                      </p>
-                    )}
-                    <p className="mt-2 break-words text-sm leading-relaxed text-muted-foreground">
-                      {document.kern}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full shrink-0 sm:w-auto"
-                    disabled={!document.beschikbaar || busy === document.id}
-                    onClick={() => openDocument(document)}
-                  >
-                    {busy === document.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4" />
-                    )}
-                    {document.beschikbaar ? "Open PDF" : "Nog niet beschikbaar"}
-                  </Button>
-                </div>
-              </li>
-            ))}
-        </ul>
-      </CardContent>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="documenten" className="border-0">
+          <AccordionTrigger className="bg-brand-red/5 px-4 py-4 text-left hover:no-underline sm:px-6">
+            <div className="min-w-0 pr-3">
+              <CardTitle className="break-words font-display text-xl sm:text-2xl">
+                Brieven en bestanden
+              </CardTitle>
+              <p className="mt-1 text-sm font-normal leading-relaxed text-muted-foreground">
+                {documenten.length} documenten, juridische analyses en interne
+                notities
+              </p>
+              <p className="mt-2 text-xs font-medium text-brand-red">
+                Bekijk bestanden
+              </p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-0">
+            <CardContent className="p-0">
+              <ul className="divide-y">
+                {[...documenten]
+                  .sort((a, b) => b.datum.localeCompare(a.datum))
+                  .map((document) => (
+                    <li key={document.id} className="min-w-0 p-4 sm:p-5">
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <FileText className="h-4 w-4 shrink-0 text-brand-red" />
+                            <span>{document.datumLabel}</span>
+                            {document.soort === "notitie" && (
+                              <Badge variant="secondary">Interne notitie</Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 break-words font-semibold leading-snug">
+                            {document.titel}
+                          </p>
+                          {(document.aan || document.van) && (
+                            <p className="mt-1 break-words text-xs text-muted-foreground">
+                              {document.aan
+                                ? `Aan: ${document.aan}`
+                                : `Van: ${document.van}`}
+                            </p>
+                          )}
+                          <p className="mt-2 break-words text-sm leading-relaxed text-muted-foreground">
+                            {document.kern}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full shrink-0 sm:w-auto"
+                          disabled={
+                            !document.beschikbaar || busy === document.id
+                          }
+                          onClick={() => openDocument(document)}
+                        >
+                          {busy === document.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                          {document.beschikbaar
+                            ? "Open PDF"
+                            : "Nog niet beschikbaar"}
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </CardContent>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 }
@@ -325,11 +338,28 @@ export default function KennisbankPage() {
       )}
 
       {dossiers.length > 0 && (
-        <div className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-2">
-          {dossiers.map((dossier) => (
-            <DossierCard key={dossier.slug} dossier={dossier} />
-          ))}
-        </div>
+        <section className="min-w-0 space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-2xl">Dossiers</h2>
+              <p className="text-sm text-muted-foreground">
+                Kies een onderwerp om het dossier te openen.
+              </p>
+            </div>
+            <Badge variant="secondary" className="shrink-0">
+              {dossiers.length}
+            </Badge>
+          </div>
+          <Accordion
+            type="single"
+            collapsible
+            className="grid min-w-0 grid-cols-1 gap-3"
+          >
+            {dossiers.map((dossier) => (
+              <DossierItem key={dossier.slug} dossier={dossier} />
+            ))}
+          </Accordion>
+        </section>
       )}
 
       {query.data && <DocumentsPanel documenten={query.data.documenten} />}
