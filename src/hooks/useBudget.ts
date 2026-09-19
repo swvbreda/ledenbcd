@@ -325,14 +325,22 @@ export function useFinancialResult(year: number) {
         (debtorMap ?? []).map((r: any) => String(r.informer_debtor_id)),
       );
 
-      const rows = (data ?? []) as any[];
-      return rows.reduce<FinancialResultData>((totals, entry: any) => {
-        if (!entry.counts_in_totals) return totals;
-        if (isExcludedDossier(entry.dossier)) return totals;
+      const rows = (data ?? []) as LedgerEntry[];
+      const totals: FinancialResultData = {
+        contributionIncome: 0,
+        otherIncome: 0,
+        totalExpenses: 0,
+        openSales: 0,
+        openPurchase: 0,
+      };
+      for (const entry of expenseEntries(rows)) {
+        totals.totalExpenses += Number(entry.amount_incl) || 0;
+        totals.openPurchase += Number(entry.open_amount) || 0;
+      }
+      for (const entry of revenueEntries(rows)) {
         const amount = Number(entry.amount_incl) || 0;
-        if (entry.doc_type === "purchase_invoice") {
-          totals.totalExpenses += amount;
-        } else if (
+        totals.openSales += Number(entry.open_amount) || 0;
+        if (
           memberRelations.has(String(entry.relation_id)) ||
           /contributie/i.test(String(entry.description ?? entry.dossier ?? ""))
         ) {
@@ -340,8 +348,8 @@ export function useFinancialResult(year: number) {
         } else {
           totals.otherIncome += amount;
         }
-        return totals;
-      }, { contributionIncome: 0, otherIncome: 0, totalExpenses: 0 });
+      }
+      return totals;
     },
   });
 }
