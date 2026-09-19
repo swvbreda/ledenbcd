@@ -41,12 +41,6 @@ export default function ContributiesBreakdownDialog({
     return m;
   }, [payments]);
 
-  const contribByMember = useMemo(() => {
-    const m = new Map<number, Contribution>();
-    contributions.forEach((c) => m.set(c.member_id, c));
-    return m;
-  }, [contributions]);
-
   const fmtDate = (d?: string | null) => {
     if (!d) return "—";
     const dt = new Date(d);
@@ -55,37 +49,25 @@ export default function ContributiesBreakdownDialog({
   };
 
   const rows = useMemo(() => {
-    return invoices
-      .map((inv) => {
-        const mem = memberMap.get(inv.member_id);
-        const paidC = paidMap.get(inv.member_id);
-        const contrib = contribByMember.get(inv.member_id);
-        const invoice_date = inv.invoice_date ?? contrib?.invoice_date ?? inv.created_at ?? null;
-        const invoiceAmount = Number(inv.amount ?? contrib?.amount ?? 0) || 0;
-        const payment = paymentsByMember.get(inv.member_id);
-        const paidAmount = payment?.amount ?? (paidC ? invoiceAmount : 0);
-        const openAmount = Math.max(0, invoiceAmount - paidAmount);
-        const paid = paidAmount >= invoiceAmount - 0.01 || !!paidC;
-        return {
-          key: inv.id,
-          member_id: inv.member_id,
-          naam: mem?.naam ?? `Lid #${inv.member_id}`,
-          invoice_number: inv.invoice_number ?? "—",
-          invoice_date,
-          amount: invoiceAmount,
-          paidAmount,
-          openAmount,
-          paid,
-          paid_date: payment?.paidDate ?? paidC?.paid_date ?? null,
-        };
-      })
+    return buildCanonicalInvoiceRows({
+      contributions,
+      invoices,
+      paymentsByMember,
+    })
+      .map((r) => ({
+        ...r,
+        naam: memberMap.get(r.member_id)?.naam ?? `Lid #${r.member_id}`,
+        invoice_number: r.invoiceNumber ?? "—",
+        invoice_date: r.invoiceDate,
+        paid_date: r.paidDate,
+      }))
       .sort((a, b) => {
         const da = a.invoice_date ? new Date(a.invoice_date).getTime() : 0;
         const db = b.invoice_date ? new Date(b.invoice_date).getTime() : 0;
         if (db !== da) return db - da;
         return a.naam.localeCompare(b.naam, "nl");
       });
-  }, [invoices, memberMap, paidMap, contribByMember, paymentsByMember]);
+  }, [invoices, memberMap, contributions, paymentsByMember]);
 
   const filtered = useMemo(() => {
     if (mode === "paid") return rows.filter((r) => r.paidAmount > 0);
