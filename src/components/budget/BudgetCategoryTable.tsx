@@ -110,24 +110,25 @@ export default function BudgetCategoryTable({
                 <h3 className="min-w-0 text-sm font-semibold">{category.name}</h3>
               </div>
             </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong></>}
-            </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">{spentLabel}: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
-            </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && (
-                <>
+            {!expanded && (
+              <>
+                <td className="text-right px-3 py-2 text-sm">
+                  <span className="text-muted-foreground text-xs">Begroot: </span>
+                  <strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong>
+                </td>
+                <td className="text-right px-3 py-2 text-sm">
+                  <span className="text-muted-foreground text-xs">{spentLabel}: </span>
+                  <strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong>
+                </td>
+                <td className="text-right px-3 py-2 text-sm">
                   <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
                   <strong className={totalRemainingClass}>
                     <CurrencyText value={totalRemaining} className="justify-end" />
                   </strong>
-                </>
-              )}
-            </td>
-
-            <td />
+                </td>
+                <td />
+              </>
+            )}
           </tr>
         </thead>
         {expanded && (
