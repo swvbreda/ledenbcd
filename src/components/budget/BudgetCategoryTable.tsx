@@ -29,8 +29,6 @@ interface Props {
 
 export default function BudgetCategoryTable({
   category,
-  titleOverride,
-  subtitle,
   onAddLineItem,
   onUpdateLineItem,
   onDeleteLineItem,
