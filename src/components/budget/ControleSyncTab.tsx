@@ -18,7 +18,12 @@ import { toast } from "sonner";
 interface Props {
   year: number;
   /** Status van de automatische volledige-jaarsync (geen handmatige knop meer). */
-  autoSync?: { isSyncing: boolean; error: string | null };
+  autoSync?: {
+    isSyncing: boolean;
+    error: string | null;
+    lastSyncAt: string | null;
+    lastItemsProcessed: number | null;
+  };
 }
 
 function StatCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
