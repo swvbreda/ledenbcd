@@ -29,6 +29,12 @@ export interface DossierMutation {
   source: string;
   /** Verdeling over meerdere dossiers; leeg = één dossier (veld `dossier`). */
   splits: { dossier: string; amount: number }[];
+  /**
+   * Bestaande administratieve mutatie die (nog) niet aan een Informer-regel
+   * gekoppeld kon worden. Blijft zichtbaar, maar telt niet mee in de
+   * boekhoudkundige dossiertotalen.
+   */
+  unlinked?: boolean;
 }
 
 export interface ExpenseDocument {
