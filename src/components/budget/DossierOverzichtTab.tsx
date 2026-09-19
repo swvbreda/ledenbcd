@@ -296,6 +296,14 @@ export default function DossierOverzichtTab({ year }: Props) {
                   </button>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
+                    {Math.abs(d.localTotal) > 0.005 && (
+                      <>
+                        {" · Informer "}
+                        <CurrencyText value={d.informerTotal} />
+                        {" · lokaal "}
+                        <CurrencyText value={d.localTotal} />
+                      </>
+                    )}
                   </span>
                   {canEdit && (
                     <>
