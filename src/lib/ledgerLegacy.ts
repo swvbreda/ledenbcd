@@ -211,12 +211,11 @@ export function findCombination(
   };
   search(0, [], 0);
   if (solutions.length === 0) return null;
-  if (hintKeys.length > 0) {
-    const withHint = solutions.filter((s) =>
-      s.some((e) => entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)))),
-    );
+  if (hinted.length > 0) {
+    // Alle uit documenten bekende facturen moeten in de combinatie zitten.
+    const withHint = solutions.filter((s) => hinted.every((h) => s.includes(h)));
     if (withHint.length === 1) return withHint[0];
-    if (withHint.length > 1) return null;
+    return null;
   }
   return solutions.length === 1 ? solutions[0] : null;
 }
