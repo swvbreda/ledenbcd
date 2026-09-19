@@ -91,6 +91,11 @@ export default function ControleSyncTab({ year }: Props) {
         <p className="text-xs text-muted-foreground mb-3">
           Vul de totalen in die de boekhouding toont. Zonder invoer tonen we geen oordeel.
         </p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Let op: de koppeling met de boekhouding levert alleen verkoop- en inkoopfacturen,
+          geen grootboekmutaties. Wijken de totalen daardoor af, dan tonen we dat als
+          &quot;niet gereconcilieerd&quot; en vullen we niets aan met een schatting.
+        </p>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground">Uitgaven volgens boekhouding</label>
