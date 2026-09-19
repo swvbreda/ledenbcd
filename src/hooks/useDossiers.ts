@@ -386,9 +386,15 @@ export function useDossierMutations(year: number) {
           categoryName: lineItemName
             ? catNameById.get(liById.get(lineItemId)?.category_id) || ""
             : "",
-          dossier: (e.dossier || legacy?.dossier || "").trim(),
+          dossier: (
+            e.dossier ||
+            legacy?.dossier ||
+            aliases.find((a) => a.dossier)?.dossier ||
+            ""
+          ).trim(),
           source: "informer",
           splits,
+          legacyKeys,
         });
       }
 
