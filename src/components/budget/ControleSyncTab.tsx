@@ -193,7 +193,7 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
             </div>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground">Opbrengsten volgens boekhouding</label>
+            <label className="text-xs text-muted-foreground">Totale inkomsten volgens boekhouding</label>
             <Input value={revenueInput} onChange={(e) => setRefRevenue(e.target.value)} placeholder="bijv. 349.574,79" />
             <div className="text-xs mt-1">
               {revenueOk === null ? (
