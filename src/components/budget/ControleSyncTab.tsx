@@ -40,7 +40,7 @@ function parseAmount(reference: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export default function ControleSyncTab({ year }: Props) {
+export default function ControleSyncTab({ year, autoSync }: Props) {
   // Vastgelegde controletotalen uit de boekhouding (auditbaar opgeslagen).
   const { data: check } = useReconciliationCheck(year);
   const saveCheck = useSaveReconciliationCheck(year);
@@ -57,7 +57,6 @@ export default function ControleSyncTab({ year }: Props) {
   const { data: unlinked } = useUnlinkedBankTransactions(year);
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
-  const { syncYear } = useLedgerMutations(year);
 
   const lastSync = totals.readiness.lastSyncAt;
   const lastLog = (syncState?.log ?? []).find((l: any) => String(l.action ?? "").includes("sync_year"));
