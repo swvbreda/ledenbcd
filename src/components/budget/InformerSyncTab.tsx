@@ -245,7 +245,16 @@ export default function InformerSyncTab() {
           <div>
             <h3 className="text-base font-semibold mb-1">Informer-koppeling</h3>
             <p className="text-sm text-muted-foreground">
-              Haalt debiteuren, factuurstatus en crediteuren uit Informer. Het ledenbestand is leidend; nieuwe debiteuren in Informer worden niet automatisch aangemaakt.
+              Informer is leidend voor alle financiële bedragen, factuurstatussen
+              en kostenrubrieken. Het ledenbestand is alleen leidend voor
+              ledenidentiteit en de interne dossier- en begrotingstoewijzing;
+              nieuwe debiteuren in Informer worden niet automatisch aangemaakt.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Let op: deze koppeling leest facturen. Losse bank- en
+              grootboekmutaties (bijvoorbeeld LEAP NL € 55,00 van 17-09-2026)
+              zitten niet in de facturen-API en moeten via de saldibalans in
+              Informer gecontroleerd worden.
             </p>
             <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
               <div>
