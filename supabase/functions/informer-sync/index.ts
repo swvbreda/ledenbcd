@@ -1739,13 +1739,26 @@ async function prepareInvoices(
         { onConflict: "member_id,year" },
       );
 
-      await supabase.from("contribution_invoices").insert({
-        member_id: candidate.member_id,
-        year: candidate.year,
-        invoice_number: invoiceNumber,
-        amount: candidate.amount,
-        invoice_date: invoice.date,
-      });
+      // Alleen schrijven met een definitief factuurnummer; een placeholder met
+      // invoice_number = null zou later dubbel geteld worden in het overzicht.
+      if (invoiceNumber) {
+        const { data: invExisting } = await supabase
+          .from("contribution_invoices")
+          .select("id")
+          .eq("member_id", candidate.member_id)
+          .eq("year", candidate.year)
+          .eq("invoice_number", invoiceNumber)
+          .maybeSingle();
+        if (!invExisting?.id) {
+          await supabase.from("contribution_invoices").insert({
+            member_id: candidate.member_id,
+            year: candidate.year,
+            invoice_number: invoiceNumber,
+            amount: candidate.amount,
+            invoice_date: invoice.date,
+          });
+        }
+      }
 
 
       await supabase
