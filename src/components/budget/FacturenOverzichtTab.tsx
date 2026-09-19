@@ -64,33 +64,30 @@ export default function FacturenOverzichtTab({ year }: Props) {
       const invs = invoicesMap.get(m.id) ?? [];
       const contrib = contribMap.get(m.id);
       const paidInfo = paymentsMap.get(m.id);
-      const invoicedAmount = invs.length > 0
-        ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
-        : defaultAmount;
-      const paidAmount = paidInfo?.amount ?? (contrib?.paid ? Number(contrib.amount) || 0 : 0);
-      const openAmount = Math.max(0, invoicedAmount - paidAmount);
-      const paid = invs.length > 0 && openAmount <= 0.01;
-      const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
+      const resolved = resolveContributionInvoice({
+        contrib,
+        invoices: invs,
+        payment: paidInfo ?? null,
+        defaultAmount,
+      });
       return {
         member: m,
         invoices: invs,
         contrib,
-        status,
-        amount: invoicedAmount,
-        paidAmount,
-        openAmount,
-        paidDate: paidInfo?.paidDate ?? contrib?.paid_date ?? null,
+        resolved,
+        status: resolved.status as RowStatus,
+        amount: resolved.invoicedAmount,
+        paidAmount: resolved.paidAmount,
+        openAmount: resolved.openAmount,
+        paidDate: resolved.paidDate,
       };
     });
 
     return rowsBase.sort((a, b) => {
       const dateOf = (r: typeof rowsBase[0]) => {
-        if (r.status === "paid" && r.contrib?.paid_date) return new Date(r.contrib.paid_date).getTime();
-        if (r.status === "sent" && r.contrib?.invoice_date) return new Date(r.contrib.invoice_date).getTime();
-        const latestInvoice = r.invoices[0]
-          ? Math.max(...r.invoices.map((i) => new Date(i.invoice_date ?? i.created_at).getTime()))
-          : 0;
-        return latestInvoice || 0;
+        if (r.status === "paid" && r.paidDate) return new Date(r.paidDate).getTime();
+        const d = r.resolved.invoiceDate;
+        return d ? new Date(d).getTime() || 0 : 0;
       };
       return dateOf(b) - dateOf(a);
     });
