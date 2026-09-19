@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Euro, CheckCircle2, Clock, CreditCard } from "lucide-react";
+import { Euro, CheckCircle2, Clock, CreditCard, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { paymentsConfigured } from "@/lib/stripe";
+import { useMemberExemption } from "@/hooks/useContributionExemptions";
 
 interface PaymentRow {
   id: string;
