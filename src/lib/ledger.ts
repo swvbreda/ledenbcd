@@ -58,8 +58,24 @@ export function needsAttention(entry: LedgerEntry): boolean {
   return Number(entry.amount_incl) === 0;
 }
 
+/**
+ * DE canonieke set meetellende regels. Dashboard, begroting-vs-werkelijk,
+ * resultaat, dossiers en de controlemodule gebruiken allemaal deze functie,
+ * zodat hun totalen per definitie gelijk zijn. Regels uit een uitgesloten
+ * dossier ("buiten begroting") tellen nergens mee.
+ */
 export function countableEntries(entries: LedgerEntry[]): LedgerEntry[] {
-  return entries.filter(countsInTotals);
+  return entries.filter((e) => countsInTotals(e) && !isExcludedDossier(e.dossier));
+}
+
+/** Meetellende inkoopfacturen — de enige bron voor het uitgaventotaal. */
+export function expenseEntries(entries: LedgerEntry[]): LedgerEntry[] {
+  return countableEntries(entries).filter((e) => e.doc_type === "purchase_invoice");
+}
+
+/** Meetellende verkoopfacturen — de enige bron voor het opbrengstentotaal. */
+export function revenueEntries(entries: LedgerEntry[]): LedgerEntry[] {
+  return countableEntries(entries).filter((e) => e.doc_type === "sales_invoice");
 }
 
 export function sumAmount(entries: LedgerEntry[]): number {
@@ -67,11 +83,11 @@ export function sumAmount(entries: LedgerEntry[]): number {
 }
 
 export function totalExpenses(entries: LedgerEntry[]): number {
-  return sumAmount(countableEntries(entries).filter((e) => e.doc_type === "purchase_invoice"));
+  return sumAmount(expenseEntries(entries));
 }
 
 export function totalRevenue(entries: LedgerEntry[]): number {
-  return sumAmount(countableEntries(entries).filter((e) => e.doc_type === "sales_invoice"));
+  return sumAmount(revenueEntries(entries));
 }
 
 export function netResult(entries: LedgerEntry[]): number {
@@ -79,9 +95,11 @@ export function netResult(entries: LedgerEntry[]): number {
 }
 
 export function openSalesTotal(entries: LedgerEntry[]): number {
-  return countableEntries(entries)
-    .filter((e) => e.doc_type === "sales_invoice")
-    .reduce((sum, e) => sum + (Number(e.open_amount) || 0), 0);
+  return revenueEntries(entries).reduce((sum, e) => sum + (Number(e.open_amount) || 0), 0);
+}
+
+export function openPurchaseTotal(entries: LedgerEntry[]): number {
+  return expenseEntries(entries).reduce((sum, e) => sum + (Number(e.open_amount) || 0), 0);
 }
 
 /** Totalen per dossier; splits gaan voor de regel zelf en tellen exact eenmaal. */
