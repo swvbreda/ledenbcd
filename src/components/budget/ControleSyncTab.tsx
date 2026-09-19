@@ -62,7 +62,9 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
 
-  const lastSync = totals.readiness.lastSyncAt;
+  // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
+  const lastSync = autoSync?.lastSyncAt ?? null;
+  const itemsProcessed = autoSync?.lastItemsProcessed ?? null;
   const lastLog = (syncState?.log ?? []).find(
     (l: any) => String(l.action ?? "").includes("sync_year") && Number(l?.details?.year) === year,
   );
