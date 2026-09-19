@@ -102,6 +102,7 @@ async function fetchAllPublic(table: string, select: string): Promise<any[]> {
 type SecureExport = {
   shops: SourceShop[];
   gemeenten: Array<{ id: string; naam: string; provincie: string | null }>;
+  payload: any;
 };
 
 /** Beveiligd export-eindpunt van Coffeeshopbeleid. */
@@ -118,6 +119,7 @@ async function fetchSecureExport(secret: string): Promise<SecureExport | null> {
   return {
     shops: json.coffeeshops ?? json.shops ?? json.data ?? [],
     gemeenten: json.gemeenten ?? [],
+    payload: json,
   };
 }
 
