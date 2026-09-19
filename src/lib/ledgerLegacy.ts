@@ -6,7 +6,12 @@
 // dossier, splits en documentkoppeling. Deze module is puur, zodat begroting,
 // dossiers en controle exact dezelfde koppeling gebruiken.
 
-import { isSamePayment, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
+import {
+  isSamePayment,
+  sharesInvoiceNumber,
+  invoiceKeysOf,
+  invoiceKeysMatch,
+} from "@/lib/ledgerDedupe";
 import type { LedgerEntry } from "@/lib/ledger";
 
 export type LegacyKind = "expense" | "ponto";
