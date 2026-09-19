@@ -11,6 +11,7 @@ import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import { useContributions, useContributionInvoices, useContributionPayments, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useBudgetYearSettings } from "@/hooks/useBudget";
+import { resolveContributionInvoice } from "@/lib/contributionInvoice";
 
 type StatusFilter = "all" | "todo" | "sent" | "paid";
 type RowStatus = "todo" | "sent" | "paid";
