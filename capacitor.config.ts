@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'nl.bcd.leden',
+  appId: 'nl.coffeeshopbond.leden',
   appName: 'BCD leden',
   webDir: 'dist',
   plugins: {
