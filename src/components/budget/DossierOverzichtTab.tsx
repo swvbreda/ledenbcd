@@ -63,6 +63,14 @@ interface DossierRow {
   total: number;
 }
 
+/**
+ * Een regel telt niet mee zolang géén van de samengevoegde bronnen aan een
+ * Informer-regel hangt. Zodra één bron wél gekoppeld is, telt het
+ * boekhoudkundige bedrag gewoon mee.
+ */
+export const isUnlinkedOnly = (e: DedupedEntry) =>
+  e.sources && e.sources.length > 0 ? e.sources.every((s) => s.unlinked) : !!e.unlinked;
+
 const formatDate = (value: string | null) => {
   if (!value) return "";
   const d = new Date(value);
