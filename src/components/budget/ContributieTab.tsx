@@ -17,6 +17,7 @@ import ContributionPdfUploadDialog from "@/components/budget/ContributionPdfUplo
 import { useBankStatement } from "@/hooks/useBudget";
 import FacturenOverzichtTab from "@/components/budget/FacturenOverzichtTab";
 import PrepareInvoicesDialog from "@/components/budget/PrepareInvoicesDialog";
+import { hasCanonicalInvoice } from "@/lib/contributionInvoice";
 
 const FIXED_AMOUNT = 3000;
 
@@ -112,11 +113,17 @@ export default function ContributieTab({ year }: Props) {
   // Informer-sync + Ponto matcher now cover this properly, so we no longer
   // create synthetic invoices from the client.
 
+  // Een Informer-snapshot (external_invoice_id + factuurnummer) geldt ook als
+  // bestaande factuur, ook als er geen lokale contribution_invoices-rij is.
   const membersWithoutInvoice = useMemo(() => {
     return effectiveMembers
-      .filter((m) => (invoicesMap.get(m.id) ?? []).length === 0)
+      .filter(
+        (m) =>
+          (invoicesMap.get(m.id) ?? []).length === 0 &&
+          !hasCanonicalInvoice(contribMap.get(m.id)),
+      )
       .sort((a, b) => a.id - b.id);
-  }, [effectiveMembers, invoicesMap]);
+  }, [effectiveMembers, invoicesMap, contribMap]);
 
   if (isLoading || invoicesLoading) {
     return <p className="text-sm text-muted-foreground py-8 text-center">Contributiegegevens laden...</p>;

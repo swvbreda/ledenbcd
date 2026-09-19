@@ -11,6 +11,7 @@ import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import { useContributions, useContributionInvoices, useContributionPayments, type Contribution, type ContributionInvoice } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useBudgetYearSettings } from "@/hooks/useBudget";
+import { resolveContributionInvoice } from "@/lib/contributionInvoice";
 
 type StatusFilter = "all" | "todo" | "sent" | "paid";
 type RowStatus = "todo" | "sent" | "paid";
@@ -64,33 +65,30 @@ export default function FacturenOverzichtTab({ year }: Props) {
       const invs = invoicesMap.get(m.id) ?? [];
       const contrib = contribMap.get(m.id);
       const paidInfo = paymentsMap.get(m.id);
-      const invoicedAmount = invs.length > 0
-        ? invs.reduce((s, i) => s + (Number(i.amount ?? defaultAmount) || 0), 0)
-        : defaultAmount;
-      const paidAmount = paidInfo?.amount ?? (contrib?.paid ? Number(contrib.amount) || 0 : 0);
-      const openAmount = Math.max(0, invoicedAmount - paidAmount);
-      const paid = invs.length > 0 && openAmount <= 0.01;
-      const status: RowStatus = paid ? "paid" : invs.length > 0 ? "sent" : "todo";
+      const resolved = resolveContributionInvoice({
+        contrib,
+        invoices: invs,
+        payment: paidInfo ?? null,
+        defaultAmount,
+      });
       return {
         member: m,
         invoices: invs,
         contrib,
-        status,
-        amount: invoicedAmount,
-        paidAmount,
-        openAmount,
-        paidDate: paidInfo?.paidDate ?? contrib?.paid_date ?? null,
+        resolved,
+        status: resolved.status as RowStatus,
+        amount: resolved.invoicedAmount,
+        paidAmount: resolved.paidAmount,
+        openAmount: resolved.openAmount,
+        paidDate: resolved.paidDate,
       };
     });
 
     return rowsBase.sort((a, b) => {
       const dateOf = (r: typeof rowsBase[0]) => {
-        if (r.status === "paid" && r.contrib?.paid_date) return new Date(r.contrib.paid_date).getTime();
-        if (r.status === "sent" && r.contrib?.invoice_date) return new Date(r.contrib.invoice_date).getTime();
-        const latestInvoice = r.invoices[0]
-          ? Math.max(...r.invoices.map((i) => new Date(i.invoice_date ?? i.created_at).getTime()))
-          : 0;
-        return latestInvoice || 0;
+        if (r.status === "paid" && r.paidDate) return new Date(r.paidDate).getTime();
+        const d = r.resolved.invoiceDate;
+        return d ? new Date(d).getTime() || 0 : 0;
       };
       return dateOf(b) - dateOf(a);
     });
@@ -107,7 +105,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
           r.member.bedrijfsnaam.toLowerCase().includes(q) ||
           r.member.plaats.toLowerCase().includes(q) ||
           String(r.member.id).includes(q) ||
-          r.invoices.some((i) => (i.invoice_number ?? "").toLowerCase().includes(q))
+          r.resolved.invoiceNumbers.some((n) => n.toLowerCase().includes(q))
       );
     }
     return list;
@@ -134,7 +132,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
   const handleExportCSV = () => {
     const header = ["Lidnr", "Naam", "Plaats", "Status", "Factuurnummer(s)", "Factuurdatum", "Gefactureerd", "Ontvangen", "Openstaand", "Betaald op"];
     const rowsCsv = filteredRows.map((r) => {
-      const nums = r.invoices.map((i) => i.invoice_number ?? "").filter(Boolean).join("; ");
+      const nums = r.resolved.invoiceNumbers.join("; ");
       const label = r.status === "paid" ? "Betaald" : r.status === "sent" ? "Verstuurd" : "Nog te versturen";
       return [
         r.member.id,
@@ -142,7 +140,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
         `"${r.member.plaats}"`,
         label,
         `"${nums}"`,
-        r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? "",
+        r.resolved.invoiceDate ?? "",
         r.amount,
         r.paidAmount,
         r.openAmount,
@@ -291,11 +289,11 @@ export default function FacturenOverzichtTab({ year }: Props) {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                    {r.invoices.length === 0 ? "—" : r.invoices.map((i) => i.invoice_number ?? "—").join(", ")}
+                    {r.resolved.invoiceNumbers.length === 0 ? "—" : r.resolved.invoiceNumbers.join(", ")}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground tabular-nums">
                     {(() => {
-                      const d = r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? r.invoices[0]?.created_at ?? null;
+                      const d = r.resolved.invoiceDate;
                       if (!d) return "—";
                       const dt = new Date(d);
                       return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });

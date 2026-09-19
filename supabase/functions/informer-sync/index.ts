@@ -795,14 +795,32 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
             .eq("invoice_number", invoiceNumber)
             .maybeSingle();
           if (!invExisting?.id) {
-            await supabase.from("contribution_invoices").insert({
-              member_id: memberId,
-              year,
-              invoice_number: invoiceNumber,
-              invoice_file_path: null,
-              amount,
-              invoice_date: invoiceDate,
-            });
+            // Werk een eerdere incomplete placeholder (invoice_number = null)
+            // voor hetzelfde lid/jaar/bedrag/datum bij i.p.v. een tweede rij.
+            let placeholderQuery = supabase
+              .from("contribution_invoices")
+              .select("id")
+              .eq("member_id", memberId)
+              .eq("year", year)
+              .is("invoice_number", null);
+            if (amount !== null && amount !== undefined) placeholderQuery = placeholderQuery.eq("amount", amount);
+            if (invoiceDate) placeholderQuery = placeholderQuery.eq("invoice_date", invoiceDate);
+            const { data: placeholder } = await placeholderQuery.limit(1).maybeSingle();
+            if (placeholder?.id) {
+              await supabase
+                .from("contribution_invoices")
+                .update({ invoice_number: invoiceNumber, amount, invoice_date: invoiceDate })
+                .eq("id", placeholder.id);
+            } else {
+              await supabase.from("contribution_invoices").insert({
+                member_id: memberId,
+                year,
+                invoice_number: invoiceNumber,
+                invoice_file_path: null,
+                amount,
+                invoice_date: invoiceDate,
+              });
+            }
           } else {
             await supabase
               .from("contribution_invoices")
@@ -1739,13 +1757,26 @@ async function prepareInvoices(
         { onConflict: "member_id,year" },
       );
 
-      await supabase.from("contribution_invoices").insert({
-        member_id: candidate.member_id,
-        year: candidate.year,
-        invoice_number: invoiceNumber,
-        amount: candidate.amount,
-        invoice_date: invoice.date,
-      });
+      // Alleen schrijven met een definitief factuurnummer; een placeholder met
+      // invoice_number = null zou later dubbel geteld worden in het overzicht.
+      if (invoiceNumber) {
+        const { data: invExisting } = await supabase
+          .from("contribution_invoices")
+          .select("id")
+          .eq("member_id", candidate.member_id)
+          .eq("year", candidate.year)
+          .eq("invoice_number", invoiceNumber)
+          .maybeSingle();
+        if (!invExisting?.id) {
+          await supabase.from("contribution_invoices").insert({
+            member_id: candidate.member_id,
+            year: candidate.year,
+            invoice_number: invoiceNumber,
+            amount: candidate.amount,
+            invoice_date: invoice.date,
+          });
+        }
+      }
 
 
       await supabase

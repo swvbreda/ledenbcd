@@ -35,6 +35,7 @@ export interface Contribution {
   invoice_number: string | null;
   invoice_date: string | null;
   invoice_file_path: string | null;
+  external_invoice_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
