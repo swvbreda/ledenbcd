@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { nextMemberNumber } from "@/lib/memberNumber";
 import { UserPlus } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,19 +54,37 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
   const [factuurEmail, setFactuurEmail] = useState(lead.factuurEmail || lead.email || "");
   const [saving, setSaving] = useState(false);
 
+  // Bij een vastgelegde contributievrijstelling blijft het dossiernummer staan,
+  // zodat de vrijstelling gekoppeld blijft en er geen factuur kan ontstaan.
+  const { data: exemptions } = useQuery({
+    queryKey: ["contribution-exemptions", "lead", lead.id],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("contribution_exemptions")
+        .select("year, reason")
+        .eq("member_id", lead.id);
+      if (error) throw error;
+      return (data ?? []) as Array<{ year: number; reason: string }>;
+    },
+  });
+  const vrijstelling = (exemptions ?? [])[0];
+  const nummerVast = !!vrijstelling;
+  const gebruiktNummer = nummerVast ? lead.id : lidnummer;
+
   const handleConvert = async () => {
     setSaving(true);
     try {
-      await convertLead({
+      const resultaat = await convertLead({
         leadId: lead.id,
-        lidnummer,
+        lidnummer: gebruiktNummer,
         lidSinds,
         factuurBedrijfsnaam: factuurBedrijfsnaam || undefined,
         factuurKvk: factuurKvk || undefined,
         factuurEmail: factuurEmail || undefined,
         leadEmail: lead.email,
       });
-      toast.success(`${lead.naam} is omgezet naar lid #${lidnummer}`);
+      toast.success(`${lead.naam} is omgezet naar lid #${resultaat.lidnummer}`);
       queryClient.invalidateQueries({ queryKey: ["members-data"] });
       setOpen(false);
       onConverted?.();
@@ -92,13 +111,23 @@ const ConvertLeadDialog = ({ lead, conversions, onConverted }: Props) => {
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {vrijstelling && (
+            <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
+              <p className="font-medium">{vrijstelling.reason}</p>
+              <p className="text-xs mt-1">
+                Het dossiernummer {lead.id} blijft ongewijzigd zodat de vrijstelling behouden blijft en
+                er geen factuur wordt aangemaakt.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="lidnummer">Lidnummer</Label>
               <Input
                 id="lidnummer"
                 type="number"
-                value={lidnummer}
+                value={gebruiktNummer}
+                disabled={nummerVast}
                 onChange={(e) => setLidnummer(Number(e.target.value))}
               />
             </div>

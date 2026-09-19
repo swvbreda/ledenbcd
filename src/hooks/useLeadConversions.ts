@@ -90,10 +90,20 @@ export async function convertLead(params: {
 
   const leadData = leadRows[0].data as Record<string, unknown>;
 
+  // 1b. Heeft dit dossier een vastgelegde contributievrijstelling, dan blijft
+  // het dossiernummer ongewijzigd. Anders zou de vrijstelling losraken van het
+  // nieuwe nummer en zou de factuurtrigger alsnog kunnen afgaan.
+  const { data: exemptionRows } = await (supabase as any)
+    .from("contribution_exemptions")
+    .select("id, year, reason")
+    .eq("member_id", params.leadId);
+  const heeftVrijstelling = ((exemptionRows ?? []) as unknown[]).length > 0;
+  const lidnummer = heeftVrijstelling ? params.leadId : params.lidnummer;
+
   // 2. Build new member data with conversion overrides
   const memberData = {
     ...leadData,
-    id: params.lidnummer,
+    id: lidnummer,
     lidSinds: params.lidSinds,
     factuurBedrijfsnaam: params.factuurBedrijfsnaam || leadData.factuurBedrijfsnaam,
     factuurKvk: params.factuurKvk || undefined,
@@ -103,30 +113,33 @@ export async function convertLead(params: {
     factuurPlaats: params.factuurPlaats || leadData.factuurPlaats,
   };
 
-  // 3. Insert new member row
-  const { error: insertErr } = await supabase
-    .from("members_data")
-    .insert([{ id: params.lidnummer, member_type: "member", data: memberData as any }]);
-  if (insertErr) throw insertErr;
-
-  // 4. Move existing account links from old lead id to the new member id
-  await supabase
-    .from("member_profiles")
-    .update({ member_id: params.lidnummer })
-    .eq("member_id", params.leadId);
-
-  // 4b. Contributievrijstellingen meeverhuizen zodat een vastgelegde
-  // jaargebonden vrijstelling niet verloren gaat bij de conversie.
-  if (params.lidnummer !== params.leadId) {
+  // 2b. Bij een ander nummer eerst de vrijstellingen en notities verplaatsen,
+  // vóórdat het lidrecord (en dus de facturatietrigger) ontstaat.
+  if (lidnummer !== params.leadId) {
     await (supabase as any)
       .from("contribution_exemptions")
-      .update({ member_id: params.lidnummer })
+      .update({ member_id: lidnummer })
       .eq("member_id", params.leadId);
     await supabase
       .from("member_notes")
-      .update({ member_id: params.lidnummer })
+      .update({ member_id: lidnummer })
       .eq("member_id", params.leadId);
   }
+
+  // 3. Insert new member row
+  const { error: insertErr } = await supabase
+    .from("members_data")
+    .insert([{ id: lidnummer, member_type: "member", data: memberData as any }]);
+  if (insertErr) throw insertErr;
+
+  // 4. Move existing account links from old lead id to the new member id
+  if (lidnummer !== params.leadId) {
+    await supabase
+      .from("member_profiles")
+      .update({ member_id: lidnummer })
+      .eq("member_id", params.leadId);
+  }
+
 
   // 5. Delete old lead row
   await supabase
@@ -139,14 +152,14 @@ export async function convertLead(params: {
   if (params.leadEmail) {
     await supabase.from("member_allowed_emails").insert({
       email: params.leadEmail.toLowerCase().trim(),
-      member_id: params.lidnummer,
+      member_id: lidnummer,
     });
   }
 
   // 6. Record conversion for reference (redirect old URLs etc.)
   await supabase.from("lead_conversions").insert({
     lead_id: params.leadId,
-    lidnummer: params.lidnummer,
+    lidnummer,
     lid_sinds: params.lidSinds,
     factuur_bedrijfsnaam: params.factuurBedrijfsnaam || null,
     factuur_kvk: params.factuurKvk || null,
@@ -159,6 +172,7 @@ export async function convertLead(params: {
 
   const data = await fetchConversions();
   notifyListeners(data);
+  return { lidnummer, behieldNummer: lidnummer === params.leadId && heeftVrijstelling };
 }
 
 export async function revertConversion(leadId: number) {

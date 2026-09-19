@@ -2251,6 +2251,36 @@ export type Database = {
         }
         Relationships: []
       }
+      member_shop_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: number
+          note: string | null
+          plaats: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: number
+          note?: string | null
+          plaats: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: number
+          note?: string | null
+          plaats?: string
+        }
+        Relationships: []
+      }
       member_whatsapp_status: {
         Row: {
           created_at: string
@@ -3481,6 +3511,15 @@ export type Database = {
       is_board_member: { Args: { _user_id: string }; Returns: boolean }
       is_contribution_exempt: {
         Args: { _member_id: number; _year: number }
+        Returns: boolean
+      }
+      is_contribution_exempt_shop: {
+        Args: {
+          _member_id: number
+          _naam: string
+          _plaats: string
+          _year: number
+        }
         Returns: boolean
       }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
