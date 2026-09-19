@@ -626,7 +626,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, shopsSynced, uboSynced, linksProposed, uboBron }),
+      JSON.stringify({
+        ok: true,
+        shopsSynced,
+        uboSynced,
+        linksProposed,
+        uboBron,
+        schemaVersion,
+        bronIsV2,
+        teltMeeShops: registerRows.length,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
