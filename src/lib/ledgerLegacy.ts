@@ -162,22 +162,39 @@ export function matchLegacyRecords(
     if (hit) take(entry, hit, "external_id");
   }
 
+  // Meerdere oude representaties van dezelfde factuur/betaling vormen samen
+  // één koppeling zolang ze niet tegenstrijdig zijn.
+  const takeGroup = (
+    entry: LedgerEntry,
+    hits: LegacyRecord[],
+    how: "invoice" | "payment",
+  ) => {
+    if (hits.length === 0) return;
+    if (hits.length > 1 && !groupIsConsistent(hits)) return;
+    const primary = pickPrimary(hits);
+    take(entry, primary, how);
+    const extra = hits.filter((r) => r.key !== primary.key);
+    for (const r of extra) usedLegacy.add(r.key);
+    if (extra.length > 0) {
+      const key = ledgerKeyOf(entry);
+      aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
+    }
+  };
+
   // 2. Factuurnummer.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
-    const hits = available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r)));
-    // Alleen een eenduidige factuurmatch telt.
-    if (hits.length === 1) take(entry, hits[0], "invoice");
+    takeGroup(entry, available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r))), "invoice");
   }
 
   // 3. Bedrag + tegenpartij + datum.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
-    const hits = available().filter((r) => isSamePayment(self, asRecordLike(r)));
-    if (hits.length === 1) take(entry, hits[0], "payment");
+    takeGroup(entry, available().filter((r) => isSamePayment(self, asRecordLike(r))), "payment");
   }
+
 
   // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
