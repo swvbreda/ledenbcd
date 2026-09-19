@@ -97,8 +97,13 @@ export function matchLegacyRecords(
   legacy: LegacyRecord[],
 ): LegacyMatchResult {
   const byEntryKey = new Map<string, LegacyRecord>();
+  const aliasesByEntryKey = new Map<string, LegacyRecord[]>();
   const matchedBy = new Map<string, "external_id" | "invoice" | "payment">();
   const usedLegacy = new Set<string>();
+
+  // Synthetische hulprijen doen niet mee aan matching: ze bevatten geen
+  // goedgekeurde toewijzing en zouden echte facturen verkeerd koppelen.
+  const usable = legacy.filter((r) => !r.placeholder && !isSyntheticPlaceholder(r));
 
   const take = (
     entry: LedgerEntry,
