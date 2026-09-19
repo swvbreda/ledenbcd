@@ -1,5 +1,12 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildDryRunReport,
+  detectSchemaVersion,
+  isV2,
+  mapShopRow,
+  shopCounts,
+} from "../_shared/registerMapping.ts";
 
 /**
  * Haalt het landelijke coffeeshopregister op uit het project "Coffeeshopbeleid"
