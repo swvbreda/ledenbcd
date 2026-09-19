@@ -313,28 +313,44 @@ export function matchLegacyRecords(
     const hintKeys = hintKeysFor(record, hints);
     if (!party && hintKeys.length === 0) continue;
     const taken = claimed();
-    const candidates = entries.filter((e) => {
+    const wantsSales = record.direction === "in";
+    const relevant = entries.filter(
+      (e) => e.counts_in_totals && wantsSales === (e.doc_type === "sales_invoice"),
+    );
+    const isHinted = (e: LedgerEntry) =>
+      hintKeys.length > 0 &&
+      entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)));
+    // Een uit een document bekende factuur die al direct gekoppeld is, telt
+    // mee voor het betaalde bedrag maar wordt niet opnieuw toegewezen.
+    const alreadyLinked = relevant.filter((e) => isHinted(e) && taken.has(ledgerKeyOf(e)));
+    const covered = alreadyLinked.reduce((s, e) => s + Math.abs(Number(e.amount_incl) || 0), 0);
+    const residual = Math.round((record.amount - covered) * 100) / 100;
+    if (residual <= 0) continue;
+    const candidates = relevant.filter((e) => {
       if (taken.has(ledgerKeyOf(e))) return false;
-      if (!e.counts_in_totals) return false;
-      const wantsSales = record.direction === "in";
-      if (wantsSales !== (e.doc_type === "sales_invoice")) return false;
-      const keys = entryInvoiceKeys(e);
-      const hinted = hintKeys.some((h) => keys.some((k) => invoiceKeysMatch(h, k)));
-      if (hinted) return true;
+      if (isHinted(e)) return true;
       if (!party || normalizeCounterparty(e.relation_name) !== party) return false;
       // Facturen worden na de factuurdatum betaald; een klein voorschot mag.
       const delta = daysBetween(record.date, e.entry_date);
       return delta >= -14 && delta <= 180;
     });
-    if (candidates.length < 2) continue;
-    const hit = findCombination(record, candidates, hintKeys);
-    if (!hit || hit.length < 2) continue;
+    const minPicks = alreadyLinked.length > 0 ? 1 : 2;
+    if (candidates.length < minPicks) continue;
+    const hit = findCombination(record, candidates, hintKeys, {
+      targetAmount: residual,
+      minPicks,
+      nearDateOnly: alreadyLinked.length > 0,
+    });
+    if (!hit || hit.length + alreadyLinked.length < 2) continue;
     const entryKeys = hit.map(ledgerKeyOf);
     for (const key of entryKeys) {
       combinedByEntryKey.set(key, record);
       matchedBy.set(key, "combined");
     }
-    combined.push({ legacyKey: record.key, entryKeys });
+    combined.push({
+      legacyKey: record.key,
+      entryKeys: [...alreadyLinked.map(ledgerKeyOf), ...entryKeys],
+    });
     usedLegacy.add(record.key);
   }
 
