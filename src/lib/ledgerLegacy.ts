@@ -245,13 +245,14 @@ export function counterpartyLineItemMap(legacy: LegacyRecord[]): Map<string, str
     if (r.direction !== "out") continue;
     const name = normalizeCounterparty(r.counterparty);
     if (!name) continue;
+    if (!r.lineItemId) continue; // lege post zegt niets, blokkeert de historie niet
     const set = byName.get(name) ?? new Set<string>();
-    set.add(r.lineItemId || "");
+    set.add(r.lineItemId);
     byName.set(name, set);
   }
   const result = new Map<string, string>();
   for (const [name, set] of byName) {
-    if (set.size !== 1) continue; // conflict of gemengd leeg/gevuld
+    if (set.size !== 1) continue; // alleen bij eenduidige historie
     const only = [...set][0];
     if (only) result.set(name, only);
   }
@@ -274,13 +275,17 @@ export function buildLegacyAssignments(
   for (const entry of entries) {
     const key = ledgerKeyOf(entry);
     const record = match.byEntryKey.get(key);
-    if (record && (record.lineItemId || record.dossier)) {
-      out.set(key, { lineItemId: record.lineItemId, dossier: record.dossier, via: "legacy" });
-      continue;
+    const dossier = record?.dossier ?? null;
+    let lineItemId = record?.lineItemId ?? null;
+    let via: LegacyAssignment["via"] = lineItemId || dossier ? "legacy" : "counterparty";
+    if (!lineItemId && entry.doc_type !== "sales_invoice") {
+      const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
+      if (fallback) {
+        lineItemId = fallback;
+        if (!dossier) via = "counterparty";
+      }
     }
-    if (entry.doc_type === "sales_invoice") continue;
-    const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
-    if (fallback) out.set(key, { lineItemId: fallback, dossier: null, via: "counterparty" });
+    if (lineItemId || dossier) out.set(key, { lineItemId, dossier, via });
   }
   return out;
 }
