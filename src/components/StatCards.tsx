@@ -16,7 +16,8 @@ interface StatCardsProps {
 
 const StatCards = ({ members }: StatCardsProps) => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isBoard } = useAuth();
+  const canSeeRegister = isAdmin || isBoard;
   const { rawLeads } = useMembersData();
   const { members: mergedMembers } = useMergedMembers(members);
   const { members: mergedLeads } = useMergedMembers(rawLeads);
@@ -48,18 +49,18 @@ const StatCards = ({ members }: StatCardsProps) => {
     dataUpdatedAt,
     refetch: refetchStats,
     isFetching: statsFetching,
-  } = useRegisterStats();
+  } = useRegisterStats(canSeeRegister);
   const totalNLCities = Object.keys(perStad).length;
   const representedGemeenten = new Set(
     allRepresented.flatMap((m) => {
       const locaties = m.locaties?.length ? m.locaties : [{ naam: m.naam, plaats: m.plaats }];
-      return locaties.map((l) => getLocationGemeente(l, m.plaats)).filter((g) => g in perStad);
+      return locaties.map((l) => getLocationGemeente(l, m.plaats)).filter(Boolean);
     })
   );
   const matchedCities = representedGemeenten.size;
   const cityPct = totalNLCities > 0 ? Math.round((matchedCities / totalNLCities) * 100) : 0;
 
-  const representedLocations = fromRegister ? totaalRepresented : allRepresented.reduce((sum, member) => sum + Math.max(member.locaties?.length || member.aantalLocaties || 1, 1), 0);
+  const representedLocations = canSeeRegister && fromRegister ? totaalRepresented : allRepresented.reduce((sum, member) => sum + Math.max(member.locaties?.length || member.aantalLocaties || 1, 1), 0);
   const marketPct = Math.round((representedLocations / totalNL) * 100);
   const g4Cities = ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht"];
   const g4Total = g4Cities.reduce((s, c) => s + (perStad[c] || 0), 0);
@@ -94,7 +95,7 @@ const StatCards = ({ members }: StatCardsProps) => {
   };
 
   return (
-    <div className="grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+    <div className={`grid w-full max-w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 ${canSeeRegister ? "xl:grid-cols-5" : "xl:grid-cols-2"}`}>
       {/* Aangesloten Coffeeshops */}
       <div
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
@@ -107,7 +108,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         <div className="mt-auto pt-3 text-center">
           <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{representedLocations}</p>
           <p className="text-xs text-muted-foreground mt-1">aangesloten coffeeshops</p>
-          {dataUpdatedAt > 0 && (
+          {canSeeRegister && dataUpdatedAt > 0 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -133,13 +134,15 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Building2 size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto pt-3 text-center">
-          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{cityPct}%</p>
-          <p className="text-xs text-muted-foreground mt-1">in {matchedCities} van {totalNLCities} gemeenten</p>
+          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{canSeeRegister ? `${cityPct}%` : matchedCities}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {canSeeRegister ? `in ${matchedCities} van ${totalNLCities} gemeenten` : "gemeenten met aangesloten locaties"}
+          </p>
         </div>
       </div>
 
       {/* Marktaandeel gauge */}
-      <div
+      {canSeeRegister && <div
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
@@ -152,10 +155,10 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-center text-xl sm:text-2xl font-bold font-display tabular-nums -mt-1">{marketPct}%</p>
           <p className="text-xs text-muted-foreground text-center mt-0.5">{representedLocations}/{totalNL} coffeeshops</p>
         </div>
-      </div>
+      </div>}
 
       {/* G4 dekking */}
-      <div
+      {canSeeRegister && <div
         className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 transition-colors hover:border-primary sm:p-5 cursor-pointer"
         onClick={() => navigate("/locaties")}
       >
@@ -168,10 +171,10 @@ const StatCards = ({ members }: StatCardsProps) => {
           <p className="text-center text-xl sm:text-2xl font-bold font-display tabular-nums -mt-1">{g4Pct}%</p>
           <p className="text-xs text-muted-foreground text-center mt-0.5">{g4Bcd}/{g4Total} coffeeshops</p>
         </div>
-      </div>
+      </div>}
 
       {/* Benchmark */}
-      <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
+      {canSeeRegister && <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-2 border-primary/60 bg-card p-4 sm:col-span-2 sm:p-5 lg:col-span-1">
         <div className="mb-2 grid min-h-11 grid-cols-[minmax(0,1fr)_1.25rem] items-start gap-3">
           <p className="min-w-0 text-xs font-medium leading-tight text-muted-foreground sm:text-sm">Benchmark</p>
           <BarChart3 size={18} className="text-brand-red justify-self-end" />
@@ -195,7 +198,7 @@ const StatCards = ({ members }: StatCardsProps) => {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

@@ -19,9 +19,10 @@ export type RegisterStats = {
 };
 
 /** Actuele, geverifieerde cijfers uit Coffeeshopbeleid (statisch bestand alleen als noodfallback). */
-export function useRegisterStats() {
+export function useRegisterStats(enabled = true) {
   const query = useQuery({
     queryKey: ["register-plaats-stats"],
+    enabled,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<RegisterStats> => {
       // cache-bust zodat de edge-cache (max-age 300) verse cijfers teruggeeft na een wijziging

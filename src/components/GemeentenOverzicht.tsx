@@ -6,6 +6,7 @@ import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { pctColor } from "@/lib/pctColor";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
@@ -55,6 +56,8 @@ const isInGemeente = (m: Member, gemeente: string): boolean => {
 
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { isAdmin, isBoard } = useAuth();
+  const canSeeRegister = isAdmin || isBoard;
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
   const {
@@ -62,7 +65,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
     totaalNL: totalNL,
     representedPerGemeente: cityCount,
     totaalRepresented: totalLocaties,
-  } = useRegisterStats();
+  } = useRegisterStats(canSeeRegister);
   // Use merged members + merged leads for market share calculations
   const represented = [...members, ...mergedLeads];
   // Member counts remain local; shop counts come from the central register-backed calculation.
@@ -91,6 +94,8 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
       const pct = total > 0 ? Math.round((bcd / total) * 100) : 0;
       return { city, total, bcd, leden, pct };
     });
+
+  if (!canSeeRegister) return null;
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">

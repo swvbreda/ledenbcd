@@ -13,6 +13,7 @@ interface CityData {
 interface CityMapProps {
   cities: CityData[];
   allCoffeeshopCities?: Record<string, number>;
+  showRegisterStats?: boolean;
   onCityClick?: (city: string) => void;
 }
 
@@ -23,12 +24,15 @@ const getColor = (pct: number) => {
   return "hsl(45, 90%, 55%)";                   // yellow
 };
 
-const CityMap = ({ cities, allCoffeeshopCities, onCityClick }: CityMapProps) => {
+const CityMap = ({ cities, allCoffeeshopCities, showRegisterStats = true, onCityClick }: CityMapProps) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
 
-  const maxLocaties = useMemo(() => Math.max(...cities.map((c) => c.totaalNL || c.aantalLocaties), 1), [cities]);
+  const maxLocaties = useMemo(
+    () => Math.max(...cities.map((c) => (showRegisterStats ? c.totaalNL : c.aantalLocaties) || c.aantalLocaties), 1),
+    [cities, showRegisterStats],
+  );
 
   const cityMap = useMemo(() => {
     const m = new Map<string, CityData>();
@@ -91,11 +95,14 @@ const CityMap = ({ cities, allCoffeeshopCities, onCityClick }: CityMapProps) => 
       const pct = bcdCity?.marktPct || 0;
       const hasBcd = aangesloten > 0;
 
+      const radiusBasis = showRegisterStats ? totaalNL : aangesloten;
       const radius = hasBcd
-        ? 6 + (totaalNL / maxLocaties) * 26
+        ? 6 + (radiusBasis / maxLocaties) * 26
         : 5;
 
-      const color = hasBcd ? getColor(pct) : "hsl(45, 90%, 55%)";
+      const color = hasBcd
+        ? showRegisterStats ? getColor(pct) : "hsl(var(--primary))"
+        : "hsl(45, 90%, 55%)";
 
       const marker = L.circleMarker(coords, {
         radius,
@@ -107,7 +114,9 @@ const CityMap = ({ cities, allCoffeeshopCities, onCityClick }: CityMapProps) => 
       });
 
       const tooltip = hasBcd
-        ? `<div class="text-xs"><strong>${naam}</strong><br/>${totaalNL} totaal · ${aangesloten} aangesloten (${pct}%)</div>`
+        ? showRegisterStats
+          ? `<div class="text-xs"><strong>${naam}</strong><br/>${totaalNL} totaal · ${aangesloten} aangesloten (${pct}%)</div>`
+          : `<div class="text-xs"><strong>${naam}</strong><br/>${aangesloten} aangesloten locatie${aangesloten === 1 ? "" : "s"}</div>`
         : `<div class="text-xs"><strong>${naam}</strong><br/>${totaalNL} coffeeshops · geen leden</div>`;
 
       marker.bindTooltip(tooltip, { direction: "top", offset: [0, -radius] });
@@ -118,7 +127,7 @@ const CityMap = ({ cities, allCoffeeshopCities, onCityClick }: CityMapProps) => 
 
       marker.addTo(markerLayer);
     }
-  }, [cities, cityMap, maxLocaties, allCoffeeshopCities, onCityClick]);
+  }, [cities, cityMap, maxLocaties, allCoffeeshopCities, showRegisterStats, onCityClick]);
 
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden" style={{ height: 420 }}>

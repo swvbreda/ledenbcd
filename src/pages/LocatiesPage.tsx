@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { Search, X, MapPin, Users, Building2, ChevronDown, ChevronUp, ExternalLink, RefreshCw } from "lucide-react";
+import { Search, X, MapPin, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
@@ -9,6 +9,7 @@ import DocumentenZoeker from "@/components/DocumentenZoeker";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
@@ -55,6 +56,8 @@ class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 
 const LocatiesPage = () => {
   const { allRepresented } = useMembersData();
+  const { isAdmin, isBoard } = useAuth();
+  const canSeeRegister = isAdmin || isBoard;
   const [search, setSearch] = useState("");
   const [expandedCity, setExpandedCity] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<"naam" | "aantalLocaties" | "marktPct">("aantalLocaties");
@@ -67,7 +70,7 @@ const LocatiesPage = () => {
     totaalNL: totalNL,
     representedPerGemeente: repCityCount,
     totaalRepresented: representedLocaties,
-  } = useRegisterStats();
+  } = useRegisterStats(canSeeRegister);
   const marketPctNL = totalNL > 0 ? Math.round((representedLocaties / totalNL) * 100) : 0;
 
 
@@ -102,7 +105,7 @@ const LocatiesPage = () => {
         if (!plaats) continue;
 
         if (!map.has(plaats)) {
-          const totaal = perStad[plaats] || 0;
+          const totaal = canSeeRegister ? perStad[plaats] || 0 : 0;
           map.set(plaats, {
             naam: plaats,
             aantalLeden: 0,
@@ -131,14 +134,16 @@ const LocatiesPage = () => {
       }
     }
 
-    // Use the same central register-backed total for each municipality.
-    for (const city of map.values()) {
-      city.aantalLocaties = repCityCount[city.naam] || 0;
-      city.marktPct = city.totaalNL > 0 ? Math.round((city.aantalLocaties / city.totaalNL) * 100) : 0;
+    // Registervergelijkingen zijn uitsluitend zichtbaar voor bestuur en beheer.
+    if (canSeeRegister) {
+      for (const city of map.values()) {
+        city.aantalLocaties = repCityCount[city.naam] || 0;
+        city.marktPct = city.totaalNL > 0 ? Math.round((city.aantalLocaties / city.totaalNL) * 100) : 0;
+      }
     }
 
     return Array.from(map.values());
-  }, [represented, perStad, repCityCount]);
+  }, [represented, perStad, repCityCount, canSeeRegister]);
 
   const filtered = useMemo(() => {
     let result = cities;
@@ -200,14 +205,21 @@ const LocatiesPage = () => {
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Coffeeshops NL", value: totalNL },
-          { label: "Vertegenwoordigd", value: representedLocaties },
-          { label: "Vertegenwoordiging", value: `${marketPctNL}%` },
-          { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
-        ].map((card) => (
+      {/* Registervergelijkingen zijn uitsluitend voor bestuur en beheer. */}
+      <div className={`grid grid-cols-2 gap-4 ${canSeeRegister ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+        {(canSeeRegister
+          ? [
+              { label: "Coffeeshops NL", value: totalNL },
+              { label: "Vertegenwoordigd", value: representedLocaties },
+              { label: "Vertegenwoordiging", value: `${marketPctNL}%` },
+              { label: "G4 dekking", value: `${g4Pct}%`, sub: `${g4Bcd}/${g4Total}` },
+            ]
+          : [
+              { label: "Gemeenten", value: cities.length },
+              { label: "Aangesloten locaties", value: totalLocations },
+              { label: "Leden", value: represented.length },
+            ]
+        ).map((card) => (
           <div key={card.label} className="bg-card rounded-lg border border-border p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
             <p className="text-2xl font-bold font-display">{card.value}</p>
@@ -216,13 +228,18 @@ const LocatiesPage = () => {
         ))}
       </div>
 
-      <RegisterCoverageCard />
+      {canSeeRegister && <RegisterCoverageCard />}
 
       <DocumentenZoeker />
 
 
       <MapErrorBoundary>
-        <CityMap cities={filtered} allCoffeeshopCities={perStad} onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)} />
+        <CityMap
+          cities={filtered}
+          allCoffeeshopCities={canSeeRegister ? perStad : undefined}
+          showRegisterStats={canSeeRegister}
+          onCityClick={(name) => setExpandedCity(expandedCity === name ? null : name)}
+        />
       </MapErrorBoundary>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
@@ -234,12 +251,18 @@ const LocatiesPage = () => {
                   <span className="inline-flex items-center gap-1">Gemeente <SortIcon col="naam" /></span>
                 </th>
                 <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[15%]" onClick={() => handleSort("aantalLocaties")}>
-                  <span className="inline-flex items-center gap-1">Aangesloten <SortIcon col="aantalLocaties" /></span>
+                  <span className="inline-flex items-center gap-1">Locaties <SortIcon col="aantalLocaties" /></span>
                 </th>
-                <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-[15%]">Totaal</th>
-                <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[30%]" onClick={() => handleSort("marktPct")}>
-                  <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
-                </th>
+                {canSeeRegister ? (
+                  <>
+                    <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-[15%]">Totaal</th>
+                    <th className="px-3 py-2 text-right font-semibold text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors w-[30%]" onClick={() => handleSort("marktPct")}>
+                      <span className="inline-flex items-center gap-1">Aandeel <SortIcon col="marktPct" /></span>
+                    </th>
+                  </>
+                ) : (
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground w-[30%]">Leden</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -256,8 +279,10 @@ const LocatiesPage = () => {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{city.aantalLocaties}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{city.totaalNL || "—"}</td>
-                    <td className="px-3 py-2">
+                    {canSeeRegister ? (
+                      <>
+                        <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{city.totaalNL || "—"}</td>
+                        <td className="px-3 py-2">
                       {city.totaalNL > 0 ? (
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -273,7 +298,11 @@ const LocatiesPage = () => {
                       ) : (
                         <span className="text-xs text-muted-foreground text-right block">—</span>
                       )}
-                    </td>
+                        </td>
+                      </>
+                    ) : (
+                      <td className="px-3 py-2 text-right tabular-nums">{city.aantalLeden}</td>
+                    )}
                   </tr>
                   {expandedCity === city.naam && city.stadsdelen.length > 0 &&
                     city.stadsdelen
@@ -287,7 +316,7 @@ const LocatiesPage = () => {
                             <span className="text-xs text-muted-foreground">{sd.naam}</span>
                           </td>
                           <td className="px-3 py-1.5 text-right tabular-nums text-xs">{sd.aantalLocaties}</td>
-                          <td />
+                          {canSeeRegister && <td />}
                           <td className="px-3 py-1.5">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -305,7 +334,7 @@ const LocatiesPage = () => {
                       ))}
                   {expandedCity === city.naam && city.stadsdelen.length === 0 && (
                     <tr className="border-b border-border bg-muted/10">
-                      <td className="pl-8 pr-3 py-1.5 text-xs text-muted-foreground" colSpan={4}>
+                      <td className="pl-8 pr-3 py-1.5 text-xs text-muted-foreground" colSpan={canSeeRegister ? 4 : 3}>
                         Geen stadsdeel-data beschikbaar
                       </td>
                     </tr>

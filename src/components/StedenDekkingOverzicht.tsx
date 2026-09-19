@@ -4,12 +4,15 @@ import { ArrowRight } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
+import { useAuth } from "@/hooks/useAuth";
 
 const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
+  const { isAdmin, isBoard } = useAuth();
+  const canSeeRegister = isAdmin || isBoard;
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
-  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats();
+  const { perGemeente: perStad, totaalNL: totalNL } = useRegisterStats(canSeeRegister);
   // Use merged members + merged leads for market share
   const represented = [...members, ...mergedLeads];
   const totalLocaties = represented.reduce((s, m) => s + (m.locaties?.length || m.aantalLocaties || 1), 0);
@@ -31,6 +34,8 @@ const StedenDekkingOverzicht = ({ members }: { members: Member[] }) => {
       const pct = total > 0 ? Math.round((bcd / total) * 100) : 0;
       return { city, total, bcd, pct };
     });
+
+  if (!canSeeRegister) return null;
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
