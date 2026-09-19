@@ -115,6 +115,23 @@ export function duplicateAllocationKeys(entries: { key: string; shared?: boolean
   return flagged;
 }
 
+/**
+ * Alle sleutels waaronder documenten van deze regel kunnen hangen: de eigen
+ * sleutel, de samengevoegde bronnen en de gekoppelde legacy-aliassen.
+ */
+export function documentKeysOf(entry: {
+  key: string;
+  legacyKeys?: string[];
+  sources?: { key: string; legacyKeys?: string[] }[];
+}): string[] {
+  const keys = new Set<string>([entry.key, ...(entry.legacyKeys || [])]);
+  for (const s of entry.sources || []) {
+    keys.add(s.key);
+    for (const k of s.legacyKeys || []) keys.add(k);
+  }
+  return [...keys];
+}
+
 /** True als deze mutatie aan geen enkel dossier hangt (ook niet via een verdeling). */
 export function isUnassigned(m: DossierMutation) {
   return !m.dossier && (!m.splits || m.splits.length === 0);
