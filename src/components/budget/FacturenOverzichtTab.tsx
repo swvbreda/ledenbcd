@@ -132,7 +132,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
   const handleExportCSV = () => {
     const header = ["Lidnr", "Naam", "Plaats", "Status", "Factuurnummer(s)", "Factuurdatum", "Gefactureerd", "Ontvangen", "Openstaand", "Betaald op"];
     const rowsCsv = filteredRows.map((r) => {
-      const nums = r.invoices.map((i) => i.invoice_number ?? "").filter(Boolean).join("; ");
+      const nums = r.resolved.invoiceNumbers.join("; ");
       const label = r.status === "paid" ? "Betaald" : r.status === "sent" ? "Verstuurd" : "Nog te versturen";
       return [
         r.member.id,
