@@ -1045,6 +1045,36 @@ export type Database = {
         }
         Relationships: []
       }
+      contribution_exemptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: number
+          reason: string
+          source: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: number
+          reason: string
+          source: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: number
+          reason?: string
+          source?: string
+          year?: number
+        }
+        Relationships: []
+      }
       contribution_invoices: {
         Row: {
           amount: number | null
@@ -2280,6 +2310,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          match_status: string | null
+          matched_member_id: number | null
           message: string | null
           phone: string | null
           request_type: string
@@ -2292,6 +2324,8 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          match_status?: string | null
+          matched_member_id?: number | null
           message?: string | null
           phone?: string | null
           request_type?: string
@@ -2304,6 +2338,8 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          match_status?: string | null
+          matched_member_id?: number | null
           message?: string | null
           phone?: string | null
           request_type?: string
@@ -3338,6 +3374,14 @@ export type Database = {
         Returns: number
       }
       ensure_member_link: { Args: never; Returns: number }
+      find_shop_match: {
+        Args: { _naam: string; _plaats: string }
+        Returns: {
+          member_id: number
+          member_type: string
+          naam: string
+        }[]
+      }
       generate_agenda_share_code: { Args: never; Returns: string }
       get_agenda_board_attendance: {
         Args: never
@@ -3435,6 +3479,10 @@ export type Database = {
         Returns: boolean
       }
       is_board_member: { Args: { _user_id: string }; Returns: boolean }
+      is_contribution_exempt: {
+        Args: { _member_id: number; _year: number }
+        Returns: boolean
+      }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
       member_registered_emails: {
         Args: { _member_id: number }
@@ -3457,6 +3505,7 @@ export type Database = {
       }
       next_member_number: { Args: never; Returns: number }
       normalize_gemeente: { Args: { _naam: string }; Returns: string }
+      normalize_shop_naam: { Args: { _naam: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
