@@ -849,17 +849,46 @@ function normalizeLedgerStatus(inv: any, amount: number): string {
   return "open";
 }
 
-function ledgerAccountOf(inv: any): string | null {
+/**
+ * Kostenrubriek van een factuur. Informer zet per regel een `ledger_id`; de
+ * omschrijving komt uit /ledgers. Regel met het grootste bedrag is leidend.
+ * Levert Informer niets, dan blijft dit leeg (geen lokale schatting).
+ */
+function ledgerAccountOf(inv: any, ledgerNames?: Map<string, string>): string | null {
   const direct = inv?.ledger_account ?? inv?.ledger_code ?? inv?.ledger?.code ?? inv?.ledger?.name;
   if (direct) return String(direct);
   const lines = inv?.lines ?? inv?.invoice_lines ?? inv?.rows;
-  if (Array.isArray(lines)) {
+  if (Array.isArray(lines) && lines.length > 0) {
+    let best: { amount: number; label: string } | null = null;
     for (const l of lines) {
-      const v = l?.ledger_account ?? l?.ledger_code ?? l?.ledger?.code ?? l?.ledger?.name ?? l?.category;
-      if (v) return String(v);
+      const id = l?.ledger_id ?? l?.ledger?.id ?? null;
+      const label = id != null && ledgerNames?.get(String(id))
+        ? ledgerNames.get(String(id))!
+        : String(l?.ledger_account ?? l?.ledger_code ?? l?.ledger?.name ?? l?.category ?? "");
+      if (!label) continue;
+      const amount = Math.abs(toAmount(l?.amount ?? l?.total ?? 0));
+      if (!best || amount > best.amount) best = { amount, label };
     }
+    if (best) return best.label;
   }
   return null;
+}
+
+/** Haalt de grootboekrubrieken op: id -> "nummer omschrijving". */
+async function fetchLedgerNames(api_calls: ApiCall[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  try {
+    const rows = await fetchAllInformerPages("/ledgers", ["ledgers", "data"], api_calls);
+    for (const l of rows as any[]) {
+      const id = l?.id;
+      const desc = l?.description ?? l?.name;
+      if (id == null || !desc) continue;
+      map.set(String(id), l?.number ? `${l.number} ${desc}` : String(desc));
+    }
+  } catch (_e) {
+    // Rubrieken niet beschikbaar: ledger_account blijft leeg.
+  }
+  return map;
 }
 
 function entryDateOf(inv: any): string | null {
