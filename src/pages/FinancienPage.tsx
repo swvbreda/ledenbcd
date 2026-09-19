@@ -360,6 +360,16 @@ export default function FinancienPage() {
                   <BudgetCategoryTable
                     key={cat.id}
                     category={cat}
+                    titleOverride={
+                      /inkomst|contribut|subsid|opbreng/i.test(cat.name)
+                        ? `${cat.name} — volgens ledenregister (operationele controle, telt niet mee in boekhoudkundig resultaat)`
+                        : undefined
+                    }
+                    subtitle={
+                      /inkomst|contribut|subsid|opbreng/i.test(cat.name)
+                        ? `Boekhouding (Informer API): ${fmt(financialResult?.contributionIncome ?? 0)} totaal, waarvan ${fmt(financialResult?.openSales ?? 0)} openstaand.`
+                        : undefined
+                    }
                     onAddLineItem={(catId, name, amount) =>
                       mutations.addLineItem.mutate({ categoryId: catId, name, amount }, {
                         onSuccess: () => toast.success("Post toegevoegd"),
