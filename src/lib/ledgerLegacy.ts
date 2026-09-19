@@ -274,7 +274,20 @@ export function matchLegacyRecords(
     takeGroup(entry, available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r))), "invoice");
   }
 
-  // 3. Bedrag + tegenpartij + datum.
+  // 3. Factuurnummer uit een gekoppeld document (bv. "Declaratie 20260688.pdf").
+  if (hints && hints.size > 0) {
+    for (const entry of entries) {
+      if (byEntryKey.has(ledgerKeyOf(entry))) continue;
+      const keys = entryInvoiceKeys(entry);
+      if (keys.length === 0) continue;
+      const hits = available().filter((r) =>
+        hintKeysFor(r, hints).some((h) => keys.some((k) => invoiceKeysMatch(h, k))),
+      );
+      takeGroup(entry, hits, "document");
+    }
+  }
+
+  // 4. Bedrag + tegenpartij + datum.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
@@ -282,7 +295,7 @@ export function matchLegacyRecords(
   }
 
 
-  // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
+  // 5. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
   // verschijnt dus niet apart als "nog niet gekoppeld".
   for (const [key, record] of byEntryKey) {
@@ -299,10 +312,43 @@ export function matchLegacyRecords(
 
   }
 
+  // 6. Gecombineerde betaling: één bankmutatie dekt exact meerdere facturen.
+  const combined: CombinedPayment[] = [];
+  const combinedByEntryKey = new Map<string, LegacyRecord>();
+  const claimedEntries = new Set<string>([...byEntryKey.keys()]);
+  for (const record of available()) {
+    const party = normalizeCounterparty(record.counterparty);
+    if (!party) continue;
+    const candidates = entries.filter((e) => {
+      const key = ledgerKeyOf(e);
+      if (claimedEntries.has(key)) return false;
+      if (!e.counts_in_totals) return false;
+      const wantsSales = record.direction === "in";
+      if (wantsSales !== (e.doc_type === "sales_invoice")) return false;
+      if (normalizeCounterparty(e.relation_name) !== party) return false;
+      // Facturen worden na de factuurdatum betaald; een klein voorschot mag.
+      const delta = daysBetween(record.date, e.entry_date);
+      return delta >= -14 && delta <= 180;
+    });
+    if (candidates.length < 2) continue;
+    const hit = findCombination(record, candidates, hintKeysFor(record, hints));
+    if (!hit) continue;
+    const entryKeys = hit.map(ledgerKeyOf);
+    for (const key of entryKeys) {
+      claimedEntries.add(key);
+      combinedByEntryKey.set(key, record);
+      matchedBy.set(key, "combined");
+    }
+    combined.push({ legacyKey: record.key, entryKeys });
+    usedLegacy.add(record.key);
+  }
+
   return {
     byEntryKey,
     aliasesByEntryKey,
     matchedBy,
+    combined,
+    combinedByEntryKey,
     // Synthetische hulprijen zijn geen administratief aandachtspunt.
     unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
