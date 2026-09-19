@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -eu
 
 # Xcode Cloud runs this from ios/App/ci_scripts — go to the repo root.
 cd "$CI_PRIMARY_REPOSITORY_PATH"
@@ -13,10 +13,9 @@ fi
 node -v
 npm -v
 
-npm install --legacy-peer-deps --no-audit --no-fund
+npm ci --legacy-peer-deps --no-audit --no-fund
 npm run build
 npx cap sync ios
 
-# Resolve Swift package dependencies so Package.resolved exists before archiving
-defaults write com.apple.dt.Xcode IDEPackageOnlyUseVersionsFromResolvedFile -bool NO
-xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App IDEPackageOnlyUseVersionsFromResolvedFile=NO
+# Resolve Swift package dependencies so Package.resolved is in place before archiving
+xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
