@@ -113,3 +113,121 @@ export function hasCanonicalInvoice(contrib?: CanonicalContribution | null): boo
     String(contrib.invoice_number ?? "").trim()
   );
 }
+
+export interface MemberContributionRecord extends CanonicalContribution {
+  member_id: number;
+}
+
+export interface MemberInvoiceRecord extends LocalInvoiceRow {
+  id: string;
+  member_id: number;
+}
+
+export interface CanonicalInvoiceRow {
+  key: string;
+  member_id: number;
+  source: "informer" | "legacy";
+  invoiceNumber: string | null;
+  invoiceDate: string | null;
+  amount: number;
+  paidAmount: number;
+  openAmount: number;
+  paid: boolean;
+  paidDate: string | null;
+}
+
+/**
+ * Bouwt exact één canonieke factuurregel per Informer-snapshot (external_invoice_id)
+ * en negeert dan alle lokale shadow/placeholderrijen van dat lid/jaar.
+ * Legacy-leden zonder snapshot houden hun bestaande lokale facturen, elk als
+ * afzonderlijke regel; een betaling wordt daarbij volgordelijk verdeeld zodat
+ * ze nooit dubbel wordt geteld.
+ */
+export function buildCanonicalInvoiceRows(input: {
+  contributions?: MemberContributionRecord[] | null;
+  invoices?: MemberInvoiceRecord[] | null;
+  paymentsByMember?: Map<number, PaymentInfo> | null;
+  defaultAmount?: number;
+}): CanonicalInvoiceRow[] {
+  const contributions = input.contributions ?? [];
+  const invoices = input.invoices ?? [];
+  const payments = input.paymentsByMember ?? new Map<number, PaymentInfo>();
+  const defaultAmount = input.defaultAmount ?? 0;
+
+  const contribByMember = new Map<number, MemberContributionRecord>();
+  contributions.forEach((c) => contribByMember.set(c.member_id, c));
+
+  const invoicesByMember = new Map<number, MemberInvoiceRecord[]>();
+  invoices.forEach((inv) => {
+    const list = invoicesByMember.get(inv.member_id) ?? [];
+    list.push(inv);
+    invoicesByMember.set(inv.member_id, list);
+  });
+
+  const rows: CanonicalInvoiceRow[] = [];
+  const memberIds = new Set<number>([...contribByMember.keys(), ...invoicesByMember.keys()]);
+
+  for (const memberId of memberIds) {
+    const contrib = contribByMember.get(memberId) ?? null;
+    const local = invoicesByMember.get(memberId) ?? [];
+    const payment = payments.get(memberId) ?? null;
+
+    if (hasCanonicalContribution(contrib)) {
+      const resolved = resolveContributionInvoice({ contrib, invoices: [], payment, defaultAmount });
+      rows.push({
+        key: `contrib:${memberId}`,
+        member_id: memberId,
+        source: "informer",
+        invoiceNumber: resolved.invoiceNumbers[0] ?? null,
+        invoiceDate: resolved.invoiceDate,
+        amount: resolved.invoicedAmount,
+        paidAmount: resolved.paidAmount,
+        openAmount: resolved.openAmount,
+        paid: resolved.status === "paid",
+        paidDate: resolved.paidDate,
+      });
+      continue;
+    }
+
+    let remainingPaid = payment?.amount ?? (contrib?.paid ? num(contrib.amount) ?? 0 : 0);
+    for (const inv of local) {
+      const amount = num(inv.amount) ?? num(contrib?.amount) ?? defaultAmount;
+      const paidAmount = Math.min(Math.max(remainingPaid, 0), amount);
+      remainingPaid -= paidAmount;
+      const openAmount = Math.max(0, amount - paidAmount);
+      rows.push({
+        key: inv.id,
+        member_id: memberId,
+        source: "legacy",
+        invoiceNumber: inv.invoice_number ?? null,
+        invoiceDate: inv.invoice_date ?? contrib?.invoice_date ?? inv.created_at ?? null,
+        amount,
+        paidAmount,
+        openAmount,
+        paid: openAmount <= 0.01,
+        paidDate: payment?.paidDate ?? contrib?.paid_date ?? null,
+      });
+    }
+  }
+
+  return rows;
+}
+
+function hasCanonicalContribution(contrib?: CanonicalContribution | null): boolean {
+  return !!(contrib && String(contrib.external_invoice_id ?? "").trim());
+}
+
+export function sumCanonicalInvoiceRows(rows: CanonicalInvoiceRow[]): {
+  invoiced: number;
+  paid: number;
+  open: number;
+} {
+  return rows.reduce(
+    (acc, r) => ({
+      invoiced: acc.invoiced + r.amount,
+      paid: acc.paid + r.paidAmount,
+      open: acc.open + r.openAmount,
+    }),
+    { invoiced: 0, paid: 0, open: 0 },
+  );
+}
