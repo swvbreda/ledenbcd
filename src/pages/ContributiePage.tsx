@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import CsvImportDialog from "@/components/CsvImportDialog";
 import { useBudgetYearSettings } from "@/hooks/useBudget";
+import { useContributionExemptions, type ContributionExemption } from "@/hooks/useContributionExemptions";
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
@@ -51,6 +52,14 @@ const ContributiePage = () => {
     return map;
   }, [invoicesData]);
 
+  // Vrijstellingen gelden per contributiejaar: die leden hebben geen
+  // betaalplicht en tellen niet mee als openstaand of "geen factuur".
+  const exemptMap = useMemo(() => {
+    const map = new Map<number, ContributionExemption>();
+    (exemptions ?? []).forEach((e) => map.set(e.member_id, e));
+    return map;
+  }, [exemptions]);
+
   const filteredMembers = useMemo(() => {
     let list = [...effectiveMembers].sort((a, b) => a.id - b.id);
     if (search) {
@@ -66,17 +75,24 @@ const ContributiePage = () => {
     if (statusFilter === "paid") {
       list = list.filter((m) => contribMap.get(m.id)?.paid);
     } else if (statusFilter === "unpaid") {
-      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0 && !contribMap.get(m.id)?.paid);
+      list = list.filter(
+        (m) =>
+          !exemptMap.has(m.id) &&
+          (invoicesMap.get(m.id) ?? []).length > 0 &&
+          !contribMap.get(m.id)?.paid
+      );
     } else if (statusFilter === "no_invoice") {
-      list = list.filter((m) => (invoicesMap.get(m.id) ?? []).length === 0);
+      list = list.filter((m) => !exemptMap.has(m.id) && (invoicesMap.get(m.id) ?? []).length === 0);
     }
     return list;
-  }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap]);
+  }, [effectiveMembers, search, statusFilter, contribMap, invoicesMap, exemptMap]);
 
   const stats = useMemo(() => {
     const total = effectiveMembers.length;
     // Only count members who have at least one invoice for this year
-    const invoiced = effectiveMembers.filter((m) => (invoicesMap.get(m.id) ?? []).length > 0).length;
+    const invoiced = effectiveMembers.filter(
+      (m) => !exemptMap.has(m.id) && (invoicesMap.get(m.id) ?? []).length > 0
+    ).length;
     let paid = 0;
     effectiveMembers.forEach((m) => {
       if (contribMap.get(m.id)?.paid) paid++;
@@ -84,7 +100,7 @@ const ContributiePage = () => {
     const expectedAmount = invoiced * contributionAmount;
     const paidAmount = paid * contributionAmount;
     return { total, invoiced, paid, expectedAmount, paidAmount, openAmount: expectedAmount - paidAmount };
-  }, [effectiveMembers, contribMap, invoicesMap, contributionAmount]);
+  }, [effectiveMembers, contribMap, invoicesMap, exemptMap, contributionAmount]);
 
   const handleTogglePaid = async (memberId: number, currentlyPaid: boolean) => {
     const existing = contribMap.get(memberId);
@@ -275,6 +291,7 @@ const ContributiePage = () => {
               <TableBody>
                 {filteredMembers.map((m) => {
                   const c = contribMap.get(m.id);
+                  const exemption = exemptMap.get(m.id);
                   const isPaid = c?.paid ?? false;
                   const memberInvoices = invoicesMap.get(m.id) ?? [];
                   return (
@@ -282,8 +299,12 @@ const ContributiePage = () => {
                       <TableCell className="text-sm text-muted-foreground">{m.id}</TableCell>
                       <TableCell>
                         <div className="font-medium text-sm">{m.naam}</div>
+                        {exemption && (
+                          <div className="text-xs text-emerald-700 font-medium">{exemption.reason}</div>
+                        )}
                         <div className="text-sm text-muted-foreground sm:hidden">{m.plaats}</div>
                       </TableCell>
+
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {m.plaats}
                       </TableCell>
@@ -326,18 +347,23 @@ const ContributiePage = () => {
                         {m.locaties?.length || m.aantalLocaties || 1}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        € {contributionAmount.toLocaleString("nl-NL")}
+                        {exemption ? "€ 0" : `€ ${contributionAmount.toLocaleString("nl-NL")}`}
                       </TableCell>
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isPaid}
-                          onCheckedChange={() => handleTogglePaid(m.id, isPaid)}
-                          className="mx-auto"
-                        />
+                        {exemption ? (
+                          <span className="text-xs text-muted-foreground">n.v.t.</span>
+                        ) : (
+                          <Checkbox
+                            checked={isPaid}
+                            onCheckedChange={() => handleTogglePaid(m.id, isPaid)}
+                            className="mx-auto"
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {c?.paid_date ?? "—"}
+                        {exemption ? "—" : (c?.paid_date ?? "—")}
                       </TableCell>
+
                     </TableRow>
                   );
                 })}
