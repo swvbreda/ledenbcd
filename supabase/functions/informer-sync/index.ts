@@ -1427,6 +1427,7 @@ async function prepareInvoices(
     for (const m of (members ?? [])) {
       const memberId = Number(m.id);
       if (invoiced.has(memberId)) continue;
+      if (exempt.has(memberId)) continue;
       const data = (m.data ?? {}) as any;
       const lidSinds = Number(data.lidSinds ?? 0);
       let startMonth = 1;
