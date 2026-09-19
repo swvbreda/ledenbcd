@@ -176,3 +176,48 @@ describe("idempotentie en blijvende lokale toevoegingen", () => {
     expect(totalExpenses([e])).toBe(0);
   });
 });
+
+describe("revenueBreakdown (Controle & sync 2026)", () => {
+  const sales = (over: Partial<LedgerEntry>): LedgerEntry => makeEntry({
+    doc_type: "sales_invoice",
+    status: "paid",
+    amount_incl: 0,
+    open_amount: 0,
+    ...over,
+  });
+
+  const entries2026: LedgerEntry[] = [
+    // 6 betaalde contributiefacturen samen € 8.500
+    ...[1500, 1500, 1500, 1500, 1500, 1000].map((a, i) =>
+      sales({ id: `c${i}`, informer_id: `c${i}`, ledger_account: "4940 Contributies", amount_incl: a })),
+    // 2 openstaande contributiefacturen samen € 2.500
+    sales({ id: "c6", informer_id: "c6", ledger_account: "4940 Contributies", status: "open", amount_incl: 1500, open_amount: 1500 }),
+    sales({ id: "c7", informer_id: "c7", ledger_account: "4940 Contributies", status: "open", amount_incl: 1000, open_amount: 1000 }),
+    // 1 overige inkomst: PCN Kantoor, betaald
+    sales({ id: "o1", informer_id: "o1", ledger_account: "8000 Omzet hoge BTW", amount_incl: 28814.42, relation_name: "PCN Kantoor" }),
+  ];
+
+  it("classificeert op grootboekrekening en telt de huidige 2026-totalen", () => {
+    const b = revenueBreakdown(entries2026);
+    expect(b.contribution.count).toBe(8);
+    expect(b.contribution.total).toBeCloseTo(11000, 2);
+    expect(b.contribution.open).toBeCloseTo(2500, 2);
+    expect(b.other.count).toBe(1);
+    expect(b.other.total).toBeCloseTo(28814.42, 2);
+    expect(b.other.entries[0]!.relation_name).toBe("PCN Kantoor");
+    expect(b.other.open).toBe(0);
+    expect(b.contribution.total + b.other.total).toBeCloseTo(totalRevenue(entries2026), 2);
+  });
+
+  it("telt overige inkomsten nooit als contributie en verbergt ze niet", () => {
+    const b = revenueBreakdown(entries2026);
+    expect(b.contribution.entries.some((e) => e.relation_name === "PCN Kantoor")).toBe(false);
+    expect(b.contribution.count + b.other.count).toBe(9);
+  });
+
+  it("herkent contributie op grootboekrekening, niet op omschrijving", () => {
+    expect(isContributionRevenue(sales({ ledger_account: "4940 Contributies" }))).toBe(true);
+    expect(isContributionRevenue(sales({ ledger_account: "8000 Omzet hoge BTW", description: "Contributie 2026" }))).toBe(false);
+    expect(isContributionRevenue(sales({ ledger_account: null }))).toBe(false);
+  });
+});
