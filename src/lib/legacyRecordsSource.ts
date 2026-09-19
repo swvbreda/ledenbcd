@@ -2,7 +2,7 @@
 // die als toewijzingsbron dient naast de canonieke Informer-regels.
 
 import { supabase } from "@/integrations/supabase/client";
-import type { LegacyRecord } from "@/lib/ledgerLegacy";
+import { isSyntheticPlaceholder, type LegacyRecord } from "@/lib/ledgerLegacy";
 
 const client = supabase as any;
 
@@ -36,6 +36,15 @@ export async function fetchLegacyRecords(year: number, lineItemIds: string[]): P
   const records: LegacyRecord[] = [];
 
   for (const e of expenses || []) {
+    const candidate = {
+      amount: Math.abs(Number(e.amount) || 0),
+      description: e.description ?? null,
+      counterparty: e.creditor_name ?? null,
+      invoice: e.invoice_reference ?? null,
+      dossier: e.dossier ? String(e.dossier).trim() || null : null,
+    };
+    // Technische hulprijen uit oude synchronisatie tellen niet als toewijzing.
+    if (isSyntheticPlaceholder(candidate)) continue;
     records.push({
       key: `expense:${e.id}`,
       kind: "expense",

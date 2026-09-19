@@ -33,6 +33,12 @@ export interface DossierMutation {
   /** Verdeling over meerdere dossiers; leeg = één dossier (veld `dossier`). */
   splits: { dossier: string; amount: number }[];
   /**
+   * Sleutels van gekoppelde bestaande boekingen/bankmutaties ("expense:uuid",
+   * "ponto:uuid"). Uitsluitend om bestaande documenten terug te vinden; de
+   * Informer-regel blijft de hoofdregel en de bron van het bedrag.
+   */
+  legacyKeys?: string[];
+  /**
    * Bestaande administratieve mutatie die (nog) niet aan een Informer-regel
    * gekoppeld kon worden. Blijft zichtbaar, maar telt niet mee in de
    * boekhoudkundige dossiertotalen.
@@ -107,6 +113,23 @@ export function duplicateAllocationKeys(entries: { key: string; shared?: boolean
     }
   }
   return flagged;
+}
+
+/**
+ * Alle sleutels waaronder documenten van deze regel kunnen hangen: de eigen
+ * sleutel, de samengevoegde bronnen en de gekoppelde legacy-aliassen.
+ */
+export function documentKeysOf(entry: {
+  key: string;
+  legacyKeys?: string[];
+  sources?: { key: string; legacyKeys?: string[] }[];
+}): string[] {
+  const keys = new Set<string>([entry.key, ...(entry.legacyKeys || [])]);
+  for (const s of entry.sources || []) {
+    keys.add(s.key);
+    for (const k of s.legacyKeys || []) keys.add(k);
+  }
+  return [...keys];
 }
 
 /** True als deze mutatie aan geen enkel dossier hangt (ook niet via een verdeling). */
@@ -354,8 +377,15 @@ export function useDossierMutations(year: number) {
           e.line_item_id ||
           (legacy?.lineItemId && liById.has(legacy.lineItemId) ? legacy.lineItemId : null);
         const lineItemName = lineItemId ? liById.get(lineItemId)?.name || "" : "";
+        const aliases = matched.aliasesByEntryKey.get(ledgerKey) || [];
+        const legacyKeys = [legacy?.key, ...aliases.map((a) => a.key)].filter(
+          (k): k is string => !!k,
+        );
         const ownSplits = splitsFor(key);
-        const splits = ownSplits.length > 0 ? ownSplits : legacy ? splitsFor(legacy.key) : [];
+        const splits =
+          ownSplits.length > 0
+            ? ownSplits
+            : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
         rows.push({
           key,
           kind: "ledger",
@@ -373,9 +403,15 @@ export function useDossierMutations(year: number) {
           categoryName: lineItemName
             ? catNameById.get(liById.get(lineItemId)?.category_id) || ""
             : "",
-          dossier: (e.dossier || legacy?.dossier || "").trim(),
+          dossier: (
+            e.dossier ||
+            legacy?.dossier ||
+            aliases.find((a) => a.dossier)?.dossier ||
+            ""
+          ).trim(),
           source: "informer",
           splits,
+          legacyKeys,
         });
       }
 

@@ -39,6 +39,7 @@ import {
   groupByDossier,
   isUnassigned,
   dedupeEntries,
+  documentKeysOf,
   type DedupedEntry,
   type DossierMutation,
   type DossierEntry,
@@ -127,7 +128,7 @@ export default function DossierOverzichtTab({ year }: Props) {
   /** Aantal unieke facturen over alle onderliggende bronnen van een samengevoegde regel. */
   const docCountFor = (e: DedupedEntry) => {
     const seen = new Set<string>();
-    for (const k of [e.key, ...(e.sources || []).map((s) => s.key)]) {
+    for (const k of documentKeysOf(e)) {
       for (const p of docsByEntry.get(k) || []) seen.add(p);
     }
     return seen.size;
@@ -390,9 +391,7 @@ export default function DossierOverzichtTab({ year }: Props) {
           entries={activeRow.entries}
           documents={documents.filter(
             (doc) =>
-              activeRow.entries.some((e) =>
-                [e.key, ...(e.sources || []).map((s) => s.key)].includes(doc.entry_key),
-              ) ||
+              activeRow.entries.some((e) => documentKeysOf(e).includes(doc.entry_key)) ||
               doc.entry_key === `dossier:${activeRow.dossier}` ||
               (!!doc.dossier && doc.dossier === activeRow.dossier),
           )}

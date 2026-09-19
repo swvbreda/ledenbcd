@@ -26,11 +26,40 @@ export interface LegacyRecord {
   direction: "in" | "out";
   lineItemId: string | null;
   dossier: string | null;
+  /**
+   * Technische hulprij uit een oude synchronisatie (bedrag 0, omschrijving
+   * "Informer <id>", geen tegenpartij/dossier). Geen door de leden
+   * goedgekeurde toewijzing en dus onbruikbaar voor post- en dossiermatching.
+   */
+  placeholder?: boolean;
+}
+
+/** Herkent synthetische Informer-hulprijen uit oude synchronisaties. */
+export function isSyntheticPlaceholder(r: {
+  amount: number;
+  description: string | null;
+  counterparty: string | null;
+  invoice: string | null;
+  dossier: string | null;
+}): boolean {
+  const description = (r.description || "").trim();
+  return (
+    Math.abs(r.amount) < 0.005 &&
+    /^Informer\s+\d+$/i.test(description) &&
+    !r.invoice &&
+    !r.dossier &&
+    (!r.counterparty || r.counterparty.trim().toLowerCase() === "onbekend")
+  );
 }
 
 export interface LegacyMatchResult {
   /** Informer-regelsleutel ("purchase_invoice:123") → bestaande administratie. */
   byEntryKey: Map<string, LegacyRecord>;
+  /**
+   * Extra administratieve representaties van dezelfde betaling (bv. zowel een
+   * budget_expense als een Ponto-mutatie). Alleen voor documentkoppeling.
+   */
+  aliasesByEntryKey: Map<string, LegacyRecord[]>;
   /** Administratieve regels die (nog) niet aan een Informer-regel hangen. */
   unmatched: LegacyRecord[];
   matchedBy: Map<string, "external_id" | "invoice" | "payment">;
@@ -68,8 +97,13 @@ export function matchLegacyRecords(
   legacy: LegacyRecord[],
 ): LegacyMatchResult {
   const byEntryKey = new Map<string, LegacyRecord>();
+  const aliasesByEntryKey = new Map<string, LegacyRecord[]>();
   const matchedBy = new Map<string, "external_id" | "invoice" | "payment">();
   const usedLegacy = new Set<string>();
+
+  // Synthetische hulprijen doen niet mee aan matching: ze bevatten geen
+  // goedgekeurde toewijzing en zouden echte facturen verkeerd koppelen.
+  const usable = legacy.filter((r) => !r.placeholder && !isSyntheticPlaceholder(r));
 
   const take = (
     entry: LedgerEntry,
@@ -82,7 +116,7 @@ export function matchLegacyRecords(
     usedLegacy.add(record.key);
   };
 
-  const available = () => legacy.filter((r) => !usedLegacy.has(r.key));
+  const available = () => usable.filter((r) => !usedLegacy.has(r.key));
 
   // 1. Directe verwijzing.
   for (const entry of entries) {
@@ -113,9 +147,25 @@ export function matchLegacyRecords(
     if (hits.length === 1) take(entry, hits[0], "payment");
   }
 
+  // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
+  // die hangt als alias aan de Informer-regel (alleen voor documenten) en
+  // verschijnt dus niet apart als "nog niet gekoppeld".
+  for (const [key, record] of byEntryKey) {
+    const extra = available().filter(
+      (r) =>
+        r.key !== record.key &&
+        (isSamePayment(asRecordLike(record), asRecordLike(r)) ||
+          sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
+    );
+    for (const r of extra) usedLegacy.add(r.key);
+    if (extra.length > 0) aliasesByEntryKey.set(key, extra);
+  }
+
   return {
     byEntryKey,
+    aliasesByEntryKey,
     matchedBy,
-    unmatched: legacy.filter((r) => !usedLegacy.has(r.key)),
+    // Synthetische hulprijen zijn geen administratief aandachtspunt.
+    unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
 }

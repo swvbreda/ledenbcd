@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { matchLegacyRecords, type LegacyRecord } from "@/lib/ledgerLegacy";
+import { matchLegacyRecords, isSyntheticPlaceholder, type LegacyRecord } from "@/lib/ledgerLegacy";
+import { documentKeysOf } from "@/hooks/useDossiers";
 import { bucketExpenseEntries, expenseAmount, type LedgerEntry } from "@/lib/ledger";
 
 const entry = (over: Partial<LedgerEntry>): LedgerEntry =>
@@ -74,6 +75,49 @@ describe("matchLegacyRecords", () => {
     );
     expect(res.byEntryKey.size).toBe(0);
     expect(res.unmatched.map((r) => r.key)).toEqual(["ponto:x"]);
+  });
+
+  it("negeert synthetische Informer-hulprijen volledig", () => {
+    const placeholder = legacy({
+      key: "expense:placeholder",
+      externalId: "42",
+      invoice: null,
+      description: "Informer 42",
+      counterparty: "Onbekend",
+      amount: 0,
+      dossier: null,
+      lineItemId: "li-2",
+    });
+    expect(isSyntheticPlaceholder(placeholder)).toBe(true);
+
+    const e = entry({ informer_id: "42" });
+    const res = matchLegacyRecords([e], [placeholder, legacy({ key: "expense:echt" })]);
+    const hit = res.byEntryKey.get("purchase_invoice:42");
+    // De echte factuurtoewijzing wint; de hulprij geeft geen lineItemId door.
+    expect(hit?.key).toBe("expense:echt");
+    expect(hit?.lineItemId).toBe("li-1");
+    expect(res.unmatched.map((r) => r.key)).not.toContain("expense:placeholder");
+  });
+
+  it("houdt een gematchte legacy-sleutel beschikbaar als documentalias", () => {
+    const res = matchLegacyRecords([entry({})], [legacy({ key: "expense:a" })]);
+    expect(res.byEntryKey.get("purchase_invoice:1")?.key).toBe("expense:a");
+    expect(documentKeysOf({ key: "ledger:purchase_invoice:1", legacyKeys: ["expense:a"] })).toContain(
+      "expense:a",
+    );
+  });
+
+  it("voegt een dubbele oude representatie (boeking én bank) samen als alias", () => {
+    const res = matchLegacyRecords(
+      [entry({})],
+      [
+        legacy({ key: "expense:a" }),
+        legacy({ key: "ponto:b", kind: "ponto", invoice: null, lineItemId: null }),
+      ],
+    );
+    expect(res.byEntryKey.get("purchase_invoice:1")?.key).toBe("expense:a");
+    expect(res.aliasesByEntryKey.get("purchase_invoice:1")?.map((r) => r.key)).toEqual(["ponto:b"]);
+    expect(res.unmatched).toHaveLength(0);
   });
 });
 
