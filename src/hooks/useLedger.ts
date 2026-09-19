@@ -1,6 +1,13 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
+import {
+  shouldStartYearSync,
+  lastSuccessfulYearSync,
+  YEAR_SYNC_STALE_MS,
+  type SyncLogRow,
+} from "@/lib/ledgerSync";
 import {
   needsAttention,
   netResult,
@@ -269,4 +276,66 @@ export function useLedgerMutations(year: number) {
   });
 
   return { setOverride, linkPayment, syncYear };
+}
+
+/**
+ * Houdt het geselecteerde boekjaar automatisch actueel: bij openen, bij
+ * jaarwissel en periodiek. Altijd de volledige jaarsync, nooit een deelperiode.
+ */
+export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number }) {
+  const staleMs = options?.staleMs ?? YEAR_SYNC_STALE_MS;
+  const intervalMs = options?.intervalMs ?? 60_000;
+  const { data: syncState, isLoading: logLoading } = useInformerSyncState();
+  const { syncYear } = useLedgerMutations(year);
+  const [error, setError] = useState<string | null>(null);
+  const attemptRef = useRef<Record<number, number>>({});
+  const inFlightRef = useRef<Record<number, boolean>>({});
+  const mutateRef = useRef(syncYear.mutate);
+  mutateRef.current = syncYear.mutate;
+
+  const log = (syncState?.log ?? []) as SyncLogRow[];
+  const logRef = useRef(log);
+  logRef.current = log;
+  const loadedRef = useRef(!logLoading);
+  loadedRef.current = !logLoading;
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      if (cancelled) return;
+      const ok = shouldStartYearSync({
+        log: logRef.current,
+        year,
+        now: Date.now(),
+        lastAttemptAt: attemptRef.current[year] ?? null,
+        inFlight: inFlightRef.current[year] === true,
+        logLoaded: loadedRef.current,
+        staleMs,
+      });
+      if (!ok) return;
+      attemptRef.current[year] = Date.now();
+      inFlightRef.current[year] = true;
+      setError(null);
+      mutateRef.current(undefined, {
+        onError: (e: any) => setError(e?.message ?? "Synchroniseren mislukt"),
+        onSettled: () => {
+          inFlightRef.current[year] = false;
+        },
+      });
+    };
+    check();
+    const id = setInterval(check, intervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [year, staleMs, intervalMs, logLoading]);
+
+  const lastOk = lastSuccessfulYearSync(log, year);
+  return {
+    isSyncing: syncYear.isPending || inFlightRef.current[year] === true,
+    error,
+    lastSyncAt: lastOk?.run_at ?? null,
+    lastItemsProcessed: lastOk?.items_processed ?? null,
+  };
 }

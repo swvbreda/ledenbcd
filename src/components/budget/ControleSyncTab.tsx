@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import {
   useLedgerTotals,
-  useLedgerMutations,
   useUnlinkedBankTransactions,
   useUnmatchedSalesInvoices,
   useInformerSyncState,
@@ -18,6 +17,8 @@ import { toast } from "sonner";
 
 interface Props {
   year: number;
+  /** Status van de automatische volledige-jaarsync (geen handmatige knop meer). */
+  autoSync?: { isSyncing: boolean; error: string | null };
 }
 
 function StatCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
@@ -38,7 +39,7 @@ function parseAmount(reference: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export default function ControleSyncTab({ year }: Props) {
+export default function ControleSyncTab({ year, autoSync }: Props) {
   // Vastgelegde controletotalen uit de boekhouding (auditbaar opgeslagen).
   const { data: check } = useReconciliationCheck(year);
   const saveCheck = useSaveReconciliationCheck(year);
@@ -55,10 +56,11 @@ export default function ControleSyncTab({ year }: Props) {
   const { data: unlinked } = useUnlinkedBankTransactions(year);
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
-  const { syncYear } = useLedgerMutations(year);
 
   const lastSync = totals.readiness.lastSyncAt;
-  const lastLog = (syncState?.log ?? []).find((l: any) => String(l.action ?? "").includes("sync_year"));
+  const lastLog = (syncState?.log ?? []).find(
+    (l: any) => String(l.action ?? "").includes("sync_year") && Number(l?.details?.year) === year,
+  );
 
   const compare = (reference: string, actual: number) => {
     const parsed = parseAmount(reference);
@@ -72,30 +74,27 @@ export default function ControleSyncTab({ year }: Props) {
   return (
     <div className="space-y-4">
       <div className="border border-border rounded-lg bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div>
-            <h3 className="text-sm font-semibold">Synchronisatie boekjaar {year}</h3>
-            <p className="text-xs text-muted-foreground">
-              {lastSync
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold">Synchronisatie boekjaar {year}</h3>
+          <p className="text-xs text-muted-foreground">
+            {autoSync?.isSyncing
+              ? "Volledig boekjaar wordt automatisch bijgewerkt…"
+              : lastSync
                 ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })} (${new Date(lastSync).toLocaleString("nl-NL")})`
                 : "Nog geen volledige jaarsync uitgevoerd"}
-              {lastLog?.items_processed != null ? ` — ${lastLog.items_processed} regels verwerkt` : ""}
-              {lastLog?.error_message ? ` — laatste fout: ${lastLog.error_message}` : ""}
+            {!autoSync?.isSyncing && lastLog?.items_processed != null
+              ? ` — ${lastLog.items_processed} regels verwerkt`
+              : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">Het volledige boekjaar wordt automatisch bijgewerkt.</p>
+          {(autoSync?.error || lastLog?.error_message) && !autoSync?.isSyncing && (
+            <p className="text-xs text-brand-red inline-flex items-center gap-1 mt-1">
+              <AlertTriangle size={12} />
+              Bijwerken mislukte: {autoSync?.error ?? lastLog?.error_message}. De pagina blijft bruikbaar; we proberen het later opnieuw.
             </p>
-          </div>
-          <Button
-            onClick={() =>
-              syncYear.mutate(undefined, {
-                onSuccess: () => toast.success(`Boekjaar ${year} opnieuw opgehaald uit de boekhouding`),
-                onError: (e: any) => toast.error(e?.message ?? "Synchroniseren mislukt"),
-              })
-            }
-            disabled={syncYear.isPending}
-          >
-            <RefreshCw size={16} className={syncYear.isPending ? "animate-spin" : ""} />
-            Volledig jaar ophalen
-          </Button>
+          )}
         </div>
+
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
