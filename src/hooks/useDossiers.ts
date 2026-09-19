@@ -463,7 +463,10 @@ export function useDossierMutations(year: number) {
           source: r.kind === "ponto" ? "bank" : "administratie",
           splits,
           localOnly: hasAssignment,
-          unlinked: !hasAssignment,
+          // Bedragen komen uitsluitend uit Informer: een lokale mutatie blijft
+          // zichtbaar maar telt niet mee, anders ontstaat dubbeltelling met de
+          // factuur die Informer wél kent.
+          unlinked: true,
         });
       }
 
