@@ -2167,6 +2167,42 @@ export type Database = {
         }
         Relationships: []
       }
+      member_announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          link_url: string | null
+          published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          link_url?: string | null
+          published?: boolean
+          published_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          link_url?: string | null
+          published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_benefits: {
         Row: {
           active: boolean
