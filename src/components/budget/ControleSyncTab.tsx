@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import {
   useLedgerTotals,
-  useUnlinkedBankTransactions,
-  useUnmatchedSalesInvoices,
   useInformerSyncState,
   useReconciliationCheck,
   useSaveReconciliationCheck,
@@ -58,8 +56,6 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
     expenses: parseAmount(expensesInput),
     revenue: parseAmount(revenueInput),
   });
-  const { data: unlinked } = useUnlinkedBankTransactions(year);
-  const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
 
   // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
@@ -94,6 +90,9 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
               : ""}
           </p>
           <p className="text-xs text-muted-foreground">Het volledige boekjaar wordt automatisch bijgewerkt.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Details van de boekhouding beheer je in Informer. Hier bewaken we de actualiteit van begroting en dossiers.
+          </p>
           {(autoSync?.error || lastLog?.error_message) && !autoSync?.isSyncing && (
             <p className="text-xs text-brand-red inline-flex items-center gap-1 mt-1">
               <AlertTriangle size={12} />
@@ -215,68 +214,6 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
       </div>
 
 
-      <div className="border border-border rounded-lg bg-card p-4">
-        <h3 className="text-sm font-semibold mb-2">
-          Aandachtspunten in de boekhouding ({totals.attention.length})
-        </h3>
-        <p className="text-xs text-muted-foreground mb-2">
-          Concepten, nog te verwerken documenten, geannuleerde en €0-facturen. Deze tellen niet mee in de bedragen.
-        </p>
-        {totals.attention.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Geen openstaande aandachtspunten.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <tbody>
-              {totals.attention.slice(0, 50).map((e) => (
-                <tr key={`${e.doc_type}-${e.informer_id}`} className="border-b border-border/40 last:border-0">
-                  <td className="py-1.5">{e.entry_date ?? "—"}</td>
-                  <td className="py-1.5">{e.relation_name ?? e.description ?? e.invoice_number ?? "—"}</td>
-                  <td className="py-1.5 text-muted-foreground">{e.status_raw || e.status}</td>
-                  <td className="py-1.5 text-right tabular-nums"><CurrencyText value={e.amount_incl} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        <div className="border border-border rounded-lg bg-card p-4">
-          <h3 className="text-sm font-semibold mb-2">
-            Bankmutaties zonder factuurkoppeling ({unlinked?.length ?? 0})
-          </h3>
-          <p className="text-xs text-muted-foreground mb-2">Werklijst voor aflettering; tellen nergens financieel mee.</p>
-          <table className="w-full text-sm">
-            <tbody>
-              {(unlinked ?? []).slice(0, 25).map((t: any) => (
-                <tr key={t.id} className="border-b border-border/40 last:border-0">
-                  <td className="py-1.5">{String(t.executed_at ?? "").slice(0, 10)}</td>
-                  <td className="py-1.5">{t.counterparty_name ?? "—"}</td>
-                  <td className="py-1.5 text-right tabular-nums"><CurrencyText value={t.amount} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="border border-border rounded-lg bg-card p-4">
-          <h3 className="text-sm font-semibold mb-2">
-            Verkoopfacturen zonder lidkoppeling ({unmatched?.length ?? 0})
-          </h3>
-          <p className="text-xs text-muted-foreground mb-2">Uitzonderingen — deze worden niet stil overgeslagen.</p>
-          <table className="w-full text-sm">
-            <tbody>
-              {(unmatched ?? []).slice(0, 25).map((e) => (
-                <tr key={e.informer_id} className="border-b border-border/40 last:border-0">
-                  <td className="py-1.5">{e.entry_date ?? "—"}</td>
-                  <td className="py-1.5">{e.relation_name ?? e.invoice_number ?? "—"}</td>
-                  <td className="py-1.5 text-right tabular-nums"><CurrencyText value={e.amount_incl} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
