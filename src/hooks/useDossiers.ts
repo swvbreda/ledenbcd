@@ -33,6 +33,12 @@ export interface DossierMutation {
   /** Verdeling over meerdere dossiers; leeg = één dossier (veld `dossier`). */
   splits: { dossier: string; amount: number }[];
   /**
+   * Sleutels van gekoppelde bestaande boekingen/bankmutaties ("expense:uuid",
+   * "ponto:uuid"). Uitsluitend om bestaande documenten terug te vinden; de
+   * Informer-regel blijft de hoofdregel en de bron van het bedrag.
+   */
+  legacyKeys?: string[];
+  /**
    * Bestaande administratieve mutatie die (nog) niet aan een Informer-regel
    * gekoppeld kon worden. Blijft zichtbaar, maar telt niet mee in de
    * boekhoudkundige dossiertotalen.
