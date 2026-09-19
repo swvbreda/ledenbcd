@@ -97,7 +97,7 @@ export default function DossierOverzichtTab({ year }: Props) {
       const entries = dedupeEntries(groupEntries);
       // Alleen aan Informer gekoppelde regels tellen mee in de dossiertotalen;
       // bestaande administratieve mutaties blijven wel zichtbaar.
-      const counting = entries.filter((e) => !e.unlinked);
+      const counting = entries.filter((e) => !isUnlinkedOnly(e));
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
       rows.push({ dossier, entries, out, income, total: out - income });
