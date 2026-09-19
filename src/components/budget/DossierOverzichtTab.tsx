@@ -348,13 +348,16 @@ export default function DossierOverzichtTab({ year }: Props) {
                     <td className="px-3 py-1">
                       {e.counterparty || e.description}
                       {isUnlinkedOnly(e) && (
-                        <span className="ml-1 whitespace-nowrap rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-700">
-                          nog niet gekoppeld aan Informer
-                        </span>
-                      )}
-                      {!isUnlinkedOnly(e) && isLocalOnly(e) && (
-                        <span className="ml-1 whitespace-nowrap rounded bg-sky-100 px-1 text-[10px] font-medium text-sky-700">
-                          Lokale mutatie — niet in Informer
+                        <span
+                          className={`ml-1 whitespace-nowrap rounded px-1 text-[10px] font-medium ${
+                            isLocalOnly(e)
+                              ? "bg-sky-100 text-sky-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {isLocalOnly(e)
+                            ? "Lokale mutatie — niet in Informer"
+                            : "nog niet gekoppeld aan Informer"}
                         </span>
                       )}
                     </td>
