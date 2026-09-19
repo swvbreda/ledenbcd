@@ -221,3 +221,66 @@ export function matchLegacyRecords(
     unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * Toewijzing van begrotingspost en dossier op basis van de bewaarde administratie
+ * ------------------------------------------------------------------------- */
+
+export interface LegacyAssignment {
+  lineItemId: string | null;
+  dossier: string | null;
+  /** "legacy" = directe koppeling, "counterparty" = eenduidige historie. */
+  via: "legacy" | "counterparty";
+}
+
+/**
+ * Eenduidige tegenpartijgeschiedenis: alleen wanneer ALLE bruikbare historische
+ * uitgaande records van dezelfde genormaliseerde tegenpartij naar exact dezelfde
+ * niet-lege begrotingspost wijzen. Bij conflicten wordt niets toegewezen.
+ */
+export function counterpartyLineItemMap(legacy: LegacyRecord[]): Map<string, string> {
+  const byName = new Map<string, Set<string>>();
+  for (const r of legacy) {
+    if (r.placeholder || isSyntheticPlaceholder(r)) continue;
+    if (r.direction !== "out") continue;
+    const name = normalizeCounterparty(r.counterparty);
+    if (!name) continue;
+    const set = byName.get(name) ?? new Set<string>();
+    set.add(r.lineItemId || "");
+    byName.set(name, set);
+  }
+  const result = new Map<string, string>();
+  for (const [name, set] of byName) {
+    if (set.size !== 1) continue; // conflict of gemengd leeg/gevuld
+    const only = [...set][0];
+    if (only) result.set(name, only);
+  }
+  return result;
+}
+
+/**
+ * Bouwt per Informer-regel de administratieve toewijzing. Bedragen, facturen en
+ * status komen altijd uit Informer; hier gaat het uitsluitend om begrotingspost
+ * en dossier. Prioriteit: expliciete override (entry.line_item_id/dossier) >
+ * directe legacy-koppeling > eenduidige tegenpartijhistorie.
+ */
+export function buildLegacyAssignments(
+  entries: LedgerEntry[],
+  legacy: LegacyRecord[],
+  match: LegacyMatchResult,
+): Map<string, LegacyAssignment> {
+  const counterparties = counterpartyLineItemMap(legacy);
+  const out = new Map<string, LegacyAssignment>();
+  for (const entry of entries) {
+    const key = ledgerKeyOf(entry);
+    const record = match.byEntryKey.get(key);
+    if (record && (record.lineItemId || record.dossier)) {
+      out.set(key, { lineItemId: record.lineItemId, dossier: record.dossier, via: "legacy" });
+      continue;
+    }
+    if (entry.doc_type === "sales_invoice") continue;
+    const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
+    if (fallback) out.set(key, { lineItemId: fallback, dossier: null, via: "counterparty" });
+  }
+  return out;
+}
