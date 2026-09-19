@@ -2,7 +2,7 @@
 // die als toewijzingsbron dient naast de canonieke Informer-regels.
 
 import { supabase } from "@/integrations/supabase/client";
-import type { LegacyRecord } from "@/lib/ledgerLegacy";
+import { isSyntheticPlaceholder, type LegacyRecord } from "@/lib/ledgerLegacy";
 
 const client = supabase as any;
 
