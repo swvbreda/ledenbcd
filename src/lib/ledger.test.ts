@@ -8,6 +8,8 @@ import {
   splitsBalance,
   totalExpenses,
   totalRevenue,
+  revenueBreakdown,
+  isContributionRevenue,
   totalsByDossier,
   type LedgerEntry,
   type LedgerSplit,
@@ -178,7 +180,7 @@ describe("idempotentie en blijvende lokale toevoegingen", () => {
 });
 
 describe("revenueBreakdown (Controle & sync 2026)", () => {
-  const sales = (over: Partial<LedgerEntry>): LedgerEntry => makeEntry({
+  const sales = (over: Partial<LedgerEntry>): LedgerEntry => entry({
     doc_type: "sales_invoice",
     status: "paid",
     amount_incl: 0,
