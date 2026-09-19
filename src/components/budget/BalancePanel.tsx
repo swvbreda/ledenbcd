@@ -194,7 +194,12 @@ export default function BalancePanel({
       {/* Resultaat */}
       <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
         <div className="px-3 py-2 bg-muted/50">
-          <h3 className="text-sm font-semibold">Resultaat</h3>
+          <h3 className="text-sm font-semibold">Resultaat — volgens Informer API (boekhouding)</h3>
+          <p className="text-[11px] text-muted-foreground">
+            Alleen facturen uit de boekhouding. Openstaand: verkoop{" "}
+            <CurrencyText value={financialResult?.openSales ?? 0} /> · inkoop{" "}
+            <CurrencyText value={financialResult?.openPurchase ?? 0} />.
+          </p>
         </div>
         <table className="w-full min-w-[34rem] text-sm">
            <colgroup>
