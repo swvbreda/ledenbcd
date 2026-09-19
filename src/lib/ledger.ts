@@ -104,6 +104,42 @@ export function openPurchaseTotal(entries: LedgerEntry[]): number {
   return expenseEntries(entries).reduce((sum, e) => sum + (Number(e.open_amount) || 0), 0);
 }
 
+/**
+ * Een verkoopfactuur is contributie als de grootboekrekening uit Informer
+ * "Contribut" bevat (bijv. "4940 Contributies"). Alle overige verkoopfacturen
+ * zijn overige inkomsten. Lokale contributieadministratie speelt hierin geen
+ * rol, dus placeholderrijen kunnen niet dubbel meetellen.
+ */
+export function isContributionRevenue(entry: LedgerEntry): boolean {
+  return /contribut/i.test(String(entry.ledger_account ?? ""));
+}
+
+export interface RevenueGroup {
+  count: number;
+  total: number;
+  open: number;
+  entries: LedgerEntry[];
+}
+
+export interface RevenueBreakdown {
+  contribution: RevenueGroup;
+  other: RevenueGroup;
+}
+
+/** Splitst de meetellende verkoopfacturen in contributies en overige inkomsten. */
+export function revenueBreakdown(entries: LedgerEntry[]): RevenueBreakdown {
+  const empty = (): RevenueGroup => ({ count: 0, total: 0, open: 0, entries: [] });
+  const result: RevenueBreakdown = { contribution: empty(), other: empty() };
+  for (const entry of revenueEntries(entries)) {
+    const group = isContributionRevenue(entry) ? result.contribution : result.other;
+    group.count += 1;
+    group.total += Number(entry.amount_incl) || 0;
+    group.open += Number(entry.open_amount) || 0;
+    group.entries.push(entry);
+  }
+  return result;
+}
+
 /** Totalen per dossier; splits gaan voor de regel zelf en tellen exact eenmaal. */
 export function totalsByDossier(
   entries: LedgerEntry[],
