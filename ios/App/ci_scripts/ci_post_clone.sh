@@ -13,6 +13,6 @@ fi
 node -v
 npm -v
 
-npm ci
+npm install --no-audit --no-fund
 npm run build
 npx cap sync ios
