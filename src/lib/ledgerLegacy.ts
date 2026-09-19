@@ -65,6 +65,38 @@ export interface LegacyMatchResult {
   matchedBy: Map<string, "external_id" | "invoice" | "payment">;
 }
 
+/** Genormaliseerde tegenpartijsleutel voor de conservatieve postfallback. */
+export function normalizeCounterparty(value: string | null | undefined): string {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\b(b\.?\s?v\.?|n\.?\s?v\.?|v\.?o\.?f\.?|vof|holding|group|nederland)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Meerdere oude representaties van dezelfde factuur (bv. een handmatige boeking
+ * én een pdf-import) mogen samen één koppeling vormen, mits ze niet
+ * tegenstrijdig zijn: alle ingevulde begrotingsposten gelijk en alle ingevulde
+ * dossiers gelijk.
+ */
+export function groupIsConsistent(records: LegacyRecord[]): boolean {
+  const posts = new Set(records.map((r) => r.lineItemId).filter((v): v is string => !!v));
+  const dossiers = new Set(
+    records.map((r) => (r.dossier || "").trim()).filter((v) => v.length > 0),
+  );
+  return posts.size <= 1 && dossiers.size <= 1;
+}
+
+/** Kiest de meest informatieve representatie als primaire koppeling. */
+function pickPrimary(records: LegacyRecord[]): LegacyRecord {
+  const score = (r: LegacyRecord) =>
+    (r.lineItemId ? 4 : 0) + (r.dossier ? 2 : 0) + (r.kind === "expense" ? 1 : 0);
+  return [...records].sort((a, b) => score(b) - score(a) || a.key.localeCompare(b.key))[0];
+}
+
+
 export function ledgerKeyOf(entry: Pick<LedgerEntry, "doc_type" | "informer_id">): string {
   return `${entry.doc_type}:${entry.informer_id}`;
 }
