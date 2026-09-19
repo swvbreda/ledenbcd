@@ -152,252 +152,55 @@ export function useBudgetCategories(year: number) {
         .order("sort_order");
       if (liError) throw liError;
 
-      const lineItemIds = (lineItems || []).map((li: any) => li.id);
-      let expenses: any[] = [];
-      if (lineItemIds.length > 0) {
-        const { data: exp, error: expError } = await supabase
-          .from("budget_expenses")
-          .select("*")
-          .in("line_item_id", lineItemIds);
+      // Werkelijke bedragen komen uitsluitend uit de boekhouding (canonieke
+      // regels in ledger_entries_v). Bankmutaties (Ponto) en de oude
+      // PDF-/handmatige boekingen tellen niet meer mee: zij kunnen hooguit als
+      // betaling aan een boekhoudregel gekoppeld zijn.
+      const client = supabase as any;
+      const { data: ledgerRows, error: ledgerErr } = await client
+        .from("ledger_entries_v")
+        .select("*")
+        .eq("year", year)
+        .limit(5000);
+      if (ledgerErr) throw ledgerErr;
 
-        if (expError) throw expError;
-        expenses = exp || [];
-      }
-
-      // Inkomende/uitgaande banktransacties die handmatig aan een begrotingspost
-      // zijn gekoppeld tellen óók mee in het budget. Inkomend = refund/storting
-      // → wordt straks afgetrokken van het bestede bedrag.
-      let bankAsExpenses: any[] = [];
-      if (lineItemIds.length > 0) {
-        const client = supabase as any;
-        // Neem ook gekoppelde boekingen uit de administratieve bankimport mee.
-        // Niet iedere historische boeking staat in Ponto (zoals nabetalingen
-        // uit een vorig contributiejaar). De ontdubbeling hieronder geeft
-        // voorrang aan Ponto wanneer dezelfde betaling in beide bronnen staat.
-        const { data: importedRows, error: importedErr } = await client
-          .from("bank_transactions")
-          .select("id, transaction_date, direction, counterparty, description, invoice_reference, amount, line_item_id, dossier, created_at")
-          .in("line_item_id", lineItemIds)
-          .eq("year", year);
-        if (importedErr) throw importedErr;
-        const importedAsExpenses = (importedRows || [])
-          .filter((b: any) => !isExcludedDossier(b.dossier))
-          .map((b: any) => ({
-            id: `bank:${b.id}`,
-            line_item_id: b.line_item_id,
-            description: b.description,
-            amount: Math.abs(Number(b.amount) || 0),
-            expense_date: b.transaction_date,
-            creditor_name: b.counterparty,
-            invoice_reference: b.invoice_reference,
-            dossier: b.dossier,
-            source: "bank",
-            pdf_file_path: null,
-            paid: true,
-            paid_date: b.transaction_date,
-            created_at: b.created_at,
-            direction: b.direction === "in" ? "in" : "out",
-            _fromBank: true,
-          }));
-        bankAsExpenses = bankAsExpenses.concat(importedAsExpenses);
-
-        // Live bankboekingen (Ponto): koppel via budget_line_item_id
-        const yearStart = `${year}-01-01`;
-        const yearEnd = `${year + 1}-01-01`;
-        const { data: pontoRows, error: pontoErr } = await client
-          .from("ponto_transactions")
-          .select("id, executed_at, amount, counterparty_name, description, remittance_info, budget_line_item_id, dossier, created_at")
-          .in("budget_line_item_id", lineItemIds)
-          .gte("executed_at", yearStart)
-          .lt("executed_at", yearEnd);
-        if (pontoErr) throw pontoErr;
-        const pontoAsExpenses = (pontoRows || []).filter((p: any) => !isExcludedDossier(p.dossier)).map((p: any) => {
-          const raw = Number(p.amount) || 0;
-          const invoiceReference = extractInvoiceReference(p.description, p.remittance_info);
-          return {
-            id: `ponto:${p.id}`,
-            line_item_id: p.budget_line_item_id,
-            description: p.description || p.remittance_info,
-            amount: Math.abs(raw),
-            expense_date: p.executed_at,
-            creditor_name: p.counterparty_name,
-            invoice_reference: invoiceReference,
-            dossier: p.dossier,
-            source: "bank",
-            pdf_file_path: null,
-            paid: true,
-            paid_date: p.executed_at,
-            created_at: p.created_at,
-            direction: raw >= 0 ? "in" : "out",
-            _fromBank: true,
-          };
-        });
-        bankAsExpenses = bankAsExpenses.concat(pontoAsExpenses);
-      }
-
-      // Dedupliceer bankregels over ALLE begrotingsposten heen: ABN-import
-      // (bank_transactions) en Ponto (ponto_transactions) kunnen dezelfde
-      // betaling bevatten, soms met een dagverschil en andere opmaak, en soms
-      // op twee verschillende posten gekoppeld. We matchen primair op
-      // factuurnummer + bedrag, anders op datum(±4) + bedrag + tegenpartij.
-      // Voorkeur: Ponto (live bankkoppeling).
-      {
-        const isPonto = (e: any) => String(e.id).startsWith("ponto:");
-        // Twee regels uit dezelfde bron zijn altijd twee echte betalingen
-        // (bijv. een maandelijks abonnement dat twee keer in dezelfde week
-        // afschrijft). Alleen Ponto tegenover de oude bankimport kan dubbel zijn.
-        const sameSource = (a: any, b: any) => isPonto(a) === isPonto(b);
-        // Sorteer zodat Ponto-regels eerst worden gezien en behouden blijven.
-        const sorted = [...bankAsExpenses].sort((a, b) => (isPonto(b) ? 1 : 0) - (isPonto(a) ? 1 : 0));
-        const kept: any[] = [];
-        const invSeen: { key: string; entry: any }[] = [];
-        const dateSeen: { key: string; day: number; entry: any }[] = [];
-        for (const e of sorted) {
-          const amtKey = Math.round((Number(e.amount) || 0) * 100);
-          const invKey = normalizeInvoiceKey(extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference);
-          const directionKey = e.direction || "out";
-          if (invKey) {
-            const key = `${directionKey}|${amtKey}|${invKey}`;
-            const prev = invSeen.find((s) => s.key === key && !sameSource(s.entry, e));
-            if (prev) {
-              prev.entry._mergedDuplicate = true;
-              continue;
-            }
-            invSeen.push({ key, entry: e });
-            kept.push(e);
-            continue;
-          }
-          const cpKey = normalizePartyKey(e.creditor_name || e.description);
-          const baseKey = `${directionKey}|${amtKey}|${cpKey}`;
-          const day = dayNumber(e.expense_date);
-          const dup = dateSeen.find(
-            (d) => d.key === baseKey && Math.abs(d.day - day) <= 4 && !sameSource(d.entry, e),
-          );
-          if (dup) {
-            dup.entry._mergedDuplicate = true;
-            continue;
-          }
-          dateSeen.push({ key: baseKey, day, entry: e });
-          kept.push(e);
-        }
-        bankAsExpenses = kept;
-      }
-
-
-      // Dedupliceer handmatige/Informer-boekingen tegen bankregels (over alle
-      // posten heen): bestaat er een bankbetaling die vrijwel zeker dezelfde
-      // betaling is (gelijk bedrag + factuurnummer, of gelijk bedrag +
-      // tegenpartij binnen 10 dagen), dan valt de handmatige versie weg zodat
-      // we niet dubbel tellen — ook niet als beide op een andere post staan.
-      {
-        const toLedger = (e: any) => ({
-          date: e.expense_date,
-          amount: Number(e.amount) || 0,
-          counterparty: e.creditor_name || e.description,
-          description: e.description,
-          invoice: extractInvoiceReference(e.invoice_reference, e.description) || e.invoice_reference,
-          direction: e.direction || "out",
-        });
-        const bankLike = bankAsExpenses.map((b: any) => ({ entry: b, ledger: toLedger(b) }));
-        expenses = expenses.filter((e: any) => {
-          const cand = toLedger(e);
-          const hit = bankLike.find((b) => isSamePayment(b.ledger, cand));
-          if (hit) {
-            hit.entry._mergedDuplicate = true;
-            return false;
-          }
-          return true;
-        });
-
-        // Ten slotte handmatige boekingen onderling: dezelfde betaling die twee
-        // keer is ingeboekt (bijv. op twee posten) telt nog maar één keer mee.
-        // Verschillende factuurnummers = twee echte facturen: die blijven staan,
-        // ook als bedrag, leverancier en datum toevallig gelijk zijn.
-        const keptManual: any[] = [];
-        for (const e of expenses) {
-          const cand = toLedger(e);
-          const candKeys = invoiceKeysOf(cand);
-          const dup = keptManual.find((k) => {
-            const kLedger = toLedger(k);
-            const kKeys = invoiceKeysOf(kLedger);
-            if (candKeys.length && kKeys.length && !sharesInvoiceNumber(kLedger, cand)) return false;
-            return isSamePayment(kLedger, cand, { dayWindow: 3 });
-          });
-          if (dup) {
-            dup._mergedDuplicate = true;
-            continue;
-          }
-          keptManual.push(e);
-        }
-        expenses = keptManual;
-
-      }
-
-
-
-      // Voor de post "Contributies" (Inkomsten) zijn geregistreerde betalingen
-      // leidend: de bankbijschrijvingen en verrekeningen komen hierin samen.
-      const contribCategory = (categories || []).find(
-        (c: any) => String(c.name).toLowerCase() === "inkomsten"
+      const entries = (ledgerRows || []).filter(
+        (e: any) => e.counts_in_totals && !isExcludedDossier(e.dossier),
       );
-      const contribLineItem = contribCategory
-        ? (lineItems || []).find(
-            (li: any) =>
-              li.category_id === contribCategory.id &&
-              String(li.name).toLowerCase().startsWith("contribut"),
-          )
-        : null;
-      if (contribLineItem) {
-        const { data: paidContribs, error: pcErr } = await (supabase as any)
-          .from("contribution_payments")
-          .select("id, member_id, amount, paid_at, updated_at")
-          .eq("year", year)
-          .eq("status", "paid");
-        if (pcErr) throw pcErr;
-        const contribAsExpenses = (paidContribs || []).map((c: any) => ({
-          id: `contrib:${c.id}`,
-          line_item_id: contribLineItem.id,
-          description: `Contributie lid #${c.member_id}`,
-          amount: Number(c.amount) || 0,
-          expense_date: c.paid_at || c.updated_at,
-          creditor_name: null,
-          invoice_reference: null,
-          dossier: null,
-          source: "contribution",
-          pdf_file_path: null,
-          paid: true,
-          paid_date: c.paid_at,
-          created_at: c.updated_at,
-          direction: "in" as const,
-          _fromBank: true,
-        }));
-        // Vervang eventuele ponto-koppelingen op deze post: contributies zijn
-        // hier de bron van waarheid — we willen niet dubbel tellen.
-        bankAsExpenses = bankAsExpenses.filter(
-          (e) => e.line_item_id !== contribLineItem.id,
-        );
-        bankAsExpenses = bankAsExpenses.concat(contribAsExpenses);
-      }
 
-      // Bank is leidend: per begrotingspost gebruiken we de gekoppelde
-      // banktransacties als die er zijn. Alleen wanneer er geen enkele bankregel
-      // aan een post hangt, vallen we terug op handmatige / PDF-boekingen.
-      // Zo voorkomen we dat dezelfde betaling dubbel meetelt (handmatig + bank).
-      const bankByLineItem: Record<string, any[]> = {};
-      for (const e of bankAsExpenses) {
-        if (!bankByLineItem[e.line_item_id]) bankByLineItem[e.line_item_id] = [];
-        bankByLineItem[e.line_item_id].push(e);
-      }
-      const manualByLineItem: Record<string, any[]> = {};
-      for (const e of expenses) {
-        if (!manualByLineItem[e.line_item_id]) manualByLineItem[e.line_item_id] = [];
-        manualByLineItem[e.line_item_id].push(e);
-      }
+      // Koppeling boekhoudregel → begrotingspost: eerst de lokale keuze
+      // (ledger_entry_overrides.line_item_id), anders de kostenrubriek van
+      // Informer op naam. Zonder eenduidige koppeling blijft de regel buiten
+      // de posten; die staan in Controle & sync als ontbrekende koppeling.
+      const normalize = (v: string) =>
+        v.toLowerCase().replace(/^\d+\s*/, "").replace(/[^a-z0-9]+/g, " ").trim();
+      const byName = new Map<string, string>();
+      for (const li of lineItems || []) byName.set(normalize(String(li.name)), li.id);
+
       const expensesByLineItem: Record<string, any[]> = {};
-      for (const liId of new Set([...Object.keys(bankByLineItem), ...Object.keys(manualByLineItem)])) {
-        expensesByLineItem[liId] = bankByLineItem[liId]?.length
-          ? bankByLineItem[liId]
-          : (manualByLineItem[liId] || []);
+      for (const e of entries) {
+        const lineItemId =
+          e.line_item_id ||
+          (e.ledger_account ? byName.get(normalize(String(e.ledger_account))) : undefined);
+        if (!lineItemId) continue;
+        const row = {
+          id: `ledger:${e.doc_type}:${e.informer_id}`,
+          line_item_id: lineItemId,
+          description: e.description || e.relation_name || e.invoice_number,
+          amount: Math.abs(Number(e.amount_incl) || 0),
+          expense_date: e.entry_date,
+          creditor_name: e.relation_name,
+          invoice_reference: e.invoice_number,
+          dossier: e.dossier,
+          source: "informer",
+          pdf_file_path: null,
+          paid: e.status === "paid",
+          paid_date: e.payment_date ?? null,
+          created_at: e.entry_date,
+          direction: e.doc_type === "sales_invoice" ? "in" : "out",
+          _fromLedger: true,
+        };
+        (expensesByLineItem[lineItemId] ||= []).push(row);
       }
 
       const lineItemsByCategory: Record<string, any[]> = {};
@@ -477,28 +280,37 @@ export function useBankStatement(year: number) {
   });
 }
 
+/**
+ * Werkelijk resultaat. Uitsluitend gebaseerd op de canonieke Informer-regels
+ * (ledger_entries_v); bankmutaties tellen hier nooit zelfstandig in mee.
+ */
 export function useFinancialResult(year: number) {
   return useQuery({
-    queryKey: ["financial-result", year],
+    queryKey: ["financial-result", "ledger", year],
     queryFn: async () => {
-      const yearStart = `${year}-01-01`;
-      const yearEnd = `${year + 1}-01-01`;
-      const { data, error } = await supabase
-        .from("ponto_transactions")
-        .select("amount, dossier")
-        .gte("executed_at", yearStart)
-        .lt("executed_at", yearEnd)
-        .limit(5000);
+      const client = supabase as any;
+      const [{ data, error }, { data: debtorMap }] = await Promise.all([
+        client.from("ledger_entries_v").select("*").eq("year", year).limit(5000),
+        client.from("informer_debtor_map").select("informer_debtor_id"),
+      ]);
       if (error) throw error;
+      const memberRelations = new Set<string>(
+        (debtorMap ?? []).map((r: any) => String(r.informer_debtor_id)),
+      );
 
-      return (data || []).reduce<FinancialResultData>((totals, transaction) => {
-        if (isExcludedDossier(transaction.dossier)) return totals;
-        const amount = Number(transaction.amount) || 0;
-        if (amount < 0) {
-          totals.totalExpenses += Math.abs(amount);
-        } else if (/^contributie\b/i.test(transaction.dossier || "")) {
+      const rows = (data ?? []) as any[];
+      return rows.reduce<FinancialResultData>((totals, entry: any) => {
+        if (!entry.counts_in_totals) return totals;
+        if (isExcludedDossier(entry.dossier)) return totals;
+        const amount = Number(entry.amount_incl) || 0;
+        if (entry.doc_type === "purchase_invoice") {
+          totals.totalExpenses += amount;
+        } else if (
+          memberRelations.has(String(entry.relation_id)) ||
+          /contributie/i.test(String(entry.description ?? entry.dossier ?? ""))
+        ) {
           totals.contributionIncome += amount;
-        } else if (amount > 0) {
+        } else {
           totals.otherIncome += amount;
         }
         return totals;
