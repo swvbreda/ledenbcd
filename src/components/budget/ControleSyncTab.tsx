@@ -18,7 +18,12 @@ import { toast } from "sonner";
 interface Props {
   year: number;
   /** Status van de automatische volledige-jaarsync (geen handmatige knop meer). */
-  autoSync?: { isSyncing: boolean; error: string | null };
+  autoSync?: {
+    isSyncing: boolean;
+    error: string | null;
+    lastSyncAt: string | null;
+    lastItemsProcessed: number | null;
+  };
 }
 
 function StatCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
@@ -57,7 +62,9 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
 
-  const lastSync = totals.readiness.lastSyncAt;
+  // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
+  const lastSync = autoSync?.lastSyncAt ?? null;
+  const itemsProcessed = autoSync?.lastItemsProcessed ?? null;
   const lastLog = (syncState?.log ?? []).find(
     (l: any) => String(l.action ?? "").includes("sync_year") && Number(l?.details?.year) === year,
   );
@@ -82,8 +89,8 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
               : lastSync
                 ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })} (${new Date(lastSync).toLocaleString("nl-NL")})`
                 : "Nog geen volledige jaarsync uitgevoerd"}
-            {!autoSync?.isSyncing && lastLog?.items_processed != null
-              ? ` — ${lastLog.items_processed} regels verwerkt`
+            {!autoSync?.isSyncing && itemsProcessed != null
+              ? ` — ${itemsProcessed} regels verwerkt`
               : ""}
           </p>
           <p className="text-xs text-muted-foreground">Het volledige boekjaar wordt automatisch bijgewerkt.</p>

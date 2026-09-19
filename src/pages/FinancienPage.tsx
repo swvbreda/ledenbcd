@@ -541,7 +541,15 @@ export default function FinancienPage() {
 
 
           <TabsContent value="controle">
-            <ControleSyncTab year={year} autoSync={{ isSyncing: autoSync.isSyncing, error: autoSync.error }} />
+            <ControleSyncTab
+              year={year}
+              autoSync={{
+                isSyncing: autoSync.isSyncing,
+                error: autoSync.error,
+                lastSyncAt: autoSync.lastSyncAt,
+                lastItemsProcessed: autoSync.lastItemsProcessed,
+              }}
+            />
           </TabsContent>
         </Tabs>
         </>
