@@ -239,44 +239,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    const rows = shops.map((s) => {
-      const gem = gemeenteById.get(s.gemeente_id);
-      const gemeente = canonPlace(gem?.naam ?? (typeof s.gemeente === "string" ? s.gemeente : null));
-      return {
-        bron_id: s.id,
-        naam: s.naam_coffeeshop ?? s.naam ?? "Onbekend",
-        straat: s.straat ?? s.adres ?? null,
-        huisnummer: s.huisnummer ?? null,
-        huisnummer_toevoeging: s.huisnummer_toevoeging ?? null,
-        postcode: s.postcode ?? null,
-        plaats: canonPlace(s.plaats) ?? gemeente,
-        gemeente,
-        provincie: gem?.provincie ?? null,
-        latitude: s.latitude ?? null,
-        longitude: s.longitude ?? null,
-        exploitant: s.exploitant ?? null,
-        vergunninghouder: s.vergunninghouder ?? null,
-        vergunningnummer: s.vergunningnummer ?? null,
-        status: s.status ?? "actief",
-        vergunningverlening: s.vergunningverlening ?? null,
-        einddatum: s.einddatum ?? null,
-        website: s.website ?? null,
-        telefoon: s.telefoon ?? null,
-        // Verrijking uit de Beleidsmonitor: alleen echte http(s)-logo's overnemen,
-        // data-URI's zijn vaak plaatjes van andere diensten en worden genegeerd.
-        logo_url: typeof s.logo_url === "string" && /^https?:\/\//i.test(s.logo_url) ? s.logo_url : null,
-        socials: s.socials && typeof s.socials === "object" ? s.socials : null,
-        oprichtingsdatum: s.oprichtingsdatum ?? null,
-        oprichtingsdatum_bron: s.oprichtingsdatum_bron ?? null,
-        shopcode: s.shopcode ?? s.shop_code ?? null,
-        bag_pand_id: s.bag_pand_id ?? null,
-        bag_verblijfsobject_id: s.bag_verblijfsobject_id ?? null,
-        verrijkt_op: s.verrijkt_op ?? null,
-        raw: s,
-        vervallen: false,
-        synced_at: new Date().toISOString(),
-      };
-    });
+    const schemaVersion = detectSchemaVersion(sourcePayload);
+    const bronIsV2 = isV2(schemaVersion);
+    const now = new Date().toISOString();
+
+    const rows = shops.map((s) =>
+      mapShopRow(s, { gemeente: gemeenteById.get(s.gemeente_id) ?? null, schemaVersion, now }),
+    );
+
+    // Droogloop: alleen rapporteren, niets schrijven.
+    if (dryRun) {
+      const { data: linkRows } = await db
+        .from("coffeeshop_member_links")
+        .select("register_id,status")
+        .neq("status", "afgewezen");
+      const { data: registerRows } = await db.from("coffeeshop_register").select("id,bron_id");
+      const bronByLocalId = new Map((registerRows ?? []).map((r: any) => [r.id, r.bron_id]));
+      const gekoppeldeBronIds = (linkRows ?? [])
+        .map((l: any) => bronByLocalId.get(l.register_id))
+        .filter(Boolean) as string[];
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          dryRun: true,
+          geschreven: false,
+          rapport: buildDryRunReport(sourcePayload, rows, gekoppeldeBronIds),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     for (let i = 0; i < rows.length; i += 200) {
       const chunk = rows.slice(i, i + 200);
