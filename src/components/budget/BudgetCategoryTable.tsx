@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface Props {
+  /**
+   * De door de leden goedgekeurde rubriek. De opgeslagen naam is altijd de
+   * zichtbare titel; er wordt nooit tekst aan toegevoegd of overschreven.
+   */
   category: BudgetCategory;
-  /** Vervangt de zichtbare categorienaam (bv. om de bron te verduidelijken). */
-  titleOverride?: string;
-  /** Korte toelichting onder de titel. */
-  subtitle?: React.ReactNode;
   onAddLineItem: (categoryId: string, name: string, amount: number) => void;
   onUpdateLineItem: (id: string, name?: string, amount?: number) => void;
   onDeleteLineItem: (id: string) => void;
