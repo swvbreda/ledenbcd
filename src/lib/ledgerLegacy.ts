@@ -172,12 +172,23 @@ const daysBetween = (a: string | null, b: string | null) => {
  * plausibele datums en precies één mogelijke combinatie. Documenthints krijgen
  * voorrang: combinaties die de bekende factuur bevatten gaan voor.
  */
+export interface CombinationOptions {
+  /** Te dekken bedrag; standaard het volledige bedrag van de mutatie. */
+  targetAmount?: number;
+  /** Minimaal aantal facturen in de combinatie (standaard 2). */
+  minPicks?: number;
+  /** Ook zonder documenthint alleen facturen rond de betaaldatum meenemen. */
+  nearDateOnly?: boolean;
+}
+
 export function findCombination(
   record: LegacyRecord,
   candidates: LedgerEntry[],
   hintKeys: string[] = [],
+  options: CombinationOptions = {},
 ): LedgerEntry[] | null {
-  const target = cents(record.amount);
+  const target = cents(options.targetAmount ?? record.amount);
+  const minPicks = options.minPicks ?? 2;
   if (target === 0) return null;
   const isHinted = (e: LedgerEntry) =>
     hintKeys.length > 0 &&
