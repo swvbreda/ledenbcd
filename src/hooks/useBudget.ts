@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
+import { expenseEntries, revenueEntries, type LedgerEntry } from "@/lib/ledger";
+
+/** Synthetische categorie voor meetellende inkoopfacturen zonder begrotingspost. */
+export const UNASSIGNED_CATEGORY_ID = "__unassigned_ledger__";
+export const UNASSIGNED_LINE_ITEM_ID = "__unassigned_ledger_line__";
 
 
 export interface BudgetCategory {
