@@ -198,7 +198,7 @@ export function findCombination(
   // bij, aangevuld met facturen rond de betaaldatum. Dat voorkomt willekeurige
   // combinaties bij leveranciers met veel facturen.
   const scope =
-    hinted.length > 0
+    hinted.length > 0 || options.nearDateOnly
       ? candidates.filter(
           (e) => isHinted(e) || Math.abs(daysBetween(record.date, e.entry_date)) <= 21,
         )
@@ -212,7 +212,7 @@ export function findCombination(
   const solutions: LedgerEntry[][] = [];
   const search = (index: number, picked: LedgerEntry[], sum: number) => {
     if (solutions.length > 8) return;
-    if (picked.length >= 2 && sum === target) {
+    if (picked.length >= minPicks && sum === target) {
       solutions.push([...picked]);
       return;
     }
