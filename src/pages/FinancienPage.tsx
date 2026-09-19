@@ -387,18 +387,21 @@ export default function FinancienPage() {
                       // moet z'n eigen banktransacties tonen, niet de ontvangen
                       // ledencontributies.
                       if (li.name.trim().toLowerCase() === "contributies") {
-                        const invs = contributionInvoices ?? [];
-                        const paidTotal = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-                        const openTotal = invs.reduce((s, i) => {
-                          const paid = paidByMember.get(i.member_id) ?? 0;
-                          return s + Math.max(0, (Number(i.amount) || 0) - paid);
-                        }, 0);
+                        // Zelfde canonieke bron als de breakdown-dialog:
+                        // Informer-snapshot wint, lokale placeholders tellen niet mee.
+                        const totals = sumCanonicalInvoiceRows(
+                          buildCanonicalInvoiceRows({
+                            contributions: contributions ?? [],
+                            invoices: contributionInvoices ?? [],
+                            paymentsByMember: paymentsByMemberInfo,
+                          }),
+                        );
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
                           remaining: () => setContributieBreakdown("unpaid"),
-                          spentValue: paidTotal,
-                          remainingValue: openTotal,
+                          spentValue: totals.paid,
+                          remainingValue: totals.open,
                           remainingLabel: "openstaand",
                         };
                       }
