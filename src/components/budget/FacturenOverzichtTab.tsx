@@ -140,7 +140,7 @@ export default function FacturenOverzichtTab({ year }: Props) {
         `"${r.member.plaats}"`,
         label,
         `"${nums}"`,
-        r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? "",
+        r.resolved.invoiceDate ?? "",
         r.amount,
         r.paidAmount,
         r.openAmount,
