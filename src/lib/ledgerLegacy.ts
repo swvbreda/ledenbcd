@@ -207,7 +207,10 @@ export function matchLegacyRecords(
           sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
     );
     for (const r of extra) usedLegacy.add(r.key);
-    if (extra.length > 0) aliasesByEntryKey.set(key, extra);
+    if (extra.length > 0) {
+      aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
+    }
+
   }
 
   return {
