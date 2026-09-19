@@ -344,6 +344,11 @@ export default function DossierOverzichtTab({ year }: Props) {
                           nog niet gekoppeld aan Informer
                         </span>
                       )}
+                      {!isUnlinkedOnly(e) && isLocalOnly(e) && (
+                        <span className="ml-1 whitespace-nowrap rounded bg-sky-100 px-1 text-[10px] font-medium text-sky-700">
+                          Lokale mutatie — niet in Informer
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-1 tabular-nums">
                       {e.invoice || "—"}
