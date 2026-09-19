@@ -177,7 +177,9 @@ export default function SecurePdfViewer({ url, data }: Props) {
     });
     ro.observe(c);
     return () => { cancelled = true; ro.disconnect(); cancelAnimationFrame(raf); };
-  }, [pdf, pageNum, showThumbs, showOutline]);
+  // `loading` is included because the PDF can finish loading before the viewer
+  // container is mounted. Recompute once the loading screen is replaced.
+  }, [pdf, pageNum, showThumbs, showOutline, loading]);
 
   useEffect(() => {
     let blockTimeout: number | undefined;
