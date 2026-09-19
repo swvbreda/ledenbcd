@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import {
   useLedgerTotals,
-  useLedgerMutations,
   useUnlinkedBankTransactions,
   useUnmatchedSalesInvoices,
   useInformerSyncState,
