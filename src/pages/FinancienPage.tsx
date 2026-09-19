@@ -19,6 +19,7 @@ import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import ControleSyncTab from "@/components/budget/ControleSyncTab";
+import { useAutoYearSync } from "@/hooks/useLedger";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
 import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 
@@ -39,6 +40,9 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
 export default function FinancienPage() {
   const [year, setYear] = useState(currentYear);
+  // Het volledige geselecteerde boekjaar wordt automatisch bijgewerkt,
+  // ongeacht welk financieel tabblad actief is.
+  const autoSync = useAutoYearSync(year);
   const { user, isAdmin } = useAuth();
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
@@ -537,7 +541,7 @@ export default function FinancienPage() {
 
 
           <TabsContent value="controle">
-            <ControleSyncTab year={year} />
+            <ControleSyncTab year={year} autoSync={{ isSyncing: autoSync.isSyncing, error: autoSync.error }} />
           </TabsContent>
         </Tabs>
         </>
