@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
-import { matchLegacyRecords } from "@/lib/ledgerLegacy";
+import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords } from "@/lib/legacyRecordsSource";
 import {
   expenseEntries,
