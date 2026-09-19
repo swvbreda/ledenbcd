@@ -39,6 +39,30 @@ export function useLedger(year: number) {
   });
 }
 
+/**
+ * Laatste geslaagde jaarsync: de nieuwste geslaagde sync_year-log, en anders
+ * de hoogste last_synced_at van de regels zelf. informer_sync_state heeft
+ * bewust geen kolom voor factuursync.
+ */
+export function deriveLastYearSync(
+  log: any[],
+  entries: { last_synced_at?: string | null }[],
+): string | null {
+  const fromLog = (log ?? [])
+    .filter((l) => l?.success && String(l?.action ?? "").includes("sync_year"))
+    .map((l) => l.run_at as string)
+    .filter(Boolean)
+    .sort()
+    .pop();
+  if (fromLog) return fromLog;
+  const fromEntries = (entries ?? [])
+    .map((e) => e.last_synced_at)
+    .filter((v): v is string => !!v)
+    .sort()
+    .pop();
+  return fromEntries ?? null;
+}
+
 export function useLedgerTotals(
   year: number,
   reference?: { expenses?: number | null; revenue?: number | null },
@@ -46,20 +70,68 @@ export function useLedgerTotals(
   const { data, isLoading, error } = useLedger(year);
   const { data: syncInfo } = useInformerSyncState();
   const entries = data ?? [];
-  const lastSyncAt = (syncInfo?.state as any)?.last_invoice_sync_at ?? null;
+  const lastSyncAt = deriveLastYearSync((syncInfo?.log as any[]) ?? [], entries as any[]);
   return {
     isLoading,
     error,
     entries,
     counted: countableEntries(entries),
+    expenses: expenseEntries(entries),
+    revenues: revenueEntries(entries),
     attention: entries.filter(needsAttention),
     totalExpenses: totalExpenses(entries),
     totalRevenue: totalRevenue(entries),
     netResult: netResult(entries),
     openSales: openSalesTotal(entries),
+    openPurchase: openPurchaseTotal(entries),
     byDossier: totalsByDossier(entries),
     readiness: ledgerReadiness(entries, lastSyncAt, reference),
   };
+}
+
+/** Vastgelegde controle van de boekhoudtotalen per jaar (auditbaar). */
+export function useReconciliationCheck(year: number) {
+  return useQuery({
+    queryKey: ["reconciliation-check", year],
+    queryFn: async () => {
+      const { data, error } = await client
+        .from("informer_reconciliation_checks")
+        .select("*")
+        .eq("year", year)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+}
+
+export function useSaveReconciliationCheck(year: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      reference_expenses: number | null;
+      reference_revenue: number | null;
+      measured_expenses: number;
+      measured_revenue: number;
+      reconciled: boolean;
+      note?: string | null;
+    }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await client
+        .from("informer_reconciliation_checks")
+        .upsert(
+          {
+            year,
+            ...input,
+            checked_at: new Date().toISOString(),
+            checked_by: auth?.user?.id ?? null,
+          },
+          { onConflict: "year" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["reconciliation-check", year] }),
+  });
 }
 
 /** Bankmutaties die (nog) niet aan een Informer-factuur hangen. Tellen nergens mee. */
