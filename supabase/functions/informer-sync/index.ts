@@ -914,6 +914,17 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
 
     let fetchedById = 0;
     const ledgerNames = await fetchLedgerNames(api_calls);
+    // Relatienamen: de factuur-endpoints geven alleen relation_id terug.
+    const relationNames = new Map<string, string>();
+    try {
+      for (const rel of await fetchInformerRelations(api_calls)) {
+        const id = (rel as any)?.id;
+        const name = (rel as any)?.company_name ?? (rel as any)?.name;
+        if (id != null && name) relationNames.set(String(id), String(name));
+      }
+    } catch (_e) {
+      // Relaties niet beschikbaar: relation_name blijft leeg.
+    }
     for (const src of sources) {
       let invoices: any[] = [];
       try {
@@ -984,7 +995,10 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
           status,
           status_raw: String(inv?.status?.status ?? inv?.status ?? ""),
           relation_id: invoiceRelationId(inv) || null,
-          relation_name: String(inv?.relation?.company_name ?? inv?.relation_name ?? inv?.company_name ?? "") || null,
+          relation_name:
+            String(inv?.relation?.company_name ?? inv?.relation_name ?? inv?.company_name ?? "") ||
+            relationNames.get(String(invoiceRelationId(inv) ?? "")) ||
+            null,
           relation_number: String(inv?.relation?.relation_number ?? inv?.relation_number ?? "") || null,
           invoice_number: String(inv?.invoice_number ?? inv?.number ?? "") || null,
           ledger_account: ledgerAccountOf(inv, ledgerNames),
