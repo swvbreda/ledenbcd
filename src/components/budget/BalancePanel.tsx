@@ -194,7 +194,7 @@ export default function BalancePanel({
       {/* Resultaat */}
       <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
         <div className="px-3 py-2 bg-muted/50">
-          <h3 className="text-sm font-semibold">Resultaat — volgens Informer API (boekhouding)</h3>
+          <h3 className="text-sm font-semibold">Resultaat</h3>
           <p className="text-[11px] text-muted-foreground">
             Alleen facturen uit de boekhouding. Openstaand: verkoop{" "}
             <CurrencyText value={financialResult?.openSales ?? 0} /> · inkoop{" "}
@@ -230,55 +230,6 @@ export default function BalancePanel({
         </table>
       </div>
 
-      {/* Contributie volgens ledenregister — operationele controle, geen boekhouding */}
-      {contributionStats && (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="px-3 py-2 bg-muted/50">
-            <h3 className="text-sm font-semibold">Volgens ledenregister (operationele controle)</h3>
-            <p className="text-[11px] text-muted-foreground">
-              Verwachte contributie op basis van het ledenbestand. Telt niet mee
-              in het boekhoudkundig resultaat hierboven.
-            </p>
-          </div>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr className="border-b border-border/50">
-                <td className="px-3 py-1.5 font-semibold">Aantal leden</td>
-                <td className="text-right px-3 py-1.5 tabular-nums font-semibold">{contributionStats.totalMembers}</td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="px-3 py-1.5">Contributie</td>
-                <td className="text-right px-3 py-1.5 whitespace-nowrap"><CurrencyCell value={contributionStats.contributionAmount} /></td>
-              </tr>
-              <tr>
-                <td className="px-3 py-1.5 font-semibold">Inkomsten {year}</td>
-                <td className="text-right px-3 py-1.5 font-semibold whitespace-nowrap"><CurrencyCell value={contributionStats.totalMembers * contributionStats.contributionAmount} /></td>
-              </tr>
-              {onUpdateYearSettings && (
-                <tr>
-                  <td colSpan={2} className="px-3 py-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{contributionStats.totalMembers} leden ×</span>
-                      <Input
-                        type="number"
-                        placeholder="Bedrag"
-                        defaultValue={contributionStats.contributionAmount || ""}
-                        onBlur={(e) => {
-                          const val = Number(e.target.value);
-                          if (val > 0 && val !== contributionStats.contributionAmount) {
-                            onUpdateYearSettings({ budgeted_member_count: contributionStats.totalMembers, contribution_amount: val });
-                          }
-                        }}
-                        className="h-6 w-20 text-xs"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {/* Notities */}
       {onAddNote && (
