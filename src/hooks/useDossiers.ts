@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber, invoiceKeysOf } from "@/lib/ledgerDedupe";
 import { matchLegacyRecords } from "@/lib/ledgerLegacy";
-import { fetchLegacyRecords } from "@/lib/legacyRecordsSource";
+import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
 import type { LedgerEntry } from "@/lib/ledger";
 
 
@@ -44,6 +44,12 @@ export interface DossierMutation {
    * boekhoudkundige dossiertotalen.
    */
   unlinked?: boolean;
+  /**
+   * Lokale mutatie met een eigen begrotingspost/dossier die niet aan een
+   * Informer-factuur te koppelen is. Telt exact één keer mee in het
+   * managementoverzicht, maar nooit in Controle & sync.
+   */
+  localOnly?: boolean;
 }
 
 export interface ExpenseDocument {
