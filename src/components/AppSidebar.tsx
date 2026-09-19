@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { LayoutDashboard, Users, MapPin, BarChart3, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -104,19 +104,6 @@ export function AppSidebar() {
                           >
                             <Building2 className="mr-2 h-4 w-4" />
                             {!collapsed && <span>Coffeeshopregister</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem key="Kerngegevens">
-                        <SidebarMenuButton asChild>
-                          <NavLink
-                            to="/kerngegevens"
-                            className="hover:bg-sidebar-accent/50"
-                            activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
-                            onClick={closeMobile}
-                          >
-                            <BarChart3 className="mr-2 h-4 w-4" />
-                            {!collapsed && <span>Kerngegevens</span>}
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

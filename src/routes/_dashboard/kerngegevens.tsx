@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import KerngegevensPage from "@/pages/KerngegevensPage";
+import { Navigate } from "@/lib/router-compat";
 
 export const Route = createFileRoute("/_dashboard/kerngegevens")({
-  component: KerngegevensPage,
+  component: () => <Navigate to="/" replace />,
 });

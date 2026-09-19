@@ -3,10 +3,6 @@ import { useNavigate } from "@/lib/router-compat";
 import {
   Banknote,
   CreditCard,
-  Building2,
-  Link2,
-  MapPin,
-  Users,
 } from "lucide-react";
 import {
   PieChart,
@@ -15,10 +11,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useKerngegevens } from "@/hooks/useKerngegevens";
-import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 import { bankColor, pspColor } from "@/lib/brandColors";
@@ -32,27 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Member } from "@/data/types";
-
-const Kaart = ({
-  icon: Icon,
-  label,
-  waarde,
-  hint,
-}: {
-  icon: typeof Users;
-  label: string;
-  waarde: string;
-  hint?: string;
-}) => (
-  <div className="rounded-xl border border-border bg-card p-4">
-    <div className="flex items-center gap-2 text-muted-foreground">
-      <Icon className="h-4 w-4 text-brand-red" />
-      <span className="text-xs uppercase tracking-wide">{label}</span>
-    </div>
-    <div className="mt-2 text-3xl font-display tabular-nums">{waarde}</div>
-    {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
-  </div>
-);
 
 const Sectie = ({
   titel,
@@ -170,13 +143,11 @@ const DonutDiagram = ({
 );
 
 
-const KerngegevensPage = () => {
+export const KerngegevensDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isBoard } = useAuth();
   const allowed = isAdmin || isBoard;
   const k = useKerngegevens(allowed);
-  // Zelfde bron als de dashboardkaart, zodat beide pagina's hetzelfde getal tonen.
-  const { totaalRepresented } = useRegisterStats();
   const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
   const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
@@ -205,68 +176,12 @@ const KerngegevensPage = () => {
     [psp],
   );
 
-  const peildatum = useMemo(
-    () => new Date().toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }),
-    [],
-  );
+  if (!allowed) return null;
 
-  if (!allowed) {
-    return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Deze pagina is alleen beschikbaar voor het bestuur.</p>
-      </div>
-    );
-  }
-
-  const maxGemeente = k.gemeenteRijen[0]?.vestigingen ?? 1;
   const maxDec = Math.max(1, ...k.decenniaRijen.map((d) => d.aantal));
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      <BcdHeroBanner
-        title="Kerngegevens"
-        subtitle="Inzichten uit het ledenbestand, de bankgegevens en de registerkoppelingen"
-      />
-
-      <p className="text-xs text-muted-foreground">Peildatum {peildatum}</p>
-
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-        <Kaart
-          icon={Users}
-          label="Aangesloten coffeeshops"
-          waarde={String(totaalRepresented)}
-          hint="vertegenwoordigd via het register"
-        />
-        <Kaart icon={Users} label="Leden" waarde={String(k.totaalLeden)} />
-        <Kaart
-          icon={Building2}
-          label="Vestigingen (ledenbestand)"
-          waarde={String(k.totaalVestigingen)}
-          hint="alleen leden, zoals ingevuld"
-        />
-        <Kaart
-          icon={Building2}
-          label="Gem. per lid"
-          waarde={k.gemiddeld.toFixed(1)}
-          hint={`${k.multiShop} leden met meerdere shops`}
-        />
-        <Kaart
-          icon={MapPin}
-          label="Gemeenten"
-          waarde={String(k.gemeenteRijen.length)}
-          hint={`${k.ledenMeerdereGemeenten} leden in meerdere gemeenten`}
-        />
-        <Kaart
-          icon={Link2}
-          label="Gekoppeld aan register"
-          waarde={String(k.gekoppeldeVestigingen)}
-          hint="bevestigde koppelingen"
-        />
-      </div>
-
-      {/* Bank- en betaalverwerkerdiagrammen staan onderaan de pagina */}
-
-
+    <div className="space-y-4">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Sectie titel="Omvang ondernemers">
           <div className="space-y-2">
@@ -308,57 +223,24 @@ const KerngegevensPage = () => {
         </Sectie>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Sectie titel="Spreiding over gemeenten">
-          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-            {k.gemeenteRijen.map((g) => (
-              <div key={g.gemeente} className="px-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span>{g.gemeente}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {g.vestigingen} · {g.leden} {g.leden === 1 ? "lid" : "leden"}
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <Balk pct={(g.vestigingen / maxGemeente) * 100} />
-                </div>
+      <Sectie titel="Oprichting vestigingen">
+        <div className="space-y-2">
+          {k.decenniaRijen.map((d) => (
+            <div key={d.label}>
+              <div className="flex items-center justify-between text-sm">
+                <span>{d.label}</span>
+                <span className="tabular-nums text-muted-foreground">{d.aantal}</span>
               </div>
-            ))}
-          </div>
-        </Sectie>
-
-        <div className="space-y-4">
-          <Sectie titel="Oprichting vestigingen">
-            <div className="space-y-2">
-              {k.decenniaRijen.map((d) => (
-                <div key={d.label}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{d.label}</span>
-                    <span className="tabular-nums text-muted-foreground">{d.aantal}</span>
-                  </div>
-                  <div className="mt-1.5">
-                    <Balk pct={(d.aantal / maxDec) * 100} />
-                  </div>
-                </div>
-              ))}
-              {k.decenniaRijen.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nog geen oprichtingsdata bekend.</p>
-              )}
+              <div className="mt-1.5">
+                <Balk pct={(d.aantal / maxDec) * 100} />
+              </div>
             </div>
-          </Sectie>
-
-          <Sectie titel="Lidmaatschapsduur">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {k.duurRijen.map((d) => (
-                <div key={d.label} className="rounded-lg border border-border p-2">
-                  <div className="text-xl font-display tabular-nums">{d.aantal}</div>
-                  <div className="text-xs text-muted-foreground">{d.label}</div>
-                </div>
-              ))}
-            </div>
-          </Sectie>
+          ))}
+          {k.decenniaRijen.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nog geen oprichtingsdata bekend.</p>
+          )}
         </div>
-      </div>
+      </Sectie>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Sectie titel="Bankiert bij">
@@ -443,4 +325,4 @@ const KerngegevensPage = () => {
   );
 };
 
-export default KerngegevensPage;
+export default KerngegevensDashboard;
