@@ -1,5 +1,12 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildDryRunReport,
+  detectSchemaVersion,
+  isV2,
+  mapShopRow,
+  shopCounts,
+} from "../_shared/registerMapping.ts";
 
 /**
  * Haalt het landelijke coffeeshopregister op uit het project "Coffeeshopbeleid"
@@ -95,6 +102,7 @@ async function fetchAllPublic(table: string, select: string): Promise<any[]> {
 type SecureExport = {
   shops: SourceShop[];
   gemeenten: Array<{ id: string; naam: string; provincie: string | null }>;
+  payload: any;
 };
 
 /** Beveiligd export-eindpunt van Coffeeshopbeleid. */
@@ -111,6 +119,7 @@ async function fetchSecureExport(secret: string): Promise<SecureExport | null> {
   return {
     shops: json.coffeeshops ?? json.shops ?? json.data ?? [],
     gemeenten: json.gemeenten ?? [],
+    payload: json,
   };
 }
 
@@ -153,10 +162,21 @@ Deno.serve(async (req) => {
   let uboSynced = 0;
   let linksProposed = 0;
 
+  // Droogloop: alleen lezen en rapporteren, niets wegschrijven.
+  const url = new URL(req.url);
+  let dryRun = ["1", "true", "ja"].includes((url.searchParams.get("dry_run") ?? "").toLowerCase());
+  if (!dryRun && req.method === "POST") {
+    try {
+      const body = await req.clone().json();
+      dryRun = body?.dryRun === true || body?.dry_run === true;
+    } catch { /* geen json-body */ }
+  }
+
   try {
     const secret = Deno.env.get("BCD_KOPPEL_SLEUTEL") ?? Deno.env.get("COFFEESHOPBELEID_API_SECRET");
     let shops: SourceShop[] | null = null;
     let secureGemeenten: SecureExport["gemeenten"] = [];
+    let sourcePayload: any = null;
     let linkedDossiers: any[] = [];
     let uboBron: "export" | "geen" = "geen";
 
@@ -164,6 +184,7 @@ Deno.serve(async (req) => {
       const secureExport = await fetchSecureExport(secret);
       shops = secureExport?.shops ?? null;
       secureGemeenten = secureExport?.gemeenten ?? [];
+      sourcePayload = secureExport?.payload ?? null;
       if (shops) uboBron = "export";
       try {
         linkedDossiers = await fetchLinkedDossiers(secret);
@@ -218,44 +239,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    const rows = shops.map((s) => {
-      const gem = gemeenteById.get(s.gemeente_id);
-      const gemeente = canonPlace(gem?.naam ?? (typeof s.gemeente === "string" ? s.gemeente : null));
-      return {
-        bron_id: s.id,
-        naam: s.naam_coffeeshop ?? s.naam ?? "Onbekend",
-        straat: s.straat ?? s.adres ?? null,
-        huisnummer: s.huisnummer ?? null,
-        huisnummer_toevoeging: s.huisnummer_toevoeging ?? null,
-        postcode: s.postcode ?? null,
-        plaats: canonPlace(s.plaats) ?? gemeente,
-        gemeente,
-        provincie: gem?.provincie ?? null,
-        latitude: s.latitude ?? null,
-        longitude: s.longitude ?? null,
-        exploitant: s.exploitant ?? null,
-        vergunninghouder: s.vergunninghouder ?? null,
-        vergunningnummer: s.vergunningnummer ?? null,
-        status: s.status ?? "actief",
-        vergunningverlening: s.vergunningverlening ?? null,
-        einddatum: s.einddatum ?? null,
-        website: s.website ?? null,
-        telefoon: s.telefoon ?? null,
-        // Verrijking uit de Beleidsmonitor: alleen echte http(s)-logo's overnemen,
-        // data-URI's zijn vaak plaatjes van andere diensten en worden genegeerd.
-        logo_url: typeof s.logo_url === "string" && /^https?:\/\//i.test(s.logo_url) ? s.logo_url : null,
-        socials: s.socials && typeof s.socials === "object" ? s.socials : null,
-        oprichtingsdatum: s.oprichtingsdatum ?? null,
-        oprichtingsdatum_bron: s.oprichtingsdatum_bron ?? null,
-        shopcode: s.shopcode ?? s.shop_code ?? null,
-        bag_pand_id: s.bag_pand_id ?? null,
-        bag_verblijfsobject_id: s.bag_verblijfsobject_id ?? null,
-        verrijkt_op: s.verrijkt_op ?? null,
-        raw: s,
-        vervallen: false,
-        synced_at: new Date().toISOString(),
-      };
-    });
+    const schemaVersion = detectSchemaVersion(sourcePayload);
+    const bronIsV2 = isV2(schemaVersion);
+    const now = new Date().toISOString();
+
+    const rows = shops.map((s) =>
+      mapShopRow(s, { gemeente: gemeenteById.get(s.gemeente_id) ?? null, schemaVersion, now }),
+    );
+
+    // Droogloop: alleen rapporteren, niets schrijven.
+    if (dryRun) {
+      const { data: linkRows } = await db
+        .from("coffeeshop_member_links")
+        .select("register_id,status")
+        .neq("status", "afgewezen");
+      const { data: registerRows } = await db.from("coffeeshop_register").select("id,bron_id");
+      const bronByLocalId = new Map((registerRows ?? []).map((r: any) => [r.id, r.bron_id]));
+      const gekoppeldeBronIds = (linkRows ?? [])
+        .map((l: any) => bronByLocalId.get(l.register_id))
+        .filter(Boolean) as string[];
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          dryRun: true,
+          geschreven: false,
+          rapport: buildDryRunReport(sourcePayload, rows, gekoppeldeBronIds),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     for (let i = 0; i < rows.length; i += 200) {
       const chunk = rows.slice(i, i + 200);
@@ -330,10 +343,16 @@ Deno.serve(async (req) => {
     }
 
     // ---- Automatische matching op leden ----
-    const { data: registerRows } = await db
+    // Alleen dossiers die volgens de bron meetellen mogen automatisch worden
+    // gekoppeld: geen ruis, gesloten zaken, aanvragen of nieuwe vestigingen.
+    // Bestaande (bevestigde) koppelingen blijven altijd ongemoeid.
+    const { data: registerRowsAll } = await db
       .from("coffeeshop_register")
-      .select("id,naam,plaats,gemeente,postcode,huisnummer,kvk_nummer,vergunninghouder,exploitant")
+      .select(
+        "id,naam,plaats,gemeente,postcode,huisnummer,kvk_nummer,vergunninghouder,exploitant,telt_mee,status,vervallen,raw",
+      )
       .eq("vervallen", false);
+    const registerRows = (registerRowsAll ?? []).filter((r: any) => shopCounts(r));
     const { data: memberRows } = await db
       .from("members_data")
       .select("id,data,member_type")
@@ -584,7 +603,7 @@ Deno.serve(async (req) => {
 
     await db.from("coffeeshop_register_sync_state").update({
       last_run_at: new Date().toISOString(),
-      last_status: uboBron === "export" ? "ok (incl. UBO)" : "ok (openbaar, zonder UBO)",
+      last_status: `${uboBron === "export" ? "ok (incl. UBO)" : "ok (openbaar, zonder UBO)"} — bron v${schemaVersion}`,
       shops_synced: shopsSynced,
       ubo_synced: uboSynced,
       links_proposed: linksProposed,
@@ -607,7 +626,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, shopsSynced, uboSynced, linksProposed, uboBron }),
+      JSON.stringify({
+        ok: true,
+        shopsSynced,
+        uboSynced,
+        linksProposed,
+        uboBron,
+        schemaVersion,
+        bronIsV2,
+        teltMeeShops: registerRows.length,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: any) {
