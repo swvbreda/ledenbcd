@@ -142,6 +142,18 @@ export default function SecurePdfViewer({ url, data }: Props) {
     return () => { cancelled = true; };
   }, [pdf, pageNum, scale, fitScale, canvasEl]);
 
+  // Mobiel blijft altijd op passend-op-scherm. Zo kan de PDF niet door zoomen
+  // of horizontaal onder de vaste app-layout gaan schuiven.
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const keepMobileFit = () => {
+      if (media.matches) setScale(1);
+    };
+    keepMobileFit();
+    media.addEventListener("change", keepMobileFit);
+    return () => media.removeEventListener("change", keepMobileFit);
+  }, []);
+
   // Compute fit-to-width scale based on container width and current page's intrinsic size.
   useEffect(() => {
     if (!pdf) return;
@@ -369,11 +381,11 @@ export default function SecurePdfViewer({ url, data }: Props) {
           <ChevronRight size={16} />
         </Button>
         <span className="w-2" />
-        <Button size="sm" variant="outline" onClick={() => setScale((s) => Math.max(0.5, s - 0.2))}>
+        <Button className="hidden sm:inline-flex" size="sm" variant="outline" onClick={() => setScale((s) => Math.max(0.5, s - 0.2))}>
           <ZoomOut size={16} />
         </Button>
-        <span className="text-xs tabular-nums w-10 text-center">{Math.round(scale * 100)}%</span>
-        <Button size="sm" variant="outline" onClick={() => setScale((s) => Math.min(3, s + 0.2))}>
+        <span className="hidden w-10 text-center text-xs tabular-nums sm:inline">{Math.round(scale * 100)}%</span>
+        <Button className="hidden sm:inline-flex" size="sm" variant="outline" onClick={() => setScale((s) => Math.min(3, s + 0.2))}>
           <ZoomIn size={16} />
         </Button>
       </div>
@@ -396,12 +408,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
         )}
         <div
           ref={containerRef}
-          className="relative mx-auto flex w-full min-w-0 max-w-4xl justify-center overflow-auto rounded-md border-2 border-primary/60 bg-muted/30"
-          style={{ maxHeight: "calc(100vh - 140px)" }}
+          className="relative mx-auto flex w-full min-w-0 max-w-4xl touch-pan-y justify-center overflow-x-hidden overflow-y-auto overscroll-x-none rounded-md border-2 border-primary/60 bg-muted/30"
+          style={{ maxHeight: "calc(100vh - 140px)", touchAction: "pan-y" }}
         >
-        <div className="relative inline-block max-w-full">
+        <div className="relative inline-block max-w-full overflow-hidden">
           <canvas
             ref={setCanvasEl}
+            className="block max-w-full"
             style={{
               filter: hidden || blurred ? "blur(28px)" : "none",
               transition: "none",
