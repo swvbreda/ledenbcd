@@ -248,7 +248,7 @@ export function matchLegacyRecords(
   const takeGroup = (
     entry: LedgerEntry,
     hits: LegacyRecord[],
-    how: "invoice" | "payment",
+    how: "invoice" | "document" | "payment",
   ) => {
     if (hits.length === 0) return;
     if (hits.length > 1 && !groupIsConsistent(hits)) return;
