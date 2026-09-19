@@ -19,6 +19,7 @@ import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import InformerSyncTab from "@/components/budget/InformerSyncTab";
+import ControleSyncTab from "@/components/budget/ControleSyncTab";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
 import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
 
@@ -328,8 +329,11 @@ export default function FinancienPage() {
             <TabsTrigger value="todo" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               To Do
             </TabsTrigger>
-            <TabsTrigger value="informer" className="col-span-2 min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1 sm:px-4 sm:py-1.5">
+            <TabsTrigger value="informer" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Informer
+            </TabsTrigger>
+            <TabsTrigger value="controle" className="col-span-2 min-w-0 whitespace-normal px-2 py-2 leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1 sm:px-4 sm:py-1.5">
+              Controle &amp; sync
             </TabsTrigger>
 
 
@@ -520,6 +524,10 @@ export default function FinancienPage() {
 
           <TabsContent value="informer">
             <InformerSyncTab />
+          </TabsContent>
+
+          <TabsContent value="controle">
+            <ControleSyncTab year={year} />
           </TabsContent>
         </Tabs>
         </>

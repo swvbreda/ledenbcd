@@ -1669,6 +1669,87 @@ export type Database = {
         }
         Relationships: []
       }
+      informer_ledger_entries: {
+        Row: {
+          amount_excl: number | null
+          amount_incl: number
+          created_at: string
+          currency: string | null
+          deleted_at: string | null
+          description: string | null
+          doc_type: string
+          due_date: string | null
+          entry_date: string | null
+          id: string
+          informer_id: string
+          invoice_number: string | null
+          last_synced_at: string
+          ledger_account: string | null
+          open_amount: number
+          paid_amount: number
+          raw: Json | null
+          relation_id: string | null
+          relation_name: string | null
+          relation_number: string | null
+          status: string
+          status_raw: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount_excl?: number | null
+          amount_incl?: number
+          created_at?: string
+          currency?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          doc_type: string
+          due_date?: string | null
+          entry_date?: string | null
+          id?: string
+          informer_id: string
+          invoice_number?: string | null
+          last_synced_at?: string
+          ledger_account?: string | null
+          open_amount?: number
+          paid_amount?: number
+          raw?: Json | null
+          relation_id?: string | null
+          relation_name?: string | null
+          relation_number?: string | null
+          status?: string
+          status_raw?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount_excl?: number | null
+          amount_incl?: number
+          created_at?: string
+          currency?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          doc_type?: string
+          due_date?: string | null
+          entry_date?: string | null
+          id?: string
+          informer_id?: string
+          invoice_number?: string | null
+          last_synced_at?: string
+          ledger_account?: string | null
+          open_amount?: number
+          paid_amount?: number
+          raw?: Json | null
+          relation_id?: string | null
+          relation_name?: string | null
+          relation_number?: string | null
+          status?: string
+          status_raw?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       informer_sync_log: {
         Row: {
           action: string
@@ -1862,6 +1943,97 @@ export type Database = {
           lidnummer?: number
         }
         Relationships: []
+      }
+      ledger_entry_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          dossier: string | null
+          excluded: boolean
+          id: string
+          informer_id: string
+          line_item_id: string | null
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          dossier?: string | null
+          excluded?: boolean
+          id?: string
+          informer_id: string
+          line_item_id?: string | null
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          dossier?: string | null
+          excluded?: boolean
+          id?: string
+          informer_id?: string
+          line_item_id?: string | null
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entry_overrides_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_payment_links: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          id: string
+          informer_id: string
+          matched_by: string
+          ponto_transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          id?: string
+          informer_id: string
+          matched_by?: string
+          ponto_transaction_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          id?: string
+          informer_id?: string
+          matched_by?: string
+          ponto_transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_payment_links_ponto_transaction_id_fkey"
+            columns: ["ponto_transaction_id"]
+            isOneToOne: true
+            referencedRelation: "ponto_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       location_duplicate_dismissals: {
         Row: {
@@ -3376,7 +3548,53 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ledger_entries_v: {
+        Row: {
+          amount_excl: number | null
+          amount_incl: number | null
+          counts_in_totals: boolean | null
+          deleted_at: string | null
+          description: string | null
+          doc_type: string | null
+          dossier: string | null
+          due_date: string | null
+          entry_date: string | null
+          excluded: boolean | null
+          id: string | null
+          informer_id: string | null
+          invoice_number: string | null
+          last_synced_at: string | null
+          ledger_account: string | null
+          line_item_id: string | null
+          note: string | null
+          open_amount: number | null
+          paid_amount: number | null
+          payment_date: string | null
+          ponto_transaction_id: string | null
+          relation_id: string | null
+          relation_name: string | null
+          relation_number: string | null
+          status: string | null
+          status_raw: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entry_overrides_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_payment_links_ponto_transaction_id_fkey"
+            columns: ["ponto_transaction_id"]
+            isOneToOne: true
+            referencedRelation: "ponto_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }

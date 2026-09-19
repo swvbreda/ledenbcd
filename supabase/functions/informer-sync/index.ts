@@ -834,6 +834,187 @@ async function pullInvoices(supabase: any): Promise<ActionResult> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Canonieke jaarsync: Informer is de enige bron van waarheid voor werkelijke
+// bedragen. Verkoop- en inkoopfacturen worden volledig (gepagineerd) opgehaald
+// voor het gekozen boekjaar en idempotent geupsert op (doc_type, informer_id).
+// ---------------------------------------------------------------------------
+function normalizeLedgerStatus(inv: any, amount: number): string {
+  const raw = invoiceStatus(inv);
+  if (/cancel|geannuleerd|vervallen|deleted/.test(raw)) return "cancelled";
+  if (/draft|concept/.test(raw)) return "draft";
+  if (/te verwerken|unprocessed|processing|new|nieuw/.test(raw)) return "unprocessed";
+  if (/paid|betaald|voldaan/.test(raw)) return "paid";
+  if (!amount) return "unprocessed";
+  return "open";
+}
+
+function ledgerAccountOf(inv: any): string | null {
+  const direct = inv?.ledger_account ?? inv?.ledger_code ?? inv?.ledger?.code ?? inv?.ledger?.name;
+  if (direct) return String(direct);
+  const lines = inv?.lines ?? inv?.invoice_lines ?? inv?.rows;
+  if (Array.isArray(lines)) {
+    for (const l of lines) {
+      const v = l?.ledger_account ?? l?.ledger_code ?? l?.ledger?.code ?? l?.ledger?.name ?? l?.category;
+      if (v) return String(v);
+    }
+  }
+  return null;
+}
+
+function entryDateOf(inv: any): string | null {
+  const d = inv?.invoice_date ?? inv?.date ?? inv?.booking_date ?? null;
+  const s = d ? String(d).slice(0, 10) : "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+async function syncYear(supabase: any, year: number): Promise<ActionResult> {
+  const action = "sync_year";
+  const api_calls: ApiCall[] = [];
+  try {
+    const sources: Array<{ doc_type: string; path: string; keys: string[] }> = [
+      { doc_type: "sales_invoice", path: "/invoices/sales", keys: ["sales", "invoices", "data"] },
+      { doc_type: "purchase_invoice", path: "/invoices/purchase", keys: ["purchase", "invoices", "data"] },
+    ];
+
+    let upserted = 0;
+    let skippedOtherYear = 0;
+    let removed = 0;
+    const perType: Record<string, number> = {};
+    const errors: string[] = [];
+
+    let fetchedById = 0;
+    for (const src of sources) {
+      let invoices: any[] = [];
+      try {
+        invoices = await fetchAllInformerPages(src.path, src.keys, api_calls);
+      } catch (e) {
+        errors.push(`${src.doc_type}: ${(e as Error).message}`);
+        continue;
+      }
+
+      // De lijst-endpoints van Informer geven alleen een beperkt, recent venster
+      // terug. Verkoopfacturen waarvan we het Informer-documentnummer al kennen
+      // halen we daarom per document op — nog steeds rechtstreeks uit Informer.
+      if (src.doc_type === "sales_invoice") {
+        const listIds = new Set(invoices.map((i: any) => String(i?.id ?? "")));
+        const { data: known } = await supabase
+          .from("member_contributions")
+          .select("external_invoice_id")
+          .eq("year", year)
+          .not("external_invoice_id", "is", null);
+        const { data: stored } = await supabase
+          .from("informer_ledger_entries")
+          .select("informer_id")
+          .eq("doc_type", "sales_invoice")
+          .eq("year", year);
+        const candidates = [
+          ...(known ?? []).map((r: any) => String(r.external_invoice_id ?? "").trim()),
+          ...(stored ?? []).map((r: any) => String(r.informer_id ?? "").trim()),
+        ];
+        const missing = Array.from(
+          new Set(candidates.filter((id: string) => /^\d+$/.test(id) && !listIds.has(id))),
+        );
+        for (const id of missing) {
+          try {
+            const detail = await fetchSalesInvoiceById(id, api_calls);
+            if (detail?.raw && typeof detail.raw === "object") {
+              invoices.push({ id, ...(detail.raw as Record<string, unknown>) });
+              fetchedById++;
+            }
+          } catch (_e) {
+            // Individuele factuur niet ophaalbaar: overslaan, blijft zichtbaar als ontbrekend.
+          }
+        }
+      }
+
+      const seen = new Set<string>();
+      const rows: any[] = [];
+      for (const inv of invoices) {
+        const informerId = String(inv?.id ?? inv?.invoice_id ?? "").trim();
+        if (!informerId) continue;
+        const entryDate = entryDateOf(inv);
+        const invYear = entryDate ? Number(entryDate.slice(0, 4)) : detectYear(inv);
+        if (invYear !== year) { skippedOtherYear++; continue; }
+        const amountIncl = invoiceAmount(inv);
+        const paid = invoicePaidAmount(inv);
+        const status = normalizeLedgerStatus(inv, amountIncl);
+        const open = status === "paid" ? 0 : Math.max(0, amountIncl - paid);
+        seen.add(informerId);
+        rows.push({
+          doc_type: src.doc_type,
+          informer_id: informerId,
+          year,
+          entry_date: entryDate,
+          due_date: inv?.due_date ? String(inv.due_date).slice(0, 10) : null,
+          amount_incl: amountIncl,
+          amount_excl: toAmount(inv?.totals?.excl_vat ?? inv?.total_price_excl_tax ?? null) || null,
+          paid_amount: paid,
+          open_amount: open,
+          status,
+          status_raw: String(inv?.status?.status ?? inv?.status ?? ""),
+          relation_id: invoiceRelationId(inv) || null,
+          relation_name: String(inv?.relation?.company_name ?? inv?.relation_name ?? inv?.company_name ?? "") || null,
+          relation_number: String(inv?.relation?.relation_number ?? inv?.relation_number ?? "") || null,
+          invoice_number: String(inv?.invoice_number ?? inv?.number ?? "") || null,
+          ledger_account: ledgerAccountOf(inv),
+          description: String(inv?.description ?? inv?.reference ?? "") || null,
+          currency: String(inv?.currency ?? "EUR"),
+          raw: inv,
+          last_synced_at: new Date().toISOString(),
+          deleted_at: null,
+        });
+      }
+
+      for (let i = 0; i < rows.length; i += 200) {
+        const chunk = rows.slice(i, i + 200);
+        const { error } = await supabase
+          .from("informer_ledger_entries")
+          .upsert(chunk, { onConflict: "doc_type,informer_id" });
+        if (error) { errors.push(`${src.doc_type} upsert: ${error.message}`); break; }
+        upserted += chunk.length;
+      }
+      perType[src.doc_type] = rows.length;
+
+      // Wat niet meer in Informer voorkomt, markeren als verwijderd (nooit hard weg).
+      const { data: existing } = await supabase
+        .from("informer_ledger_entries")
+        .select("informer_id")
+        .eq("doc_type", src.doc_type)
+        .eq("year", year)
+        .is("deleted_at", null);
+      const gone = (existing ?? [])
+        .map((r: any) => String(r.informer_id))
+        .filter((id: string) => !seen.has(id));
+      if (gone.length > 0 && errors.length === 0) {
+        const { error } = await supabase
+          .from("informer_ledger_entries")
+          .update({ deleted_at: new Date().toISOString() })
+          .eq("doc_type", src.doc_type)
+          .eq("year", year)
+          .in("informer_id", gone);
+        if (!error) removed += gone.length;
+      }
+    }
+
+    await supabase.from("informer_sync_state").update({
+      last_invoice_sync_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+
+    return {
+      action,
+      success: errors.length === 0,
+      items_processed: upserted,
+      error_message: errors.join(" | ") || undefined,
+      details: { year, per_type: perType, removed, skipped_other_year: skippedOtherYear, fetched_by_id: fetchedById },
+      api_calls,
+    };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message, api_calls };
+  }
+}
+
 async function pullCreditors(supabase: any): Promise<ActionResult> {
   const action = "pull_creditors";
   const api_calls: ApiCall[] = [];
@@ -1891,6 +2072,11 @@ Deno.serve(async (req) => {
 
   const results: ActionResult[] = [];
   try {
+    if (action === "sync_year" || action === "all") {
+      const yearParam = Number(url.searchParams.get("year"));
+      const syncYearValue = Number.isInteger(yearParam) && yearParam > 2000 ? yearParam : new Date().getFullYear();
+      results.push(await syncYear(supabase, syncYearValue));
+    }
     if (action === "pull_debtors"  || action === "all") results.push(await pullDebtors(supabase));
     if (action === "pull_invoices" || action === "all") results.push(await pullInvoices(supabase));
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));

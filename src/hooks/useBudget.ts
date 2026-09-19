@@ -477,28 +477,37 @@ export function useBankStatement(year: number) {
   });
 }
 
+/**
+ * Werkelijk resultaat. Uitsluitend gebaseerd op de canonieke Informer-regels
+ * (ledger_entries_v); bankmutaties tellen hier nooit zelfstandig in mee.
+ */
 export function useFinancialResult(year: number) {
   return useQuery({
-    queryKey: ["financial-result", year],
+    queryKey: ["financial-result", "ledger", year],
     queryFn: async () => {
-      const yearStart = `${year}-01-01`;
-      const yearEnd = `${year + 1}-01-01`;
-      const { data, error } = await supabase
-        .from("ponto_transactions")
-        .select("amount, dossier")
-        .gte("executed_at", yearStart)
-        .lt("executed_at", yearEnd)
-        .limit(5000);
+      const client = supabase as any;
+      const [{ data, error }, { data: debtorMap }] = await Promise.all([
+        client.from("ledger_entries_v").select("*").eq("year", year).limit(5000),
+        client.from("informer_debtor_map").select("informer_debtor_id"),
+      ]);
       if (error) throw error;
+      const memberRelations = new Set<string>(
+        (debtorMap ?? []).map((r: any) => String(r.informer_debtor_id)),
+      );
 
-      return (data || []).reduce<FinancialResultData>((totals, transaction) => {
-        if (isExcludedDossier(transaction.dossier)) return totals;
-        const amount = Number(transaction.amount) || 0;
-        if (amount < 0) {
-          totals.totalExpenses += Math.abs(amount);
-        } else if (/^contributie\b/i.test(transaction.dossier || "")) {
+      const rows = (data ?? []) as any[];
+      return rows.reduce<FinancialResultData>((totals, entry: any) => {
+        if (!entry.counts_in_totals) return totals;
+        if (isExcludedDossier(entry.dossier)) return totals;
+        const amount = Number(entry.amount_incl) || 0;
+        if (entry.doc_type === "purchase_invoice") {
+          totals.totalExpenses += amount;
+        } else if (
+          memberRelations.has(String(entry.relation_id)) ||
+          /contributie/i.test(String(entry.description ?? entry.dossier ?? ""))
+        ) {
           totals.contributionIncome += amount;
-        } else if (amount > 0) {
+        } else {
           totals.otherIncome += amount;
         }
         return totals;
