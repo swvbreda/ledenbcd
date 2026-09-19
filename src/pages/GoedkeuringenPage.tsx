@@ -247,13 +247,35 @@ export default function GoedkeuringenPage() {
   const handleAddAsMember = async (s: MembershipRequest) => {
     setAddingId(s.id);
     try {
-      const nextId = await nextMemberNumber();
       const naam = s.coffeeshop_name.trim();
       const plaats = s.city.trim();
       const contactNaam = s.full_name.trim();
       const emailAddr = s.email.trim();
       const telefoon = (s.phone || "").trim();
       const jaar = new Date().getFullYear();
+
+      // Duplicaatbescherming: bestaat deze shop al (bijv. vooraf geregistreerd),
+      // dan geen tweede dossier aanmaken maar de aanmelding daaraan koppelen.
+      const { data: matches } = await (supabase as any).rpc("find_shop_match", {
+        _naam: naam,
+        _plaats: plaats,
+      });
+      const matchList = (matches ?? []) as Array<{ member_id: number; naam: string }>;
+      if (matchList.length === 1) {
+        const existingId = matchList[0].member_id;
+        await updateSignup.mutateAsync({ id: s.id, status: "approved" });
+        refetch();
+        toast.success(`Aanmelding gekoppeld aan bestaand dossier ${existingId} (${matchList[0].naam})`);
+        navigate(`/leden/${existingId}`);
+        return;
+      }
+      if (matchList.length > 1) {
+        toast.error("Meerdere bestaande dossiers gevonden — beoordeel dit handmatig, er is niets aangemaakt.");
+        return;
+      }
+
+      const nextId = await nextMemberNumber();
+
 
       const data = {
         id: nextId,
