@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import type { Contribution, ContributionInvoice, ContributionPayment } from "@/hooks/useContributions";
+import { buildCanonicalInvoiceRows } from "@/lib/contributionInvoice";
 
 export type BreakdownMode = "invoices" | "paid" | "unpaid";
 
