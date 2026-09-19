@@ -18,4 +18,5 @@ npm run build
 npx cap sync ios
 
 # Resolve Swift package dependencies so Package.resolved is in place before archiving
-xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
+xcodebuild -resolvePackageDependencies \
+  -project ios/App/App.xcodeproj
