@@ -62,6 +62,10 @@ interface DossierRow {
   out: number;
   income: number;
   total: number;
+  /** Netto bedrag uit de canonieke Informer-facturen. */
+  informerTotal: number;
+  /** Netto bedrag uit aanvullende lokale mutaties (niet in Informer). */
+  localTotal: number;
 }
 
 /**
@@ -71,6 +75,10 @@ interface DossierRow {
  */
 export const isUnlinkedOnly = (e: DedupedEntry) =>
   e.sources && e.sources.length > 0 ? e.sources.every((s) => s.unlinked) : !!e.unlinked;
+
+/** Aanvullende lokale mutatie: eigen toewijzing, geen Informer-factuur. */
+export const isLocalOnly = (e: DedupedEntry) =>
+  e.sources && e.sources.length > 0 ? e.sources.every((s) => s.localOnly) : !!e.localOnly;
 
 const formatDate = (value: string | null) => {
   if (!value) return "";
@@ -104,12 +112,24 @@ export default function DossierOverzichtTab({ year }: Props) {
     for (const [dossier, groupEntries] of map) {
       if (isContributionDossier(dossier)) continue;
       const entries = dedupeEntries(groupEntries);
-      // Alleen aan Informer gekoppelde regels tellen mee in de dossiertotalen;
-      // bestaande administratieve mutaties blijven wel zichtbaar.
+      // Canonieke Informer-facturen plus aanvullende lokale mutaties met een
+      // eigen toewijzing; regels zonder toewijzing blijven zichtbaar maar
+      // tellen niet mee.
       const counting = entries.filter((e) => !isUnlinkedOnly(e));
+      const net = (list: DedupedEntry[]) =>
+        list.reduce((s, e) => s + (e.direction === "in" ? -e.shareAmount : e.shareAmount), 0);
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      rows.push({ dossier, entries, out, income, total: out - income });
+      const localTotal = net(counting.filter((e) => isLocalOnly(e)));
+      rows.push({
+        dossier,
+        entries,
+        out,
+        income,
+        total: out - income,
+        informerTotal: out - income - localTotal,
+        localTotal,
+      });
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
@@ -276,6 +296,14 @@ export default function DossierOverzichtTab({ year }: Props) {
                   </button>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
+                    {Math.abs(d.localTotal) > 0.005 && (
+                      <>
+                        {" · Informer "}
+                        <CurrencyText value={d.informerTotal} />
+                        {" · lokaal "}
+                        <CurrencyText value={d.localTotal} />
+                      </>
+                    )}
                   </span>
                   {canEdit && (
                     <>
@@ -320,8 +348,16 @@ export default function DossierOverzichtTab({ year }: Props) {
                     <td className="px-3 py-1">
                       {e.counterparty || e.description}
                       {isUnlinkedOnly(e) && (
-                        <span className="ml-1 whitespace-nowrap rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-700">
-                          nog niet gekoppeld aan Informer
+                        <span
+                          className={`ml-1 whitespace-nowrap rounded px-1 text-[10px] font-medium ${
+                            isLocalOnly(e)
+                              ? "bg-sky-100 text-sky-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {isLocalOnly(e)
+                            ? "Lokale mutatie — niet in Informer"
+                            : "nog niet gekoppeld aan Informer"}
                         </span>
                       )}
                     </td>

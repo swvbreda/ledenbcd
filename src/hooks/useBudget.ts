@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
 import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
-import { fetchLegacyRecords } from "@/lib/legacyRecordsSource";
+import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
 import {
   expenseEntries,
   revenueEntries,
@@ -184,13 +184,22 @@ export function useBudgetCategories(year: number) {
       // Bestaande administratieve toewijzing (begrotingspost/dossier) blijft
       // gelden: die komt uit budget_expenses en ponto_transactions en wordt
       // conservatief aan de Informer-regels gekoppeld.
-      const legacy = await fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id));
+      const [legacy, documentHints] = await Promise.all([
+        fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id)),
+        fetchDocumentHints(year),
+      ]);
       const entriesAll = (ledgerRows || []) as LedgerEntry[];
-      const matched = matchLegacyRecords(entriesAll, legacy);
+      const matched = matchLegacyRecords(entriesAll, legacy, { documentHints });
       const assignments = buildLegacyAssignments(entriesAll, legacy, matched);
       const legacyLineItemByEntryKey = new Map<string, string | null>(
         [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
+
+      // Bestaande administratieve boekingen zonder Informer-koppeling worden
+      // NIET bij de bedragen opgeteld: in de praktijk zijn dit vrijwel altijd
+      // oudere representaties van facturen die Informer ook kent. Zij blijven
+      // zichtbaar in het dossieroverzicht met een eigen markering.
+      const localOnlyRecords: typeof matched.unmatched = [];
 
 
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
@@ -231,6 +240,30 @@ export function useBudgetCategories(year: number) {
         );
       }
       const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
+
+      for (const r of localOnlyRecords) {
+        const lineItemId = r.lineItemId as string;
+        if (!expensesByLineItem[lineItemId]) expensesByLineItem[lineItemId] = [];
+        expensesByLineItem[lineItemId].push({
+          id: r.key,
+          line_item_id: lineItemId,
+          description: r.description || r.counterparty || "",
+          // Inkomsten/terugbetalingen verlagen de kosten van de post.
+          amount: r.direction === "in" ? -r.amount : r.amount,
+          expense_date: r.date,
+          creditor_name: r.counterparty || "",
+          invoice_reference: r.invoice || "",
+          dossier: r.dossier || null,
+          source: r.kind === "ponto" ? "bank" : "administratie",
+          pdf_file_path: null,
+          paid: r.kind === "ponto",
+          paid_date: r.kind === "ponto" ? r.date : null,
+          created_at: r.date,
+          direction: r.direction,
+          _localOnly: true,
+        });
+      }
+
 
       const lineItemsByCategory: Record<string, any[]> = {};
       for (const li of lineItems || []) {

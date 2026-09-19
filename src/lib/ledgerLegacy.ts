@@ -6,7 +6,12 @@
 // dossier, splits en documentkoppeling. Deze module is puur, zodat begroting,
 // dossiers en controle exact dezelfde koppeling gebruiken.
 
-import { isSamePayment, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
+import {
+  isSamePayment,
+  sharesInvoiceNumber,
+  invoiceKeysOf,
+  invoiceKeysMatch,
+} from "@/lib/ledgerDedupe";
 import type { LedgerEntry } from "@/lib/ledger";
 
 export type LegacyKind = "expense" | "ponto";
@@ -52,6 +57,15 @@ export function isSyntheticPlaceholder(r: {
   );
 }
 
+export type MatchMethod = "external_id" | "invoice" | "document" | "payment" | "combined";
+
+export interface CombinedPayment {
+  /** De lokale betaling (meestal een bankmutatie) die meerdere facturen dekt. */
+  legacyKey: string;
+  /** Informer-regelsleutels die samen exact deze betaling vormen. */
+  entryKeys: string[];
+}
+
 export interface LegacyMatchResult {
   /** Informer-regelsleutel ("purchase_invoice:123") → bestaande administratie. */
   byEntryKey: Map<string, LegacyRecord>;
@@ -62,7 +76,19 @@ export interface LegacyMatchResult {
   aliasesByEntryKey: Map<string, LegacyRecord[]>;
   /** Administratieve regels die (nog) niet aan een Informer-regel hangen. */
   unmatched: LegacyRecord[];
-  matchedBy: Map<string, "external_id" | "invoice" | "payment">;
+  matchedBy: Map<string, MatchMethod>;
+  /** Eén betaling die exact meerdere Informer-facturen dekt. */
+  combined: CombinedPayment[];
+  /** Informer-regelsleutel → de gecombineerde betaling waar hij in zit. */
+  combinedByEntryKey: Map<string, LegacyRecord>;
+}
+
+/** Factuurnummers die uit documenten bij een lokale mutatie bekend zijn. */
+export type DocumentHints = Map<string, string[]>;
+
+export interface MatchOptions {
+  /** legacy key ("ponto:uuid") → factuurnummers uit expense_documents. */
+  documentHints?: DocumentHints;
 }
 
 /** Genormaliseerde tegenpartijsleutel voor de conservatieve postfallback. */
@@ -119,6 +145,92 @@ const asRecordLike = (r: LegacyRecord) => ({
   direction: r.direction,
 });
 
+/** Factuursleutels uit de documenten die bij een lokale mutatie horen. */
+function hintKeysFor(record: LegacyRecord, hints?: DocumentHints): string[] {
+  const raw = hints?.get(record.key) ?? [];
+  return [
+    ...new Set(
+      raw.flatMap((value) => invoiceKeysOf({ date: null, amount: 0, invoice: value })),
+    ),
+  ];
+}
+
+const entryInvoiceKeys = (e: LedgerEntry) => invoiceKeysOf(asLedgerLike(e));
+
+const cents = (value: number) => Math.round(Math.abs(value) * 100);
+
+const daysBetween = (a: string | null, b: string | null) => {
+  const ta = a ? new Date(a).getTime() : NaN;
+  const tb = b ? new Date(b).getTime() : NaN;
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
+  return Math.round((ta - tb) / 86_400_000);
+};
+
+/**
+ * Zoekt de unieke combinatie van Informer-facturen die exact één lokale
+ * betaling vormt. Voorwaarden: zelfde leverancier, som exact op centen,
+ * plausibele datums en precies één mogelijke combinatie. Documenthints krijgen
+ * voorrang: combinaties die de bekende factuur bevatten gaan voor.
+ */
+export interface CombinationOptions {
+  /** Te dekken bedrag; standaard het volledige bedrag van de mutatie. */
+  targetAmount?: number;
+  /** Minimaal aantal facturen in de combinatie (standaard 2). */
+  minPicks?: number;
+  /** Ook zonder documenthint alleen facturen rond de betaaldatum meenemen. */
+  nearDateOnly?: boolean;
+}
+
+export function findCombination(
+  record: LegacyRecord,
+  candidates: LedgerEntry[],
+  hintKeys: string[] = [],
+  options: CombinationOptions = {},
+): LedgerEntry[] | null {
+  const target = cents(options.targetAmount ?? record.amount);
+  const minPicks = options.minPicks ?? 2;
+  if (target === 0) return null;
+  const isHinted = (e: LedgerEntry) =>
+    hintKeys.length > 0 &&
+    entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)));
+  const hinted = candidates.filter(isHinted);
+  // Met een documenthint zoeken we gericht: de bekende factuur hoort er zeker
+  // bij, aangevuld met facturen rond de betaaldatum. Dat voorkomt willekeurige
+  // combinaties bij leveranciers met veel facturen.
+  const scope =
+    hinted.length > 0 || options.nearDateOnly
+      ? candidates.filter(
+          (e) => isHinted(e) || Math.abs(daysBetween(record.date, e.entry_date)) <= 21,
+        )
+      : candidates;
+  const pool = [...scope].sort(
+    (a, b) =>
+      Number(isHinted(b)) - Number(isHinted(a)) ||
+      Math.abs(daysBetween(record.date, a.entry_date)) -
+        Math.abs(daysBetween(record.date, b.entry_date)),
+  ).slice(0, 12);
+  const solutions: LedgerEntry[][] = [];
+  const search = (index: number, picked: LedgerEntry[], sum: number) => {
+    if (solutions.length > 8) return;
+    if (picked.length >= minPicks && sum === target) {
+      solutions.push([...picked]);
+      return;
+    }
+    if (index >= pool.length || picked.length >= 4 || sum > target) return;
+    search(index + 1, [...picked, pool[index]], sum + cents(Number(pool[index].amount_incl) || 0));
+    search(index + 1, picked, sum);
+  };
+  search(0, [], 0);
+  if (solutions.length === 0) return null;
+  if (hinted.length > 0) {
+    // Alle uit documenten bekende facturen moeten in de combinatie zitten.
+    const withHint = solutions.filter((s) => hinted.every((h) => s.includes(h)));
+    if (withHint.length === 1) return withHint[0];
+    return null;
+  }
+  return solutions.length === 1 ? solutions[0] : null;
+}
+
 /**
  * Conservatieve koppeling: eerst external_id/informer_id, dan factuurnummer,
  * dan bedrag + tegenpartij + datum. Elke Informer-regel en elke administratieve
@@ -127,11 +239,13 @@ const asRecordLike = (r: LegacyRecord) => ({
 export function matchLegacyRecords(
   entries: LedgerEntry[],
   legacy: LegacyRecord[],
+  options: MatchOptions = {},
 ): LegacyMatchResult {
   const byEntryKey = new Map<string, LegacyRecord>();
   const aliasesByEntryKey = new Map<string, LegacyRecord[]>();
-  const matchedBy = new Map<string, "external_id" | "invoice" | "payment">();
+  const matchedBy = new Map<string, MatchMethod>();
   const usedLegacy = new Set<string>();
+  const hints = options.documentHints;
 
   // Synthetische hulprijen doen niet mee aan matching: ze bevatten geen
   // goedgekeurde toewijzing en zouden echte facturen verkeerd koppelen.
@@ -140,7 +254,7 @@ export function matchLegacyRecords(
   const take = (
     entry: LedgerEntry,
     record: LegacyRecord,
-    how: "external_id" | "invoice" | "payment",
+    how: MatchMethod,
   ) => {
     const key = ledgerKeyOf(entry);
     byEntryKey.set(key, record);
@@ -167,7 +281,7 @@ export function matchLegacyRecords(
   const takeGroup = (
     entry: LedgerEntry,
     hits: LegacyRecord[],
-    how: "invoice" | "payment",
+    how: "invoice" | "document" | "payment",
   ) => {
     if (hits.length === 0) return;
     if (hits.length > 1 && !groupIsConsistent(hits)) return;
@@ -188,7 +302,72 @@ export function matchLegacyRecords(
     takeGroup(entry, available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r))), "invoice");
   }
 
-  // 3. Bedrag + tegenpartij + datum.
+  // 3. Gecombineerde betaling: één bankmutatie dekt exact meerdere facturen.
+  // Dit gaat vóór de losse document-/betaalkoppeling, anders zou dezelfde
+  // betaling al aan één factuur vastzitten.
+  const combined: CombinedPayment[] = [];
+  const combinedByEntryKey = new Map<string, LegacyRecord>();
+  const claimed = () => new Set<string>([...byEntryKey.keys(), ...combinedByEntryKey.keys()]);
+  for (const record of available()) {
+    const party = normalizeCounterparty(record.counterparty);
+    const hintKeys = hintKeysFor(record, hints);
+    if (!party && hintKeys.length === 0) continue;
+    const taken = claimed();
+    const wantsSales = record.direction === "in";
+    const relevant = entries.filter(
+      (e) => e.counts_in_totals && wantsSales === (e.doc_type === "sales_invoice"),
+    );
+    const isHinted = (e: LedgerEntry) =>
+      hintKeys.length > 0 &&
+      entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)));
+    // Een uit een document bekende factuur die al direct gekoppeld is, telt
+    // mee voor het betaalde bedrag maar wordt niet opnieuw toegewezen.
+    const alreadyLinked = relevant.filter((e) => isHinted(e) && taken.has(ledgerKeyOf(e)));
+    const covered = alreadyLinked.reduce((s, e) => s + Math.abs(Number(e.amount_incl) || 0), 0);
+    const residual = Math.round((record.amount - covered) * 100) / 100;
+    if (residual <= 0) continue;
+    const candidates = relevant.filter((e) => {
+      if (taken.has(ledgerKeyOf(e))) return false;
+      if (isHinted(e)) return true;
+      if (!party || normalizeCounterparty(e.relation_name) !== party) return false;
+      // Facturen worden na de factuurdatum betaald; een klein voorschot mag.
+      const delta = daysBetween(record.date, e.entry_date);
+      return delta >= -14 && delta <= 180;
+    });
+    const minPicks = alreadyLinked.length > 0 ? 1 : 2;
+    if (candidates.length < minPicks) continue;
+    const hit = findCombination(record, candidates, hintKeys, {
+      targetAmount: residual,
+      minPicks,
+      nearDateOnly: alreadyLinked.length > 0,
+    });
+    if (!hit || hit.length + alreadyLinked.length < 2) continue;
+    const entryKeys = hit.map(ledgerKeyOf);
+    for (const key of entryKeys) {
+      combinedByEntryKey.set(key, record);
+      matchedBy.set(key, "combined");
+    }
+    combined.push({
+      legacyKey: record.key,
+      entryKeys: [...alreadyLinked.map(ledgerKeyOf), ...entryKeys],
+    });
+    usedLegacy.add(record.key);
+  }
+
+  // 4. Factuurnummer uit een gekoppeld document (bv. "Declaratie 20260688.pdf").
+  if (hints && hints.size > 0) {
+    for (const entry of entries) {
+      if (byEntryKey.has(ledgerKeyOf(entry))) continue;
+      const keys = entryInvoiceKeys(entry);
+      if (keys.length === 0) continue;
+      const hits = available().filter((r) =>
+        hintKeysFor(r, hints).some((h) => keys.some((k) => invoiceKeysMatch(h, k))),
+      );
+      takeGroup(entry, hits, "document");
+    }
+  }
+
+  // 5. Bedrag + tegenpartij + datum.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
@@ -196,7 +375,7 @@ export function matchLegacyRecords(
   }
 
 
-  // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
+  // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
   // verschijnt dus niet apart als "nog niet gekoppeld".
   for (const [key, record] of byEntryKey) {
@@ -213,10 +392,13 @@ export function matchLegacyRecords(
 
   }
 
+
   return {
     byEntryKey,
     aliasesByEntryKey,
     matchedBy,
+    combined,
+    combinedByEntryKey,
     // Synthetische hulprijen zijn geen administratief aandachtspunt.
     unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
@@ -229,8 +411,11 @@ export function matchLegacyRecords(
 export interface LegacyAssignment {
   lineItemId: string | null;
   dossier: string | null;
-  /** "legacy" = directe koppeling, "counterparty" = eenduidige historie. */
-  via: "legacy" | "counterparty";
+  /**
+   * "legacy" = directe koppeling, "combined" = deel van één gecombineerde
+   * betaling, "counterparty" = eenduidige historie.
+   */
+  via: "legacy" | "combined" | "counterparty";
 }
 
 /**
@@ -274,10 +459,13 @@ export function buildLegacyAssignments(
   const out = new Map<string, LegacyAssignment>();
   for (const entry of entries) {
     const key = ledgerKeyOf(entry);
-    const record = match.byEntryKey.get(key);
+    const direct = match.byEntryKey.get(key);
+    const grouped = match.combinedByEntryKey.get(key);
+    const record = direct ?? grouped;
     const dossier = record?.dossier ?? null;
     let lineItemId = record?.lineItemId ?? null;
-    let via: LegacyAssignment["via"] = lineItemId || dossier ? "legacy" : "counterparty";
+    let via: LegacyAssignment["via"] =
+      lineItemId || dossier ? (direct ? "legacy" : "combined") : "counterparty";
     if (!lineItemId && entry.doc_type !== "sales_invoice") {
       const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
       if (fallback) {
