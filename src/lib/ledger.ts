@@ -125,3 +125,57 @@ export function splitsBalance(entry: LedgerEntry, splits: LedgerSplit[]): boolea
   const sum = relevant.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   return Math.abs(sum - Number(entry.amount_incl)) < 0.011;
 }
+
+export interface LedgerReadiness {
+  /** Zijn de bedragen uit de boekhouding bruikbaar als werkelijke cijfers? */
+  ready: boolean;
+  /** Zijn de totalen aantoonbaar gelijk aan de boekhouding? */
+  reconciled: boolean;
+  counted: number;
+  zeroAmount: number;
+  attention: number;
+  withoutLedgerAccount: number;
+  lastSyncAt: string | null;
+  reasons: string[];
+}
+
+/**
+ * Bepaalt of de canonieke gegevens gebruikt mogen worden als boekhoudkundige
+ * werkelijkheid. Zonder geslaagde sync of met €0-bedragen in meetellende regels
+ * is het antwoord nee; dan toont de UI "niet volledig gereconcilieerd".
+ */
+export function ledgerReadiness(
+  entries: LedgerEntry[],
+  lastSyncAt: string | null,
+  reference?: { expenses?: number | null; revenue?: number | null },
+): LedgerReadiness {
+  const counted = countableEntries(entries);
+  const zeroAmount = counted.filter((e) => Number(e.amount_incl) === 0).length;
+  const attention = entries.filter(needsAttention).length;
+  const withoutLedgerAccount = counted.filter((e) => !e.ledger_account).length;
+  const reasons: string[] = [];
+
+  if (!lastSyncAt) reasons.push("Nog geen geslaagde synchronisatie voor dit boekjaar.");
+  if (counted.length === 0) reasons.push("Geen meetellende regels uit de boekhouding.");
+  if (zeroAmount > 0) reasons.push(`${zeroAmount} meetellende regels zonder bedrag.`);
+
+  const ready = reasons.length === 0;
+
+  const matches = (ref: number | null | undefined, actual: number) =>
+    typeof ref === "number" && Number.isFinite(ref) && Math.abs(ref - actual) < 0.011;
+  const reconciled =
+    ready &&
+    matches(reference?.expenses, totalExpenses(entries)) &&
+    matches(reference?.revenue, totalRevenue(entries));
+
+  return {
+    ready,
+    reconciled,
+    counted: counted.length,
+    zeroAmount,
+    attention,
+    withoutLedgerAccount,
+    lastSyncAt,
+    reasons,
+  };
+}
