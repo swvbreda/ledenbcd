@@ -2251,6 +2251,36 @@ export type Database = {
         }
         Relationships: []
       }
+      member_shop_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          created_by: string | null
+          id: string
+          member_id: number
+          note: string | null
+          plaats: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: number
+          note?: string | null
+          plaats: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: number
+          note?: string | null
+          plaats?: string
+        }
+        Relationships: []
+      }
       member_whatsapp_status: {
         Row: {
           created_at: string
