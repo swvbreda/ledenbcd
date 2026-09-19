@@ -1,6 +1,13 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
+import {
+  shouldStartYearSync,
+  lastSuccessfulYearSync,
+  YEAR_SYNC_STALE_MS,
+  type SyncLogRow,
+} from "@/lib/ledgerSync";
 import {
   needsAttention,
   netResult,
