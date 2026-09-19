@@ -162,10 +162,21 @@ Deno.serve(async (req) => {
   let uboSynced = 0;
   let linksProposed = 0;
 
+  // Droogloop: alleen lezen en rapporteren, niets wegschrijven.
+  const url = new URL(req.url);
+  let dryRun = ["1", "true", "ja"].includes((url.searchParams.get("dry_run") ?? "").toLowerCase());
+  if (!dryRun && req.method === "POST") {
+    try {
+      const body = await req.clone().json();
+      dryRun = body?.dryRun === true || body?.dry_run === true;
+    } catch { /* geen json-body */ }
+  }
+
   try {
     const secret = Deno.env.get("BCD_KOPPEL_SLEUTEL") ?? Deno.env.get("COFFEESHOPBELEID_API_SECRET");
     let shops: SourceShop[] | null = null;
     let secureGemeenten: SecureExport["gemeenten"] = [];
+    let sourcePayload: any = null;
     let linkedDossiers: any[] = [];
     let uboBron: "export" | "geen" = "geen";
 
@@ -173,6 +184,7 @@ Deno.serve(async (req) => {
       const secureExport = await fetchSecureExport(secret);
       shops = secureExport?.shops ?? null;
       secureGemeenten = secureExport?.gemeenten ?? [];
+      sourcePayload = secureExport?.payload ?? null;
       if (shops) uboBron = "export";
       try {
         linkedDossiers = await fetchLinkedDossiers(secret);
