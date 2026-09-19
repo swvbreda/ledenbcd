@@ -261,12 +261,16 @@ export default function FinancienPage() {
   const totalBudgeted = expenseCategories.reduce(
     (s, c) => s + c.line_items.reduce((ls, li) => ls + li.budgeted_amount, 0), 0
   );
-  const totalSpent = expenseCategories.reduce(
+  // Canonieke bron: alle meetellende inkoopfacturen uit de boekhouding, exact
+  // één keer. De categorieoptelling (inclusief "Niet toegewezen") moet hier
+  // per definitie aan gelijk zijn; de boekhouding blijft leidend.
+  const categorySpent = expenseCategories.reduce(
     (s, c) => s + c.line_items.reduce(
       (ls, li) => ls + li.expenses.reduce((es, e) => es + (e.direction === "in" ? -e.amount : e.amount), 0),
       0
     ), 0
   );
+  const totalSpent = financialResult?.totalExpenses ?? categorySpent;
 
   const handleAddCategory = () => {
     if (!newCatName.trim()) return;

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CurrencyCell, formatEuro } from "@/components/budget/CurrencyAmount";
+import { CurrencyCell, CurrencyText, formatEuro } from "@/components/budget/CurrencyAmount";
 
 interface ContributionStats {
   totalMembers: number;
@@ -52,7 +52,9 @@ export default function BalancePanel({
     .filter((i) => i.section === "middelen" && i.side === "left" && /reserve|reservering/i.test(i.name))
     .reduce((sum, item) => sum + item.amount, 0);
   const openingBalance = openingBalanceItem?.amount ?? 0;
-  const contributionIncome = financialResult?.contributionIncome ?? contributionStats?.totalReceived ?? 0;
+  // Boekhoudkundige bedragen komen uitsluitend uit de Informer-facturen.
+  // Lokale ledenregister- of bankbedragen mogen hier nooit voor doorgaan.
+  const contributionIncome = financialResult?.contributionIncome ?? 0;
   const otherIncome = financialResult?.otherIncome ?? 0;
   const resultExpenses = financialResult?.totalExpenses ?? totalSpent;
   const availableBankBalance = openingBalance + contributionIncome + otherIncome - resultExpenses;
@@ -192,7 +194,12 @@ export default function BalancePanel({
       {/* Resultaat */}
       <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
         <div className="px-3 py-2 bg-muted/50">
-          <h3 className="text-sm font-semibold">Resultaat</h3>
+          <h3 className="text-sm font-semibold">Resultaat — volgens Informer API (boekhouding)</h3>
+          <p className="text-[11px] text-muted-foreground">
+            Alleen facturen uit de boekhouding. Openstaand: verkoop{" "}
+            <CurrencyText value={financialResult?.openSales ?? 0} /> · inkoop{" "}
+            <CurrencyText value={financialResult?.openPurchase ?? 0} />.
+          </p>
         </div>
         <table className="w-full min-w-[34rem] text-sm">
            <colgroup>
@@ -223,9 +230,16 @@ export default function BalancePanel({
         </table>
       </div>
 
-      {/* Contributie & Vrijwilligersvergoeding */}
+      {/* Contributie volgens ledenregister — operationele controle, geen boekhouding */}
       {contributionStats && (
         <div className="border border-border rounded-lg overflow-hidden">
+          <div className="px-3 py-2 bg-muted/50">
+            <h3 className="text-sm font-semibold">Volgens ledenregister (operationele controle)</h3>
+            <p className="text-[11px] text-muted-foreground">
+              Verwachte contributie op basis van het ledenbestand. Telt niet mee
+              in het boekhoudkundig resultaat hierboven.
+            </p>
+          </div>
           <table className="w-full text-sm">
             <tbody>
               <tr className="border-b border-border/50">

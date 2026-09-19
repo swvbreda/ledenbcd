@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
+import { expenseEntries, revenueEntries, type LedgerEntry } from "@/lib/ledger";
+
+/** Synthetische categorie voor meetellende inkoopfacturen zonder begrotingspost. */
+export const UNASSIGNED_CATEGORY_ID = "__unassigned_ledger__";
+export const UNASSIGNED_LINE_ITEM_ID = "__unassigned_ledger_line__";
 
 
 export interface BudgetCategory {
@@ -90,6 +95,10 @@ export interface FinancialResultData {
   contributionIncome: number;
   otherIncome: number;
   totalExpenses: number;
+  /** Openstaand bedrag verkoopfacturen volgens de boekhouding. */
+  openSales: number;
+  /** Openstaand bedrag inkoopfacturen volgens de boekhouding. */
+  openPurchase: number;
 }
 
 export type ExpenseSourcePreference = "manual" | "pdf_import";
@@ -164,28 +173,28 @@ export function useBudgetCategories(year: number) {
         .limit(5000);
       if (ledgerErr) throw ledgerErr;
 
-      const entries = (ledgerRows || []).filter(
-        (e: any) => e.counts_in_totals && !isExcludedDossier(e.dossier),
-      );
+      // Exact dezelfde canonieke selectie als het resultaat en de controlemodule.
+      const entries = expenseEntries((ledgerRows || []) as LedgerEntry[]);
 
       // Koppeling boekhoudregel → begrotingspost: eerst de lokale keuze
       // (ledger_entry_overrides.line_item_id), anders de kostenrubriek van
-      // Informer op naam. Zonder eenduidige koppeling blijft de regel buiten
-      // de posten; die staan in Controle & sync als ontbrekende koppeling.
+      // Informer op naam. Zonder koppeling komt de regel in de categorie
+      // "Niet toegewezen", zodat elke meetellende inkoopfactuur exact één keer
+      // in het dashboardtotaal zit.
       const normalize = (v: string) =>
         v.toLowerCase().replace(/^\d+\s*/, "").replace(/[^a-z0-9]+/g, " ").trim();
       const byName = new Map<string, string>();
       for (const li of lineItems || []) byName.set(normalize(String(li.name)), li.id);
 
       const expensesByLineItem: Record<string, any[]> = {};
-      for (const e of entries) {
+      const unassigned: any[] = [];
+      for (const e of entries as any[]) {
         const lineItemId =
           e.line_item_id ||
           (e.ledger_account ? byName.get(normalize(String(e.ledger_account))) : undefined);
-        if (!lineItemId) continue;
         const row = {
           id: `ledger:${e.doc_type}:${e.informer_id}`,
-          line_item_id: lineItemId,
+          line_item_id: lineItemId ?? UNASSIGNED_LINE_ITEM_ID,
           description: e.description || e.relation_name || e.invoice_number,
           amount: Math.abs(Number(e.amount_incl) || 0),
           expense_date: e.entry_date,
@@ -197,10 +206,11 @@ export function useBudgetCategories(year: number) {
           paid: e.status === "paid",
           paid_date: e.payment_date ?? null,
           created_at: e.entry_date,
-          direction: e.doc_type === "sales_invoice" ? "in" : "out",
+          direction: "out",
           _fromLedger: true,
         };
-        (expensesByLineItem[lineItemId] ||= []).push(row);
+        if (lineItemId) (expensesByLineItem[lineItemId] ||= []).push(row);
+        else unassigned.push(row);
       }
 
       const lineItemsByCategory: Record<string, any[]> = {};
@@ -213,10 +223,31 @@ export function useBudgetCategories(year: number) {
         });
       }
 
-      return (categories || []).map((c: any) => ({
+      const result = (categories || []).map((c: any) => ({
         ...c,
         line_items: lineItemsByCategory[c.id] || [],
       })) as BudgetCategory[];
+
+      if (unassigned.length > 0) {
+        result.push({
+          id: UNASSIGNED_CATEGORY_ID,
+          year,
+          name: "Niet toegewezen (boekhouding)",
+          sort_order: 9999,
+          line_items: [
+            {
+              id: UNASSIGNED_LINE_ITEM_ID,
+              category_id: UNASSIGNED_CATEGORY_ID,
+              name: "Nog geen begrotingspost gekoppeld",
+              budgeted_amount: 0,
+              sort_order: 0,
+              expenses: unassigned,
+            },
+          ],
+        } as BudgetCategory);
+      }
+
+      return result;
     },
   });
 }
@@ -298,14 +329,22 @@ export function useFinancialResult(year: number) {
         (debtorMap ?? []).map((r: any) => String(r.informer_debtor_id)),
       );
 
-      const rows = (data ?? []) as any[];
-      return rows.reduce<FinancialResultData>((totals, entry: any) => {
-        if (!entry.counts_in_totals) return totals;
-        if (isExcludedDossier(entry.dossier)) return totals;
+      const rows = (data ?? []) as LedgerEntry[];
+      const totals: FinancialResultData = {
+        contributionIncome: 0,
+        otherIncome: 0,
+        totalExpenses: 0,
+        openSales: 0,
+        openPurchase: 0,
+      };
+      for (const entry of expenseEntries(rows)) {
+        totals.totalExpenses += Number(entry.amount_incl) || 0;
+        totals.openPurchase += Number(entry.open_amount) || 0;
+      }
+      for (const entry of revenueEntries(rows)) {
         const amount = Number(entry.amount_incl) || 0;
-        if (entry.doc_type === "purchase_invoice") {
-          totals.totalExpenses += amount;
-        } else if (
+        totals.openSales += Number(entry.open_amount) || 0;
+        if (
           memberRelations.has(String(entry.relation_id)) ||
           /contributie/i.test(String(entry.description ?? entry.dossier ?? ""))
         ) {
@@ -313,8 +352,8 @@ export function useFinancialResult(year: number) {
         } else {
           totals.otherIncome += amount;
         }
-        return totals;
-      }, { contributionIncome: 0, otherIncome: 0, totalExpenses: 0 });
+      }
+      return totals;
     },
   });
 }

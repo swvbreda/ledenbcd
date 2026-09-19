@@ -9,6 +9,8 @@ import {
   useUnlinkedBankTransactions,
   useUnmatchedSalesInvoices,
   useInformerSyncState,
+  useReconciliationCheck,
+  useSaveReconciliationCheck,
 } from "@/hooks/useLedger";
 import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -37,30 +39,35 @@ function parseAmount(reference: string): number | null {
 }
 
 export default function ControleSyncTab({ year }: Props) {
-  // Referentiewaarden uit de boekhouding; leeg laten = geen vergelijking.
-  const [refExpenses, setRefExpenses] = useState("");
-  const [refRevenue, setRefRevenue] = useState("");
+  // Vastgelegde controletotalen uit de boekhouding (auditbaar opgeslagen).
+  const { data: check } = useReconciliationCheck(year);
+  const saveCheck = useSaveReconciliationCheck(year);
+  const [refExpenses, setRefExpenses] = useState<string | null>(null);
+  const [refRevenue, setRefRevenue] = useState<string | null>(null);
+
+  const expensesInput = refExpenses ?? (check?.reference_expenses != null ? String(check.reference_expenses) : "");
+  const revenueInput = refRevenue ?? (check?.reference_revenue != null ? String(check.reference_revenue) : "");
 
   const totals = useLedgerTotals(year, {
-    expenses: parseAmount(refExpenses),
-    revenue: parseAmount(refRevenue),
+    expenses: parseAmount(expensesInput),
+    revenue: parseAmount(revenueInput),
   });
   const { data: unlinked } = useUnlinkedBankTransactions(year);
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
   const { syncYear } = useLedgerMutations(year);
 
-  const lastSync = syncState?.state?.last_invoice_sync_at ?? null;
-  const lastLog = (syncState?.log ?? []).find((l: any) => l.action === "sync_year");
+  const lastSync = totals.readiness.lastSyncAt;
+  const lastLog = (syncState?.log ?? []).find((l: any) => String(l.action ?? "").includes("sync_year"));
 
   const compare = (reference: string, actual: number) => {
     const parsed = parseAmount(reference);
     if (parsed === null) return null;
-    return Math.abs(parsed - actual) < 0.51;
+    return Math.abs(parsed - actual) < 0.011;
   };
 
-  const expensesOk = compare(refExpenses, totals.totalExpenses);
-  const revenueOk = compare(refRevenue, totals.totalRevenue);
+  const expensesOk = compare(expensesInput, totals.totalExpenses);
+  const revenueOk = compare(revenueInput, totals.totalRevenue);
 
   return (
     <div className="space-y-4">
@@ -70,8 +77,9 @@ export default function ControleSyncTab({ year }: Props) {
             <h3 className="text-sm font-semibold">Synchronisatie boekjaar {year}</h3>
             <p className="text-xs text-muted-foreground">
               {lastSync
-                ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })}`
+                ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })} (${new Date(lastSync).toLocaleString("nl-NL")})`
                 : "Nog geen volledige jaarsync uitgevoerd"}
+              {lastLog?.items_processed != null ? ` — ${lastLog.items_processed} regels verwerkt` : ""}
               {lastLog?.error_message ? ` — laatste fout: ${lastLog.error_message}` : ""}
             </p>
           </div>
@@ -90,9 +98,17 @@ export default function ControleSyncTab({ year }: Props) {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Uitgaven" value={<CurrencyText value={totals.totalExpenses} />} hint="inkoopfacturen" />
-          <StatCard label="Opbrengsten" value={<CurrencyText value={totals.totalRevenue} />} hint="verkoopfacturen" />
-          <StatCard label="Resultaat" value={<CurrencyText value={totals.netResult} />} />
+          <StatCard
+            label="Uitgaven"
+            value={<CurrencyText value={totals.totalExpenses} />}
+            hint={`${totals.expenses.length} inkoopfacturen`}
+          />
+          <StatCard
+            label="Opbrengsten"
+            value={<CurrencyText value={totals.totalRevenue} />}
+            hint={`${totals.revenues.length} verkoopfacturen`}
+          />
+          <StatCard label="Openstaand inkoop" value={<CurrencyText value={totals.openPurchase} />} />
           <StatCard label="Openstaand verkoop" value={<CurrencyText value={totals.openSales} />} />
         </div>
 
@@ -116,6 +132,12 @@ export default function ControleSyncTab({ year }: Props) {
               {totals.readiness.counted} meetellende regels, {totals.readiness.attention} aandachtspunten,{" "}
               {totals.readiness.withoutLedgerAccount} zonder kostenrubriek.
             </div>
+            {check?.checked_at && (
+              <div className="text-muted-foreground mt-1">
+                Laatst gecontroleerd op {new Date(check.checked_at).toLocaleString("nl-NL")}
+                {check.reconciled ? " — toen exact gelijk" : " — toen afwijkend"}.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -123,17 +145,19 @@ export default function ControleSyncTab({ year }: Props) {
       <div className="border border-border rounded-lg bg-card p-4">
         <h3 className="text-sm font-semibold mb-2">Controletotalen vergelijken</h3>
         <p className="text-xs text-muted-foreground mb-3">
-          Vul de totalen in die de boekhouding toont. Zonder invoer tonen we geen oordeel.
+          Vul de totalen in die de boekhouding toont en leg de controle vast. Zonder invoer tonen we geen oordeel.
         </p>
         <p className="text-xs text-muted-foreground mb-3">
           Let op: de koppeling met de boekhouding levert alleen verkoop- en inkoopfacturen,
-          geen grootboekmutaties. Wijken de totalen daardoor af, dan tonen we dat als
-          &quot;niet gereconcilieerd&quot; en vullen we niets aan met een schatting.
+          geen bank- of grootboekmutaties (bijvoorbeeld LEAP NL € 55,00 van 17-09-2026).
+          Wijken de totalen daardoor af, dan tonen we dat als
+          &quot;niet gereconcilieerd&quot; en vullen we niets aan met een schatting;
+          controleer die mutaties via de saldibalans in Informer.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground">Uitgaven volgens boekhouding</label>
-            <Input value={refExpenses} onChange={(e) => setRefExpenses(e.target.value)} placeholder="bijv. 275.797,00" />
+            <Input value={expensesInput} onChange={(e) => setRefExpenses(e.target.value)} placeholder="bijv. 275.797,00" />
             <div className="text-xs mt-1">
               {expensesOk === null ? (
                 <span className="text-muted-foreground">niet gereconcilieerd</span>
@@ -146,7 +170,7 @@ export default function ControleSyncTab({ year }: Props) {
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Opbrengsten volgens boekhouding</label>
-            <Input value={refRevenue} onChange={(e) => setRefRevenue(e.target.value)} placeholder="bijv. 349.574,79" />
+            <Input value={revenueInput} onChange={(e) => setRefRevenue(e.target.value)} placeholder="bijv. 349.574,79" />
             <div className="text-xs mt-1">
               {revenueOk === null ? (
                 <span className="text-muted-foreground">niet gereconcilieerd</span>
@@ -158,7 +182,32 @@ export default function ControleSyncTab({ year }: Props) {
             </div>
           </div>
         </div>
+        <div className="mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={saveCheck.isPending}
+            onClick={() =>
+              saveCheck.mutate(
+                {
+                  reference_expenses: parseAmount(expensesInput),
+                  reference_revenue: parseAmount(revenueInput),
+                  measured_expenses: totals.totalExpenses,
+                  measured_revenue: totals.totalRevenue,
+                  reconciled: totals.readiness.reconciled,
+                },
+                {
+                  onSuccess: () => toast.success("Controle vastgelegd"),
+                  onError: (e: any) => toast.error(e?.message ?? "Vastleggen mislukt"),
+                },
+              )
+            }
+          >
+            Controle vastleggen
+          </Button>
+        </div>
       </div>
+
 
       <div className="border border-border rounded-lg bg-card p-4">
         <h3 className="text-sm font-semibold mb-2">

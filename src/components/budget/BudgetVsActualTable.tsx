@@ -18,10 +18,11 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
   const perCat = expenseCategories
     .map((cat) => {
       const budgeted = cat.line_items.reduce((sum, li) => sum + Number(li.budgeted_amount || 0), 0);
-      // Alleen betaalde uitgaven tellen mee.
+      // Alle meetellende inkoopfacturen tellen mee (betaald én openstaand),
+      // zodat dit totaal exact gelijk is aan het dashboard- en resultaattotaal.
       const spentPerLine = cat.line_items.map((li) =>
         li.expenses.reduce(
-          (es, e) => es + (e.direction === "in" || e.paid === false ? 0 : Number(e.amount || 0)),
+          (es, e) => es + (e.direction === "in" ? 0 : Number(e.amount || 0)),
           0
         )
       );
@@ -56,6 +57,13 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
           </span>
         </div>
       </div>
+
+      <p className="text-[11px] text-muted-foreground">
+        Bron: facturen uit de boekhouding (Informer). Losse bank- en
+        grootboekmutaties zonder factuur zitten hier niet in en moeten via de
+        saldibalans in Informer gecontroleerd worden.
+      </p>
+
 
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
