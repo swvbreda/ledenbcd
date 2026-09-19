@@ -95,6 +95,10 @@ export interface FinancialResultData {
   contributionIncome: number;
   otherIncome: number;
   totalExpenses: number;
+  /** Openstaand bedrag verkoopfacturen volgens de boekhouding. */
+  openSales: number;
+  /** Openstaand bedrag inkoopfacturen volgens de boekhouding. */
+  openPurchase: number;
 }
 
 export type ExpenseSourcePreference = "manual" | "pdf_import";
