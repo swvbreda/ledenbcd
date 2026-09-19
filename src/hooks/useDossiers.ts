@@ -377,6 +377,18 @@ export function useDossierMutationActions(year: number) {
   const setDossier = useMutation({
     mutationFn: async ({ entries, dossier }: { entries: DossierMutation[]; dossier: string | null }) => {
       for (const entry of entries) {
+        if (entry.kind === "ledger") {
+          // Blijft bewaard na synchronisatie: hangt aan de stabiele Informer-ID.
+          const [docType, informerId] = entry.key.replace(/^ledger:/, "").split(":");
+          const { error } = await client
+            .from("ledger_entry_overrides")
+            .upsert(
+              { doc_type: docType, informer_id: informerId, dossier },
+              { onConflict: "doc_type,informer_id" },
+            );
+          if (error) throw error;
+          continue;
+        }
         const table =
           entry.kind === "expense" ? "budget_expenses" : entry.kind === "bank" ? "bank_transactions" : "ponto_transactions";
         const { error } = await client.from(table).update({ dossier }).eq("id", entry.id);
