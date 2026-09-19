@@ -115,6 +115,19 @@ export async function convertLead(params: {
     .update({ member_id: params.lidnummer })
     .eq("member_id", params.leadId);
 
+  // 4b. Contributievrijstellingen meeverhuizen zodat een vastgelegde
+  // jaargebonden vrijstelling niet verloren gaat bij de conversie.
+  if (params.lidnummer !== params.leadId) {
+    await (supabase as any)
+      .from("contribution_exemptions")
+      .update({ member_id: params.lidnummer })
+      .eq("member_id", params.leadId);
+    await supabase
+      .from("member_notes")
+      .update({ member_id: params.lidnummer })
+      .eq("member_id", params.leadId);
+  }
+
   // 5. Delete old lead row
   await supabase
     .from("members_data")

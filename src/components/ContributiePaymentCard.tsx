@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Euro, CheckCircle2, Clock, CreditCard } from "lucide-react";
+import { Euro, CheckCircle2, Clock, CreditCard, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { paymentsConfigured } from "@/lib/stripe";
+import { useMemberExemption } from "@/hooks/useContributionExemptions";
 
 interface PaymentRow {
   id: string;
@@ -59,6 +60,9 @@ export function ContributiePaymentCard() {
     },
   });
 
+  const { data: exemption } = useMemberExemption(linkedMemberId, year);
+
+
   const totals = useMemo(() => {
     const paid = (payments ?? []).filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
     const pending = (payments ?? []).filter((p) => p.status === "pending").reduce((s, p) => s + Number(p.amount), 0);
@@ -83,12 +87,36 @@ export function ContributiePaymentCard() {
     setOpen(true);
   };
 
+  // Vrijstelling geldt per contributiejaar: geen bedrag, geen betaalknop,
+  // geen openstaand saldo voor dit jaar.
+  if (exemption) {
+    return (
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Euro size={16} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold font-display">Contributie {year}</h3>
+        </div>
+        <div className="flex items-start gap-2 text-sm text-emerald-700 p-3 rounded-md bg-emerald-50">
+          <BadgeCheck size={16} className="mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">{exemption.reason}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Voor {year} is er geen contributie verschuldigd en hoeft er niets betaald te worden.
+              Vanaf {year + 1} geldt de gewone contributie.
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <Euro size={16} className="text-muted-foreground" />
         <h3 className="text-sm font-semibold font-display">Contributie {year}</h3>
       </div>
+
 
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="text-center p-3 rounded-md bg-muted/40">
