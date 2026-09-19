@@ -147,9 +147,25 @@ export function matchLegacyRecords(
     if (hits.length === 1) take(entry, hits[0], "payment");
   }
 
+  // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
+  // die hangt als alias aan de Informer-regel (alleen voor documenten) en
+  // verschijnt dus niet apart als "nog niet gekoppeld".
+  for (const [key, record] of byEntryKey) {
+    const extra = available().filter(
+      (r) =>
+        r.key !== record.key &&
+        (isSamePayment(asRecordLike(record), asRecordLike(r)) ||
+          sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
+    );
+    for (const r of extra) usedLegacy.add(r.key);
+    if (extra.length > 0) aliasesByEntryKey.set(key, extra);
+  }
+
   return {
     byEntryKey,
+    aliasesByEntryKey,
     matchedBy,
-    unmatched: legacy.filter((r) => !usedLegacy.has(r.key)),
+    // Synthetische hulprijen zijn geen administratief aandachtspunt.
+    unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
 }
