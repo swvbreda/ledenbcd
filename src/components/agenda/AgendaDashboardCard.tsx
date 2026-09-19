@@ -1,6 +1,19 @@
+import { useState } from "react";
 import { Link } from "@/lib/router-compat";
-import { ArrowRight, CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  ChevronDown,
+  Clock,
+  MapPin,
+  Users,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
   useAgendaEvents,
@@ -12,7 +25,6 @@ import {
   isCancelled,
   sortAgendaEvents,
   type AgendaEvent,
-
 } from "@/hooks/useAgenda";
 import AgendaShareButton from "./AgendaShareButton";
 
@@ -51,7 +63,11 @@ function MetaItem({
       ) : (
         <Icon className="h-3.5 w-3.5 shrink-0 text-brand-red" />
       )}
-      <span className={cn("truncate", highlight && "font-semibold text-brand-red")}>{children}</span>
+      <span
+        className={cn("truncate", highlight && "font-semibold text-brand-red")}
+      >
+        {children}
+      </span>
     </span>
   );
 }
@@ -82,11 +98,17 @@ function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-muted-foreground">
-          <span className="text-foreground/80">{formatEventDate(event.event_date)}</span>
+          <span className="text-foreground/80">
+            {formatEventDate(event.event_date)}
+          </span>
           {formatTimeRange(event.start_time, event.end_time) && (
-            <MetaItem icon={Clock}>{formatTimeRange(event.start_time, event.end_time)}</MetaItem>
+            <MetaItem icon={Clock}>
+              {formatTimeRange(event.start_time, event.end_time)}
+            </MetaItem>
           )}
-          {event.location && <MetaItem icon={MapPin}>{event.location}</MetaItem>}
+          {event.location && (
+            <MetaItem icon={MapPin}>{event.location}</MetaItem>
+          )}
           <MetaItem icon={Users}>{guests} aangemeld</MetaItem>
         </div>
       </div>
@@ -97,7 +119,13 @@ function MeetingRow({ event, guests }: { event: AgendaEvent; guests: number }) {
   );
 }
 
-function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number }) {
+function EventHighlight({
+  event,
+  guests,
+}: {
+  event: AgendaEvent;
+  guests: number;
+}) {
   return (
     <Link
       to={`/agenda/${event.id}`}
@@ -126,7 +154,9 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
             )}
           </div>
           {isCancelled(event) && event.cancel_reason && (
-            <p className="text-sm font-semibold text-destructive">{event.cancel_reason}</p>
+            <p className="text-sm font-semibold text-destructive">
+              {event.cancel_reason}
+            </p>
           )}
           <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm font-semibold text-muted-foreground md:grid-cols-2">
             <MetaItem icon={CalendarDays} boxed highlight>
@@ -166,57 +196,114 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
 }
 
 export default function AgendaDashboardCard() {
+  const [open, setOpen] = useState(false);
   const { data: events = [], isLoading } = useAgendaEvents();
   const { data: registrations = [] } = useAgendaRegistrations();
-  const next = sortAgendaEvents(events.filter(isUpcoming)).slice(0, 3);
+  const upcoming = sortAgendaEvents(events.filter(isUpcoming));
+  const next = upcoming.slice(0, 3);
 
   const guestsFor = (eventId: string) =>
-    registrations.filter((r) => r.event_id === eventId).reduce((s, r) => s + r.guests, 0);
+    registrations
+      .filter((r) => r.event_id === eventId)
+      .reduce((s, r) => s + r.guests, 0);
 
   return (
     <Card className="w-full min-w-0 max-w-full overflow-hidden">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <CalendarDays className="h-5 w-5" />
-          </span>
-          <h2 className="font-display text-2xl tracking-tight text-foreground">Agenda</h2>
-        </div>
-        <Link
-          to="/agenda"
-          className="group flex shrink-0 items-center gap-1 text-sm font-bold text-primary hover:underline sm:gap-2"
-        >
-          Alles bekijken
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Link>
-      </div>
-      <CardContent className="flex min-w-0 max-w-full flex-col gap-4 px-3 pb-6 sm:px-4 md:px-6">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Laden…</p>
-        ) : next.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Geen geplande bijeenkomsten.</p>
-        ) : (
-          next.map((e) =>
-            e.event_type === "evenement" ? (
-              <div key={e.id} className="relative min-w-0 max-w-full overflow-hidden">
-                <EventHighlight event={e} guests={guestsFor(e.id)} />
-                {!isCancelled(e) && (
-                  <div className="absolute right-4 top-4 z-10">
-                    <AgendaShareButton event={e} variant="outline" />
-                  </div>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="flex min-w-0 flex-col gap-4 px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                <CalendarDays className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-display text-2xl tracking-tight text-foreground">
+                    Agenda
+                  </h2>
+                  {!isLoading && upcoming.length > 0 && (
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                      {upcoming.length} gepland
+                    </span>
+                  )}
+                </div>
+                {!open && (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                    {isLoading
+                      ? "Agenda laden…"
+                      : next.length === 0
+                        ? "Geen geplande bijeenkomsten."
+                        : `Volgende: ${next[0].title} · ${formatEventDate(next[0].event_date)}`}
+                  </p>
                 )}
               </div>
+            </div>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                aria-label={open ? "Agenda inklappen" : "Agenda uitklappen"}
+              >
+                <span className="hidden sm:inline">
+                  {open ? "Kleiner" : "Tonen"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    open && "rotate-180",
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+          </div>
+
+          <Link
+            to="/agenda"
+            className="group flex w-fit items-center gap-1 text-sm font-bold text-primary hover:underline sm:gap-2"
+          >
+            Alles bekijken
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+
+        <CollapsibleContent>
+          <CardContent className="flex min-w-0 max-w-full flex-col gap-4 px-3 pb-6 sm:px-4 md:px-6">
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground">Laden…</p>
+            ) : next.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Geen geplande bijeenkomsten.
+              </p>
             ) : (
-              <div key={e.id} className="relative min-w-0 max-w-full overflow-hidden">
-                <MeetingRow event={e} guests={guestsFor(e.id)} />
-                <div className="absolute right-4 top-4 z-10">
-                  <AgendaShareButton event={e} variant="ghost" />
-                </div>
-              </div>
-            ),
-          )
-        )}
-      </CardContent>
+              next.map((e) =>
+                e.event_type === "evenement" ? (
+                  <div
+                    key={e.id}
+                    className="relative min-w-0 max-w-full overflow-hidden"
+                  >
+                    <EventHighlight event={e} guests={guestsFor(e.id)} />
+                    {!isCancelled(e) && (
+                      <div className="absolute right-4 top-4 z-10">
+                        <AgendaShareButton event={e} variant="outline" />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    key={e.id}
+                    className="relative min-w-0 max-w-full overflow-hidden"
+                  >
+                    <MeetingRow event={e} guests={guestsFor(e.id)} />
+                    <div className="absolute right-4 top-4 z-10">
+                      <AgendaShareButton event={e} variant="ghost" />
+                    </div>
+                  </div>
+                ),
+              )
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
