@@ -116,7 +116,7 @@ export function matchLegacyRecords(
     usedLegacy.add(record.key);
   };
 
-  const available = () => legacy.filter((r) => !usedLegacy.has(r.key));
+  const available = () => usable.filter((r) => !usedLegacy.has(r.key));
 
   // 1. Directe verwijzing.
   for (const entry of entries) {
