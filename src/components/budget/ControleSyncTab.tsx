@@ -89,8 +89,8 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
               : lastSync
                 ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })} (${new Date(lastSync).toLocaleString("nl-NL")})`
                 : "Nog geen volledige jaarsync uitgevoerd"}
-            {!autoSync?.isSyncing && lastLog?.items_processed != null
-              ? ` — ${lastLog.items_processed} regels verwerkt`
+            {!autoSync?.isSyncing && itemsProcessed != null
+              ? ` — ${itemsProcessed} regels verwerkt`
               : ""}
           </p>
           <p className="text-xs text-muted-foreground">Het volledige boekjaar wordt automatisch bijgewerkt.</p>
