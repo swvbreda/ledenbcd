@@ -54,12 +54,18 @@ export function handleRpcAuthError(
 ): boolean {
   if (!error) return false;
   const msg = (error.message || "").toLowerCase();
-  const isPermission =
-    error.code === "42501" ||
-    msg.includes("permission denied") ||
+  // PostgreSQL 42501 / "permission denied" is an authorization error for one
+  // operation, not proof that the Supabase session is invalid. Logging out on
+  // that error caused valid member accounts to be ejected immediately after
+  // login when the optional ensure_member_link RPC was not permitted.
+  const isExpiredSession =
     msg.includes("jwt expired") ||
-    msg.includes("invalid claim");
-  if (!isPermission) return false;
+    msg.includes("token has expired") ||
+    msg.includes("invalid token") ||
+    msg.includes("invalid jwt") ||
+    msg.includes("invalid claim") ||
+    msg.includes("missing sub claim");
+  if (!isExpiredSession) return false;
   dispatchSessionExpired();
   return true;
 }
