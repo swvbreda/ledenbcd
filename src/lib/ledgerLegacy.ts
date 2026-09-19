@@ -361,8 +361,11 @@ export function matchLegacyRecords(
 export interface LegacyAssignment {
   lineItemId: string | null;
   dossier: string | null;
-  /** "legacy" = directe koppeling, "counterparty" = eenduidige historie. */
-  via: "legacy" | "counterparty";
+  /**
+   * "legacy" = directe koppeling, "combined" = deel van één gecombineerde
+   * betaling, "counterparty" = eenduidige historie.
+   */
+  via: "legacy" | "combined" | "counterparty";
 }
 
 /**
