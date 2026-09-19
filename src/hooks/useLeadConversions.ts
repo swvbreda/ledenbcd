@@ -152,14 +152,14 @@ export async function convertLead(params: {
   if (params.leadEmail) {
     await supabase.from("member_allowed_emails").insert({
       email: params.leadEmail.toLowerCase().trim(),
-      member_id: params.lidnummer,
+      member_id: lidnummer,
     });
   }
 
   // 6. Record conversion for reference (redirect old URLs etc.)
   await supabase.from("lead_conversions").insert({
     lead_id: params.leadId,
-    lidnummer: params.lidnummer,
+    lidnummer,
     lid_sinds: params.lidSinds,
     factuur_bedrijfsnaam: params.factuurBedrijfsnaam || null,
     factuur_kvk: params.factuurKvk || null,
@@ -172,6 +172,7 @@ export async function convertLead(params: {
 
   const data = await fetchConversions();
   notifyListeners(data);
+  return { lidnummer, behieldNummer: lidnummer === params.leadId && heeftVrijstelling };
 }
 
 export async function revertConversion(leadId: number) {
