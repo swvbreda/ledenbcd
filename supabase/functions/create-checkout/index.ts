@@ -71,6 +71,21 @@ Deno.serve(async (req) => {
     }
     const memberId: number = profile.member_id;
 
+    // Contributievrijstelling voor het gekozen contributiejaar: geen betaallink.
+    const { data: exemption } = await adminClient
+      .from("contribution_exemptions")
+      .select("reason")
+      .eq("member_id", memberId)
+      .eq("year", year)
+      .maybeSingle();
+    if (exemption) {
+      return new Response(
+        JSON.stringify({ error: exemption.reason || `Vrijgesteld van contributie ${year}` }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
     const priceLookupKey = plan === "full" ? "contributie_ineens" : "contributie_termijn";
     const installmentCount = plan === "full" ? 1 : 2;
 

@@ -78,6 +78,7 @@ serve(async (req) => {
     // 1. Members without invoice
     const newMemberSet = existingByType.get("new_member_invoice") ?? new Set();
     for (const m of members) {
+      if (exemptMembers.has(Number(m.id))) continue;
       if (!invoiceMemberIds.has(m.id) && !newMemberSet.has(m.id)) {
         membersNeedingInvoice.add(m.id);
         const naam = m.data?.naam ?? `Lid #${m.id}`;
