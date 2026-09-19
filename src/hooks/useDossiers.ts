@@ -327,10 +327,10 @@ export function useDossierMutations(year: number) {
       }
       const splitsFor = (key: string) => splitsByEntry.get(key) || [];
 
-      // Dossiermutaties komen uitsluitend uit de boekhouding. Elke regel hangt
-      // aan een stabiele Informer-ID en telt daardoor exact eenmaal. Ponto
-      // levert alleen de betaaldatum van een gekoppelde factuur; losse
-      // bankmutaties verschijnen hier niet en verhogen geen enkel totaal.
+      // Bedragen, facturen en betaalstatus komen uitsluitend uit de boekhouding.
+      // Elke regel hangt aan een stabiele Informer-ID en telt exact eenmaal.
+      // De bestaande administratie levert alleen de toewijzing (begrotingspost,
+      // dossier, splits en documenten).
       const { data: ledgerRows, error: ledgerErr } = await client
         .from("ledger_entries_v")
         .select("*")
@@ -338,11 +338,21 @@ export function useDossierMutations(year: number) {
         .limit(5000);
       if (ledgerErr) throw ledgerErr;
 
+      const legacyRecords = await fetchLegacyRecords(year, liIds);
+      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacyRecords);
+
       for (const e of ledgerRows || []) {
         if (!e.counts_in_totals) continue;
         const amount = Math.abs(Number(e.amount_incl) || 0);
-        const key = entryKeyFor("ledger", `${e.doc_type}:${e.informer_id}`);
-        const lineItemName = liById.get(e.line_item_id)?.name || "";
+        const ledgerKey = `${e.doc_type}:${e.informer_id}`;
+        const key = entryKeyFor("ledger", ledgerKey);
+        const legacy = matched.byEntryKey.get(ledgerKey) || null;
+        const lineItemId =
+          e.line_item_id ||
+          (legacy?.lineItemId && liById.has(legacy.lineItemId) ? legacy.lineItemId : null);
+        const lineItemName = lineItemId ? liById.get(lineItemId)?.name || "" : "";
+        const ownSplits = splitsFor(key);
+        const splits = ownSplits.length > 0 ? ownSplits : legacy ? splitsFor(legacy.key) : [];
         rows.push({
           key,
           kind: "ledger",
@@ -358,14 +368,43 @@ export function useDossierMutations(year: number) {
           direction: e.doc_type === "sales_invoice" ? "in" : "out",
           lineItemName,
           categoryName: lineItemName
-            ? catNameById.get(liById.get(e.line_item_id)?.category_id) || ""
+            ? catNameById.get(liById.get(lineItemId)?.category_id) || ""
             : "",
-          dossier: (e.dossier || "").trim(),
+          dossier: (e.dossier || legacy?.dossier || "").trim(),
           source: "informer",
-          splits: splitsFor(key),
+          splits,
         });
       }
-      void liIds;
+
+      // Bestaande dossiermutaties zonder Informer-koppeling blijven zichtbaar
+      // als administratief aandachtspunt, maar tellen niet mee in de totalen.
+      for (const r of matched.unmatched) {
+        const splits = splitsFor(r.key);
+        if (!r.dossier && splits.length === 0) continue;
+        const lineItemName = r.lineItemId ? liById.get(r.lineItemId)?.name || "" : "";
+        rows.push({
+          key: r.key,
+          kind: r.kind,
+          id: r.id,
+          date: r.date,
+          invoiceDate: r.date,
+          invoiceAmount: r.amount,
+          paymentDate: r.kind === "ponto" ? r.date : null,
+          counterparty: r.counterparty || "",
+          description: r.description || "",
+          invoice: r.invoice || "",
+          amount: r.amount,
+          direction: r.direction,
+          lineItemName,
+          categoryName: lineItemName
+            ? catNameById.get(liById.get(r.lineItemId!)?.category_id) || ""
+            : "",
+          dossier: r.dossier || "",
+          source: r.kind === "ponto" ? "bank" : "administratie",
+          splits,
+          unlinked: true,
+        });
+      }
 
       rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       return rows;
