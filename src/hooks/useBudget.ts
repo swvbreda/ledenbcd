@@ -185,10 +185,13 @@ export function useBudgetCategories(year: number) {
       // gelden: die komt uit budget_expenses en ponto_transactions en wordt
       // conservatief aan de Informer-regels gekoppeld.
       const legacy = await fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id));
-      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacy);
+      const entriesAll = (ledgerRows || []) as LedgerEntry[];
+      const matched = matchLegacyRecords(entriesAll, legacy);
+      const assignments = buildLegacyAssignments(entriesAll, legacy, matched);
       const legacyLineItemByEntryKey = new Map<string, string | null>(
-        [...matched.byEntryKey].map(([k, r]) => [k, r.lineItemId]),
+        [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
+
 
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
       // controlemodule: override > bestaande toewijzing > eenduidige
