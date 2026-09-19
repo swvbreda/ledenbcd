@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, BookOpen } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, BookOpen, Megaphone } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -35,6 +35,7 @@ const navItems = [
   { title: "Ledenbestand", url: "/leden", icon: Users },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Agenda", url: "/agenda", icon: CalendarDays },
+  { title: "Aankondigingen", url: "/aankondigingen", icon: Megaphone },
   { title: "Kennisbank", url: "/kennisbank", icon: BookOpen },
   { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
   { title: "Ledenvoordelen", url: "/ledenvoordelen", icon: Gift },

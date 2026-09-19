@@ -9,6 +9,7 @@ import BestuurOverzicht from "@/components/BestuurOverzicht";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MemberAlertBanner from "@/components/MemberAlertBanner";
 import AgendaDashboardCard from "@/components/agenda/AgendaDashboardCard";
+import AnnouncementsDashboardCard from "@/components/AnnouncementsDashboardCard";
 
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
@@ -33,6 +34,8 @@ const Index = () => {
       />
 
       <MemberAlertBanner />
+
+      <AnnouncementsDashboardCard />
 
       <BestuurOverzicht members={members} />
 

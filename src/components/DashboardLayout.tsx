@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
+import SharedAnnouncementReceiver from "@/components/SharedAnnouncementReceiver";
 
 const PCN_EMAIL = "info@platformcannabis.nl";
 const PCN_SURVEY_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
@@ -33,6 +34,7 @@ const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen flex w-full min-w-0 max-w-[100vw] overflow-x-hidden">
+      <SharedAnnouncementReceiver />
       <AppSidebar />
       <div className="flex w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden">
         <header className="sticky top-0 z-40 flex items-center border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] h-[calc(5rem+env(safe-area-inset-top))]">

@@ -18,6 +18,7 @@ import { Route as MfaVerifyRouteImport } from './routes/mfa-verify'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
+import { Route as DashboardAankondigingenRouteImport } from './routes/_dashboard/aankondigingen'
 import { Route as DashboardAccountsRouteImport } from './routes/_dashboard/accounts'
 import { Route as DashboardBestuurBeheerRouteImport } from './routes/_dashboard/bestuur-beheer'
 import { Route as DashboardCommunityRouteImport } from './routes/_dashboard/community'
@@ -102,6 +103,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAankondigingenRoute = DashboardAankondigingenRouteImport.update({
+  id: '/aankondigingen',
+  path: '/aankondigingen',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAccountsRoute = DashboardAccountsRouteImport.update({
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/community': typeof DashboardCommunityRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/community': typeof DashboardCommunityRoute
@@ -435,6 +443,7 @@ export interface FileRoutesById {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/_dashboard/aankondigingen': typeof DashboardAankondigingenRoute
   '/_dashboard/accounts': typeof DashboardAccountsRoute
   '/_dashboard/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/_dashboard/community': typeof DashboardCommunityRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
     | '/community'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
     | '/community'
@@ -591,6 +602,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/_dashboard/aankondigingen'
     | '/_dashboard/accounts'
     | '/_dashboard/bestuur-beheer'
     | '/_dashboard/community'
@@ -724,6 +736,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/aankondigingen': {
+      id: '/_dashboard/aankondigingen'
+      path: '/aankondigingen'
+      fullPath: '/aankondigingen'
+      preLoaderRoute: typeof DashboardAankondigingenRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/_dashboard/accounts': {
@@ -1017,6 +1036,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardAankondigingenRoute: typeof DashboardAankondigingenRoute
   DashboardAccountsRoute: typeof DashboardAccountsRoute
   DashboardBestuurBeheerRoute: typeof DashboardBestuurBeheerRoute
   DashboardCommunityRoute: typeof DashboardCommunityRoute
@@ -1047,6 +1067,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAankondigingenRoute: DashboardAankondigingenRoute,
   DashboardAccountsRoute: DashboardAccountsRoute,
   DashboardBestuurBeheerRoute: DashboardBestuurBeheerRoute,
   DashboardCommunityRoute: DashboardCommunityRoute,
