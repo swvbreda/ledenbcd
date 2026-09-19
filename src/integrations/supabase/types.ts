@@ -748,13 +748,17 @@ export type Database = {
           bag_pand_id: string | null
           bag_verblijfsobject_id: string | null
           bron_id: string
+          bron_schema_version: string | null
+          controle_nodig_bron: boolean | null
           created_at: string
           einddatum: string | null
           exploitant: string | null
+          exploitatie_status_bron: string | null
           gemeente: string | null
           huisnummer: string | null
           huisnummer_toevoeging: string | null
           id: string
+          is_baseline_shop_bron: boolean | null
           kvk_checked_at: string | null
           kvk_nummer: string | null
           kvk_oprichtingsdatum: string | null
@@ -787,6 +791,8 @@ export type Database = {
           straat: string | null
           synced_at: string
           telefoon: string | null
+          telt_mee: boolean | null
+          uitsluitreden: string | null
           updated_at: string
           vergunninghouder: string | null
           vergunningnummer: string | null
@@ -800,13 +806,17 @@ export type Database = {
           bag_pand_id?: string | null
           bag_verblijfsobject_id?: string | null
           bron_id: string
+          bron_schema_version?: string | null
+          controle_nodig_bron?: boolean | null
           created_at?: string
           einddatum?: string | null
           exploitant?: string | null
+          exploitatie_status_bron?: string | null
           gemeente?: string | null
           huisnummer?: string | null
           huisnummer_toevoeging?: string | null
           id?: string
+          is_baseline_shop_bron?: boolean | null
           kvk_checked_at?: string | null
           kvk_nummer?: string | null
           kvk_oprichtingsdatum?: string | null
@@ -839,6 +849,8 @@ export type Database = {
           straat?: string | null
           synced_at?: string
           telefoon?: string | null
+          telt_mee?: boolean | null
+          uitsluitreden?: string | null
           updated_at?: string
           vergunninghouder?: string | null
           vergunningnummer?: string | null
@@ -852,13 +864,17 @@ export type Database = {
           bag_pand_id?: string | null
           bag_verblijfsobject_id?: string | null
           bron_id?: string
+          bron_schema_version?: string | null
+          controle_nodig_bron?: boolean | null
           created_at?: string
           einddatum?: string | null
           exploitant?: string | null
+          exploitatie_status_bron?: string | null
           gemeente?: string | null
           huisnummer?: string | null
           huisnummer_toevoeging?: string | null
           id?: string
+          is_baseline_shop_bron?: boolean | null
           kvk_checked_at?: string | null
           kvk_nummer?: string | null
           kvk_oprichtingsdatum?: string | null
@@ -891,6 +907,8 @@ export type Database = {
           straat?: string | null
           synced_at?: string
           telefoon?: string | null
+          telt_mee?: boolean | null
+          uitsluitreden?: string | null
           updated_at?: string
           vergunninghouder?: string | null
           vergunningnummer?: string | null
@@ -3770,6 +3788,15 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      register_telt_mee: {
+        Args: {
+          _raw: Json
+          _status: string
+          _telt_mee: boolean
+          _vervallen: boolean
+        }
+        Returns: boolean
       }
       seed_board_registrations: {
         Args: { _event_id: string }
