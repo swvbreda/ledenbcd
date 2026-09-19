@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface Props {
+  /**
+   * De door de leden goedgekeurde rubriek. De opgeslagen naam is altijd de
+   * zichtbare titel; er wordt nooit tekst aan toegevoegd of overschreven.
+   */
   category: BudgetCategory;
-  /** Vervangt de zichtbare categorienaam (bv. om de bron te verduidelijken). */
-  titleOverride?: string;
-  /** Korte toelichting onder de titel. */
-  subtitle?: React.ReactNode;
   onAddLineItem: (categoryId: string, name: string, amount: number) => void;
   onUpdateLineItem: (id: string, name?: string, amount?: number) => void;
   onDeleteLineItem: (id: string) => void;
@@ -29,8 +29,6 @@ interface Props {
 
 export default function BudgetCategoryTable({
   category,
-  titleOverride,
-  subtitle,
   onAddLineItem,
   onUpdateLineItem,
   onDeleteLineItem,
@@ -102,35 +100,33 @@ export default function BudgetCategoryTable({
             className="bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
             onClick={() => setExpanded(!expanded)}
           >
-            <td className="px-3 py-2">
+            {/* Uitgeklapt loopt de opgeslagen rubriektitel over de volle breedte,
+                zodat hij niet in een smalle kolom tot een teksttoren afbreekt. */}
+            <td className="px-3 py-2" colSpan={expanded ? 5 : 1}>
               <div className="flex items-start gap-2">
                 <span className="mt-0.5">{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">{titleOverride || category.name}</h3>
-                  {subtitle && (
-                    <p className="text-[11px] font-normal leading-snug text-muted-foreground">{subtitle}</p>
-                  )}
-                </div>
+                <h3 className="min-w-0 text-sm font-semibold">{category.name}</h3>
               </div>
             </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">Begroot: </span><strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong></>}
-            </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && <><span className="text-muted-foreground text-xs">{spentLabel}: </span><strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong></>}
-            </td>
-            <td className="text-right px-3 py-2 text-sm">
-              {!expanded && (
-                <>
+            {!expanded && (
+              <>
+                <td className="text-right px-3 py-2 text-sm">
+                  <span className="text-muted-foreground text-xs">Begroot: </span>
+                  <strong className="text-foreground"><CurrencyText value={totalBudgeted} className="justify-end" /></strong>
+                </td>
+                <td className="text-right px-3 py-2 text-sm">
+                  <span className="text-muted-foreground text-xs">{spentLabel}: </span>
+                  <strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong>
+                </td>
+                <td className="text-right px-3 py-2 text-sm">
                   <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
                   <strong className={totalRemainingClass}>
                     <CurrencyText value={totalRemaining} className="justify-end" />
                   </strong>
-                </>
-              )}
-            </td>
-
-            <td />
+                </td>
+                <td />
+              </>
+            )}
           </tr>
         </thead>
         {expanded && (

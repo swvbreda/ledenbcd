@@ -63,6 +63,14 @@ interface DossierRow {
   total: number;
 }
 
+/**
+ * Een regel telt niet mee zolang géén van de samengevoegde bronnen aan een
+ * Informer-regel hangt. Zodra één bron wél gekoppeld is, telt het
+ * boekhoudkundige bedrag gewoon mee.
+ */
+export const isUnlinkedOnly = (e: DedupedEntry) =>
+  e.sources && e.sources.length > 0 ? e.sources.every((s) => s.unlinked) : !!e.unlinked;
+
 const formatDate = (value: string | null) => {
   if (!value) return "";
   const d = new Date(value);
@@ -95,8 +103,11 @@ export default function DossierOverzichtTab({ year }: Props) {
     for (const [dossier, groupEntries] of map) {
       if (isContributionDossier(dossier)) continue;
       const entries = dedupeEntries(groupEntries);
-      const out = entries.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
-      const income = entries.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
+      // Alleen aan Informer gekoppelde regels tellen mee in de dossiertotalen;
+      // bestaande administratieve mutaties blijven wel zichtbaar.
+      const counting = entries.filter((e) => !isUnlinkedOnly(e));
+      const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
+      const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
       rows.push({ dossier, entries, out, income, total: out - income });
     }
     rows.sort((a, b) => b.total - a.total);
@@ -305,7 +316,14 @@ export default function DossierOverzichtTab({ year }: Props) {
                   >
                     <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.invoiceDate) || "—"}</td>
                     <td className="whitespace-nowrap px-3 py-1 tabular-nums">{formatDate(e.paymentDate) || "—"}</td>
-                    <td className="px-3 py-1">{e.counterparty || e.description}</td>
+                    <td className="px-3 py-1">
+                      {e.counterparty || e.description}
+                      {isUnlinkedOnly(e) && (
+                        <span className="ml-1 whitespace-nowrap rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-700">
+                          nog niet gekoppeld aan Informer
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-1 tabular-nums">
                       {e.invoice || "—"}
                       {e.sources.length > 1 && <MergedSourcesHint sources={e.sources} note={e.note} />}

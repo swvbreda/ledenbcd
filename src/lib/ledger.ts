@@ -219,15 +219,20 @@ export function normalizeBudgetName(value: string): string {
 }
 
 /**
- * DE toewijzingsregel: expliciete override > eenduidige kostenrubriek-mapping >
- * niet toegewezen (null). Pure functie, zodat elke meetellende inkoopfactuur
- * gegarandeerd in exact één bak belandt.
+ * DE toewijzingsregel: expliciete override > bestaande administratieve
+ * toewijzing (budget_expenses/ponto_transactions via een conservatieve match) >
+ * eenduidige kostenrubriek-mapping > niet toegewezen (null). Pure functie,
+ * zodat elke meetellende inkoopfactuur gegarandeerd in exact één bak belandt.
  */
 export function assignLineItemId(
   entry: LedgerEntry,
   lineItems: BudgetLineItemRef[],
+  legacyLineItemId?: string | null,
 ): string | null {
   if (entry.line_item_id) return entry.line_item_id;
+  if (legacyLineItemId && lineItems.some((li) => li.id === legacyLineItemId)) {
+    return legacyLineItemId;
+  }
   if (!entry.ledger_account) return null;
   const key = normalizeBudgetName(entry.ledger_account);
   if (!key) return null;
@@ -246,15 +251,21 @@ export interface ExpenseBuckets {
   unassigned: LedgerEntry[];
 }
 
-/** Verdeelt alle meetellende inkoopfacturen over exact één bak per factuur. */
+/**
+ * Verdeelt alle meetellende inkoopfacturen over exact één bak per factuur.
+ * `legacyLineItemByEntryKey` bevat de bestaande administratieve toewijzing per
+ * "doc_type:informer_id"; die wordt gebruikt wanneer er geen override is.
+ */
 export function bucketExpenseEntries(
   entries: LedgerEntry[],
   lineItems: BudgetLineItemRef[],
+  legacyLineItemByEntryKey?: Map<string, string | null>,
 ): ExpenseBuckets {
   const byLineItem: Record<string, LedgerEntry[]> = {};
   const unassigned: LedgerEntry[] = [];
   for (const entry of expenseEntries(entries)) {
-    const lineItemId = assignLineItemId(entry, lineItems);
+    const legacy = legacyLineItemByEntryKey?.get(`${entry.doc_type}:${entry.informer_id}`) ?? null;
+    const lineItemId = assignLineItemId(entry, lineItems, legacy);
     if (lineItemId) (byLineItem[lineItemId] ||= []).push(entry);
     else unassigned.push(entry);
   }
