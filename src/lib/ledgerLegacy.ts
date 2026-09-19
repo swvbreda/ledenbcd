@@ -26,11 +26,40 @@ export interface LegacyRecord {
   direction: "in" | "out";
   lineItemId: string | null;
   dossier: string | null;
+  /**
+   * Technische hulprij uit een oude synchronisatie (bedrag 0, omschrijving
+   * "Informer <id>", geen tegenpartij/dossier). Geen door de leden
+   * goedgekeurde toewijzing en dus onbruikbaar voor post- en dossiermatching.
+   */
+  placeholder?: boolean;
+}
+
+/** Herkent synthetische Informer-hulprijen uit oude synchronisaties. */
+export function isSyntheticPlaceholder(r: {
+  amount: number;
+  description: string | null;
+  counterparty: string | null;
+  invoice: string | null;
+  dossier: string | null;
+}): boolean {
+  const description = (r.description || "").trim();
+  return (
+    Math.abs(r.amount) < 0.005 &&
+    /^Informer\s+\d+$/i.test(description) &&
+    !r.invoice &&
+    !r.dossier &&
+    (!r.counterparty || r.counterparty.trim().toLowerCase() === "onbekend")
+  );
 }
 
 export interface LegacyMatchResult {
   /** Informer-regelsleutel ("purchase_invoice:123") → bestaande administratie. */
   byEntryKey: Map<string, LegacyRecord>;
+  /**
+   * Extra administratieve representaties van dezelfde betaling (bv. zowel een
+   * budget_expense als een Ponto-mutatie). Alleen voor documentkoppeling.
+   */
+  aliasesByEntryKey: Map<string, LegacyRecord[]>;
   /** Administratieve regels die (nog) niet aan een Informer-regel hangen. */
   unmatched: LegacyRecord[];
   matchedBy: Map<string, "external_id" | "invoice" | "payment">;
