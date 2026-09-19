@@ -127,7 +127,7 @@ export default function DossierOverzichtTab({ year }: Props) {
   /** Aantal unieke facturen over alle onderliggende bronnen van een samengevoegde regel. */
   const docCountFor = (e: DedupedEntry) => {
     const seen = new Set<string>();
-    for (const k of [e.key, ...(e.sources || []).map((s) => s.key)]) {
+    for (const k of documentKeysOf(e)) {
       for (const p of docsByEntry.get(k) || []) seen.add(p);
     }
     return seen.size;
