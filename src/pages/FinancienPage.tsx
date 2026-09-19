@@ -27,6 +27,7 @@ import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
+import { buildCanonicalInvoiceRows, sumCanonicalInvoiceRows } from "@/lib/contributionInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
