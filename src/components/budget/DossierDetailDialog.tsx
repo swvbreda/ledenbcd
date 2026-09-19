@@ -15,6 +15,7 @@ import DossierInvoiceThumb, { useDocumentUrl } from "@/components/budget/Dossier
 import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
 import {
   duplicateAllocationKeys,
+  documentKeysOf,
   useDossierSplitActions,
   useExpenseDocumentActions,
   type DossierMutation,
