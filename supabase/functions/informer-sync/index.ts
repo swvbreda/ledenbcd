@@ -1394,6 +1394,13 @@ async function prepareInvoices(
       .eq("year", year);
     const invoiced = new Set<number>((invoiceRows ?? []).map((r: any) => Number(r.member_id)));
 
+    // Vrijgestelde leden voor DIT contributiejaar krijgen geen factuur.
+    const { data: exemptRows } = await supabase
+      .from("contribution_exemptions")
+      .select("member_id")
+      .eq("year", year);
+    const exempt = new Set<number>((exemptRows ?? []).map((r: any) => Number(r.member_id)));
+
     const { data: contribRows } = await supabase
       .from("member_contributions")
       .select("member_id, invoice_number")
