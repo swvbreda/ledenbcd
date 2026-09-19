@@ -360,8 +360,15 @@ export function useDossierMutations(year: number) {
           e.line_item_id ||
           (legacy?.lineItemId && liById.has(legacy.lineItemId) ? legacy.lineItemId : null);
         const lineItemName = lineItemId ? liById.get(lineItemId)?.name || "" : "";
+        const aliases = matched.aliasesByEntryKey.get(ledgerKey) || [];
+        const legacyKeys = [legacy?.key, ...aliases.map((a) => a.key)].filter(
+          (k): k is string => !!k,
+        );
         const ownSplits = splitsFor(key);
-        const splits = ownSplits.length > 0 ? ownSplits : legacy ? splitsFor(legacy.key) : [];
+        const splits =
+          ownSplits.length > 0
+            ? ownSplits
+            : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
         rows.push({
           key,
           kind: "ledger",
