@@ -243,6 +243,30 @@ export function useBudgetCategories(year: number) {
       }
       const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
 
+      for (const r of localOnlyRecords) {
+        const lineItemId = r.lineItemId as string;
+        if (!expensesByLineItem[lineItemId]) expensesByLineItem[lineItemId] = [];
+        expensesByLineItem[lineItemId].push({
+          id: r.key,
+          line_item_id: lineItemId,
+          description: r.description || r.counterparty || "",
+          // Inkomsten/terugbetalingen verlagen de kosten van de post.
+          amount: r.direction === "in" ? -r.amount : r.amount,
+          expense_date: r.date,
+          creditor_name: r.counterparty || "",
+          invoice_reference: r.invoice || "",
+          dossier: r.dossier || null,
+          source: r.kind === "ponto" ? "bank" : "administratie",
+          pdf_file_path: null,
+          paid: r.kind === "ponto",
+          paid_date: r.kind === "ponto" ? r.date : null,
+          created_at: r.date,
+          direction: r.direction,
+          _localOnly: true,
+        });
+      }
+
+
       const lineItemsByCategory: Record<string, any[]> = {};
       for (const li of lineItems || []) {
         if (!lineItemsByCategory[li.category_id]) lineItemsByCategory[li.category_id] = [];
