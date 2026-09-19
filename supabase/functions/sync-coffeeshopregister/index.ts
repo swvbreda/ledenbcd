@@ -603,7 +603,7 @@ Deno.serve(async (req) => {
 
     await db.from("coffeeshop_register_sync_state").update({
       last_run_at: new Date().toISOString(),
-      last_status: uboBron === "export" ? "ok (incl. UBO)" : "ok (openbaar, zonder UBO)",
+      last_status: `${uboBron === "export" ? "ok (incl. UBO)" : "ok (openbaar, zonder UBO)"} — bron v${schemaVersion}`,
       shops_synced: shopsSynced,
       ubo_synced: uboSynced,
       links_proposed: linksProposed,
