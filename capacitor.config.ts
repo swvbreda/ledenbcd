@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'nl.coffeeshopbond.leden',
   appName: 'BCD leden',
-  webDir: 'dist',
+  webDir: '.output/public',
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
