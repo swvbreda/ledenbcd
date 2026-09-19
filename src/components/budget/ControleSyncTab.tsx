@@ -56,8 +56,6 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
     expenses: parseAmount(expensesInput),
     revenue: parseAmount(revenueInput),
   });
-  const { data: unlinked } = useUnlinkedBankTransactions(year);
-  const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
 
   // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
