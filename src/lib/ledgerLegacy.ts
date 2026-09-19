@@ -274,13 +274,17 @@ export function buildLegacyAssignments(
   for (const entry of entries) {
     const key = ledgerKeyOf(entry);
     const record = match.byEntryKey.get(key);
-    if (record && (record.lineItemId || record.dossier)) {
-      out.set(key, { lineItemId: record.lineItemId, dossier: record.dossier, via: "legacy" });
-      continue;
+    const dossier = record?.dossier ?? null;
+    let lineItemId = record?.lineItemId ?? null;
+    let via: LegacyAssignment["via"] = lineItemId || dossier ? "legacy" : "counterparty";
+    if (!lineItemId && entry.doc_type !== "sales_invoice") {
+      const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
+      if (fallback) {
+        lineItemId = fallback;
+        if (!dossier) via = "counterparty";
+      }
     }
-    if (entry.doc_type === "sales_invoice") continue;
-    const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
-    if (fallback) out.set(key, { lineItemId: fallback, dossier: null, via: "counterparty" });
+    if (lineItemId || dossier) out.set(key, { lineItemId, dossier, via });
   }
   return out;
 }
