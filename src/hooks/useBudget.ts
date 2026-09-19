@@ -2,7 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
-import { expenseEntries, revenueEntries, type LedgerEntry } from "@/lib/ledger";
+import {
+  expenseEntries,
+  revenueEntries,
+  bucketExpenseEntries,
+  expenseAmount,
+  type LedgerEntry,
+} from "@/lib/ledger";
 
 /** Synthetische categorie voor meetellende inkoopfacturen zonder begrotingspost. */
 export const UNASSIGNED_CATEGORY_ID = "__unassigned_ledger__";
@@ -173,45 +179,40 @@ export function useBudgetCategories(year: number) {
         .limit(5000);
       if (ledgerErr) throw ledgerErr;
 
-      // Exact dezelfde canonieke selectie als het resultaat en de controlemodule.
-      const entries = expenseEntries((ledgerRows || []) as LedgerEntry[]);
+      // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
+      // controlemodule: override > eenduidige kostenrubriek > "Niet toegewezen".
+      // Elke meetellende inkoopfactuur zit daardoor in precies één bak.
+      const buckets = bucketExpenseEntries(
+        (ledgerRows || []) as LedgerEntry[],
+        (lineItems || []).map((li: any) => ({ id: li.id, name: String(li.name) })),
+      );
 
-      // Koppeling boekhoudregel → begrotingspost: eerst de lokale keuze
-      // (ledger_entry_overrides.line_item_id), anders de kostenrubriek van
-      // Informer op naam. Zonder koppeling komt de regel in de categorie
-      // "Niet toegewezen", zodat elke meetellende inkoopfactuur exact één keer
-      // in het dashboardtotaal zit.
-      const normalize = (v: string) =>
-        v.toLowerCase().replace(/^\d+\s*/, "").replace(/[^a-z0-9]+/g, " ").trim();
-      const byName = new Map<string, string>();
-      for (const li of lineItems || []) byName.set(normalize(String(li.name)), li.id);
+      const toRow = (e: LedgerEntry, lineItemId: string) => ({
+        id: `ledger:${e.doc_type}:${e.informer_id}`,
+        line_item_id: lineItemId,
+        description: e.description || e.relation_name || e.invoice_number,
+        // Teken behouden: een creditnota verlaagt de werkelijke uitgaven.
+        amount: expenseAmount(e),
+        expense_date: e.entry_date,
+        creditor_name: e.relation_name,
+        invoice_reference: e.invoice_number,
+        dossier: e.dossier,
+        source: "informer",
+        pdf_file_path: null,
+        paid: e.status === "paid",
+        paid_date: e.payment_date ?? null,
+        created_at: e.entry_date,
+        direction: "out" as const,
+        _fromLedger: true,
+      });
 
       const expensesByLineItem: Record<string, any[]> = {};
-      const unassigned: any[] = [];
-      for (const e of entries as any[]) {
-        const lineItemId =
-          e.line_item_id ||
-          (e.ledger_account ? byName.get(normalize(String(e.ledger_account))) : undefined);
-        const row = {
-          id: `ledger:${e.doc_type}:${e.informer_id}`,
-          line_item_id: lineItemId ?? UNASSIGNED_LINE_ITEM_ID,
-          description: e.description || e.relation_name || e.invoice_number,
-          amount: Math.abs(Number(e.amount_incl) || 0),
-          expense_date: e.entry_date,
-          creditor_name: e.relation_name,
-          invoice_reference: e.invoice_number,
-          dossier: e.dossier,
-          source: "informer",
-          pdf_file_path: null,
-          paid: e.status === "paid",
-          paid_date: e.payment_date ?? null,
-          created_at: e.entry_date,
-          direction: "out",
-          _fromLedger: true,
-        };
-        if (lineItemId) (expensesByLineItem[lineItemId] ||= []).push(row);
-        else unassigned.push(row);
+      for (const lineItemId of Object.keys(buckets.byLineItem)) {
+        expensesByLineItem[lineItemId] = (buckets.byLineItem[lineItemId] ?? []).map(
+          (e: LedgerEntry) => toRow(e, lineItemId),
+        );
       }
+      const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
 
       const lineItemsByCategory: Record<string, any[]> = {};
       for (const li of lineItems || []) {

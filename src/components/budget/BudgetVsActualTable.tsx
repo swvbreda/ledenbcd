@@ -4,9 +4,11 @@ import type { BudgetCategory } from "@/hooks/useBudget";
 interface Props {
   categories: BudgetCategory[];
   year: number;
+  /** Canoniek uitgaventotaal uit de boekhouding; leidend voor de hoofdkaart. */
+  canonicalSpent?: number;
 }
 
-export default function BudgetVsActualTable({ categories, year }: Props) {
+export default function BudgetVsActualTable({ categories, year, canonicalSpent }: Props) {
   if (categories.length === 0) return null;
 
   // Only expense categories — inkomstenposten (bv. contributies, subsidies) horen
@@ -18,13 +20,11 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
   const perCat = expenseCategories
     .map((cat) => {
       const budgeted = cat.line_items.reduce((sum, li) => sum + Number(li.budgeted_amount || 0), 0);
-      // Alle meetellende inkoopfacturen tellen mee (betaald én openstaand),
-      // zodat dit totaal exact gelijk is aan het dashboard- en resultaattotaal.
+      // Alle meetellende inkoopfacturen tellen mee (betaald én openstaand), met
+      // behoud van teken (creditnota verlaagt), zodat dit totaal exact gelijk is
+      // aan het dashboard- en resultaattotaal.
       const spentPerLine = cat.line_items.map((li) =>
-        li.expenses.reduce(
-          (es, e) => es + (e.direction === "in" ? 0 : Number(e.amount || 0)),
-          0
-        )
+        li.expenses.reduce((es, e) => es + Number(e.amount || 0), 0)
       );
       const spent = spentPerLine.reduce((s, v) => s + v, 0);
       // Netto per categorie: overschrijding binnen een post wordt verrekend
@@ -37,9 +37,12 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
     .sort((a, b) => b.spent - a.spent);
 
   const totalBudgeted = perCat.reduce((s, c) => s + c.budgeted, 0);
-  const totalSpent = perCat.reduce((s, c) => s + c.spent, 0);
-  const totalAvailable = perCat.reduce((s, c) => s + c.available, 0);
-  
+  const categorySpent = perCat.reduce((s, c) => s + c.spent, 0);
+  const totalSpent = typeof canonicalSpent === "number" ? canonicalSpent : categorySpent;
+  // Beschikbaar = begroting − canonieke uitgaven, niet de som van per-categorie
+  // restanten (die negeert overschrijdingen en ongekoppelde facturen).
+  const totalAvailable = totalBudgeted - totalSpent;
+
   const over = totalSpent > totalBudgeted && totalBudgeted > 0;
   const pct = totalBudgeted > 0 ? Math.min(100, Math.round((totalSpent / totalBudgeted) * 100)) : 0;
 
@@ -52,7 +55,7 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
           {" uitgegeven van "}
           <span className="tabular-nums"><CurrencyText value={totalBudgeted} /></span>
           {" · beschikbaar "}
-          <span className="tabular-nums font-medium text-green-600">
+          <span className={`tabular-nums font-medium ${totalAvailable < 0 ? "text-destructive" : "text-green-600"}`}>
             <CurrencyText value={totalAvailable} />
           </span>
         </div>

@@ -7,6 +7,10 @@ import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 
 interface Props {
   category: BudgetCategory;
+  /** Vervangt de zichtbare categorienaam (bv. om de bron te verduidelijken). */
+  titleOverride?: string;
+  /** Korte toelichting onder de titel. */
+  subtitle?: React.ReactNode;
   onAddLineItem: (categoryId: string, name: string, amount: number) => void;
   onUpdateLineItem: (id: string, name?: string, amount?: number) => void;
   onDeleteLineItem: (id: string) => void;
@@ -25,6 +29,8 @@ interface Props {
 
 export default function BudgetCategoryTable({
   category,
+  titleOverride,
+  subtitle,
   onAddLineItem,
   onUpdateLineItem,
   onDeleteLineItem,
@@ -97,9 +103,14 @@ export default function BudgetCategoryTable({
             onClick={() => setExpanded(!expanded)}
           >
             <td className="px-3 py-2">
-              <div className="flex items-center gap-2">
-                {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <h3 className="text-sm font-semibold">{category.name}</h3>
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5">{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold">{titleOverride || category.name}</h3>
+                  {subtitle && (
+                    <p className="text-[11px] font-normal leading-snug text-muted-foreground">{subtitle}</p>
+                  )}
+                </div>
               </div>
             </td>
             <td className="text-right px-3 py-2 text-sm">
