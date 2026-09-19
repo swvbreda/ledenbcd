@@ -157,7 +157,14 @@ export default function ExpenseListView({ categories, onDeleteExpense }: Props) 
                 <td className="px-2 py-1.5">{e.categoryName}</td>
                 <td className="px-2 py-1.5">{e.lineItemName}</td>
                 <td className="px-2 py-1.5">{e.dossier || ""}</td>
-                <td className="px-2 py-1.5">{e.creditor_name || ""}</td>
+                <td className="px-2 py-1.5">
+                  {e.creditor_name || ""}
+                  {(e as any)._localOnly && (
+                    <span className="ml-1 whitespace-nowrap rounded bg-sky-100 px-1 text-[10px] font-medium text-sky-700">
+                      Lokale mutatie — niet in Informer
+                    </span>
+                  )}
+                </td>
                 <td className="px-2 py-1.5 tabular-nums">{e.invoice_reference || ""}</td>
                 <td className="px-2 py-1.5 text-right"><CurrencyCell value={e.amount} /></td>
                 <td className="px-1">
