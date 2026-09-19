@@ -29,12 +29,6 @@ export default function ContributiesBreakdownDialog({
     return m;
   }, [members]);
 
-  const paidMap = useMemo(() => {
-    const m = new Map<number, Contribution>();
-    contributions.forEach((c) => { if (c.paid) m.set(c.member_id, c); });
-    return m;
-  }, [contributions]);
-
   const paymentsByMember = useMemo(() => {
     const m = new Map<number, { amount: number; paidDate: string | null }>();
     payments.forEach((p) => {
