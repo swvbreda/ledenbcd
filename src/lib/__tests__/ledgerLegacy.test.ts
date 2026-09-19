@@ -110,7 +110,10 @@ describe("matchLegacyRecords", () => {
   it("voegt een dubbele oude representatie (boeking én bank) samen als alias", () => {
     const res = matchLegacyRecords(
       [entry({})],
-      [legacy({ key: "expense:a" }), legacy({ key: "ponto:b", kind: "ponto", lineItemId: null })],
+      [
+        legacy({ key: "expense:a" }),
+        legacy({ key: "ponto:b", kind: "ponto", invoice: null, lineItemId: null }),
+      ],
     );
     expect(res.byEntryKey.get("purchase_invoice:1")?.key).toBe("expense:a");
     expect(res.aliasesByEntryKey.get("purchase_invoice:1")?.map((r) => r.key)).toEqual(["ponto:b"]);
