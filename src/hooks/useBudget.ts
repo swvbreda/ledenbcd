@@ -184,12 +184,23 @@ export function useBudgetCategories(year: number) {
       // Bestaande administratieve toewijzing (begrotingspost/dossier) blijft
       // gelden: die komt uit budget_expenses en ponto_transactions en wordt
       // conservatief aan de Informer-regels gekoppeld.
-      const legacy = await fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id));
+      const [legacy, documentHints] = await Promise.all([
+        fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id)),
+        fetchDocumentHints(year),
+      ]);
       const entriesAll = (ledgerRows || []) as LedgerEntry[];
-      const matched = matchLegacyRecords(entriesAll, legacy);
+      const matched = matchLegacyRecords(entriesAll, legacy, { documentHints });
       const assignments = buildLegacyAssignments(entriesAll, legacy, matched);
       const legacyLineItemByEntryKey = new Map<string, string | null>(
         [...assignments].map(([k, a]) => [k, a.lineItemId]),
+      );
+
+      // Aanvullende lokale mutaties: een bestaande administratieve boeking met
+      // eigen begrotingspost die niet door een Informer-factuur wordt
+      // vertegenwoordigd. Telt exact één keer mee in het managementoverzicht.
+      const knownLineItemIds = new Set((lineItems || []).map((li: any) => String(li.id)));
+      const localOnlyRecords = matched.unmatched.filter(
+        (r) => r.lineItemId && knownLineItemIds.has(r.lineItemId),
       );
 
 
