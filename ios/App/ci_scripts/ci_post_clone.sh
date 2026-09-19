@@ -16,3 +16,6 @@ npm -v
 npm install --legacy-peer-deps --no-audit --no-fund
 npm run build
 npx cap sync ios
+
+# Resolve Swift package dependencies so Package.resolved exists before archiving
+xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
