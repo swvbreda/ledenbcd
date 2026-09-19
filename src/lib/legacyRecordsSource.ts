@@ -81,3 +81,27 @@ export async function fetchLegacyRecords(year: number, lineItemIds: string[]): P
 
   return records;
 }
+
+/**
+ * Factuurnummers uit de gekoppelde documenten per lokale mutatie. Een
+ * bestandsnaam als "Declaratie 20260688 - Worldline.pdf" is een sterke hint
+ * naar de bijbehorende Informer-factuur.
+ */
+export async function fetchDocumentHints(year: number): Promise<Map<string, string[]>> {
+  const { data, error } = await client
+    .from("expense_documents")
+    .select("entry_key, invoice_reference, file_name")
+    .eq("year", year)
+    .limit(5000);
+  if (error) throw error;
+
+  const hints = new Map<string, string[]>();
+  for (const doc of data || []) {
+    const text = `${doc.invoice_reference ?? ""} ${doc.file_name ?? ""}`;
+    const numbers = [...new Set(text.match(/\b\d{5,9}\b/g) || [])];
+    if (numbers.length === 0) continue;
+    const key = String(doc.entry_key);
+    hints.set(key, [...new Set([...(hints.get(key) ?? []), ...numbers])]);
+  }
+  return hints;
+}
