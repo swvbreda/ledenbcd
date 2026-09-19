@@ -90,6 +90,9 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
               : ""}
           </p>
           <p className="text-xs text-muted-foreground">Het volledige boekjaar wordt automatisch bijgewerkt.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Details van de boekhouding beheer je in Informer. Hier bewaken we de actualiteit van begroting en dossiers.
+          </p>
           {(autoSync?.error || lastLog?.error_message) && !autoSync?.isSyncing && (
             <p className="text-xs text-brand-red inline-flex items-center gap-1 mt-1">
               <AlertTriangle size={12} />
