@@ -179,12 +179,23 @@ export function useBudgetCategories(year: number) {
         .limit(5000);
       if (ledgerErr) throw ledgerErr;
 
+      // Bestaande administratieve toewijzing (begrotingspost/dossier) blijft
+      // gelden: die komt uit budget_expenses en ponto_transactions en wordt
+      // conservatief aan de Informer-regels gekoppeld.
+      const legacy = await fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id));
+      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacy);
+      const legacyLineItemByEntryKey = new Map<string, string | null>(
+        [...matched.byEntryKey].map(([k, r]) => [k, r.lineItemId]),
+      );
+
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
-      // controlemodule: override > eenduidige kostenrubriek > "Niet toegewezen".
-      // Elke meetellende inkoopfactuur zit daardoor in precies één bak.
+      // controlemodule: override > bestaande toewijzing > eenduidige
+      // kostenrubriek > "Niet toegewezen". Elke meetellende inkoopfactuur zit
+      // daardoor in precies één bak.
       const buckets = bucketExpenseEntries(
         (ledgerRows || []) as LedgerEntry[],
         (lineItems || []).map((li: any) => ({ id: li.id, name: String(li.name) })),
+        legacyLineItemByEntryKey,
       );
 
       const toRow = (e: LedgerEntry, lineItemId: string) => ({
