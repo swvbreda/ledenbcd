@@ -126,27 +126,35 @@ export async function convertLead(params: {
       .eq("member_id", params.leadId);
   }
 
-  // 3. Insert new member row
-  const { error: insertErr } = await supabase
-    .from("members_data")
-    .insert([{ id: lidnummer, member_type: "member", data: memberData as any }]);
-  if (insertErr) throw insertErr;
+  if (lidnummer === params.leadId) {
+    // 3a. Zelfde dossiernummer: de bestaande rij omzetten naar lid.
+    // Een insert zou botsen met de primaire sleutel van de leadrij.
+    const { error: updateErr } = await supabase
+      .from("members_data")
+      .update({ member_type: "member", data: memberData as any })
+      .eq("id", lidnummer)
+      .eq("member_type", "lead");
+    if (updateErr) throw updateErr;
+  } else {
+    // 3b. Nieuw nummer: nieuwe ledenrij aanmaken en de leadrij opruimen.
+    const { error: insertErr } = await supabase
+      .from("members_data")
+      .insert([{ id: lidnummer, member_type: "member", data: memberData as any }]);
+    if (insertErr) throw insertErr;
 
-  // 4. Move existing account links from old lead id to the new member id
-  if (lidnummer !== params.leadId) {
+    // 4. Move existing account links from old lead id to the new member id
     await supabase
       .from("member_profiles")
       .update({ member_id: lidnummer })
       .eq("member_id", params.leadId);
+
+    // 5. Delete old lead row
+    await supabase
+      .from("members_data")
+      .delete()
+      .eq("id", params.leadId)
+      .eq("member_type", "lead");
   }
-
-
-  // 5. Delete old lead row
-  await supabase
-    .from("members_data")
-    .delete()
-    .eq("id", params.leadId)
-    .eq("member_type", "lead");
 
   // 6. Auto-add lead's email to allowed emails for registration
   if (params.leadEmail) {
