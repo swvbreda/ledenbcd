@@ -58,7 +58,9 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
   const { data: syncState } = useInformerSyncState();
 
   const lastSync = totals.readiness.lastSyncAt;
-  const lastLog = (syncState?.log ?? []).find((l: any) => String(l.action ?? "").includes("sync_year"));
+  const lastLog = (syncState?.log ?? []).find(
+    (l: any) => String(l.action ?? "").includes("sync_year") && Number(l?.details?.year) === year,
+  );
 
   const compare = (reference: string, actual: number) => {
     const parsed = parseAmount(reference);
