@@ -84,6 +84,29 @@ export default function ControleSyncTab({ year }: Props) {
           <StatCard label="Resultaat" value={<CurrencyText value={totals.netResult} />} />
           <StatCard label="Openstaand verkoop" value={<CurrencyText value={totals.openSales} />} />
         </div>
+
+        <div className="mt-3 flex items-start gap-2 text-xs rounded-md border border-border p-2">
+          {totals.readiness.reconciled ? (
+            <CheckCircle2 size={14} className="text-emerald-600 mt-0.5" />
+          ) : (
+            <AlertTriangle size={14} className="text-amber-600 mt-0.5" />
+          )}
+          <div>
+            <div className="font-medium">
+              {totals.readiness.reconciled
+                ? "Gereconcilieerd met de boekhouding"
+                : "Niet volledig gereconcilieerd"}
+            </div>
+            <div className="text-muted-foreground">
+              {totals.readiness.reasons.length > 0
+                ? totals.readiness.reasons.join(" ")
+                : "Vul hieronder de controletotalen in om dit te bevestigen."}
+              {" "}
+              {totals.readiness.counted} meetellende regels, {totals.readiness.attention} aandachtspunten,{" "}
+              {totals.readiness.withoutLedgerAccount} zonder kostenrubriek.
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="border border-border rounded-lg bg-card p-4">
