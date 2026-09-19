@@ -82,8 +82,8 @@ export default function BudgetCategoryTable({
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
+      <table className="w-full min-w-[38rem] text-sm">
         <colgroup>
           <col className="w-[30%]" />
           <col className="w-[20%]" />

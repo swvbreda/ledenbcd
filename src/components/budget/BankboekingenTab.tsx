@@ -277,13 +277,13 @@ export default function BankboekingenTab({ year }: { year: number }) {
         </Button>
       </div>
 
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card overscroll-x-contain">
         {isLoading ? (
           <div className="p-6 text-center text-sm text-muted-foreground">Laden…</div>
         ) : filtered.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">Geen boekingen.</div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[64rem] text-sm">
             <thead className="bg-muted/30">
               <tr className="text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">Datum</th>
@@ -419,11 +419,11 @@ export default function BankboekingenTab({ year }: { year: number }) {
       </div>
 
       {contribMatches.length > 0 && (
-        <div className="border border-border rounded-lg bg-card">
+        <div className="overflow-x-auto rounded-lg border border-border bg-card overscroll-x-contain">
           <div className="px-3 py-2 border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Contributie-matches ({contribMatches.length})
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[56rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">Datum</th>
@@ -467,11 +467,11 @@ export default function BankboekingenTab({ year }: { year: number }) {
       )}
 
       {(rules?.length ?? 0) > 0 && (
-        <div className="border border-border rounded-lg bg-card">
+        <div className="overflow-x-auto rounded-lg border border-border bg-card overscroll-x-contain">
           <div className="px-3 py-2 border-b border-border bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Matchregels ({rules!.length})
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[38rem] text-sm">
             <tbody>
               {rules!.map((r) => (
                 <tr key={r.id} className="border-t border-border">

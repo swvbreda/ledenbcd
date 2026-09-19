@@ -297,8 +297,8 @@ export default function InternalDeclarationsView({ declarations, year, isAdmin, 
         </div>
       )}
 
-      <div className="border border-border rounded-lg overflow-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-auto overscroll-x-contain rounded-lg border border-border">
+        <table className="w-full min-w-[78rem] text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <SortHeader label="Datum" field="expense_date" className="text-left" />

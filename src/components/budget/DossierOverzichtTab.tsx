@@ -230,7 +230,7 @@ export default function DossierOverzichtTab({ year }: Props) {
         <p className="py-8 text-center text-sm text-muted-foreground">Geen dossiers gevonden voor {year}</p>
       ) : (
         dossiers.map((d) => (
-          <div key={d.dossier} className="overflow-hidden rounded-lg border border-border">
+          <div key={d.dossier} className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
             <div className="flex items-center justify-between gap-2 bg-muted/40 px-3 py-1.5">
               {editingDossier === d.dossier ? (
                 <div className="flex flex-1 items-center gap-1">
@@ -281,7 +281,7 @@ export default function DossierOverzichtTab({ year }: Props) {
                 <CurrencyText value={d.total} />
               </span>
             </div>
-            <table className="w-full text-xs">
+            <table className="w-full min-w-[72rem] text-xs">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
                   <th className="w-[9%] px-3 py-1 text-left font-medium">Factuurdatum</th>
@@ -468,7 +468,7 @@ export default function DossierOverzichtTab({ year }: Props) {
                     {searchFilter ? "Geen resultaten" : "Alle mutaties zijn al aan een dossier gekoppeld"}
                   </p>
                 ) : (
-                  <table className="w-full text-xs">
+                  <table className="w-full min-w-[44rem] text-xs">
                     <thead className="sticky top-0 z-10 bg-background">
                       <tr className="border-b border-border/50">
                         <th className="w-8 px-2 py-1.5" />

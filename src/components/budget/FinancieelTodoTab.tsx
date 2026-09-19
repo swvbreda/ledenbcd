@@ -515,8 +515,8 @@ export default function FinancieelTodoTab({ year }: Props) {
             </span>
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{items.length}</Badge>
           </div>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm table-fixed">
+          <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
+            <table className="w-full min-w-[72rem] table-fixed text-sm">
                <thead>
                 <tr className="bg-muted/40 text-xs text-muted-foreground">
                   <th className="w-7 px-2 py-1.5">

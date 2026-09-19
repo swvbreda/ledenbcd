@@ -143,11 +143,11 @@ export default function BalancePanel({
   return (
     <div className="space-y-4">
       {/* Middelen balans */}
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Middelen balans</h3>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[38rem] text-sm">
           <thead>
             <tr className="border-b border-border/30 bg-muted/20">
               <th className="text-left px-3 py-1.5 font-medium text-muted-foreground text-xs w-[35%]">Debet</th>
@@ -190,11 +190,11 @@ export default function BalancePanel({
       </div>
 
       {/* Resultaat */}
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border border-border overscroll-x-contain">
         <div className="px-3 py-2 bg-muted/50">
           <h3 className="text-sm font-semibold">Resultaat</h3>
         </div>
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[34rem] text-sm">
            <colgroup>
             <col className="w-[35%]" />
             <col className="w-[20%]" />

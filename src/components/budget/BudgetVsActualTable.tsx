@@ -63,7 +63,33 @@ export default function BudgetVsActualTable({ categories, year }: Props) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <table className="w-full text-xs">
+      <div className="space-y-2 md:hidden">
+        {perCat.map((c) => {
+          const catPct = c.budgeted > 0 ? Math.round((c.spent / c.budgeted) * 100) : 0;
+          const catOver = c.spent > c.budgeted && c.budgeted > 0;
+          return (
+            <div key={c.id} className="rounded-md border border-border/70 p-3">
+              <div className="mb-2 font-medium">{c.name}</div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                <dt className="text-muted-foreground">Begroot</dt>
+                <dd className="text-right tabular-nums"><CurrencyCell value={c.budgeted} /></dd>
+                <dt className="text-muted-foreground">Uitgegeven</dt>
+                <dd className="text-right tabular-nums"><CurrencyCell value={c.spent} /></dd>
+                <dt className="text-muted-foreground">Verbruikt</dt>
+                <dd className={`text-right tabular-nums ${catOver ? "font-medium text-destructive" : ""}`}>
+                  {c.budgeted > 0 ? `${catPct}%` : "—"}
+                </dd>
+                <dt className="text-muted-foreground">Beschikbaar</dt>
+                <dd className="text-right tabular-nums">
+                  <CurrencyCell value={c.available + c.overrun} className={c.overrun < 0 ? "text-destructive" : ""} />
+                </dd>
+              </dl>
+            </div>
+          );
+        })}
+      </div>
+
+      <table className="hidden w-full text-xs md:table">
         <thead>
           <tr className="text-muted-foreground border-b border-border/40">
             <th className="text-left font-medium py-1">Categorie</th>

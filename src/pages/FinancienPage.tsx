@@ -281,7 +281,7 @@ export default function FinancienPage() {
   const fmt = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
+    <div className="min-w-0 max-w-full space-y-4 overflow-x-hidden p-4 sm:p-6">
       <BcdHeroBanner
         title="Financieel Beheer"
         subtitle="Begroting, contributie, declaraties en uitgaven beheren"
@@ -308,27 +308,27 @@ export default function FinancienPage() {
       ) : (
         <>
 
-        <Tabs defaultValue="dashboard" className="space-y-1">
-          <TabsList className="bg-muted/60 h-10">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+        <Tabs defaultValue="dashboard" className="min-w-0 space-y-1">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:inline-flex sm:h-10 sm:w-auto sm:flex-nowrap sm:gap-0">
+            <TabsTrigger value="dashboard" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="intern" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="intern" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Declaraties
             </TabsTrigger>
-            <TabsTrigger value="contributie" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="contributie" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="boekingen" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="boekingen" className="min-w-0 whitespace-normal px-2 py-2 leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Inkomsten / Uitgaven
             </TabsTrigger>
-            <TabsTrigger value="dossiers" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="dossiers" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               Dossiers
             </TabsTrigger>
-            <TabsTrigger value="todo" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="todo" className="min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:px-4 sm:py-1.5">
               To Do
             </TabsTrigger>
-            <TabsTrigger value="informer" className="data-[state=active]:bg-background data-[state=active]:shadow-xs px-4">
+            <TabsTrigger value="informer" className="col-span-2 min-w-0 px-2 py-2 data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1 sm:px-4 sm:py-1.5">
               Informer
             </TabsTrigger>
 
@@ -387,8 +387,8 @@ export default function FinancienPage() {
                 ))}
 
                 {(categories || []).length > 0 && (
-                  <div className="border border-border rounded-lg overflow-hidden bg-primary/5">
-                    <table className="w-full text-sm">
+                  <div className="overflow-x-auto rounded-lg border border-border bg-primary/5 overscroll-x-contain">
+                    <table className="w-full min-w-[38rem] text-sm">
                       <colgroup>
                         <col className="w-[30%]" />
                         <col className="w-[20%]" />

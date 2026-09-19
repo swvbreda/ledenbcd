@@ -370,14 +370,14 @@ export default function InformerSyncTab() {
         </DialogContent>
       </Dialog>
 
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card overscroll-x-contain">
         <div className="px-4 py-2 border-b border-border bg-muted/30">
           <h4 className="text-sm font-semibold">Recente sync-activiteit</h4>
         </div>
         {(logs ?? []).length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">Nog geen sync uitgevoerd.</div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[64rem] text-sm">
             <thead className="bg-muted/30">
               <tr className="text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">Status</th>
@@ -506,7 +506,7 @@ function DebtorLinkDialog({
           ) : filtered.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">Geen debiteuren.</div>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[64rem] text-sm">
               <thead className="bg-muted/30 sticky top-0">
                 <tr className="text-left text-xs text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Informer-debiteur</th>

@@ -61,8 +61,8 @@ export default function OpenstaandePostenTab({ categories, contributions, member
             Totaal: <CurrencyText value={totalCreditors} />
           </span>
         </div>
-        <div className="border border-border rounded-lg overflow-hidden max-h-[65vh] overflow-y-auto">
-          <table className="w-full text-xs">
+        <div className="max-h-[65vh] overflow-auto overscroll-x-contain rounded-lg border border-border">
+          <table className="w-full min-w-[38rem] text-xs">
             <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
               <tr className="border-b border-border">
                 <th className="px-2 py-1.5 w-8" />

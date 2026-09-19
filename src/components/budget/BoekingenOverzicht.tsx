@@ -345,7 +345,7 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       </div>
 
       {/* Summary */}
-      <div className="flex gap-4 text-xs">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
         <span className="text-green-600 font-medium">Inkomsten: <CurrencyText value={totals.income} /></span>
         <span className="text-destructive font-medium">Uitgaven: <CurrencyText value={totals.expense} /></span>
         {bankStatement?.upload ? (
@@ -367,8 +367,8 @@ export default function BoekingenOverzicht({ categories, contributions, bankStat
       </div>
 
       {/* Table */}
-      <div className="border border-border rounded-lg overflow-auto max-h-[65vh]">
-        <table className="w-full text-xs">
+      <div className="max-h-[65vh] overflow-auto overscroll-x-contain rounded-lg border border-border">
+        <table className="w-full min-w-[78rem] text-xs">
           <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
             <tr className="border-b border-border">
               <SortHeader label="Type" field="type" className="text-left w-[70px]" />
