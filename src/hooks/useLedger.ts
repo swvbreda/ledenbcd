@@ -38,9 +38,14 @@ export function useLedger(year: number) {
   });
 }
 
-export function useLedgerTotals(year: number) {
+export function useLedgerTotals(
+  year: number,
+  reference?: { expenses?: number | null; revenue?: number | null },
+) {
   const { data, isLoading, error } = useLedger(year);
+  const { data: syncInfo } = useInformerSyncState();
   const entries = data ?? [];
+  const lastSyncAt = (syncInfo?.state as any)?.last_invoice_sync_at ?? null;
   return {
     isLoading,
     error,
@@ -52,6 +57,7 @@ export function useLedgerTotals(year: number) {
     netResult: netResult(entries),
     openSales: openSalesTotal(entries),
     byDossier: totalsByDossier(entries),
+    readiness: ledgerReadiness(entries, lastSyncAt, reference),
   };
 }
 
@@ -101,7 +107,7 @@ export function useInformerSyncState() {
     queryFn: async () => {
       const [{ data: state }, { data: log }] = await Promise.all([
         client.from("informer_sync_state").select("*").eq("id", 1).maybeSingle(),
-        client.from("informer_sync_log").select("*").order("created_at", { ascending: false }).limit(20),
+        client.from("informer_sync_log").select("*").order("run_at", { ascending: false }).limit(20),
       ]);
       return { state: state ?? null, log: log ?? [] };
     },
