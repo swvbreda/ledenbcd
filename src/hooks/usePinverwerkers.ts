@@ -5,7 +5,6 @@ export interface PspGroep {
   naam: string;
   aantal: number;
   pct: number;
-  vestigingen: string[];
 }
 
 const KNOWN = [
@@ -97,7 +96,6 @@ export const usePinverwerkers = (enabled: boolean) =>
           naam,
           aantal: set.size,
           pct: Math.round((set.size / totaal) * 100),
-          vestigingen: Array.from(set).sort((a, b) => a.localeCompare(b, "nl")),
         }))
         .sort((a, b) => {
           if (a.naam === "Anders") return 1;

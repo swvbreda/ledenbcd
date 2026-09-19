@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import {
   Banknote,
-  CreditCard,
 } from "lucide-react";
 import {
   PieChart,
@@ -71,7 +70,7 @@ const DonutDiagram = ({
   onSelect,
 }: {
   items: DonutItem[];
-  onSelect: (label: string) => void;
+  onSelect?: (label: string) => void;
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
     <div className="h-56">
@@ -86,10 +85,10 @@ const DonutDiagram = ({
             innerRadius="55%"
             outerRadius="85%"
             paddingAngle={2}
-            onClick={(_, index) => {
+            onClick={onSelect ? (_, index) => {
               const it = items[index];
               if (it) onSelect(it.label);
-            }}
+            } : undefined}
           >
             {items.map((it) => (
               <Cell
@@ -97,7 +96,10 @@ const DonutDiagram = ({
                 fill={it.color}
                 stroke="hsl(var(--card))"
                 strokeWidth={2}
-                className="outline-hidden cursor-pointer transition-opacity hover:opacity-80"
+                className={cn(
+                  "outline-hidden",
+                  onSelect && "cursor-pointer transition-opacity hover:opacity-80",
+                )}
               />
             ))}
           </Pie>
@@ -120,11 +122,18 @@ const DonutDiagram = ({
     </div>
     <div className="space-y-2">
       {items.map((it) => (
-        <button
+        <div
           key={it.label}
-          type="button"
-          onClick={() => onSelect(it.label)}
-          className="w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm hover:bg-muted/60 transition-colors text-left"
+          className={cn(
+            "w-full flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-sm text-left",
+            onSelect && "cursor-pointer hover:bg-muted/60 transition-colors",
+          )}
+          onClick={onSelect ? () => onSelect(it.label) : undefined}
+          role={onSelect ? "button" : undefined}
+          tabIndex={onSelect ? 0 : undefined}
+          onKeyDown={onSelect ? (event) => {
+            if (event.key === "Enter" || event.key === " ") onSelect(it.label);
+          } : undefined}
         >
           <span className="flex items-center gap-2">
             <span
@@ -136,7 +145,7 @@ const DonutDiagram = ({
           <span className="tabular-nums text-muted-foreground shrink-0">
             {it.aantal} · {it.pct}%
           </span>
-        </button>
+        </div>
       ))}
     </div>
   </div>
@@ -150,7 +159,6 @@ export const KerngegevensDashboard = () => {
   const k = useKerngegevens(allowed);
   const { data: psp } = usePinverwerkers(allowed);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
-  const [pspDetail, setPspDetail] = useState<{ titel: string; regels: string[] } | null>(null);
 
   const bankItems: DonutItem[] = useMemo(
     () =>
@@ -247,13 +255,7 @@ export const KerngegevensDashboard = () => {
           {bankItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
           ) : (
-            <DonutDiagram
-              items={bankItems}
-              onSelect={(label) => {
-                const b = k.bankGroepen.find((g) => g.bank === label);
-                if (b) setDetail({ titel: `Bankiert bij ${b.bank}`, leden: b.leden });
-              }}
-            />
+            <DonutDiagram items={bankItems} />
           )}
         </Sectie>
 
@@ -263,35 +265,10 @@ export const KerngegevensDashboard = () => {
               Nog geen enquêteantwoorden over betaalverwerkers.
             </p>
           ) : (
-            <DonutDiagram
-              items={pspItems}
-              onSelect={(label) => {
-                const g = psp?.groepen.find((x) => x.naam === label);
-                if (g) setPspDetail({ titel: `Betaalverwerker ${g.naam}`, regels: g.vestigingen });
-              }}
-            />
+            <DonutDiagram items={pspItems} />
           )}
         </Sectie>
       </div>
-
-      <Dialog open={!!pspDetail} onOpenChange={(o) => !o && setPspDetail(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-brand-red" />
-              {pspDetail?.titel}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
-            {(pspDetail?.regels ?? []).map((r) => (
-              <div key={r} className="py-2 text-sm">
-                {r}
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-lg">
