@@ -62,6 +62,10 @@ interface DossierRow {
   out: number;
   income: number;
   total: number;
+  /** Netto bedrag uit de canonieke Informer-facturen. */
+  informerTotal: number;
+  /** Netto bedrag uit aanvullende lokale mutaties (niet in Informer). */
+  localTotal: number;
 }
 
 /**
@@ -71,6 +75,10 @@ interface DossierRow {
  */
 export const isUnlinkedOnly = (e: DedupedEntry) =>
   e.sources && e.sources.length > 0 ? e.sources.every((s) => s.unlinked) : !!e.unlinked;
+
+/** Aanvullende lokale mutatie: eigen toewijzing, geen Informer-factuur. */
+export const isLocalOnly = (e: DedupedEntry) =>
+  e.sources && e.sources.length > 0 ? e.sources.every((s) => s.localOnly) : !!e.localOnly;
 
 const formatDate = (value: string | null) => {
   if (!value) return "";
