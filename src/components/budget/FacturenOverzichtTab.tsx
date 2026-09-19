@@ -289,11 +289,11 @@ export default function FacturenOverzichtTab({ year }: Props) {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                    {r.invoices.length === 0 ? "—" : r.invoices.map((i) => i.invoice_number ?? "—").join(", ")}
+                    {r.resolved.invoiceNumbers.length === 0 ? "—" : r.resolved.invoiceNumbers.join(", ")}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground tabular-nums">
                     {(() => {
-                      const d = r.invoices[0]?.invoice_date ?? r.contrib?.invoice_date ?? r.invoices[0]?.created_at ?? null;
+                      const d = r.resolved.invoiceDate;
                       if (!d) return "—";
                       const dt = new Date(d);
                       return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
