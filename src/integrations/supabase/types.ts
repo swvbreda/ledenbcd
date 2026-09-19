@@ -3513,6 +3513,15 @@ export type Database = {
         Args: { _member_id: number; _year: number }
         Returns: boolean
       }
+      is_contribution_exempt_shop: {
+        Args: {
+          _member_id: number
+          _naam: string
+          _plaats: string
+          _year: number
+        }
+        Returns: boolean
+      }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
       member_registered_emails: {
         Args: { _member_id: number }
