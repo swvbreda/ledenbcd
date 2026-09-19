@@ -102,7 +102,7 @@ export default function DossierDetailDialog({
 
   /** Facturen van álle onderliggende bronnen (bank + Informer) van een samengevoegde regel. */
   const docsForEntry = (e: DetailEntry) => {
-    const keys = [e.key, ...(e.sources || []).map((s) => s.key)];
+    const keys = documentKeysOf(e);
     const seen = new Set<string>();
     const out: ExpenseDocument[] = [];
     for (const k of keys) {
@@ -126,7 +126,7 @@ export default function DossierDetailDialog({
   }, [documents]);
 
   const entryForDoc = (doc: ExpenseDocument) =>
-    entries.find((e) => [e.key, ...(e.sources || []).map((s) => s.key)].includes(doc.entry_key));
+    entries.find((e) => documentKeysOf(e).includes(doc.entry_key));
 
   const duplicates = useMemo(() => duplicateAllocationKeys(entries), [entries]);
 
