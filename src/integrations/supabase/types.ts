@@ -1768,6 +1768,51 @@ export type Database = {
         }
         Relationships: []
       }
+      informer_reconciliation_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          created_at: string
+          id: string
+          measured_expenses: number | null
+          measured_revenue: number | null
+          note: string | null
+          reconciled: boolean
+          reference_expenses: number | null
+          reference_revenue: number | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          measured_expenses?: number | null
+          measured_revenue?: number | null
+          note?: string | null
+          reconciled?: boolean
+          reference_expenses?: number | null
+          reference_revenue?: number | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          measured_expenses?: number | null
+          measured_revenue?: number | null
+          note?: string | null
+          reconciled?: boolean
+          reference_expenses?: number | null
+          reference_revenue?: number | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       informer_sync_log: {
         Row: {
           action: string
