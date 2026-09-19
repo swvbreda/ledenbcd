@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
-import { matchLegacyRecords } from "@/lib/ledgerLegacy";
+import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords } from "@/lib/legacyRecordsSource";
 import {
   expenseEntries,
@@ -185,10 +185,13 @@ export function useBudgetCategories(year: number) {
       // gelden: die komt uit budget_expenses en ponto_transactions en wordt
       // conservatief aan de Informer-regels gekoppeld.
       const legacy = await fetchLegacyRecords(year, (lineItems || []).map((li: any) => li.id));
-      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacy);
+      const entriesAll = (ledgerRows || []) as LedgerEntry[];
+      const matched = matchLegacyRecords(entriesAll, legacy);
+      const assignments = buildLegacyAssignments(entriesAll, legacy, matched);
       const legacyLineItemByEntryKey = new Map<string, string | null>(
-        [...matched.byEntryKey].map(([k, r]) => [k, r.lineItemId]),
+        [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
+
 
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
       // controlemodule: override > bestaande toewijzing > eenduidige
@@ -209,7 +212,9 @@ export function useBudgetCategories(year: number) {
         expense_date: e.entry_date,
         creditor_name: e.relation_name,
         invoice_reference: e.invoice_number,
-        dossier: e.dossier,
+        // Expliciet dossier op de Informer-regel wint; anders het bewaarde
+        // dossier uit de bestaande administratie.
+        dossier: e.dossier ?? assignments.get(`${e.doc_type}:${e.informer_id}`)?.dossier ?? null,
         source: "informer",
         pdf_file_path: null,
         paid: e.status === "paid",

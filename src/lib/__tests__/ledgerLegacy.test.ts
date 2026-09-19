@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchLegacyRecords, isSyntheticPlaceholder, type LegacyRecord } from "@/lib/ledgerLegacy";
+import { matchLegacyRecords, isSyntheticPlaceholder, buildLegacyAssignments, counterpartyLineItemMap, type LegacyRecord } from "@/lib/ledgerLegacy";
 import { documentKeysOf } from "@/hooks/useDossiers";
 import { bucketExpenseEntries, expenseAmount, type LedgerEntry } from "@/lib/ledger";
 
@@ -144,5 +144,89 @@ describe("bucketExpenseEntries met bestaande toewijzing", () => {
   it("zet een regel zonder match in Niet toegewezen", () => {
     const buckets = bucketExpenseEntries([entry({})], lineItems, new Map());
     expect(buckets.unassigned).toHaveLength(1);
+  });
+});
+
+describe("herstel van bestaande begrotingsmutaties", () => {
+  it("herstelt één koppeling bij manual + pdf van dezelfde factuur en dezelfde post", () => {
+    const res = matchLegacyRecords(
+      [entry({})],
+      [
+        legacy({ key: "expense:manual" }),
+        legacy({ key: "expense:pdf", dossier: null }),
+      ],
+    );
+    const hit = res.byEntryKey.get("purchase_invoice:1");
+    expect(hit?.lineItemId).toBe("li-1");
+    expect(hit?.dossier).toBe("Lobby");
+    expect(res.aliasesByEntryKey.get("purchase_invoice:1")?.map((r) => r.key)).toEqual([
+      "expense:pdf",
+    ]);
+    expect(res.unmatched).toHaveLength(0);
+  });
+
+  it("koppelt niet automatisch bij conflicterende posten", () => {
+    const res = matchLegacyRecords(
+      [entry({})],
+      [legacy({ key: "expense:a" }), legacy({ key: "expense:b", lineItemId: "li-2" })],
+    );
+    expect(res.byEntryKey.size).toBe(0);
+    expect(res.unmatched.map((r) => r.key).sort()).toEqual(["expense:a", "expense:b"]);
+  });
+
+  it("herstelt de begrotingspost via eenduidige tegenpartijgeschiedenis", () => {
+    const history = [legacy({ key: "expense:oud", invoice: "20260001", date: "2026-01-05" })];
+    const e = entry({ informer_id: "9", invoice_number: "20269999" } as any);
+    const match = matchLegacyRecords([e], history);
+    const assign = buildLegacyAssignments([e], history, match);
+    expect(assign.get("purchase_invoice:9")).toMatchObject({
+      lineItemId: "li-1",
+      via: "counterparty",
+    });
+  });
+
+  it("wijst niets toe bij een conflicterende tegenpartijgeschiedenis", () => {
+    const history = [
+      legacy({ key: "expense:oud1", invoice: "20260001", date: "2026-01-05" }),
+      legacy({ key: "expense:oud2", invoice: "20260002", date: "2026-02-05", lineItemId: "li-2" }),
+    ];
+    expect(counterpartyLineItemMap(history).size).toBe(0);
+  });
+
+  it("laat het Informer-bedrag leidend en neemt alleen post en dossier over", () => {
+    const e = entry({ amount_incl: 1234.56 });
+    const match = matchLegacyRecords([e], [legacy({ amount: 1000 })]);
+    const assign = buildLegacyAssignments([e], [legacy({ amount: 1000 })], match);
+    const buckets = bucketExpenseEntries(
+      [e],
+      lineItems,
+      new Map([...assign].map(([k, a]) => [k, a.lineItemId])),
+    );
+    expect(expenseAmount(buckets.byLineItem["li-1"][0])).toBe(1234.56);
+    expect(assign.get("purchase_invoice:1")?.dossier).toBe("Lobby");
+  });
+
+  it("geeft een expliciete override altijd voorrang", () => {
+    const e = entry({ line_item_id: "li-2", dossier: "Overleg" } as any);
+    const history = [legacy({})];
+    const match = matchLegacyRecords([e], history);
+    const assign = buildLegacyAssignments([e], history, match);
+    const buckets = bucketExpenseEntries(
+      [e],
+      lineItems,
+      new Map([...assign].map(([k, a]) => [k, a.lineItemId])),
+    );
+    expect(buckets.byLineItem["li-2"]).toHaveLength(1);
+    expect(buckets.byLineItem["li-1"]).toBeUndefined();
+  });
+
+  it("houdt aliassen beschikbaar voor documenten en splits", () => {
+    const res = matchLegacyRecords(
+      [entry({})],
+      [legacy({ key: "expense:manual" }), legacy({ key: "ponto:b", kind: "ponto", lineItemId: null, dossier: null })],
+    );
+    const aliases = res.aliasesByEntryKey.get("purchase_invoice:1")?.map((r) => r.key) ?? [];
+    expect(aliases).toContain("ponto:b");
+    expect(res.unmatched).toHaveLength(0);
   });
 });

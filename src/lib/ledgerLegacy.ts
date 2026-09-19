@@ -65,6 +65,38 @@ export interface LegacyMatchResult {
   matchedBy: Map<string, "external_id" | "invoice" | "payment">;
 }
 
+/** Genormaliseerde tegenpartijsleutel voor de conservatieve postfallback. */
+export function normalizeCounterparty(value: string | null | undefined): string {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\b(b\.?\s?v\.?|n\.?\s?v\.?|v\.?o\.?f\.?|vof|holding|group|nederland)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Meerdere oude representaties van dezelfde factuur (bv. een handmatige boeking
+ * én een pdf-import) mogen samen één koppeling vormen, mits ze niet
+ * tegenstrijdig zijn: alle ingevulde begrotingsposten gelijk en alle ingevulde
+ * dossiers gelijk.
+ */
+export function groupIsConsistent(records: LegacyRecord[]): boolean {
+  const posts = new Set(records.map((r) => r.lineItemId).filter((v): v is string => !!v));
+  const dossiers = new Set(
+    records.map((r) => (r.dossier || "").trim()).filter((v) => v.length > 0),
+  );
+  return posts.size <= 1 && dossiers.size <= 1;
+}
+
+/** Kiest de meest informatieve representatie als primaire koppeling. */
+function pickPrimary(records: LegacyRecord[]): LegacyRecord {
+  const score = (r: LegacyRecord) =>
+    (r.lineItemId ? 4 : 0) + (r.dossier ? 2 : 0) + (r.kind === "expense" ? 1 : 0);
+  return [...records].sort((a, b) => score(b) - score(a) || a.key.localeCompare(b.key))[0];
+}
+
+
 export function ledgerKeyOf(entry: Pick<LedgerEntry, "doc_type" | "informer_id">): string {
   return `${entry.doc_type}:${entry.informer_id}`;
 }
@@ -130,22 +162,39 @@ export function matchLegacyRecords(
     if (hit) take(entry, hit, "external_id");
   }
 
+  // Meerdere oude representaties van dezelfde factuur/betaling vormen samen
+  // één koppeling zolang ze niet tegenstrijdig zijn.
+  const takeGroup = (
+    entry: LedgerEntry,
+    hits: LegacyRecord[],
+    how: "invoice" | "payment",
+  ) => {
+    if (hits.length === 0) return;
+    if (hits.length > 1 && !groupIsConsistent(hits)) return;
+    const primary = pickPrimary(hits);
+    take(entry, primary, how);
+    const extra = hits.filter((r) => r.key !== primary.key);
+    for (const r of extra) usedLegacy.add(r.key);
+    if (extra.length > 0) {
+      const key = ledgerKeyOf(entry);
+      aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
+    }
+  };
+
   // 2. Factuurnummer.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
-    const hits = available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r)));
-    // Alleen een eenduidige factuurmatch telt.
-    if (hits.length === 1) take(entry, hits[0], "invoice");
+    takeGroup(entry, available().filter((r) => sharesInvoiceNumber(self, asRecordLike(r))), "invoice");
   }
 
   // 3. Bedrag + tegenpartij + datum.
   for (const entry of entries) {
     if (byEntryKey.has(ledgerKeyOf(entry))) continue;
     const self = asLedgerLike(entry);
-    const hits = available().filter((r) => isSamePayment(self, asRecordLike(r)));
-    if (hits.length === 1) take(entry, hits[0], "payment");
+    takeGroup(entry, available().filter((r) => isSamePayment(self, asRecordLike(r))), "payment");
   }
+
 
   // 4. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
@@ -158,7 +207,10 @@ export function matchLegacyRecords(
           sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
     );
     for (const r of extra) usedLegacy.add(r.key);
-    if (extra.length > 0) aliasesByEntryKey.set(key, extra);
+    if (extra.length > 0) {
+      aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
+    }
+
   }
 
   return {
@@ -168,4 +220,67 @@ export function matchLegacyRecords(
     // Synthetische hulprijen zijn geen administratief aandachtspunt.
     unmatched: usable.filter((r) => !usedLegacy.has(r.key)),
   };
+}
+
+/* ---------------------------------------------------------------------------
+ * Toewijzing van begrotingspost en dossier op basis van de bewaarde administratie
+ * ------------------------------------------------------------------------- */
+
+export interface LegacyAssignment {
+  lineItemId: string | null;
+  dossier: string | null;
+  /** "legacy" = directe koppeling, "counterparty" = eenduidige historie. */
+  via: "legacy" | "counterparty";
+}
+
+/**
+ * Eenduidige tegenpartijgeschiedenis: alleen wanneer ALLE bruikbare historische
+ * uitgaande records van dezelfde genormaliseerde tegenpartij naar exact dezelfde
+ * niet-lege begrotingspost wijzen. Bij conflicten wordt niets toegewezen.
+ */
+export function counterpartyLineItemMap(legacy: LegacyRecord[]): Map<string, string> {
+  const byName = new Map<string, Set<string>>();
+  for (const r of legacy) {
+    if (r.placeholder || isSyntheticPlaceholder(r)) continue;
+    if (r.direction !== "out") continue;
+    const name = normalizeCounterparty(r.counterparty);
+    if (!name) continue;
+    const set = byName.get(name) ?? new Set<string>();
+    set.add(r.lineItemId || "");
+    byName.set(name, set);
+  }
+  const result = new Map<string, string>();
+  for (const [name, set] of byName) {
+    if (set.size !== 1) continue; // conflict of gemengd leeg/gevuld
+    const only = [...set][0];
+    if (only) result.set(name, only);
+  }
+  return result;
+}
+
+/**
+ * Bouwt per Informer-regel de administratieve toewijzing. Bedragen, facturen en
+ * status komen altijd uit Informer; hier gaat het uitsluitend om begrotingspost
+ * en dossier. Prioriteit: expliciete override (entry.line_item_id/dossier) >
+ * directe legacy-koppeling > eenduidige tegenpartijhistorie.
+ */
+export function buildLegacyAssignments(
+  entries: LedgerEntry[],
+  legacy: LegacyRecord[],
+  match: LegacyMatchResult,
+): Map<string, LegacyAssignment> {
+  const counterparties = counterpartyLineItemMap(legacy);
+  const out = new Map<string, LegacyAssignment>();
+  for (const entry of entries) {
+    const key = ledgerKeyOf(entry);
+    const record = match.byEntryKey.get(key);
+    if (record && (record.lineItemId || record.dossier)) {
+      out.set(key, { lineItemId: record.lineItemId, dossier: record.dossier, via: "legacy" });
+      continue;
+    }
+    if (entry.doc_type === "sales_invoice") continue;
+    const fallback = counterparties.get(normalizeCounterparty(entry.relation_name));
+    if (fallback) out.set(key, { lineItemId: fallback, dossier: null, via: "counterparty" });
+  }
+  return out;
 }
