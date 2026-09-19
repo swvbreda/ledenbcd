@@ -245,6 +245,18 @@ export default function FinancienPage() {
     return map;
   }, [contributionPayments]);
 
+  const paymentsByMemberInfo = useMemo(() => {
+    const map = new Map<number, { amount: number; paidDate: string | null }>();
+    (contributionPayments ?? []).forEach((p) => {
+      const current = map.get(p.member_id) ?? { amount: 0, paidDate: null };
+      const paidDate = p.paid_at
+        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
+        : current.paidDate;
+      map.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
+    });
+    return map;
+  }, [contributionPayments]);
+
   const contributionStats = useMemo(() => {
     const contribs = contributions ?? [];
     const totalMembers = yearSettings?.budgeted_member_count
