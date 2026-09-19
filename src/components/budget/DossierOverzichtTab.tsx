@@ -112,12 +112,24 @@ export default function DossierOverzichtTab({ year }: Props) {
     for (const [dossier, groupEntries] of map) {
       if (isContributionDossier(dossier)) continue;
       const entries = dedupeEntries(groupEntries);
-      // Alleen aan Informer gekoppelde regels tellen mee in de dossiertotalen;
-      // bestaande administratieve mutaties blijven wel zichtbaar.
+      // Canonieke Informer-facturen plus aanvullende lokale mutaties met een
+      // eigen toewijzing; regels zonder toewijzing blijven zichtbaar maar
+      // tellen niet mee.
       const counting = entries.filter((e) => !isUnlinkedOnly(e));
+      const net = (list: DedupedEntry[]) =>
+        list.reduce((s, e) => s + (e.direction === "in" ? -e.shareAmount : e.shareAmount), 0);
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      rows.push({ dossier, entries, out, income, total: out - income });
+      const localTotal = net(counting.filter((e) => isLocalOnly(e)));
+      rows.push({
+        dossier,
+        entries,
+        out,
+        income,
+        total: out - income,
+        informerTotal: out - income - localTotal,
+        localTotal,
+      });
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
