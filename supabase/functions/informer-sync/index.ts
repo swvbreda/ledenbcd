@@ -1826,7 +1826,14 @@ Deno.serve(async (req) => {
       .select("member_id, external_invoice_id, invoice_number")
       .eq("year", year)
       .not("external_invoice_id", "is", null);
+    // Vrijgestelde leden voor dit contributiejaar overslaan.
+    const { data: exemptRows } = await supabase
+      .from("contribution_exemptions")
+      .select("member_id")
+      .eq("year", year);
+    const exempt = new Set<number>((exemptRows ?? []).map((r: any) => Number(r.member_id)));
     for (const row of (rows ?? [])) {
+      if (exempt.has(Number(row.member_id))) continue;
       const externalId = String(row.external_invoice_id ?? "");
       if (!/^\d+$/.test(externalId)) continue;
       const detail = await fetchSalesInvoiceById(externalId, api_calls);
