@@ -193,6 +193,22 @@ describe("herstel van bestaande begrotingsmutaties", () => {
     expect(counterpartyLineItemMap(history).size).toBe(0);
   });
 
+  it("vult de post aan via tegenpartijhistorie als het legacy-record alleen een dossier heeft", () => {
+    const e = entry({ informer_id: "7", invoice_number: "20267777" } as any);
+    const records = [
+      legacy({ key: "expense:dossier", invoice: "20267777", lineItemId: null, dossier: "Lobby" }),
+      legacy({ key: "expense:oud", invoice: "20260001", date: "2026-01-05" }),
+    ];
+    const match = matchLegacyRecords([e], records);
+    const assign = buildLegacyAssignments([e], records, match);
+    expect(assign.get("purchase_invoice:7")).toMatchObject({
+      lineItemId: "li-1",
+      dossier: "Lobby",
+    });
+  });
+
+
+
   it("laat het Informer-bedrag leidend en neemt alleen post en dossier over", () => {
     const e = entry({ amount_incl: 1234.56 });
     const match = matchLegacyRecords([e], [legacy({ amount: 1000 })]);
