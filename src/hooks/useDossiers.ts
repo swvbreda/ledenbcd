@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber, invoiceKeysOf } from "@/lib/ledgerDedupe";
 
 
-export type DossierEntryKind = "expense" | "bank" | "ponto";
+export type DossierEntryKind = "expense" | "bank" | "ponto" | "ledger";
 
 export interface DossierMutation {
   /** Unieke sleutel, ook gebruikt om documenten te koppelen: "expense:uuid" etc. */
@@ -321,96 +321,45 @@ export function useDossierMutations(year: number) {
       }
       const splitsFor = (key: string) => splitsByEntry.get(key) || [];
 
-      // Index op factuurnummer: zo kan een bankregel zonder eigen factuurveld
-      // toch de factuurdatum en het factuurbedrag van de boeking overnemen.
-      const invoiceIndex = new Map<string, { date: string | null; amount: number }>();
+      // Dossiermutaties komen uitsluitend uit de boekhouding. Elke regel hangt
+      // aan een stabiele Informer-ID en telt daardoor exact eenmaal. Ponto
+      // levert alleen de betaaldatum van een gekoppelde factuur; losse
+      // bankmutaties verschijnen hier niet en verhogen geen enkel totaal.
+      const { data: ledgerRows, error: ledgerErr } = await client
+        .from("ledger_entries_v")
+        .select("*")
+        .eq("year", year)
+        .limit(5000);
+      if (ledgerErr) throw ledgerErr;
 
-      if (liIds.length > 0) {
-        const { data: expenses, error } = await client
-          .from("budget_expenses")
-          .select("*")
-          .in("line_item_id", liIds);
-        if (error) throw error;
-        for (const e of expenses || []) {
-          const amount = Math.abs(Number(e.amount) || 0);
-          rows.push({
-            key: entryKeyFor("expense", e.id),
-            kind: "expense",
-            id: e.id,
-            date: e.expense_date,
-            invoiceDate: e.expense_date,
-            invoiceAmount: amount,
-            // Alleen de live bankregel bewijst wanneer er werkelijk betaald is.
-            // Informer-/importvelden kunnen een boekings- of factuurdatum bevatten.
-            paymentDate: null,
-            counterparty: e.creditor_name || "",
-            description: e.description || "",
-            invoice: e.invoice_reference || "",
-            amount,
-            direction: e.direction === "in" ? "in" : "out",
-            ...names(e.line_item_id),
-            dossier: (e.dossier || "").trim(),
-            source: e.source || "manual",
-            splits: splitsFor(entryKeyFor("expense", e.id)),
-          });
-          for (const key of invoiceKeysOf({ date: e.expense_date, amount, invoice: e.invoice_reference })) {
-            if (!invoiceIndex.has(key)) invoiceIndex.set(key, { date: e.expense_date || null, amount });
-          }
-        }
-      }
-
-
-      // De oude PDF-bankimport (`bank_transactions`) wordt bewust NIET meer
-      // meegenomen: die overlapt volledig met de live bankkoppeling (Ponto)
-      // en zorgde voor dubbele bedragen in de dossiers.
-
-
-      const { data: pontoRows, error: pontoErr } = await client
-        .from("ponto_transactions")
-        .select(
-          "id, executed_at, amount, counterparty_name, description, remittance_info, budget_line_item_id, dossier",
-        )
-        .gte("executed_at", `${year}-01-01`)
-        .lt("executed_at", `${year + 1}-01-01`);
-      if (pontoErr) throw pontoErr;
-      for (const p of pontoRows || []) {
-        const raw = Number(p.amount) || 0;
-        // Bankregels hebben geen apart factuurveld: nummers uit de omschrijving halen.
-        const pontoInvoices = [
-          ...new Set([
-            ...invoiceNumbersIn(p.description),
-            ...invoiceNumbersIn(p.remittance_info),
-          ]),
-        ].join(", ");
-        // Factuurdatum/-bedrag overnemen van een boeking met hetzelfde factuurnummer.
-        let invMeta: { date: string | null; amount: number } | null = null;
-        let invTotal = 0;
-        for (const key of invoiceKeysOf({ date: null, amount: 0, invoice: pontoInvoices, description: p.description })) {
-          const hit = invoiceIndex.get(key);
-          if (!hit) continue;
-          if (!invMeta || (hit.date && (!invMeta.date || hit.date < invMeta.date))) invMeta = hit;
-          invTotal += hit.amount;
-        }
+      for (const e of ledgerRows || []) {
+        if (!e.counts_in_totals) continue;
+        const amount = Math.abs(Number(e.amount_incl) || 0);
+        const key = entryKeyFor("ledger", `${e.doc_type}:${e.informer_id}`);
+        const lineItemName = liById.get(e.line_item_id)?.name || "";
         rows.push({
-          key: entryKeyFor("ponto", p.id),
-          kind: "ponto",
-          id: p.id,
-          date: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
-          invoiceDate: invMeta?.date || null,
-          invoiceAmount: invTotal > 0 ? invTotal : null,
-          paymentDate: p.executed_at ? String(p.executed_at).slice(0, 10) : null,
-
-          counterparty: p.counterparty_name || "",
-          description: p.description || p.remittance_info || "",
-          invoice: pontoInvoices,
-          amount: Math.abs(raw),
-          direction: raw >= 0 ? "in" : "out",
-          ...names(p.budget_line_item_id),
-          dossier: (p.dossier || "").trim(),
-          source: "bank",
-          splits: splitsFor(entryKeyFor("ponto", p.id)),
+          key,
+          kind: "ledger",
+          id: String(e.informer_id),
+          date: e.entry_date,
+          invoiceDate: e.entry_date,
+          invoiceAmount: amount,
+          paymentDate: e.payment_date ? String(e.payment_date).slice(0, 10) : null,
+          counterparty: e.relation_name || "",
+          description: e.description || e.ledger_account || "",
+          invoice: e.invoice_number || "",
+          amount,
+          direction: e.doc_type === "sales_invoice" ? "in" : "out",
+          lineItemName,
+          categoryName: lineItemName
+            ? catNameById.get(liById.get(e.line_item_id)?.category_id) || ""
+            : "",
+          dossier: (e.dossier || "").trim(),
+          source: "informer",
+          splits: splitsFor(key),
         });
       }
+      void liIds;
 
       rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       return rows;
