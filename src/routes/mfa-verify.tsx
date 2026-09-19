@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import MfaVerifyPage from "@/pages/MfaVerifyPage";
+import { Navigate } from "@/lib/router-compat";
 
 export const Route = createFileRoute("/mfa-verify")({
-  component: MfaVerifyPage,
+  component: () => <Navigate to="/" replace />,
 });

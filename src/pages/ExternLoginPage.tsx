@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, LogIn, Building2, UserPlus, User, Eye, EyeOff } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
+import { Capacitor } from "@capacitor/core";
 
 const ExternLoginPage = () => {
+  const isNative = Capacitor.isNativePlatform();
   const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -39,7 +41,7 @@ const ExternLoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
+    try { localStorage.setItem("remember_me", String(isNative || rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
@@ -244,7 +246,7 @@ const ExternLoginPage = () => {
                 </div>
               )}
 
-              {mode === "login" && (
+              {mode === "login" && !isNative && (
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"

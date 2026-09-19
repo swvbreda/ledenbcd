@@ -83,7 +83,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    try { localStorage.setItem("remember_me", String(rememberMe)); } catch {}
+    try { localStorage.setItem("remember_me", String(biometric.isNative || rememberMe)); } catch {}
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
@@ -423,7 +423,7 @@ const LoginPage = () => {
                 </div>
               )}
 
-              {!resetMode && !registerMode && (
+              {!resetMode && !registerMode && !biometric.isNative && (
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"

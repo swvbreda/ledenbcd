@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
 
 interface AuthContextType {
   user: User | null;
@@ -95,39 +96,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id]);
 
-  const checkMfaStatus = async (userId: string, reviewer = false) => {
-    // Reviewer demo accounts bypass MFA so Apple reviewers can log in
-    // without setting up an authenticator app.
-    if (reviewer || isReviewer) {
-      setMfaStatus("verified");
-      return;
-    }
-
-    // Check email MFA flag first
-    if (checkEmailMfaFlag(userId)) {
-      setMfaStatus("verified");
-      return;
-    }
-
-    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (error || !data) {
-      setMfaStatus("verified"); // fallback: don't block
-      return;
-    }
-    const { currentLevel, nextLevel } = data;
-    if (nextLevel === "aal2" && currentLevel === "aal1") {
-      setMfaStatus("needs_verify");
-    } else if (nextLevel === "aal1" && currentLevel === "aal1") {
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const hasVerifiedTotp = factors?.totp?.some(f => f.status === "verified");
-      if (hasVerifiedTotp) {
-        setMfaStatus("needs_verify");
-      } else {
-        setMfaStatus("needs_setup");
-      }
-    } else {
-      setMfaStatus("verified");
-    }
+  const checkMfaStatus = async (_userId: string, _reviewer = false) => {
+    // Dubbele verificatie is uitgeschakeld voor het ledenportaal. Een gewone,
+    // geldige Supabase-sessie geeft direct toegang.
+    setMfaStatus("verified");
   };
 
   const checkRoleAndProfile = async (userId: string) => {
@@ -230,6 +202,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // "Onthoud mij" — clear session when browser closes if disabled
     const handleBeforeUnload = () => {
       try {
+        // In de native telefoonapp blijft de Supabase-sessie altijd bewaard.
+        if (Capacitor.isNativePlatform()) return;
         if (localStorage.getItem("remember_me") === "false") {
           // Remove Supabase session tokens so next visit requires login
           const storageKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));

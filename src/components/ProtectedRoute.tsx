@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { savePostLoginPath } from "@/lib/postLoginPath";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isExtern, mfaStatus } = useAuth();
+  const { user, loading, isExtern } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -23,16 +23,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (isExtern) {
     return <Navigate to="/extern" replace />;
-  }
-
-  // MFA enforcement
-  if (mfaStatus === "needs_setup") {
-    remember();
-    return <Navigate to="/mfa-setup" replace />;
-  }
-  if (mfaStatus === "needs_verify") {
-    remember();
-    return <Navigate to="/mfa-verify" replace />;
   }
 
   return <>{children}</>;
