@@ -55,7 +55,7 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
           {" uitgegeven van "}
           <span className="tabular-nums"><CurrencyText value={totalBudgeted} /></span>
           {" · beschikbaar "}
-          <span className="tabular-nums font-medium text-green-600">
+          <span className={`tabular-nums font-medium ${totalAvailable < 0 ? "text-destructive" : "text-green-600"}`}>
             <CurrencyText value={totalAvailable} />
           </span>
         </div>
