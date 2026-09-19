@@ -108,3 +108,70 @@ describe("ledger totalen", () => {
     expect(splitsBalance(e, [{ ...splits[0], amount: 150 }])).toBe(false);
   });
 });
+
+describe("readiness en reconciliatie", () => {
+  const goed = [
+    entry({ informer_id: "p1", amount_incl: 1000, status: "paid", ledger_account: "4300 Reiskosten" }),
+    entry({ informer_id: "s1", doc_type: "sales_invoice", amount_incl: 1500, status: "paid", ledger_account: "8000 Omzet" }),
+  ];
+
+  it("zonder geslaagde sync is niets gereed of gereconcilieerd", () => {
+    const r = ledgerReadiness(goed, null);
+    expect(r.ready).toBe(false);
+    expect(r.reconciled).toBe(false);
+    expect(r.reasons.length).toBeGreaterThan(0);
+  });
+
+  it("meetellende regels zonder bedrag blokkeren de overschakeling", () => {
+    const r = ledgerReadiness(
+      [...goed, entry({ informer_id: "p2", amount_incl: 0, status: "open" })],
+      "2026-09-19T21:00:00Z",
+    );
+    expect(r.ready).toBe(false);
+    expect(r.zeroAmount).toBe(1);
+  });
+
+  it("alleen exact aansluitende totalen heten gereconcilieerd", () => {
+    const sync = "2026-09-19T21:00:00Z";
+    expect(ledgerReadiness(goed, sync, { expenses: 1000, revenue: 1500 }).reconciled).toBe(true);
+    expect(ledgerReadiness(goed, sync, { expenses: 1000.5, revenue: 1500 }).reconciled).toBe(false);
+    expect(ledgerReadiness(goed, sync, { expenses: 1000 }).reconciled).toBe(false);
+    expect(ledgerReadiness(goed, sync).ready).toBe(true);
+  });
+
+  it("documenten met status te verwerken blijven aandachtspunt maar tellen niet mee", () => {
+    const openai = [1, 2, 3, 4].map((n) =>
+      entry({ informer_id: `openai-${n}`, amount_incl: 0, status: "unprocessed" }),
+    );
+    const r = ledgerReadiness([...goed, ...openai], "2026-09-19T21:00:00Z");
+    expect(r.attention).toBe(4);
+    expect(r.ready).toBe(true);
+    expect(totalExpenses([...goed, ...openai])).toBe(1000);
+  });
+});
+
+describe("idempotentie en blijvende lokale toevoegingen", () => {
+  it("dezelfde regels twee keer verwerken geeft identieke totalen", () => {
+    const entries = [
+      entry({ informer_id: "p1", amount_incl: 100, dossier: "Juridisch" }),
+      entry({ informer_id: "p2", amount_incl: 200 }),
+    ];
+    const opnieuw = entries.map((e) => ({ ...e }));
+    expect(totalExpenses(opnieuw)).toBe(totalExpenses(entries));
+    expect(totalsByDossier(opnieuw)).toEqual(totalsByDossier(entries));
+  });
+
+  it("een handmatig dossier blijft na sync aan dezelfde Informer-ID hangen", () => {
+    const voor = entry({ informer_id: "p1", amount_incl: 100, dossier: "Juridisch" });
+    // Sync werkt alleen Informer-velden bij; dossier komt uit de override-tabel.
+    const na = { ...voor, status: "paid", paid_amount: 100, open_amount: 0 } as LedgerEntry;
+    expect(na.dossier).toBe("Juridisch");
+    expect(totalsByDossier([na])["Juridisch"]).toBe(100);
+  });
+
+  it("uitgesloten regels tellen niet mee maar blijven zichtbaar", () => {
+    const e = entry({ informer_id: "p1", amount_incl: 100, excluded: true });
+    expect(countsInTotals(e)).toBe(false);
+    expect(totalExpenses([e])).toBe(0);
+  });
+});
