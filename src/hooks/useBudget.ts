@@ -212,7 +212,9 @@ export function useBudgetCategories(year: number) {
         expense_date: e.entry_date,
         creditor_name: e.relation_name,
         invoice_reference: e.invoice_number,
-        dossier: e.dossier,
+        // Expliciet dossier op de Informer-regel wint; anders het bewaarde
+        // dossier uit de bestaande administratie.
+        dossier: e.dossier ?? assignments.get(`${e.doc_type}:${e.informer_id}`)?.dossier ?? null,
         source: "informer",
         pdf_file_path: null,
         paid: e.status === "paid",
