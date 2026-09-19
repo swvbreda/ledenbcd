@@ -249,9 +249,9 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   }
 
   return (
-    <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+    <div className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-border bg-card p-4 sm:p-5">
       <div
-        className={`flex items-center justify-between ${isMobile ? "cursor-pointer active:bg-muted/30 -m-4 p-4 rounded-lg transition-colors" : "mb-3"}`}
+        className={`flex min-w-0 items-center justify-between gap-2 ${isMobile ? "cursor-pointer active:bg-muted/30 -m-4 p-4 rounded-lg transition-colors" : "mb-3"}`}
         onClick={() => isMobile && setExpanded(!expanded)}
       >
         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap">
@@ -273,7 +273,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             <Phone size={10} className="shrink-0" /> 06 86 87 52 31
           </a>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
           {isMobile && (
             <span className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>

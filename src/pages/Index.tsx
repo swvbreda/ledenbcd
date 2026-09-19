@@ -26,7 +26,7 @@ const Index = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 overflow-x-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-6 overflow-x-hidden p-4 sm:p-6">
       <BcdHeroBanner
         title="Overzicht"
         subtitle="Welkom bij het BCD Dashboard"

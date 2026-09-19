@@ -20,7 +20,7 @@ function AgendaPoster({ event }: { event: AgendaEvent }) {
   const { data: url } = useAgendaImageUrl(event.image_path);
   if (!url) return null;
   return (
-    <div className="w-full shrink-0 overflow-hidden bg-muted/40 md:w-48">
+    <div className="w-full max-w-full shrink-0 overflow-hidden bg-muted/40 md:w-48">
       <img
         src={url}
         alt={`Poster van ${event.title}`}
@@ -101,7 +101,7 @@ function EventHighlight({ event, guests }: { event: AgendaEvent; guests: number 
   return (
     <Link
       to={`/agenda/${event.id}`}
-      className="group relative block overflow-hidden rounded-3xl border-2 border-primary bg-card shadow-xl shadow-primary/10 ring-4 ring-primary/5 transition-shadow hover:shadow-2xl hover:shadow-primary/20"
+      className="group relative block w-full min-w-0 max-w-full overflow-hidden rounded-3xl border-2 border-primary bg-card shadow-xl shadow-primary/10 ring-4 ring-primary/5 transition-shadow hover:shadow-2xl hover:shadow-primary/20"
     >
       <div className="flex flex-col md:flex-row">
         <AgendaPoster event={event} />
@@ -174,9 +174,9 @@ export default function AgendaDashboardCard() {
     registrations.filter((r) => r.event_id === eventId).reduce((s, r) => s + r.guests, 0);
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center justify-between px-6 pt-6 pb-4">
-        <div className="flex items-center gap-3">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
+        <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
             <CalendarDays className="h-5 w-5" />
           </span>
@@ -184,13 +184,13 @@ export default function AgendaDashboardCard() {
         </div>
         <Link
           to="/agenda"
-          className="group flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+          className="group flex shrink-0 items-center gap-1 text-sm font-bold text-primary hover:underline sm:gap-2"
         >
           Alles bekijken
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
-      <CardContent className="flex flex-col gap-4 px-4 pb-6 md:px-6">
+      <CardContent className="flex min-w-0 max-w-full flex-col gap-4 px-3 pb-6 sm:px-4 md:px-6">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Laden…</p>
         ) : next.length === 0 ? (
@@ -198,7 +198,7 @@ export default function AgendaDashboardCard() {
         ) : (
           next.map((e) =>
             e.event_type === "evenement" ? (
-              <div key={e.id} className="relative">
+              <div key={e.id} className="relative min-w-0 max-w-full overflow-hidden">
                 <EventHighlight event={e} guests={guestsFor(e.id)} />
                 {!isCancelled(e) && (
                   <div className="absolute right-4 top-4 z-10">
@@ -207,7 +207,7 @@ export default function AgendaDashboardCard() {
                 )}
               </div>
             ) : (
-              <div key={e.id} className="relative">
+              <div key={e.id} className="relative min-w-0 max-w-full overflow-hidden">
                 <MeetingRow event={e} guests={guestsFor(e.id)} />
                 <div className="absolute right-4 top-4 z-10">
                   <AgendaShareButton event={e} variant="ghost" />

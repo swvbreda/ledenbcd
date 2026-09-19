@@ -153,7 +153,14 @@ export default function SecurePdfViewer({ url, data }: Props) {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
       const base = page.getViewport({ scale: 1 });
-      const availW = Math.max(100, c.clientWidth - 4);
+      const visibleViewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const containerWidth = c.getBoundingClientRect().width || c.clientWidth;
+      // Never let a temporarily over-wide flex item determine the mobile PDF
+      // scale. WKWebView can report that width during the first layout pass.
+      const availW = Math.max(
+        100,
+        Math.min(containerWidth, c.clientWidth, visibleViewportWidth, window.innerWidth) - 4,
+      );
       const availH = Math.max(200, c.clientHeight - 4);
       const fitW = availW / base.width;
       const fitH = availH / base.height;
@@ -324,7 +331,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
   }
 
   return (
-    <div ref={wrapperRef} className="secure-pdf-wrap">
+    <div ref={wrapperRef} className="secure-pdf-wrap w-full min-w-0 max-w-full overflow-hidden">
       <style>{`
         @media print {
           .secure-pdf-wrap { display: none !important; }
@@ -340,7 +347,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         }
       `}</style>
 
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80 flex items-center justify-center gap-2 mb-3 flex-wrap py-2 border-b border-primary/30">
+      <div className="sticky top-0 z-20 mb-3 flex w-full min-w-0 max-w-full flex-wrap items-center justify-center gap-1 border-b border-primary/30 bg-background/95 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80 sm:gap-2">
         <Button size="sm" variant={showThumbs ? "default" : "outline"} onClick={() => setShowThumbs((v) => !v)} aria-label="Pagina-overzicht">
           <LayoutGrid size={16} />
         </Button>
@@ -369,7 +376,7 @@ export default function SecurePdfViewer({ url, data }: Props) {
         </Button>
       </div>
 
-      <div className="flex gap-3 items-start justify-center">
+      <div className="flex w-full min-w-0 max-w-full items-start justify-center gap-3 overflow-hidden">
         {showThumbs && pdf && (
           <ThumbnailSidebar
             pdf={pdf}
@@ -387,10 +394,10 @@ export default function SecurePdfViewer({ url, data }: Props) {
         )}
         <div
           ref={containerRef}
-          className="relative mx-auto overflow-auto border-2 border-primary/60 rounded-md bg-muted/30 flex justify-center w-full max-w-4xl"
+          className="relative mx-auto flex w-full min-w-0 max-w-4xl justify-center overflow-auto rounded-md border-2 border-primary/60 bg-muted/30"
           style={{ maxHeight: "calc(100vh - 140px)" }}
         >
-        <div className="relative inline-block">
+        <div className="relative inline-block max-w-full">
           <canvas
             ref={setCanvasEl}
             style={{

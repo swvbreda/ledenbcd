@@ -32,13 +32,13 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex w-full overflow-x-hidden max-w-[100vw]">
+    <div className="min-h-screen flex w-full min-w-0 max-w-[100vw] overflow-x-hidden">
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden">
         <header className="sticky top-0 z-40 flex items-center border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] h-[calc(5rem+env(safe-area-inset-top))]">
           <SidebarTrigger className="mr-3" />
         </header>
-        <main ref={mainRef} id="main-scroll-area" className="flex-1 overflow-x-hidden overflow-y-auto">
+        <main ref={mainRef} id="main-scroll-area" className="w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
         <ScrollToTop />

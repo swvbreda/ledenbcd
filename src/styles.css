@@ -152,11 +152,16 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    min-width: 0;
   }
 
-  /* Safe area insets for native iOS/Android apps */
+  /*
+   * Safe areas are handled by the fixed app header and sidebar. Padding the
+   * html element itself makes `width: 100%` wider than the WKWebView on iOS,
+   * which causes the complete dashboard to overflow horizontally.
+   */
   html {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding: 0;
   }
 
   body {
@@ -166,6 +171,10 @@
     font-family: var(--font-body);
     -webkit-text-size-adjust: 100%;
     overscroll-behavior-x: none;
+  }
+
+  #root {
+    min-height: 100%;
   }
 
   @media (min-width: 640px) {
