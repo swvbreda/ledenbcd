@@ -18,7 +18,6 @@ import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
 import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
-import InformerSyncTab from "@/components/budget/InformerSyncTab";
 import ControleSyncTab from "@/components/budget/ControleSyncTab";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
 import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
