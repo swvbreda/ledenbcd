@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, BookOpen } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -35,6 +35,7 @@ const navItems = [
   { title: "Ledenbestand", url: "/leden", icon: Users },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Agenda", url: "/agenda", icon: CalendarDays },
+  { title: "Kennisbank", url: "/kennisbank", icon: BookOpen },
   { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
   { title: "Ledenvoordelen", url: "/ledenvoordelen", icon: Gift },
   { title: "Jaarplan", url: "/jaarplan", icon: FileLock2 },
@@ -45,7 +46,7 @@ export function AppSidebar() {
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const closeMobile = () => setOpenMobile(false);
-  const { user, isAdmin, isBoard, signOut } = useAuth();
+  const { user, isAdmin, isBoard, isInhuur, signOut } = useAuth();
   const { data: pendingRequests } = useEditRequests("pending");
   const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
   const [pwOpen, setPwOpen] = useState(false);
@@ -92,6 +93,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
+                  if (item.title === "Kennisbank" && isInhuur) return null;
                   const registerItem = canSeeRegister && item.title === "Ledenbestand" && (
                     <>
                       <SidebarMenuItem key="Coffeeshopregister">

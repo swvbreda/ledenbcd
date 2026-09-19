@@ -25,6 +25,7 @@ import { Route as DashboardEmailTemplatesRouteImport } from './routes/_dashboard
 import { Route as DashboardFinancienRouteImport } from './routes/_dashboard/financien'
 import { Route as DashboardGoedkeuringenRouteImport } from './routes/_dashboard/goedkeuringen'
 import { Route as DashboardJaarplanRouteImport } from './routes/_dashboard/jaarplan'
+import { Route as DashboardKennisbankRouteImport } from './routes/_dashboard/kennisbank'
 import { Route as DashboardKerngegevensRouteImport } from './routes/_dashboard/kerngegevens'
 import { Route as DashboardLedenBetalingenRouteImport } from './routes/_dashboard/leden-betalingen'
 import { Route as DashboardMijnAccountRouteImport } from './routes/_dashboard/mijn-account'
@@ -136,6 +137,11 @@ const DashboardGoedkeuringenRoute = DashboardGoedkeuringenRouteImport.update({
 const DashboardJaarplanRoute = DashboardJaarplanRouteImport.update({
   id: '/jaarplan',
   path: '/jaarplan',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardKennisbankRoute = DashboardKennisbankRouteImport.update({
+  id: '/kennisbank',
+  path: '/kennisbank',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardKerngegevensRoute = DashboardKerngegevensRouteImport.update({
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/financien': typeof DashboardFinancienRoute
   '/goedkeuringen': typeof DashboardGoedkeuringenRoute
   '/jaarplan': typeof DashboardJaarplanRoute
+  '/kennisbank': typeof DashboardKennisbankRoute
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/financien': typeof DashboardFinancienRoute
   '/goedkeuringen': typeof DashboardGoedkeuringenRoute
   '/jaarplan': typeof DashboardJaarplanRoute
+  '/kennisbank': typeof DashboardKennisbankRoute
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/_dashboard/financien': typeof DashboardFinancienRoute
   '/_dashboard/goedkeuringen': typeof DashboardGoedkeuringenRoute
   '/_dashboard/jaarplan': typeof DashboardJaarplanRoute
+  '/_dashboard/kennisbank': typeof DashboardKennisbankRoute
   '/_dashboard/kerngegevens': typeof DashboardKerngegevensRoute
   '/_dashboard/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/_dashboard/mijn-account': typeof DashboardMijnAccountRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/financien'
     | '/goedkeuringen'
     | '/jaarplan'
+    | '/kennisbank'
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/financien'
     | '/goedkeuringen'
     | '/jaarplan'
+    | '/kennisbank'
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/_dashboard/financien'
     | '/_dashboard/goedkeuringen'
     | '/_dashboard/jaarplan'
+    | '/_dashboard/kennisbank'
     | '/_dashboard/kerngegevens'
     | '/_dashboard/leden-betalingen'
     | '/_dashboard/mijn-account'
@@ -761,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/jaarplan'
       fullPath: '/jaarplan'
       preLoaderRoute: typeof DashboardJaarplanRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/kennisbank': {
+      id: '/_dashboard/kennisbank'
+      path: '/kennisbank'
+      fullPath: '/kennisbank'
+      preLoaderRoute: typeof DashboardKennisbankRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/_dashboard/kerngegevens': {
@@ -1005,6 +1024,7 @@ interface DashboardRouteChildren {
   DashboardFinancienRoute: typeof DashboardFinancienRoute
   DashboardGoedkeuringenRoute: typeof DashboardGoedkeuringenRoute
   DashboardJaarplanRoute: typeof DashboardJaarplanRoute
+  DashboardKennisbankRoute: typeof DashboardKennisbankRoute
   DashboardKerngegevensRoute: typeof DashboardKerngegevensRoute
   DashboardLedenBetalingenRoute: typeof DashboardLedenBetalingenRoute
   DashboardMijnAccountRoute: typeof DashboardMijnAccountRoute
@@ -1034,6 +1054,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardFinancienRoute: DashboardFinancienRoute,
   DashboardGoedkeuringenRoute: DashboardGoedkeuringenRoute,
   DashboardJaarplanRoute: DashboardJaarplanRoute,
+  DashboardKennisbankRoute: DashboardKennisbankRoute,
   DashboardKerngegevensRoute: DashboardKerngegevensRoute,
   DashboardLedenBetalingenRoute: DashboardLedenBetalingenRoute,
   DashboardMijnAccountRoute: DashboardMijnAccountRoute,
