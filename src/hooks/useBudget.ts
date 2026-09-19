@@ -195,13 +195,11 @@ export function useBudgetCategories(year: number) {
         [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
 
-      // Aanvullende lokale mutaties: een bestaande administratieve boeking met
-      // eigen begrotingspost die niet door een Informer-factuur wordt
-      // vertegenwoordigd. Telt exact één keer mee in het managementoverzicht.
-      const knownLineItemIds = new Set((lineItems || []).map((li: any) => String(li.id)));
-      const localOnlyRecords = matched.unmatched.filter(
-        (r) => r.lineItemId && knownLineItemIds.has(r.lineItemId),
-      );
+      // Bestaande administratieve boekingen zonder Informer-koppeling worden
+      // NIET bij de bedragen opgeteld: in de praktijk zijn dit vrijwel altijd
+      // oudere representaties van facturen die Informer ook kent. Zij blijven
+      // zichtbaar in het dossieroverzicht met een eigen markering.
+      const localOnlyRecords: typeof matched.unmatched = [];
 
 
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
