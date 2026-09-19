@@ -1,6 +1,19 @@
 import { useState, useEffect } from "react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { KeyRound, Bell, User, Shield, Pencil, Clock, Save, X, UserCog, Fingerprint, ScanFace, Trash2 } from "lucide-react";
+import {
+  KeyRound,
+  Bell,
+  User,
+  Shield,
+  Pencil,
+  Clock,
+  Save,
+  X,
+  UserCog,
+  Fingerprint,
+  ScanFace,
+  Trash2,
+} from "lucide-react";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys } from "@/hooks/usePasskeys";
 import { Card } from "@/components/ui/card";
@@ -29,24 +42,47 @@ function PasswordSection() {
   const [saving, setSaving] = useState(false);
 
   const handleChangePassword = async () => {
-    if (newPw.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
-    if (newPw !== confirmPw) { toast.error("Wachtwoorden komen niet overeen"); return; }
+    if (newPw.length < 8) {
+      toast.error("Wachtwoord moet minimaal 8 tekens zijn");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast.error("Wachtwoorden komen niet overeen");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
-    if (error) { toast.error("Fout bij wijzigen: " + error.message); }
-    else { toast.success("Wachtwoord succesvol gewijzigd"); setNewPw(""); setConfirmPw(""); }
+    if (error) {
+      toast.error("Fout bij wijzigen: " + error.message);
+    } else {
+      toast.success("Wachtwoord succesvol gewijzigd");
+      setNewPw("");
+      setConfirmPw("");
+    }
   };
 
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <KeyRound size={16} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold font-display">Wachtwoord wijzigen</h3>
+        <h3 className="text-sm font-semibold font-display">
+          Wachtwoord wijzigen
+        </h3>
       </div>
       <div className="space-y-3 max-w-sm">
-        <Input type="password" placeholder="Nieuw wachtwoord" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
-        <Input type="password" placeholder="Bevestig wachtwoord" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+        <Input
+          type="password"
+          placeholder="Nieuw wachtwoord"
+          value={newPw}
+          onChange={(e) => setNewPw(e.target.value)}
+        />
+        <Input
+          type="password"
+          placeholder="Bevestig wachtwoord"
+          value={confirmPw}
+          onChange={(e) => setConfirmPw(e.target.value)}
+        />
         <Button onClick={handleChangePassword} disabled={saving} size="sm">
           {saving ? "Opslaan..." : "Wachtwoord opslaan"}
         </Button>
@@ -62,25 +98,54 @@ function NotificationSection() {
   const { user } = useAuth();
   const isNative = Capacitor.isNativePlatform();
 
-  useState(() => {
-    if (!user) { setLoading(false); return; }
-    supabase.from("push_device_tokens").select("id").eq("user_id", user.id)
-      .then(({ data }) => { setPushEnabled((data?.length ?? 0) > 0); setLoading(false); });
-  });
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    supabase
+      .from("push_device_tokens")
+      .select("id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        setPushEnabled((data?.length ?? 0) > 0);
+        setLoading(false);
+      });
+  }, [user]);
 
   const handleToggle = async () => {
-    if (!isNative) { toast.info("Push-notificaties zijn alleen beschikbaar in de mobiele app"); return; }
+    if (!isNative) {
+      toast.info("Push-notificaties zijn alleen beschikbaar in de mobiele app");
+      return;
+    }
     if (pushEnabled) {
-      const { error } = await supabase.from("push_device_tokens").delete().eq("user_id", user!.id);
-      if (error) { toast.error("Fout bij uitschakelen: " + error.message); return; }
-      setPushEnabled(false); toast.success("Push-notificaties uitgeschakeld");
+      const { error } = await supabase
+        .from("push_device_tokens")
+        .delete()
+        .eq("user_id", user!.id);
+      if (error) {
+        toast.error("Fout bij uitschakelen: " + error.message);
+        return;
+      }
+      localStorage.setItem("bcd-push-disabled", "true");
+      setPushEnabled(false);
+      toast.success("Push-notificaties uitgeschakeld");
     } else {
       try {
-        const { PushNotifications } = await import("@capacitor/push-notifications");
+        const { PushNotifications } =
+          await import("@capacitor/push-notifications");
         const perm = await PushNotifications.requestPermissions();
-        if (perm.receive !== "granted") { toast.error("Geen toestemming voor notificaties"); return; }
-        await PushNotifications.register(); setPushEnabled(true); toast.success("Push-notificaties ingeschakeld");
-      } catch { toast.error("Kon notificaties niet inschakelen"); }
+        if (perm.receive !== "granted") {
+          toast.error("Geen toestemming voor notificaties");
+          return;
+        }
+        localStorage.removeItem("bcd-push-disabled");
+        await PushNotifications.register();
+        setPushEnabled(true);
+        toast.success("Push-notificaties ingeschakeld");
+      } catch {
+        toast.error("Kon notificaties niet inschakelen");
+      }
     }
   };
 
@@ -88,15 +153,29 @@ function NotificationSection() {
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <Bell size={16} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold font-display">Notificatie-instellingen</h3>
+        <h3 className="text-sm font-semibold font-display">
+          Notificatie-instellingen
+        </h3>
       </div>
       <div className="flex items-center justify-between max-w-sm">
-        <Label htmlFor="push-toggle" className="text-sm">Push-notificaties</Label>
-        {loading ? <span className="text-xs text-muted-foreground">Laden...</span> : (
-          <Switch id="push-toggle" checked={pushEnabled} onCheckedChange={handleToggle} />
+        <Label htmlFor="push-toggle" className="text-sm">
+          Push-notificaties
+        </Label>
+        {loading ? (
+          <span className="text-xs text-muted-foreground">Laden...</span>
+        ) : (
+          <Switch
+            id="push-toggle"
+            checked={pushEnabled}
+            onCheckedChange={handleToggle}
+          />
         )}
       </div>
-      {!isNative && <p className="text-xs text-muted-foreground mt-2">Push-notificaties zijn alleen beschikbaar in de mobiele app.</p>}
+      {!isNative && (
+        <p className="text-xs text-muted-foreground mt-2">
+          Push-notificaties zijn alleen beschikbaar in de mobiele app.
+        </p>
+      )}
     </Card>
   );
 }
@@ -120,11 +199,19 @@ function BiometricSection() {
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <Fingerprint size={16} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold font-display">Biometrische login</h3>
+        <h3 className="text-sm font-semibold font-display">
+          Biometrische login
+        </h3>
       </div>
       <div className="flex items-center justify-between max-w-sm">
-        <Label htmlFor="bio-toggle" className="text-sm">Inloggen met {biometric.biometryLabel}</Label>
-        <Switch id="bio-toggle" checked={biometric.hasCredentials} onCheckedChange={handleToggle} />
+        <Label htmlFor="bio-toggle" className="text-sm">
+          Inloggen met {biometric.biometryLabel}
+        </Label>
+        <Switch
+          id="bio-toggle"
+          checked={biometric.hasCredentials}
+          onCheckedChange={handleToggle}
+        />
       </div>
       <p className="text-xs text-muted-foreground mt-2">
         {biometric.hasCredentials
@@ -135,7 +222,6 @@ function BiometricSection() {
   );
 }
 
-
 // ── Passkey Section (Web biometric) ──
 function PasskeySection() {
   const passkeys = usePasskeys();
@@ -143,26 +229,38 @@ function PasskeySection() {
   const [loadingKeys, setLoadingKeys] = useState(true);
 
   useEffect(() => {
-    supabase.from("passkey_credentials").select("id, device_name, created_at")
-      .then(({ data }) => { setRegisteredKeys(data || []); setLoadingKeys(false); });
+    supabase
+      .from("passkey_credentials")
+      .select("id, device_name, created_at")
+      .then(({ data }) => {
+        setRegisteredKeys(data || []);
+        setLoadingKeys(false);
+      });
   }, []);
 
   const handleRegister = async () => {
-    const deviceName = navigator.userAgent.includes("iPhone") || navigator.userAgent.includes("iPad")
-      ? "iPhone/iPad"
-      : navigator.userAgent.includes("Android")
-      ? "Android"
-      : navigator.userAgent.includes("Mac")
-      ? "Mac"
-      : navigator.userAgent.includes("Windows")
-      ? "Windows"
-      : "Apparaat";
+    const deviceName =
+      navigator.userAgent.includes("iPhone") ||
+      navigator.userAgent.includes("iPad")
+        ? "iPhone/iPad"
+        : navigator.userAgent.includes("Android")
+          ? "Android"
+          : navigator.userAgent.includes("Mac")
+            ? "Mac"
+            : navigator.userAgent.includes("Windows")
+              ? "Windows"
+              : "Apparaat";
 
     const result = await passkeys.registerPasskey(deviceName);
     if (result.success) {
-      toast.success("Passkey geregistreerd! Log uit en log opnieuw in om Face ID / vingerafdruk te testen.", { duration: 8000 });
+      toast.success(
+        "Passkey geregistreerd! Log uit en log opnieuw in om Face ID / vingerafdruk te testen.",
+        { duration: 8000 },
+      );
       // Refresh list
-      const { data } = await supabase.from("passkey_credentials").select("id, device_name, created_at");
+      const { data } = await supabase
+        .from("passkey_credentials")
+        .select("id, device_name, created_at");
       setRegisteredKeys(data || []);
     } else if (result.error) {
       toast.error(result.error);
@@ -170,8 +268,14 @@ function PasskeySection() {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("passkey_credentials").delete().eq("id", id);
-    if (error) { toast.error("Kon passkey niet verwijderen"); return; }
+    const { error } = await supabase
+      .from("passkey_credentials")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      toast.error("Kon passkey niet verwijderen");
+      return;
+    }
     setRegisteredKeys((prev) => prev.filter((k) => k.id !== id));
     toast.success("Passkey verwijderd");
   };
@@ -182,25 +286,38 @@ function PasskeySection() {
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <ScanFace size={16} className="text-muted-foreground" />
-        <h3 className="text-sm font-semibold font-display">Inloggen met Face ID / vingerafdruk</h3>
+        <h3 className="text-sm font-semibold font-display">
+          Inloggen met Face ID / vingerafdruk
+        </h3>
       </div>
       <div className="space-y-3 max-w-sm">
         <p className="text-xs text-muted-foreground">
-          Registreer dit apparaat om snel in te loggen met gezichtsherkenning of vingerafdruk.
+          Registreer dit apparaat om snel in te loggen met gezichtsherkenning of
+          vingerafdruk.
         </p>
 
         {/* Registered passkeys */}
         {!loadingKeys && registeredKeys.length > 0 && (
           <div className="space-y-2">
             {registeredKeys.map((key) => (
-              <div key={key.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+              <div
+                key={key.id}
+                className="flex items-center justify-between p-2 bg-muted rounded-md"
+              >
                 <div>
-                  <p className="text-sm font-medium">{key.device_name || "Apparaat"}</p>
+                  <p className="text-sm font-medium">
+                    {key.device_name || "Apparaat"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(key.created_at).toLocaleDateString("nl-NL")}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(key.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleDelete(key.id)}
+                >
                   <Trash2 size={14} className="text-destructive" />
                 </Button>
               </div>
@@ -215,13 +332,16 @@ function PasskeySection() {
           variant={registeredKeys.length > 0 ? "outline" : "default"}
         >
           <ScanFace size={14} className="mr-1.5" />
-          {passkeys.loading ? "Bezig..." : registeredKeys.length > 0 ? "Nog een apparaat toevoegen" : "Activeer voor dit apparaat"}
+          {passkeys.loading
+            ? "Bezig..."
+            : registeredKeys.length > 0
+              ? "Nog een apparaat toevoegen"
+              : "Activeer voor dit apparaat"}
         </Button>
       </div>
     </Card>
   );
 }
-
 
 interface BoardMemberData {
   id: string;
@@ -238,36 +358,68 @@ interface BoardMemberData {
   coffeeshop_plaats: string | null;
 }
 
-const EditableField = ({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) => (
+const EditableField = ({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+}) => (
   <div>
-    <label className="text-xs text-muted-foreground block mb-0.5">{label}</label>
-    <Input value={value} onChange={(e) => onChange(e.target.value)} type={type} className="h-8 text-sm" />
+    <label className="text-xs text-muted-foreground block mb-0.5">
+      {label}
+    </label>
+    <Input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      type={type}
+      className="h-8 text-sm"
+    />
   </div>
 );
 
 // ── Board Member Edit Section ──
-function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMemberData; onSaved: () => void }) {
+function BoardMemberSection({
+  boardMember,
+  onSaved,
+}: {
+  boardMember: BoardMemberData;
+  onSaved: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [naam, setNaam] = useState(boardMember.naam);
   const [email, setEmail] = useState(boardMember.email || "");
   const [telefoon, setTelefoon] = useState(boardMember.telefoon || "");
   const [priveAdres, setPriveAdres] = useState(boardMember.prive_adres || "");
-  const [privePostcode, setPrivePostcode] = useState(boardMember.prive_postcode || "");
-  const [privePlaats, setPrivePlaats] = useState(boardMember.prive_plaats || "");
-  const [geboortedatum, setGeboortedatum] = useState(boardMember.geboortedatum || "");
+  const [privePostcode, setPrivePostcode] = useState(
+    boardMember.prive_postcode || "",
+  );
+  const [privePlaats, setPrivePlaats] = useState(
+    boardMember.prive_plaats || "",
+  );
+  const [geboortedatum, setGeboortedatum] = useState(
+    boardMember.geboortedatum || "",
+  );
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase.from("board_members").update({
-      naam,
-      email: email || null,
-      telefoon: telefoon || null,
-      prive_adres: priveAdres || null,
-      prive_postcode: privePostcode || null,
-      prive_plaats: privePlaats || null,
-      geboortedatum: geboortedatum || null,
-    }).eq("id", boardMember.id);
+    const { error } = await supabase
+      .from("board_members")
+      .update({
+        naam,
+        email: email || null,
+        telefoon: telefoon || null,
+        prive_adres: priveAdres || null,
+        prive_postcode: privePostcode || null,
+        prive_plaats: privePlaats || null,
+        geboortedatum: geboortedatum || null,
+      })
+      .eq("id", boardMember.id);
     setSaving(false);
     if (error) {
       toast.error("Opslaan mislukt: " + error.message);
@@ -284,9 +436,16 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <UserCog size={16} className="text-muted-foreground" />
-            <h3 className="text-sm font-semibold font-display">Bestuursgegevens</h3>
+            <h3 className="text-sm font-semibold font-display">
+              Bestuursgegevens
+            </h3>
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setEditing(true)}
+          >
             <Pencil size={14} /> Bewerken
           </Button>
         </div>
@@ -296,42 +455,66 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
             <span className="font-medium">{boardMember.naam}</span>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-muted-foreground w-28 shrink-0">Functie:</span>
+            <span className="text-muted-foreground w-28 shrink-0">
+              Functie:
+            </span>
             <span className="font-medium">{boardMember.functie}</span>
           </div>
           {boardMember.bond_email && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Bond e-mail:</span>
-              <span className="font-medium break-all">{boardMember.bond_email}</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Bond e-mail:
+              </span>
+              <span className="font-medium break-all">
+                {boardMember.bond_email}
+              </span>
             </div>
           )}
           {boardMember.email && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Privé e-mail:</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Privé e-mail:
+              </span>
               <span className="font-medium break-all">{boardMember.email}</span>
             </div>
           )}
           {boardMember.telefoon && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Telefoon:</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Telefoon:
+              </span>
               <span className="font-medium">{boardMember.telefoon}</span>
             </div>
           )}
           {boardMember.coffeeshop && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Coffeeshop:</span>
-              <span className="font-medium">{boardMember.coffeeshop}{boardMember.coffeeshop_plaats ? ` (${boardMember.coffeeshop_plaats})` : ""}</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Coffeeshop:
+              </span>
+              <span className="font-medium">
+                {boardMember.coffeeshop}
+                {boardMember.coffeeshop_plaats
+                  ? ` (${boardMember.coffeeshop_plaats})`
+                  : ""}
+              </span>
             </div>
           )}
           {boardMember.prive_adres && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Privé-adres:</span>
-              <span className="font-medium">{boardMember.prive_adres}, {boardMember.prive_postcode} {boardMember.prive_plaats}</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Privé-adres:
+              </span>
+              <span className="font-medium">
+                {boardMember.prive_adres}, {boardMember.prive_postcode}{" "}
+                {boardMember.prive_plaats}
+              </span>
             </div>
           )}
           {boardMember.geboortedatum && (
             <div className="flex items-start gap-2">
-              <span className="text-muted-foreground w-28 shrink-0">Geboortedatum:</span>
+              <span className="text-muted-foreground w-28 shrink-0">
+                Geboortedatum:
+              </span>
               <span className="font-medium">{boardMember.geboortedatum}</span>
             </div>
           )}
@@ -345,13 +528,25 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <UserCog size={16} className="text-muted-foreground" />
-          <h3 className="text-sm font-semibold font-display">Bestuursgegevens bewerken</h3>
+          <h3 className="text-sm font-semibold font-display">
+            Bestuursgegevens bewerken
+          </h3>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditing(false)} className="gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing(false)}
+            className="gap-1.5"
+          >
             <X size={14} /> Annuleren
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={saving}
+            className="gap-1.5"
+          >
             <Save size={14} /> {saving ? "Opslaan..." : "Opslaan"}
           </Button>
         </div>
@@ -359,15 +554,42 @@ function BoardMemberSection({ boardMember, onSaved }: { boardMember: BoardMember
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <EditableField label="Naam" value={naam} onChange={setNaam} />
         <div>
-          <label className="text-xs text-muted-foreground block mb-0.5">Functie</label>
-          <Input value={boardMember.functie} disabled className="h-8 text-sm bg-muted" />
+          <label className="text-xs text-muted-foreground block mb-0.5">
+            Functie
+          </label>
+          <Input
+            value={boardMember.functie}
+            disabled
+            className="h-8 text-sm bg-muted"
+          />
         </div>
         <EditableField label="Privé e-mail" value={email} onChange={setEmail} />
-        <EditableField label="Telefoon" value={telefoon} onChange={setTelefoon} />
-        <EditableField label="Privé-adres" value={priveAdres} onChange={setPriveAdres} />
-        <EditableField label="Postcode" value={privePostcode} onChange={setPrivePostcode} />
-        <EditableField label="Plaats" value={privePlaats} onChange={setPrivePlaats} />
-        <EditableField label="Geboortedatum" value={geboortedatum} onChange={setGeboortedatum} type="date" />
+        <EditableField
+          label="Telefoon"
+          value={telefoon}
+          onChange={setTelefoon}
+        />
+        <EditableField
+          label="Privé-adres"
+          value={priveAdres}
+          onChange={setPriveAdres}
+        />
+        <EditableField
+          label="Postcode"
+          value={privePostcode}
+          onChange={setPrivePostcode}
+        />
+        <EditableField
+          label="Plaats"
+          value={privePlaats}
+          onChange={setPrivePlaats}
+        />
+        <EditableField
+          label="Geboortedatum"
+          value={geboortedatum}
+          onChange={setGeboortedatum}
+          type="date"
+        />
       </div>
     </Card>
   );
@@ -404,32 +626,39 @@ async function sendContactChangeConfirmation(
   });
 
   try {
-    const { error } = await supabase.functions.invoke("send-transactional-email", {
-      body: {
-        templateName: "contact-details-changed",
-        recipientEmail: recipient,
-        idempotencyKey: `contact-change-${member.id}-${date}-${start}`,
-        templateData: {
-          memberName: member.contactpersoon || member.naam || "",
-          changes,
-          changedAt,
-          pending,
-          loginUrl: "https://leden.coffeeshopbond.nl",
-          icsEvent: {
-            uid: `contact-change-${member.id}-${now.getTime()}`,
-            method: "PUBLISH",
-            title: "Gegevens gewijzigd — Ledenportaal BCD",
-            date,
-            start,
-            end,
-            description: changes
-              .map((c) => `${c.label}: ${c.oud || "leeg"} → ${c.nieuw || "leeg"}`)
-              .join("\n"),
+    const { error } = await supabase.functions.invoke(
+      "send-transactional-email",
+      {
+        body: {
+          templateName: "contact-details-changed",
+          recipientEmail: recipient,
+          idempotencyKey: `contact-change-${member.id}-${date}-${start}`,
+          templateData: {
+            memberName: member.contactpersoon || member.naam || "",
+            changes,
+            changedAt,
+            pending,
+            loginUrl: "https://leden.coffeeshopbond.nl",
+            icsEvent: {
+              uid: `contact-change-${member.id}-${now.getTime()}`,
+              method: "PUBLISH",
+              title: "Gegevens gewijzigd — Ledenportaal BCD",
+              date,
+              start,
+              end,
+              description: changes
+                .map(
+                  (c) =>
+                    `${c.label}: ${c.oud || "leeg"} → ${c.nieuw || "leeg"}`,
+                )
+                .join("\n"),
+            },
           },
         },
       },
-    });
-    if (error) console.error("Bevestigingsmail contactwijziging mislukt", error);
+    );
+    if (error)
+      console.error("Bevestigingsmail contactwijziging mislukt", error);
   } catch (e) {
     console.error("Bevestigingsmail contactwijziging mislukt", e);
   }
@@ -443,9 +672,10 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const [editTelefoon, setEditTelefoon] = useState("");
   const [editEmail2, setEditEmail2] = useState("");
   const [saving, setSaving] = useState(false);
-  const { photos, uploadPhoto, removePhoto } = useContactPhotos(linkedMember?.id);
+  const { photos, uploadPhoto, removePhoto } = useContactPhotos(
+    linkedMember?.id,
+  );
   const photoName = linkedMember?.contactpersoon || "";
-
 
   useEffect(() => {
     if (linkedMember) {
@@ -458,10 +688,12 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const handleSaveProfile = async () => {
     if (!linkedMember || !user) return;
     setSaving(true);
-    
+
     const editData: Record<string, unknown> = {};
-    if (editName !== (linkedMember.contactpersoon || "")) editData.contactpersoon = editName;
-    if (editTelefoon !== (linkedMember.telefoon || "")) editData.telefoon = editTelefoon;
+    if (editName !== (linkedMember.contactpersoon || ""))
+      editData.contactpersoon = editName;
+    if (editTelefoon !== (linkedMember.telefoon || ""))
+      editData.telefoon = editTelefoon;
     if (editEmail2 !== (linkedMember.email || "")) editData.email = editEmail2;
 
     if (Object.keys(editData).length === 0) {
@@ -473,10 +705,18 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
     // Alleen contactgegevens (e-mail / telefoon) leiden tot een bevestiging.
     const contactChanges: { label: string; oud: string; nieuw: string }[] = [];
     if ("email" in editData) {
-      contactChanges.push({ label: "E-mailadres", oud: linkedMember.email || "", nieuw: editEmail2 });
+      contactChanges.push({
+        label: "E-mailadres",
+        oud: linkedMember.email || "",
+        nieuw: editEmail2,
+      });
     }
     if ("telefoon" in editData) {
-      contactChanges.push({ label: "Telefoonnummer", oud: linkedMember.telefoon || "", nieuw: editTelefoon });
+      contactChanges.push({
+        label: "Telefoonnummer",
+        oud: linkedMember.telefoon || "",
+        nieuw: editTelefoon,
+      });
     }
 
     if (isAdmin) {
@@ -492,22 +732,47 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
       const { error } = await supabase
         .from("member_edits")
         .upsert(
-          { member_id: linkedMember.id, data: mergedData as any, updated_by: user.id, updated_at: new Date().toISOString() },
-          { onConflict: "member_id" }
+          {
+            member_id: linkedMember.id,
+            data: mergedData as any,
+            updated_by: user.id,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "member_id" },
         );
       setSaving(false);
-      if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
+      if (error) {
+        toast.error("Opslaan mislukt: " + error.message);
+        return;
+      }
       toast.success("Gegevens opgeslagen");
-      void sendContactChangeConfirmation(linkedMember, contactChanges, editEmail2, false);
+      void sendContactChangeConfirmation(
+        linkedMember,
+        contactChanges,
+        editEmail2,
+        false,
+      );
     } else {
       // Member: submit edit request
       const { error } = await supabase
         .from("member_edit_requests")
-        .insert({ member_id: linkedMember.id, data: editData as any, submitted_by: user.id });
+        .insert({
+          member_id: linkedMember.id,
+          data: editData as any,
+          submitted_by: user.id,
+        });
       setSaving(false);
-      if (error) { toast.error("Opslaan mislukt: " + error.message); return; }
+      if (error) {
+        toast.error("Opslaan mislukt: " + error.message);
+        return;
+      }
       toast.success("Wijziging ingediend ter goedkeuring");
-      void sendContactChangeConfirmation(linkedMember, contactChanges, editEmail2, true);
+      void sendContactChangeConfirmation(
+        linkedMember,
+        contactChanges,
+        editEmail2,
+        true,
+      );
     }
     setEditingProfile(false);
   };
@@ -520,7 +785,12 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
           <h3 className="text-sm font-semibold font-display">Profiel</h3>
         </div>
         {linkedMember && !editingProfile && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditingProfile(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setEditingProfile(true)}
+          >
             <Pencil size={14} /> Bewerken
           </Button>
         )}
@@ -537,49 +807,87 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
             onRemove={() => removePhoto(photoName)}
           />
           <div className="text-xs text-muted-foreground">
-            <div className="font-medium text-foreground text-sm">{photoName}</div>
+            <div className="font-medium text-foreground text-sm">
+              {photoName}
+            </div>
             Klik op de foto om een profielfoto toe te voegen of te wijzigen.
           </div>
         </div>
       )}
 
-
       {editingProfile && linkedMember ? (
         <div className="space-y-3 max-w-sm">
           <div>
-            <label className="text-xs text-muted-foreground block mb-0.5">Naam contactpersoon</label>
-            <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
+            <label className="text-xs text-muted-foreground block mb-0.5">
+              Naam contactpersoon
+            </label>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="h-8 text-sm"
+            />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-0.5">E-mail (lid)</label>
-            <Input value={editEmail2} onChange={(e) => setEditEmail2(e.target.value)} className="h-8 text-sm" />
+            <label className="text-xs text-muted-foreground block mb-0.5">
+              E-mail (lid)
+            </label>
+            <Input
+              value={editEmail2}
+              onChange={(e) => setEditEmail2(e.target.value)}
+              className="h-8 text-sm"
+            />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-0.5">Telefoon</label>
-            <Input value={editTelefoon} onChange={(e) => setEditTelefoon(e.target.value)} className="h-8 text-sm" />
+            <label className="text-xs text-muted-foreground block mb-0.5">
+              Telefoon
+            </label>
+            <Input
+              value={editTelefoon}
+              onChange={(e) => setEditTelefoon(e.target.value)}
+              className="h-8 text-sm"
+            />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-0.5">Account e-mail</label>
-            <Input value={user?.email || ""} disabled className="h-8 text-sm bg-muted" />
+            <label className="text-xs text-muted-foreground block mb-0.5">
+              Account e-mail
+            </label>
+            <Input
+              value={user?.email || ""}
+              disabled
+              className="h-8 text-sm bg-muted"
+            />
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" onClick={handleSaveProfile} disabled={saving} className="gap-1.5">
+            <Button
+              size="sm"
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="gap-1.5"
+            >
               <Save size={14} /> {saving ? "Opslaan..." : "Opslaan"}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setEditingProfile(false)} className="gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEditingProfile(false)}
+              className="gap-1.5"
+            >
               <X size={14} /> Annuleren
             </Button>
           </div>
           {!isAdmin && (
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Clock size={12} /> Wijzigingen worden beoordeeld door het bestuur.
+              <Clock size={12} /> Wijzigingen worden beoordeeld door het
+              bestuur.
             </p>
           )}
         </div>
       ) : (
         <div className="space-y-2 text-sm">
           <div className="flex items-start gap-2">
-            <span className="text-muted-foreground w-28 shrink-0">Account e-mail:</span>
+            <span className="text-muted-foreground w-28 shrink-0">
+              Account e-mail:
+            </span>
             <span className="font-medium break-all">{user?.email}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -592,30 +900,46 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
           {linkedMember && (
             <>
               <div className="flex items-start gap-2">
-                <span className="text-muted-foreground w-28 shrink-0">Gekoppeld lid:</span>
-                <span className="font-medium">{linkedMember.bedrijfsnaam || linkedMember.naam}</span>
+                <span className="text-muted-foreground w-28 shrink-0">
+                  Gekoppeld lid:
+                </span>
+                <span className="font-medium">
+                  {linkedMember.bedrijfsnaam || linkedMember.naam}
+                </span>
               </div>
               {linkedMember.contactpersoon && (
                 <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-28 shrink-0">Contactpersoon:</span>
-                  <span className="font-medium">{linkedMember.contactpersoon}</span>
+                  <span className="text-muted-foreground w-28 shrink-0">
+                    Contactpersoon:
+                  </span>
+                  <span className="font-medium">
+                    {linkedMember.contactpersoon}
+                  </span>
                 </div>
               )}
               {linkedMember.email && (
                 <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-28 shrink-0">E-mail (lid):</span>
-                  <span className="font-medium break-all">{linkedMember.email}</span>
+                  <span className="text-muted-foreground w-28 shrink-0">
+                    E-mail (lid):
+                  </span>
+                  <span className="font-medium break-all">
+                    {linkedMember.email}
+                  </span>
                 </div>
               )}
               {linkedMember.telefoon && (
                 <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-28 shrink-0">Telefoon:</span>
+                  <span className="text-muted-foreground w-28 shrink-0">
+                    Telefoon:
+                  </span>
                   <span className="font-medium">{linkedMember.telefoon}</span>
                 </div>
               )}
               {linkedMember.plaats && (
                 <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-28 shrink-0">Plaats:</span>
+                  <span className="text-muted-foreground w-28 shrink-0">
+                    Plaats:
+                  </span>
                   <span className="font-medium">{linkedMember.plaats}</span>
                 </div>
               )}
@@ -642,10 +966,15 @@ export default function MijnAccountPage() {
 
   // Fetch board member data for current user by matching email
   const fetchBoardMember = async () => {
-    if (!user?.email) { setBoardLoading(false); return; }
+    if (!user?.email) {
+      setBoardLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from("board_members")
-      .select("id, naam, functie, email, bond_email, telefoon, prive_adres, prive_postcode, prive_plaats, geboortedatum, coffeeshop, coffeeshop_plaats")
+      .select(
+        "id, naam, functie, email, bond_email, telefoon, prive_adres, prive_postcode, prive_plaats, geboortedatum, coffeeshop, coffeeshop_plaats",
+      )
       .or(`bond_email.eq.${user.email},email.eq.${user.email}`);
     setBoardMember(data?.[0] ?? null);
     setBoardLoading(false);
@@ -657,9 +986,17 @@ export default function MijnAccountPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
-      <BcdHeroBanner title="Mijn Account" subtitle="Beheer je accountinstellingen">
+      <BcdHeroBanner
+        title="Mijn Account"
+        subtitle="Beheer je accountinstellingen"
+      >
         {linkedMember && !editingMember && (
-          <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => setEditingMember(true)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setEditingMember(true)}
+          >
             <Pencil size={14} /> Lidgegevens bewerken
           </Button>
         )}
@@ -671,10 +1008,16 @@ export default function MijnAccountPage() {
           {!isAdmin && (
             <div className="flex items-center gap-2 p-3 bg-muted border border-border rounded-lg">
               <Clock size={14} className="text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground">Wijzigingen worden beoordeeld door het bestuur.</p>
+              <p className="text-xs text-muted-foreground">
+                Wijzigingen worden beoordeeld door het bestuur.
+              </p>
             </div>
           )}
-          <MemberEditForm member={linkedMember} editing={editingMember} setEditing={setEditingMember} />
+          <MemberEditForm
+            member={linkedMember}
+            editing={editingMember}
+            setEditing={setEditingMember}
+          />
         </>
       )}
 
@@ -688,11 +1031,16 @@ export default function MijnAccountPage() {
 
           {/* Board member section */}
           {!boardLoading && boardMember && (
-            <BoardMemberSection boardMember={boardMember} onSaved={fetchBoardMember} />
+            <BoardMemberSection
+              boardMember={boardMember}
+              onSaved={fetchBoardMember}
+            />
           )}
 
           {/* Mailing preferences */}
-          {linkedMember && <MailingPreferences member={linkedMember} canEdit={true} />}
+          {linkedMember && (
+            <MailingPreferences member={linkedMember} canEdit={true} />
+          )}
 
           {/* Extern data sharing consent */}
           {linkedMember && (

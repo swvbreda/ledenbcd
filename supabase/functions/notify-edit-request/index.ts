@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    )!;
     const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
 
     if (!INTERNAL_WEBHOOK_SECRET) {
@@ -29,7 +31,9 @@ Deno.serve(async (req) => {
     // (sent via Vault) or an internal caller with the internal webhook secret.
     const authHeader = req.headers.get("authorization") ?? "";
     const internalSecret = req.headers.get("x-internal-secret") ?? "";
-    const isServiceRole = SUPABASE_SERVICE_ROLE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
+    const isServiceRole =
+      SUPABASE_SERVICE_ROLE_KEY &&
+      authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
     const isInternal = internalSecret === INTERNAL_WEBHOOK_SECRET;
     if (!isServiceRole && !isInternal) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -58,6 +62,7 @@ Deno.serve(async (req) => {
         title: "Nieuw wijzigingsverzoek",
         body: `Lid #${memberId} heeft een wijzigingsverzoek ingediend.`,
         target_role: "admin",
+        route: "/goedkeuringen",
       }),
     });
 
