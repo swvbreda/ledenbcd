@@ -343,10 +343,16 @@ Deno.serve(async (req) => {
     }
 
     // ---- Automatische matching op leden ----
-    const { data: registerRows } = await db
+    // Alleen dossiers die volgens de bron meetellen mogen automatisch worden
+    // gekoppeld: geen ruis, gesloten zaken, aanvragen of nieuwe vestigingen.
+    // Bestaande (bevestigde) koppelingen blijven altijd ongemoeid.
+    const { data: registerRowsAll } = await db
       .from("coffeeshop_register")
-      .select("id,naam,plaats,gemeente,postcode,huisnummer,kvk_nummer,vergunninghouder,exploitant")
+      .select(
+        "id,naam,plaats,gemeente,postcode,huisnummer,kvk_nummer,vergunninghouder,exploitant,telt_mee,status,vervallen,raw",
+      )
       .eq("vervallen", false);
+    const registerRows = (registerRowsAll ?? []).filter((r: any) => shopCounts(r));
     const { data: memberRows } = await db
       .from("members_data")
       .select("id,data,member_type")
