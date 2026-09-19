@@ -179,7 +179,25 @@ export function findCombination(
 ): LedgerEntry[] | null {
   const target = cents(record.amount);
   if (target === 0) return null;
-  const pool = candidates.slice(0, 12);
+  const isHinted = (e: LedgerEntry) =>
+    hintKeys.length > 0 &&
+    entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)));
+  const hinted = candidates.filter(isHinted);
+  // Met een documenthint zoeken we gericht: de bekende factuur hoort er zeker
+  // bij, aangevuld met facturen rond de betaaldatum. Dat voorkomt willekeurige
+  // combinaties bij leveranciers met veel facturen.
+  const scope =
+    hinted.length > 0
+      ? candidates.filter(
+          (e) => isHinted(e) || Math.abs(daysBetween(record.date, e.entry_date)) <= 21,
+        )
+      : candidates;
+  const pool = [...scope].sort(
+    (a, b) =>
+      Number(isHinted(b)) - Number(isHinted(a)) ||
+      Math.abs(daysBetween(record.date, a.entry_date)) -
+        Math.abs(daysBetween(record.date, b.entry_date)),
+  ).slice(0, 12);
   const solutions: LedgerEntry[][] = [];
   const search = (index: number, picked: LedgerEntry[], sum: number) => {
     if (solutions.length > 8) return;
