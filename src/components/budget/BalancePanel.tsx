@@ -230,9 +230,16 @@ export default function BalancePanel({
         </table>
       </div>
 
-      {/* Contributie & Vrijwilligersvergoeding */}
+      {/* Contributie volgens ledenregister — operationele controle, geen boekhouding */}
       {contributionStats && (
         <div className="border border-border rounded-lg overflow-hidden">
+          <div className="px-3 py-2 bg-muted/50">
+            <h3 className="text-sm font-semibold">Volgens ledenregister (operationele controle)</h3>
+            <p className="text-[11px] text-muted-foreground">
+              Verwachte contributie op basis van het ledenbestand. Telt niet mee
+              in het boekhoudkundig resultaat hierboven.
+            </p>
+          </div>
           <table className="w-full text-sm">
             <tbody>
               <tr className="border-b border-border/50">
