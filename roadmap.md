@@ -1,6 +1,12 @@
 # Roadmap
 
 ## Open
+- [ ] Financiële module: Informer als enige bron (canonieke tabellen, jaarsync, overrides, betaalkoppelingen, controlemodule)
+- [ ] Veldmapping verkoop-/inkoopfacturen 2026 aantoonbaar valideren + vastleggen in tests
+- [ ] Readiness/reconciliatiestatus vóór omschakeling van bestaande widgets
+- [ ] Ponto alleen saldo/betaaldatum/koppeling; nergens in totalen
+- [ ] Tests: idempotentie, geen dubbeltelling, statusfilters, splits, blijvende overrides
+- [ ] 2026-sync draaien en werkelijke API-totalen versus dashboardwaarden rapporteren
 
 ## Klaar
 - [x] Coffeeshopregister-sync gebruikt het beveiligde export-endpoint met de juiste sleutelheader en antwoordvelden; publieke tabeltoegang is niet meer nodig
