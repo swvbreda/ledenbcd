@@ -536,9 +536,6 @@ export default function FinancienPage() {
             <FinancieelTodoTab year={year} />
           </TabsContent>
 
-          <TabsContent value="informer">
-            <InformerSyncTab />
-          </TabsContent>
 
           <TabsContent value="controle">
             <ControleSyncTab year={year} />
