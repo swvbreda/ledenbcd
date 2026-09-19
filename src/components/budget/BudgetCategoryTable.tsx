@@ -102,15 +102,12 @@ export default function BudgetCategoryTable({
             className="bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
             onClick={() => setExpanded(!expanded)}
           >
-            <td className="px-3 py-2">
+            {/* Uitgeklapt loopt de opgeslagen rubriektitel over de volle breedte,
+                zodat hij niet in een smalle kolom tot een teksttoren afbreekt. */}
+            <td className="px-3 py-2" colSpan={expanded ? 5 : 1}>
               <div className="flex items-start gap-2">
                 <span className="mt-0.5">{expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">{titleOverride || category.name}</h3>
-                  {subtitle && (
-                    <p className="text-[11px] font-normal leading-snug text-muted-foreground">{subtitle}</p>
-                  )}
-                </div>
+                <h3 className="min-w-0 text-sm font-semibold">{category.name}</h3>
               </div>
             </td>
             <td className="text-right px-3 py-2 text-sm">
