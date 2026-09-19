@@ -199,3 +199,64 @@ export function ledgerReadiness(
     reasons,
   };
 }
+
+/* -------------------------------------------------------------------------
+ * Toewijzing boekhoudregel → begrotingspost
+ * ---------------------------------------------------------------------- */
+
+export interface BudgetLineItemRef {
+  id: string;
+  name: string;
+}
+
+/** Normaliseert een naam van een begrotingspost of kostenrubriek (4530 → "representatiekosten"). */
+export function normalizeBudgetName(value: string): string {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/^\d+\s*/, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * DE toewijzingsregel: expliciete override > eenduidige kostenrubriek-mapping >
+ * niet toegewezen (null). Pure functie, zodat elke meetellende inkoopfactuur
+ * gegarandeerd in exact één bak belandt.
+ */
+export function assignLineItemId(
+  entry: LedgerEntry,
+  lineItems: BudgetLineItemRef[],
+): string | null {
+  if (entry.line_item_id) return entry.line_item_id;
+  if (!entry.ledger_account) return null;
+  const key = normalizeBudgetName(entry.ledger_account);
+  if (!key) return null;
+  const matches = lineItems.filter((li) => normalizeBudgetName(li.name) === key);
+  // Alleen een eenduidige match telt; bij dubbele namen blijft de regel ongekoppeld.
+  return matches.length === 1 ? matches[0].id : null;
+}
+
+/** Werkelijk bedrag van een inkoopregel, met behoud van teken (creditnota = negatief). */
+export function expenseAmount(entry: LedgerEntry): number {
+  return Number(entry.amount_incl) || 0;
+}
+
+export interface ExpenseBuckets {
+  byLineItem: Record<string, LedgerEntry[]>;
+  unassigned: LedgerEntry[];
+}
+
+/** Verdeelt alle meetellende inkoopfacturen over exact één bak per factuur. */
+export function bucketExpenseEntries(
+  entries: LedgerEntry[],
+  lineItems: BudgetLineItemRef[],
+): ExpenseBuckets {
+  const byLineItem: Record<string, LedgerEntry[]> = {};
+  const unassigned: LedgerEntry[] = [];
+  for (const entry of expenseEntries(entries)) {
+    const lineItemId = assignLineItemId(entry, lineItems);
+    if (lineItemId) (byLineItem[lineItemId] ||= []).push(entry);
+    else unassigned.push(entry);
+  }
+  return { byLineItem, unassigned };
+}
