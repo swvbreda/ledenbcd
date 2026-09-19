@@ -102,19 +102,29 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
         </div>
 
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatCard
+            label="Contributies"
+            value={<CurrencyText value={totals.revenueSplit.contribution.total} />}
+            hint={`${totals.revenueSplit.contribution.count} contributiefacturen`}
+          />
+          <StatCard
+            label="Openstaande contributies"
+            value={<CurrencyText value={totals.revenueSplit.contribution.open} />}
+          />
+          <StatCard
+            label="Overige inkomsten"
+            value={<CurrencyText value={totals.revenueSplit.other.total} />}
+            hint={`${totals.revenueSplit.other.count} overige verkoopfactu${totals.revenueSplit.other.count === 1 ? "ur" : "ren"}${
+              otherNames ? ` — ${otherNames}` : ""
+            }`}
+          />
           <StatCard
             label="Uitgaven"
             value={<CurrencyText value={totals.totalExpenses} />}
             hint={`${totals.expenses.length} inkoopfacturen`}
           />
-          <StatCard
-            label="Opbrengsten"
-            value={<CurrencyText value={totals.totalRevenue} />}
-            hint={`${totals.revenues.length} verkoopfacturen`}
-          />
           <StatCard label="Openstaand inkoop" value={<CurrencyText value={totals.openPurchase} />} />
-          <StatCard label="Openstaand verkoop" value={<CurrencyText value={totals.openSales} />} />
         </div>
 
         <div className="mt-3 flex items-start gap-2 text-xs rounded-md border border-border p-2">
