@@ -364,15 +364,24 @@ export function useDossierMutations(year: number) {
         .limit(5000);
       if (ledgerErr) throw ledgerErr;
 
-      const legacyRecords = await fetchLegacyRecords(year, liIds);
-      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacyRecords);
+      const [legacyRecords, documentHints] = await Promise.all([
+        fetchLegacyRecords(year, liIds),
+        fetchDocumentHints(year),
+      ]);
+      const matched = matchLegacyRecords((ledgerRows || []) as LedgerEntry[], legacyRecords, {
+        documentHints,
+      });
 
       for (const e of ledgerRows || []) {
         if (!e.counts_in_totals) continue;
         const amount = Math.abs(Number(e.amount_incl) || 0);
         const ledgerKey = `${e.doc_type}:${e.informer_id}`;
         const key = entryKeyFor("ledger", ledgerKey);
-        const legacy = matched.byEntryKey.get(ledgerKey) || null;
+        const direct = matched.byEntryKey.get(ledgerKey) || null;
+        // Eén bankbetaling die meerdere facturen dekt levert ook de
+        // administratieve toewijzing; de betaling zelf telt niet apart mee.
+        const grouped = matched.combinedByEntryKey.get(ledgerKey) || null;
+        const legacy = direct || grouped;
         const lineItemId =
           e.line_item_id ||
           (legacy?.lineItemId && liById.has(legacy.lineItemId) ? legacy.lineItemId : null);
@@ -382,10 +391,14 @@ export function useDossierMutations(year: number) {
           (k): k is string => !!k,
         );
         const ownSplits = splitsFor(key);
+        // Bij een gecombineerde betaling gelden de splits van de betaling niet
+        // per factuur: die zouden dan meerdere keren meetellen.
         const splits =
           ownSplits.length > 0
             ? ownSplits
-            : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
+            : grouped
+              ? []
+              : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
         rows.push({
           key,
           kind: "ledger",
@@ -415,12 +428,14 @@ export function useDossierMutations(year: number) {
         });
       }
 
-      // Bestaande dossiermutaties zonder Informer-koppeling blijven zichtbaar
-      // als administratief aandachtspunt, maar tellen niet mee in de totalen.
+      // Bestaande administratieve mutaties zonder Informer-koppeling. Met een
+      // expliciete toewijzing tellen ze exact één keer mee als lokale mutatie;
+      // zonder toewijzing blijven ze zichtbaar als aandachtspunt en tellen niet.
       for (const r of matched.unmatched) {
         const splits = splitsFor(r.key);
         if (!r.dossier && splits.length === 0) continue;
         const lineItemName = r.lineItemId ? liById.get(r.lineItemId)?.name || "" : "";
+        const hasAssignment = !!(r.lineItemId || r.dossier || splits.length > 0);
         rows.push({
           key: r.key,
           kind: r.kind,
@@ -441,7 +456,8 @@ export function useDossierMutations(year: number) {
           dossier: r.dossier || "",
           source: r.kind === "ponto" ? "bank" : "administratie",
           splits,
-          unlinked: true,
+          localOnly: hasAssignment,
+          unlinked: !hasAssignment,
         });
       }
 
