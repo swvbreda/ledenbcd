@@ -140,6 +140,64 @@ const asRecordLike = (r: LegacyRecord) => ({
   direction: r.direction,
 });
 
+/** Factuursleutels uit de documenten die bij een lokale mutatie horen. */
+function hintKeysFor(record: LegacyRecord, hints?: DocumentHints): string[] {
+  const raw = hints?.get(record.key) ?? [];
+  return [
+    ...new Set(
+      raw.flatMap((value) => invoiceKeysOf({ date: null, amount: 0, invoice: value })),
+    ),
+  ];
+}
+
+const entryInvoiceKeys = (e: LedgerEntry) => invoiceKeysOf(asLedgerLike(e));
+
+const cents = (value: number) => Math.round(Math.abs(value) * 100);
+
+const daysBetween = (a: string | null, b: string | null) => {
+  const ta = a ? new Date(a).getTime() : NaN;
+  const tb = b ? new Date(b).getTime() : NaN;
+  if (Number.isNaN(ta) || Number.isNaN(tb)) return 0;
+  return Math.round((ta - tb) / 86_400_000);
+};
+
+/**
+ * Zoekt de unieke combinatie van Informer-facturen die exact één lokale
+ * betaling vormt. Voorwaarden: zelfde leverancier, som exact op centen,
+ * plausibele datums en precies één mogelijke combinatie. Documenthints krijgen
+ * voorrang: combinaties die de bekende factuur bevatten gaan voor.
+ */
+export function findCombination(
+  record: LegacyRecord,
+  candidates: LedgerEntry[],
+  hintKeys: string[] = [],
+): LedgerEntry[] | null {
+  const target = cents(record.amount);
+  if (target === 0) return null;
+  const pool = candidates.slice(0, 12);
+  const solutions: LedgerEntry[][] = [];
+  const search = (index: number, picked: LedgerEntry[], sum: number) => {
+    if (solutions.length > 8) return;
+    if (picked.length >= 2 && sum === target) {
+      solutions.push([...picked]);
+      return;
+    }
+    if (index >= pool.length || picked.length >= 4 || sum > target) return;
+    search(index + 1, [...picked, pool[index]], sum + cents(Number(pool[index].amount_incl) || 0));
+    search(index + 1, picked, sum);
+  };
+  search(0, [], 0);
+  if (solutions.length === 0) return null;
+  if (hintKeys.length > 0) {
+    const withHint = solutions.filter((s) =>
+      s.some((e) => entryInvoiceKeys(e).some((k) => hintKeys.some((h) => invoiceKeysMatch(h, k)))),
+    );
+    if (withHint.length === 1) return withHint[0];
+    if (withHint.length > 1) return null;
+  }
+  return solutions.length === 1 ? solutions[0] : null;
+}
+
 /**
  * Conservatieve koppeling: eerst external_id/informer_id, dan factuurnummer,
  * dan bedrag + tegenpartij + datum. Elke Informer-regel en elke administratieve
@@ -148,11 +206,13 @@ const asRecordLike = (r: LegacyRecord) => ({
 export function matchLegacyRecords(
   entries: LedgerEntry[],
   legacy: LegacyRecord[],
+  options: MatchOptions = {},
 ): LegacyMatchResult {
   const byEntryKey = new Map<string, LegacyRecord>();
   const aliasesByEntryKey = new Map<string, LegacyRecord[]>();
-  const matchedBy = new Map<string, "external_id" | "invoice" | "payment">();
+  const matchedBy = new Map<string, MatchMethod>();
   const usedLegacy = new Set<string>();
+  const hints = options.documentHints;
 
   // Synthetische hulprijen doen niet mee aan matching: ze bevatten geen
   // goedgekeurde toewijzing en zouden echte facturen verkeerd koppelen.
@@ -161,7 +221,7 @@ export function matchLegacyRecords(
   const take = (
     entry: LedgerEntry,
     record: LegacyRecord,
-    how: "external_id" | "invoice" | "payment",
+    how: MatchMethod,
   ) => {
     const key = ledgerKeyOf(entry);
     byEntryKey.set(key, record);
