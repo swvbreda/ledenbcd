@@ -28,23 +28,34 @@ function StatCard({ label, value, hint }: { label: string; value: React.ReactNod
   );
 }
 
+function parseAmount(reference: string): number | null {
+  if (!reference.trim()) return null;
+  const parsed = Number(
+    reference.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."),
+  );
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function ControleSyncTab({ year }: Props) {
-  const totals = useLedgerTotals(year);
+  // Referentiewaarden uit de boekhouding; leeg laten = geen vergelijking.
+  const [refExpenses, setRefExpenses] = useState("");
+  const [refRevenue, setRefRevenue] = useState("");
+
+  const totals = useLedgerTotals(year, {
+    expenses: parseAmount(refExpenses),
+    revenue: parseAmount(refRevenue),
+  });
   const { data: unlinked } = useUnlinkedBankTransactions(year);
   const { data: unmatched } = useUnmatchedSalesInvoices(year);
   const { data: syncState } = useInformerSyncState();
   const { syncYear } = useLedgerMutations(year);
 
-  // Referentiewaarden uit de boekhouding; leeg laten = geen vergelijking.
-  const [refExpenses, setRefExpenses] = useState("");
-  const [refRevenue, setRefRevenue] = useState("");
-
   const lastSync = syncState?.state?.last_invoice_sync_at ?? null;
   const lastLog = (syncState?.log ?? []).find((l: any) => l.action === "sync_year");
 
   const compare = (reference: string, actual: number) => {
-    const parsed = Number(reference.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
-    if (!reference.trim() || !Number.isFinite(parsed)) return null;
+    const parsed = parseAmount(reference);
+    if (parsed === null) return null;
     return Math.abs(parsed - actual) < 0.51;
   };
 
