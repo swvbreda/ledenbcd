@@ -32,17 +32,21 @@ serve(async (req) => {
     const currentYear = year || new Date().getFullYear();
 
     // Gather context data
-    const [membersRes, contribsRes, invoicesRes, declsRes, existingTodosRes] = await Promise.all([
+    const [membersRes, contribsRes, invoicesRes, declsRes, existingTodosRes, exemptRes] = await Promise.all([
       supabase.from("members_data").select("id, data, member_type").eq("member_type", "member"),
       supabase.from("member_contributions").select("*").eq("year", currentYear),
       supabase.from("contribution_invoices").select("*").eq("year", currentYear),
       supabase.from("internal_declarations").select("*").eq("year", currentYear),
       // Check ALL statuses to never recreate dismissed/done/on_hold tasks
       supabase.from("finance_todos").select("*").eq("year", currentYear),
+      supabase.from("contribution_exemptions").select("member_id").eq("year", currentYear),
     ]);
 
     const members = membersRes.data ?? [];
-    const contribs = contribsRes.data ?? [];
+    // Leden met een contributievrijstelling voor dit jaar: geen factuurtaak en
+    // geen betalingsherinnering, zij hebben geen betaalplicht voor dit jaar.
+    const exemptMembers = new Set<number>((exemptRes.data ?? []).map((e: any) => Number(e.member_id)));
+    const contribs = (contribsRes.data ?? []).filter((c: any) => !exemptMembers.has(Number(c.member_id)));
     const invoices = invoicesRes.data ?? [];
     const decls = declsRes.data ?? [];
     const existingTodos = existingTodosRes.data ?? [];
