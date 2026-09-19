@@ -367,7 +367,7 @@ export default function FinancienPage() {
                     }
                     subtitle={
                       /inkomst|contribut|subsid|opbreng/i.test(cat.name)
-                        ? `Boekhouding (Informer API): ${fmt(financialResult?.contributionIncome ?? 0)} totaal, waarvan ${fmt(financialResult?.openSales ?? 0)} openstaand.`
+                        ? `Informer API: ${fmt(financialResult?.contributionIncome ?? 0)} contributiefacturen + ${fmt(financialResult?.otherIncome ?? 0)} overige verkoopfacturen = ${fmt((financialResult?.contributionIncome ?? 0) + (financialResult?.otherIncome ?? 0))} totale opbrengsten; ${fmt(financialResult?.openSales ?? 0)} openstaand.`
                         : undefined
                     }
                     onAddLineItem={(catId, name, amount) =>
