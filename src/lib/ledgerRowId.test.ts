@@ -3,7 +3,10 @@ import {
   assertOverrideSaved,
   classifyRowId,
   entryKeyFromRowId,
+  entryKeyVariants,
+  isLedgerEntryKey,
   ledgerEntryKey,
+  parseLedgerEntryKey,
   parseLedgerRowId,
 } from "./ledgerRowId";
 
@@ -76,5 +79,46 @@ describe("ledgerEntryKey", () => {
     expect(ledgerEntryKey({ doc_type: "sales_invoice", informer_id: "9" })).toBe(
       "sales_invoice:9",
     );
+  });
+});
+
+describe("canonieke dossiersleutels", () => {
+  it("parseert canonieke en oude geprefixte sleutels", () => {
+    expect(parseLedgerEntryKey("purchase_invoice:123")).toEqual({
+      doc_type: "purchase_invoice",
+      informer_id: "123",
+    });
+    expect(parseLedgerEntryKey("ledger:purchase_invoice:123")).toEqual({
+      doc_type: "purchase_invoice",
+      informer_id: "123",
+    });
+    expect(parseLedgerEntryKey("expense:ledger:purchase_invoice:123")).toEqual({
+      doc_type: "purchase_invoice",
+      informer_id: "123",
+    });
+  });
+
+  it("behoudt een informer_id met dubbele punten", () => {
+    expect(parseLedgerEntryKey("sales_invoice:a:b:c")).toEqual({
+      doc_type: "sales_invoice",
+      informer_id: "a:b:c",
+    });
+    expect(entryKeyVariants("ledger:sales_invoice:a:b:c")).toEqual([
+      "sales_invoice:a:b:c",
+      "ledger:sales_invoice:a:b:c",
+      "expense:ledger:sales_invoice:a:b:c",
+    ]);
+  });
+
+  it("dezelfde sleutel als ExpenseDialog gebruikt voor splits en documenten", () => {
+    const rowId = "ledger:purchase_invoice:20260688";
+    expect(entryKeyFromRowId(rowId)).toBe("purchase_invoice:20260688");
+    expect(entryKeyVariants(entryKeyFromRowId(rowId)!)).toContain(rowId);
+  });
+
+  it("laat niet-ledger sleutels ongemoeid", () => {
+    expect(isLedgerEntryKey("ponto:abc")).toBe(false);
+    expect(entryKeyVariants("ponto:abc")).toEqual(["ponto:abc"]);
+    expect(entryKeyVariants("expense:xyz")).toEqual(["expense:xyz"]);
   });
 });

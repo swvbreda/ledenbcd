@@ -4,6 +4,7 @@ import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber, invoiceKeysOf } f
 import { matchLegacyRecords } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
 import type { LedgerEntry } from "@/lib/ledger";
+import { entryKeyVariants, parseLedgerEntryKey } from "@/lib/ledgerRowId";
 
 
 export type DossierEntryKind = "expense" | "bank" | "ponto" | "ledger";
@@ -130,10 +131,15 @@ export function documentKeysOf(entry: {
   legacyKeys?: string[];
   sources?: { key: string; legacyKeys?: string[] }[];
 }): string[] {
-  const keys = new Set<string>([entry.key, ...(entry.legacyKeys || [])]);
+  const keys = new Set<string>();
+  const add = (k: string) => {
+    for (const v of entryKeyVariants(k)) keys.add(v);
+  };
+  add(entry.key);
+  for (const k of entry.legacyKeys || []) add(k);
   for (const s of entry.sources || []) {
-    keys.add(s.key);
-    for (const k of s.legacyKeys || []) keys.add(k);
+    add(s.key);
+    for (const k of s.legacyKeys || []) add(k);
   }
   return [...keys];
 }
@@ -357,7 +363,15 @@ export function useDossierMutations(year: number) {
         list.push({ dossier: String(s.dossier), amount: Number(s.amount) || 0 });
         splitsByEntry.set(s.entry_key, list);
       }
-      const splitsFor = (key: string) => splitsByEntry.get(key) || [];
+      // Canonieke Informer-regels kunnen historisch onder een geprefixte
+      // sleutel zijn opgeslagen; we lezen alle varianten, schrijven canoniek.
+      const splitsFor = (key: string) => {
+        for (const variant of entryKeyVariants(key)) {
+          const hit = splitsByEntry.get(variant);
+          if (hit && hit.length > 0) return hit;
+        }
+        return [];
+      };
 
       // Bedragen, facturen en betaalstatus komen uitsluitend uit de boekhouding.
       // Elke regel hangt aan een stabiele Informer-ID en telt exact eenmaal.
@@ -382,7 +396,9 @@ export function useDossierMutations(year: number) {
         if (!e.counts_in_totals) continue;
         const amount = Math.abs(Number(e.amount_incl) || 0);
         const ledgerKey = `${e.doc_type}:${e.informer_id}`;
-        const key = entryKeyFor("ledger", ledgerKey);
+        // Canonieke sleutel zonder UI-prefix: gelijk aan wat ExpenseDialog
+        // gebruikt voor splits en documenten.
+        const key = ledgerKey;
         const direct = matched.byEntryKey.get(ledgerKey) || null;
         // Eén bankbetaling die meerdere facturen dekt levert ook de
         // administratieve toewijzing; de betaling zelf telt niet apart mee.
@@ -495,11 +511,12 @@ export function useDossierMutationActions(year: number) {
       for (const entry of entries) {
         if (entry.kind === "ledger") {
           // Blijft bewaard na synchronisatie: hangt aan de stabiele Informer-ID.
-          const [docType, informerId] = entry.key.replace(/^ledger:/, "").split(":");
+          const ref = parseLedgerEntryKey(entry.key);
+          if (!ref) throw new Error(`Onbekende boekingssleutel: ${entry.key}`);
           const { error } = await client
             .from("ledger_entry_overrides")
             .upsert(
-              { doc_type: docType, informer_id: informerId, dossier },
+              { doc_type: ref.doc_type, informer_id: ref.informer_id, dossier },
               { onConflict: "doc_type,informer_id" },
             );
           if (error) throw error;
