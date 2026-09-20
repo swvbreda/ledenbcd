@@ -125,7 +125,10 @@ export default function DossierOverzichtTab({ year }: Props) {
         list.reduce((s, e) => s + (e.direction === "in" ? -e.shareAmount : e.shareAmount), 0);
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      const localTotal = net(counting.filter((e) => isLocalOnly(e)));
+      const local = counting.filter((e) => isLocalOnly(e));
+      const localOut = local.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
+      const localIncome = local.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
+      const localTotal = net(local);
       rows.push({
         dossier,
         entries,
@@ -134,7 +137,10 @@ export default function DossierOverzichtTab({ year }: Props) {
         total: out - income,
         informerTotal: out - income - localTotal,
         localTotal,
+        localOut,
+        localIncome,
       });
+
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
