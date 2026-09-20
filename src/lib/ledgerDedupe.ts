@@ -30,10 +30,18 @@ export function invoiceKey(value?: string | null): string {
  * Alle waarschijnlijke factuurnummers uit een omschrijving.
  * Reeksen van tien of meer cijfers zijn doorgaans IBAN-/rekeningnummers en
  * worden bewust genegeerd, zodat die niet als factuurnummer in beeld komen.
+ * Ook losse tokens met een scheidingsteken ("Fac nr 2026-0003") worden herkend:
+ * in lange bankomschrijvingen staat het factuurnummer vrijwel altijd zo.
  */
 export function invoiceNumbersIn(text?: string | null): string[] {
-  return [...new Set(String(text || "").match(/\b\d{5,9}\b/g) || [])];
+  const raw = String(text || "");
+  const plain = raw.match(/\b\d{5,9}\b/g) || [];
+  // "2026-0003", "2026/0003" → "20260003". Datums ("2026-06-24") vallen af,
+  // omdat daar maar twee cijfers op het scheidingsteken volgen.
+  const joined = (raw.match(/\b\d{4}[-/]\d{3,6}\b/g) || []).map((t) => t.replace(/\D/g, ""));
+  return [...new Set([...plain, ...joined].filter((t) => t.length >= 5 && t.length <= 9))];
 }
+
 
 /** Alle factuurnummers van een regel: uit het factuurveld én de omschrijving. */
 export function allInvoiceNumbers(entry: LedgerLike): string[] {
