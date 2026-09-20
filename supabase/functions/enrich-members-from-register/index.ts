@@ -1,5 +1,14 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  effectiveMember,
+  findByLinkKey,
+  isLocationDeleted,
+  locationKeyOf,
+  locationTarget,
+  realLocationCount,
+  sameFieldValue,
+} from "../_shared/memberEffective.ts";
 
 /**
  * Vult ledengegevens aan met data uit het landelijke coffeeshopregister.
@@ -60,35 +69,7 @@ function locHouseNumber(adres: string | undefined): string {
   return m ? m[1] : "";
 }
 
-/** Samengestelde koppelsleutel `naam|adres|postcode` van een ledenlocatie. */
-const compactKey = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-function locationKeyOf(loc: any): string {
-  return [compactKey(loc?.naam), compactKey(loc?.adres), compactKey(loc?.postcode)].join("|");
-}
-
-/** Vindt de ledenlocatie waar een bevestigde koppeling naar verwijst. */
-function findByLinkKey(locaties: any[], linkKey: string | null | undefined): any | null {
-  const key = String(linkKey ?? "").trim().toLowerCase();
-  if (!key) return null;
-  if (key.includes("|")) {
-    const [n, a, p] = key.split("|");
-    return (
-      locaties.find((l) => locationKeyOf(l) === key) ??
-      locaties.find((l) => !!a && compactKey(l?.adres) === a) ??
-      locaties.find((l) => !!p && compactKey(l?.postcode) === p) ??
-      locaties.find((l) => !!n && compactKey(l?.naam) === n) ??
-      null
-    );
-  }
-  return (
-    locaties.find((l) => normPc(l?.postcode) === normPc(key)) ??
-    locaties.find((l) => norm(l?.naam) === norm(key)) ??
-    null
-  );
-}
-
 /** Bepaalt of een bestaande locatie dezelfde vestiging is als de registershop. */
-
 function sameLocation(loc: any, shop: any): boolean {
   const pcA = normPc(loc?.postcode);
   const pcB = normPc(shop.postcode);
@@ -103,14 +84,48 @@ function sameLocation(loc: any, shop: any): boolean {
   return false;
 }
 
-/** Een echte vestiging heeft minimaal adres of plaats; lege invoerrijen tellen niet mee. */
-function realLocationCount(locaties: any[]): number {
-  return locaties.filter((loc) => String(loc?.adres ?? "").trim() || String(loc?.plaats ?? "").trim()).length;
-}
-
 /** Factuurvelden worden nooit door het register aangeraakt. */
 function isInvoiceField(field: string): boolean {
   return field.toLowerCase().startsWith("factuur");
+}
+
+/** Registerwaarde voor een veld van een vestiging. */
+function registerValueFor(shop: any, field: string): string | null {
+  const socials = (shop?.socials ?? {}) as Record<string, string | null>;
+  const shopLogo =
+    typeof shop?.logo_url === "string" && /^https?:\/\//i.test(shop.logo_url) ? shop.logo_url : null;
+  switch (field) {
+    case "adres":
+      return shopAddress(shop) || null;
+    case "postcode":
+      return shop?.postcode ?? null;
+    case "plaats":
+      return shop?.plaats ?? null;
+    case "gemeente":
+      return shop?.gemeente ?? null;
+    case "naam":
+      return shop?.naam ?? null;
+    case "oprichtingsDatum":
+      return shop?.kvk_vestiging_datum ?? null;
+    case "kvk":
+      return shop?.kvk_nummer ?? null;
+    case "vergunninghouder":
+      return shop?.vergunninghouder ?? null;
+    case "exploitant":
+      return shop?.exploitant ?? null;
+    case "website":
+      return cleanWebsite(shop?.website);
+    case "telefoon":
+      return shop?.telefoon ?? null;
+    case "logo":
+      return shopLogo;
+    case "instagram":
+      return socials.instagram ?? null;
+    case "facebook":
+      return socials.facebook ?? null;
+    default:
+      return null;
+  }
 }
 
 type Proposal = {
@@ -344,7 +359,9 @@ Deno.serve(async (req) => {
     // Openstaande/genegeerde voorstellen zodat we niets dubbel of opnieuw voorstellen
     const { data: existingProposals } = await db
       .from("register_enrichment_proposals")
-      .select("id, member_id, register_id, location_key, field, status, scope");
+      .select(
+        "id, member_id, register_id, location_key, field, status, scope, current_value, proposed_value",
+      );
     const knownProposal = new Set(
       (existingProposals ?? []).map(
         (p: any) => `${p.member_id}|${p.register_id ?? ""}|${p.location_key ?? ""}|${p.field}`,
@@ -354,13 +371,24 @@ Deno.serve(async (req) => {
     // (lid, registershop, veld). De locatiesleutel verschuift bij een verhuizing
     // en mag dus geen dubbele of teruggekeerde voorstellen veroorzaken.
     const knownByLink = new Map<string, any>();
+    const openByMember = new Map<number, any[]>();
     for (const p of existingProposals ?? []) {
+      if ((p as any).status === "open") {
+        const arr = openByMember.get(p.member_id) ?? [];
+        arr.push(p);
+        openByMember.set(p.member_id, arr);
+      }
       if ((p as any).scope !== "locatie" || !(p as any).register_id) continue;
       knownByLink.set(`${p.member_id}|${p.register_id}|${p.field}`, p);
     }
-    /** Voorstellen waarvan de locatiesleutel is verschoven, bijwerken. */
-    const keyFixes: Array<{ id: string; location_key: string }> = [];
-
+    /** Voorstellen waarvan de locatiesleutel of registerwaarde is verschoven. */
+    const proposalUpdates: Array<{ id: string; patch: Record<string, unknown> }> = [];
+    /** Voorstellen die inmiddels zijn verwerkt (ledengegevens = registerwaarde). */
+    const proposalClosures: Array<{ id: string; reden: string }> = [];
+    /** Bevestigde koppelingen waarvan de locatiesleutel is verouderd. */
+    const linkKeyFixes: Array<{ member_id: number; register_id: string; location_key: string }> =
+      [];
+    let linksNeedingReview = 0;
 
     const byMember = new Map<number, Array<{ rid: string; linkKey: string | null }>>();
     for (const l of links ?? []) {
@@ -384,9 +412,45 @@ Deno.serve(async (req) => {
       if (memErr) throw memErr;
       if (!row) continue;
 
-      const data: any = JSON.parse(JSON.stringify(row.data ?? {}));
-      const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
-      let changed = false;
+      const { data: editRow, error: editErr } = await db
+        .from("member_edits")
+        .select("member_id, data")
+        .eq("member_id", memberId)
+        .maybeSingle();
+      if (editErr) throw editErr;
+
+      // Basis en goedgekeurde wijzigingen blijven gescheiden; de verrijking
+      // redeneert uitsluitend over de effectieve (samengevoegde) ledengegevens.
+      const baseData: any = JSON.parse(JSON.stringify(row.data ?? {}));
+      if (!Array.isArray(baseData.locaties)) baseData.locaties = [];
+      const overlayData: any = editRow?.data
+        ? JSON.parse(JSON.stringify(editRow.data))
+        : null;
+      if (overlayData && !Array.isArray(overlayData.locaties)) overlayData.locaties = [];
+
+      const eff = effectiveMember(baseData, overlayData);
+      const locaties: any[] = eff.locaties;
+      let baseChanged = false;
+      let overlayChanged = false;
+
+      /**
+       * Vult een leeg veld aan in de laag waar de vestiging staat: correcties
+       * van het lid blijven in member_edits, registerdata vult de basis aan.
+       */
+      const fillLocationField = (loc: any, field: string, value: string) => {
+        const target = locationTarget(baseData, overlayData, loc);
+        if (target?.layer === "overlay" && overlayData) {
+          overlayData.locaties[target.index][field] = value;
+          overlayChanged = true;
+        } else if (target?.layer === "base") {
+          baseData.locaties[target.index][field] = value;
+          baseChanged = true;
+        } else {
+          return false;
+        }
+        loc[field] = value;
+        return true;
+      };
 
       // Oude voorstellen van vóór de locatie-verrijking mogen gegevens van een
       // meerlocatielid niet meer op lidniveau wijzigen. KvK, vergunninghouders
@@ -394,7 +458,11 @@ Deno.serve(async (req) => {
       if (realLocationCount(locaties) > 1) {
         const { error: staleErr } = await db
           .from("register_enrichment_proposals")
-          .update({ status: "genegeerd", resolved_at: new Date().toISOString() })
+          .update({
+            status: "genegeerd",
+            resolved_at: new Date().toISOString(),
+            resolutie_reden: "lid heeft meerdere vestigingen; alleen locatievoorstellen gelden",
+          })
           .eq("member_id", memberId)
           .neq("scope", "locatie")
           .eq("status", "open");
@@ -408,15 +476,29 @@ Deno.serve(async (req) => {
         // De bevestigde koppeling is leidend: die wijst de bestaande vestiging
         // aan, ook wanneer de shop in het register is verhuisd. Pas als de
         // sleutel niets oplevert, zoeken we op adres/naam.
-        let loc = findByLinkKey(locaties, linkKey) ?? locaties.find((l) => sameLocation(l, shop));
+        const matches = locaties.filter((l) => sameLocation(l, shop));
+        let loc = findByLinkKey(locaties, linkKey) ?? (matches.length === 1 ? matches[0] : null);
+        if (!loc && matches.length > 1) {
+          // Meerdere kandidaten: nooit gokken, dit vraagt menselijke beoordeling.
+          linksNeedingReview++;
+          continue;
+        }
         // De sleutel verwijst naar de bestaande ledenlocatie. Gebruik daarom de
         // huidige gegevens van die locatie, niet het mogelijk gewijzigde registeradres.
         const locKey = loc
           ? linkKey || normPc(loc.postcode) || norm(loc.naam)
           : normPc(shop.postcode) || norm(shop.naam);
 
-
-        const ubo = uboByRegister.get(rid) ?? [];
+        // Bevestigde koppeling blijft op dezelfde register_id hangen; alleen een
+        // verouderde locatiesleutel wordt bijgewerkt naar de effectieve locatie.
+        if (loc) {
+          const effKey = locationKeyOf(loc);
+          if (effKey !== "||" && (linkKey ?? "") !== effKey && !findByLinkKey([loc], linkKey)) {
+            linkKeyFixes.push({ member_id: memberId, register_id: rid, location_key: effKey });
+          }
+        } else if (linkKey) {
+          linksNeedingReview++;
+        }
 
         // Extra verrijking uit het register: logo, socials en telefoon
         const socials = (shop.socials ?? {}) as Record<string, string | null>;
@@ -425,71 +507,87 @@ Deno.serve(async (req) => {
           : null;
 
         if (!loc) {
-          loc = {
+          const candidate: any = {
             naam: shop.naam,
             plaats: shop.plaats ?? "",
             gemeente: shop.gemeente ?? "",
             adres: shopAddress(shop),
             postcode: shop.postcode ?? "",
           };
+          // Een vestiging die het lid zelf heeft verwijderd komt nooit terug.
+          if (isLocationDeleted(candidate, eff.verwijderd)) continue;
           // Alleen de startdatum van DEZE vestiging, nooit de bedrijfsdatum
-          if (shop.kvk_vestiging_datum) loc.oprichtingsDatum = shop.kvk_vestiging_datum;
-          if (shop.kvk_nummer) loc.kvk = shop.kvk_nummer;
-          if (shop.vergunninghouder) loc.vergunninghouder = shop.vergunninghouder;
-          if (shop.exploitant) loc.exploitant = shop.exploitant;
-          if (shopLogo) loc.logo = shopLogo;
-          if (shop.telefoon) loc.telefoon = shop.telefoon;
-          if (socials.instagram) loc.instagram = socials.instagram;
-          if (socials.facebook) loc.facebook = socials.facebook;
-          locaties.push(loc);
+          if (shop.kvk_vestiging_datum) candidate.oprichtingsDatum = shop.kvk_vestiging_datum;
+          if (shop.kvk_nummer) candidate.kvk = shop.kvk_nummer;
+          if (shop.vergunninghouder) candidate.vergunninghouder = shop.vergunninghouder;
+          if (shop.exploitant) candidate.exploitant = shop.exploitant;
+          if (shopLogo) candidate.logo = shopLogo;
+          if (shop.telefoon) candidate.telefoon = shop.telefoon;
+          if (socials.instagram) candidate.instagram = socials.instagram;
+          if (socials.facebook) candidate.facebook = socials.facebook;
+          baseData.locaties.push(candidate);
+          locaties.push(candidate);
           locationsAdded++;
-          changed = true;
+          baseChanged = true;
           continue;
         }
 
         // Eigendomsketen wordt bewust NIET bij het lid opgeslagen: die blijft
         // alleen in het register staan (uitsluitend leesbaar voor bestuur/beheer).
         if (loc.ubo) {
+          const target = locationTarget(baseData, overlayData, loc);
+          if (target?.layer === "overlay" && overlayData) {
+            delete overlayData.locaties[target.index].ubo;
+            overlayChanged = true;
+          } else if (target?.layer === "base") {
+            delete baseData.locaties[target.index].ubo;
+            baseChanged = true;
+          }
           delete loc.ubo;
-          changed = true;
         }
 
-
         const candidates: Array<[string, string | null]> = [
-          ["adres", shopAddress(shop) || null],
-          ["postcode", shop.postcode],
-          ["plaats", shop.plaats],
-          ["gemeente", shop.gemeente],
-          ["oprichtingsDatum", shop.kvk_vestiging_datum],
-          ["kvk", shop.kvk_nummer],
-          ["vergunninghouder", shop.vergunninghouder],
-          ["exploitant", shop.exploitant],
+          "adres",
+          "postcode",
+          "plaats",
+          "gemeente",
+          "oprichtingsDatum",
+          "kvk",
+          "vergunninghouder",
+          "exploitant",
           // De website hoort bij DEZE vestiging, niet bij het lid als geheel
-          ["website", cleanWebsite(shop.website)],
-          ["telefoon", shop.telefoon ?? null],
-          ["logo", shopLogo],
-          ["instagram", socials.instagram ?? null],
-          ["facebook", socials.facebook ?? null],
-        ];
-
+          "website",
+          "telefoon",
+          "logo",
+          "instagram",
+          "facebook",
+        ].map((field) => [field, registerValueFor(shop, field)] as [string, string | null]);
 
         for (const [field, value] of candidates) {
           if (!value) continue;
           if (isInvoiceField(field)) continue;
           const current = loc[field];
           if (!current || String(current).trim() === "") {
-            loc[field] = value;
-            fieldsFilled++;
-            changed = true;
-          } else if (norm(current) !== norm(value)) {
+            if (fillLocationField(loc, field, value)) fieldsFilled++;
+          } else if (!sameFieldValue(field, current, value)) {
             const key = `${memberId}|${rid}|${locKey}|${field}`;
             const linkScoped = `${memberId}|${rid}|${field}`;
             const prior = knownByLink.get(linkScoped);
             if (prior) {
-              // Zelfde vestiging, verschoven sleutel: bijwerken i.p.v. dupliceren.
-              if ((prior.location_key ?? "") !== locKey && prior.id) {
-                keyFixes.push({ id: prior.id, location_key: locKey });
-                prior.location_key = locKey;
+              // Zelfde vestiging: bijwerken i.p.v. dupliceren.
+              const patch: Record<string, unknown> = {};
+              if ((prior.location_key ?? "") !== locKey) patch.location_key = locKey;
+              if (prior.status === "open") {
+                if (String(prior.proposed_value ?? "") !== String(value)) {
+                  patch.proposed_value = String(value);
+                }
+                if (String(prior.current_value ?? "") !== String(current)) {
+                  patch.current_value = String(current);
+                }
+              }
+              if (prior.id && Object.keys(patch).length > 0) {
+                proposalUpdates.push({ id: prior.id, patch });
+                Object.assign(prior, patch);
               }
             } else if (!knownProposal.has(key)) {
               knownProposal.add(key);
@@ -527,10 +625,12 @@ Deno.serve(async (req) => {
         for (const [field, value] of memberCandidates) {
           if (!value) continue;
           if (isInvoiceField(field)) continue;
-          if (!data[field] || String(data[field]).trim() === "") {
-            data[field] = value;
+          const effectiveValue = eff.data[field];
+          if (!effectiveValue || String(effectiveValue).trim() === "") {
+            baseData[field] = value;
+            eff.data[field] = value;
             fieldsFilled++;
-            changed = true;
+            baseChanged = true;
           }
         }
 
@@ -541,7 +641,7 @@ Deno.serve(async (req) => {
         // die naam op lidniveau voor.
         if (locaties.length <= 1) {
           const factuurnaam = shop.vergunninghouder || shop.exploitant || null;
-          const current = data.bedrijfsnaam;
+          const current = eff.data.bedrijfsnaam;
           if (factuurnaam && (!current || String(current).trim() === "")) {
             const key = `${memberId}|${rid}||bedrijfsnaam`;
             if (!knownProposal.has(key)) {
@@ -562,25 +662,89 @@ Deno.serve(async (req) => {
 
       }
 
-      if (changed) {
-        data.locaties = locaties;
-        data.aantalLocaties = locaties.length;
+      // Openstaande voorstellen herberekenen tegen de actuele registerwaarde en
+      // de effectieve ledenwaarde: alleen een echt inhoudelijk verschil blijft open.
+      for (const p of openByMember.get(memberId) ?? []) {
+        if (p.scope !== "locatie" || !p.register_id) continue;
+        const shop = shopById.get(p.register_id);
+        if (!shop) continue;
+        const registerValue = registerValueFor(shop, p.field);
+        const loc =
+          findByLinkKey(locaties, p.location_key) ?? locaties.find((l) => sameLocation(l, shop));
+        const currentValue = loc ? loc[p.field] : undefined;
+        if (!registerValue) {
+          proposalClosures.push({
+            id: p.id,
+            reden: "register heeft geen waarde meer voor dit veld",
+          });
+          continue;
+        }
+        if (
+          currentValue &&
+          String(currentValue).trim() !== "" &&
+          sameFieldValue(p.field, currentValue, registerValue)
+        ) {
+          proposalClosures.push({
+            id: p.id,
+            reden: "ledengegevens komen al overeen met het register (geen wijziging nodig)",
+          });
+        }
+      }
+
+      if (baseChanged) {
+        baseData.aantalLocaties = Array.isArray(baseData.locaties) ? baseData.locaties.length : 0;
         const { error: upErr } = await db
           .from("members_data")
-          .update({ data })
+          .update({ data: baseData })
           .eq("id", memberId);
         if (upErr) throw upErr;
-        membersUpdated++;
       }
+      if (overlayChanged && overlayData) {
+        const { error: edErr } = await db
+          .from("member_edits")
+          .update({ data: overlayData })
+          .eq("member_id", memberId);
+        if (edErr) throw edErr;
+      }
+      if (baseChanged || overlayChanged) membersUpdated++;
     }
 
-    // Verschoven locatiesleutels bijwerken zodat de vestiging één groep blijft
-    for (const fix of keyFixes) {
+    // Verouderde locatiesleutels van bevestigde koppelingen bijwerken; de
+    // koppeling zelf blijft aan dezelfde registershop hangen.
+    let linksRelinked = 0;
+    for (const fix of linkKeyFixes) {
+      const { error } = await db
+        .from("coffeeshop_member_links")
+        .update({ location_key: fix.location_key })
+        .eq("member_id", fix.member_id)
+        .eq("register_id", fix.register_id);
+      if (error) console.warn("locatiesleutel koppeling bijwerken mislukt:", error.message);
+      else linksRelinked++;
+    }
+
+    // Verschoven/gewijzigde voorstellen bijwerken zodat de vestiging één groep blijft
+    for (const upd of proposalUpdates) {
       const { error } = await db
         .from("register_enrichment_proposals")
-        .update({ location_key: fix.location_key })
-        .eq("id", fix.id);
-      if (error) console.warn("locatiesleutel bijwerken mislukt:", error.message);
+        .update(upd.patch)
+        .eq("id", upd.id);
+      if (error) console.warn("voorstel bijwerken mislukt:", error.message);
+    }
+
+    // Voorstellen die geen verschil meer vormen, automatisch sluiten met reden
+    let proposalsClosed = 0;
+    for (const closure of proposalClosures) {
+      const { error } = await db
+        .from("register_enrichment_proposals")
+        .update({
+          status: "toegepast",
+          resolved_at: new Date().toISOString(),
+          resolutie_reden: `automatisch gesloten: ${closure.reden}`,
+        })
+        .eq("id", closure.id)
+        .eq("status", "open");
+      if (error) console.warn("voorstel sluiten mislukt:", error.message);
+      else proposalsClosed++;
     }
 
     let proposalsSaved = 0;
@@ -599,6 +763,9 @@ Deno.serve(async (req) => {
         locationsAdded,
         fieldsFilled,
         proposals: proposalsSaved,
+        proposalsClosed,
+        linksRelinked,
+        linksNeedingReview,
         kvkLookups,
         kvkEnabled: !!kvkKey,
       }),
