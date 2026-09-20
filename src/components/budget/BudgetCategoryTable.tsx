@@ -22,7 +22,6 @@ interface Props {
     remaining?: () => void;
     spentValue?: number;
     remainingValue?: number;
-    remainingLabel?: string;
     remainingHint?: string;
   } | null;
 }
