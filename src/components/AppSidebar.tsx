@@ -267,14 +267,24 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {(isAdmin || isBoard) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink to="/community" onClick={closeMobile}>
-                        <ListChecks className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>Community deelnemers</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/whatsapp-inbox" onClick={closeMobile}>
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>WhatsApp-inbox</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/community" onClick={closeMobile}>
+                          <ListChecks className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Community deelnemers</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
                 )}
               </SidebarMenu>
             </SidebarGroupContent>
