@@ -397,14 +397,18 @@ export function useDossierMutations(year: number) {
           (k): k is string => !!k,
         );
         const ownSplits = splitsFor(key);
-        // Bij een gecombineerde betaling gelden de splits van de betaling niet
-        // per factuur: die zouden dan meerdere keren meetellen.
+        // Bij een gecombineerde of gesplitste betaling gelden de splits van die
+        // betaling niet per factuur: die zouden dan meerdere keren meetellen.
+        // Bij een splitmatch levert de mutatie alleen het dossier van het
+        // bijbehorende deel (zit al in `legacy.dossier`).
+        const viaSplit = matched.matchedBy.get(ledgerKey) === "split";
         const splits =
           ownSplits.length > 0
             ? ownSplits
-            : grouped
+            : grouped || viaSplit
               ? []
               : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
+
         rows.push({
           key,
           kind: "ledger",
@@ -434,14 +438,17 @@ export function useDossierMutations(year: number) {
         });
       }
 
-      // Bestaande administratieve mutaties zonder Informer-koppeling. Met een
-      // expliciete toewijzing tellen ze exact één keer mee als lokale mutatie;
-      // zonder toewijzing blijven ze zichtbaar als aandachtspunt en tellen niet.
+      // Bestaande administratieve mutaties zonder Informer-koppeling. Alleen een
+      // bankmutatie (Ponto) met zowel een begrotingspost als een dossier is een
+      // werkelijk aanvullende mutatie: die telt exact één keer mee in het
+      // managementtotaal. Oude boekingen zonder koppeling blijven zichtbaar als
+      // aandachtspunt en tellen niet mee.
       for (const r of matched.unmatched) {
-        const splits = splitsFor(r.key);
+        const splits = splitsFor(r.key).length > 0 ? splitsFor(r.key) : r.splits || [];
         if (!r.dossier && splits.length === 0) continue;
         const lineItemName = r.lineItemId ? liById.get(r.lineItemId)?.name || "" : "";
-        const hasAssignment = !!(r.lineItemId || r.dossier || splits.length > 0);
+        const counts =
+          r.kind === "ponto" && !!r.lineItemId && (!!r.dossier || splits.length > 0);
         rows.push({
           key: r.key,
           kind: r.kind,
@@ -462,13 +469,13 @@ export function useDossierMutations(year: number) {
           dossier: r.dossier || "",
           source: r.kind === "ponto" ? "bank" : "administratie",
           splits,
-          localOnly: hasAssignment,
-          // Bedragen komen uitsluitend uit Informer: een lokale mutatie blijft
-          // zichtbaar maar telt niet mee, anders ontstaat dubbeltelling met de
-          // factuur die Informer wél kent.
-          unlinked: true,
+          localOnly: counts,
+          // Een aanvullende lokale mutatie telt mee in het managementtotaal;
+          // zonder volledige toewijzing blijft de regel zichtbaar maar telt niet.
+          unlinked: !counts,
         });
       }
+
 
       rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       return rows;

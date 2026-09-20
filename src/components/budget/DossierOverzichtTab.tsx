@@ -66,7 +66,12 @@ interface DossierRow {
   informerTotal: number;
   /** Netto bedrag uit aanvullende lokale mutaties (niet in Informer). */
   localTotal: number;
+  /** Aanvullende lokale uitgaven (niet in Informer). */
+  localOut: number;
+  /** Aanvullende lokale inkomsten/terugbetalingen (niet in Informer). */
+  localIncome: number;
 }
+
 
 /**
  * Een regel telt niet mee zolang géén van de samengevoegde bronnen aan een
@@ -120,7 +125,10 @@ export default function DossierOverzichtTab({ year }: Props) {
         list.reduce((s, e) => s + (e.direction === "in" ? -e.shareAmount : e.shareAmount), 0);
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      const localTotal = net(counting.filter((e) => isLocalOnly(e)));
+      const local = counting.filter((e) => isLocalOnly(e));
+      const localOut = local.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
+      const localIncome = local.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
+      const localTotal = net(local);
       rows.push({
         dossier,
         entries,
@@ -129,7 +137,10 @@ export default function DossierOverzichtTab({ year }: Props) {
         total: out - income,
         informerTotal: out - income - localTotal,
         localTotal,
+        localOut,
+        localIncome,
       });
+
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
@@ -296,15 +307,28 @@ export default function DossierOverzichtTab({ year }: Props) {
                   </button>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
-                    {Math.abs(d.localTotal) > 0.005 && (
+                    {(Math.abs(d.localOut) > 0.005 || Math.abs(d.localIncome) > 0.005) && (
                       <>
-                        {" · Informer "}
+                        {" · Informer-facturen "}
                         <CurrencyText value={d.informerTotal} />
-                        {" · lokaal "}
-                        <CurrencyText value={d.localTotal} />
+                        {Math.abs(d.localOut) > 0.005 && (
+                          <>
+                            {" · lokale uitgaven "}
+                            <CurrencyText value={d.localOut} />
+                          </>
+                        )}
+                        {Math.abs(d.localIncome) > 0.005 && (
+                          <>
+                            {" · lokale opbrengsten "}
+                            <CurrencyText value={d.localIncome} />
+                          </>
+                        )}
+                        {" · netto dossierkosten "}
+                        <CurrencyText value={d.total} />
                       </>
                     )}
                   </span>
+
                   {canEdit && (
                     <>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => startRename(d.dossier)}>

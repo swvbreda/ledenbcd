@@ -337,3 +337,79 @@ describe("documenthints en gecombineerde betalingen", () => {
     expect(res.unmatched.map((r) => r.key)).toEqual(["ponto:z"]);
   });
 });
+
+describe("aliassen, splits en lokale mutaties", () => {
+  const informer = entry({
+    informer_id: "3001",
+    invoice_number: "2026-0003",
+    amount_incl: 630,
+    entry_date: "2026-04-01",
+    relation_name: "Stichting Recreational Cannabis Foundation",
+  });
+
+  it("maakt een bankregel met hetzelfde factuurnummer alias van de canonieke factuur", () => {
+    const boeking = legacy({ key: "expense:a", invoice: "2026-0003", amount: 630, date: "2026-04-01", counterparty: "Stichting Recreational Cannabis Foundation" });
+    const bank = legacy({
+      key: "ponto:b",
+      kind: "ponto",
+      invoice: "Fac nr 2026-0003",
+      counterparty: "Stichting RCF",
+      amount: 630,
+      date: "2026-04-05",
+      lineItemId: null,
+      dossier: "Lobby",
+    });
+    const res = matchLegacyRecords([informer], [boeking, bank]);
+    expect(res.byEntryKey.get("purchase_invoice:3001")?.key).toBe("expense:a");
+    expect(res.aliasesByEntryKey.get("purchase_invoice:3001")?.map((r) => r.key)).toContain("ponto:b");
+    expect(res.unmatched).toHaveLength(0);
+  });
+
+  it("koppelt een gesplitste betaling op het dossierdeelbedrag", () => {
+    const e = entry({
+      informer_id: "82",
+      invoice_number: "00082",
+      amount_incl: 605,
+      entry_date: "2026-05-01",
+      relation_name: "GetSmokin",
+    });
+    const rec = legacy({
+      key: "ponto:split",
+      kind: "ponto",
+      invoice: "00082",
+      counterparty: "Greenmeister",
+      amount: 1210,
+      date: "2026-05-02",
+      lineItemId: "li-1",
+      dossier: null,
+      splits: [
+        { dossier: "Verkiezingen", amount: 605 },
+        { dossier: "Overig", amount: 605 },
+      ],
+    });
+    const res = matchLegacyRecords([e], [rec]);
+    expect(res.matchedBy.get("purchase_invoice:82")).toBe("split");
+    expect(res.byEntryKey.get("purchase_invoice:82")?.dossier).toBe("Verkiezingen");
+    expect(res.byEntryKey.get("purchase_invoice:82")?.lineItemId).toBe("li-1");
+    expect(res.unmatched).toHaveLength(0);
+  });
+
+  it("laat een echt aanvullende bankuitgave met post en dossier ongekoppeld over", () => {
+    const rec = legacy({
+      key: "ponto:klm",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "KLM",
+      description: "Vlucht",
+      amount: 289.55,
+      date: "2026-07-01",
+      lineItemId: "li-2",
+      dossier: "Lobby",
+    });
+    const res = matchLegacyRecords([informer], [rec]);
+    expect(res.unmatched.map((r) => r.key)).toEqual(["ponto:klm"]);
+    expect(res.unmatched[0].lineItemId).toBe("li-2");
+    expect(res.unmatched[0].dossier).toBe("Lobby");
+  });
+});

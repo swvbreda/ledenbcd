@@ -32,12 +32,18 @@ export interface LegacyRecord {
   lineItemId: string | null;
   dossier: string | null;
   /**
+   * Administratieve dossierverdeling van deze mutatie. Een deelbedrag kan een
+   * eigen Informer-factuur vertegenwoordigen (gesplitste betaling).
+   */
+  splits?: { dossier: string; amount: number }[];
+  /**
    * Technische hulprij uit een oude synchronisatie (bedrag 0, omschrijving
    * "Informer <id>", geen tegenpartij/dossier). Geen door de leden
    * goedgekeurde toewijzing en dus onbruikbaar voor post- en dossiermatching.
    */
   placeholder?: boolean;
 }
+
 
 /** Herkent synthetische Informer-hulprijen uit oude synchronisaties. */
 export function isSyntheticPlaceholder(r: {
@@ -57,7 +63,14 @@ export function isSyntheticPlaceholder(r: {
   );
 }
 
-export type MatchMethod = "external_id" | "invoice" | "document" | "payment" | "combined";
+export type MatchMethod =
+  | "external_id"
+  | "invoice"
+  | "document"
+  | "payment"
+  | "combined"
+  | "split";
+
 
 export interface CombinedPayment {
   /** De lokale betaling (meestal een bankmutatie) die meerdere facturen dekt. */
@@ -158,6 +171,23 @@ function hintKeysFor(record: LegacyRecord, hints?: DocumentHints): string[] {
 const entryInvoiceKeys = (e: LedgerEntry) => invoiceKeysOf(asLedgerLike(e));
 
 const cents = (value: number) => Math.round(Math.abs(value) * 100);
+
+/** Alle factuursleutels van een lokale mutatie: eigen velden én documenthints. */
+function recordHintKeys(record: LegacyRecord, hints?: DocumentHints): string[] {
+  return [...new Set([...invoiceKeysOf(asRecordLike(record)), ...hintKeysFor(record, hints)])];
+}
+
+/**
+ * True als het volledige bedrag óf een dossierdeel van de lokale mutatie exact
+ * gelijk is aan het bedrag van de Informer-regel.
+ */
+function relevantAmountMatches(record: LegacyRecord, entry: LedgerEntry): boolean {
+  const target = cents(Number(entry.amount_incl) || 0);
+  if (target === 0) return false;
+  if (cents(record.amount) === target) return true;
+  return (record.splits || []).some((s) => cents(s.amount) === target);
+}
+
 
 const daysBetween = (a: string | null, b: string | null) => {
   const ta = a ? new Date(a).getTime() : NaN;
@@ -374,23 +404,72 @@ export function matchLegacyRecords(
     takeGroup(entry, available().filter((r) => isSamePayment(self, asRecordLike(r))), "payment");
   }
 
+  // 5b. Gesplitste betaling: een grotere bankmutatie waarvan één dossierdeel
+  // exact deze factuur dekt. De tegenpartijnaam mag afwijken; de factuurhint en
+  // het deelbedrag zijn leidend. Mutaties zonder dossierverdeling blijven buiten
+  // deze stap, zodat eerdere conflictregels intact blijven.
+  for (const record of available()) {
+    if (!record.splits || record.splits.length === 0) continue;
+    const keys = recordHintKeys(record, hints);
+    if (keys.length === 0) continue;
+    for (const entry of entries) {
+      if (!entry.counts_in_totals) continue;
+      const ekey = ledgerKeyOf(entry);
+      if (byEntryKey.has(ekey) || combinedByEntryKey.has(ekey)) continue;
+      if (!entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)))) continue;
+      const target = cents(Number(entry.amount_incl) || 0);
+      const split = record.splits.find((s) => cents(s.amount) === target);
+      if (!split) continue;
+      take(entry, { ...record, dossier: split.dossier }, "split");
+      break;
+    }
+  }
+  // 5c. Is een gekoppelde mutatie over dossiers verdeeld, dan geldt voor deze
+  // factuur het dossier van het deel dat exact haar bedrag dekt.
+  for (const entry of entries) {
+    const ekey = ledgerKeyOf(entry);
+    const record = byEntryKey.get(ekey);
+    if (!record?.splits || record.splits.length === 0) continue;
+    if (cents(record.amount) === cents(Number(entry.amount_incl) || 0)) continue;
+    const split = record.splits.find((s) => cents(s.amount) === cents(Number(entry.amount_incl) || 0));
+    if (!split) continue;
+    byEntryKey.set(ekey, { ...record, dossier: split.dossier });
+    matchedBy.set(ekey, "split");
+  }
+
+
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
-  // verschijnt dus niet apart als "nog niet gekoppeld".
+  // verschijnt dus niet apart als "nog niet gekoppeld". Er wordt zowel met de
+  // primaire administratieve regel als met de canonieke Informer-regel zelf
+  // vergeleken, zodat een bankregel met hetzelfde factuurnummer nooit dubbel
+  // blijft staan.
+  const entryByKey = new Map(entries.map((e) => [ledgerKeyOf(e), e]));
   for (const [key, record] of byEntryKey) {
-    const extra = available().filter(
-      (r) =>
-        r.key !== record.key &&
-        (isSamePayment(asRecordLike(record), asRecordLike(r)) ||
-          sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
-    );
+    const entry = entryByKey.get(key);
+    const self = entry ? asLedgerLike(entry) : null;
+    const extra = available().filter((r) => {
+      if (r.key === record.key) return false;
+      if (
+        isSamePayment(asRecordLike(record), asRecordLike(r)) ||
+        sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))
+      )
+        return true;
+      if (!entry || !self) return false;
+      if (isSamePayment(self, asRecordLike(r))) return true;
+      const keys = recordHintKeys(r, hints);
+      const hit =
+        sharesInvoiceNumber(self, asRecordLike(r)) ||
+        entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)));
+      return hit && relevantAmountMatches(r, entry);
+    });
     for (const r of extra) usedLegacy.add(r.key);
     if (extra.length > 0) {
       aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
     }
-
   }
+
 
 
   return {
