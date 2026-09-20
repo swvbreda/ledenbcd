@@ -91,6 +91,8 @@ export async function fetchLegacyRecords(year: number, lineItemIds: string[]): P
       direction: amount >= 0 ? "in" : "out",
       lineItemId: t.budget_line_item_id ? String(t.budget_line_item_id) : null,
       dossier: t.dossier ? String(t.dossier).trim() || null : null,
+      splits: splitsByKey.get(`ponto:${t.id}`) || [],
+
     });
   }
 
