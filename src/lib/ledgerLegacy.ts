@@ -454,12 +454,8 @@ export function matchLegacyRecords(
       if (linked) break;
       const target = cents(portion.amount);
       if (target === 0) continue;
-      const candidates = entries.filter((e) => {
-        if (!e.counts_in_totals) continue as never;
-        return false;
-      });
-      void candidates;
       const hits = entries.filter((e) => {
+
         if (!e.counts_in_totals) return false;
         if (wantsSales !== (e.doc_type === "sales_invoice")) return false;
         const ekey = ledgerKeyOf(e);
