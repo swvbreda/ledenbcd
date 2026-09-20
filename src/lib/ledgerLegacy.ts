@@ -32,12 +32,18 @@ export interface LegacyRecord {
   lineItemId: string | null;
   dossier: string | null;
   /**
+   * Administratieve dossierverdeling van deze mutatie. Een deelbedrag kan een
+   * eigen Informer-factuur vertegenwoordigen (gesplitste betaling).
+   */
+  splits?: { dossier: string; amount: number }[];
+  /**
    * Technische hulprij uit een oude synchronisatie (bedrag 0, omschrijving
    * "Informer <id>", geen tegenpartij/dossier). Geen door de leden
    * goedgekeurde toewijzing en dus onbruikbaar voor post- en dossiermatching.
    */
   placeholder?: boolean;
 }
+
 
 /** Herkent synthetische Informer-hulprijen uit oude synchronisaties. */
 export function isSyntheticPlaceholder(r: {
