@@ -516,6 +516,12 @@ Deno.serve(async (req) => {
           };
           // Een vestiging die het lid zelf heeft verwijderd komt nooit terug.
           if (isLocationDeleted(candidate, eff.verwijderd)) continue;
+          // Laatste dubbelcheck: nooit een vestiging toevoegen die het lid al
+          // heeft (bijv. met een afwijkende naam of ontbrekende postcode).
+          if (locaties.some((l) => locationsMatch(l, candidate))) {
+            linksNeedingReview++;
+            continue;
+          }
           // Alleen de startdatum van DEZE vestiging, nooit de bedrijfsdatum
           if (shop.kvk_vestiging_datum) candidate.oprichtingsDatum = shop.kvk_vestiging_datum;
           if (shop.kvk_nummer) candidate.kvk = shop.kvk_nummer;
