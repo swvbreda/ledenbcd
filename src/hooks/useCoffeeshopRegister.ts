@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
+import { mergeMemberLocations } from "@/lib/memberLocations";
 
 export type RegisterShop = {
   id: string;
@@ -305,17 +306,40 @@ export function useResolveProposal() {
       }
 
       if (apply) {
-        const { data: row, error } = await supabase
-          .from("members_data")
-          .select("id, data")
-          .eq("id", proposal.member_id)
-          .maybeSingle();
+        const { data: session } = await supabase.auth.getSession();
+        const userId = session?.session?.user?.id;
+        if (!userId) throw new Error("Niet ingelogd");
+        // Basisgegevens en de goedgekeurde wijzigingslaag worden samen gelezen:
+        // een voorstel wordt altijd in de wijzigingslaag vastgelegd, zodat de
+        // zichtbare ledengegevens en de auditlaag gelijk blijven lopen.
+        const [{ data: row, error }, { data: editRow, error: editError }] = await Promise.all([
+          supabase.from("members_data").select("id, data").eq("id", proposal.member_id).maybeSingle(),
+          supabase
+            .from("member_edits")
+            .select("member_id, data")
+            .eq("member_id", proposal.member_id)
+            .maybeSingle(),
+        ]);
         if (error) throw error;
+        if (editError) throw editError;
         if (!row) throw new Error("Lid niet gevonden");
 
-        const data: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
+        const baseData: any = JSON.parse(JSON.stringify((row as any).data ?? {}));
+        const overlay: any = editRow?.data
+          ? JSON.parse(JSON.stringify((editRow as any).data))
+          : {};
+        const baseLocaties: any[] = Array.isArray(baseData.locaties) ? baseData.locaties : [];
+        const overlayLocaties: any[] = Array.isArray(overlay.locaties) ? overlay.locaties : [];
+        const verwijderd: string[] = Array.isArray(overlay._verwijderdeLocaties)
+          ? overlay._verwijderdeLocaties
+          : [];
+
         if (proposal.scope === "locatie") {
-          const locaties: any[] = Array.isArray(data.locaties) ? data.locaties : [];
+          const effectief = mergeMemberLocations(
+            baseLocaties as any,
+            overlayLocaties as any,
+            verwijderd,
+          ) as any[];
           let shop: Parameters<typeof findMemberLocation>[2] = null;
           if (proposal.register_id) {
             const { data: shopRow, error: shopError } = await supabase
@@ -337,29 +361,43 @@ export function useResolveProposal() {
           if (siblingError) throw siblingError;
           const oldPostcode = (siblingRows?.[0] as { current_value?: string | null } | undefined)
             ?.current_value;
-          const match = findMemberLocation(locaties, proposal.location_key, shop, [oldPostcode]);
+          const match = findMemberLocation(effectief, proposal.location_key, shop, [oldPostcode]);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
-          match[proposal.field] = proposal.proposed_value;
-          data.locaties = locaties;
 
-          // Bij een verhuizing (adres/postcode) verschuift ook de koppeling mee,
-          // zodat de registershop aan dezelfde vestiging gekoppeld blijft.
+          // De wijziging landt op de bestaande overlay-vestiging, of anders als
+          // nieuwe overlay-vestiging die op identiteit met de basis samenvalt.
+          const overlayMatch = findMemberLocation(overlayLocaties, locationKeyOf(match));
+          const doel = overlayMatch ?? { ...match };
+          doel[proposal.field] = proposal.proposed_value;
+          if (!overlayMatch) overlayLocaties.push(doel);
+          overlay.locaties = overlayLocaties;
+
+          // Bij een verhuizing (adres/postcode) verschuift alleen de
+          // locatiesleutel van de koppeling mee; de koppeling blijft aan
+          // dezelfde registershop hangen.
           if (proposal.register_id && ["adres", "postcode"].includes(proposal.field)) {
             const { error: linkErr } = await supabase
               .from("coffeeshop_member_links")
-              .update({ location_key: locationKeyOf(match) })
+              .update({ location_key: locationKeyOf({ ...match, ...doel }) })
               .eq("register_id", proposal.register_id)
               .eq("member_id", proposal.member_id);
             if (linkErr) throw linkErr;
           }
         } else {
-          data[proposal.field] = proposal.proposed_value;
+          overlay[proposal.field] = proposal.proposed_value;
         }
 
         const { error: upErr } = await supabase
-          .from("members_data")
-          .update({ data })
-          .eq("id", proposal.member_id);
+          .from("member_edits")
+          .upsert(
+            {
+              member_id: proposal.member_id,
+              data: overlay,
+              updated_by: userId,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "member_id" },
+          );
         if (upErr) throw upErr;
       }
 
@@ -369,6 +407,9 @@ export function useResolveProposal() {
         .update({
           status: apply ? "toegepast" : "genegeerd",
           resolved_at: new Date().toISOString(),
+          resolutie_reden: apply
+            ? "overgenomen door beheer in de goedgekeurde wijzigingslaag"
+            : "genegeerd door beheer",
         })
         .eq("id", proposal.id);
       if (statusErr) throw statusErr;
@@ -377,6 +418,8 @@ export function useResolveProposal() {
       toast.success(vars.apply ? "Overgenomen" : "Genegeerd");
       qc.invalidateQueries({ queryKey: ["register-enrichment-proposals"] });
       qc.invalidateQueries({ queryKey: ["members-data"] });
+      qc.invalidateQueries({ queryKey: ["member-edits"] });
+      qc.invalidateQueries({ queryKey: ["register-enrichment-context"] });
       qc.invalidateQueries({ queryKey: ["coffeeshop-register-links"] });
 
     },
@@ -442,14 +485,26 @@ export function useEnrichmentContext(
       const shops = new Map<string, RegisterShop>();
 
       if (memberKey.length) {
-        const { data, error } = await supabase
-          .from("members_data")
-          .select("id, data")
-          .in("id", memberKey);
+        // De beheerweergave toont de effectieve ledengegevens: basis plus de
+        // goedgekeurde wijzigingen van het lid zelf.
+        const [{ data, error }, { data: edits, error: editError }] = await Promise.all([
+          supabase.from("members_data").select("id, data").in("id", memberKey),
+          supabase.from("member_edits").select("member_id, data").in("member_id", memberKey),
+        ]);
         if (error) throw error;
+        if (editError) throw editError;
+        const overlayById = new Map<number, any>();
+        for (const row of edits ?? []) overlayById.set((row as any).member_id, (row as any).data ?? {});
         for (const row of data ?? []) {
+          const id = (row as any).id as number;
           const d: any = (row as any).data ?? {};
-          locaties.set((row as any).id, Array.isArray(d.locaties) ? d.locaties : []);
+          const overlay: any = overlayById.get(id) ?? {};
+          const merged = mergeMemberLocations(
+            (Array.isArray(d.locaties) ? d.locaties : []) as any,
+            (Array.isArray(overlay.locaties) ? overlay.locaties : []) as any,
+            Array.isArray(overlay._verwijderdeLocaties) ? overlay._verwijderdeLocaties : [],
+          ) as any[];
+          locaties.set(id, merged);
         }
       }
 

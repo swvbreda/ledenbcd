@@ -3061,6 +3061,7 @@ export type Database = {
           member_id: number
           proposed_value: string
           register_id: string | null
+          resolutie_reden: string | null
           resolved_at: string | null
           resolved_by: string | null
           scope: string
@@ -3077,6 +3078,7 @@ export type Database = {
           member_id: number
           proposed_value: string
           register_id?: string | null
+          resolutie_reden?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           scope?: string
@@ -3093,6 +3095,7 @@ export type Database = {
           member_id?: number
           proposed_value?: string
           register_id?: string | null
+          resolutie_reden?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           scope?: string
