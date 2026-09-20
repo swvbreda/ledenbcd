@@ -42,8 +42,13 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
       },
 
       POST: async ({ request }) => {
-        const declaredLength = Number(request.headers.get("content-length") ?? "0");
-        if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+        const declaredLength = Number(
+          request.headers.get("content-length") ?? "0",
+        );
+        if (
+          Number.isFinite(declaredLength) &&
+          declaredLength > MAX_BODY_BYTES
+        ) {
           return new Response("Payload too large", { status: 413 });
         }
 
@@ -72,9 +77,13 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
         const messages = parseIncomingMessages(payload);
         if (messages.length === 0) return new Response("ok", { status: 200 });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin } =
+          await import("@/integrations/supabase/client.server");
         const db = supabaseAdmin as unknown as {
-          rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+          rpc: (
+            fn: string,
+            args: Record<string, unknown>,
+          ) => Promise<{ error: unknown }>;
         };
 
         for (const message of messages) {

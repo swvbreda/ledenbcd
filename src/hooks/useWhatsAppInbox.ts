@@ -27,7 +27,10 @@ export interface WhatsAppMessage {
 // De tabellen zijn nieuw; de gegenereerde types kennen ze nog niet.
 const db = supabase as unknown as {
   from: (table: string) => any;
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ error: unknown }>;
   channel: typeof supabase.channel;
   removeChannel: typeof supabase.removeChannel;
 };
@@ -39,7 +42,9 @@ export function useWhatsAppConversations(enabled: boolean) {
     queryFn: async (): Promise<WhatsAppConversation[]> => {
       const { data, error } = await db
         .from("whatsapp_conversations")
-        .select("id, wa_id, profile_name, last_message_at, last_message_preview")
+        .select(
+          "id, wa_id, profile_name, last_message_at, last_message_preview",
+        )
         .order("last_message_at", { ascending: false, nullsFirst: false });
       if (error) throw error;
 
@@ -57,10 +62,12 @@ export function useWhatsAppConversations(enabled: boolean) {
         );
       }
 
-      return ((data ?? []) as Omit<WhatsAppConversation, "unread">[]).map((c) => ({
-        ...c,
-        unread: unreadByConversation.get(c.id) ?? 0,
-      }));
+      return ((data ?? []) as Omit<WhatsAppConversation, "unread">[]).map(
+        (c) => ({
+          ...c,
+          unread: unreadByConversation.get(c.id) ?? 0,
+        }),
+      );
     },
   });
 }
@@ -95,7 +102,9 @@ export function useMarkConversationRead() {
     },
     onSuccess: (_data, conversationId) => {
       queryClient.invalidateQueries({ queryKey: ["whatsapp-conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["whatsapp-messages", conversationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["whatsapp-messages", conversationId],
+      });
     },
   });
 }
@@ -111,7 +120,9 @@ export function useWhatsAppRealtime(enabled: boolean) {
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_messages" },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["whatsapp-conversations"] });
+          queryClient.invalidateQueries({
+            queryKey: ["whatsapp-conversations"],
+          });
           queryClient.invalidateQueries({ queryKey: ["whatsapp-messages"] });
         },
       )

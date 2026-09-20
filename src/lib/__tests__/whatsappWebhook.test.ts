@@ -17,7 +17,11 @@ async function sign(body: string, secret: string) {
     false,
     ["sign"],
   );
-  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+  const mac = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(body),
+  );
   return `sha256=${Array.from(new Uint8Array(mac))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")}`;
@@ -49,7 +53,10 @@ describe("verifyChallenge", () => {
       "hub.verify_token": token,
       "hub.challenge": "12345",
     });
-    expect(verifyChallenge(params, token)).toEqual({ ok: true, challenge: "12345" });
+    expect(verifyChallenge(params, token)).toEqual({
+      ok: true,
+      challenge: "12345",
+    });
   });
 
   it("weigert een verkeerd token", () => {
@@ -81,7 +88,9 @@ describe("verifySignature", () => {
 
   it("weigert een handtekening van een ander secret", async () => {
     const header = await sign(body, "ander-secret");
-    await expect(verifySignature(body, header, APP_SECRET)).resolves.toBe(false);
+    await expect(verifySignature(body, header, APP_SECRET)).resolves.toBe(
+      false,
+    );
   });
 
   it("faalt gesloten zonder handtekening of zonder secret", async () => {
@@ -89,13 +98,19 @@ describe("verifySignature", () => {
     await expect(
       verifySignature(body, await sign(body, APP_SECRET), undefined),
     ).resolves.toBe(false);
-    await expect(verifySignature(body, "sha256=xyz", APP_SECRET)).resolves.toBe(false);
+    await expect(verifySignature(body, "sha256=xyz", APP_SECRET)).resolves.toBe(
+      false,
+    );
   });
 
   it("weigert een gewijzigde body", async () => {
     const header = await sign(body, APP_SECRET);
     await expect(
-      verifySignature(JSON.stringify({ hello: "aangepast" }), header, APP_SECRET),
+      verifySignature(
+        JSON.stringify({ hello: "aangepast" }),
+        header,
+        APP_SECRET,
+      ),
     ).resolves.toBe(false);
   });
 });
@@ -128,7 +143,11 @@ describe("parseIncomingMessages", () => {
         from: "31612345678",
         type: "image",
         timestamp: "1750000100",
-        image: { id: "media-1", mime_type: "image/jpeg", caption: "Foto gevel" },
+        image: {
+          id: "media-1",
+          mime_type: "image/jpeg",
+          caption: "Foto gevel",
+        },
       }),
     );
     expect(message).toMatchObject({
@@ -150,10 +169,14 @@ describe("parseIncomingMessages", () => {
 
   it("negeert payloads zonder berichten en onvolledige regels", () => {
     expect(parseIncomingMessages({})).toEqual([]);
-    expect(parseIncomingMessages({ entry: [{ changes: [{ value: { statuses: [] } }] }] })).toEqual(
-      [],
-    );
-    expect(parseIncomingMessages(payload({ type: "text", text: { body: "x" } }))).toEqual([]);
+    expect(
+      parseIncomingMessages({
+        entry: [{ changes: [{ value: { statuses: [] } }] }],
+      }),
+    ).toEqual([]);
+    expect(
+      parseIncomingMessages(payload({ type: "text", text: { body: "x" } })),
+    ).toEqual([]);
   });
 
   it("levert stabiele bericht-ids zodat retries idempotent zijn", () => {
@@ -166,7 +189,9 @@ describe("parseIncomingMessages", () => {
     const first = parseIncomingMessages(body);
     const second = parseIncomingMessages(body);
     expect(first[0]?.waMessageId).toBe(second[0]?.waMessageId);
-    expect(new Set([...first, ...second].map((m) => m.waMessageId)).size).toBe(1);
+    expect(new Set([...first, ...second].map((m) => m.waMessageId)).size).toBe(
+      1,
+    );
   });
 });
 
@@ -184,10 +209,16 @@ describe("interactive replies", () => {
         id: "wamid.5",
         from: "31612345678",
         type: "interactive",
-        interactive: { type: "button_reply", button_reply: { id: "ja", title: "Ja, ik kom" } },
+        interactive: {
+          type: "button_reply",
+          button_reply: { id: "ja", title: "Ja, ik kom" },
+        },
       }),
     );
-    expect(message).toMatchObject({ messageType: "interactive", body: "Ja, ik kom" });
+    expect(message).toMatchObject({
+      messageType: "interactive",
+      body: "Ja, ik kom",
+    });
   });
 
   it("leest een lijstantwoord met omschrijving als titel ontbreekt", () => {
@@ -196,7 +227,10 @@ describe("interactive replies", () => {
         id: "wamid.6",
         from: "31612345678",
         type: "interactive",
-        interactive: { type: "list_reply", list_reply: { id: "a", description: "Optie A" } },
+        interactive: {
+          type: "list_reply",
+          list_reply: { id: "a", description: "Optie A" },
+        },
       }),
     );
     expect(message?.body).toBe("Optie A");

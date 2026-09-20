@@ -47,7 +47,11 @@ const WhatsAppInboxPage = () => {
   const [selected, setSelected] = useState<string | null>(null);
 
   useWhatsAppRealtime(allowed);
-  const { data: conversations, isLoading, error } = useWhatsAppConversations(allowed);
+  const {
+    data: conversations,
+    isLoading,
+    error,
+  } = useWhatsAppConversations(allowed);
   const { data: messages } = useWhatsAppMessages(selected);
   const markRead = useMarkConversationRead();
 
@@ -77,7 +81,10 @@ const WhatsAppInboxPage = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
-      <BcdHeroBanner title="WhatsApp-inbox" subtitle="Binnengekomen berichten" />
+      <BcdHeroBanner
+        title="WhatsApp-inbox"
+        subtitle="Binnengekomen berichten"
+      />
 
       {error && (
         <Card className="border-destructive/40">
@@ -99,7 +106,9 @@ const WhatsAppInboxPage = () => {
             </CardHeader>
             <CardContent className="p-0">
               {isLoading && (
-                <p className="px-4 py-6 text-sm text-muted-foreground">Laden...</p>
+                <p className="px-4 py-6 text-sm text-muted-foreground">
+                  Laden...
+                </p>
               )}
               {!isLoading && (conversations?.length ?? 0) === 0 && (
                 <p className="px-4 py-6 text-sm text-muted-foreground">
@@ -115,7 +124,8 @@ const WhatsAppInboxPage = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-medium text-sm truncate">
-                          {conversation.profile_name || maskWaId(conversation.wa_id)}
+                          {conversation.profile_name ||
+                            maskWaId(conversation.wa_id)}
                         </span>
                         <span className="text-[11px] text-muted-foreground shrink-0">
                           {formatTime(conversation.last_message_at)}
@@ -149,8 +159,12 @@ const WhatsAppInboxPage = () => {
                   <p className="break-all font-mono text-xs">{webhookUrl}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Benodigde instellingen</p>
-                  <p className="text-xs">WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET</p>
+                  <p className="text-xs text-muted-foreground">
+                    Benodigde instellingen
+                  </p>
+                  <p className="text-xs">
+                    WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -161,7 +175,12 @@ const WhatsAppInboxPage = () => {
       {selected && (
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center gap-2 space-y-0">
-            <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="px-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected(null)}
+              className="px-2"
+            >
               <ArrowLeft size={16} />
             </Button>
             <CardTitle className="text-base truncate">
@@ -170,7 +189,9 @@ const WhatsAppInboxPage = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {(messages?.length ?? 0) === 0 && (
-              <p className="text-sm text-muted-foreground">Nog geen berichten ontvangen</p>
+              <p className="text-sm text-muted-foreground">
+                Nog geen berichten ontvangen
+              </p>
             )}
             {messages?.map((message) => (
               <div
@@ -179,7 +200,9 @@ const WhatsAppInboxPage = () => {
               >
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px]">
-                    {message.direction === "inbound" ? "Ontvangen" : "Verzonden"}
+                    {message.direction === "inbound"
+                      ? "Ontvangen"
+                      : "Verzonden"}
                   </Badge>
                   <Badge variant="outline" className="text-[10px]">
                     {messageLabel(message)}
