@@ -5,6 +5,7 @@ import {
   findByLinkKey,
   isLocationDeleted,
   locationKeyOf,
+  locationsMatch,
   locationTarget,
   realLocationCount,
   sameFieldValue,
