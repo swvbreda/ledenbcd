@@ -137,11 +137,13 @@ export default function ExpenseDialog({
           ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
           dossier: dossierValue,
         });
-        cancelEdit();
-      } catch (err: any) {
-        setSaveError(err?.message || "Opslaan mislukt");
-      } finally {
+        const t = ledgerSaveTransition({ ok: true });
         setSaving(false);
+        if (t.reset) resetEditState();
+      } catch (err: any) {
+        const t = ledgerSaveTransition({ ok: false, message: err?.message });
+        setSaving(false);
+        setSaveError(t.saveError);
       }
       return;
     }
