@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
-import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, BookOpen, Megaphone } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, LogOut, Shield, KeyRound, UserMinus, ClipboardCheck, UserCog, UserCircle, ClipboardList, Building2, Gift, Wallet, FileLock2, Mail, ListChecks, CalendarDays, BookOpen, Megaphone, MessageCircle } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
@@ -267,14 +267,24 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {(isAdmin || isBoard) && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink to="/community" onClick={closeMobile}>
-                        <ListChecks className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>Community deelnemers</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/whatsapp-inbox" onClick={closeMobile}>
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>WhatsApp-inbox</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/community" onClick={closeMobile}>
+                          <ListChecks className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Community deelnemers</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
                 )}
               </SidebarMenu>
             </SidebarGroupContent>

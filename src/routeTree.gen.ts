@@ -30,6 +30,7 @@ import { Route as DashboardKennisbankRouteImport } from './routes/_dashboard/ken
 import { Route as DashboardKerngegevensRouteImport } from './routes/_dashboard/kerngegevens'
 import { Route as DashboardLedenBetalingenRouteImport } from './routes/_dashboard/leden-betalingen'
 import { Route as DashboardMijnAccountRouteImport } from './routes/_dashboard/mijn-account'
+import { Route as DashboardWhatsappInboxRouteImport } from './routes/_dashboard/whatsapp-inbox'
 import { Route as AShareCodeRouteImport } from './routes/a.$shareCode'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
 import { Route as EnqueteExternIdRouteImport } from './routes/enquete-extern.$id'
@@ -51,6 +52,7 @@ import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
 import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id'
@@ -166,6 +168,11 @@ const DashboardMijnAccountRoute = DashboardMijnAccountRouteImport.update({
   path: '/mijn-account',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardWhatsappInboxRoute = DashboardWhatsappInboxRouteImport.update({
+  id: '/whatsapp-inbox',
+  path: '/whatsapp-inbox',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const AShareCodeRoute = AShareCodeRouteImport.update({
   id: '/a/$shareCode',
   path: '/a/$shareCode',
@@ -279,6 +286,12 @@ const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   path: '/api/public/register-enrich',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp-webhook',
+    path: '/api/public/whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EnquetesIdReviewRoute = EnquetesIdReviewRouteImport.update({
   id: '/enquetes/$id/review',
   path: '/enquetes/$id/review',
@@ -350,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
@@ -364,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -401,6 +416,7 @@ export interface FileRoutesByTo {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
@@ -416,6 +432,7 @@ export interface FileRoutesByTo {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -455,6 +472,7 @@ export interface FileRoutesById {
   '/_dashboard/kerngegevens': typeof DashboardKerngegevensRoute
   '/_dashboard/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/_dashboard/mijn-account': typeof DashboardMijnAccountRoute
+  '/_dashboard/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
@@ -470,6 +488,7 @@ export interface FileRoutesById {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -510,6 +529,7 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/whatsapp-inbox'
     | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
@@ -524,6 +544,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -561,6 +582,7 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/whatsapp-inbox'
     | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
@@ -576,6 +598,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -614,6 +637,7 @@ export interface FileRouteTypes {
     | '/_dashboard/kerngegevens'
     | '/_dashboard/leden-betalingen'
     | '/_dashboard/mijn-account'
+    | '/_dashboard/whatsapp-inbox'
     | '/a/$shareCode'
     | '/checkout/return'
     | '/enquete-extern/$id'
@@ -629,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -665,6 +690,7 @@ export interface RootRouteChildren {
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
@@ -822,6 +848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMijnAccountRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/_dashboard/whatsapp-inbox': {
+      id: '/_dashboard/whatsapp-inbox'
+      path: '/whatsapp-inbox'
+      fullPath: '/whatsapp-inbox'
+      preLoaderRoute: typeof DashboardWhatsappInboxRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/a/$shareCode': {
       id: '/a/$shareCode'
       path: '/a/$shareCode'
@@ -969,6 +1002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRegisterEnrichRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp-webhook': {
+      id: '/api/public/whatsapp-webhook'
+      path: '/api/public/whatsapp-webhook'
+      fullPath: '/api/public/whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquetes/$id/review': {
       id: '/enquetes/$id/review'
       path: '/enquetes/$id/review'
@@ -1048,6 +1088,7 @@ interface DashboardRouteChildren {
   DashboardKerngegevensRoute: typeof DashboardKerngegevensRoute
   DashboardLedenBetalingenRoute: typeof DashboardLedenBetalingenRoute
   DashboardMijnAccountRoute: typeof DashboardMijnAccountRoute
+  DashboardWhatsappInboxRoute: typeof DashboardWhatsappInboxRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardAgendaEventIdRoute: typeof DashboardAgendaEventIdRoute
   DashboardExternePartijenIdRoute: typeof DashboardExternePartijenIdRoute
@@ -1079,6 +1120,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardKerngegevensRoute: DashboardKerngegevensRoute,
   DashboardLedenBetalingenRoute: DashboardLedenBetalingenRoute,
   DashboardMijnAccountRoute: DashboardMijnAccountRoute,
+  DashboardWhatsappInboxRoute: DashboardWhatsappInboxRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardAgendaEventIdRoute: DashboardAgendaEventIdRoute,
   DashboardExternePartijenIdRoute: DashboardExternePartijenIdRoute,
@@ -1120,6 +1162,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,
