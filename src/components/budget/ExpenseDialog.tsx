@@ -95,16 +95,19 @@ export default function ExpenseDialog({
     setEditLineItemId(e.line_item_id);
     setEditDossier(e.dossier || "");
     setEditMemberId("");
+    setSaveError(null);
     const cat = (categories || []).find((c) => c.line_items.some((li) => li.id === e.line_item_id));
     setEditCategoryId(cat?.id || "");
   };
 
   const cancelEdit = () => {
+    if (saving) return;
     setEditingId(null);
     setEditCategoryId("");
     setEditLineItemId("");
     setEditDossier("");
     setEditMemberId("");
+    setSaveError(null);
   };
 
   const saveEdit = async (e: BudgetExpense) => {
@@ -441,14 +444,18 @@ export default function ExpenseDialog({
                                   </Select>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button size="sm" className="h-8 text-xs" onClick={() => saveEdit(e)}>
-                                    <Check size={12} className="mr-1" /> Opslaan
+                                  <Button size="sm" className="h-8 text-xs" disabled={saving} onClick={() => { void saveEdit(e); }}>
+                                    <Check size={12} className="mr-1" /> {saving ? "Opslaan…" : "Opslaan"}
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={cancelEdit}>
+                                  <Button size="sm" variant="outline" className="h-8 text-xs" disabled={saving} onClick={cancelEdit}>
                                     <X size={12} className="mr-1" /> Annuleren
                                   </Button>
                                 </div>
                               </div>
+                              {saveError && (
+                                <p className="mt-2 text-[11px] text-destructive">{saveError}</p>
+                              )}
+
 
                               {entryKeyFromRowId(e.id) && (
                                 <DossierSplitEditor
