@@ -453,10 +453,13 @@ export function matchLegacyRecords(
     const party = normalizeCounterparty(record.counterparty);
     if (!party) continue;
     const wantsSales = record.direction === "in";
+    // Dossierdelen eerst: bij een verdeelde mutatie hoort de factuur bij het
+    // deel met hetzelfde bedrag, niet bij de mutatie als geheel.
     const portions = [
-      { amount: record.amount, dossier: record.dossier },
       ...(record.splits || []).map((s) => ({ amount: s.amount, dossier: s.dossier })),
+      { amount: record.amount, dossier: record.dossier },
     ];
+
     let linked = false;
     for (const portion of portions) {
       if (linked) break;
