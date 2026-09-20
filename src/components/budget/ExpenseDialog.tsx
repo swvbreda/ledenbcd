@@ -6,6 +6,7 @@ import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
+import { classifyRowId, entryKeyFromRowId } from "@/lib/ledgerRowId";
 
 interface MemberOption { id: number; naam: string }
 
@@ -21,6 +22,13 @@ interface Props {
   onUpdateExpense?: (id: string, fields: { line_item_id?: string; dossier?: string | null; direction?: "in" | "out" }) => void;
   onUpdateBankTransaction?: (id: string, fields: { line_item_id?: string | null; dossier?: string | null }) => void;
   onUpdatePontoTransaction?: (id: string, fields: { budget_line_item_id?: string | null; dossier?: string | null }) => void;
+  /** Canonieke Informer-regel: opslaan in ledger_entry_overrides. */
+  onSaveLedgerOverride?: (input: {
+    doc_type: string;
+    informer_id: string;
+    line_item_id?: string | null;
+    dossier?: string | null;
+  }) => Promise<unknown>;
   onLinkPayment?: (input: { member_id: number; amount: number; paid_at: string | null }) => void;
   categories?: BudgetCategory[];
   members?: MemberOption[];
