@@ -11,29 +11,42 @@ export async function fetchLegacyRecords(year: number, lineItemIds: string[]): P
   const from = `${year}-01-01`;
   const to = `${year + 1}-01-01`;
 
-  const [{ data: expenses, error: expErr }, { data: ponto, error: pontoErr }] = await Promise.all([
-    lineItemIds.length > 0
-      ? client
-          .from("budget_expenses")
-          .select(
-            "id, line_item_id, description, amount, expense_date, creditor_name, invoice_reference, dossier, direction, external_id",
-          )
-          .in("line_item_id", lineItemIds)
-          .limit(5000)
-      : Promise.resolve({ data: [], error: null }),
-    client
-      .from("ponto_transactions")
-      .select(
-        "id, executed_at, value_date, amount, counterparty_name, description, remittance_info, dossier, budget_line_item_id",
-      )
-      .gte("executed_at", from)
-      .lt("executed_at", to)
-      .limit(5000),
-  ]);
+  const [{ data: expenses, error: expErr }, { data: ponto, error: pontoErr }, { data: splitRows, error: splitErr }] =
+    await Promise.all([
+      lineItemIds.length > 0
+        ? client
+            .from("budget_expenses")
+            .select(
+              "id, line_item_id, description, amount, expense_date, creditor_name, invoice_reference, dossier, direction, external_id",
+            )
+            .in("line_item_id", lineItemIds)
+            .limit(5000)
+        : Promise.resolve({ data: [], error: null }),
+      client
+        .from("ponto_transactions")
+        .select(
+          "id, executed_at, value_date, amount, counterparty_name, description, remittance_info, dossier, budget_line_item_id",
+        )
+        .gte("executed_at", from)
+        .lt("executed_at", to)
+        .limit(5000),
+      client.from("expense_dossier_splits").select("entry_key, dossier, amount").limit(5000),
+    ]);
   if (expErr) throw expErr;
   if (pontoErr) throw pontoErr;
+  if (splitErr) throw splitErr;
+
+  // Dossierverdelingen horen bij de lokale mutatie en maken split-matching op
+  // een deelbedrag mogelijk.
+  const splitsByKey = new Map<string, { dossier: string; amount: number }[]>();
+  for (const s of splitRows || []) {
+    const list = splitsByKey.get(String(s.entry_key)) || [];
+    list.push({ dossier: String(s.dossier), amount: Number(s.amount) || 0 });
+    splitsByKey.set(String(s.entry_key), list);
+  }
 
   const records: LegacyRecord[] = [];
+
 
   for (const e of expenses || []) {
     const candidate = {
