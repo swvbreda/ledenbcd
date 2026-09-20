@@ -42,7 +42,10 @@ export default function BudgetCategoryTable({
   const [newAmount, setNewAmount] = useState("");
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
+  const fmt = (v: number) =>
+    v.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const isIncome = category.name.toLowerCase() === "inkomsten";
+
   const expenseSign = (e: BudgetCategory["line_items"][number]["expenses"][number]) =>
     // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
     // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
