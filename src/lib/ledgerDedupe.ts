@@ -49,10 +49,24 @@ export function allInvoiceNumbers(entry: LedgerLike): string[] {
 }
 
 
-/** Vergelijkbare sleutels van alle factuurnummers van een regel. */
+/**
+ * Vergelijkbare sleutels van alle factuurnummers van een regel. Korte nummers
+ * met voorloopnullen ("00082") blijven volledig staan: zonder die nullen zou
+ * er te weinig overblijven om betrouwbaar op te vergelijken.
+ */
 export function invoiceKeysOf(entry: LedgerLike): string[] {
-  return [...new Set(allInvoiceNumbers(entry).map(invoiceKey).filter((k) => k.length >= 5))];
+  return [
+    ...new Set(
+      allInvoiceNumbers(entry)
+        .map((raw) => {
+          const key = invoiceKey(raw);
+          return key.length >= 5 ? key : raw;
+        })
+        .filter((k) => k.length >= 5),
+    ),
+  ];
 }
+
 
 /** True als twee genormaliseerde factuursleutels hetzelfde nummer aanduiden. */
 export function invoiceKeysMatch(a: string, b: string): boolean {
