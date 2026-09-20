@@ -413,3 +413,82 @@ describe("aliassen, splits en lokale mutaties", () => {
     expect(res.unmatched[0].dossier).toBe("Lobby");
   });
 });
+
+describe("vrije tekst en betalingen zonder factuurhint", () => {
+  it("koppelt een bankregel met het factuurnummer in lange vrije tekst", () => {
+    const e = entry({
+      informer_id: "3001",
+      invoice_number: "2026-0003",
+      amount_incl: 630,
+      entry_date: "2026-04-01",
+      relation_name: "Stichting Recreational Cannabis Foundation",
+    });
+    const bank = legacy({
+      key: "ponto:lobby",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "STICHTING RECREATIONAL CANNABIS FOUNDATIO",
+      description:
+        "SEPA Overboeking IBAN: NL12RABO0123456789 BIC: RABONL2U Naam: Stichting Recreational Cannabis Foundation Omschrijving: Fac nr 2026-0003 betaling contributie bijdrage 2026 Kenmerk: 1234567890",
+      amount: 630,
+      date: "2026-04-05",
+      lineItemId: null,
+      dossier: "Lobby",
+    });
+    const res = matchLegacyRecords([e], [bank]);
+    expect(res.unmatched).toHaveLength(0);
+    const key = "purchase_invoice:3001";
+    const linked =
+      res.byEntryKey.get(key)?.key ?? res.aliasesByEntryKey.get(key)?.[0]?.key;
+    expect(linked).toBe("ponto:lobby");
+  });
+
+  it("koppelt een deelbetaling zonder factuurhint bij een unieke tegenpartij", () => {
+    const donatie = entry({
+      doc_type: "sales_invoice",
+      informer_id: "500",
+      invoice_number: "2026-0011",
+      amount_incl: 5000,
+      entry_date: "2026-02-01",
+      relation_name: "Stg. Maatschappij en Cannabis",
+      description: "Donatie",
+    });
+    const bank = legacy({
+      key: "ponto:donatie",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "Stg Maatschappij en Cannabis",
+      description: "Donatie ontvangen",
+      amount: 5000,
+      direction: "in",
+      date: "2026-06-01",
+      lineItemId: "li-9",
+      dossier: null,
+      splits: [{ dossier: "Verkiezingen", amount: 5000 }],
+    });
+    const res = matchLegacyRecords([donatie], [bank]);
+    expect(res.unmatched).toHaveLength(0);
+    expect(res.byEntryKey.get("sales_invoice:500")?.dossier).toBe("Verkiezingen");
+  });
+
+  it("koppelt niet zonder hint als twee facturen hetzelfde bedrag hebben", () => {
+    const a = entry({ informer_id: "a1", invoice_number: "20260900", amount_incl: 400, relation_name: "Dubbel B.V." });
+    const b = entry({ informer_id: "a2", invoice_number: "20260901", amount_incl: 400, relation_name: "Dubbel B.V." });
+    const bank = legacy({
+      key: "ponto:dub",
+      kind: "ponto",
+      invoice: null,
+      externalId: null,
+      counterparty: "Dubbel B.V.",
+      description: "Betaling",
+      amount: 400,
+      date: "2026-06-01",
+      lineItemId: "li-1",
+      dossier: "Lobby",
+    });
+    const res = matchLegacyRecords([a, b], [bank]);
+    expect(res.unmatched.map((r) => r.key)).toEqual(["ponto:dub"]);
+  });
+});
