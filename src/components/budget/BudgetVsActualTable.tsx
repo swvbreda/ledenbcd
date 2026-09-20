@@ -8,8 +8,12 @@ interface Props {
   canonicalSpent?: number;
 }
 
+const euro = (v: number) =>
+  v.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
 export default function BudgetVsActualTable({ categories, year, canonicalSpent }: Props) {
   if (categories.length === 0) return null;
+
 
   // Only expense categories — inkomstenposten (bv. contributies, subsidies) horen
   // niet in "uitgegeven van begroot".
