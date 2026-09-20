@@ -48,6 +48,7 @@ export default function ExpenseDialog({
   onUpdateExpense,
   onUpdateBankTransaction,
   onUpdatePontoTransaction,
+  onSaveLedgerOverride,
   onLinkPayment,
   categories,
   members = [],
@@ -86,12 +87,6 @@ export default function ExpenseDialog({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [expenses, allDossiers]);
 
-  const entryKeyFromRowId = (rawId: string): string | null => {
-    if (rawId.startsWith("ponto:")) return `ponto:${rawId.split(":")[1]}`;
-    if (rawId.startsWith("bank:")) return `bank:${rawId.split(":")[1]}`;
-    if (rawId.startsWith("contrib:")) return null;
-    return `expense:${rawId}`;
-  };
 
   const startEdit = (e: BudgetExpense) => {
     setEditingId(e.id);
