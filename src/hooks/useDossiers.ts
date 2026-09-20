@@ -131,10 +131,15 @@ export function documentKeysOf(entry: {
   legacyKeys?: string[];
   sources?: { key: string; legacyKeys?: string[] }[];
 }): string[] {
-  const keys = new Set<string>([entry.key, ...(entry.legacyKeys || [])]);
+  const keys = new Set<string>();
+  const add = (k: string) => {
+    for (const v of entryKeyVariants(k)) keys.add(v);
+  };
+  add(entry.key);
+  for (const k of entry.legacyKeys || []) add(k);
   for (const s of entry.sources || []) {
-    keys.add(s.key);
-    for (const k of s.legacyKeys || []) keys.add(k);
+    add(s.key);
+    for (const k of s.legacyKeys || []) add(k);
   }
   return [...keys];
 }
