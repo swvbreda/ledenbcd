@@ -182,8 +182,22 @@ export default function BudgetCategoryTable({
                     <CurrencyCell value={li.budgeted_amount} className={clickableClass(clicks?.budgeted)} />
                   </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.spent)}>
-                    {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
+                    <div className="flex flex-col items-end">
+                      {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
+                      {(() => {
+                        const s = splitOf(li);
+                        if (s.localOut === 0 && s.localIn === 0) return null;
+                        return (
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            boekhouding {fmt(s.informer)}
+                            {s.localOut !== 0 && ` · lokaal +${fmt(s.localOut)}`}
+                            {s.localIn !== 0 && ` · lokaal −${fmt(s.localIn)}`}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </td>
+
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.remaining)}>
                     <div className="flex flex-col items-end">
                       <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />
