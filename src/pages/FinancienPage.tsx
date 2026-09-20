@@ -207,7 +207,8 @@ export default function FinancienPage() {
                     getCellClicks={(li) => {
                       // Alleen de Inkomsten-post "Contributies" krijgt de
                       // klikbare breakdown, met bedragen uit de boekhouding.
-                      if (li.name.trim().toLowerCase() === "contributies") {
+                      const name = li.name.trim().toLowerCase();
+                      if (name === "contributies") {
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
@@ -215,7 +216,15 @@ export default function FinancienPage() {
                           spentValue: financialResult?.contribution.paid ?? 0,
                           remainingValue:
                             li.budgeted_amount - (financialResult?.contribution.paid ?? 0),
-                          remainingLabel: "nog te ontvangen",
+                        };
+                      }
+                      // Overige verkoopopbrengsten uit de administratie horen bij
+                      // de begrotingsregel "Donaties en overige baten".
+                      if (name === "donaties en overige baten") {
+                        const paid = financialResult?.other.paid ?? 0;
+                        return {
+                          spentValue: paid,
+                          remainingValue: li.budgeted_amount - paid,
                         };
                       }
                       return null;

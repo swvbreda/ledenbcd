@@ -51,19 +51,10 @@ export default function BalancePanel({
 
   const middelenLeft = items.filter((i) => i.section === "middelen" && i.side === "left");
   const middelenRight = items.filter((i) => i.section === "middelen" && i.side === "right");
-  const openingBalanceItem = items.find((i) =>
-    i.section === "resultaat" && /^bank saldo 31-12-/i.test(i.name.trim()),
-  );
-  const reserveTotal = items
-    .filter((i) => i.section === "middelen" && i.side === "left" && /reserve|reservering/i.test(i.name))
-    .reduce((sum, item) => sum + item.amount, 0);
-  const openingBalance = openingBalanceItem?.amount ?? 0;
-  // Boekhoudkundige bedragen komen uitsluitend uit de Informer-facturen.
-  // Lokale ledenregister- of bankbedragen mogen hier nooit voor doorgaan.
   const contributionIncome = financialResult?.contributionIncome ?? 0;
   const otherIncome = financialResult?.otherIncome ?? 0;
   const resultExpenses = financialResult?.totalExpenses ?? totalSpent;
-  const availableBankBalance = openingBalance + contributionIncome + otherIncome - resultExpenses;
+  const yearResult = contributionIncome + otherIncome - resultExpenses;
   const hasManualBudgetedExpenses = middelenLeft.some(
     (item) => item.name.trim().toLowerCase() === "begrote uitgaven",
   );
@@ -211,21 +202,19 @@ export default function BalancePanel({
           </colgroup>
           <tbody>
             {[
-              { label: openingBalanceItem?.name || `Banksaldo 31-12-${year - 1}`, value: openingBalance },
               { label: "Contributie", value: contributionIncome },
               { label: "Overige inkomsten", value: otherIncome },
-              { label: "Reserve (totaal)", value: reserveTotal, note: "Onderdeel van het banksaldo" },
               { label: "Uitgaven", value: resultExpenses },
             ].map((row) => (
               <tr key={row.label} className="border-b border-border/50">
                 <td className="px-3 py-1.5">{row.label}</td>
                 <td className="text-right px-3 py-1.5 whitespace-nowrap pr-7"><CurrencyCell value={row.value} /></td>
-                <td className="text-right px-3 py-1.5 text-xs text-muted-foreground">{row.note}</td>
+                <td />
               </tr>
             ))}
             <tr className="bg-primary/5 font-semibold border-t border-border">
-              <td className="px-3 py-2">Beschikbaar banksaldo</td>
-              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={availableBankBalance} /></td>
+              <td className="px-3 py-2">Resultaat boekjaar</td>
+              <td className="text-right px-3 py-2 whitespace-nowrap pr-7"><CurrencyCell value={yearResult} /></td>
               <td />
             </tr>
           </tbody>

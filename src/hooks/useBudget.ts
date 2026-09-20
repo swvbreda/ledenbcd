@@ -284,7 +284,7 @@ export function useBudgetCategories(year: number) {
         result.push({
           id: UNASSIGNED_CATEGORY_ID,
           year,
-          name: "Niet toegewezen (boekhouding)",
+          name: "Niet toegewezen",
           sort_order: 9999,
           line_items: [
             {
