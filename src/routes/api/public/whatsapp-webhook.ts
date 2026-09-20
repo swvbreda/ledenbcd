@@ -12,12 +12,19 @@ import {
  * Meta kan geen Supabase-JWT meesturen, daarom staat deze route onder
  * /api/public/. De verificatie gebeurt hier zelf:
  *  - GET  : hub.verify_token wordt vergeleken met WHATSAPP_VERIFY_TOKEN.
- *  - POST : X-Hub-Signature-256 wordt met WHATSAPP_APP_SECRET gecontroleerd.
+ *  - POST : X-Hub-Signature-256 wordt op de ruwe body gecontroleerd met
+ *           WHATSAPP_APP_SECRET, vóór het parsen van JSON.
  * Beide falen gesloten wanneer een secret of handtekening ontbreekt.
  *
- * Er wordt geen volledige payload opgeslagen en er worden geen tokens,
- * volledige telefoonnummers of berichtteksten gelogd.
+ * Opslaan gebeurt via de service-role-only databasefunctie
+ * whatsapp_ingest_message: atomair en idempotent per wa_message_id.
+ * Er wordt geen ruwe payload bewaard en er worden geen tokens, volledige
+ * telefoonnummers of berichtteksten gelogd.
  */
+
+/** Meta-webhookberichten zijn klein; ruim bemeten bovengrens. */
+const MAX_BODY_BYTES = 256 * 1024;
+
 export const Route = createFileRoute("/api/public/whatsapp-webhook")({
   server: {
     handlers: {
@@ -35,7 +42,16 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
       },
 
       POST: async ({ request }) => {
+        const declaredLength = Number(request.headers.get("content-length") ?? "0");
+        if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+          return new Response("Payload too large", { status: 413 });
+        }
+
         const rawBody = await request.text();
+        if (new TextEncoder().encode(rawBody).length > MAX_BODY_BYTES) {
+          return new Response("Payload too large", { status: 413 });
+        }
+
         const valid = await verifySignature(
           rawBody,
           request.headers.get("x-hub-signature-256"),
@@ -58,46 +74,23 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const db = supabaseAdmin as unknown as {
-          from: (table: string) => any;
+          rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
         };
 
         for (const message of messages) {
-          try {
-            const receivedAt = message.sentAt ?? new Date().toISOString();
+          const { error } = await db.rpc("whatsapp_ingest_message", {
+            p_wa_id: message.waId,
+            p_profile_name: message.profileName,
+            p_wa_message_id: message.waMessageId,
+            p_message_type: message.messageType,
+            p_body: message.body,
+            p_media_id: message.mediaId,
+            p_media_mime_type: message.mediaMimeType,
+            p_sent_at: message.sentAt,
+            p_preview: previewFor(message),
+          });
 
-            const { data: conversation, error: convError } = await db
-              .from("whatsapp_conversations")
-              .upsert(
-                {
-                  wa_id: message.waId,
-                  profile_name: message.profileName,
-                  last_message_at: receivedAt,
-                  last_message_preview: previewFor(message),
-                },
-                { onConflict: "wa_id" },
-              )
-              .select("id")
-              .single();
-            if (convError || !conversation) throw convError ?? new Error("no conversation");
-
-            const { error: insertError } = await db.from("whatsapp_messages").insert({
-              conversation_id: conversation.id,
-              wa_message_id: message.waMessageId,
-              wa_id: message.waId,
-              profile_name: message.profileName,
-              direction: "inbound",
-              message_type: message.messageType,
-              body: message.body,
-              media_id: message.mediaId,
-              media_mime_type: message.mediaMimeType,
-              status: "received",
-              sent_at: message.sentAt,
-              received_at: receivedAt,
-            });
-
-            // 23505 = duplicate wa_message_id: retry van Meta, veilig te negeren.
-            if (insertError && insertError.code !== "23505") throw insertError;
-          } catch (error) {
+          if (error) {
             console.error("[whatsapp-webhook] kon bericht niet opslaan", {
               code: (error as { code?: string })?.code ?? "unknown",
             });

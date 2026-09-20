@@ -15,7 +15,6 @@ export interface WhatsAppMessage {
   id: string;
   conversation_id: string;
   wa_message_id: string;
-  profile_name: string | null;
   direction: string;
   message_type: string;
   body: string | null;
@@ -28,6 +27,7 @@ export interface WhatsAppMessage {
 // De tabellen zijn nieuw; de gegenereerde types kennen ze nog niet.
 const db = supabase as unknown as {
   from: (table: string) => any;
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
   channel: typeof supabase.channel;
   removeChannel: typeof supabase.removeChannel;
 };
@@ -73,7 +73,7 @@ export function useWhatsAppMessages(conversationId: string | null) {
       const { data, error } = await db
         .from("whatsapp_messages")
         .select(
-          "id, conversation_id, wa_message_id, profile_name, direction, message_type, body, media_mime_type, sent_at, received_at, read_at",
+          "id, conversation_id, wa_message_id, direction, message_type, body, media_mime_type, sent_at, received_at, read_at",
         )
         .eq("conversation_id", conversationId)
         .order("received_at", { ascending: true });
@@ -83,15 +83,14 @@ export function useWhatsAppMessages(conversationId: string | null) {
   });
 }
 
+/** Markeren als gelezen loopt via een afgeschermde databasefunctie. */
 export function useMarkConversationRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (conversationId: string) => {
-      const { error } = await db
-        .from("whatsapp_messages")
-        .update({ read_at: new Date().toISOString() })
-        .eq("conversation_id", conversationId)
-        .is("read_at", null);
+      const { error } = await db.rpc("whatsapp_mark_conversation_read", {
+        p_conversation_id: conversationId,
+      });
       if (error) throw error;
     },
     onSuccess: (_data, conversationId) => {

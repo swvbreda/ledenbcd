@@ -176,3 +176,55 @@ describe("maskWaId", () => {
     expect(maskWaId("12")).toBe("••••");
   });
 });
+
+describe("interactive replies", () => {
+  it("leest een knopantwoord", () => {
+    const [message] = parseIncomingMessages(
+      payload({
+        id: "wamid.5",
+        from: "31612345678",
+        type: "interactive",
+        interactive: { type: "button_reply", button_reply: { id: "ja", title: "Ja, ik kom" } },
+      }),
+    );
+    expect(message).toMatchObject({ messageType: "interactive", body: "Ja, ik kom" });
+  });
+
+  it("leest een lijstantwoord met omschrijving als titel ontbreekt", () => {
+    const [message] = parseIncomingMessages(
+      payload({
+        id: "wamid.6",
+        from: "31612345678",
+        type: "interactive",
+        interactive: { type: "list_reply", list_reply: { id: "a", description: "Optie A" } },
+      }),
+    );
+    expect(message?.body).toBe("Optie A");
+  });
+
+  it("valt terug op de id wanneer er geen tekst is", () => {
+    const [message] = parseIncomingMessages(
+      payload({
+        id: "wamid.7",
+        from: "31612345678",
+        type: "interactive",
+        interactive: { type: "button_reply", button_reply: { id: "keuze-1" } },
+      }),
+    );
+    expect(message?.body).toBe("keuze-1");
+  });
+});
+
+describe("previewFor", () => {
+  it("kort een lange tekst in tot een veilige preview", () => {
+    const [message] = parseIncomingMessages(
+      payload({
+        id: "wamid.8",
+        from: "31612345678",
+        type: "text",
+        text: { body: "a".repeat(500) },
+      }),
+    );
+    expect(previewFor(message!).length).toBe(140);
+  });
+});

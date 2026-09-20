@@ -134,6 +134,16 @@ export function parseIncomingMessages(payload: unknown): ParsedWhatsAppMessage[]
           body = clip((message["text"] as { body?: unknown } | undefined)?.body);
         } else if (type === "button") {
           body = clip((message["button"] as { text?: unknown } | undefined)?.text);
+        } else if (type === "interactive") {
+          const interactive = message["interactive"] as Record<string, unknown> | undefined;
+          const reply = (interactive?.["button_reply"] ??
+            interactive?.["list_reply"] ??
+            interactive?.["nfm_reply"]) as Record<string, unknown> | undefined;
+          body =
+            clip(reply?.["title"]) ??
+            clip(reply?.["description"]) ??
+            clip(reply?.["body"]) ??
+            clip(reply?.["id"]);
         } else if ((MEDIA_TYPES as readonly string[]).includes(type)) {
           const media = message[type] as Record<string, unknown> | undefined;
           body = clip(media?.["caption"]) ?? clip(media?.["filename"]);
