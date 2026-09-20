@@ -69,3 +69,32 @@ export function assertOverrideSaved(
     );
   }
 }
+
+/**
+ * Historisch zijn dossiersplits/documenten van canonieke Informer-regels ook
+ * opgeslagen onder "ledger:<doc_type>:<informer_id>" en
+ * "expense:ledger:<doc_type>:<informer_id>". We schrijven voortaan canoniek,
+ * maar lezen alle varianten.
+ */
+export function ledgerEntryKeyAliases(canonicalKey: string): string[] {
+  if (!canonicalKey) return [];
+  return [canonicalKey, `ledger:${canonicalKey}`, `expense:ledger:${canonicalKey}`];
+}
+
+/**
+ * Parseert een dossiersleutel van een canonieke Informer-regel. Ondersteunt de
+ * canonieke vorm en de oude geprefixte varianten; informer_id mag dubbele
+ * punten bevatten en gaat nooit verloren.
+ */
+export function parseLedgerEntryKey(key: string): LedgerRowRef | null {
+  if (!key) return null;
+  let rest = key;
+  if (rest.startsWith("expense:")) rest = rest.slice("expense:".length);
+  if (rest.startsWith("ledger:")) rest = rest.slice("ledger:".length);
+  const idx = rest.indexOf(":");
+  if (idx <= 0) return null;
+  const doc_type = rest.slice(0, idx);
+  const informer_id = rest.slice(idx + 1);
+  if (!doc_type || !informer_id) return null;
+  return { doc_type, informer_id };
+}
