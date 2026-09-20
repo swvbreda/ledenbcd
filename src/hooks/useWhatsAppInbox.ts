@@ -85,7 +85,9 @@ export function useWhatsAppRealtime(enabled: boolean) {
         "postgres_changes",
         { event: "*", schema: "public", table: "whatsapp_messages" },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["whatsapp-conversations"] });
+          queryClient.invalidateQueries({
+            queryKey: ["whatsapp-conversations"],
+          });
           queryClient.invalidateQueries({ queryKey: ["whatsapp-messages"] });
         },
       )

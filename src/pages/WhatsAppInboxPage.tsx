@@ -62,7 +62,12 @@ const WhatsAppInboxPage = () => {
   const { data: messages } = useWhatsAppMessages(current?.phone ?? null);
 
   useEffect(() => {
-    if (selected && current && current.unread_count > 0 && !markRead.isPending) {
+    if (
+      selected &&
+      current &&
+      current.unread_count > 0 &&
+      !markRead.isPending
+    ) {
       markRead.mutate(selected);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
