@@ -425,17 +425,23 @@ export function matchLegacyRecords(
     }
   }
   // 5c. Is een gekoppelde mutatie over dossiers verdeeld, dan geldt voor deze
-  // factuur het dossier van het deel dat exact haar bedrag dekt.
+  // factuur het dossier van het deel dat exact haar bedrag dekt. Ook wanneer
+  // het totaalbedrag gelijk is aan de factuur, maar de mutatie zelf geen eigen
+  // dossier heeft, is het dossier van dat ene deel leidend.
   for (const entry of entries) {
     const ekey = ledgerKeyOf(entry);
     const record = byEntryKey.get(ekey);
     if (!record?.splits || record.splits.length === 0) continue;
-    if (cents(record.amount) === cents(Number(entry.amount_incl) || 0)) continue;
-    const split = record.splits.find((s) => cents(s.amount) === cents(Number(entry.amount_incl) || 0));
+    const target = cents(Number(entry.amount_incl) || 0);
+    const sameTotal = cents(record.amount) === target;
+    if (sameTotal && record.dossier) continue;
+    const matches = record.splits.filter((s) => cents(s.amount) === target);
+    const split = sameTotal ? (matches.length === 1 ? matches[0] : null) : matches[0];
     if (!split) continue;
     byEntryKey.set(ekey, { ...record, dossier: split.dossier });
     matchedBy.set(ekey, "split");
   }
+
 
   // 5d. Deelbetaling zonder bruikbare factuurhint: een bankmutatie (of een
   // dossierdeel daarvan) die exact één canonieke factuur van dezelfde
