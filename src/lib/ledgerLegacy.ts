@@ -63,7 +63,14 @@ export function isSyntheticPlaceholder(r: {
   );
 }
 
-export type MatchMethod = "external_id" | "invoice" | "document" | "payment" | "combined";
+export type MatchMethod =
+  | "external_id"
+  | "invoice"
+  | "document"
+  | "payment"
+  | "combined"
+  | "split";
+
 
 export interface CombinedPayment {
   /** De lokale betaling (meestal een bankmutatie) die meerdere facturen dekt. */
