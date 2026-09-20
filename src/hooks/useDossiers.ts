@@ -4,6 +4,7 @@ import { isSamePayment, invoiceNumbersIn, sharesInvoiceNumber, invoiceKeysOf } f
 import { matchLegacyRecords } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
 import type { LedgerEntry } from "@/lib/ledger";
+import { ledgerEntryKeyAliases, parseLedgerEntryKey } from "@/lib/ledgerRowId";
 
 
 export type DossierEntryKind = "expense" | "bank" | "ponto" | "ledger";
