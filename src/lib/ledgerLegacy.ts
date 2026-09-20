@@ -172,6 +172,23 @@ const entryInvoiceKeys = (e: LedgerEntry) => invoiceKeysOf(asLedgerLike(e));
 
 const cents = (value: number) => Math.round(Math.abs(value) * 100);
 
+/** Alle factuursleutels van een lokale mutatie: eigen velden én documenthints. */
+function recordHintKeys(record: LegacyRecord, hints?: DocumentHints): string[] {
+  return [...new Set([...invoiceKeysOf(asRecordLike(record)), ...hintKeysFor(record, hints)])];
+}
+
+/**
+ * True als het volledige bedrag óf een dossierdeel van de lokale mutatie exact
+ * gelijk is aan het bedrag van de Informer-regel.
+ */
+function relevantAmountMatches(record: LegacyRecord, entry: LedgerEntry): boolean {
+  const target = cents(Number(entry.amount_incl) || 0);
+  if (target === 0) return false;
+  if (cents(record.amount) === target) return true;
+  return (record.splits || []).some((s) => cents(s.amount) === target);
+}
+
+
 const daysBetween = (a: string | null, b: string | null) => {
   const ta = a ? new Date(a).getTime() : NaN;
   const tb = b ? new Date(b).getTime() : NaN;
