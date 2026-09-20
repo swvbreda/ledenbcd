@@ -66,7 +66,12 @@ interface DossierRow {
   informerTotal: number;
   /** Netto bedrag uit aanvullende lokale mutaties (niet in Informer). */
   localTotal: number;
+  /** Aanvullende lokale uitgaven (niet in Informer). */
+  localOut: number;
+  /** Aanvullende lokale inkomsten/terugbetalingen (niet in Informer). */
+  localIncome: number;
 }
+
 
 /**
  * Een regel telt niet mee zolang géén van de samengevoegde bronnen aan een
