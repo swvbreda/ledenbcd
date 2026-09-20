@@ -363,7 +363,15 @@ export function useDossierMutations(year: number) {
         list.push({ dossier: String(s.dossier), amount: Number(s.amount) || 0 });
         splitsByEntry.set(s.entry_key, list);
       }
-      const splitsFor = (key: string) => splitsByEntry.get(key) || [];
+      // Canonieke Informer-regels kunnen historisch onder een geprefixte
+      // sleutel zijn opgeslagen; we lezen alle varianten, schrijven canoniek.
+      const splitsFor = (key: string) => {
+        for (const variant of entryKeyVariants(key)) {
+          const hit = splitsByEntry.get(variant);
+          if (hit && hit.length > 0) return hit;
+        }
+        return [];
+      };
 
       // Bedragen, facturen en betaalstatus komen uitsluitend uit de boekhouding.
       // Elke regel hangt aan een stabiele Informer-ID en telt exact eenmaal.
