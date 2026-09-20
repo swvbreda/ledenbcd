@@ -125,8 +125,8 @@ const WhatsAppInboxPage = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-medium text-sm truncate">
-                          {conversation.profile_name ||
-                            maskWaId(conversation.wa_id)}
+                          {conversation.display_name ||
+                            maskWaId(conversation.phone)}
                         </span>
                         <span className="text-[11px] text-muted-foreground shrink-0">
                           {formatTime(conversation.last_message_at)}
@@ -136,9 +136,9 @@ const WhatsAppInboxPage = () => {
                         <span className="text-xs text-muted-foreground truncate">
                           {conversation.last_message_preview ?? ""}
                         </span>
-                        {conversation.unread > 0 && (
+                        {conversation.unread_count > 0 && (
                           <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none shrink-0">
-                            {conversation.unread}
+                            {conversation.unread_count}
                           </span>
                         )}
                       </div>
@@ -185,7 +185,7 @@ const WhatsAppInboxPage = () => {
               <ArrowLeft size={16} />
             </Button>
             <CardTitle className="text-base truncate">
-              {current?.profile_name || maskWaId(current?.wa_id ?? "")}
+              {current?.display_name || maskWaId(current?.phone ?? "")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -209,7 +209,7 @@ const WhatsAppInboxPage = () => {
                     {messageLabel(message)}
                   </Badge>
                   <span className="text-[11px] text-muted-foreground">
-                    {formatTime(message.sent_at ?? message.received_at)}
+                    {formatTime(message.timestamp)}
                   </span>
                 </div>
                 <p className="text-sm whitespace-pre-wrap break-words">
