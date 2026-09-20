@@ -425,19 +425,71 @@ export function matchLegacyRecords(
     }
   }
   // 5c. Is een gekoppelde mutatie over dossiers verdeeld, dan geldt voor deze
-  // factuur het dossier van het deel dat exact haar bedrag dekt.
+  // factuur het dossier van het deel dat exact haar bedrag dekt. Ook wanneer
+  // het totaalbedrag gelijk is aan de factuur, maar de mutatie zelf geen eigen
+  // dossier heeft, is het dossier van dat ene deel leidend.
   for (const entry of entries) {
     const ekey = ledgerKeyOf(entry);
     const record = byEntryKey.get(ekey);
     if (!record?.splits || record.splits.length === 0) continue;
-    if (cents(record.amount) === cents(Number(entry.amount_incl) || 0)) continue;
-    const split = record.splits.find((s) => cents(s.amount) === cents(Number(entry.amount_incl) || 0));
+    const target = cents(Number(entry.amount_incl) || 0);
+    const sameTotal = cents(record.amount) === target;
+    if (sameTotal && record.dossier) continue;
+    const matches = record.splits.filter((s) => cents(s.amount) === target);
+    const split = sameTotal ? (matches.length === 1 ? matches[0] : null) : matches[0];
     if (!split) continue;
     byEntryKey.set(ekey, { ...record, dossier: split.dossier });
     matchedBy.set(ekey, "split");
   }
 
 
+  // 5d. Deelbetaling zonder bruikbare factuurhint: een bankmutatie (of een
+  // dossierdeel daarvan) die exact één canonieke factuur van dezelfde
+  // tegenpartij dekt. Streng: gelijk bedrag op centen, gelijke richting,
+  // eenduidige tegenpartij, plausibel datumvenster en precies één kandidaat.
+  for (const record of available()) {
+    // Alleen bankmutaties: oude boekingen blijven hier bewust buiten.
+    if (record.kind !== "ponto") continue;
+    const party = normalizeCounterparty(record.counterparty);
+    if (!party) continue;
+    const wantsSales = record.direction === "in";
+    // Dossierdelen eerst: bij een verdeelde mutatie hoort de factuur bij het
+    // deel met hetzelfde bedrag, niet bij de mutatie als geheel.
+    const portions = [
+      ...(record.splits || []).map((s) => ({ amount: s.amount, dossier: s.dossier })),
+      { amount: record.amount, dossier: record.dossier },
+    ];
+
+    let linked = false;
+    for (const portion of portions) {
+      if (linked) break;
+      const target = cents(portion.amount);
+      if (target === 0) continue;
+      // Ook aan de administratiekant moet de kandidaat uniek zijn.
+      const competitors = available().filter(
+        (r2) =>
+          r2.key !== record.key &&
+          normalizeCounterparty(r2.counterparty) === party &&
+          (cents(r2.amount) === target || (r2.splits || []).some((s) => cents(s.amount) === target)),
+      );
+      if (competitors.length > 0) continue;
+
+      const hits = entries.filter((e) => {
+
+        if (!e.counts_in_totals) return false;
+        if (wantsSales !== (e.doc_type === "sales_invoice")) return false;
+        const ekey = ledgerKeyOf(e);
+        if (byEntryKey.has(ekey) || combinedByEntryKey.has(ekey)) return false;
+        if (cents(Number(e.amount_incl) || 0) !== target) return false;
+        if (normalizeCounterparty(e.relation_name) !== party) return false;
+        const delta = daysBetween(record.date, e.entry_date);
+        return delta >= -30 && delta <= 180;
+      });
+      if (hits.length !== 1) continue;
+      take(hits[0], { ...record, dossier: portion.dossier ?? record.dossier }, "split");
+      linked = true;
+    }
+  }
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
@@ -462,13 +514,20 @@ export function matchLegacyRecords(
       const hit =
         sharesInvoiceNumber(self, asRecordLike(r)) ||
         entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)));
-      return hit && relevantAmountMatches(r, entry);
+      if (!hit) return false;
+      // Alleen met exact hetzelfde bedrag (of splitbedrag), dezelfde richting
+      // en een plausibele datum is dit aantoonbaar dezelfde betaling.
+      if ((self.direction || "out") !== r.direction) return false;
+      const delta = daysBetween(r.date, entry.entry_date);
+      if (delta < -30 || delta > 180) return false;
+      return relevantAmountMatches(r, entry);
     });
     for (const r of extra) usedLegacy.add(r.key);
     if (extra.length > 0) {
       aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
     }
   }
+
 
 
 

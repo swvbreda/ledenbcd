@@ -42,7 +42,10 @@ export default function BudgetCategoryTable({
   const [newAmount, setNewAmount] = useState("");
 
   const totalBudgeted = category.line_items.reduce((s, li) => s + li.budgeted_amount, 0);
+  const fmt = (v: number) =>
+    v.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   const isIncome = category.name.toLowerCase() === "inkomsten";
+
   const expenseSign = (e: BudgetCategory["line_items"][number]["expenses"][number]) =>
     // Voor inkomstenposten tellen ontvangen bedragen (direction=in) als
     // "gerealiseerd"; uitgaande boekingen zijn correcties (negatief).
@@ -53,11 +56,29 @@ export default function BudgetCategoryTable({
     li.expenses.reduce((es, e) => (e.paid === false ? es : es + expenseSign(e) * e.amount), 0);
   const sumUnpaid = (li: typeof category.line_items[number]) =>
     li.expenses.reduce((es, e) => (e.paid === false ? es + expenseSign(e) * e.amount : es), 0);
+  /** Splitst het werkelijke bedrag in het deel uit de boekhouding en het lokale deel. */
+  const splitOf = (li: typeof category.line_items[number]) => {
+    let informer = 0;
+    let localOut = 0;
+    let localIn = 0;
+    for (const e of li.expenses) {
+      if (e.paid === false) continue;
+      if (!(e as any)._localOnly) {
+        informer += expenseSign(e) * e.amount;
+      } else if (e.direction === "in") {
+        localIn += e.amount;
+      } else {
+        localOut += e.amount;
+      }
+    }
+    return { informer, localOut, localIn };
+  };
   const totalSpent = category.line_items.reduce((s, li) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     return s + (clicks?.spentValue ?? sumExpenses(li));
   }, 0);
   const totalUnpaid = category.line_items.reduce((s, li) => s + sumUnpaid(li), 0);
+
   const remainingOf = (li: typeof category.line_items[number]) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
@@ -164,8 +185,22 @@ export default function BudgetCategoryTable({
                     <CurrencyCell value={li.budgeted_amount} className={clickableClass(clicks?.budgeted)} />
                   </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.spent)}>
-                    {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
+                    <div className="flex flex-col items-end">
+                      {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
+                      {(() => {
+                        const s = splitOf(li);
+                        if (s.localOut === 0 && s.localIn === 0) return null;
+                        return (
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            boekhouding {fmt(s.informer)}
+                            {s.localOut !== 0 && ` · lokaal +${fmt(s.localOut)}`}
+                            {s.localIn !== 0 && ` · lokaal −${fmt(s.localIn)}`}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </td>
+
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.remaining)}>
                     <div className="flex flex-col items-end">
                       <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />

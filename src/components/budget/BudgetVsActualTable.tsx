@@ -8,8 +8,12 @@ interface Props {
   canonicalSpent?: number;
 }
 
+const euro = (v: number) =>
+  v.toLocaleString("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
 export default function BudgetVsActualTable({ categories, year, canonicalSpent }: Props) {
   if (categories.length === 0) return null;
+
 
   // Only expense categories — inkomstenposten (bv. contributies, subsidies) horen
   // niet in "uitgegeven van begroot".
@@ -21,26 +25,38 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
     .map((cat) => {
       const budgeted = cat.line_items.reduce((sum, li) => sum + Number(li.budgeted_amount || 0), 0);
       // Alle meetellende inkoopfacturen tellen mee (betaald én openstaand), met
-      // behoud van teken (creditnota verlaagt), zodat dit totaal exact gelijk is
-      // aan het dashboard- en resultaattotaal.
-      const spentPerLine = cat.line_items.map((li) =>
-        li.expenses.reduce((es, e) => es + Number(e.amount || 0), 0)
-      );
-      const spent = spentPerLine.reduce((s, v) => s + v, 0);
+      // behoud van teken (creditnota verlaagt). Aanvullende lokale mutaties
+      // staan hier apart: uitgaand verhoogt, inkomend verlaagt de kosten.
+      let informer = 0;
+      let localOut = 0;
+      let localIn = 0;
+      for (const li of cat.line_items) {
+        for (const e of li.expenses) {
+          const amount = Number(e.amount || 0);
+          if (!(e as any)._localOnly) informer += amount;
+          else if (e.direction === "in") localIn += Math.abs(amount);
+          else localOut += Math.abs(amount);
+        }
+      }
+      const spent = informer + localOut - localIn;
       // Netto per categorie: overschrijding binnen een post wordt verrekend
       // met ruimte op andere posten in dezelfde categorie.
       const net = budgeted - spent;
       const available = Math.max(net, 0);
       const overrun = Math.min(net, 0);
-      return { id: cat.id, name: cat.name, budgeted, spent, available, overrun };
+      return { id: cat.id, name: cat.name, budgeted, spent, informer, localOut, localIn, available, overrun };
     })
     .sort((a, b) => b.spent - a.spent);
 
   const totalBudgeted = perCat.reduce((s, c) => s + c.budgeted, 0);
-  const categorySpent = perCat.reduce((s, c) => s + c.spent, 0);
-  const totalSpent = typeof canonicalSpent === "number" ? canonicalSpent : categorySpent;
-  // Beschikbaar = begroting − canonieke uitgaven, niet de som van per-categorie
-  // restanten (die negeert overschrijdingen en ongekoppelde facturen).
+  const categoryInformer = perCat.reduce((s, c) => s + c.informer, 0);
+  const totalLocalOut = perCat.reduce((s, c) => s + c.localOut, 0);
+  const totalLocalIn = perCat.reduce((s, c) => s + c.localIn, 0);
+  // Het boekhoudtotaal blijft exact het canonieke Informer-bedrag.
+  const informerTotal = typeof canonicalSpent === "number" ? canonicalSpent : categoryInformer;
+  // Managementbedrag: boekhouding plus aanvullende lokale mutaties.
+  const totalSpent = informerTotal + totalLocalOut - totalLocalIn;
+  // Beschikbaar = begroting − management werkelijk.
   const totalAvailable = totalBudgeted - totalSpent;
 
   const over = totalSpent > totalBudgeted && totalBudgeted > 0;
@@ -52,20 +68,40 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
         <h3 className="text-sm font-semibold">Begroting vs Werkelijk — {year}</h3>
         <div className="text-xs text-muted-foreground">
           <span className="tabular-nums"><CurrencyText value={totalSpent} /></span>
-          {" uitgegeven van "}
+          {" van "}
           <span className="tabular-nums"><CurrencyText value={totalBudgeted} /></span>
-          {" · beschikbaar "}
+          {" begroot · beschikbaar "}
           <span className={`tabular-nums font-medium ${totalAvailable < 0 ? "text-destructive" : "text-green-600"}`}>
             <CurrencyText value={totalAvailable} />
           </span>
         </div>
       </div>
 
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:grid-cols-4">
+        <div className="flex flex-col">
+          <dt className="text-muted-foreground">Informer werkelijk</dt>
+          <dd className="tabular-nums font-medium"><CurrencyText value={informerTotal} /></dd>
+        </div>
+        <div className="flex flex-col">
+          <dt className="text-muted-foreground">Aanvullende lokale uitgaven</dt>
+          <dd className="tabular-nums font-medium"><CurrencyText value={totalLocalOut} /></dd>
+        </div>
+        <div className="flex flex-col">
+          <dt className="text-muted-foreground">Lokale inkomsten/terugbetalingen</dt>
+          <dd className="tabular-nums font-medium"><CurrencyText value={totalLocalIn} /></dd>
+        </div>
+        <div className="flex flex-col">
+          <dt className="text-muted-foreground">Management werkelijk</dt>
+          <dd className="tabular-nums font-semibold"><CurrencyText value={totalSpent} /></dd>
+        </div>
+      </dl>
+
       <p className="text-[11px] text-muted-foreground">
-        Bron: facturen uit de boekhouding (Informer). Losse bank- en
-        grootboekmutaties zonder factuur zitten hier niet in en moeten via de
-        saldibalans in Informer gecontroleerd worden.
+        Informer werkelijk is het boekhoudtotaal en hoort bij Controle &amp; sync.
+        De postregels hieronder tonen het managementbedrag: boekhouding plus
+        aanvullende lokale mutaties die niet in Informer staan.
       </p>
+
 
 
       <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -118,7 +154,17 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
               <tr key={c.id} className="border-b border-border/20">
                 <td className="py-1">{c.name}</td>
                 <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.budgeted} /></td>
-                <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.spent} /></td>
+                <td className="py-1 text-right tabular-nums">
+                  <CurrencyCell value={c.spent} />
+                  {(c.localOut !== 0 || c.localIn !== 0) && (
+                    <div className="text-[10px] text-muted-foreground">
+                      boekhouding {euro(c.informer)}
+                      {c.localOut !== 0 && ` · lokaal +${euro(c.localOut)}`}
+                      {c.localIn !== 0 && ` · lokaal −${euro(c.localIn)}`}
+                    </div>
+                  )}
+                </td>
+
                 <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {c.budgeted > 0 ? `${catPct}%` : "—"}
                 </td>

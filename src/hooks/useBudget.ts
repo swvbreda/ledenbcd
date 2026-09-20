@@ -51,6 +51,9 @@ export interface BudgetExpense {
   direction?: "in" | "out";
   /** True als er een dubbele boeking van dezelfde betaling is samengevoegd. */
   _mergedDuplicate?: boolean;
+  /** True bij een aanvullende lokale mutatie die niet in de boekhouding staat. */
+  _localOnly?: boolean;
+
 }
 
 
@@ -252,8 +255,11 @@ export function useBudgetCategories(year: number) {
           id: r.key,
           line_item_id: lineItemId,
           description: r.description || r.counterparty || "",
-          // Inkomsten/terugbetalingen verlagen de kosten van de post.
-          amount: r.direction === "in" ? -r.amount : r.amount,
+          // Bedrag blijft positief; de richting bepaalt per soort post of het
+          // een kostenpost verhoogt (uit) of verlaagt (in). Zo telt een
+          // ontvangen vergoeding nooit als extra uitgave.
+          amount: r.amount,
+
           expense_date: r.date,
           creditor_name: r.counterparty || "",
           invoice_reference: r.invoice || "",
