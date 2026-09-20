@@ -97,9 +97,6 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
 
             // 23505 = duplicate wa_message_id: retry van Meta, veilig te negeren.
             if (insertError && insertError.code !== "23505") throw insertError;
-            if (!insertError) {
-              await db.rpc?.("noop_placeholder_never_called");
-            }
           } catch (error) {
             console.error("[whatsapp-webhook] kon bericht niet opslaan", {
               code: (error as { code?: string })?.code ?? "unknown",
