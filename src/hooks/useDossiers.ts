@@ -454,17 +454,14 @@ export function useDossierMutations(year: number) {
         });
       }
 
-      // Bestaande administratieve mutaties zonder Informer-koppeling. Alleen een
-      // bankmutatie (Ponto) met zowel een begrotingspost als een dossier is een
-      // werkelijk aanvullende mutatie: die telt exact één keer mee in het
-      // managementtotaal. Oude boekingen zonder koppeling blijven zichtbaar als
-      // aandachtspunt en tellen niet mee.
+      // Bestaande administratieve mutaties zonder Informer-koppeling blijven
+      // zichtbaar als aandachtspunt, maar tellen nergens financieel mee: de
+      // dossierkosten bestaan uitsluitend uit Informer-inkoopfacturen die
+      // lokaal aan een dossier zijn gekoppeld.
       for (const r of matched.unmatched) {
         const splits = splitsFor(r.key).length > 0 ? splitsFor(r.key) : r.splits || [];
         if (!r.dossier && splits.length === 0) continue;
         const lineItemName = r.lineItemId ? liById.get(r.lineItemId)?.name || "" : "";
-        const counts =
-          r.kind === "ponto" && !!r.lineItemId && (!!r.dossier || splits.length > 0);
         rows.push({
           key: r.key,
           kind: r.kind,
@@ -485,12 +482,11 @@ export function useDossierMutations(year: number) {
           dossier: r.dossier || "",
           source: r.kind === "ponto" ? "bank" : "administratie",
           splits,
-          localOnly: counts,
-          // Een aanvullende lokale mutatie telt mee in het managementtotaal;
-          // zonder volledige toewijzing blijft de regel zichtbaar maar telt niet.
-          unlinked: !counts,
+          localOnly: false,
+          unlinked: true,
         });
       }
+
 
 
       rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));

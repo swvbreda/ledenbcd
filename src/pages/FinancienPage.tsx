@@ -3,7 +3,6 @@ import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions, useUpsertContribution, useContributionInvoices, useContributionPayments } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -27,7 +26,6 @@ import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
-import { buildCanonicalInvoiceRows, sumCanonicalInvoiceRows } from "@/lib/contributionInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,10 +53,6 @@ export default function FinancienPage() {
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
-  const { data: contributions } = useContributions(year);
-  const { data: contributionInvoices } = useContributionInvoices(year);
-  const { data: contributionPayments } = useContributionPayments(year);
-  const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
   const allMembersForLookup = useMemo(
@@ -66,208 +60,31 @@ export default function FinancienPage() {
     [effectiveMembers, rawOldMembers]
   );
 
-  // Auto-categoriseer inkomende banktransacties als contributie. Match volgorde:
-  // 1) Factuurnummer in omschrijving/REMI → contribution_invoices → lid
-  // 2) Tegenpartij matcht bedrijfsnaam/naam van een lid
-  // 3) Bedrag = contributiebedrag → markeer als Contributie (zonder lid)
-  // Bij match op lid wordt member_contributions bijgewerkt naar "betaald".
-  const autoMatchedRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!user) return;
-    if (!bankStatement?.transactions?.length) return;
-
-    const normalize = (s: string) =>
-      (s || "")
-        .toLowerCase()
-        .replace(/\b(b\.?v\.?|v\.?o\.?f\.?|n\.?v\.?|c\.?v\.?|coffeeshop|coffeshop|the)\b/g, " ")
-        .replace(/[^a-z0-9]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const stopwords = new Set([
-      "van", "de", "der", "den", "het", "en", "the", "of", "aan", "bij",
-      "voor", "met", "in", "op", "tot", "uit",
-    ]);
-    const distinctiveTokens = (s: string) =>
-      normalize(s)
-        .split(" ")
-        .filter((t) => t.length >= 4 && !stopwords.has(t));
-
-    const memberIndex = allMembersForLookup
-      .map((m) => {
-        const contactNames = [
-          (m as any).contactpersoon,
-          (m as any).contactpersoon2,
-          ...((m as any).contacten || []).map((c: any) => c?.naam),
-        ].filter(Boolean) as string[];
-        const rawKeys = [
-          m.bedrijfsnaam,
-          m.naam,
-          (m as any).factuurBedrijfsnaam,
-          ...contactNames,
-        ];
-        const keys = rawKeys.map((v) => normalize(v || "")).filter((v) => v.length >= 3);
-        const tokenSet = new Set<string>();
-        for (const v of rawKeys) for (const t of distinctiveTokens(v || "")) tokenSet.add(t);
-        return { id: m.id, naam: m.naam, keys, tokens: tokenSet };
-      })
-      .filter((m) => m.keys.length > 0);
-
-    const memberById = new Map(allMembersForLookup.map((m) => [m.id, m]));
-    const invoiceByNumber = new Map<string, number>();
-    for (const inv of contributionInvoices || []) {
-      const num = (inv.invoice_number || "").trim();
-      if (num) invoiceByNumber.set(num, inv.member_id);
-    }
-
-    const extractInvoiceNumbers = (text: string): string[] => {
-      const out = new Set<string>();
-      const t = text || "";
-      // Expliciet na REMI/Factuurnummer/EREF
-      const re = /(?:REMI|Factuurnummer|EREF)[/:]+([A-Za-z0-9-]+)/gi;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(t)) !== null) {
-        if (m[1] && m[1].toUpperCase() !== "NOTPROVIDED") out.add(m[1]);
-      }
-      // Losse nummers die op factuur kunnen lijken (bv. 2026012)
-      const yearPrefix = String(year);
-      const reYear = new RegExp(`\\b${yearPrefix}\\d{2,4}\\b`, "g");
-      let m2: RegExpExecArray | null;
-      while ((m2 = reYear.exec(t)) !== null) out.add(m2[0]);
-      return Array.from(out);
-    };
-
-    const findMember = (counterparty: string | null) => {
-      const n = normalize(counterparty || "");
-      if (!n) return null;
-      // 1) Exact / contained match op één van de keys
-      for (const m of memberIndex) {
-        if (m.keys.some((k) => n === k || n.includes(k) || k.includes(n))) {
-          return m;
-        }
-      }
-      // 2) Token-overlap match op onderscheidende tokens (achternaam, bedrijfsnaam)
-      const cpTokens = distinctiveTokens(counterparty || "");
-      if (cpTokens.length === 0) return null;
-      let best: { m: typeof memberIndex[number]; score: number } | null = null;
-      for (const m of memberIndex) {
-        let score = 0;
-        for (const t of cpTokens) if (m.tokens.has(t)) score++;
-        if (score > 0 && (!best || score > best.score)) best = { m, score };
-      }
-      // Vereis minstens 1 onderscheidende match, en uniek (geen tie met andere leden)
-      if (best && best.score >= 1) {
-        const ties = memberIndex.filter((m) => {
-          if (m.id === best!.m.id) return false;
-          let s = 0;
-          for (const t of cpTokens) if (m.tokens.has(t)) s++;
-          return s >= best!.score;
-        });
-        if (ties.length === 0) return best.m;
-      }
-      return null;
-    };
-
-    const contribByMember = new Map<number, boolean>();
-    for (const c of contributions || []) contribByMember.set(c.member_id, c.paid);
-
-    for (const tx of bankStatement.transactions) {
-      if (tx.direction !== "in") continue;
-      if (tx.line_item_id) continue;
-      if ((tx.dossier || "").toLowerCase().startsWith("contributie")) continue;
-      if (autoMatchedRef.current.has(tx.id)) continue;
-
-      // 1) Invoice-number match via REMI/EREF/description
-      let matchedMemberId: number | null = null;
-      let matchedName: string | null = null;
-      const haystack = `${tx.description || ""} ${tx.invoice_reference || ""}`;
-      const invNumbers = extractInvoiceNumbers(haystack);
-      for (const num of invNumbers) {
-        const mid = invoiceByNumber.get(num);
-        if (mid) {
-          matchedMemberId = mid;
-          matchedName = memberById.get(mid)?.naam || `Lid #${mid}`;
-          break;
-        }
-      }
-
-      // 2) Counterparty match op bedrijfsnaam/naam
-      if (!matchedMemberId) {
-        const m = findMember(tx.counterparty);
-        if (m) {
-          matchedMemberId = m.id;
-          matchedName = m.naam;
-        }
-      }
-
-      // 3) Fallback: bedrag = contributiebedrag → categoriseer als Contributie zonder lid
-      const isContribAmount = Math.abs(tx.amount - contributionAmount) < 0.005;
-      if (!matchedMemberId && !isContribAmount) continue;
-
-      autoMatchedRef.current.add(tx.id);
-
-      const dossier = matchedMemberId
-        ? `Contributie · ${matchedName} (#${matchedMemberId})`
-        : `Contributie · ${tx.counterparty || "onbekend"}`;
-      mutations.updateBankTransaction.mutate({
-        id: tx.id,
-        dossier,
-        line_item_id: null,
-        applyToSimilar: false,
-      });
-
-      if (matchedMemberId && !contribByMember.get(matchedMemberId)) {
-        upsertContribution.mutate({
-          member_id: matchedMemberId,
-          year,
-          amount: tx.amount || contributionAmount,
-          paid: true,
-          paid_date: tx.transaction_date || new Date().toISOString().slice(0, 10),
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bankStatement?.transactions, allMembersForLookup, contributions, contributionInvoices, user, year]);
-
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string; categoryName?: string } | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [contributieBreakdown, setContributieBreakdown] = useState<BreakdownMode | null>(null);
-  
 
   const contributionAmount = yearSettings?.contribution_amount ?? 3000;
-  const paidByMember = useMemo(() => {
-    const map = new Map<number, number>();
-    (contributionPayments ?? []).forEach((p) => {
-      map.set(p.member_id, (map.get(p.member_id) ?? 0) + (Number(p.amount) || 0));
-    });
-    return map;
-  }, [contributionPayments]);
 
-  const paymentsByMemberInfo = useMemo(() => {
-    const map = new Map<number, { amount: number; paidDate: string | null }>();
-    (contributionPayments ?? []).forEach((p) => {
-      const current = map.get(p.member_id) ?? { amount: 0, paidDate: null };
-      const paidDate = p.paid_at
-        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
-        : current.paidDate;
-      map.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
-    });
-    return map;
-  }, [contributionPayments]);
-
+  // Contributiecijfers komen uitsluitend uit de boekhouding.
   const contributionStats = useMemo(() => {
-    const contribs = contributions ?? [];
-    const totalMembers = yearSettings?.budgeted_member_count
-      ? yearSettings.budgeted_member_count
-      : contribs.length > 0 ? contribs.length : effectiveMembers.length;
-    const paidCount = contribs.filter((c) => (paidByMember.get(c.member_id) ?? (c.paid ? c.amount : 0)) > 0).length;
-    const unpaidCount = totalMembers - paidCount;
-    const totalReceived = (contributionPayments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-    return { totalMembers, paidCount, unpaidCount, totalReceived, contributionAmount };
-  }, [effectiveMembers, contributions, yearSettings, contributionAmount, contributionPayments, paidByMember]);
+    const c = financialResult?.contribution;
+    const totalMembers = yearSettings?.budgeted_member_count ?? effectiveMembers.length;
+    const paidCount = c ? Math.round((c.paid / (contributionAmount || 1)) * 100) / 100 : 0;
+    return {
+      totalMembers,
+      invoiceCount: c?.count ?? 0,
+      invoiced: c?.invoiced ?? 0,
+      totalReceived: c?.paid ?? 0,
+      openAmount: c?.open ?? 0,
+      paidCount,
+      contributionAmount,
+    };
+  }, [financialResult, yearSettings, effectiveMembers.length, contributionAmount]);
+
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
@@ -368,16 +185,9 @@ export default function FinancienPage() {
 
               {/* Left: Budget categories */}
               <div className="space-y-3">
-                {/* Los, compact controleblok: de rubriektitels zelf blijven
-                    exact de door de leden goedgekeurde namen. */}
-                <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-[11px] leading-snug text-muted-foreground">
-                  Begrotingsstructuur en postnamen zijn de goedgekeurde begroting. Werkelijke bedragen,
-                  facturen en betaalstatus komen uit de boekhouding (Informer API):{" "}
-                  {fmt(financialResult?.contributionIncome ?? 0)} contributiefacturen +{" "}
-                  {fmt(financialResult?.otherIncome ?? 0)} overige verkoopfacturen ={" "}
-                  {fmt((financialResult?.contributionIncome ?? 0) + (financialResult?.otherIncome ?? 0))} totale
-                  opbrengsten; {fmt(financialResult?.openSales ?? 0)} openstaand.
-                </p>
+                {/* De rubriektitels blijven exact de door de leden
+                    goedgekeurde begroting. */}
+
                 {(categories || []).map((cat) => (
                   <BudgetCategoryTable
                     key={cat.id}
@@ -395,31 +205,22 @@ export default function FinancienPage() {
                       setExpenseDialog({ lineItemId, lineItemName, categoryName: cat?.name });
                     }}
                     getCellClicks={(li) => {
-                      // Alleen de Inkomsten-post "Contributies" krijgt de klikbare
-                      // breakdown; de uitgavenpost "Contributies & abonnementen"
-                      // moet z'n eigen banktransacties tonen, niet de ontvangen
-                      // ledencontributies.
+                      // Alleen de Inkomsten-post "Contributies" krijgt de
+                      // klikbare breakdown, met bedragen uit de boekhouding.
                       if (li.name.trim().toLowerCase() === "contributies") {
-                        // Zelfde canonieke bron als de breakdown-dialog:
-                        // Informer-snapshot wint, lokale placeholders tellen niet mee.
-                        const totals = sumCanonicalInvoiceRows(
-                          buildCanonicalInvoiceRows({
-                            contributions: contributions ?? [],
-                            invoices: contributionInvoices ?? [],
-                            paymentsByMember: paymentsByMemberInfo,
-                          }),
-                        );
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),
                           remaining: () => setContributieBreakdown("unpaid"),
-                          spentValue: totals.paid,
-                          remainingValue: totals.open,
-                          remainingLabel: "openstaand",
+                          spentValue: financialResult?.contribution.paid ?? 0,
+                          remainingValue:
+                            li.budgeted_amount - (financialResult?.contribution.paid ?? 0),
+                          remainingLabel: "nog te ontvangen",
                         };
                       }
                       return null;
                     }}
+
                   />
                 ))}
 
@@ -502,7 +303,8 @@ export default function FinancienPage() {
             <BankboekingenTab year={year} />
             <BoekingenOverzicht
               categories={categories || []}
-              contributions={contributions || []}
+              contributions={[]}
+
               bankStatement={bankStatement}
               members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
               year={year}
@@ -603,23 +405,17 @@ export default function FinancienPage() {
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
           members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
-          contributions={contributions || []}
+          contributions={[]}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync({ ...exp, direction: "out" });
             }
           }}
-          onImportIncome={async (incomes) => {
-            for (const inc of incomes) {
-              await upsertContribution.mutateAsync({
-                member_id: inc.member_id,
-                year,
-                amount: inc.amount,
-                paid: true,
-                paid_date: inc.paid_date,
-              });
-            }
+          onImportIncome={async () => {
+            // Ontvangsten worden uitsluitend in de boekhouding vastgelegd.
+            toast.info("Ontvangsten worden hier niet vastgelegd.");
           }}
+
           onReplaceBankStatement={async ({ fileName, openingBalance, closingBalance, transactions }) => {
             await mutations.replaceBankStatement.mutateAsync({
               fileName,
@@ -647,11 +443,9 @@ export default function FinancienPage() {
         mode={contributieBreakdown ?? "invoices"}
         year={year}
         budgetedMemberCount={yearSettings?.budgeted_member_count ?? contributionStats.totalMembers}
-        invoices={contributionInvoices ?? []}
-        contributions={contributions ?? []}
-        payments={contributionPayments ?? []}
         members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam, bedrijfsnaam: (m as any).bedrijfsnaam }))}
       />
+
     </div>
   );
 }
