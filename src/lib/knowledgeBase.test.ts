@@ -38,6 +38,12 @@ describe("parseKnowledgePayload", () => {
           slug: "nieuw-dossier",
           titel: "Nieuw dossier",
           pad: "/publicaties/nieuw-dossier",
+          afbeelding: "https://coffeeshopbond.nl/cover.jpg",
+          status: "Kennispagina",
+          soort: "kennis",
+          links: [
+            { label: "Lees meer", href: "https://coffeeshopbond.nl/meer" },
+          ],
           vragen: [{ vraag: "Waarom?", antwoord: "Daarom." }],
         },
       ],
@@ -47,6 +53,15 @@ describe("parseKnowledgePayload", () => {
       expect.objectContaining({
         slug: "nieuw-dossier",
         path: "/publicaties/nieuw-dossier",
+        afbeelding: "https://coffeeshopbond.nl/cover.jpg",
+        status: "Kennispagina",
+        soort: "kennis",
+        links: [
+          expect.objectContaining({
+            label: "Lees meer",
+            href: "https://coffeeshopbond.nl/meer",
+          }),
+        ],
         qa: [{ vraag: "Waarom?", antwoord: "Daarom." }],
       }),
     ]);
@@ -57,35 +72,37 @@ describe("parseKnowledgePayload", () => {
   });
 
   it("combineert actuele openbare dossiers met beveiligde ledenbestanden", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url === "/api/leden/kennisbank") {
-        expect(init?.headers).toMatchObject({
-          Authorization: "Bearer test-token",
-        });
-        return new Response(
-          JSON.stringify({
-            dossiers: [{ slug: "oud", titel: "Oud dossier" }],
-            documenten: [
-              { id: "ledenbrief", titel: "Ledenbrief", beschikbaar: true },
-            ],
-          }),
-          { status: 200 },
-        );
-      }
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/leden/kennisbank") {
+          expect(init?.headers).toMatchObject({
+            Authorization: "Bearer test-token",
+          });
+          return new Response(
+            JSON.stringify({
+              dossiers: [{ slug: "oud", titel: "Oud dossier" }],
+              documenten: [
+                { id: "ledenbrief", titel: "Ledenbrief", beschikbaar: true },
+              ],
+            }),
+            { status: 200 },
+          );
+        }
 
-      if (url === "https://coffeeshopbond.nl/kennisbank.json") {
-        expect(init?.headers).not.toHaveProperty("Authorization");
-        return new Response(
-          JSON.stringify({
-            items: [{ slug: "actueel", titel: "Actueel dossier" }],
-          }),
-          { status: 200 },
-        );
-      }
+        if (url === "https://coffeeshopbond.nl/kennisbank.json") {
+          expect(init?.headers).not.toHaveProperty("Authorization");
+          return new Response(
+            JSON.stringify({
+              items: [{ slug: "actueel", titel: "Actueel dossier" }],
+            }),
+            { status: 200 },
+          );
+        }
 
-      return new Response(null, { status: 404 });
-    });
+        return new Response(null, { status: 404 });
+      },
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await loadKnowledgeBase({
