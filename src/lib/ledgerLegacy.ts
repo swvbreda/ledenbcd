@@ -442,6 +442,8 @@ export function matchLegacyRecords(
   // tegenpartij dekt. Streng: gelijk bedrag op centen, gelijke richting,
   // eenduidige tegenpartij, plausibel datumvenster en precies één kandidaat.
   for (const record of available()) {
+    // Alleen bankmutaties: oude boekingen blijven hier bewust buiten.
+    if (record.kind !== "ponto") continue;
     const party = normalizeCounterparty(record.counterparty);
     if (!party) continue;
     const wantsSales = record.direction === "in";
@@ -454,6 +456,15 @@ export function matchLegacyRecords(
       if (linked) break;
       const target = cents(portion.amount);
       if (target === 0) continue;
+      // Ook aan de administratiekant moet de kandidaat uniek zijn.
+      const competitors = available().filter(
+        (r2) =>
+          r2.key !== record.key &&
+          normalizeCounterparty(r2.counterparty) === party &&
+          (cents(r2.amount) === target || (r2.splits || []).some((s) => cents(s.amount) === target)),
+      );
+      if (competitors.length > 0) continue;
+
       const hits = entries.filter((e) => {
 
         if (!e.counts_in_totals) return false;
