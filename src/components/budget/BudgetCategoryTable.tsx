@@ -142,7 +142,6 @@ export default function BudgetCategoryTable({
               const clicks = getCellClicks ? getCellClicks(li) : null;
               const spentValue = clicks?.spentValue ?? spent;
               const remaining = clicks?.remainingValue ?? (li.budgeted_amount - spentValue);
-              const rowRemainingLabel = clicks?.remainingLabel;
               const cellBtn = (fn?: () => void) =>
                 fn
                   ? (e: React.MouseEvent) => { e.stopPropagation(); fn(); }
