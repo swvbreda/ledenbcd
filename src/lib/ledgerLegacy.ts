@@ -404,10 +404,12 @@ export function matchLegacyRecords(
     takeGroup(entry, available().filter((r) => isSamePayment(self, asRecordLike(r))), "payment");
   }
 
-  // 5b. Factuurhint + exact bedrag, ook wanneer alleen een dossierdeel van een
-  // grotere betaling bij deze factuur hoort (gesplitste betaling). De
-  // tegenpartijnaam mag afwijken; de factuurhint en het bedrag zijn leidend.
+  // 5b. Gesplitste betaling: een grotere bankmutatie waarvan één dossierdeel
+  // exact deze factuur dekt. De tegenpartijnaam mag afwijken; de factuurhint en
+  // het deelbedrag zijn leidend. Mutaties zonder dossierverdeling blijven buiten
+  // deze stap, zodat eerdere conflictregels intact blijven.
   for (const record of available()) {
+    if (!record.splits || record.splits.length === 0) continue;
     const keys = recordHintKeys(record, hints);
     if (keys.length === 0) continue;
     for (const entry of entries) {
@@ -416,13 +418,13 @@ export function matchLegacyRecords(
       if (byEntryKey.has(ekey) || combinedByEntryKey.has(ekey)) continue;
       if (!entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)))) continue;
       const target = cents(Number(entry.amount_incl) || 0);
-      const full = cents(record.amount) === target;
-      const split = (record.splits || []).find((s) => cents(s.amount) === target);
-      if (!full && !split) continue;
-      take(entry, split ? { ...record, dossier: split.dossier } : record, "split");
+      const split = record.splits.find((s) => cents(s.amount) === target);
+      if (!split) continue;
+      take(entry, { ...record, dossier: split.dossier }, "split");
       break;
     }
   }
+
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
