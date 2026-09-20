@@ -150,7 +150,17 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
               <tr key={c.id} className="border-b border-border/20">
                 <td className="py-1">{c.name}</td>
                 <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.budgeted} /></td>
-                <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.spent} /></td>
+                <td className="py-1 text-right tabular-nums">
+                  <CurrencyCell value={c.spent} />
+                  {(c.localOut !== 0 || c.localIn !== 0) && (
+                    <div className="text-[10px] text-muted-foreground">
+                      boekhouding {euro(c.informer)}
+                      {c.localOut !== 0 && ` · lokaal +${euro(c.localOut)}`}
+                      {c.localIn !== 0 && ` · lokaal −${euro(c.localIn)}`}
+                    </div>
+                  )}
+                </td>
+
                 <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {c.budgeted > 0 ? `${catPct}%` : "—"}
                 </td>
