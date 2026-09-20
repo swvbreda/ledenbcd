@@ -3,7 +3,6 @@ import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
 import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
-import { useContributions, useUpsertContribution, useContributionInvoices, useContributionPayments } from "@/hooks/useContributions";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -27,7 +26,6 @@ import BankboekingenTab from "@/components/budget/BankboekingenTab";
 import ContributiesBreakdownDialog, { type BreakdownMode } from "@/components/budget/ContributiesBreakdownDialog";
 
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
-import { buildCanonicalInvoiceRows, sumCanonicalInvoiceRows } from "@/lib/contributionInvoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -309,7 +307,8 @@ export default function FinancienPage() {
             <BankboekingenTab year={year} />
             <BoekingenOverzicht
               categories={categories || []}
-              contributions={contributions || []}
+              contributions={[]}
+
               bankStatement={bankStatement}
               members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
               year={year}
@@ -410,23 +409,17 @@ export default function FinancienPage() {
           onOpenChange={setPdfImportOpen}
           categories={categories || []}
           members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
-          contributions={contributions || []}
+          contributions={[]}
           onImport={async (expenses) => {
             for (const exp of expenses) {
               await mutations.addExpense.mutateAsync({ ...exp, direction: "out" });
             }
           }}
-          onImportIncome={async (incomes) => {
-            for (const inc of incomes) {
-              await upsertContribution.mutateAsync({
-                member_id: inc.member_id,
-                year,
-                amount: inc.amount,
-                paid: true,
-                paid_date: inc.paid_date,
-              });
-            }
+          onImportIncome={async () => {
+            // Ontvangsten worden uitsluitend in de boekhouding vastgelegd.
+            toast.info("Ontvangsten komen uit de boekhouding en worden hier niet vastgelegd.");
           }}
+
           onReplaceBankStatement={async ({ fileName, openingBalance, closingBalance, transactions }) => {
             await mutations.replaceBankStatement.mutateAsync({
               fileName,
@@ -454,11 +447,9 @@ export default function FinancienPage() {
         mode={contributieBreakdown ?? "invoices"}
         year={year}
         budgetedMemberCount={yearSettings?.budgeted_member_count ?? contributionStats.totalMembers}
-        invoices={contributionInvoices ?? []}
-        contributions={contributions ?? []}
-        payments={contributionPayments ?? []}
         members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam, bedrijfsnaam: (m as any).bedrijfsnaam }))}
       />
+
     </div>
   );
 }
