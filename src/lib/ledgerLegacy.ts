@@ -437,7 +437,43 @@ export function matchLegacyRecords(
     matchedBy.set(ekey, "split");
   }
 
-
+  // 5d. Deelbetaling zonder bruikbare factuurhint: een bankmutatie (of een
+  // dossierdeel daarvan) die exact één canonieke factuur van dezelfde
+  // tegenpartij dekt. Streng: gelijk bedrag op centen, gelijke richting,
+  // eenduidige tegenpartij, plausibel datumvenster en precies één kandidaat.
+  for (const record of available()) {
+    const party = normalizeCounterparty(record.counterparty);
+    if (!party) continue;
+    const wantsSales = record.direction === "in";
+    const portions = [
+      { amount: record.amount, dossier: record.dossier },
+      ...(record.splits || []).map((s) => ({ amount: s.amount, dossier: s.dossier })),
+    ];
+    let linked = false;
+    for (const portion of portions) {
+      if (linked) break;
+      const target = cents(portion.amount);
+      if (target === 0) continue;
+      const candidates = entries.filter((e) => {
+        if (!e.counts_in_totals) continue as never;
+        return false;
+      });
+      void candidates;
+      const hits = entries.filter((e) => {
+        if (!e.counts_in_totals) return false;
+        if (wantsSales !== (e.doc_type === "sales_invoice")) return false;
+        const ekey = ledgerKeyOf(e);
+        if (byEntryKey.has(ekey) || combinedByEntryKey.has(ekey)) return false;
+        if (cents(Number(e.amount_incl) || 0) !== target) return false;
+        if (normalizeCounterparty(e.relation_name) !== party) return false;
+        const delta = daysBetween(record.date, e.entry_date);
+        return delta >= -30 && delta <= 180;
+      });
+      if (hits.length !== 1) continue;
+      take(hits[0], { ...record, dossier: portion.dossier ?? record.dossier }, "split");
+      linked = true;
+    }
+  }
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
@@ -462,13 +498,20 @@ export function matchLegacyRecords(
       const hit =
         sharesInvoiceNumber(self, asRecordLike(r)) ||
         entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)));
-      return hit && relevantAmountMatches(r, entry);
+      if (!hit) return false;
+      // Alleen met exact hetzelfde bedrag (of splitbedrag), dezelfde richting
+      // en een plausibele datum is dit aantoonbaar dezelfde betaling.
+      if ((self.direction || "out") !== r.direction) return false;
+      const delta = daysBetween(r.date, entry.entry_date);
+      if (delta < -30 || delta > 180) return false;
+      return relevantAmountMatches(r, entry);
     });
     for (const r of extra) usedLegacy.add(r.key);
     if (extra.length > 0) {
       aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
     }
   }
+
 
 
 
