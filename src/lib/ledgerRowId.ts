@@ -98,3 +98,18 @@ export function parseLedgerEntryKey(key: string): LedgerRowRef | null {
   if (!doc_type || !informer_id) return null;
   return { doc_type, informer_id };
 }
+
+const LEDGER_DOC_TYPES = new Set(["sales_invoice", "purchase_invoice"]);
+
+/** True als deze dossiersleutel bij een canonieke Informer-regel hoort. */
+export function isLedgerEntryKey(key: string): boolean {
+  const ref = parseLedgerEntryKey(key);
+  return !!ref && LEDGER_DOC_TYPES.has(ref.doc_type);
+}
+
+/** Alle sleutelvarianten waaronder deze sleutel kan zijn opgeslagen. */
+export function entryKeyVariants(key: string): string[] {
+  if (!isLedgerEntryKey(key)) return [key];
+  const ref = parseLedgerEntryKey(key)!;
+  return ledgerEntryKeyAliases(ledgerEntryKey(ref));
+}
