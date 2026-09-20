@@ -52,7 +52,6 @@ const WhatsAppInboxPage = () => {
     isLoading,
     error,
   } = useWhatsAppConversations(allowed);
-  const { data: messages } = useWhatsAppMessages(selected);
   const markRead = useMarkConversationRead();
 
   const current = useMemo(
@@ -60,12 +59,14 @@ const WhatsAppInboxPage = () => {
     [conversations, selected],
   );
 
+  const { data: messages } = useWhatsAppMessages(current?.phone ?? null);
+
   useEffect(() => {
-    if (selected && current && current.unread > 0 && !markRead.isPending) {
+    if (selected && current && current.unread_count > 0 && !markRead.isPending) {
       markRead.mutate(selected);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, current?.unread]);
+  }, [selected, current?.unread_count]);
 
   if (!allowed) return <Navigate to="/" replace />;
 
