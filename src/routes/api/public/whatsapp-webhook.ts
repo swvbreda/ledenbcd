@@ -81,7 +81,9 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
           await import("@/integrations/supabase/client.server");
 
         for (const message of messages) {
-          const { error } = await supabaseAdmin.rpc("whatsapp_ingest_message", {
+          // De databasefunctie accepteert NULL voor de optionele velden;
+          // de gegenereerde typen kennen alleen de verplichte variant.
+          const args = {
             p_phone: message.waId,
             p_profile_name: message.profileName,
             p_wa_message_id: message.waMessageId,
@@ -90,7 +92,14 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
             p_media_type: message.mediaMimeType,
             p_sent_at: message.sentAt,
             p_preview: previewFor(message),
-          });
+          } as unknown as Parameters<
+            typeof supabaseAdmin.rpc<"whatsapp_ingest_message">
+          >[1];
+
+          const { error } = await supabaseAdmin.rpc(
+            "whatsapp_ingest_message",
+            args,
+          );
 
           if (error) {
             console.error("[whatsapp-webhook] kon bericht niet opslaan", {
