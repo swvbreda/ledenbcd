@@ -53,11 +53,29 @@ export default function BudgetCategoryTable({
     li.expenses.reduce((es, e) => (e.paid === false ? es : es + expenseSign(e) * e.amount), 0);
   const sumUnpaid = (li: typeof category.line_items[number]) =>
     li.expenses.reduce((es, e) => (e.paid === false ? es + expenseSign(e) * e.amount : es), 0);
+  /** Splitst het werkelijke bedrag in het deel uit de boekhouding en het lokale deel. */
+  const splitOf = (li: typeof category.line_items[number]) => {
+    let informer = 0;
+    let localOut = 0;
+    let localIn = 0;
+    for (const e of li.expenses) {
+      if (e.paid === false) continue;
+      if (!(e as any)._localOnly) {
+        informer += expenseSign(e) * e.amount;
+      } else if (e.direction === "in") {
+        localIn += e.amount;
+      } else {
+        localOut += e.amount;
+      }
+    }
+    return { informer, localOut, localIn };
+  };
   const totalSpent = category.line_items.reduce((s, li) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     return s + (clicks?.spentValue ?? sumExpenses(li));
   }, 0);
   const totalUnpaid = category.line_items.reduce((s, li) => s + sumUnpaid(li), 0);
+
   const remainingOf = (li: typeof category.line_items[number]) => {
     const clicks = getCellClicks ? getCellClicks(li) : null;
     const spentValue = clicks?.spentValue ?? sumExpenses(li);
