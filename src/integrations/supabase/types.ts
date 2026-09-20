@@ -1904,7 +1904,6 @@ export type Database = {
           receipt_path: string | null
           reviewed_at: string | null
           reviewed_by: string | null
-          receipt_path: string | null
           status: string
           submitted_by: string | null
           trajectory: string | null
@@ -1935,7 +1934,6 @@ export type Database = {
           receipt_path?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          receipt_path?: string | null
           status?: string
           submitted_by?: string | null
           trajectory?: string | null
@@ -1966,7 +1964,6 @@ export type Database = {
           receipt_path?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          receipt_path?: string | null
           status?: string
           submitted_by?: string | null
           trajectory?: string | null
