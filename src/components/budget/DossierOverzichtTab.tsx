@@ -307,15 +307,28 @@ export default function DossierOverzichtTab({ year }: Props) {
                   </button>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
-                    {Math.abs(d.localTotal) > 0.005 && (
+                    {(Math.abs(d.localOut) > 0.005 || Math.abs(d.localIncome) > 0.005) && (
                       <>
-                        {" · Informer "}
+                        {" · Informer-facturen "}
                         <CurrencyText value={d.informerTotal} />
-                        {" · lokaal "}
-                        <CurrencyText value={d.localTotal} />
+                        {Math.abs(d.localOut) > 0.005 && (
+                          <>
+                            {" · lokale uitgaven "}
+                            <CurrencyText value={d.localOut} />
+                          </>
+                        )}
+                        {Math.abs(d.localIncome) > 0.005 && (
+                          <>
+                            {" · lokale opbrengsten "}
+                            <CurrencyText value={d.localIncome} />
+                          </>
+                        )}
+                        {" · netto dossierkosten "}
+                        <CurrencyText value={d.total} />
                       </>
                     )}
                   </span>
+
                   {canEdit && (
                     <>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => startRename(d.dossier)}>
