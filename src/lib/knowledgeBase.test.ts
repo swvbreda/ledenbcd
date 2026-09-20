@@ -31,6 +31,27 @@ describe("parseKnowledgePayload", () => {
     expect(result).not.toHaveProperty("storagePath");
   });
 
+  it("leest de centrale kennisbankcatalogus met items en openbare paden", () => {
+    const result = parseKnowledgePayload({
+      items: [
+        {
+          slug: "nieuw-dossier",
+          titel: "Nieuw dossier",
+          pad: "/publicaties/nieuw-dossier",
+          vragen: [{ vraag: "Waarom?", antwoord: "Daarom." }],
+        },
+      ],
+    });
+
+    expect(result.dossiers).toEqual([
+      expect.objectContaining({
+        slug: "nieuw-dossier",
+        path: "/publicaties/nieuw-dossier",
+        qa: [{ vraag: "Waarom?", antwoord: "Daarom." }],
+      }),
+    ]);
+  });
+
   it("weigert een ongeldig antwoord", () => {
     expect(() => parseKnowledgePayload(null)).toThrow("Ongeldig antwoord");
   });
@@ -53,10 +74,11 @@ describe("parseKnowledgePayload", () => {
         );
       }
 
-      if (url === "https://coffeeshopbond.nl/dossiers.json") {
+      if (url === "https://coffeeshopbond.nl/kennisbank.json") {
+        expect(init?.headers).not.toHaveProperty("Authorization");
         return new Response(
           JSON.stringify({
-            dossiers: [{ slug: "actueel", titel: "Actueel dossier" }],
+            items: [{ slug: "actueel", titel: "Actueel dossier" }],
           }),
           { status: 200 },
         );
@@ -73,5 +95,33 @@ describe("parseKnowledgePayload", () => {
 
     expect(result.dossiers.map((item) => item.slug)).toEqual(["actueel"]);
     expect(result.documenten.map((item) => item.id)).toEqual(["ledenbrief"]);
+  });
+
+  it("valt terug op dossiers.json zolang de nieuwe feed nog niet live staat", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/leden/kennisbank") {
+        return new Response(JSON.stringify({ dossiers: [], documenten: [] }));
+      }
+      if (url === "https://coffeeshopbond.nl/kennisbank.json") {
+        return new Response(null, { status: 404 });
+      }
+      if (url === "https://coffeeshopbond.nl/dossiers.json") {
+        return new Response(
+          JSON.stringify({
+            dossiers: [{ slug: "fallback", titel: "Fallback-dossier" }],
+          }),
+        );
+      }
+      return new Response(null, { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await loadKnowledgeBase({
+      access_token: "test-token",
+      user: { id: "test-user" },
+    } as never);
+
+    expect(result.dossiers.map((item) => item.slug)).toEqual(["fallback"]);
   });
 });
