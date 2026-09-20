@@ -51,6 +51,9 @@ export interface BudgetExpense {
   direction?: "in" | "out";
   /** True als er een dubbele boeking van dezelfde betaling is samengevoegd. */
   _mergedDuplicate?: boolean;
+  /** True bij een aanvullende lokale mutatie die niet in de boekhouding staat. */
+  _localOnly?: boolean;
+
 }
 
 
