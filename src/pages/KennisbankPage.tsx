@@ -6,6 +6,7 @@ import {
   ExternalLink,
   FileText,
   Loader2,
+  Lock,
   Search,
 } from "lucide-react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -47,36 +48,83 @@ function matchesSearch(dossier: KnowledgeDossier, query: string) {
   return haystack.includes(query);
 }
 
-function DossierItem({ dossier }: { dossier: KnowledgeDossier }) {
+const CARD_TONES = [
+  "bg-card text-foreground",
+  "bg-muted text-foreground",
+  "bg-brand-red text-white",
+  "bg-card text-foreground",
+] as const;
+
+function dossierUrl(dossier: KnowledgeDossier) {
+  if (dossier.path.startsWith("https://")) return dossier.path;
+  return `https://coffeeshopbond.nl${dossier.path.startsWith("/") ? "" : "/"}${dossier.path}`;
+}
+
+function DossierItem({
+  dossier,
+  index,
+}: {
+  dossier: KnowledgeDossier;
+  index: number;
+}) {
+  const isRed = index % CARD_TONES.length === 2;
   return (
     <AccordionItem
       value={dossier.slug}
-      className="min-w-0 overflow-hidden rounded-xl border border-border/80 bg-card px-4 sm:px-5"
+      className={`group min-w-0 overflow-hidden rounded-3xl border border-border/80 shadow-sm transition-shadow hover:shadow-xl ${CARD_TONES[index % CARD_TONES.length]}`}
     >
-      <AccordionTrigger className="gap-3 py-4 text-left hover:no-underline">
-        <div className="min-w-0 space-y-2 pr-2">
-          <Badge
-            variant="secondary"
-            className="w-fit max-w-full whitespace-normal"
+      {dossier.afbeelding && (
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+          <img
+            src={dossier.afbeelding}
+            alt={`Cover ${dossier.titel}`}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <span className="absolute left-4 top-4 rounded-full bg-brand-red px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+            {dossier.status ?? "Kennispagina"}
+          </span>
+          {dossier.badge === "hop" && (
+            <span className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground shadow">
+              HOP
+            </span>
+          )}
+        </div>
+      )}
+      <AccordionTrigger className="items-start gap-3 px-6 py-6 text-left hover:no-underline sm:px-7">
+        <div className="min-w-0 flex-1 pr-2">
+          <div
+            className={`mb-3 flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] ${isRed ? "text-white/80" : "text-brand-red"}`}
           >
+            <span className="h-px w-6 shrink-0 bg-current opacity-60" />
             {dossier.thema}
-          </Badge>
-          <h2 className="break-words font-display text-xl leading-tight sm:text-2xl">
+          </div>
+          <h2 className="break-words font-display text-xl uppercase leading-[1.08] sm:text-2xl">
             {dossier.titel}
           </h2>
-          <p className="line-clamp-2 break-words text-sm font-normal leading-relaxed text-muted-foreground">
+          <p
+            className={`mt-3 break-words text-sm font-normal leading-relaxed ${isRed ? "text-white/85" : "text-muted-foreground"}`}
+          >
             {dossier.beschrijving}
           </p>
-          <p className="text-xs font-medium text-brand-red">Bekijk dossier</p>
+          <p
+            className={`mt-5 text-xs font-bold uppercase tracking-wide ${isRed ? "text-white" : "text-brand-red"}`}
+          >
+            Bekijk inhoud
+          </p>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="space-y-5 pb-5 pt-1">
-        <div className="rounded-lg border-l-4 border-brand-red bg-muted/45 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
-            Standpunt BCD
-          </p>
-          <p className="mt-1 text-sm leading-relaxed">{dossier.standpunt}</p>
-        </div>
+      <AccordionContent className="space-y-5 px-6 pb-6 pt-0 sm:px-7">
+        {dossier.standpunt && (
+          <div
+            className={`rounded-xl border-l-4 p-4 ${isRed ? "border-white bg-white/10" : "border-brand-red bg-muted/45"}`}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
+              Standpunt BCD
+            </p>
+            <p className="mt-1 text-sm leading-relaxed">{dossier.standpunt}</p>
+          </div>
+        )}
 
         {dossier.kerncijfers.length > 0 && (
           <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
@@ -155,9 +203,50 @@ function DossierItem({ dossier }: { dossier: KnowledgeDossier }) {
           )}
         </Accordion>
 
-        <Button asChild variant="outline" className="w-full whitespace-normal">
+        {(dossier.links.length > 0 || dossier.cta) && (
+          <div className="flex flex-wrap gap-2">
+            {dossier.links.map((link) => (
+              <Button
+                key={`${link.label}-${link.href}`}
+                asChild
+                size="sm"
+                variant={isRed ? "secondary" : "outline"}
+                className="h-auto whitespace-normal rounded-full"
+              >
+                <a href={link.href} target="_blank" rel="noopener noreferrer">
+                  {link.members && <Lock className="h-3.5 w-3.5" />}
+                  {link.label}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            ))}
+            {dossier.cta && (
+              <Button
+                asChild
+                size="sm"
+                className="h-auto whitespace-normal rounded-full"
+              >
+                <a
+                  href={dossier.cta.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {dossier.cta.members && <Lock className="h-3.5 w-3.5" />}
+                  {dossier.cta.label}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            )}
+          </div>
+        )}
+
+        <Button
+          asChild
+          variant={isRed ? "secondary" : "outline"}
+          className="w-full whitespace-normal"
+        >
           <a
-            href={`https://coffeeshopbond.nl${dossier.path}`}
+            href={dossierUrl(dossier)}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -292,7 +381,7 @@ export default function KennisbankPage() {
     <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden p-4 sm:p-6">
       <BcdHeroBanner
         title="Kennisbank"
-        subtitle="Dossiers, kerngegevens en vertrouwelijke bestanden voor leden"
+        subtitle="Alles wat nu speelt in de coffeeshopbranche én de onderwerpen achter het beleid"
       />
 
       <div className="relative max-w-2xl">
@@ -341,9 +430,14 @@ export default function KennisbankPage() {
         <section className="min-w-0 space-y-3">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl">Dossiers</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-brand-red">
+                Dossiers & kennisbank
+              </p>
+              <h2 className="mt-2 font-display text-2xl uppercase sm:text-3xl">
+                Dossiers en onderwerpen
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Kies een onderwerp om het dossier te openen.
+                Wat er nu speelt en de kennis eronder — zoek op trefwoord.
               </p>
             </div>
             <Badge variant="secondary" className="shrink-0">
@@ -353,10 +447,10 @@ export default function KennisbankPage() {
           <Accordion
             type="single"
             collapsible
-            className="grid min-w-0 grid-cols-1 gap-3"
+            className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-3"
           >
-            {dossiers.map((dossier) => (
-              <DossierItem key={dossier.slug} dossier={dossier} />
+            {dossiers.map((dossier, index) => (
+              <DossierItem key={dossier.slug} dossier={dossier} index={index} />
             ))}
           </Accordion>
         </section>

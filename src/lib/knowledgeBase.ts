@@ -28,6 +28,13 @@ export type KnowledgeQuestion = {
   antwoord: string;
 };
 
+export type KnowledgeLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+  members?: boolean;
+};
+
 export type KnowledgeDossier = {
   slug: string;
   path: string;
@@ -35,6 +42,13 @@ export type KnowledgeDossier = {
   thema: string;
   beschrijving: string;
   standpunt: string;
+  afbeelding?: string;
+  status?: string;
+  soort?: "dossier" | "kennis";
+  badge?: "hop";
+  level?: "urgent" | "lopend" | "aankomend";
+  links: KnowledgeLink[];
+  cta?: KnowledgeLink;
   kerncijfers: KnowledgeMetric[];
   bronnen: KnowledgeSource[];
   qa: KnowledgeQuestion[];
@@ -85,6 +99,30 @@ function normalizeDossier(
     thema: text(value.thema, "Kennisdossier"),
     beschrijving: text(value.beschrijving),
     standpunt: text(value.standpunt),
+    afbeelding: text(value.afbeelding).startsWith("https://")
+      ? text(value.afbeelding)
+      : undefined,
+    status: text(value.status) || undefined,
+    soort:
+      value.soort === "dossier" || value.soort === "kennis"
+        ? value.soort
+        : undefined,
+    badge: value.badge === "hop" ? "hop" : undefined,
+    level:
+      value.level === "urgent" ||
+      value.level === "lopend" ||
+      value.level === "aankomend"
+        ? value.level
+        : undefined,
+    links: Array.isArray(value.links)
+      ? (value.links
+          .filter(isRecord)
+          .map(normalizeKnowledgeLink)
+          .filter(Boolean) as KnowledgeLink[])
+      : [],
+    cta: isRecord(value.cta)
+      ? (normalizeKnowledgeLink(value.cta) ?? undefined)
+      : undefined,
     kerncijfers: Array.isArray(value.kerncijfers)
       ? (value.kerncijfers.filter(isRecord) as unknown as KnowledgeMetric[])
       : [],
@@ -96,6 +134,20 @@ function normalizeDossier(
       : Array.isArray(value.vragen)
         ? (value.vragen.filter(isRecord) as unknown as KnowledgeQuestion[])
         : [],
+  };
+}
+
+function normalizeKnowledgeLink(
+  value: Record<string, unknown>,
+): KnowledgeLink | null {
+  const label = text(value.label);
+  const href = text(value.href);
+  if (!label || !href) return null;
+  return {
+    label,
+    href,
+    external: value.external === true || undefined,
+    members: value.members === true || undefined,
   };
 }
 
