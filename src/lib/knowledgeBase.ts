@@ -303,6 +303,13 @@ export async function loadKnowledgeBase(
   };
 }
 
+export async function loadKnowledgeDocuments(
+  session: Session,
+): Promise<KnowledgeDocument[]> {
+  const response = await requestWithPreviewFallback(session);
+  return parseKnowledgePayload(await response.json()).documenten;
+}
+
 export async function getKnowledgeDocumentUrl(
   session: Session,
   id: string,
