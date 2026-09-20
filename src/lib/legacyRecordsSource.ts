@@ -71,6 +71,8 @@ export async function fetchLegacyRecords(year: number, lineItemIds: string[]): P
       direction: e.direction === "in" ? "in" : "out",
       lineItemId: e.line_item_id ? String(e.line_item_id) : null,
       dossier: e.dossier ? String(e.dossier).trim() || null : null,
+      splits: splitsByKey.get(`expense:${e.id}`) || [],
+
     });
   }
 
