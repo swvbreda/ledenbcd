@@ -1,438 +1,271 @@
-import { useState, useMemo, Fragment } from "react";
-import { Trash2, Plus, Search, Download, ArrowUpDown, Check, X, Pencil } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useMemo, useState } from "react";
+import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
+import type { DeclarationBoardMember, InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import type { InternalDeclaration } from "@/hooks/useInternalDeclarations";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyCell } from "@/components/budget/CurrencyAmount";
+import { toast } from "sonner";
+
+type AddDeclarationInput = {
+  declaration: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">;
+  receipt?: File | null;
+};
+
+type AddDeclarationResult = { id: string; informerSynced: boolean } | void;
 
 interface Props {
   declarations: InternalDeclaration[];
+  boardMembers: DeclarationBoardMember[];
   year: number;
   isAdmin: boolean;
   userId: string;
-  onAdd: (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => void;
+  onAdd: (input: AddDeclarationInput) => Promise<AddDeclarationResult> | AddDeclarationResult;
   onDelete: (id: string) => void;
-  onUpdate?: (id: string, fields: Partial<Omit<InternalDeclaration, "id">>) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }
 
-const fmtDate = (d: string | null) => {
-  if (!d) return "";
-  const parts = d.split("-");
-  if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-  return d;
-};
+const fmtDate = (value: string | null) => value
+  ? new Intl.DateTimeFormat("nl-NL").format(new Date(`${value}T12:00:00`))
+  : "–";
+
+const money = (value: number) => new Intl.NumberFormat("nl-NL", {
+  style: "currency",
+  currency: "EUR",
+}).format(value);
 
 const statusBadge = (status: string) => {
-  switch (status) {
-    case "approved": return <Badge variant="default" className="bg-green-600 text-xs">Goedgekeurd</Badge>;
-    case "rejected": return <Badge variant="destructive" className="text-xs">Afgewezen</Badge>;
-    default: return <Badge variant="secondary" className="text-xs">In afwachting</Badge>;
-  }
+  if (status === "approved") return <Badge className="bg-green-600">Goedgekeurd</Badge>;
+  if (status === "rejected") return <Badge variant="destructive">Afgewezen</Badge>;
+  return <Badge variant="secondary">In afwachting</Badge>;
 };
 
-const paidBadge = (paidAt: string | null) => {
-  if (paidAt) {
-    return <Badge variant="default" className="bg-green-600 text-xs">Uitbetaald {fmtDate(paidAt)}</Badge>;
+const informerBadge = (declaration: InternalDeclaration) => {
+  if (declaration.informer_status === "synced") return <Badge className="bg-green-600">In Informer</Badge>;
+  if (declaration.informer_status === "error") {
+    return <Badge variant="destructive" title={declaration.informer_error || undefined}>Informer: actie nodig</Badge>;
   }
-  return <Badge variant="outline" className="text-xs text-muted-foreground">Nog niet uitbetaald</Badge>;
+  if (declaration.informer_status === "queued") return <Badge variant="outline">Naar Informer…</Badge>;
+  return null;
 };
 
-type SortKey = "expense_date" | "board_member_name" | "appointment" | "trajectory" | "amount" | "declaration_type" | "status";
+const memberAddress = (member?: DeclarationBoardMember) => [
+  member?.prive_adres,
+  [member?.prive_postcode, member?.prive_plaats].filter(Boolean).join(" "),
+].filter(Boolean).join(", ");
 
-export default function InternalDeclarationsView({ declarations, year, isAdmin, userId, onAdd, onDelete, onUpdate, onApprove, onReject }: Props) {
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("expense_date");
-  const [sortAsc, setSortAsc] = useState(false);
+export default function InternalDeclarationsView({
+  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject,
+}: Props) {
   const [adding, setAdding] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [saving, setSaving] = useState(false);
+  const [calculating, setCalculating] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [memberId, setMemberId] = useState("");
+  const [kind, setKind] = useState<"reiskosten" | "overig">("reiskosten");
+  const [description, setDescription] = useState("");
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [returnTrip, setReturnTrip] = useState(true);
+  const [oneWayKm, setOneWayKm] = useState<number | null>(null);
+  const [otherAmount, setOtherAmount] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
+  const [receipt, setReceipt] = useState<File | null>(null);
 
-  const emptyForm = {
-    board_member_name: "",
-    declaration_type: "reiskosten",
-    appointment: "",
-    trajectory: "",
-    km_single: "",
-    km_return: "",
-    expense_date: "",
-    bank_account: "",
-    account_holder: "",
-    max_allowance_note: "",
-  };
-
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState(emptyForm);
-
-  const startEdit = (d: InternalDeclaration) => {
-    setEditingId(d.id);
-    setEditForm({
-      board_member_name: d.board_member_name || "",
-      declaration_type: d.declaration_type || "reiskosten",
-      appointment: d.appointment || "",
-      trajectory: d.trajectory || "",
-      km_single: d.km_single != null ? String(d.km_single) : "",
-      km_return: d.km_return != null ? String(d.km_return) : "",
-      expense_date: d.expense_date || "",
-      bank_account: d.bank_account || "",
-      account_holder: d.account_holder || "",
-      max_allowance_note: d.max_allowance_note || "",
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditForm(emptyForm);
-  };
-
-  const saveEdit = (d: InternalDeclaration) => {
-    if (!onUpdate) return;
-    if (!editForm.board_member_name || !editForm.expense_date) {
-      toast.error("Naam en datum zijn verplicht");
-      return;
-    }
-    const kmSingle = editForm.km_single ? parseFloat(editForm.km_single) : null;
-    const kmReturn = editForm.km_return ? parseFloat(editForm.km_return) : null;
-    let amount = d.amount;
-    if (editForm.declaration_type === "reiskosten") {
-      amount = kmSingle != null ? (kmReturn ?? kmSingle * 2) * (d.km_rate || 0.23) : 0;
-    } else if (editForm.declaration_type === "woordvoering" || editForm.declaration_type === "penningmeester") {
-      amount = 210;
-    }
-    onUpdate(d.id, {
-      board_member_name: editForm.board_member_name,
-      declaration_type: editForm.declaration_type,
-      appointment: editForm.appointment || null,
-      trajectory: editForm.trajectory || null,
-      km_single: kmSingle,
-      km_return: kmReturn,
-      amount: Math.round(amount * 100) / 100,
-      expense_date: editForm.expense_date,
-      bank_account: editForm.bank_account || null,
-      account_holder: editForm.account_holder || null,
-      max_allowance_note: editForm.max_allowance_note || null,
-    });
-    cancelEdit();
-  };
-
+  const selectedMember = boardMembers.find((member) => member.id === memberId);
+  const calculation = oneWayKm == null ? null : calculateTravelDeclaration(oneWayKm, returnTrip, DEFAULT_KM_RATE);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    let list = [...declarations];
-    if (statusFilter !== "all") {
-      list = list.filter((d) => d.status === statusFilter);
-    }
-    if (q) {
-      list = list.filter(
-        (d) =>
-          d.board_member_name.toLowerCase().includes(q) ||
-          (d.appointment || "").toLowerCase().includes(q) ||
-          (d.trajectory || "").toLowerCase().includes(q) ||
-          (d.declaration_type || "").toLowerCase().includes(q) ||
-          (d.account_holder || "").toLowerCase().includes(q)
-      );
-    }
-    list.sort((a, b) => {
-      let valA: any = a[sortKey] ?? "";
-      let valB: any = b[sortKey] ?? "";
-      if (sortKey === "amount") { valA = a.amount; valB = b.amount; }
-      if (valA < valB) return sortAsc ? -1 : 1;
-      if (valA > valB) return sortAsc ? 1 : -1;
-      return 0;
-    });
-    return list;
-  }, [declarations, search, sortKey, sortAsc, statusFilter]);
+    const needle = search.trim().toLowerCase();
+    return declarations
+      .filter((item) => statusFilter === "all" || item.status === statusFilter)
+      .filter((item) => !needle || [item.board_member_name, item.appointment, item.trajectory, item.declaration_type]
+        .some((value) => (value || "").toLowerCase().includes(needle)))
+      .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
+  }, [declarations, search, statusFilter]);
 
-  const total = filtered.reduce((s, d) => s + d.amount, 0);
-  const pendingCount = declarations.filter((d) => d.status === "pending").length;
+  const total = filtered.reduce((sum, item) => sum + item.amount, 0);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortAsc(!sortAsc);
-    else { setSortKey(key); setSortAsc(true); }
+  const chooseMember = (id: string) => {
+    setMemberId(id);
+    const member = boardMembers.find((item) => item.id === id);
+    setOrigin(memberAddress(member));
+    setAccountHolder(member?.naam || "");
+    setOneWayKm(null);
   };
 
-  const getMonthlyAllowanceCount = (name: string, type: string) => {
-    return declarations.filter(
-      (d) => d.board_member_name === name && d.declaration_type === type && d.year === year
-    ).length;
-  };
-
-  const handleAdd = () => {
-    if (!form.board_member_name || !form.expense_date) {
-      toast.error("Naam en datum zijn verplicht");
+  const calculateRoute = async () => {
+    if (!origin.trim() || !destination.trim()) {
+      toast.error("Vul eerst het vertrek- en bestemmingsadres in");
       return;
     }
-    // Max 10 maandelijkse vergoedingen per jaar voor woordvoering/penningmeester
-    if (form.declaration_type === "woordvoering" || form.declaration_type === "penningmeester") {
-      const count = getMonthlyAllowanceCount(form.board_member_name, form.declaration_type);
-      if (count >= 10) {
-        toast.error(`${form.board_member_name} heeft al ${count} van max 10 maandvergoedingen (${form.declaration_type}) voor ${year}`);
-        return;
-      }
+    setCalculating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("calculate-route", {
+        body: { origin: origin.trim(), destination: destination.trim() },
+      });
+      if (error) throw error;
+      if (!data?.one_way_km) throw new Error(data?.error || "De afstand kon niet worden berekend");
+      setOneWayKm(Number(data.one_way_km));
+      toast.success(`Afstand berekend: ${Number(data.one_way_km).toLocaleString("nl-NL")} km enkele reis`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "De afstand kon niet worden berekend");
+    } finally {
+      setCalculating(false);
     }
-    const kmSingle = form.km_single ? parseFloat(form.km_single) : null;
-    const kmReturn = form.km_return ? parseFloat(form.km_return) : null;
-    const kmRate = 0.23;
-    let amount = 0;
-    if (form.declaration_type === "reiskosten" && kmSingle != null) {
-      amount = (kmReturn ?? kmSingle * 2) * kmRate;
-    } else if (form.declaration_type === "woordvoering" || form.declaration_type === "penningmeester") {
-      amount = 210;
+  };
+
+  const resetForm = () => {
+    setDescription(""); setDestination(""); setOneWayKm(null); setOtherAmount(""); setReceipt(null);
+    setExpenseDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const submit = async () => {
+    const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
+      : !expenseDate ? "Kies de datum van de kosten"
+      : !description.trim() ? "Vul een korte omschrijving in"
+      : !bankAccount.trim() ? "Vul het rekeningnummer in"
+      : !accountHolder.trim() ? "Vul de rekeninghouder in"
+      : kind === "reiskosten" && !calculation ? "Bereken eerst de afstand"
+      : kind === "overig" && (!otherAmount || Number(otherAmount) <= 0) ? "Vul het bedrag in"
+      : kind === "overig" && !receipt ? "Voeg een foto of PDF van de bon toe"
+      : null;
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
 
-    onAdd({
-      year,
-      board_member_name: form.board_member_name,
-      declaration_type: form.declaration_type,
-      appointment: form.appointment || null,
-      trajectory: form.trajectory || null,
-      km_single: kmSingle,
-      km_return: kmReturn,
-      km_rate: kmRate,
-      amount: Math.round(amount * 100) / 100,
-      expense_date: form.expense_date,
-      bank_account: form.bank_account || null,
-      account_holder: form.account_holder || null,
-      max_allowance_note: form.max_allowance_note || null,
-      status: "pending",
-      submitted_by: userId,
-      paid_at: null,
-      bank_transaction_id: null,
-    });
-    setForm({
-      board_member_name: form.board_member_name,
-      declaration_type: form.declaration_type,
-      appointment: "",
-      trajectory: "",
-      km_single: "",
-      km_return: "",
-      expense_date: "",
-      bank_account: form.bank_account,
-      account_holder: form.account_holder,
-      max_allowance_note: "",
-    });
+    setSaving(true);
+    try {
+      const result = await onAdd({
+        declaration: {
+          year, board_member_id: selectedMember!.id, board_member_name: selectedMember!.naam,
+          declaration_type: kind, appointment: description.trim(),
+          trajectory: kind === "reiskosten" ? `${origin.trim()} – ${destination.trim()}` : null,
+          km_single: kind === "reiskosten" ? calculation!.oneWayKm : null,
+          km_return: kind === "reiskosten" ? calculation!.totalKm : null,
+          km_rate: DEFAULT_KM_RATE,
+          amount: kind === "reiskosten" ? calculation!.amount : Number(otherAmount),
+          expense_date: expenseDate, bank_account: bankAccount.trim(), account_holder: accountHolder.trim(),
+          max_allowance_note: null, status: "pending", submitted_by: userId,
+          paid_at: null, bank_transaction_id: null, receipt_path: null, informer_status: "queued",
+          informer_external_id: null, informer_error: null, informer_synced_at: null,
+        }, receipt,
+      });
+      if (result && !result.informerSynced) {
+        toast.warning("Declaratie is opgeslagen. Informer vraagt nog aandacht; er is een financieel actiepunt aangemaakt.");
+      } else {
+        toast.success("Declaratie ingediend en als open post naar Informer gestuurd");
+      }
+      resetForm(); setAdding(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Declaratie kon niet worden ingediend");
+    } finally { setSaving(false); }
+  };
+
+  const viewReceipt = async (path: string) => {
+    const { data, error } = await supabase.storage.from("declaration-receipts").createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("De bon kon niet worden geopend");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleExport = () => {
-    const headers = ["Datum", "Wie", "Omschrijving", "Traject", "Km enkel", "Km retour", "Bedrag", "Rekeningnummer", "Rekeninghouder", "Status"];
-    const rows = filtered.map((d) => [
-      d.expense_date || "",
-      d.board_member_name,
-      d.appointment || "",
-      d.trajectory || "",
-      d.km_single || "",
-      d.km_return || "",
-      d.amount,
-      d.bank_account || "",
-      d.account_holder || "",
-      d.status,
-    ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `interne-declaraties-${year}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const rows = filtered.map((item) => [item.expense_date || "", item.board_member_name, item.declaration_type,
+      item.appointment || "", item.trajectory || "", item.km_return || "", item.amount, item.status, item.informer_status]);
+    const csv = [["Datum", "Bestuurslid", "Soort", "Omschrijving", "Traject", "Km totaal", "Bedrag", "Status", "Informer"], ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = `declaraties-${year}.csv`; link.click(); URL.revokeObjectURL(url);
   };
 
-  const SortHeader = ({ label, field, className = "" }: { label: string; field: SortKey; className?: string }) => (
-    <th className={`px-2 py-1.5 font-medium text-muted-foreground cursor-pointer hover:text-foreground select-none ${className}`} onClick={() => toggleSort(field)}>
-      <span className="flex items-center gap-1">
-        {label}
-        <ArrowUpDown size={10} className={sortKey === field ? "text-foreground" : "text-muted-foreground/40"} />
-      </span>
-    </th>
-  );
-
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Zoek op naam, omschrijving, traject..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm pl-8" />
+    <div className="min-w-0 space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Zoek in declaraties…" className="pl-9" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 text-xs rounded-md border border-input bg-background px-2">
-          <option value="all">Alle statussen</option>
-          <option value="pending">In afwachting{pendingCount > 0 ? ` (${pendingCount})` : ""}</option>
-          <option value="approved">Goedgekeurd</option>
-          <option value="rejected">Afgewezen</option>
-        </select>
-        <button onClick={handleExport} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-background text-xs font-medium hover:bg-accent transition-colors">
-          <Download size={12} /> CSV
-        </button>
-        <Button size="sm" variant="outline" className="h-8" onClick={() => setAdding(!adding)}>
-          <Plus size={14} className="mr-1" /> Declaratie
-        </Button>
-        <span className="text-xs text-muted-foreground">{filtered.length} regels</span>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Alle statussen</SelectItem><SelectItem value="pending">In afwachting</SelectItem><SelectItem value="approved">Goedgekeurd</SelectItem><SelectItem value="rejected">Afgewezen</SelectItem></SelectContent>
+        </Select>
+        <Button variant="outline" onClick={handleExport}><Download className="mr-2 h-4 w-4" />CSV</Button>
+        <Button onClick={() => setAdding((value) => !value)}><Plus className="mr-2 h-4 w-4" />Declaratie indienen</Button>
       </div>
 
       {adding && (
-        <div className="border border-border rounded-lg p-3 bg-muted/20 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Nieuwe declaratie</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Input placeholder="Naam bestuurslid" value={form.board_member_name} onChange={(e) => setForm({ ...form, board_member_name: e.target.value })} className="h-8 text-sm" />
-            <select value={form.declaration_type} onChange={(e) => setForm({ ...form, declaration_type: e.target.value })} className="h-8 text-sm rounded-md border border-input bg-background px-2">
-              <option value="reiskosten">Reiskosten</option>
-              <option value="woordvoering">Woordvoering</option>
-              <option value="penningmeester">Penningmeester</option>
-            </select>
-            <Input placeholder="Omschrijving" value={form.appointment} onChange={(e) => setForm({ ...form, appointment: e.target.value })} className="h-8 text-sm" />
-            <Input placeholder="Traject (bijv. A'veen – Utrecht)" value={form.trajectory} onChange={(e) => setForm({ ...form, trajectory: e.target.value })} className="h-8 text-sm" />
-            <Input type="number" placeholder="Km enkel" value={form.km_single} onChange={(e) => setForm({ ...form, km_single: e.target.value })} className="h-8 text-sm" />
-            <Input type="number" placeholder="Km retour" value={form.km_return} onChange={(e) => setForm({ ...form, km_return: e.target.value })} className="h-8 text-sm" />
-            <Input type="date" value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} className="h-8 text-sm" />
-            <Input placeholder="Rekeningnummer" value={form.bank_account} onChange={(e) => setForm({ ...form, bank_account: e.target.value })} className="h-8 text-sm" />
-            <Input placeholder="Rekeninghouder" value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} className="h-8 text-sm" />
-            <Input placeholder="Max vergoeding notitie" value={form.max_allowance_note} onChange={(e) => setForm({ ...form, max_allowance_note: e.target.value })} className="h-8 text-sm" />
+        <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
+          <div className="mb-5"><h2 className="text-lg font-semibold">Nieuwe declaratie</h2><p className="text-sm text-muted-foreground">Kies eerst voor welk bestuurslid de kosten zijn gemaakt.</p></div>
+          <div className="grid min-w-0 gap-4 md:grid-cols-2">
+            <label className="min-w-0 space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bestuurslid</span>
+              <Select value={memberId} onValueChange={chooseMember}><SelectTrigger><SelectValue placeholder="Selecteer een bestuurslid" /></SelectTrigger><SelectContent>{boardMembers.map((member) => <SelectItem key={member.id} value={member.id}>{member.naam}{member.functie ? ` — ${member.functie}` : ""}</SelectItem>)}</SelectContent></Select>
+            </label>
+            <label className="space-y-1.5"><span className="text-sm font-medium">Soort declaratie</span>
+              <Select value={kind} onValueChange={(value: "reiskosten" | "overig") => { setKind(value); setOneWayKm(null); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reiskosten">Reiskosten</SelectItem><SelectItem value="overig">Overige kosten</SelectItem></SelectContent></Select>
+            </label>
+            <label className="space-y-1.5"><span className="text-sm font-medium">Datum</span><Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} /></label>
+            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Omschrijving</span><Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={kind === "reiskosten" ? "Bijvoorbeeld: bestuursvergadering Utrecht" : "Waarvoor waren de kosten?"} /></label>
+
+            {kind === "reiskosten" ? <>
+              <label className="space-y-1.5"><span className="text-sm font-medium">Van</span><Input value={origin} onChange={(e) => { setOrigin(e.target.value); setOneWayKm(null); }} placeholder="Vertrekadres" /></label>
+              <label className="space-y-1.5"><span className="text-sm font-medium">Naar</span><Input value={destination} onChange={(e) => { setDestination(e.target.value); setOneWayKm(null); }} placeholder="Bestemmingsadres" /></label>
+              <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+                <label className="flex items-center gap-2 text-sm"><Checkbox checked={returnTrip} onCheckedChange={(checked) => setReturnTrip(checked === true)} />Heen en terug</label>
+                <Button type="button" variant="outline" onClick={calculateRoute} disabled={calculating}><MapPin className="mr-2 h-4 w-4" />{calculating ? "Afstand berekenen…" : "Bereken afstand"}</Button>
+              </div>
+              {calculation && <div className="grid grid-cols-2 gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-950 md:col-span-2 sm:grid-cols-3">
+                <div><span className="block text-xs text-green-700">Enkele reis</span><strong>{calculation.oneWayKm.toLocaleString("nl-NL")} km</strong></div>
+                <div><span className="block text-xs text-green-700">Totaal</span><strong>{calculation.totalKm.toLocaleString("nl-NL")} km</strong></div>
+                <div><span className="block text-xs text-green-700">Bedrag à € 0,23/km</span><strong>{money(calculation.amount)}</strong></div>
+              </div>}
+            </> : <label className="space-y-1.5"><span className="text-sm font-medium">Bedrag</span><Input type="number" min="0" step="0.01" inputMode="decimal" value={otherAmount} onChange={(e) => setOtherAmount(e.target.value)} placeholder="0,00" /></label>}
+
+            <label className="space-y-1.5"><span className="text-sm font-medium">Rekeningnummer</span><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoCapitalize="characters" placeholder="NL00 BANK 0000 0000 00" /></label>
+            <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
+            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind === "overig" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" className="h-8" onClick={handleAdd}>Toevoegen</Button>
-            <Button size="sm" variant="ghost" className="h-8" onClick={() => setAdding(false)}>Annuleer</Button>
-          </div>
-        </div>
+          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button onClick={submit} disabled={saving}>{saving ? "Indienen…" : "Declaratie indienen"}</Button></div>
+        </section>
       )}
 
-      <div className="overflow-auto overscroll-x-contain rounded-lg border border-border">
-        <table className="w-full min-w-[78rem] text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <SortHeader label="Datum" field="expense_date" className="text-left" />
-              <SortHeader label="Wie" field="board_member_name" className="text-left" />
-              <SortHeader label="Omschrijving" field="appointment" className="text-left" />
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Traject</th>
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Km</th>
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-right">Retour</th>
-              <SortHeader label="Bedrag" field="amount" className="text-right" />
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Rekening</th>
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-left">Houder</th>
-              <SortHeader label="Status" field="status" className="text-center" />
-              <th className="px-2 py-1.5 font-medium text-muted-foreground text-center">Bank</th>
-              <th className="w-16" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((d) => {
-              const isOwnPending = d.status === "pending" && !d.paid_at && d.submitted_by === userId;
-              const canModify = isAdmin || isOwnPending;
-              const isEditing = editingId === d.id;
-              return (
-              <Fragment key={d.id}>
-              <tr className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{fmtDate(d.expense_date)}</td>
-                <td className="px-2 py-1.5">{d.board_member_name}</td>
-                <td className="px-2 py-1.5">{d.appointment || ""}</td>
-                <td className="px-2 py-1.5">{d.trajectory || ""}</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{d.km_single ?? "–"}</td>
-                <td className="px-2 py-1.5 text-right tabular-nums">{d.km_return ?? "–"}</td>
-                <td className="px-2 py-1.5 text-right"><CurrencyCell value={d.amount} /></td>
-                <td className="px-2 py-1.5 text-xs">{d.bank_account || ""}</td>
-                <td className="px-2 py-1.5">{d.account_holder || ""}</td>
-                <td className="px-2 py-1.5 text-center">{statusBadge(d.status)}</td>
-                <td className="px-2 py-1.5 text-center whitespace-nowrap">{paidBadge(d.paid_at)}</td>
-                <td className="px-1 whitespace-nowrap">
-                  <span className="inline-flex gap-0.5">
-                    {isAdmin && d.status !== "approved" && (
-                      <button onClick={() => onApprove(d.id)} className="p-1 text-muted-foreground hover:text-green-600" title="Goedkeuren">
-                        <Check size={14} />
-                      </button>
-                    )}
-                    {isAdmin && d.status !== "rejected" && (
-                      <button onClick={() => onReject(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Afwijzen">
-                        <X size={14} />
-                      </button>
-                    )}
-                    {canModify && onUpdate && (
-                      <button onClick={() => (isEditing ? cancelEdit() : startEdit(d))} className="p-1 text-muted-foreground hover:text-foreground" title="Bewerken">
-                        <Pencil size={12} />
-                      </button>
-                    )}
-                    {canModify && (
-                      <button onClick={() => onDelete(d.id)} className="p-1 text-muted-foreground hover:text-destructive" title="Verwijderen">
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </span>
-                </td>
-              </tr>
-              {isEditing && (
-                <tr className="border-b border-border bg-muted/20">
-                  <td colSpan={12} className="px-3 py-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <Input placeholder="Naam bestuurslid" value={editForm.board_member_name} onChange={(e) => setEditForm({ ...editForm, board_member_name: e.target.value })} className="h-8 text-sm" />
-                      <select value={editForm.declaration_type} onChange={(e) => setEditForm({ ...editForm, declaration_type: e.target.value })} className="h-8 text-sm rounded-md border border-input bg-background px-2">
-                        <option value="reiskosten">Reiskosten</option>
-                        <option value="woordvoering">Woordvoering</option>
-                        <option value="penningmeester">Penningmeester</option>
-                      </select>
-                      <Input placeholder="Omschrijving" value={editForm.appointment} onChange={(e) => setEditForm({ ...editForm, appointment: e.target.value })} className="h-8 text-sm" />
-                      <Input placeholder="Traject" value={editForm.trajectory} onChange={(e) => setEditForm({ ...editForm, trajectory: e.target.value })} className="h-8 text-sm" />
-                      <Input type="number" placeholder="Km enkel" value={editForm.km_single} onChange={(e) => setEditForm({ ...editForm, km_single: e.target.value })} className="h-8 text-sm" />
-                      <Input type="number" placeholder="Km retour" value={editForm.km_return} onChange={(e) => setEditForm({ ...editForm, km_return: e.target.value })} className="h-8 text-sm" />
-                      <Input type="date" value={editForm.expense_date} onChange={(e) => setEditForm({ ...editForm, expense_date: e.target.value })} className="h-8 text-sm" />
-                      <Input placeholder="Rekeningnummer" value={editForm.bank_account} onChange={(e) => setEditForm({ ...editForm, bank_account: e.target.value })} className="h-8 text-sm" />
-                      <Input placeholder="Rekeninghouder" value={editForm.account_holder} onChange={(e) => setEditForm({ ...editForm, account_holder: e.target.value })} className="h-8 text-sm" />
-                      <Input placeholder="Max vergoeding notitie" value={editForm.max_allowance_note} onChange={(e) => setEditForm({ ...editForm, max_allowance_note: e.target.value })} className="h-8 text-sm" />
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Button size="sm" className="h-8" onClick={() => saveEdit(d)}>Opslaan</Button>
-                      <Button size="sm" variant="ghost" className="h-8" onClick={cancelEdit}>Annuleer</Button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-              </Fragment>
-              );
-            })}
-
-            {filtered.length === 0 && (
-              <tr><td colSpan={13} className="px-2 py-4 text-center text-muted-foreground">Geen declaraties gevonden</td></tr>
-            )}
-            {filtered.length > 0 && (
-              <tr className="bg-muted/30 font-semibold">
-                <td colSpan={6} className="px-2 py-1.5">Totaal</td>
-                <td className="px-2 py-1.5 text-right"><CurrencyCell value={total} /></td>
-                <td colSpan={6} />
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="grid gap-3 lg:hidden">
+        {filtered.map((item) => {
+          const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId);
+          return <article key={item.id} className="min-w-0 rounded-xl border bg-card p-4 shadow-sm">
+            <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {item.declaration_type === "reiskosten" ? "Reiskosten" : "Overige kosten"}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
+            <p className="mt-3 break-words text-sm">{item.appointment || "Geen omschrijving"}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item)}</div>
+            <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+              {item.receipt_path && <Button size="sm" variant="outline" onClick={() => viewReceipt(item.receipt_path!)}><Receipt className="mr-1 h-4 w-4" />Bon</Button>}
+              {isAdmin && item.status !== "approved" && <Button size="sm" variant="outline" onClick={() => onApprove(item.id)}><Check className="mr-1 h-4 w-4" />Goedkeuren</Button>}
+              {isAdmin && item.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
+              {canModify && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(item.id)}><Trash2 className="mr-1 h-4 w-4" />Verwijderen</Button>}
+            </div>
+          </article>;
+        })}
       </div>
 
-      {/* Max. vrijwilligersvergoeding */}
-      <div className="border border-border rounded-lg overflow-hidden max-w-sm">
-        <div className="px-3 py-2 bg-muted/50">
-          <h3 className="text-xs font-semibold">Max. vrijwilligersvergoeding</h3>
-        </div>
-        <table className="w-full text-sm text-muted-foreground">
-          <tbody>
-            <tr className="border-b border-border/50">
-              <td className="px-3 py-1">Per uur</td>
-              <td className="text-right px-3 py-1">€</td>
-              <td className="text-right px-3 py-1 tabular-nums">5,50</td>
-            </tr>
-            <tr className="border-b border-border/50">
-              <td className="px-3 py-1">Per maand</td>
-              <td className="text-right px-3 py-1">€</td>
-              <td className="text-right px-3 py-1 tabular-nums">210</td>
-            </tr>
-            <tr className="border-b border-border/50">
-              <td className="px-3 py-1">Per jaar</td>
-              <td className="text-right px-3 py-1">€</td>
-              <td className="text-right px-3 py-1 tabular-nums">2.100</td>
-            </tr>
-            <tr>
-              <td className="px-3 py-1">Reiskosten</td>
-              <td className="text-right px-3 py-1">€</td>
-              <td className="text-right px-3 py-1 tabular-nums">0,23/km</td>
-            </tr>
-          </tbody>
+      <div className="hidden overflow-x-auto rounded-xl border lg:block">
+        <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
+          <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
+            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{item.appointment || "–"}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item)}</td>
+            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
+          </tr>; })}</tbody>
+          <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
         </table>
       </div>
+      {filtered.length === 0 && <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">Geen declaraties gevonden.</div>}
     </div>
   );
 }

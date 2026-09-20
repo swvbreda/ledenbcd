@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeReceiptName } from "@/lib/declarations";
 
 export interface InternalDeclaration {
   id: string;
   year: number;
   board_member_name: string;
+  board_member_id: string | null;
   declaration_type: string;
   appointment: string | null;
   trajectory: string | null;
@@ -22,6 +24,35 @@ export interface InternalDeclaration {
   reviewed_at: string | null;
   paid_at: string | null;
   bank_transaction_id: string | null;
+  receipt_path: string | null;
+  informer_status: "not_sent" | "queued" | "synced" | "error";
+  informer_external_id: string | null;
+  informer_error: string | null;
+  informer_synced_at: string | null;
+}
+
+export interface DeclarationBoardMember {
+  id: string;
+  naam: string;
+  functie: string | null;
+  prive_adres: string | null;
+  prive_postcode: string | null;
+  prive_plaats: string | null;
+}
+
+export function useDeclarationBoardMembers() {
+  return useQuery({
+    queryKey: ["declaration-board-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("board_members")
+        .select("id, naam, functie, prive_adres, prive_postcode, prive_plaats")
+        .eq("type", "bestuurslid")
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as DeclarationBoardMember[];
+    },
+  });
 }
 
 export function useInternalDeclarations(year: number) {
@@ -50,9 +81,49 @@ export function useInternalDeclarationMutations(year: number) {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["internal-declarations", year] });
 
   const add = useMutation({
-    mutationFn: async (decl: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">) => {
-      const { error } = await supabase.from("internal_declarations").insert(decl as any);
+    mutationFn: async ({
+      declaration,
+      receipt,
+    }: {
+      declaration: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">;
+      receipt?: File | null;
+    }) => {
+      let receiptPath: string | null = null;
+      if (receipt) {
+        if (receipt.size > 10 * 1024 * 1024) throw new Error("De bon mag maximaal 10 MB zijn");
+        const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+        if (!allowed.includes(receipt.type)) throw new Error("Gebruik een JPG, PNG, WebP of PDF als bon");
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (!uid) throw new Error("Log opnieuw in om een bon te uploaden");
+        receiptPath = `${uid}/${crypto.randomUUID()}-${sanitizeReceiptName(receipt.name)}`;
+        const { error: uploadError } = await supabase.storage
+          .from("declaration-receipts")
+          .upload(receiptPath, receipt, { contentType: receipt.type, upsert: false });
+        if (uploadError) throw uploadError;
+      }
+
+      const { data, error } = await supabase
+        .from("internal_declarations")
+        .insert({ ...declaration, receipt_path: receiptPath, informer_status: "queued" } as any)
+        .select("id")
+        .single();
       if (error) throw error;
+      const { data: informerData, error: informerError } = await supabase.functions.invoke(
+        `informer-sync?action=declaration_to_informer`,
+        { body: { declaration_id: data.id } },
+      );
+      const informerSynced = !informerError && informerData?.success !== false;
+      if (!informerSynced) {
+        const message = informerError?.message
+          || informerData?.results?.[0]?.error_message
+          || "Informer heeft de declaratie niet aangenomen";
+        await supabase.from("internal_declarations").update({
+          informer_status: "error",
+          informer_error: message,
+        } as any).eq("id", data.id);
+      }
+      return { id: data.id, informerSynced };
     },
     onSuccess: invalidate,
   });

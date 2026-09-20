@@ -1886,11 +1886,16 @@ export type Database = {
           appointment: string | null
           bank_account: string | null
           bank_transaction_id: string | null
+          board_member_id: string | null
           board_member_name: string
           created_at: string
           declaration_type: string
           expense_date: string | null
           id: string
+          informer_error: string | null
+          informer_external_id: string | null
+          informer_status: string
+          informer_synced_at: string | null
           km_rate: number
           km_return: number | null
           km_single: number | null
@@ -1898,6 +1903,7 @@ export type Database = {
           paid_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          receipt_path: string | null
           status: string
           submitted_by: string | null
           trajectory: string | null
@@ -1910,11 +1916,16 @@ export type Database = {
           appointment?: string | null
           bank_account?: string | null
           bank_transaction_id?: string | null
+          board_member_id?: string | null
           board_member_name: string
           created_at?: string
           declaration_type?: string
           expense_date?: string | null
           id?: string
+          informer_error?: string | null
+          informer_external_id?: string | null
+          informer_status?: string
+          informer_synced_at?: string | null
           km_rate?: number
           km_return?: number | null
           km_single?: number | null
@@ -1922,6 +1933,7 @@ export type Database = {
           paid_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          receipt_path?: string | null
           status?: string
           submitted_by?: string | null
           trajectory?: string | null
@@ -1934,11 +1946,16 @@ export type Database = {
           appointment?: string | null
           bank_account?: string | null
           bank_transaction_id?: string | null
+          board_member_id?: string | null
           board_member_name?: string
           created_at?: string
           declaration_type?: string
           expense_date?: string | null
           id?: string
+          informer_error?: string | null
+          informer_external_id?: string | null
+          informer_status?: string
+          informer_synced_at?: string | null
           km_rate?: number
           km_return?: number | null
           km_single?: number | null
@@ -1946,6 +1963,7 @@ export type Database = {
           paid_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          receipt_path?: string | null
           status?: string
           submitted_by?: string | null
           trajectory?: string | null

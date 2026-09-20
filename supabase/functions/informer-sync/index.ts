@@ -1474,6 +1474,209 @@ async function ensureDebtorForMember(
   return { relationId: newId, created: true };
 }
 
+// ---------------------------------------------------------------------------
+// Bestuursdeclaraties als open inkoopfactuur naar Informer
+// ---------------------------------------------------------------------------
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function splitPersonName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return { firstname: parts[0], surname_prefix: undefined, surname: parts[0] };
+  const prefixes = new Set(["van", "de", "den", "der", "het", "'t", "ter", "ten"]);
+  let surnameStart = parts.length - 1;
+  while (surnameStart > 1 && prefixes.has(parts[surnameStart - 1].toLowerCase())) surnameStart--;
+  return {
+    firstname: parts.slice(0, surnameStart).join(" "),
+    surname_prefix: surnameStart < parts.length - 1 ? parts.slice(surnameStart, -1).join(" ") : undefined,
+    surname: parts.at(-1)!,
+  };
+}
+
+function parseAddressLine(value: string) {
+  const match = value.trim().match(/^(.*?)[\s,]+(\d+)(?:\s*([A-Za-z0-9-]+))?$/);
+  return { street: (match?.[1] ?? "").trim(), houseNumber: match?.[2] ?? "", suffix: match?.[3] ?? undefined };
+}
+
+function findNestedArray(value: unknown, pattern: RegExp): any[] {
+  if (!value || typeof value !== "object") return [];
+  if (Array.isArray(value)) return value;
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    if (pattern.test(key) && Array.isArray(nested)) return nested;
+  }
+  for (const nested of Object.values(value as Record<string, unknown>)) {
+    const found = findNestedArray(nested, pattern);
+    if (found.length) return found;
+  }
+  return [];
+}
+
+function optionId(value: any): number | null {
+  const raw = value?.id ?? value?.ledger_id ?? value?.vat_id ?? value?.value;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function declarationReceiptPdf(supabase: any, declaration: any): Promise<string | undefined> {
+  if (!declaration.receipt_path) return undefined;
+  const { data, error } = await supabase.storage.from("declaration-receipts").download(declaration.receipt_path);
+  if (error || !data) throw new Error(`bon ophalen mislukt: ${error?.message ?? "geen bestand"}`);
+  const bytes = new Uint8Array(await data.arrayBuffer());
+  const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+  let pdfBytes = bytes;
+  if (!isPdf) {
+    const { PDFDocument } = await import("npm:pdf-lib@1.17.1");
+    const pdf = await PDFDocument.create();
+    const mime = String(data.type || "").toLowerCase();
+    const image = mime.includes("png") ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+    const size = image.scale(1);
+    const maxWidth = 540;
+    const maxHeight = 760;
+    const scale = Math.min(maxWidth / size.width, maxHeight / size.height, 1);
+    const page = pdf.addPage([595, 842]);
+    page.drawImage(image, {
+      x: (595 - size.width * scale) / 2,
+      y: (842 - size.height * scale) / 2,
+      width: size.width * scale,
+      height: size.height * scale,
+    });
+    pdfBytes = await pdf.save();
+  }
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < pdfBytes.length; i += chunk) binary += String.fromCharCode(...pdfBytes.subarray(i, i + chunk));
+  return btoa(binary);
+}
+
+async function ensureSupplierForBoardMember(supabase: any, declaration: any, apiCalls: ApiCall[]) {
+  const { data: boardMember, error } = await supabase
+    .from("board_members")
+    .select("id, naam, email, bond_email, telefoon, prive_adres, prive_postcode, prive_plaats")
+    .eq("id", declaration.board_member_id)
+    .maybeSingle();
+  if (error || !boardMember) throw new Error("Bestuurslid niet gevonden");
+
+  const relations = await fetchInformerRelations(apiCalls);
+  const emails = [boardMember.bond_email, boardMember.email].map(normalizeText).filter(Boolean);
+  const iban = normalizeText(declaration.bank_account).replace(/\s/g, "");
+  const name = normalizeText(boardMember.naam);
+  const existing = relations.find((relation: any) => {
+    const relationEmails = [relation?.email, relation?.email_invoice].map(normalizeText);
+    const relationIban = normalizeText(relation?.iban).replace(/\s/g, "");
+    const relationName = normalizeText([relation?.firstname, relation?.surname_prefix, relation?.surname].filter(Boolean).join(" ") || relation?.company_name || relation?.name);
+    return emails.some((email) => relationEmails.includes(email)) || (iban && relationIban === iban) || relationName === name;
+  });
+  const existingId = existing ? informerRelationId(existing) : "";
+  if (existingId && /^\d+$/.test(existingId)) return existingId;
+
+  const address = parseAddressLine(String(boardMember.prive_adres ?? ""));
+  if (!address.street || !address.houseNumber || !boardMember.prive_postcode || !boardMember.prive_plaats) {
+    throw new Error("Adresgegevens van het bestuurslid zijn niet compleet; Informer-relatie kan niet worden aangemaakt");
+  }
+  const person = splitPersonName(boardMember.naam);
+  const payload = {
+    relation_type: 1,
+    firstname: person.firstname,
+    surname_prefix: person.surname_prefix,
+    surname: person.surname,
+    street: address.street,
+    house_number: address.houseNumber,
+    house_number_suffix: address.suffix,
+    zip: boardMember.prive_postcode,
+    city: boardMember.prive_plaats,
+    country: "NL",
+    email: boardMember.bond_email || boardMember.email || undefined,
+    email_invoice: boardMember.bond_email || boardMember.email || undefined,
+    phone: boardMember.telefoon || undefined,
+    iban: declaration.bank_account || undefined,
+    subtype: { supplier: 1, active: 1 },
+  };
+  const call = await informerCall("/relations", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
+  const apiError = hasInformerError(call.response_body);
+  if (call.error || !call.ok || apiError) throw new Error(`Leverancier aanmaken in Informer mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+
+  const created = firstInformerItem(call.response_body, ["relation", "relations", "data"]);
+  let id = informerRelationId(created) || String((call.response_body as any)?.id ?? "");
+  if (!/^\d+$/.test(id)) {
+    const refreshed = await fetchInformerRelations(apiCalls);
+    const match = refreshed.find((relation: any) => emails.includes(normalizeText(relation?.email_invoice ?? relation?.email)) || normalizeText(relation?.iban).replace(/\s/g, "") === iban);
+    id = match ? informerRelationId(match) : "";
+  }
+  if (!/^\d+$/.test(id)) throw new Error("Leverancier is aangemaakt, maar Informer gaf geen bruikbaar relatie-id terug");
+  return id;
+}
+
+async function sendDeclarationToInformer(supabase: any, declarationId: string): Promise<ActionResult> {
+  const action = "declaration_to_informer";
+  const apiCalls: ApiCall[] = [];
+  try {
+    const { data: declaration, error } = await supabase.from("internal_declarations").select("*").eq("id", declarationId).single();
+    if (error || !declaration) throw new Error("Declaratie niet gevonden");
+    if (declaration.informer_status === "synced" && declaration.informer_external_id) {
+      return { action, success: true, items_processed: 0, details: { already_synced: true, id: declaration.informer_external_id }, api_calls: apiCalls };
+    }
+
+    const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
+    const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
+    const optionsError = hasInformerError(optionsCall.response_body);
+    if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
+
+    const ledgers = findNestedArray(optionsCall.response_body, /ledger/i);
+    const vats = findNestedArray(optionsCall.response_body, /vat/i);
+    const configuredLedger = Number(Deno.env.get("INFORMER_DECLARATION_LEDGER_ID") ?? "");
+    const ledger = ledgers.find((item: any) => configuredLedger && optionId(item) === configuredLedger)
+      ?? ledgers.find((item: any) => /reis|onkosten|bestuur|algemene kosten|vrijwillig/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
+      ?? ledgers[0];
+    const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
+      ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
+      ?? vats[0];
+    const ledgerId = optionId(ledger);
+    const vatId = optionId(vat);
+    if (!ledgerId || !vatId) throw new Error("Informer heeft geen bruikbaar grootboek of btw-tarief teruggegeven");
+
+    const reference = `DECL-${String(declaration.year)}-${String(declaration.id).slice(0, 8).toUpperCase()}`;
+    const pdf = await declarationReceiptPdf(supabase, declaration);
+    const payload: Record<string, unknown> = {
+      relation_id: Number(relationId),
+      invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
+      number: reference,
+      vat_option: "incl",
+      collect: 0,
+      lines: [{
+        description: `${declaration.declaration_type === "reiskosten" ? "Reiskosten" : "Declaratie"}: ${declaration.appointment || declaration.board_member_name}`,
+        amount: Number(declaration.amount),
+        vat_amount: 0,
+        vat_id: vatId,
+        ledger_id: ledgerId,
+      }],
+      ...(pdf ? { pdf } : {}),
+    };
+    const call = await informerCall("/invoices/purchase", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
+    const apiError = hasInformerError(call.response_body);
+    if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+    const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
+    const externalId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
+    await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
+    return { action, success: true, items_processed: 1, details: { declaration_id: declarationId, external_id: externalId, reference }, api_calls: apiCalls };
+  } catch (error) {
+    const message = (error as Error).message;
+    await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", declarationId);
+    const { data: declaration } = await supabase.from("internal_declarations").select("year, board_member_name, amount").eq("id", declarationId).maybeSingle();
+    await supabase.from("finance_todos").upsert({
+      todo_type: "declaration_informer_error",
+      title: `Declaratie handmatig verwerken: ${declaration?.board_member_name ?? declarationId}`,
+      description: `De declaratie van € ${Number(declaration?.amount ?? 0).toFixed(2)} kon niet automatisch als open inkoopfactuur in Informer worden gezet. Reden: ${message}`,
+      assigned_to: "penningmeester",
+      reference_id: declarationId,
+      status: "pending",
+      year: Number(declaration?.year ?? new Date().getFullYear()),
+    }, { onConflict: "todo_type,reference_id,year" });
+    return { action, success: false, items_processed: 0, error_message: message, api_calls: apiCalls };
+  }
+}
+
 async function createDraftSalesInvoice(
   relationId: string,
   candidate: PrepareCandidate,
@@ -1876,6 +2079,21 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
   const url = new URL(req.url);
   const action = url.searchParams.get("action") ?? "all";
+
+  if (action === "declaration_to_informer") {
+    const body = await req.json().catch(() => ({})) as { declaration_id?: string };
+    if (!body.declaration_id) {
+      return new Response(JSON.stringify({ error: "declaration_id is verplicht" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const result = await sendDeclarationToInformer(supabase, body.declaration_id);
+    await logResult(supabase, result);
+    return new Response(JSON.stringify({ success: result.success, results: [result] }), {
+      status: result.success ? 200 : 207,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // Verify which Informer administration is active for the given security code.
   // Optional override via query ?code=... or JSON body { code }. Returns the
