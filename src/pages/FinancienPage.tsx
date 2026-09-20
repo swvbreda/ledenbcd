@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
-import { useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
+import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -52,6 +52,7 @@ export default function FinancienPage() {
   const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
+  const { data: declarationBoardMembers } = useDeclarationBoardMembers();
   const internalMutations = useInternalDeclarationMutations(year);
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
@@ -341,12 +342,12 @@ export default function FinancienPage() {
             <div className="mt-4">
               <InternalDeclarationsView
                 declarations={internalDeclarations || []}
+                boardMembers={declarationBoardMembers || []}
                 year={year}
                 isAdmin={isAdmin}
                 userId={user?.id || ""}
-                onAdd={(decl) => internalMutations.add.mutate(decl, { onSuccess: () => toast.success("Declaratie ingediend") })}
+                onAdd={(input) => internalMutations.add.mutateAsync(input)}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
-                onUpdate={(id, fields) => internalMutations.update.mutate({ id, ...fields }, { onSuccess: () => toast.success("Declaratie bijgewerkt") })}
                 onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
               />

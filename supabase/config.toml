@@ -51,6 +51,9 @@ verify_jwt = false
 [functions.informer-sync]
 verify_jwt = false
 
+[functions.calculate-route]
+verify_jwt = true
+
 [functions.sync-topical-calendar]
 verify_jwt = false
 
@@ -62,4 +65,3 @@ verify_jwt = false
 
 [functions.register-changed]
 verify_jwt = false
-
