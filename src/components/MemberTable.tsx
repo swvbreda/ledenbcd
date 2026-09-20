@@ -143,12 +143,12 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
         className="p-3 border-b border-border active:bg-muted/30 transition-colors cursor-pointer"
         onClick={() => navigate(`/leden/${m.id}`)}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="min-w-0 flex items-start gap-2">
             <LogoThumb url={logos[m.id]} naam={m.naam} size={40} />
             <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-medium font-display text-sm">{m.naam}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-medium font-display text-sm truncate">{m.naam}</span>
               {m.oprichter && <span className="text-amber-500">★</span>}
               {(() => {
                 const boardEntries = boardMembersByLid.get(m.id) || [];
@@ -162,9 +162,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
                 );
               })()}
             </div>
-            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-              {!memberIsLead && <span className="font-mono">#{m.id}</span>}
-              <span>{gemeenten.join(", ")}</span>
+            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground min-w-0">
+              {!memberIsLead && <span className="font-mono shrink-0">#{m.id}</span>}
+              <span className="truncate">{gemeenten.join(", ")}</span>
             </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border overflow-hidden">
+    <div className="w-full max-w-full min-w-0 bg-card rounded-lg border border-border overflow-hidden">
       {isAdmin && (
         <div className="hidden md:flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 border-b border-border text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><span className="text-amber-500">★</span> Oprichter</span>

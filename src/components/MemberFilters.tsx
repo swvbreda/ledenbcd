@@ -30,13 +30,13 @@ const MemberFilters = ({
   onClear, hasActiveFilters,
 }: MemberFiltersProps) => {
   return (
-    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-      <Filter size={15} className="text-muted-foreground hidden sm:block" />
+    <div className="grid w-full max-w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:w-auto sm:gap-3">
+      <Filter size={15} className="text-muted-foreground hidden sm:block shrink-0" />
 
       <select
         value={selectedCity}
         onChange={(e) => onCityChange(e.target.value)}
-        className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
+        className="w-full sm:w-auto sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
       >
         <option value="">Alle steden</option>
         {cities.map((c) => (
@@ -47,7 +47,7 @@ const MemberFilters = ({
       <select
         value={selectedStadsdeel}
         onChange={(e) => onStadsdeelChange(e.target.value)}
-        className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
+        className="w-full sm:w-auto sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
       >
         <option value="">Alle stadsdelen</option>
         {stadsdelen.map((s) => (
@@ -58,7 +58,7 @@ const MemberFilters = ({
       <select
         value={selectedJaren}
         onChange={(e) => onJarenChange(e.target.value)}
-        className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
+        className="w-full sm:w-auto sm:flex-none px-2 sm:px-3 py-1.5 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring min-w-0"
       >
         {jarenOptions.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -68,7 +68,7 @@ const MemberFilters = ({
       {hasActiveFilters && (
         <button
           onClick={onClear}
-          className="flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="col-span-2 sm:col-auto flex items-center justify-center sm:justify-start gap-1 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <X size={13} /> Wis filters
         </button>

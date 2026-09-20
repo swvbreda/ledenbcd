@@ -91,7 +91,7 @@ const LedenPage = () => {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
+    <div className="w-full max-w-full min-w-0 p-4 sm:p-6 space-y-4 overflow-x-hidden">
       <BcdHeroBanner
         title={
           showArchived
@@ -131,8 +131,12 @@ const LedenPage = () => {
 
       {!showArchived && (
         <>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ViewTab)}>
-            <TabsList>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as ViewTab)}
+            className="w-full max-w-full min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <TabsList className="w-max">
               <TabsTrigger value="leden" className="gap-1.5">
                 <Users size={14} />
                 Leden ({ledenOnly.length})
@@ -150,7 +154,7 @@ const LedenPage = () => {
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full max-w-full min-w-0">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
               <MemberFilters
                 cities={cities}
