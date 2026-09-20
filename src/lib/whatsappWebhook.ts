@@ -92,10 +92,12 @@ const MEDIA_TYPES = ["image", "video", "audio", "document", "sticker"] as const;
  * Haalt inkomende 1-op-1 berichten uit een Meta-webhookpayload.
  * Onbekende typen blijven herkenbaar bewaard zonder te crashen.
  */
-export function parseIncomingMessages(payload: unknown): ParsedWhatsAppMessage[] {
+export function parseIncomingMessages(
+  payload: unknown,
+): ParsedWhatsAppMessage[] {
   const result: ParsedWhatsAppMessage[] = [];
   const entries = Array.isArray((payload as { entry?: unknown })?.entry)
-    ? ((payload as { entry: unknown[] }).entry)
+    ? (payload as { entry: unknown[] }).entry
     : [];
 
   for (const entry of entries) {
@@ -114,30 +116,50 @@ export function parseIncomingMessages(payload: unknown): ParsedWhatsAppMessage[]
 
       const nameByWaId = new Map<string, string>();
       for (const contact of contacts) {
-        const waId = typeof contact["wa_id"] === "string" ? contact["wa_id"] : null;
+        const waId =
+          typeof contact["wa_id"] === "string" ? contact["wa_id"] : null;
         const profile = contact["profile"] as { name?: unknown } | undefined;
         const name = clip(profile?.name);
         if (waId && name) nameByWaId.set(waId, name);
       }
 
       for (const message of messages) {
-        const waMessageId = typeof message["id"] === "string" ? message["id"] : null;
-        const waId = typeof message["from"] === "string" ? message["from"] : null;
+        const waMessageId =
+          typeof message["id"] === "string" ? message["id"] : null;
+        const waId =
+          typeof message["from"] === "string" ? message["from"] : null;
         if (!waMessageId || !waId) continue;
 
-        const type = typeof message["type"] === "string" ? message["type"] : "unknown";
+        const type =
+          typeof message["type"] === "string" ? message["type"] : "unknown";
         let body: string | null = null;
         let mediaId: string | null = null;
         let mediaMimeType: string | null = null;
 
         if (type === "text") {
-          body = clip((message["text"] as { body?: unknown } | undefined)?.body);
+          body = clip(
+            (message["text"] as { body?: unknown } | undefined)?.body,
+          );
         } else if (type === "button") {
-          body = clip((message["button"] as { text?: unknown } | undefined)?.text);
+          body = clip(
+            (message["button"] as { text?: unknown } | undefined)?.text,
+          );
+        } else if (type === "interactive") {
+          const interactive = message["interactive"] as
+            Record<string, unknown> | undefined;
+          const reply = (interactive?.["button_reply"] ??
+            interactive?.["list_reply"] ??
+            interactive?.["nfm_reply"]) as Record<string, unknown> | undefined;
+          body =
+            clip(reply?.["title"]) ??
+            clip(reply?.["description"]) ??
+            clip(reply?.["body"]) ??
+            clip(reply?.["id"]);
         } else if ((MEDIA_TYPES as readonly string[]).includes(type)) {
           const media = message[type] as Record<string, unknown> | undefined;
           body = clip(media?.["caption"]) ?? clip(media?.["filename"]);
-          mediaId = typeof media?.["id"] === "string" ? (media["id"] as string) : null;
+          mediaId =
+            typeof media?.["id"] === "string" ? (media["id"] as string) : null;
           mediaMimeType =
             typeof media?.["mime_type"] === "string"
               ? (media["mime_type"] as string)
