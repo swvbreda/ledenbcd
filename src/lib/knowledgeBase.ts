@@ -6,8 +6,10 @@ export const KNOWLEDGE_BASE_ENDPOINTS = [
   "https://id-preview--ad4fe468-a3c4-4d88-8f3f-4515abd526e9.lovable.app/api/leden/kennisbank",
 ] as const;
 
-export const PUBLIC_DOSSIERS_URL =
-  "https://coffeeshopbond.nl/dossiers.json";
+export const PUBLIC_KNOWLEDGE_BASE_URLS = [
+  "https://coffeeshopbond.nl/kennisbank.json",
+  "https://coffeeshopbond.nl/dossiers.json",
+] as const;
 
 export type KnowledgeMetric = {
   label: string;
@@ -75,7 +77,10 @@ function normalizeDossier(
 
   return {
     slug,
-    path: text(value.path, `/publicaties/${slug}`),
+    path: text(
+      value.path,
+      text(value.pad, text(value.url, `/publicaties/${slug}`)),
+    ),
     titel,
     thema: text(value.thema, "Kennisdossier"),
     beschrijving: text(value.beschrijving),
@@ -130,7 +135,11 @@ export function parseKnowledgePayload(value: unknown): KnowledgePayload {
   if (!isRecord(value)) throw new Error("Ongeldig antwoord van de kennisbank");
 
   const nested = isRecord(value.data) ? value.data : value;
-  const dossiers = Array.isArray(nested.dossiers) ? nested.dossiers : [];
+  const dossiers = Array.isArray(nested.dossiers)
+    ? nested.dossiers
+    : Array.isArray(nested.items)
+      ? nested.items
+      : [];
   const documenten = Array.isArray(nested.documenten)
     ? nested.documenten
     : Array.isArray(nested.documents)
@@ -147,6 +156,30 @@ export function parseKnowledgePayload(value: unknown): KnowledgePayload {
       .map(normalizeDocument)
       .filter(Boolean) as KnowledgeDocument[],
   };
+}
+
+async function requestPublicKnowledgeBase(): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (const endpoint of PUBLIC_KNOWLEDGE_BASE_URLS) {
+    try {
+      const response = await fetch(endpoint, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (response.ok) return response;
+      lastError = new Error(
+        `Openbare kennisbank niet beschikbaar (${response.status})`,
+      );
+    } catch (error) {
+      lastError =
+        error instanceof Error
+          ? error
+          : new Error("Openbare kennisbank niet bereikbaar");
+    }
+  }
+
+  throw lastError ?? new Error("Openbare kennisbank niet bereikbaar");
 }
 
 async function authorizedRequest(
@@ -203,15 +236,8 @@ export async function loadKnowledgeBase(
 ): Promise<KnowledgePayload> {
   const [memberResponse, publicResponse] = await Promise.all([
     requestWithPreviewFallback(session),
-    fetch(PUBLIC_DOSSIERS_URL, {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    }),
+    requestPublicKnowledgeBase(),
   ]);
-
-  if (!publicResponse.ok) {
-    throw new Error(`Openbare kennisbank niet beschikbaar (${publicResponse.status})`);
-  }
 
   const memberData = parseKnowledgePayload(await memberResponse.json());
   const publicData = parseKnowledgePayload(await publicResponse.json());
