@@ -1886,16 +1886,22 @@ export type Database = {
           appointment: string | null
           bank_account: string | null
           bank_transaction_id: string | null
+          board_member_id: string | null
           board_member_name: string
           created_at: string
           declaration_type: string
           expense_date: string | null
           id: string
+          informer_error: string | null
+          informer_external_id: string | null
+          informer_status: string
+          informer_synced_at: string | null
           km_rate: number
           km_return: number | null
           km_single: number | null
           max_allowance_note: string | null
           paid_at: string | null
+          receipt_path: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
@@ -1910,16 +1916,22 @@ export type Database = {
           appointment?: string | null
           bank_account?: string | null
           bank_transaction_id?: string | null
+          board_member_id?: string | null
           board_member_name: string
           created_at?: string
           declaration_type?: string
           expense_date?: string | null
           id?: string
+          informer_error?: string | null
+          informer_external_id?: string | null
+          informer_status?: string
+          informer_synced_at?: string | null
           km_rate?: number
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
           paid_at?: string | null
+          receipt_path?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -1934,16 +1946,22 @@ export type Database = {
           appointment?: string | null
           bank_account?: string | null
           bank_transaction_id?: string | null
+          board_member_id?: string | null
           board_member_name?: string
           created_at?: string
           declaration_type?: string
           expense_date?: string | null
           id?: string
+          informer_error?: string | null
+          informer_external_id?: string | null
+          informer_status?: string
+          informer_synced_at?: string | null
           km_rate?: number
           km_return?: number | null
           km_single?: number | null
           max_allowance_note?: string | null
           paid_at?: string | null
+          receipt_path?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -1958,6 +1976,13 @@ export type Database = {
             columns: ["bank_transaction_id"]
             isOneToOne: false
             referencedRelation: "ponto_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_declarations_board_member_id_fkey"
+            columns: ["board_member_id"]
+            isOneToOne: false
+            referencedRelation: "board_members"
             referencedColumns: ["id"]
           },
         ]
