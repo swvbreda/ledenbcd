@@ -195,11 +195,15 @@ export function useBudgetCategories(year: number) {
         [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
 
-      // Bestaande administratieve boekingen zonder Informer-koppeling worden
-      // NIET bij de bedragen opgeteld: in de praktijk zijn dit vrijwel altijd
-      // oudere representaties van facturen die Informer ook kent. Zij blijven
-      // zichtbaar in het dossieroverzicht met een eigen markering.
-      const localOnlyRecords: typeof matched.unmatched = [];
+      // Werkelijk aanvullende lokale mutaties: een bankmutatie die niet aan een
+      // Informer-factuur te koppelen is, maar wel expliciet aan een
+      // begrotingspost én dossier is toegewezen. Die telt exact één keer mee in
+      // het managementtotaal. Oude boekingen (budget_expenses) blijven
+      // uitsluitend metadata voor matching en tellen nooit mee.
+      const localOnlyRecords = matched.unmatched.filter(
+        (r) => r.kind === "ponto" && !!r.lineItemId && !!r.dossier,
+      );
+
 
 
       // Exact dezelfde canonieke selectie én toewijzing als het resultaat en de
