@@ -4,6 +4,7 @@ import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
 import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
+import { assertOverrideSaved } from "@/lib/ledgerRowId";
 import {
   expenseEntries,
   revenueEntries,
@@ -561,6 +562,64 @@ export function useBudgetMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  /**
+   * Canonieke Informer-regels hebben geen eigen rij in budget_expenses. Hun
+   * begrotingspost en dossier horen in ledger_entry_overrides, uniek op
+   * (doc_type, informer_id). Bestaande note/excluded/created_by blijven staan.
+   */
+  const setLedgerOverride = useMutation({
+    mutationFn: async ({
+      doc_type,
+      informer_id,
+      line_item_id,
+      dossier,
+    }: {
+      doc_type: string;
+      informer_id: string;
+      line_item_id?: string | null;
+      dossier?: string | null;
+    }) => {
+      const client = supabase as any;
+      const { data: existing, error: readError } = await client
+        .from("ledger_entry_overrides")
+        .select("id, note, excluded, created_by")
+        .eq("doc_type", doc_type)
+        .eq("informer_id", informer_id)
+        .maybeSingle();
+      if (readError) throw readError;
+
+      const payload: any = {
+        doc_type,
+        informer_id,
+        ...(line_item_id !== undefined ? { line_item_id } : {}),
+        ...(dossier !== undefined ? { dossier } : {}),
+        updated_at: new Date().toISOString(),
+      };
+      if (existing) {
+        payload.id = existing.id;
+        payload.note = existing.note ?? null;
+        payload.excluded = existing.excluded ?? false;
+        payload.created_by = existing.created_by ?? null;
+      }
+
+      const { data, error } = await client
+        .from("ledger_entry_overrides")
+        .upsert(payload, { onConflict: "doc_type,informer_id" })
+        .select("id, doc_type, informer_id, line_item_id, dossier");
+      if (error) throw error;
+      assertOverrideSaved(data, { doc_type, informer_id });
+      return data[0];
+    },
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["ledger", year] });
+      qc.invalidateQueries({ queryKey: ["dossier-mutations", year] });
+      qc.invalidateQueries({ queryKey: ["dossiers", year] });
+      qc.invalidateQueries({ queryKey: ["dossier-splits"] });
+      qc.invalidateQueries({ queryKey: ["expense-documents"] });
+    },
+  });
+
   const updateExpense = useMutation({
     mutationFn: async ({ id, ...fields }: { id: string; dossier?: string | null; line_item_id?: string; paid?: boolean; paid_date?: string | null; direction?: "in" | "out" }) => {
       const { error } = await supabase.from("budget_expenses").update(fields).eq("id", id);
@@ -822,6 +881,7 @@ export function useBudgetMutations(year: number) {
     addExpense,
     deleteExpense,
     updateExpense,
+    setLedgerOverride,
     toggleExpensePaid,
     addBalanceItem,
     updateBalanceItem,

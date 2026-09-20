@@ -6,6 +6,7 @@ import { CurrencyCell } from "@/components/budget/CurrencyAmount";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
+import { classifyRowId, entryKeyFromRowId } from "@/lib/ledgerRowId";
 
 interface MemberOption { id: number; naam: string }
 
@@ -21,6 +22,13 @@ interface Props {
   onUpdateExpense?: (id: string, fields: { line_item_id?: string; dossier?: string | null; direction?: "in" | "out" }) => void;
   onUpdateBankTransaction?: (id: string, fields: { line_item_id?: string | null; dossier?: string | null }) => void;
   onUpdatePontoTransaction?: (id: string, fields: { budget_line_item_id?: string | null; dossier?: string | null }) => void;
+  /** Canonieke Informer-regel: opslaan in ledger_entry_overrides. */
+  onSaveLedgerOverride?: (input: {
+    doc_type: string;
+    informer_id: string;
+    line_item_id?: string | null;
+    dossier?: string | null;
+  }) => Promise<unknown>;
   onLinkPayment?: (input: { member_id: number; amount: number; paid_at: string | null }) => void;
   categories?: BudgetCategory[];
   members?: MemberOption[];
@@ -40,6 +48,7 @@ export default function ExpenseDialog({
   onUpdateExpense,
   onUpdateBankTransaction,
   onUpdatePontoTransaction,
+  onSaveLedgerOverride,
   onLinkPayment,
   categories,
   members = [],
@@ -51,6 +60,8 @@ export default function ExpenseDialog({
   const [editLineItemId, setEditLineItemId] = useState<string>("");
   const [editDossier, setEditDossier] = useState<string>("");
   const [editMemberId, setEditMemberId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const isIncomeCategory = useMemo(
     () => /inkomst|contribut|subsid|opbreng/i.test(categoryName || ""),
@@ -78,54 +89,71 @@ export default function ExpenseDialog({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [expenses, allDossiers]);
 
-  const entryKeyFromRowId = (rawId: string): string | null => {
-    if (rawId.startsWith("ponto:")) return `ponto:${rawId.split(":")[1]}`;
-    if (rawId.startsWith("bank:")) return `bank:${rawId.split(":")[1]}`;
-    if (rawId.startsWith("contrib:")) return null;
-    return `expense:${rawId}`;
-  };
 
   const startEdit = (e: BudgetExpense) => {
     setEditingId(e.id);
     setEditLineItemId(e.line_item_id);
     setEditDossier(e.dossier || "");
     setEditMemberId("");
+    setSaveError(null);
     const cat = (categories || []).find((c) => c.line_items.some((li) => li.id === e.line_item_id));
     setEditCategoryId(cat?.id || "");
   };
 
   const cancelEdit = () => {
+    if (saving) return;
     setEditingId(null);
     setEditCategoryId("");
     setEditLineItemId("");
     setEditDossier("");
     setEditMemberId("");
+    setSaveError(null);
   };
 
-  const saveEdit = (e: BudgetExpense) => {
-    if (!editingId) return;
-    const rawId = editingId;
-    const isPonto = rawId.startsWith("ponto:");
-    const isBank = rawId.startsWith("bank:");
-    const isContrib = rawId.startsWith("contrib:");
-    const cleanId = rawId.includes(":") ? rawId.split(":")[1] : rawId;
+  const saveEdit = async (e: BudgetExpense) => {
+    if (!editingId || saving) return;
+    const target = classifyRowId(editingId);
     const dossierValue = editDossier.trim() ? editDossier.trim() : null;
-    const lineItemChanged = editLineItemId && editLineItemId !== e.line_item_id;
+    const lineItemChanged = !!editLineItemId && editLineItemId !== e.line_item_id;
 
-    if (isPonto) {
-      onUpdatePontoTransaction?.(cleanId, {
+    if (target.kind === "ledger") {
+      // Canonieke Informer-regel: toewijzing hoort in ledger_entry_overrides.
+      if (!onSaveLedgerOverride) {
+        setSaveError("Deze boeking kan hier niet worden verplaatst.");
+        return;
+      }
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await onSaveLedgerOverride({
+          doc_type: target.ref.doc_type,
+          informer_id: target.ref.informer_id,
+          ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
+          dossier: dossierValue,
+        });
+        cancelEdit();
+      } catch (err: any) {
+        setSaveError(err?.message || "Opslaan mislukt");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (target.kind === "ponto") {
+      onUpdatePontoTransaction?.(target.id, {
         ...(lineItemChanged ? { budget_line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
-    } else if (isBank) {
-      onUpdateBankTransaction?.(cleanId, {
+    } else if (target.kind === "bank") {
+      onUpdateBankTransaction?.(target.id, {
         ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
-    } else if (isContrib) {
+    } else if (target.kind === "contrib") {
       // Contributiebetalingen worden hier niet rechtstreeks verschoven.
     } else {
-      onUpdateExpense?.(cleanId, {
+      onUpdateExpense?.(target.id, {
         ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
@@ -416,14 +444,18 @@ export default function ExpenseDialog({
                                   </Select>
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button size="sm" className="h-8 text-xs" onClick={() => saveEdit(e)}>
-                                    <Check size={12} className="mr-1" /> Opslaan
+                                  <Button size="sm" className="h-8 text-xs" disabled={saving} onClick={() => { void saveEdit(e); }}>
+                                    <Check size={12} className="mr-1" /> {saving ? "Opslaan…" : "Opslaan"}
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-8 text-xs" onClick={cancelEdit}>
+                                  <Button size="sm" variant="outline" className="h-8 text-xs" disabled={saving} onClick={cancelEdit}>
                                     <X size={12} className="mr-1" /> Annuleren
                                   </Button>
                                 </div>
                               </div>
+                              {saveError && (
+                                <p className="mt-2 text-[11px] text-destructive">{saveError}</p>
+                              )}
+
 
                               {entryKeyFromRowId(e.id) && (
                                 <DossierSplitEditor
