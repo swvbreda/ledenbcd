@@ -51,6 +51,7 @@ import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
 import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id'
@@ -279,6 +280,12 @@ const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   path: '/api/public/register-enrich',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp-webhook',
+    path: '/api/public/whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EnquetesIdReviewRoute = EnquetesIdReviewRouteImport.update({
   id: '/enquetes/$id/review',
   path: '/enquetes/$id/review',
@@ -364,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -416,6 +424,7 @@ export interface FileRoutesByTo {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
   '/extern/product/$id': typeof ExternProductIdRoute
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -629,6 +641,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
     | '/extern/product/$id'
@@ -665,6 +678,7 @@ export interface RootRouteChildren {
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
   ExternProductIdRoute: typeof ExternProductIdRoute
@@ -969,6 +983,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRegisterEnrichRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp-webhook': {
+      id: '/api/public/whatsapp-webhook'
+      path: '/api/public/whatsapp-webhook'
+      fullPath: '/api/public/whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquetes/$id/review': {
       id: '/enquetes/$id/review'
       path: '/enquetes/$id/review'
@@ -1120,6 +1141,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
   ExternProductIdRoute: ExternProductIdRoute,
