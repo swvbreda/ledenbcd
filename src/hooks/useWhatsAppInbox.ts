@@ -25,8 +25,10 @@ export interface WhatsAppMessage {
 }
 
 // De tabellen zijn nieuw; de gegenereerde types kennen ze nog niet.
-interface WhatsAppQuery
-  extends PromiseLike<{ data: unknown[] | null; error: unknown }> {
+interface WhatsAppQuery extends PromiseLike<{
+  data: unknown[] | null;
+  error: unknown;
+}> {
   select(columns: string): WhatsAppQuery;
   order(
     column: string,
