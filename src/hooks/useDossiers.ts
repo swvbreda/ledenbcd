@@ -397,14 +397,18 @@ export function useDossierMutations(year: number) {
           (k): k is string => !!k,
         );
         const ownSplits = splitsFor(key);
-        // Bij een gecombineerde betaling gelden de splits van de betaling niet
-        // per factuur: die zouden dan meerdere keren meetellen.
+        // Bij een gecombineerde of gesplitste betaling gelden de splits van die
+        // betaling niet per factuur: die zouden dan meerdere keren meetellen.
+        // Bij een splitmatch levert de mutatie alleen het dossier van het
+        // bijbehorende deel (zit al in `legacy.dossier`).
+        const viaSplit = matched.matchedBy.get(ledgerKey) === "split";
         const splits =
           ownSplits.length > 0
             ? ownSplits
-            : grouped
+            : grouped || viaSplit
               ? []
               : legacyKeys.map((k) => splitsFor(k)).find((s) => s.length > 0) || [];
+
         rows.push({
           key,
           kind: "ledger",
