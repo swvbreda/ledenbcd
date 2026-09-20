@@ -100,14 +100,20 @@ export default function ExpenseDialog({
     setEditCategoryId(cat?.id || "");
   };
 
-  const cancelEdit = () => {
-    if (saving) return;
+  // Sluit de bewerkmodus altijd (intern gebruik, ook direct na een geslaagde opslag).
+  const resetEditState = () => {
     setEditingId(null);
     setEditCategoryId("");
     setEditLineItemId("");
     setEditDossier("");
     setEditMemberId("");
     setSaveError(null);
+  };
+
+  // Gebruikersactie "Annuleren": geblokkeerd zolang er wordt opgeslagen.
+  const cancelEdit = () => {
+    if (saving) return;
+    resetEditState();
   };
 
   const saveEdit = async (e: BudgetExpense) => {
