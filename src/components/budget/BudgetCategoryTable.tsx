@@ -171,9 +171,6 @@ export default function BudgetCategoryTable({
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.remaining)}>
                     <div className="flex flex-col items-end">
                       <CurrencyCell value={remaining} className={`${remainingClass(remaining)} ${clickableClass(clicks?.remaining)}`} />
-                      {rowRemainingLabel && (
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{rowRemainingLabel}</span>
-                      )}
                     </div>
                   </td>
                   <td className="px-1">
