@@ -396,7 +396,9 @@ export function useDossierMutations(year: number) {
         if (!e.counts_in_totals) continue;
         const amount = Math.abs(Number(e.amount_incl) || 0);
         const ledgerKey = `${e.doc_type}:${e.informer_id}`;
-        const key = entryKeyFor("ledger", ledgerKey);
+        // Canonieke sleutel zonder UI-prefix: gelijk aan wat ExpenseDialog
+        // gebruikt voor splits en documenten.
+        const key = ledgerKey;
         const direct = matched.byEntryKey.get(ledgerKey) || null;
         // Eén bankbetaling die meerdere facturen dekt levert ook de
         // administratieve toewijzing; de betaling zelf telt niet apart mee.
