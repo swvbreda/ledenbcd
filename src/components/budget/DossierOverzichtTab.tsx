@@ -62,14 +62,6 @@ interface DossierRow {
   out: number;
   income: number;
   total: number;
-  /** Netto bedrag uit de canonieke Informer-facturen. */
-  informerTotal: number;
-  /** Netto bedrag uit aanvullende lokale mutaties (niet in Informer). */
-  localTotal: number;
-  /** Aanvullende lokale uitgaven (niet in Informer). */
-  localOut: number;
-  /** Aanvullende lokale inkomsten/terugbetalingen (niet in Informer). */
-  localIncome: number;
 }
 
 
@@ -80,10 +72,6 @@ interface DossierRow {
  */
 export const isUnlinkedOnly = (e: DedupedEntry) =>
   e.sources && e.sources.length > 0 ? e.sources.every((s) => s.unlinked) : !!e.unlinked;
-
-/** Aanvullende lokale mutatie: eigen toewijzing, geen Informer-factuur. */
-export const isLocalOnly = (e: DedupedEntry) =>
-  e.sources && e.sources.length > 0 ? e.sources.every((s) => s.localOnly) : !!e.localOnly;
 
 const formatDate = (value: string | null) => {
   if (!value) return "";
@@ -117,34 +105,17 @@ export default function DossierOverzichtTab({ year }: Props) {
     for (const [dossier, groupEntries] of map) {
       if (isContributionDossier(dossier)) continue;
       const entries = dedupeEntries(groupEntries);
-      // Canonieke Informer-facturen plus aanvullende lokale mutaties met een
-      // eigen toewijzing; regels zonder toewijzing blijven zichtbaar maar
-      // tellen niet mee.
+      // Uitsluitend facturen uit de boekhouding tellen mee; regels zonder
+      // koppeling blijven zichtbaar maar tellen niet.
       const counting = entries.filter((e) => !isUnlinkedOnly(e));
-      const net = (list: DedupedEntry[]) =>
-        list.reduce((s, e) => s + (e.direction === "in" ? -e.shareAmount : e.shareAmount), 0);
       const out = counting.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
       const income = counting.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      const local = counting.filter((e) => isLocalOnly(e));
-      const localOut = local.filter((e) => e.direction === "out").reduce((s, e) => s + e.shareAmount, 0);
-      const localIncome = local.filter((e) => e.direction === "in").reduce((s, e) => s + e.shareAmount, 0);
-      const localTotal = net(local);
-      rows.push({
-        dossier,
-        entries,
-        out,
-        income,
-        total: out - income,
-        informerTotal: out - income - localTotal,
-        localTotal,
-        localOut,
-        localIncome,
-      });
-
+      rows.push({ dossier, entries, out, income, total: out - income });
     }
     rows.sort((a, b) => b.total - a.total);
     return rows;
   }, [mutations]);
+
 
 
   const docsByEntry = useMemo(() => {
@@ -307,27 +278,8 @@ export default function DossierOverzichtTab({ year }: Props) {
                   </button>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
                     {d.entries.length} mutatie{d.entries.length === 1 ? "" : "s"}
-                    {(Math.abs(d.localOut) > 0.005 || Math.abs(d.localIncome) > 0.005) && (
-                      <>
-                        {" · Informer-facturen "}
-                        <CurrencyText value={d.informerTotal} />
-                        {Math.abs(d.localOut) > 0.005 && (
-                          <>
-                            {" · lokale uitgaven "}
-                            <CurrencyText value={d.localOut} />
-                          </>
-                        )}
-                        {Math.abs(d.localIncome) > 0.005 && (
-                          <>
-                            {" · lokale opbrengsten "}
-                            <CurrencyText value={d.localIncome} />
-                          </>
-                        )}
-                        {" · netto dossierkosten "}
-                        <CurrencyText value={d.total} />
-                      </>
-                    )}
                   </span>
+
 
                   {canEdit && (
                     <>
@@ -372,18 +324,11 @@ export default function DossierOverzichtTab({ year }: Props) {
                     <td className="px-3 py-1">
                       {e.counterparty || e.description}
                       {isUnlinkedOnly(e) && (
-                        <span
-                          className={`ml-1 whitespace-nowrap rounded px-1 text-[10px] font-medium ${
-                            isLocalOnly(e)
-                              ? "bg-sky-100 text-sky-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
-                          {isLocalOnly(e)
-                            ? "Lokale mutatie — niet in Informer"
-                            : "nog niet gekoppeld aan Informer"}
+                        <span className="ml-1 whitespace-nowrap rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-700">
+                          nog niet gekoppeld
                         </span>
                       )}
+
                     </td>
                     <td className="px-3 py-1 tabular-nums">
                       {e.invoice || "—"}

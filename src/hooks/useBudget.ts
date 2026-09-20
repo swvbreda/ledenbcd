@@ -7,11 +7,15 @@ import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSourc
 import { assertOverrideSaved } from "@/lib/ledgerRowId";
 import {
   expenseEntries,
-  revenueEntries,
   bucketExpenseEntries,
   expenseAmount,
   type LedgerEntry,
 } from "@/lib/ledger";
+import {
+  buildContributionInvoiceRows,
+  buildOtherRevenueRows,
+  summarizeInvoiceRows,
+} from "@/lib/contributionLedger";
 
 /** Synthetische categorie voor meetellende inkoopfacturen zonder begrotingspost. */
 export const UNASSIGNED_CATEGORY_ID = "__unassigned_ledger__";
@@ -52,8 +56,7 @@ export interface BudgetExpense {
   direction?: "in" | "out";
   /** True als er een dubbele boeking van dezelfde betaling is samengevoegd. */
   _mergedDuplicate?: boolean;
-  /** True bij een aanvullende lokale mutatie die niet in de boekhouding staat. */
-  _localOnly?: boolean;
+
 
 }
 
@@ -103,15 +106,29 @@ export interface BankStatementData {
   netMutation: number;
 }
 
+export interface RevenueTotals {
+  count: number;
+  invoiced: number;
+  paid: number;
+  open: number;
+}
+
 export interface FinancialResultData {
+  /** Gefactureerde contributie volgens de boekhouding. */
   contributionIncome: number;
+  /** Gefactureerde overige verkoopopbrengsten volgens de boekhouding. */
   otherIncome: number;
   totalExpenses: number;
   /** Openstaand bedrag verkoopfacturen volgens de boekhouding. */
   openSales: number;
   /** Openstaand bedrag inkoopfacturen volgens de boekhouding. */
   openPurchase: number;
+  /** Contributie: aantal facturen, gefactureerd, ontvangen en openstaand. */
+  contribution: RevenueTotals;
+  /** Overige opbrengsten: aantal facturen, gefactureerd, ontvangen en openstaand. */
+  other: RevenueTotals;
 }
+
 
 export type ExpenseSourcePreference = "manual" | "pdf_import";
 
@@ -199,14 +216,10 @@ export function useBudgetCategories(year: number) {
         [...assignments].map(([k, a]) => [k, a.lineItemId]),
       );
 
-      // Werkelijk aanvullende lokale mutaties: een bankmutatie die niet aan een
-      // Informer-factuur te koppelen is, maar wel expliciet aan een
-      // begrotingspost én dossier is toegewezen. Die telt exact één keer mee in
-      // het managementtotaal. Oude boekingen (budget_expenses) blijven
-      // uitsluitend metadata voor matching en tellen nooit mee.
-      const localOnlyRecords = matched.unmatched.filter(
-        (r) => r.kind === "ponto" && !!r.lineItemId && !!r.dossier,
-      );
+      // Lokale bankmutaties en oude handmatige boekingen zijn uitsluitend
+      // metadata voor de koppeling; zij voegen nooit een bedrag toe aan de
+      // begrotingsrealisatie.
+
 
 
 
@@ -249,31 +262,7 @@ export function useBudgetCategories(year: number) {
       }
       const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
 
-      for (const r of localOnlyRecords) {
-        const lineItemId = r.lineItemId as string;
-        if (!expensesByLineItem[lineItemId]) expensesByLineItem[lineItemId] = [];
-        expensesByLineItem[lineItemId].push({
-          id: r.key,
-          line_item_id: lineItemId,
-          description: r.description || r.counterparty || "",
-          // Bedrag blijft positief; de richting bepaalt per soort post of het
-          // een kostenpost verhoogt (uit) of verlaagt (in). Zo telt een
-          // ontvangen vergoeding nooit als extra uitgave.
-          amount: r.amount,
 
-          expense_date: r.date,
-          creditor_name: r.counterparty || "",
-          invoice_reference: r.invoice || "",
-          dossier: r.dossier || null,
-          source: r.kind === "ponto" ? "bank" : "administratie",
-          pdf_file_path: null,
-          paid: r.kind === "ponto",
-          paid_date: r.kind === "ponto" ? r.date : null,
-          created_at: r.date,
-          direction: r.direction,
-          _localOnly: true,
-        });
-      }
 
 
       const lineItemsByCategory: Record<string, any[]> = {};
@@ -376,50 +365,46 @@ export function useBankStatement(year: number) {
 
 /**
  * Werkelijk resultaat. Uitsluitend gebaseerd op de canonieke Informer-regels
- * (ledger_entries_v); bankmutaties tellen hier nooit zelfstandig in mee.
+ * (ledger_entries_v); bankmutaties en lokale contributietabellen tellen hier
+ * nooit in mee. Contributie wordt herkend met dezelfde gedeelde classificatie
+ * als het contributieoverzicht en de ledenkaart.
  */
 export function useFinancialResult(year: number) {
   return useQuery({
     queryKey: ["financial-result", "ledger", year],
     queryFn: async () => {
       const client = supabase as any;
-      const [{ data, error }, { data: debtorMap }] = await Promise.all([
-        client.from("ledger_entries_v").select("*").eq("year", year).limit(5000),
-        client.from("informer_debtor_map").select("informer_debtor_id"),
-      ]);
+      const { data, error } = await client
+        .from("ledger_entries_v")
+        .select("*")
+        .eq("year", year)
+        .limit(5000);
       if (error) throw error;
-      const memberRelations = new Set<string>(
-        (debtorMap ?? []).map((r: any) => String(r.informer_debtor_id)),
-      );
 
       const rows = (data ?? []) as LedgerEntry[];
+      const contributionRows = buildContributionInvoiceRows(rows);
+      const otherRows = buildOtherRevenueRows(rows);
+      const contribution = summarizeInvoiceRows(contributionRows);
+      const other = summarizeInvoiceRows(otherRows);
+
       const totals: FinancialResultData = {
-        contributionIncome: 0,
-        otherIncome: 0,
+        contributionIncome: contribution.invoiced,
+        otherIncome: other.invoiced,
         totalExpenses: 0,
-        openSales: 0,
+        openSales: contribution.open + other.open,
         openPurchase: 0,
+        contribution,
+        other,
       };
       for (const entry of expenseEntries(rows)) {
         totals.totalExpenses += Number(entry.amount_incl) || 0;
         totals.openPurchase += Number(entry.open_amount) || 0;
       }
-      for (const entry of revenueEntries(rows)) {
-        const amount = Number(entry.amount_incl) || 0;
-        totals.openSales += Number(entry.open_amount) || 0;
-        if (
-          memberRelations.has(String(entry.relation_id)) ||
-          /contributie/i.test(String(entry.description ?? entry.dossier ?? ""))
-        ) {
-          totals.contributionIncome += amount;
-        } else {
-          totals.otherIncome += amount;
-        }
-      }
       return totals;
     },
   });
 }
+
 
 export function useBudgetMutations(year: number) {
   const qc = useQueryClient();

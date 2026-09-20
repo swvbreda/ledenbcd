@@ -3791,6 +3791,20 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_contribution_invoices: {
+        Args: { _year?: number }
+        Returns: {
+          amount_incl: number
+          due_date: string
+          entry_date: string
+          invoice_number: string
+          member_id: number
+          open_amount: number
+          paid_amount: number
+          status: string
+          year: number
+        }[]
+      }
       get_register_link_summary: {
         Args: never
         Returns: {

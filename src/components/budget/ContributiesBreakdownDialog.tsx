@@ -2,8 +2,7 @@ import { useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
-import type { Contribution, ContributionInvoice, ContributionPayment } from "@/hooks/useContributions";
-import { buildCanonicalInvoiceRows } from "@/lib/contributionInvoice";
+import { useContributionLedger } from "@/hooks/useContributionLedger";
 
 export type BreakdownMode = "invoices" | "paid" | "unpaid";
 
@@ -15,32 +14,19 @@ interface Props {
   mode: BreakdownMode;
   year: number;
   budgetedMemberCount: number;
-  invoices: ContributionInvoice[];
-  contributions: Contribution[];
-  payments?: ContributionPayment[];
   members: MemberLite[];
 }
 
 export default function ContributiesBreakdownDialog({
-  open, onOpenChange, mode, year, budgetedMemberCount, invoices, contributions, payments = [], members,
+  open, onOpenChange, mode, year, budgetedMemberCount, members,
 }: Props) {
+  const { data } = useContributionLedger(year);
+
   const memberMap = useMemo(() => {
     const m = new Map<number, MemberLite>();
     members.forEach((mm) => m.set(mm.id, mm));
     return m;
   }, [members]);
-
-  const paymentsByMember = useMemo(() => {
-    const m = new Map<number, { amount: number; paidDate: string | null }>();
-    payments.forEach((p) => {
-      const current = m.get(p.member_id) ?? { amount: 0, paidDate: null };
-      const paidDate = p.paid_at
-        ? (!current.paidDate || p.paid_at > current.paidDate ? p.paid_at : current.paidDate)
-        : current.paidDate;
-      m.set(p.member_id, { amount: current.amount + (Number(p.amount) || 0), paidDate });
-    });
-    return m;
-  }, [payments]);
 
   const fmtDate = (d?: string | null) => {
     if (!d) return "—";
@@ -50,25 +36,18 @@ export default function ContributiesBreakdownDialog({
   };
 
   const rows = useMemo(() => {
-    return buildCanonicalInvoiceRows({
-      contributions,
-      invoices,
-      paymentsByMember,
-    })
+    return (data?.contribution ?? [])
       .map((r) => ({
         ...r,
-        naam: memberMap.get(r.member_id)?.naam ?? `Lid #${r.member_id}`,
-        invoice_number: r.invoiceNumber ?? "—",
-        invoice_date: r.invoiceDate,
-        paid_date: r.paidDate,
+        naam: (r.memberId ? memberMap.get(r.memberId)?.naam : null) ?? r.relationName ?? "—",
       }))
       .sort((a, b) => {
-        const da = a.invoice_date ? new Date(a.invoice_date).getTime() : 0;
-        const db = b.invoice_date ? new Date(b.invoice_date).getTime() : 0;
+        const da = a.invoiceDate ? new Date(a.invoiceDate).getTime() : 0;
+        const db = b.invoiceDate ? new Date(b.invoiceDate).getTime() : 0;
         if (db !== da) return db - da;
         return a.naam.localeCompare(b.naam, "nl");
       });
-  }, [invoices, memberMap, contributions, paymentsByMember]);
+  }, [data, memberMap]);
 
   const filtered = useMemo(() => {
     if (mode === "paid") return rows.filter((r) => r.paidAmount > 0);
@@ -123,7 +102,7 @@ export default function ContributiesBreakdownDialog({
                     <th className="px-3 py-2 text-left font-medium">Factuurnr</th>
                     <th className="px-3 py-2 text-left font-medium w-28">Factuurdatum</th>
                     <th className="px-3 py-2 text-right font-medium">Bedrag</th>
-                    <th className="px-3 py-2 text-left font-medium w-28">Betaaldatum</th>
+                    <th className="px-3 py-2 text-right font-medium">Openstaand</th>
                     <th className="px-3 py-2 text-left font-medium w-24">Status</th>
                   </tr>
                 </thead>
@@ -132,16 +111,18 @@ export default function ContributiesBreakdownDialog({
                     <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">Geen resultaten</td></tr>
                   ) : filtered.map((r) => (
                     <tr key={r.key} className="border-t border-border/50 hover:bg-muted/30">
-                      <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{r.member_id}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground tabular-nums">{r.memberId ?? "—"}</td>
                       <td className="px-3 py-1.5">{r.naam}</td>
-                      <td className="px-3 py-1.5 tabular-nums">{r.invoice_number}</td>
-                      <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{fmtDate(r.invoice_date)}</td>
+                      <td className="px-3 py-1.5 tabular-nums">{r.invoiceNumber ?? "—"}</td>
+                      <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{fmtDate(r.invoiceDate)}</td>
                       <td className="px-3 py-1.5 text-right">
                         <CurrencyCell value={mode === "paid" ? r.paidAmount : mode === "unpaid" ? r.openAmount : r.amount} />
                       </td>
-                      <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{r.paid ? fmtDate(r.paid_date) : "—"}</td>
+                      <td className="px-3 py-1.5 text-right">
+                        <CurrencyCell value={r.openAmount} />
+                      </td>
                       <td className="px-3 py-1.5">
-                        {r.paid ? (
+                        {r.status === "paid" ? (
                           <span className="text-emerald-600 text-xs font-medium">Betaald</span>
                         ) : (
                           <span className="text-amber-600 text-xs font-medium">Open</span>
