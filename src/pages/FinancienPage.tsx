@@ -413,7 +413,7 @@ export default function FinancienPage() {
           }}
           onImportIncome={async () => {
             // Ontvangsten worden uitsluitend in de boekhouding vastgelegd.
-            toast.info("Ontvangsten komen uit de boekhouding en worden hier niet vastgelegd.");
+            toast.info("Ontvangsten worden hier niet vastgelegd.");
           }}
 
           onReplaceBankStatement={async ({ fileName, openingBalance, closingBalance, transactions }) => {
