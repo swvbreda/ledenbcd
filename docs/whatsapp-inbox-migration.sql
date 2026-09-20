@@ -1,0 +1,4 @@
+-- Referentiekopie van de WhatsApp-inbox migratie.
+-- De map supabase/migrations/ is beheerd; deze SQL wordt daar automatisch
+-- vastgelegd zodra de database bereikbaar is en de migratie wordt toegepast.
+-- Idempotent: herhaald uitvoeren is veilig.
