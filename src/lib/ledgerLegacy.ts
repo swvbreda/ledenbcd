@@ -424,6 +424,19 @@ export function matchLegacyRecords(
       break;
     }
   }
+  // 5c. Is een gekoppelde mutatie over dossiers verdeeld, dan geldt voor deze
+  // factuur het dossier van het deel dat exact haar bedrag dekt.
+  for (const entry of entries) {
+    const ekey = ledgerKeyOf(entry);
+    const record = byEntryKey.get(ekey);
+    if (!record?.splits || record.splits.length === 0) continue;
+    if (cents(record.amount) === cents(Number(entry.amount_incl) || 0)) continue;
+    const split = record.splits.find((s) => cents(s.amount) === cents(Number(entry.amount_incl) || 0));
+    if (!split) continue;
+    byEntryKey.set(ekey, { ...record, dossier: split.dossier });
+    matchedBy.set(ekey, "split");
+  }
+
 
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
