@@ -387,23 +387,57 @@ export function matchLegacyRecords(
     takeGroup(entry, available().filter((r) => isSamePayment(self, asRecordLike(r))), "payment");
   }
 
+  // 5b. Factuurhint + exact bedrag, ook wanneer alleen een dossierdeel van een
+  // grotere betaling bij deze factuur hoort (gesplitste betaling). De
+  // tegenpartijnaam mag afwijken; de factuurhint en het bedrag zijn leidend.
+  for (const record of available()) {
+    const keys = recordHintKeys(record, hints);
+    if (keys.length === 0) continue;
+    for (const entry of entries) {
+      if (!entry.counts_in_totals) continue;
+      const ekey = ledgerKeyOf(entry);
+      if (byEntryKey.has(ekey) || combinedByEntryKey.has(ekey)) continue;
+      if (!entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)))) continue;
+      const target = cents(Number(entry.amount_incl) || 0);
+      const full = cents(record.amount) === target;
+      const split = (record.splits || []).find((s) => cents(s.amount) === target);
+      if (!full && !split) continue;
+      take(entry, split ? { ...record, dossier: split.dossier } : record, "split");
+      break;
+    }
+  }
 
   // 6. Dezelfde oude betaling die zowel als boeking als bankmutatie bestaat:
   // die hangt als alias aan de Informer-regel (alleen voor documenten) en
-  // verschijnt dus niet apart als "nog niet gekoppeld".
+  // verschijnt dus niet apart als "nog niet gekoppeld". Er wordt zowel met de
+  // primaire administratieve regel als met de canonieke Informer-regel zelf
+  // vergeleken, zodat een bankregel met hetzelfde factuurnummer nooit dubbel
+  // blijft staan.
+  const entryByKey = new Map(entries.map((e) => [ledgerKeyOf(e), e]));
   for (const [key, record] of byEntryKey) {
-    const extra = available().filter(
-      (r) =>
-        r.key !== record.key &&
-        (isSamePayment(asRecordLike(record), asRecordLike(r)) ||
-          sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))),
-    );
+    const entry = entryByKey.get(key);
+    const self = entry ? asLedgerLike(entry) : null;
+    const extra = available().filter((r) => {
+      if (r.key === record.key) return false;
+      if (
+        isSamePayment(asRecordLike(record), asRecordLike(r)) ||
+        sharesInvoiceNumber(asRecordLike(record), asRecordLike(r))
+      )
+        return true;
+      if (!entry || !self) return false;
+      if (isSamePayment(self, asRecordLike(r))) return true;
+      const keys = recordHintKeys(r, hints);
+      const hit =
+        sharesInvoiceNumber(self, asRecordLike(r)) ||
+        entryInvoiceKeys(entry).some((k) => keys.some((h) => invoiceKeysMatch(h, k)));
+      return hit && relevantAmountMatches(r, entry);
+    });
     for (const r of extra) usedLegacy.add(r.key);
     if (extra.length > 0) {
       aliasesByEntryKey.set(key, [...(aliasesByEntryKey.get(key) ?? []), ...extra]);
     }
-
   }
+
 
 
   return {
