@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
 import { classifyRowId, entryKeyFromRowId } from "@/lib/ledgerRowId";
+import { ledgerSaveTransition } from "@/lib/expenseEditState";
 
 interface MemberOption { id: number; naam: string }
 
@@ -100,14 +101,20 @@ export default function ExpenseDialog({
     setEditCategoryId(cat?.id || "");
   };
 
-  const cancelEdit = () => {
-    if (saving) return;
+  // Sluit de bewerkmodus altijd (intern gebruik, ook direct na een geslaagde opslag).
+  const resetEditState = () => {
     setEditingId(null);
     setEditCategoryId("");
     setEditLineItemId("");
     setEditDossier("");
     setEditMemberId("");
     setSaveError(null);
+  };
+
+  // Gebruikersactie "Annuleren": geblokkeerd zolang er wordt opgeslagen.
+  const cancelEdit = () => {
+    if (saving) return;
+    resetEditState();
   };
 
   const saveEdit = async (e: BudgetExpense) => {
@@ -131,11 +138,13 @@ export default function ExpenseDialog({
           ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
           dossier: dossierValue,
         });
-        cancelEdit();
-      } catch (err: any) {
-        setSaveError(err?.message || "Opslaan mislukt");
-      } finally {
+        const t = ledgerSaveTransition({ ok: true });
         setSaving(false);
+        if (t.reset) resetEditState();
+      } catch (err: any) {
+        const t = ledgerSaveTransition({ ok: false, message: err?.message });
+        setSaving(false);
+        setSaveError(t.saveError);
       }
       return;
     }
