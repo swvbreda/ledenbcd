@@ -60,6 +60,8 @@ export default function ExpenseDialog({
   const [editLineItemId, setEditLineItemId] = useState<string>("");
   const [editDossier, setEditDossier] = useState<string>("");
   const [editMemberId, setEditMemberId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const isIncomeCategory = useMemo(
     () => /inkomst|contribut|subsid|opbreng/i.test(categoryName || ""),
@@ -105,30 +107,50 @@ export default function ExpenseDialog({
     setEditMemberId("");
   };
 
-  const saveEdit = (e: BudgetExpense) => {
-    if (!editingId) return;
-    const rawId = editingId;
-    const isPonto = rawId.startsWith("ponto:");
-    const isBank = rawId.startsWith("bank:");
-    const isContrib = rawId.startsWith("contrib:");
-    const cleanId = rawId.includes(":") ? rawId.split(":")[1] : rawId;
+  const saveEdit = async (e: BudgetExpense) => {
+    if (!editingId || saving) return;
+    const target = classifyRowId(editingId);
     const dossierValue = editDossier.trim() ? editDossier.trim() : null;
-    const lineItemChanged = editLineItemId && editLineItemId !== e.line_item_id;
+    const lineItemChanged = !!editLineItemId && editLineItemId !== e.line_item_id;
 
-    if (isPonto) {
-      onUpdatePontoTransaction?.(cleanId, {
+    if (target.kind === "ledger") {
+      // Canonieke Informer-regel: toewijzing hoort in ledger_entry_overrides.
+      if (!onSaveLedgerOverride) {
+        setSaveError("Deze boeking kan hier niet worden verplaatst.");
+        return;
+      }
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await onSaveLedgerOverride({
+          doc_type: target.ref.doc_type,
+          informer_id: target.ref.informer_id,
+          ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
+          dossier: dossierValue,
+        });
+        cancelEdit();
+      } catch (err: any) {
+        setSaveError(err?.message || "Opslaan mislukt");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    if (target.kind === "ponto") {
+      onUpdatePontoTransaction?.(target.id, {
         ...(lineItemChanged ? { budget_line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
-    } else if (isBank) {
-      onUpdateBankTransaction?.(cleanId, {
+    } else if (target.kind === "bank") {
+      onUpdateBankTransaction?.(target.id, {
         ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
-    } else if (isContrib) {
+    } else if (target.kind === "contrib") {
       // Contributiebetalingen worden hier niet rechtstreeks verschoven.
     } else {
-      onUpdateExpense?.(cleanId, {
+      onUpdateExpense?.(target.id, {
         ...(lineItemChanged ? { line_item_id: editLineItemId } : {}),
         dossier: dossierValue,
       });
