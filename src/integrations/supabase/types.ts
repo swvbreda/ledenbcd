@@ -3460,6 +3460,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           member_id: number | null
+          message_type: string
           phone: string
           read_by_us_at: string | null
           sent_by: string | null
@@ -3479,6 +3480,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           member_id?: number | null
+          message_type?: string
           phone: string
           read_by_us_at?: string | null
           sent_by?: string | null
@@ -3498,6 +3500,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           member_id?: number | null
+          message_type?: string
           phone?: string
           read_by_us_at?: string | null
           sent_by?: string | null
@@ -3709,6 +3712,7 @@ export type Database = {
         Args: { _member_id: number }
         Returns: number
       }
+      can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
       delete_email: {
@@ -3935,6 +3939,23 @@ export type Database = {
         Returns: number
       }
       trigger_topical_sync: { Args: never; Returns: number }
+      whatsapp_ingest_message: {
+        Args: {
+          p_body: string
+          p_media_type: string
+          p_message_type: string
+          p_phone: string
+          p_preview: string
+          p_profile_name: string
+          p_sent_at: string
+          p_wa_message_id: string
+        }
+        Returns: boolean
+      }
+      whatsapp_mark_conversation_read: {
+        Args: { p_conversation_id: string }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "extern" | "inhuur"
