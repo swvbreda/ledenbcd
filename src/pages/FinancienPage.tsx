@@ -584,6 +584,11 @@ export default function FinancienPage() {
           onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Boeking verplaatst") })}
           onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Bankboeking bijgewerkt") })}
           onUpdatePontoTransaction={(id, fields) => mutations.updatePontoTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Bankboeking bijgewerkt") })}
+          onSaveLedgerOverride={async (input) => {
+            const result = await mutations.setLedgerOverride.mutateAsync(input);
+            toast.success("Boeking verplaatst");
+            return result;
+          }}
           onLinkPayment={(input) => mutations.linkPaymentToMember.mutate({ ...input, userId: user.id }, { onSuccess: () => toast.success("Contributie gekoppeld aan lid") })}
           categories={categories || []}
           members={allMembersForLookup.map((m) => ({ id: m.id, naam: m.naam }))}
