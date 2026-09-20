@@ -4,6 +4,7 @@ import { isExcludedDossier } from "@/lib/budgetExclusions";
 import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerDedupe";
 import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
+import { assertOverrideSaved } from "@/lib/ledgerRowId";
 import {
   expenseEntries,
   revenueEntries,
@@ -880,6 +881,7 @@ export function useBudgetMutations(year: number) {
     addExpense,
     deleteExpense,
     updateExpense,
+    setLedgerOverride,
     toggleExpensePaid,
     addBalanceItem,
     updateBalanceItem,
