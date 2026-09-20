@@ -53,10 +53,6 @@ export default function FinancienPage() {
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const internalMutations = useInternalDeclarationMutations(year);
-  const { data: contributions } = useContributions(year);
-  const { data: contributionInvoices } = useContributionInvoices(year);
-  const { data: contributionPayments } = useContributionPayments(year);
-  const upsertContribution = useUpsertContribution();
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
   const allMembersForLookup = useMemo(
