@@ -511,11 +511,12 @@ export function useDossierMutationActions(year: number) {
       for (const entry of entries) {
         if (entry.kind === "ledger") {
           // Blijft bewaard na synchronisatie: hangt aan de stabiele Informer-ID.
-          const [docType, informerId] = entry.key.replace(/^ledger:/, "").split(":");
+          const ref = parseLedgerEntryKey(entry.key);
+          if (!ref) throw new Error(`Onbekende boekingssleutel: ${entry.key}`);
           const { error } = await client
             .from("ledger_entry_overrides")
             .upsert(
-              { doc_type: docType, informer_id: informerId, dossier },
+              { doc_type: ref.doc_type, informer_id: ref.informer_id, dossier },
               { onConflict: "doc_type,informer_id" },
             );
           if (error) throw error;
