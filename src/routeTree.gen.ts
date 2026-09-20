@@ -48,6 +48,7 @@ import { Route as DashboardLedenvoordelenIndexRouteImport } from './routes/_dash
 import { Route as DashboardLedenvoordelenIdRouteImport } from './routes/_dashboard/ledenvoordelen.$id'
 import { Route as DashboardLocatiesIndexRouteImport } from './routes/_dashboard/locaties.index'
 import { Route as DashboardLocatiesGemeenteRouteImport } from './routes/_dashboard/locaties.$gemeente'
+import { Route as ApiLedenKennisbankRouteImport } from './routes/api/leden/kennisbank'
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
@@ -264,6 +265,11 @@ const DashboardLocatiesGemeenteRoute =
     path: '/locaties/$gemeente',
     getParentRoute: () => DashboardRoute,
   } as any)
+const ApiLedenKennisbankRoute = ApiLedenKennisbankRouteImport.update({
+  id: '/api/leden/kennisbank',
+  path: '/api/leden/kennisbank',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgendaOutlookBackfillRoute =
   ApiPublicAgendaOutlookBackfillRouteImport.update({
     id: '/api/public/agenda-outlook-backfill',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -428,6 +435,7 @@ export interface FileRoutesByTo {
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -484,6 +492,7 @@ export interface FileRoutesById {
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
   '/_dashboard/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/_dashboard/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
+  '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -540,6 +549,7 @@ export interface FileRouteTypes {
     | '/leden/$id'
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
+    | '/api/leden/kennisbank'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/leden/$id'
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
+    | '/api/leden/kennisbank'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -649,6 +660,7 @@ export interface FileRouteTypes {
     | '/_dashboard/leden/$id'
     | '/_dashboard/ledenvoordelen/$id'
     | '/_dashboard/locaties/$gemeente'
+    | '/api/leden/kennisbank'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -686,6 +698,7 @@ export interface RootRouteChildren {
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
   ExternProfielRoute: typeof ExternProfielRoute
   ExternIndexRoute: typeof ExternIndexRoute
+  ApiLedenKennisbankRoute: typeof ApiLedenKennisbankRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
@@ -974,6 +987,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLocatiesGemeenteRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/leden/kennisbank': {
+      id: '/api/leden/kennisbank'
+      path: '/api/leden/kennisbank'
+      fullPath: '/api/leden/kennisbank'
+      preLoaderRoute: typeof ApiLedenKennisbankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agenda-outlook-backfill': {
       id: '/api/public/agenda-outlook-backfill'
       path: '/api/public/agenda-outlook-backfill'
@@ -1158,6 +1178,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnqueteExternIdRoute: EnqueteExternIdRoute,
   ExternProfielRoute: ExternProfielRoute,
   ExternIndexRoute: ExternIndexRoute,
+  ApiLedenKennisbankRoute: ApiLedenKennisbankRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,

@@ -1,9 +1,13 @@
 import type { Session } from "@supabase/supabase-js";
 
-export const KNOWLEDGE_BASE_ORIGINS = [
-  "https://coffeeshopbond.nl",
-  "https://id-preview--ad4fe468-a3c4-4d88-8f3f-4515abd526e9.lovable.app",
+export const KNOWLEDGE_BASE_ENDPOINTS = [
+  "/api/leden/kennisbank",
+  "https://coffeeshopbond.nl/api/leden/kennisbank",
+  "https://id-preview--ad4fe468-a3c4-4d88-8f3f-4515abd526e9.lovable.app/api/leden/kennisbank",
 ] as const;
+
+export const PUBLIC_DOSSIERS_URL =
+  "https://coffeeshopbond.nl/dossiers.json";
 
 export type KnowledgeMetric = {
   label: string;
@@ -146,11 +150,11 @@ export function parseKnowledgePayload(value: unknown): KnowledgePayload {
 }
 
 async function authorizedRequest(
-  origin: string,
+  endpoint: string,
   session: Session,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(`${origin}/api/leden/kennisbank`, {
+  return fetch(endpoint, {
     ...init,
     headers: {
       Accept: "application/json",
@@ -168,9 +172,9 @@ async function requestWithPreviewFallback(
 ): Promise<Response> {
   let lastError: Error | null = null;
 
-  for (const origin of KNOWLEDGE_BASE_ORIGINS) {
+  for (const endpoint of KNOWLEDGE_BASE_ENDPOINTS) {
     try {
-      const response = await authorizedRequest(origin, session, init);
+      const response = await authorizedRequest(endpoint, session, init);
       if (response.ok) return response;
       if (
         response.status !== 404 &&
@@ -197,8 +201,28 @@ async function requestWithPreviewFallback(
 export async function loadKnowledgeBase(
   session: Session,
 ): Promise<KnowledgePayload> {
-  const response = await requestWithPreviewFallback(session);
-  return parseKnowledgePayload(await response.json());
+  const [memberResponse, publicResponse] = await Promise.all([
+    requestWithPreviewFallback(session),
+    fetch(PUBLIC_DOSSIERS_URL, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    }),
+  ]);
+
+  if (!publicResponse.ok) {
+    throw new Error(`Openbare kennisbank niet beschikbaar (${publicResponse.status})`);
+  }
+
+  const memberData = parseKnowledgePayload(await memberResponse.json());
+  const publicData = parseKnowledgePayload(await publicResponse.json());
+
+  return {
+    dossiers:
+      publicData.dossiers.length > 0
+        ? publicData.dossiers
+        : memberData.dossiers,
+    documenten: memberData.documenten,
+  };
 }
 
 export async function getKnowledgeDocumentUrl(
