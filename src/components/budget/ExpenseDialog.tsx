@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import DossierSplitEditor from "@/components/budget/DossierSplitEditor";
 import { classifyRowId, entryKeyFromRowId } from "@/lib/ledgerRowId";
+import { ledgerSaveTransition } from "@/lib/expenseEditState";
 
 interface MemberOption { id: number; naam: string }
 
