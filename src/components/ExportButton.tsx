@@ -58,6 +58,7 @@ const HEADERS_LOCATIES = [
 
 const HEADERS_CONTACTEN = [
   { header: "Nr.", key: "nr", width: 6 },
+  { header: "Type", key: "type", width: 10 },
   { header: "Lidnr", key: "lidnr", width: 9 },
   { header: "Lidnaam", key: "lidnaam", width: 28 },
   { header: "Naam contactpersoon", key: "naam", width: 26 },
