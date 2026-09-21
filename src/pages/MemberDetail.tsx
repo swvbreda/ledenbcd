@@ -66,8 +66,11 @@ const MemberDetail = () => {
   const { isAdmin, isBoard, isInhuur, linkedMemberIds } = useAuth();
   const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
-  const canSeeContacts = isAdmin || isInhuur || isOwnProfile;
-  const canSeeFinance = isAdmin || isOwnProfile;
+  // Bestuur en beheer zien alles; een gewoon lid alleen de eigen gekoppelde rij.
+  const canSeeContacts = isAdmin || isBoard || isInhuur || isOwnProfile;
+  const canSeeFinance = isAdmin || isBoard || isOwnProfile;
+  /** Eigenaars-, vergunning- en bedrijfsgegevens van andere leden blijven verborgen. */
+  const canSeeOwnerInfo = canSeeContacts;
   const memberId = Number(id);
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
   const saveContactpersoonMutation = useSaveMemberEdit();
@@ -988,7 +991,7 @@ const MemberDetail = () => {
                     {loc.oprichtingsDatum && (
                       <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
                     )}
-                    {loc.vergunninghouder && !canSeeRegister && (
+                    {loc.vergunninghouder && !canSeeRegister && canSeeOwnerInfo && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
                     {canSeeContacts && (() => {
@@ -1040,7 +1043,9 @@ const MemberDetail = () => {
                         );
                       })()}
                       <div className="space-y-0.5">
-                        {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
+                        {loc.kvk && canSeeOwnerInfo && (
+                          <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                        )}
                         {loc.website && (
                           <a
                             href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}

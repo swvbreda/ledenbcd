@@ -58,8 +58,9 @@ const MemberTable = ({ members, compact }: MemberTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
-  const { isAdmin, isInhuur, linkedMemberId } = useAuth();
-  const canSeeDetails = isAdmin || isInhuur;
+  const { isAdmin, isBoard, isInhuur, linkedMemberId } = useAuth();
+  // Eigenaar en contactpersoon alleen voor bestuur/beheer, nooit voor gewone leden.
+  const canSeeDetails = isAdmin || isBoard || isInhuur;
   const { rawLeads: allLeads } = useMembersData();
   const [boardMembersByLid, setBoardMembersByLid] = useState<Map<number, { naam: string; functie: string }[]>>(new Map());
 

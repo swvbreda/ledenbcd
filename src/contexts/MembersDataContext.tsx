@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Member } from "@/data/types";
 import { useAuth } from "@/hooks/useAuth";
+import { directoryAccess, mergeDirectory } from "@/lib/memberDirectory";
 
 interface MembersDataContextType {
   rawMembers: Member[];
@@ -39,18 +40,34 @@ const toMember = (row: MembersDataRow): Member => {
 };
 
 export function MembersDataProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isAdmin, isBoard, isExtern, isInhuur, linkedMemberIds } = useAuth();
   const queryClient = useQueryClient();
 
+  const { canReadAll, canUseDirectory } = directoryAccess({
+    isAdmin,
+    isBoard,
+    isExtern,
+    isInhuur,
+    linkedMemberIds,
+  });
+
   const { data, isLoading } = useQuery({
-    queryKey: ["members-data", user?.id ?? null],
+    queryKey: ["members-data", user?.id ?? null, canReadAll, canUseDirectory],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("members_data")
         .select("id, member_type, data");
       if (error) throw error;
-      return (data ?? []) as MembersDataRow[];
+      const ownRows = (data ?? []) as MembersDataRow[];
+      if (!canUseDirectory) return ownRows;
+
+      const { data: directory, error: dirError } = await supabase.rpc("get_members_directory");
+      if (dirError) {
+        console.warn("Ledendirectory niet beschikbaar", dirError);
+        return ownRows;
+      }
+      return mergeDirectory(ownRows, (directory ?? []) as MembersDataRow[]);
     },
   });
 
