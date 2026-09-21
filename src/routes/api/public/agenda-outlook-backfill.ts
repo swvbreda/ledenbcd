@@ -227,6 +227,26 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
               continue;
             }
 
+            // At-most-once: alleen deelnemers die nog nooit een bevestiging kregen.
+            const { data: claimedRows, error: claimErr } = await supabaseAdmin.rpc(
+              "agenda_claim_invites",
+              {
+                _event_id: ev.id,
+                _channel: "outlook",
+                _emails: attendees.map((a) => a.emailAddress.address),
+                _source: "agenda-outlook-backfill",
+              } as never,
+            );
+            if (claimErr) throw claimErr;
+            const fresh = ((claimedRows ?? []) as { email: string }[] | string[]).map((row) =>
+              typeof row === "string" ? row : row.email,
+            );
+            if (fresh.length === 0) {
+              results.push({ event: ev.title, skipped: "iedereen kreeg al een bevestiging" });
+              continue;
+            }
+            const invitees = attendees.filter((a) => fresh.includes(a.emailAddress.address));
+
             // 3. Oude afspraak weg, nieuwe afspraak als bevestiging.
             const intro =
               `<p>Je aanmelding voor <strong>${ev.title}</strong> is bevestigd. ` +
@@ -238,7 +258,7 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
                 content: intro + (ev.description ?? "").replace(/\n/g, "<br/>"),
               },
               ...eventTimes(ev),
-              attendees,
+              attendees: invitees,
               allowNewTimeProposals: false,
               // Bevestiging, geen RSVP-vraag.
               responseRequested: false,
@@ -261,6 +281,7 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
               payload,
             )) as { id?: string };
             const newId = created?.id ?? null;
+
 
             await supabaseAdmin
               .from("agenda_events")
