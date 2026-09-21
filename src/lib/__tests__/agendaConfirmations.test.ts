@@ -149,7 +149,7 @@ describe("loadDispatchSettings (fail closed)", () => {
 describe("gedeelde bevestigingspoort", () => {
   it("laat parallelle aanvragen samen hooguit één claim winnen", async () => {
     const { db } = makeDb({ settings: SETTINGS_OPEN });
-    const args = { eventId: "ev-1", emails: ["Job@Example.NL"], source: "t" } as const;
+    const args = { eventId: "ev-1", emails: ["Job@Example.NL"], source: "t" };
     const [a, b, c] = await Promise.all([
       claimConfirmations(db, { ...args, channel: "email" }),
       claimConfirmations(db, { ...args, channel: "outlook" }),
