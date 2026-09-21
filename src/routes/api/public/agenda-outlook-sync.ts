@@ -417,7 +417,10 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
             event_id: ev.id,
             outlook_event_id: outlookId,
             attendees: attendees.length,
+            graph_action: graphAction,
+            newly_invited: invitedNow.length,
             zonder_email: regUpdates.filter((u) => u.state === "no_email").length,
+
             verify,
           };
           await supabaseAdmin.from("outlook_sync_log").insert(log as never);
