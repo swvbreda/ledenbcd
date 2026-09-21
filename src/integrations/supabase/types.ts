@@ -3747,6 +3747,15 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      dir_loc_del_identity: { Args: { _loc: Json }; Returns: string }
+      dir_loc_deleted: {
+        Args: { _deleted: string[]; _loc: Json }
+        Returns: boolean
+      }
+      dir_loc_identity: { Args: { _loc: Json }; Returns: string }
+      dir_loc_match: { Args: { _a: Json; _b: Json }; Returns: boolean }
+      dir_norm: { Args: { _v: string }; Returns: string }
+      dir_pick: { Args: { _keys: string[]; _obj: Json }; Returns: Json }
       email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -3812,6 +3821,14 @@ export type Database = {
           location_key: string
           logo_url: string
           member_id: number
+        }[]
+      }
+      get_members_directory: {
+        Args: never
+        Returns: {
+          data: Json
+          id: number
+          member_type: string
         }[]
       }
       get_members_for_extern: { Args: { _org_id: string }; Returns: Json }
@@ -3886,6 +3903,10 @@ export type Database = {
         Returns: boolean
       }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
+      member_directory_payload: {
+        Args: { _base: Json; _overlay: Json }
+        Returns: Json
+      }
       member_registered_emails: {
         Args: { _member_id: number }
         Returns: {
