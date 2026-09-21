@@ -233,7 +233,11 @@ describe("memberExport", () => {
           naam: `Record ${start + i}`,
           contactpersoon: `C${start + i}`,
           locaties: [
-            { naam: `L${start + i}`, adres: `Straat ${start + i}`, plaats: "X" },
+            {
+              naam: `L${start + i}`,
+              adres: `Straat ${start + i}`,
+              plaats: "X",
+            },
           ],
         }),
       );
@@ -251,7 +255,9 @@ describe("memberExport", () => {
     expect(data.leden[0].nr).toBe(1);
     expect(data.leads[0].nr).toBe(1);
     expect(data.oudLeden[0].nr).toBe(1);
-    expect(data.oudLeden.map((r) => r.lidnr)).toEqual([300, 301, 302, 303, 304]);
+    expect(data.oudLeden.map((r) => r.lidnr)).toEqual([
+      300, 301, 302, 303, 304,
+    ]);
     // Locaties en contactpersonen bevatten alle drie de categorieën met Type.
     expect(data.locaties).toHaveLength(131);
     expect(data.contacten).toHaveLength(131);
@@ -269,8 +275,18 @@ describe("memberExport", () => {
   it("past de effectieve merge ook op oud-leden toe en laat verwijderde locaties weg", () => {
     const merged = mergeMemberLocations(
       [
-        { naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam" },
-        { naam: "Oud", adres: "Kerkstraat 2", postcode: "1017 GG", plaats: "Amsterdam" },
+        {
+          naam: "A",
+          adres: "Tolstraat 91",
+          postcode: "1074 VK",
+          plaats: "Amsterdam",
+        },
+        {
+          naam: "Oud",
+          adres: "Kerkstraat 2",
+          postcode: "1017 GG",
+          plaats: "Amsterdam",
+        },
       ],
       [],
       ["locatie:1017GG|kerkstraat2"],
