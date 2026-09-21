@@ -186,16 +186,19 @@ export type Database = {
       agenda_outlook_settings: {
         Row: {
           id: boolean
+          outlook_dispatch_enabled: boolean
           registration_sync_enabled: boolean
           updated_at: string
         }
         Insert: {
           id?: boolean
+          outlook_dispatch_enabled?: boolean
           registration_sync_enabled?: boolean
           updated_at?: string
         }
         Update: {
           id?: boolean
+          outlook_dispatch_enabled?: boolean
           registration_sync_enabled?: boolean
           updated_at?: string
         }
