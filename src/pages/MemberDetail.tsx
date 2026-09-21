@@ -991,7 +991,7 @@ const MemberDetail = () => {
                     {loc.oprichtingsDatum && (
                       <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
                     )}
-                    {loc.vergunninghouder && !canSeeRegister && canSeeOwnerInfo && (
+                    {loc.vergunninghouder && canSeeOwnerInfo && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
                     {canSeeContacts && (() => {
