@@ -21,15 +21,11 @@ const GemeenteDetailPage = () => {
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
-  const { isAdmin, isBoard } = useAuth();
-  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
-  const canSeeRegister = isAdmin || isBoard;
-  const { perGemeente: perStad } = useRegisterStats(canSeeRegister);
+  // Deze pagina gaat uitsluitend over leden en ledenlocaties; geen registerverwijzingen.
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
 
-    const totaalNL = canSeeRegister ? perStad[decodedGemeente] || 0 : 0;
 
     // Collect all represented locations in this city (dedupe on same physical address)
     const normalizeLocationValue = (value: string) =>
