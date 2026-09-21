@@ -570,6 +570,8 @@ Deno.serve(async (req) => {
 
     if (!resp.ok) {
       console.error('Resend send failed', { status: resp.status, data })
+      // Claim blijft staan: de aflevering kan al gebeurd zijn.
+      await markConfirmation('uncertain', `Resend ${resp.status}`)
       await supabase.from('email_send_log').insert({
         message_id: messageId,
         template_name: templateName,
@@ -583,6 +585,7 @@ Deno.serve(async (req) => {
       })
     }
 
+    await markConfirmation('sent')
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: templateName,
