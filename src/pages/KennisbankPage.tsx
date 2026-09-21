@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Download,
-  ExternalLink,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, Download, FileText, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,23 +135,6 @@ export default function KennisbankPage() {
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden p-3 sm:p-6">
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3">
-        <div className="min-w-0">
-          <p className="break-words font-display text-base uppercase leading-tight sm:text-lg">
-            BCD Kennisbank
-          </p>
-          <p className="break-words text-xs text-muted-foreground">
-            Live en automatisch gelijk aan coffeeshopbond.nl
-          </p>
-        </div>
-        <Button asChild size="sm" variant="outline" className="shrink-0">
-          <a href={KENNISBANK_URL} target="_blank" rel="noopener noreferrer">
-            Open apart
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </Button>
-      </div>
-
       <div className="min-w-0 max-w-full overflow-hidden rounded-xl border bg-card">
         <iframe
           src={KENNISBANK_URL}
