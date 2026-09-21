@@ -70,16 +70,22 @@ const HEADERS_CONTACTEN = [
 
 const ExportButton = ({ filename }: ExportButtonProps) => {
   const [busy, setBusy] = useState(false);
-  const { rawMembers, rawLeads } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
   const { members: mergedMembers } = useMergedMembers(rawMembers);
   const { members: mergedLeads } = useMergedMembers(rawLeads);
+  const { members: mergedOldMembers } = useMergedMembers(rawOldMembers);
 
   const handleExport = async () => {
     setBusy(true);
     try {
-      // Altijd de volledige effectieve ledenlijst; zoeken, sorteren en filters tellen niet mee.
-      const alleLeden = [...mergedMembers, ...mergedLeads];
-      const { leden, locaties, contacten } = buildWorkbookData(alleLeden);
+      // Altijd de volledige effectieve lijst; tab, zoeken, sorteren en filters tellen niet mee.
+      const { leden, leads, oudLeden, locaties, contacten } = buildWorkbookData(
+        {
+          leden: mergedMembers,
+          leads: mergedLeads,
+          oudLeden: mergedOldMembers,
+        },
+      );
 
       const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
@@ -95,6 +101,18 @@ const ExportButton = ({ filename }: ExportButtonProps) => {
           "Leden",
           HEADERS_LEDEN,
           leden as unknown as Record<string, unknown>[],
+          ["locaties"],
+        ],
+        [
+          "Leads",
+          HEADERS_LEDEN,
+          leads as unknown as Record<string, unknown>[],
+          ["locaties"],
+        ],
+        [
+          "Oud-leden",
+          HEADERS_LEDEN,
+          oudLeden as unknown as Record<string, unknown>[],
           ["locaties"],
         ],
         [
