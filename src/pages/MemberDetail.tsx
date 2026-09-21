@@ -20,25 +20,17 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
-import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
-import ShopLogoReview from "@/components/register/ShopLogoReview";
+import { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
 import { useMemberAffiliations } from "@/hooks/useMemberAffiliations";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
-import { locationKey } from "@/components/register/RegisterCoverageCard";
-import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
-
-import {
-  useAssignLinkLocation,
-  useCoffeeshopRegister,
-  useRegisterLinks,
-} from "@/hooks/useCoffeeshopRegister";
+import { locationKeyOf } from "@/lib/registerLocationMatch";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 
