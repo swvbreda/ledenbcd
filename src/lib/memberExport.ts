@@ -215,65 +215,89 @@ export function buildLedenRows(members: Member[]): LedenRow[] {
   });
 }
 
-export function buildLocatieRows(members: Member[]): LocatieRow[] {
+export function buildLocatieRows(groups: MemberGroup[]): LocatieRow[] {
   const rows: Omit<LocatieRow, "nr">[] = [];
-  for (const m of sortMembersByNumber(members)) {
-    const locaties = [...realLocations(m)].sort((a, b) =>
-      text(a.naam).localeCompare(text(b.naam), "nl"),
-    );
-    for (const loc of locaties) {
-      const { straat, huisnummer, toevoeging } = splitAddress(loc.adres);
-      rows.push({
-        lidnr: m.id,
-        lidnaam: text(m.naam),
-        locatienaam: text(loc.naam),
-        straat,
-        huisnummer,
-        toevoeging,
-        postcode: text(loc.postcode),
-        plaats: text(loc.plaats) || text(m.plaats),
-        gemeente:
-          text(loc.gemeente) || text(getLocationGemeente(loc, m.plaats)),
-        stadsdeel: text(loc.stadsdeel) || text(m.stadsdeel),
-        kvk: text(loc.kvk),
-        bedrijfsnaam: text(loc.vergunninghouder) || text(loc.exploitant),
-        telefoon: text(loc.telefoon),
-        email: "",
-      });
+  for (const group of groups) {
+    for (const m of sortMembersByNumber(group.members)) {
+      const locaties = [...realLocations(m)].sort((a, b) =>
+        text(a.naam).localeCompare(text(b.naam), "nl"),
+      );
+      for (const loc of locaties) {
+        const { straat, huisnummer, toevoeging } = splitAddress(loc.adres);
+        rows.push({
+          type: group.type,
+          lidnr: m.id,
+          lidnaam: text(m.naam),
+          locatienaam: text(loc.naam),
+          straat,
+          huisnummer,
+          toevoeging,
+          postcode: text(loc.postcode),
+          plaats: text(loc.plaats) || text(m.plaats),
+          gemeente:
+            text(loc.gemeente) || text(getLocationGemeente(loc, m.plaats)),
+          stadsdeel: text(loc.stadsdeel) || text(m.stadsdeel),
+          kvk: text(loc.kvk),
+          bedrijfsnaam: text(loc.vergunninghouder) || text(loc.exploitant),
+          telefoon: text(loc.telefoon),
+          email: "",
+        });
+      }
     }
   }
   return rows.map((r, i) => ({ nr: i + 1, ...r }));
 }
 
-export function buildContactRows(members: Member[]): ContactRow[] {
+export function buildContactRows(groups: MemberGroup[]): ContactRow[] {
   const rows: Omit<ContactRow, "nr">[] = [];
-  for (const m of sortMembersByNumber(members)) {
-    for (const c of effectiveContacts(m)) {
-      rows.push({
-        lidnr: m.id,
-        lidnaam: text(m.naam),
-        naam: c.naam,
-        functie: c.functie,
-        telefoon: c.telefoon,
-        email: c.email,
-        primair: c.primair ? "Ja" : "Nee",
-      });
+  for (const group of groups) {
+    for (const m of sortMembersByNumber(group.members)) {
+      for (const c of effectiveContacts(m)) {
+        rows.push({
+          type: group.type,
+          lidnr: m.id,
+          lidnaam: text(m.naam),
+          naam: c.naam,
+          functie: c.functie,
+          telefoon: c.telefoon,
+          email: c.email,
+          primair: c.primair ? "Ja" : "Nee",
+        });
+      }
     }
   }
   return rows.map((r, i) => ({ nr: i + 1, ...r }));
+}
+
+export interface WorkbookInput {
+  /** Actieve leden. */
+  leden: Member[];
+  /** Actieve leads. */
+  leads: Member[];
+  /** Gearchiveerde oud-leden. */
+  oudLeden: Member[];
 }
 
 export interface WorkbookData {
   leden: LedenRow[];
+  leads: LedenRow[];
+  oudLeden: LedenRow[];
   locaties: LocatieRow[];
   contacten: ContactRow[];
 }
 
-export function buildWorkbookData(members: Member[]): WorkbookData {
+export function buildWorkbookData(input: WorkbookInput): WorkbookData {
+  const groups: MemberGroup[] = [
+    { type: "Lid", members: input.leden },
+    { type: "Lead", members: input.leads },
+    { type: "Oud-lid", members: input.oudLeden },
+  ];
   return {
-    leden: buildLedenRows(members),
-    locaties: buildLocatieRows(members),
-    contacten: buildContactRows(members),
+    leden: buildLedenRows(input.leden),
+    leads: buildLedenRows(input.leads),
+    oudLeden: buildLedenRows(input.oudLeden),
+    locaties: buildLocatieRows(groups),
+    contacten: buildContactRows(groups),
   };
 }
 
