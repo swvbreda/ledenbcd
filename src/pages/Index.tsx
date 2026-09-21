@@ -44,7 +44,7 @@ const Index = () => {
       <StatCards members={members} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
-        <VerloopChart />
+        <VerloopChart members={members} />
         <LidmaatschapsduurChart members={members} />
       </div>
 
