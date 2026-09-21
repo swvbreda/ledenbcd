@@ -260,68 +260,56 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
             }
 
             // At-most-once: alleen deelnemers die nog nooit een bevestiging kregen.
-            const { data: claimedRows, error: claimErr } = await supabaseAdmin.rpc(
-              "agenda_claim_invites",
-              {
-                _event_id: ev.id,
-                _channel: "outlook",
-                _emails: attendees.map((a) => a.emailAddress.address),
-                _source: "agenda-outlook-backfill",
-              } as never,
-            );
-            if (claimErr) throw claimErr;
-            const fresh = ((claimedRows ?? []) as { email: string }[] | string[]).map((row) =>
-              typeof row === "string" ? row : row.email,
-            );
+            const fresh = await claimConfirmations(db, {
+              eventId: ev.id,
+              channel: "outlook",
+              emails: attendees.map((a) => a.emailAddress.address),
+              source: "agenda-outlook-backfill",
+            });
             if (fresh.length === 0) {
+              // Nul schrijfacties bij Microsoft.
               results.push({ event: ev.title, skipped: "iedereen kreeg al een bevestiging" });
               continue;
             }
-            const invitees = attendees.filter((a) => fresh.includes(a.emailAddress.address));
 
-            // 3. Oude afspraak weg, nieuwe afspraak als bevestiging.
             const intro =
               `<p>Je aanmelding voor <strong>${ev.title}</strong> is bevestigd. ` +
               `Deze afspraak staat nu in je agenda.</p>`;
-            const payload: Record<string, unknown> = {
-              subject: `Bevestiging aanmelding — ${ev.title}`,
-              body: {
-                contentType: "HTML",
-                content: intro + (ev.description ?? "").replace(/\n/g, "<br/>"),
-              },
-              ...eventTimes(ev),
-              attendees: invitees,
-              allowNewTimeProposals: false,
-              // Bevestiging, geen RSVP-vraag.
-              responseRequested: false,
-              isReminderOn: true,
-            };
-            if (ev.location) payload["location"] = { displayName: ev.location };
 
-            await graph(
-              token,
-              "DELETE",
-              `/users/${encodeURIComponent(mailbox)}/events/${ev.outlook_event_id}`,
-            ).catch((e: Error) => {
-              if (!String(e.message).includes("404")) throw e;
-            });
-
-            const created = (await graph(
-              token,
-              "POST",
-              `/users/${encodeURIComponent(mailbox)}/events`,
-              payload,
-            )) as { id?: string };
-            const newId = created?.id ?? null;
-
+            // De bestaande afspraak blijft staan; alleen de nieuwe deelnemers
+            // krijgen hem doorgestuurd. Geen DELETE, geen opnieuw aanmaken.
+            try {
+              await graph(
+                token,
+                "POST",
+                `/users/${encodeURIComponent(mailbox)}/events/${ev.outlook_event_id}/forward`,
+                {
+                  Comment: intro,
+                  ToRecipients: fresh.map((email) => ({
+                    emailAddress: {
+                      address: email,
+                      name:
+                        attendees.find((a) => a.emailAddress.address === email)?.emailAddress
+                          .name ?? email,
+                    },
+                  })),
+                },
+              );
+              await markConfirmations(db, { eventId: ev.id, emails: fresh, status: "sent" });
+            } catch (e) {
+              // Claim blijft staan: de uitnodiging kán al onderweg zijn.
+              await markConfirmations(db, {
+                eventId: ev.id,
+                emails: fresh,
+                status: "uncertain",
+                note: String((e as Error).message).slice(0, 300),
+              });
+              throw e;
+            }
 
             await supabaseAdmin
               .from("agenda_events")
-              .update({
-                outlook_event_id: newId,
-                outlook_synced_at: new Date().toISOString(),
-                outlook_error: null,
-              })
+              .update({ outlook_synced_at: new Date().toISOString(), outlook_error: null })
               .eq("id", ev.id);
 
             for (const u of regUpdates) {
@@ -336,35 +324,12 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
                 .eq("id", u.id);
             }
 
-            // 4. Verificatie bij Microsoft.
-            let verify: Record<string, unknown> | null = null;
-            if (newId) {
-              try {
-                const v = (await graph(
-                  token,
-                  "GET",
-                  `/users/${encodeURIComponent(mailbox)}/events/${newId}?$select=isDraft,responseRequested,attendees`,
-                )) as {
-                  isDraft?: boolean;
-                  responseRequested?: boolean;
-                  attendees?: unknown[];
-                };
-                verify = {
-                  isDraft: v.isDraft ?? null,
-                  responseRequested: v.responseRequested ?? null,
-                  attendees: (v.attendees ?? []).length,
-                };
-              } catch (e) {
-                verify = { verify_error: (e as Error).message };
-              }
-            }
-
             results.push({
               event: ev.title,
               event_id: ev.id,
-              outlook_event_id: newId,
-              invited: attendees.length,
-              verify,
+              outlook_event_id: ev.outlook_event_id,
+              graph_action: "forwarded",
+              newly_invited: fresh.length,
             });
           } catch (e) {
             results.push({ event: ev.title, event_id: ev.id, error: (e as Error).message });
