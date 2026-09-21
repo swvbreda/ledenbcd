@@ -28,9 +28,19 @@ export interface LedenRow {
   factuurTelefoon: string;
 }
 
+/** Expliciete categorie; nooit afgeleid uit naam of status. */
+export type MemberCategory = "Lid" | "Lead" | "Oud-lid";
+
+/** Eén groep records met hun expliciete categorie. */
+export interface MemberGroup {
+  type: MemberCategory;
+  members: Member[];
+}
+
 /** Rij op het blad "Locaties". */
 export interface LocatieRow {
   nr: number;
+  type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
   locatienaam: string;
