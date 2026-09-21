@@ -92,67 +92,9 @@ const MemberDetail = () => {
   const { photos: contactPhotos, uploadPhoto, removePhoto } = useContactPhotos(canSeeContacts ? memberId : undefined);
 
 
+  // Registergegevens (koppelingen, statussen en eigendomsketen) horen
+  // uitsluitend op de registerpagina, niet in ledenprofielen.
 
-  // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
-  const canSeeRegister = isAdmin || isBoard;
-  const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
-  const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
-  const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
-  const assignLocation = useAssignLinkLocation();
-
-  const memberLinks = useMemo(
-    () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
-    [registerLinks, memberId],
-  );
-  // Koppeling per vestiging: eerst op exacte vestigingssleutel, daarna terugval
-  // op de registerregel zelf (postcode + huisnummer, naam + plaats, adres) zodat
-  // een verhuisde of licht afwijkende vestiging niet als "niet gekoppeld" oogt.
-  const linkByLocation = useMemo(() => {
-    const map = new Map<string, (typeof memberLinks)[number]>();
-    const locs = (member?.locaties ?? []) as any[];
-    const better = (
-      current: (typeof memberLinks)[number] | undefined,
-      candidate: (typeof memberLinks)[number],
-    ) => !current || (current.status !== "bevestigd" && candidate.status === "bevestigd");
-
-    const assign = (loc: any, link: (typeof memberLinks)[number]) => {
-      const key = locationKey(loc);
-      if (better(map.get(key), link)) map.set(key, link);
-    };
-
-    const pending: typeof memberLinks = [];
-
-    // 1. Exacte sleutel wint altijd.
-    memberLinks.forEach((l) => {
-      const exact = l.location_key
-        ? locs.find((loc) => locationKeyOf(loc) === l.location_key!.toLowerCase())
-        : undefined;
-      if (exact) assign(exact, l);
-      else pending.push(l);
-    });
-
-    // 2. Terugval via gedeelde matchlogica op basis van de registerregel.
-    pending.forEach((l) => {
-      const shop = shopById.get(l.register_id);
-      const taken = new Set(Array.from(map.values()).map((x) => x.id));
-      const free = locs.filter((loc) => {
-        const existing = map.get(locationKey(loc));
-        return !existing || !taken.has(existing.id);
-      });
-      const match = findMemberLocation(free.length ? free : locs, l.location_key, shop ?? null);
-      if (match) assign(match, l);
-    });
-
-    return map;
-  }, [memberLinks, shopById, member?.locaties]);
-
-
-  const matchedLinkIds = useMemo(
-    () => new Set(Array.from(linkByLocation.values()).map((l) => l.id)),
-    [linkByLocation],
-  );
-
-  // Eigendomsketen (UBO) hoort uitsluitend op de registerpagina, niet in ledenprofielen.
 
 
 
