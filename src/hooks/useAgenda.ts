@@ -162,8 +162,11 @@ async function sendRegistrationConfirmation(args: {
 
   const e = ev as any;
   const templateData = {
+    // Nodig voor de at-most-once controle per bijeenkomst en e-mailadres.
+    eventId: args.eventId,
     eventTitle: e.title,
     recipientName,
+
     isUpdate,
     eventDate: formatEventDate(e.event_date),
     eventTime: formatTimeRange(e.start_time, e.end_time),

@@ -148,6 +148,59 @@ export type Database = {
           },
         ]
       }
+      agenda_invite_ledger: {
+        Row: {
+          channel: string
+          email: string
+          event_id: string
+          id: string
+          sent_at: string
+          source: string | null
+        }
+        Insert: {
+          channel: string
+          email: string
+          event_id: string
+          id?: string
+          sent_at?: string
+          source?: string | null
+        }
+        Update: {
+          channel?: string
+          email?: string
+          event_id?: string
+          id?: string
+          sent_at?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_invite_ledger_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agenda_outlook_settings: {
+        Row: {
+          id: boolean
+          registration_sync_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          registration_sync_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          registration_sync_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agenda_registrations: {
         Row: {
           attendee_names: string[]
@@ -3728,6 +3781,18 @@ export type Database = {
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }
+      agenda_claim_invites: {
+        Args: {
+          _channel: string
+          _emails: string[]
+          _event_id: string
+          _source?: string
+        }
+        Returns: {
+          email: string
+        }[]
+      }
+      agenda_normalize_email: { Args: { _email: string }; Returns: string }
       agenda_outlook_dispatch: {
         Args: { _action: string; _event_id: string }
         Returns: undefined
