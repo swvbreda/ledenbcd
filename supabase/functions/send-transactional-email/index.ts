@@ -286,7 +286,57 @@ Deno.serve(async (req) => {
     )
   }
 
+  // 2b. Aanmeldbevestigingen: hooguit één keer per bijeenkomst en per adres.
+  // De claim gebeurt in de database (uniek index), dus ook parallelle
+  // verzoeken kunnen samen niet meer dan één bevestiging opleveren.
+  if (templateName === 'agenda-registration-confirmation') {
+    const rawEventId = String(
+      (req.headers.get('x-agenda-event-id') ?? '') ||
+        (templateData?.eventId ?? '') ||
+        (templateData?.icsEvent?.uid ?? ''),
+    ).trim()
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawEventId)
+    if (!isUuid) {
+      console.error('Aanmeldbevestiging zonder bijeenkomst-id geweigerd', { idempotencyKey })
+      return new Response(
+        JSON.stringify({ success: false, reason: 'missing_event_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+    const { data: claimed, error: claimError } = await supabase.rpc('agenda_claim_invites', {
+      _event_id: rawEventId,
+      _channel: 'email',
+      _emails: [effectiveRecipient],
+      _source: 'send-transactional-email',
+    })
+    if (claimError) {
+      console.error('Dedupe-controle mislukt — niet verzonden', claimError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify duplicate status' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+    if (!Array.isArray(claimed) || claimed.length === 0) {
+      await supabase.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: templateName,
+        recipient_email: effectiveRecipient,
+        status: 'skipped_duplicate',
+        metadata: { event_id: rawEventId, idempotency_key: idempotencyKey },
+      })
+      console.log('Aanmeldbevestiging overgeslagen (al eerder verstuurd)', {
+        rawEventId,
+        effectiveRecipient,
+      })
+      return new Response(
+        JSON.stringify({ success: false, reason: 'already_sent' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+  }
+
   // 3. Get or create unsubscribe token (one token per email address)
+
   const normalizedEmail = effectiveRecipient.toLowerCase()
   let unsubscribeToken: string
 
