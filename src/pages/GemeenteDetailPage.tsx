@@ -141,39 +141,16 @@ const GemeenteDetailPage = () => {
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {data.aangesloten} aangesloten coffeeshop{data.aangesloten !== 1 ? "s" : ""}
-            {canSeeRegister && data.totaalNL > 0 && ` van ${data.totaalNL} totaal`}
           </p>
-          {canSeeRegister && (
-            <button
-              onClick={() => navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(decodedGemeente)}`)}
-              className="text-xs text-primary hover:underline mt-1"
-            >
-              Bekijk registerdetails van deze gemeente →
-            </button>
-          )}
         </div>
       </div>
 
       {/* Stat cards */}
-      <div className={`grid grid-cols-2 gap-4 ${canSeeRegister ? "lg:grid-cols-4" : "lg:grid-cols-2"}`}>
-        {canSeeRegister && (
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Totaal coffeeshops</p>
-            <p className="text-2xl font-bold font-display">{data.totaalNL || "—"}</p>
-          </div>
-        )}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
         <div className="bg-card rounded-lg border border-border p-4 text-center">
           <p className="text-xs text-muted-foreground mb-1">Aangesloten</p>
           <p className="text-2xl font-bold font-display">{data.aangesloten}</p>
         </div>
-        {canSeeRegister && (
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Vertegenwoordiging</p>
-            <p className={`text-2xl font-bold font-display ${data.marktPct >= 30 ? "text-success" : ""}`}>
-              {data.totaalNL > 0 ? `${data.marktPct}%` : "—"}
-            </p>
-          </div>
-        )}
         <div className="bg-card rounded-lg border border-border p-4 text-center">
           <p className="text-xs text-muted-foreground mb-1">Stadsdelen</p>
           <p className="text-2xl font-bold font-display">{data.stadsdelen.length}</p>
