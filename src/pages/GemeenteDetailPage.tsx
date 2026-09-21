@@ -92,7 +92,7 @@ const GemeenteDetailPage = () => {
     }
 
     const aangesloten = locaties.length;
-    const marktPct = totaalNL > 0 ? Math.round((aangesloten / totaalNL) * 100) : 0;
+
 
     const stadsdelen = Object.entries(stadsdeelCount)
       .map(([naam, aantal]) => ({ naam, aantal }))
