@@ -82,7 +82,7 @@ describe("memberExport", () => {
     const leden = buildLedenRows([m]);
     expect(leden[0].aantalLocaties).toBe(2);
     expect(leden[0].locaties.split("\n")).toHaveLength(2);
-    const locaties = buildLocatieRows([m]);
+    const locaties = buildLocatieRows([{ type: "Lid", members: [m] }]);
     expect(locaties).toHaveLength(2);
     expect(locaties.map((l) => l.locatienaam)).toEqual(["A", "B"]);
     expect(locaties[0]).toMatchObject({
@@ -119,7 +119,9 @@ describe("memberExport", () => {
     const merged = mergeMemberLocations(base, overlay, [
       "locatie:1017GG|kerkstraat2",
     ]);
-    const rows = buildLocatieRows([member({ id: 7, locaties: merged })]);
+    const rows = buildLocatieRows([
+      { type: "Lid", members: [member({ id: 7, locaties: merged })] },
+    ]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ locatienaam: "A", stadsdeel: "Zuid" });
   });
@@ -183,14 +185,19 @@ describe("memberExport", () => {
     const contacts = effectiveContacts(m);
     expect(contacts).toHaveLength(2);
     expect(contacts[0].primair).toBe(true);
-    const rows = buildContactRows([m]);
+    const rows = buildContactRows([{ type: "Lid", members: [m] }]);
     expect(rows.map((r) => r.primair)).toEqual(["Ja", "Nee"]);
     expect(rows.map((r) => r.nr)).toEqual([1, 2]);
   });
 
   it("neemt de hoofdvelden op als er geen contactenlijst is", () => {
     const rows = buildContactRows([
-      member({ id: 4, contactpersoon: "Alleen Hoofd", email: "a@b.nl" }),
+      {
+        type: "Lid",
+        members: [
+          member({ id: 4, contactpersoon: "Alleen Hoofd", email: "a@b.nl" }),
+        ],
+      },
     ]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ naam: "Alleen Hoofd", primair: "Ja" });
