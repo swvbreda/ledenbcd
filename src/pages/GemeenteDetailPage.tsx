@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "@/lib/router-compat";
-import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Search, X } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
