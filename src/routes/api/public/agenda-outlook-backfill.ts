@@ -1,10 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  claimConfirmations,
+  DispatchPausedError,
+  loadDispatchSettings,
+  markConfirmations,
+  type ConfirmationDb,
+} from "@/lib/agendaConfirmations";
 
 /**
- * Eenmalige inhaalactie: komende evenementen die al in Outlook staan, maar waar
- * nooit een uitnodiging is uitgegaan (aangemaakt zonder uitnodigingsverzoek),
- * opnieuw aanmaken mét uitnodigingsverzoek zodat alle aangemelde deelnemers
- * alsnog een agenda-uitnodiging van Microsoft ontvangen.
+ * Inhaalactie: komende evenementen die al in Outlook staan, maar waar deelnemers
+ * nooit een uitnodiging kregen, alsnog een uitnodiging sturen — uitsluitend aan
+ * wie nog geen bevestiging heeft.
+ *
+ * De bestaande afspraak wordt NOOIT verwijderd of opnieuw aangemaakt: dat zou
+ * annuleringen sturen en bestaande deelnemers opnieuw benaderen. Wie al een
+ * bevestiging kreeg, veroorzaakt nul schrijfacties bij Microsoft.
  *
  * Verstuurt géén e-mail vanuit het ledenportaal — alleen het agendaverzoek.
  * Server-to-server, beveiligd met het interne webhook-geheim.
