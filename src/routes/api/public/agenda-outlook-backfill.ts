@@ -106,6 +106,27 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
         };
         const dryRun = body.dry_run === true;
 
+        const db = supabaseAdmin as unknown as ConfirmationDb;
+
+        // Globale noodpauze: vóór elke Graph-aanroep, fail closed.
+        let settings;
+        try {
+          settings = await loadDispatchSettings(db);
+        } catch (e) {
+          const reason = e instanceof DispatchPausedError ? e.reason : "settings_error";
+          console.warn("agenda-outlook-backfill geblokkeerd:", reason);
+          return Response.json({ ok: false, skipped: reason }, { status: 200 });
+        }
+        if (!dryRun && !settings.dispatchEnabled) {
+          return Response.json({ ok: false, skipped: "dispatch_paused" }, { status: 200 });
+        }
+        if (!dryRun && settings.confirmationChannel !== "outlook") {
+          return Response.json(
+            { ok: false, skipped: "confirmation_channel_is_email" },
+            { status: 200 },
+          );
+        }
+
         const today = new Date().toISOString().slice(0, 10);
         let query = supabaseAdmin
           .from("agenda_events")
@@ -121,7 +142,8 @@ export const Route = createFileRoute("/api/public/agenda-outlook-backfill")({
         const { data: events, error: evErr } = await query;
         if (evErr) return Response.json({ error: evErr.message }, { status: 500 });
 
-        const token = await getAppToken();
+        // Bij een proefdraai nooit een token ophalen of Microsoft aanroepen.
+        const token = dryRun ? "" : await getAppToken();
         const results: Record<string, unknown>[] = [];
 
         for (const ev of (events ?? []) as {
