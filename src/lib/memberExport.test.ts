@@ -203,22 +203,89 @@ describe("memberExport", () => {
     expect(rows[0]).toMatchObject({ naam: "Alleen Hoofd", primair: "Ja" });
   });
 
-  it("bouwt alle drie de bladen consistent", () => {
-    const data = buildWorkbookData([
-      member({
-        id: 2,
-        contactpersoon: "B",
-        locaties: [{ naam: "L2", adres: "Straat 2", plaats: "Utrecht" }],
-      }),
-      member({
-        id: 1,
-        contactpersoon: "A",
-        locaties: [{ naam: "L1", adres: "Straat 1", plaats: "Utrecht" }],
-      }),
-    ]);
+  it("bouwt alle bladen consistent", () => {
+    const data = buildWorkbookData({
+      leden: [
+        member({
+          id: 2,
+          contactpersoon: "B",
+          locaties: [{ naam: "L2", adres: "Straat 2", plaats: "Utrecht" }],
+        }),
+        member({
+          id: 1,
+          contactpersoon: "A",
+          locaties: [{ naam: "L1", adres: "Straat 1", plaats: "Utrecht" }],
+        }),
+      ],
+      leads: [],
+      oudLeden: [],
+    });
     expect(data.leden.map((r) => r.lidnr)).toEqual([1, 2]);
     expect(data.locaties.map((r) => r.lidnr)).toEqual([1, 2]);
     expect(data.contacten.map((r) => r.lidnr)).toEqual([1, 2]);
+  });
+
+  it("verdeelt leden, leads en oud-leden over eigen bladen en telt op tot 131", () => {
+    const make = (start: number, count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        member({
+          id: start + i,
+          naam: `Record ${start + i}`,
+          contactpersoon: `C${start + i}`,
+          locaties: [
+            { naam: `L${start + i}`, adres: `Straat ${start + i}`, plaats: "X" },
+          ],
+        }),
+      );
+    const data = buildWorkbookData({
+      leden: make(1, 116),
+      leads: make(200, 10),
+      oudLeden: make(300, 5),
+    });
+    expect(data.leden).toHaveLength(116);
+    expect(data.leads).toHaveLength(10);
+    expect(data.oudLeden).toHaveLength(5);
+    expect(data.leden.length + data.leads.length + data.oudLeden.length).toBe(
+      131,
+    );
+    expect(data.leden[0].nr).toBe(1);
+    expect(data.leads[0].nr).toBe(1);
+    expect(data.oudLeden[0].nr).toBe(1);
+    expect(data.oudLeden.map((r) => r.lidnr)).toEqual([300, 301, 302, 303, 304]);
+    // Locaties en contactpersonen bevatten alle drie de categorieën met Type.
+    expect(data.locaties).toHaveLength(131);
+    expect(data.contacten).toHaveLength(131);
+    expect(new Set(data.locaties.map((r) => r.type))).toEqual(
+      new Set(["Lid", "Lead", "Oud-lid"]),
+    );
+    expect(data.locaties.filter((r) => r.type === "Oud-lid")).toHaveLength(5);
+    expect(data.contacten.filter((r) => r.type === "Lead")).toHaveLength(10);
+    expect(data.locaties[0].type).toBe("Lid");
+    expect(data.locaties.map((r) => r.nr)).toEqual(
+      data.locaties.map((_, i) => i + 1),
+    );
+  });
+
+  it("past de effectieve merge ook op oud-leden toe en laat verwijderde locaties weg", () => {
+    const merged = mergeMemberLocations(
+      [
+        { naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam" },
+        { naam: "Oud", adres: "Kerkstraat 2", postcode: "1017 GG", plaats: "Amsterdam" },
+      ],
+      [],
+      ["locatie:1017GG|kerkstraat2"],
+    );
+    const data = buildWorkbookData({
+      leden: [],
+      leads: [],
+      oudLeden: [member({ id: 9, locaties: merged })],
+    });
+    expect(data.oudLeden).toHaveLength(1);
+    expect(data.locaties).toHaveLength(1);
+    expect(data.locaties[0]).toMatchObject({
+      type: "Oud-lid",
+      locatienaam: "A",
+    });
   });
 
   it("gebruikt de juiste bestandsnaam", () => {
