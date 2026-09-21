@@ -60,6 +60,7 @@ export interface LocatieRow {
 /** Rij op het blad "Contactpersonen". */
 export interface ContactRow {
   nr: number;
+  type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
   naam: string;
