@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "@/lib/router-compat";
-import { ArrowLeft, MapPin, Building2, Users, Search, X } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Search, X } from "lucide-react";
 import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
-import { useRegisterStats } from "@/hooks/useRegisterStats";
-import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,15 +19,11 @@ const GemeenteDetailPage = () => {
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
-  const { isAdmin, isBoard } = useAuth();
-  // Het coffeeshopregister is uitsluitend voor bestuur en beheer.
-  const canSeeRegister = isAdmin || isBoard;
-  const { perGemeente: perStad } = useRegisterStats(canSeeRegister);
+  // Deze pagina gaat uitsluitend over leden en ledenlocaties.
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
 
-    const totaalNL = canSeeRegister ? perStad[decodedGemeente] || 0 : 0;
 
     // Collect all represented locations in this city (dedupe on same physical address)
     const normalizeLocationValue = (value: string) =>
@@ -96,7 +90,7 @@ const GemeenteDetailPage = () => {
     }
 
     const aangesloten = locaties.length;
-    const marktPct = totaalNL > 0 ? Math.round((aangesloten / totaalNL) * 100) : 0;
+
 
     const stadsdelen = Object.entries(stadsdeelCount)
       .map(([naam, aantal]) => ({ naam, aantal }))
@@ -117,8 +111,8 @@ const GemeenteDetailPage = () => {
       return a.localeCompare(b);
     });
 
-    return { totaalNL, aangesloten, marktPct, stadsdelen, perStadsdeel, sortedKeys, locaties };
-  }, [perStad, decodedGemeente, mergedRepresented, canSeeRegister]);
+    return { aangesloten, stadsdelen, perStadsdeel, sortedKeys, locaties };
+  }, [decodedGemeente, mergedRepresented]);
 
   if (!data) {
     return (
@@ -145,39 +139,16 @@ const GemeenteDetailPage = () => {
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {data.aangesloten} aangesloten coffeeshop{data.aangesloten !== 1 ? "s" : ""}
-            {canSeeRegister && data.totaalNL > 0 && ` van ${data.totaalNL} totaal`}
           </p>
-          {canSeeRegister && (
-            <button
-              onClick={() => navigate(`/coffeeshopregister/gemeente/${encodeURIComponent(decodedGemeente)}`)}
-              className="text-xs text-primary hover:underline mt-1"
-            >
-              Bekijk registerdetails van deze gemeente →
-            </button>
-          )}
         </div>
       </div>
 
       {/* Stat cards */}
-      <div className={`grid grid-cols-2 gap-4 ${canSeeRegister ? "lg:grid-cols-4" : "lg:grid-cols-2"}`}>
-        {canSeeRegister && (
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Totaal coffeeshops</p>
-            <p className="text-2xl font-bold font-display">{data.totaalNL || "—"}</p>
-          </div>
-        )}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
         <div className="bg-card rounded-lg border border-border p-4 text-center">
           <p className="text-xs text-muted-foreground mb-1">Aangesloten</p>
           <p className="text-2xl font-bold font-display">{data.aangesloten}</p>
         </div>
-        {canSeeRegister && (
-          <div className="bg-card rounded-lg border border-border p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Vertegenwoordiging</p>
-            <p className={`text-2xl font-bold font-display ${data.marktPct >= 30 ? "text-success" : ""}`}>
-              {data.totaalNL > 0 ? `${data.marktPct}%` : "—"}
-            </p>
-          </div>
-        )}
         <div className="bg-card rounded-lg border border-border p-4 text-center">
           <p className="text-xs text-muted-foreground mb-1">Stadsdelen</p>
           <p className="text-2xl font-bold font-display">{data.stadsdelen.length}</p>
