@@ -1,50 +1,165 @@
+import { useState } from "react";
 import { Download } from "lucide-react";
+import { toast } from "sonner";
 import type { Member } from "@/data/types";
-import { getMembershipYears } from "@/lib/membership";
+import { useMembersData } from "@/contexts/MembersDataContext";
+import { useMergedMembers } from "@/hooks/useMemberEdits";
+import { buildWorkbookData, exportFileName } from "@/lib/memberExport";
 
 interface ExportButtonProps {
-  members: Member[];
+  /** Alleen als hint voor de bestandsnaam; de export bevat altijd alle leden. */
   filename?: string;
+  members?: Member[];
 }
 
-const ExportButton = ({ members, filename = "bcd-leden" }: ExportButtonProps) => {
-  const handleExport = () => {
-    const headers = [
-      "Lidnr", "Naam", "Plaats", "Stadsdeel", "Jaren Lid", "Oprichting",
-      "Contactpersoon", "Functie", "Telefoon", "Email",
-      "Aantal Locaties", "Factuur Bedrijfsnaam", "Factuur KVK",
-      "Factuur Adres", "Factuur Postcode", "Factuur Plaats", "Factuur Email",
-    ];
+const HEADERS_LEDEN = [
+  { header: "Nr.", key: "nr", width: 6 },
+  { header: "Lidnr", key: "lidnr", width: 9 },
+  { header: "Naam", key: "naam", width: 28 },
+  { header: "Plaats", key: "plaats", width: 18 },
+  { header: "Stadsdeel", key: "stadsdeel", width: 16 },
+  { header: "Jaren lid", key: "jarenLid", width: 10 },
+  { header: "Lid sinds", key: "lidSinds", width: 10 },
+  { header: "Oprichtingsjaar", key: "oprichtingsjaar", width: 14 },
+  { header: "Contactpersoon", key: "contactpersoon", width: 24 },
+  { header: "Functie", key: "functie", width: 18 },
+  { header: "Telefoon", key: "telefoon", width: 16 },
+  { header: "E-mail", key: "email", width: 30 },
+  { header: "Aantal locaties", key: "aantalLocaties", width: 13 },
+  { header: "Locaties", key: "locaties", width: 55 },
+  { header: "KVK", key: "kvk", width: 14 },
+  { header: "Bedrijfsnaam", key: "bedrijfsnaam", width: 28 },
+  { header: "Factuurbedrijfsnaam", key: "factuurBedrijfsnaam", width: 28 },
+  { header: "Factuuradres", key: "factuurAdres", width: 26 },
+  { header: "Factuurpostcode", key: "factuurPostcode", width: 14 },
+  { header: "Factuurplaats", key: "factuurPlaats", width: 18 },
+  { header: "Factuure-mail", key: "factuurEmail", width: 30 },
+  { header: "Factuurtelefoon", key: "factuurTelefoon", width: 16 },
+];
 
-    const rows = members.map((m) => [
-      m.id, m.naam, m.plaats, m.stadsdeel, getMembershipYears(m) ?? "", m.oprichtingJaar ?? "",
-      m.contactpersoon, m.functie, m.telefoon, m.email,
-      m.aantalLocaties, m.factuurBedrijfsnaam ?? "", m.factuurKvk ?? "",
-      m.factuurAdres ?? "", m.factuurPostcode ?? "", m.factuurPlaats ?? "",
-      m.factuurEmail ?? "",
-    ]);
+const HEADERS_LOCATIES = [
+  { header: "Nr.", key: "nr", width: 6 },
+  { header: "Lidnr", key: "lidnr", width: 9 },
+  { header: "Lidnaam", key: "lidnaam", width: 28 },
+  { header: "Locatienaam", key: "locatienaam", width: 28 },
+  { header: "Straat", key: "straat", width: 26 },
+  { header: "Huisnummer", key: "huisnummer", width: 12 },
+  { header: "Toevoeging", key: "toevoeging", width: 12 },
+  { header: "Postcode", key: "postcode", width: 12 },
+  { header: "Plaats", key: "plaats", width: 18 },
+  { header: "Gemeente", key: "gemeente", width: 18 },
+  { header: "Stadsdeel", key: "stadsdeel", width: 16 },
+  { header: "KVK", key: "kvk", width: 14 },
+  { header: "Bedrijfsnaam", key: "bedrijfsnaam", width: 28 },
+  { header: "Telefoon", key: "telefoon", width: 16 },
+  { header: "E-mail", key: "email", width: 30 },
+];
 
-    const csv = [headers, ...rows]
-      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
-      .join("\n");
+const HEADERS_CONTACTEN = [
+  { header: "Nr.", key: "nr", width: 6 },
+  { header: "Lidnr", key: "lidnr", width: 9 },
+  { header: "Lidnaam", key: "lidnaam", width: 28 },
+  { header: "Naam contactpersoon", key: "naam", width: 26 },
+  { header: "Functie", key: "functie", width: 20 },
+  { header: "Telefoon", key: "telefoon", width: 16 },
+  { header: "E-mail", key: "email", width: 30 },
+  { header: "Primair", key: "primair", width: 9 },
+];
 
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const today = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `${filename}-${today}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+const ExportButton = ({ filename }: ExportButtonProps) => {
+  const [busy, setBusy] = useState(false);
+  const { rawMembers, rawLeads } = useMembersData();
+  const { members: mergedMembers } = useMergedMembers(rawMembers);
+  const { members: mergedLeads } = useMergedMembers(rawLeads);
+
+  const handleExport = async () => {
+    setBusy(true);
+    try {
+      // Altijd de volledige effectieve ledenlijst; zoeken, sorteren en filters tellen niet mee.
+      const alleLeden = [...mergedMembers, ...mergedLeads];
+      const { leden, locaties, contacten } = buildWorkbookData(alleLeden);
+
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      workbook.created = new Date();
+
+      const sheets: [
+        string,
+        typeof HEADERS_LEDEN,
+        Record<string, unknown>[],
+        string[],
+      ][] = [
+        [
+          "Leden",
+          HEADERS_LEDEN,
+          leden as unknown as Record<string, unknown>[],
+          ["locaties"],
+        ],
+        [
+          "Locaties",
+          HEADERS_LOCATIES,
+          locaties as unknown as Record<string, unknown>[],
+          [],
+        ],
+        [
+          "Contactpersonen",
+          HEADERS_CONTACTEN,
+          contacten as unknown as Record<string, unknown>[],
+          [],
+        ],
+      ];
+
+      for (const [name, columns, rows, wrapKeys] of sheets) {
+        const sheet = workbook.addWorksheet(name, {
+          views: [{ state: "frozen", ySplit: 1 }],
+        });
+        sheet.columns = columns.map((c) => ({
+          header: c.header,
+          key: c.key,
+          width: c.width,
+        }));
+        sheet.getRow(1).font = { bold: true };
+        sheet.getRow(1).alignment = { vertical: "middle" };
+        rows.forEach((row) => sheet.addRow(row));
+        sheet.autoFilter = {
+          from: { row: 1, column: 1 },
+          to: { row: 1, column: columns.length },
+        };
+        for (const key of wrapKeys) {
+          const column = sheet.getColumn(key);
+          column.alignment = { wrapText: true, vertical: "top" };
+        }
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename ? `${filename}.xlsx` : exportFileName();
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(
+        `Excel gedownload: ${leden.length} leden, ${locaties.length} locaties, ${contacten.length} contactpersonen.`,
+      );
+    } catch (error) {
+      console.error("Excel-export mislukt", error);
+      toast.error("Excel downloaden is niet gelukt. Probeer het opnieuw.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <button
       onClick={handleExport}
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors"
+      disabled={busy}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent transition-colors disabled:opacity-60"
     >
       <Download size={14} />
-      Exporteer CSV
+      {busy ? "Bezig…" : "Excel downloaden"}
     </button>
   );
 };

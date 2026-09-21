@@ -122,7 +122,7 @@ const LedenPage = () => {
         </div>
         {!showArchived && isAdmin && (
           <div className="flex items-center gap-2 flex-wrap">
-            <ExportButton members={mergedSearched} />
+            <ExportButton />
             <MailingExportButton members={mergedSearched} />
             <NewMemberDialog type={activeTab === "leads" ? "lead" : "member"} />
           </div>
