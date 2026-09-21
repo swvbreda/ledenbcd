@@ -4,7 +4,6 @@ import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 /** Rij op het blad "Leden". */
 export interface LedenRow {
-  nr: number;
   lidnr: number | string;
   naam: string;
   plaats: string;
@@ -39,7 +38,6 @@ export interface MemberGroup {
 
 /** Rij op het blad "Locaties". */
 export interface LocatieRow {
-  nr: number;
   type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
@@ -59,7 +57,6 @@ export interface LocatieRow {
 
 /** Rij op het blad "Contactpersonen". */
 export interface ContactRow {
-  nr: number;
   type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
