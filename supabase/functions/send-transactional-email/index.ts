@@ -606,6 +606,8 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('Resend request error', err)
+    // Time-out of netwerkfout: onbekend of de mail eruit ging — nooit opnieuw.
+    await markConfirmation('uncertain', msg.slice(0, 300))
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: templateName,
