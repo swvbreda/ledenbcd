@@ -955,10 +955,8 @@ const MemberDetail = () => {
             </h3>
             <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
               {member.locaties.map((loc, i) => {
-                const key = locationKey(loc as any);
-                const link = canSeeRegister ? linkByLocation.get(key) : undefined;
-                const shop = link ? shopById.get(link.register_id) : null;
                 return (
+
                 <div
                   key={i}
                   className="flex h-full flex-col border border-border rounded-md p-4 transition-colors hover:bg-muted/20"
