@@ -5,8 +5,6 @@ import GemeentePublicaties from "@/components/GemeentePublicaties";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
-import { useRegisterStats } from "@/hooks/useRegisterStats";
-import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
