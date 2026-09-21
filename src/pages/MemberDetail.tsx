@@ -20,25 +20,17 @@ import {
 import { useMergedMember, useSaveMemberEdit } from "@/hooks/useMemberEdits";
 import MemberEditForm from "@/components/MemberEditForm";
 import MailingPreferences from "@/components/MailingPreferences";
-import LocationRegisterInfo, { cleanUrl } from "@/components/register/LocationRegisterInfo";
-import ShopLogoOptoutToggle from "@/components/register/ShopLogoOptoutToggle";
-import ShopLogoReview from "@/components/register/ShopLogoReview";
+import { cleanUrl } from "@/components/register/LocationRegisterInfo";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useMemberLogo, useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
 import { useRegisterLogos } from "@/hooks/useRegisterLogos";
 import { useMemberAffiliations } from "@/hooks/useMemberAffiliations";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
-import { locationKey } from "@/components/register/RegisterCoverageCard";
-import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
-
-import {
-  useAssignLinkLocation,
-  useCoffeeshopRegister,
-  useRegisterLinks,
-} from "@/hooks/useCoffeeshopRegister";
+import { locationKeyOf } from "@/lib/registerLocationMatch";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useMemberContributions, useMemberInvoices, useMemberPayments } from "@/hooks/useContributions";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 
@@ -92,67 +84,9 @@ const MemberDetail = () => {
   const { photos: contactPhotos, uploadPhoto, removePhoto } = useContactPhotos(canSeeContacts ? memberId : undefined);
 
 
+  // Registergegevens (koppelingen, statussen en eigendomsketen) horen
+  // uitsluitend op de registerpagina, niet in ledenprofielen.
 
-  // Registerkoppelingen van dit lid, per vestiging (alleen bestuur/admin).
-  const canSeeRegister = isAdmin || isBoard;
-  const { data: registerLinks = [] } = useRegisterLinks(canSeeRegister);
-  const { data: registerShops = [] } = useCoffeeshopRegister(canSeeRegister);
-  const shopById = useMemo(() => new Map(registerShops.map((s) => [s.id, s])), [registerShops]);
-  const assignLocation = useAssignLinkLocation();
-
-  const memberLinks = useMemo(
-    () => registerLinks.filter((l) => l.member_id === memberId && l.status !== "afgewezen"),
-    [registerLinks, memberId],
-  );
-  // Koppeling per vestiging: eerst op exacte vestigingssleutel, daarna terugval
-  // op de registerregel zelf (postcode + huisnummer, naam + plaats, adres) zodat
-  // een verhuisde of licht afwijkende vestiging niet als "niet gekoppeld" oogt.
-  const linkByLocation = useMemo(() => {
-    const map = new Map<string, (typeof memberLinks)[number]>();
-    const locs = (member?.locaties ?? []) as any[];
-    const better = (
-      current: (typeof memberLinks)[number] | undefined,
-      candidate: (typeof memberLinks)[number],
-    ) => !current || (current.status !== "bevestigd" && candidate.status === "bevestigd");
-
-    const assign = (loc: any, link: (typeof memberLinks)[number]) => {
-      const key = locationKey(loc);
-      if (better(map.get(key), link)) map.set(key, link);
-    };
-
-    const pending: typeof memberLinks = [];
-
-    // 1. Exacte sleutel wint altijd.
-    memberLinks.forEach((l) => {
-      const exact = l.location_key
-        ? locs.find((loc) => locationKeyOf(loc) === l.location_key!.toLowerCase())
-        : undefined;
-      if (exact) assign(exact, l);
-      else pending.push(l);
-    });
-
-    // 2. Terugval via gedeelde matchlogica op basis van de registerregel.
-    pending.forEach((l) => {
-      const shop = shopById.get(l.register_id);
-      const taken = new Set(Array.from(map.values()).map((x) => x.id));
-      const free = locs.filter((loc) => {
-        const existing = map.get(locationKey(loc));
-        return !existing || !taken.has(existing.id);
-      });
-      const match = findMemberLocation(free.length ? free : locs, l.location_key, shop ?? null);
-      if (match) assign(match, l);
-    });
-
-    return map;
-  }, [memberLinks, shopById, member?.locaties]);
-
-
-  const matchedLinkIds = useMemo(
-    () => new Set(Array.from(linkByLocation.values()).map((l) => l.id)),
-    [linkByLocation],
-  );
-
-  // Eigendomsketen (UBO) hoort uitsluitend op de registerpagina, niet in ledenprofielen.
 
 
 
@@ -955,10 +889,8 @@ const MemberDetail = () => {
             </h3>
             <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
               {member.locaties.map((loc, i) => {
-                const key = locationKey(loc as any);
-                const link = canSeeRegister ? linkByLocation.get(key) : undefined;
-                const shop = link ? shopById.get(link.register_id) : null;
                 return (
+
                 <div
                   key={i}
                   className="flex h-full flex-col border border-border rounded-md p-4 transition-colors hover:bg-muted/20"
@@ -991,7 +923,7 @@ const MemberDetail = () => {
                     {loc.oprichtingsDatum && (
                       <p className="text-xs">Opgericht {formatDate(loc.oprichtingsDatum)}</p>
                     )}
-                    {loc.vergunninghouder && !canSeeRegister && canSeeOwnerInfo && (
+                    {loc.vergunninghouder && canSeeOwnerInfo && (
                       <p className="text-xs">Vergunninghouder: {loc.vergunninghouder}</p>
                     )}
                     {canSeeContacts && (() => {
@@ -1008,100 +940,42 @@ const MemberDetail = () => {
                     })()}
                   </div>
 
-                  {canSeeRegister ? (
-                    <div className="flex flex-1 flex-col">
-                      <LocationRegisterInfo
-                        link={link}
-                        shop={shop}
-                        memberKvk={loc.kvk}
-                        memberVergunninghouder={loc.vergunninghouder}
-                        memberExploitant={loc.exploitant}
-                        memberWebsite={loc.website}
-                        memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
-                      />
-                      {isAdmin && link && (
-                        <>
-                          <ShopLogoReview registerId={link.register_id} />
-                          <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
-                        </>
+                  <div className="mt-1 flex items-start gap-3">
+                    {(() => {
+                      const vestigingLogo =
+                        loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc));
+                      if (!vestigingLogo) return null;
+                      return (
+                        <img
+                          src={vestigingLogo}
+                          alt={`Logo ${loc.naam || member.naam}`}
+                          loading="lazy"
+                          className="h-10 w-10 rounded-md border border-border object-contain bg-background"
+                        />
+                      );
+                    })()}
+                    <div className="space-y-0.5">
+                      {loc.kvk && canSeeOwnerInfo && (
+                        <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                      )}
+                      {loc.website && (
+                        <a
+                          href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-muted-foreground hover:underline"
+                        >
+                          {cleanUrl(loc.website)}
+                        </a>
                       )}
                     </div>
+                  </div>
 
-                  ) : (
-                    <div className="mt-1 flex items-start gap-3">
-                      {(() => {
-                        const vestigingLogo =
-                          loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc));
-                        if (!vestigingLogo) return null;
-                        return (
-                          <img
-                            src={vestigingLogo}
-                            alt={`Logo ${loc.naam || member.naam}`}
-                            loading="lazy"
-                            className="h-10 w-10 rounded-md border border-border object-contain bg-background"
-                          />
-                        );
-                      })()}
-                      <div className="space-y-0.5">
-                        {loc.kvk && canSeeOwnerInfo && (
-                          <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
-                        )}
-                        {loc.website && (
-                          <a
-                            href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block text-xs text-muted-foreground hover:underline"
-                          >
-                            {cleanUrl(loc.website)}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 );
               })}
-
-              {/* Registershops die aan dit lid gekoppeld zijn, maar (nog) niet aan een vestiging */}
-              {canSeeRegister &&
-                memberLinks
-                  .filter((l) => !matchedLinkIds.has(l.id))
-                  .map((l) => {
-                    const shop = shopById.get(l.register_id);
-                    if (!shop) return null;
-                    return (
-                      <div key={l.id} className="border border-dashed border-border rounded-md p-4 bg-muted/10">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium font-display">{shop.naam}</span>
-                          <span className="px-2 py-0.5 bg-muted rounded-sm text-xs text-muted-foreground">
-                            Alleen in register
-                          </span>
-                        </div>
-                        <LocationRegisterInfo link={l} shop={shop} />
-                        {isAdmin && (
-                          <div className="mt-3">
-                            <p className="text-xs text-muted-foreground mb-1">Koppel aan vestiging:</p>
-                            <Select
-                              onValueChange={(v) => assignLocation.mutate({ linkId: l.id, location_key: v })}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Kies vestiging…" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {member.locaties.map((loc, li) => (
-                                  <SelectItem key={li} value={locationKey(loc as any)} className="text-xs">
-                                    {loc.naam} — {loc.adres || loc.plaats}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
             </div>
+
           </div>
 
 
