@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Member } from "@/data/types";
 import { useAuth } from "@/hooks/useAuth";
-import { mergeDirectory } from "@/lib/memberDirectory";
+import { directoryAccess, mergeDirectory } from "@/lib/memberDirectory";
 
 interface MembersDataContextType {
   rawMembers: Member[];
@@ -43,14 +43,13 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
   const { user, isAdmin, isBoard, isExtern, isInhuur, linkedMemberIds } = useAuth();
   const queryClient = useQueryClient();
 
-  /** Bestuur en beheer lezen het volledige ledenbestand rechtstreeks. */
-  const canReadAll = isAdmin || isBoard;
-  /**
-   * Gewone leden met een geldige ledenkoppeling krijgen aanvullend de geschoonde
-   * ledendirectory. Externen, inhuur en accounts zonder koppeling nooit.
-   */
-  const canUseDirectory =
-    !canReadAll && !isExtern && !isInhuur && linkedMemberIds.length > 0;
+  const { canReadAll, canUseDirectory } = directoryAccess({
+    isAdmin,
+    isBoard,
+    isExtern,
+    isInhuur,
+    linkedMemberIds,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["members-data", user?.id ?? null, canReadAll, canUseDirectory],
