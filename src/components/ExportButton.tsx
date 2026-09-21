@@ -162,7 +162,7 @@ const ExportButton = ({ filename }: ExportButtonProps) => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success(
-        `Excel gedownload: ${leden.length} leden, ${locaties.length} locaties, ${contacten.length} contactpersonen.`,
+        `Excel gedownload: ${leden.length} leden, ${leads.length} leads, ${oudLeden.length} oud-leden, ${locaties.length} locaties, ${contacten.length} contactpersonen.`,
       );
     } catch (error) {
       console.error("Excel-export mislukt", error);
