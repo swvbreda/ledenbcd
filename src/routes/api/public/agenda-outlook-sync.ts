@@ -1,4 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  claimConfirmations,
+  DispatchPausedError,
+  loadDispatchSettings,
+  markConfirmations,
+  type ConfirmationDb,
+  type DispatchSettings,
+} from "@/lib/agendaConfirmations";
 
 /**
  * Zet een evenement als afspraak in de Outlook-agenda van het secretariaat en
@@ -97,6 +105,22 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           eventId = body.event_id ?? null;
           const action = body.action ?? "sync";
           if (!eventId) return Response.json({ error: "event_id ontbreekt" }, { status: 400 });
+
+          // --- Globale noodpauze: vóór elke Graph-aanroep, fail closed -------
+          let settings: DispatchSettings;
+          try {
+            settings = await loadDispatchSettings(supabaseAdmin as unknown as ConfirmationDb);
+          } catch (e) {
+            const reason = e instanceof DispatchPausedError ? e.reason : "settings_error";
+            console.warn("agenda-outlook-sync geblokkeerd:", reason);
+            return Response.json({ ok: false, skipped: reason }, { status: 200 });
+          }
+          if (!settings.dispatchEnabled) {
+            return Response.json({ ok: false, skipped: "dispatch_paused" }, { status: 200 });
+          }
+          if (action === "attendees" && !settings.registrationSyncEnabled) {
+            return Response.json({ ok: false, skipped: "registration_sync_paused" }, { status: 200 });
+          }
 
           const { data: ev, error: evErr } = await supabaseAdmin
             .from("agenda_events")
@@ -262,72 +286,69 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           };
           if (ev.location) payload["location"] = { displayName: ev.location };
 
-          /** Reserveert adressen die nog nooit een bevestiging kregen (at-most-once). */
-          const claimInvites = async (emails: string[]): Promise<string[]> => {
-            if (emails.length === 0) return [];
-            const { data, error } = await supabaseAdmin.rpc("agenda_claim_invites", {
-              _event_id: ev.id,
-              _channel: "outlook",
-              _emails: emails,
-              _source: "agenda-outlook-sync",
-            } as never);
-            if (error) throw error;
-            return ((data ?? []) as { email: string }[] | string[]).map((row) =>
-              typeof row === "string" ? row : row.email,
-            );
-          };
-          /** Geeft een reservering terug wanneer de uitnodiging niet verstuurd kon worden. */
-          const releaseInvites = async (emails: string[]) => {
-            if (emails.length === 0) return;
-            await supabaseAdmin
-              .from("agenda_invite_ledger")
-              .delete()
-              .eq("event_id", ev.id)
-              .eq("channel", "outlook")
-              .in("email", emails);
-          };
+          const db = supabaseAdmin as unknown as ConfirmationDb;
+          const claim = (emails: string[]) =>
+            claimConfirmations(db, {
+              eventId: ev.id,
+              channel: "outlook",
+              emails,
+              source: "agenda-outlook-sync",
+            });
 
           const nameByEmail = new Map(
             attendees.map((a) => [a.emailAddress.address, a.emailAddress.name]),
           );
 
-          // 'attendees' = gestuurd door een aanmelding; 'sync' = inhoudelijke wijziging.
+          // 'attendees' = gestuurd door een aanmelding (routine),
+          // 'event-changed' = uitdrukkelijke inhoudelijke wijziging,
+          // 'sync' = routinecontrole en mag niets aan een bestaande afspraak wijzigen.
           const attendeeMode = action === "attendees";
+          const outlookIsConfirmationChannel = settings.confirmationChannel === "outlook";
           let outlookId: string | null = ev.outlook_event_id ?? null;
           let graphAction = "none";
           let invitedNow: string[] = [];
 
           if (outlookId) {
             if (attendeeMode) {
-              // Alleen nieuwe deelnemers uitnodigen; bestaande deelnemers krijgen
-              // niets opnieuw. Geen PATCH, want dat mailt de hele lijst opnieuw.
-              const fresh = await claimInvites(attendees.map((a) => a.emailAddress.address));
-              if (fresh.length > 0) {
-                try {
-                  await graph(
-                    token,
-                    "POST",
-                    `/users/${encodeURIComponent(mailbox)}/events/${outlookId}/forward`,
-                    {
-                      Comment: intro,
-                      ToRecipients: fresh.map((email) => ({
-                        emailAddress: { address: email, name: nameByEmail.get(email) ?? email },
-                      })),
-                    },
-                  );
-                  graphAction = "forwarded";
-                  invitedNow = fresh;
-                } catch (e) {
-                  await releaseInvites(fresh);
-                  if (String((e as Error).message).includes("404")) outlookId = null;
-                  else throw e;
-                }
+              if (!outlookIsConfirmationChannel) {
+                // De bevestiging loopt via e-mail; de agenda stuurt niets extra's.
+                graphAction = "skipped_channel_not_outlook";
               } else {
-                graphAction = "skipped_no_new_attendees";
+                // Alleen nieuwe deelnemers uitnodigen; bestaande deelnemers krijgen
+                // niets opnieuw. Geen PATCH, want dat mailt de hele lijst opnieuw.
+                const fresh = await claim(attendees.map((a) => a.emailAddress.address));
+                if (fresh.length > 0) {
+                  try {
+                    await graph(
+                      token,
+                      "POST",
+                      `/users/${encodeURIComponent(mailbox)}/events/${outlookId}/forward`,
+                      {
+                        Comment: intro,
+                        ToRecipients: fresh.map((email) => ({
+                          emailAddress: { address: email, name: nameByEmail.get(email) ?? email },
+                        })),
+                      },
+                    );
+                    graphAction = "forwarded";
+                    invitedNow = fresh;
+                    await markConfirmations(db, { eventId: ev.id, emails: fresh, status: "sent" });
+                  } catch (e) {
+                    // Claim blijft staan: de uitnodiging kán al onderweg zijn.
+                    await markConfirmations(db, {
+                      eventId: ev.id,
+                      emails: fresh,
+                      status: "uncertain",
+                      note: String((e as Error).message).slice(0, 300),
+                    });
+                    throw e;
+                  }
+                } else {
+                  graphAction = "skipped_no_new_attendees";
+                }
               }
-            } else {
-              // Inhoudelijke wijziging: afspraak bijwerken zonder de deelnemerslijst
-              // opnieuw te zetten, zodat Outlook alleen een echte update stuurt.
+            } else if (action === "event-changed") {
+              // Uitdrukkelijke inhoudelijke wijziging: alleen dan een update sturen.
               try {
                 await graph(
                   token,
@@ -337,15 +358,20 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
                 );
                 graphAction = "updated";
               } catch (e) {
-                if (String((e as Error).message).includes("404")) outlookId = null;
-                else throw e;
+                if (!String((e as Error).message).includes("404")) throw e;
+                // Afspraak bestaat niet meer; niet stilzwijgend opnieuw aanmaken.
+                graphAction = "missing_at_microsoft";
               }
+            } else {
+              // Routinecontrole of aanmelding zonder wijziging: geen enkele schrijfactie.
+              graphAction = "skipped_existing_meeting";
             }
-          }
-
-          if (!outlookId) {
-            // Nieuwe afspraak: iedereen krijgt hier precies één uitnodiging.
-            const fresh = await claimInvites(attendees.map((a) => a.emailAddress.address));
+          } else {
+            // Nieuwe afspraak. Deelnemers worden alleen uitgenodigd wanneer de
+            // agenda het gekozen bevestigingskanaal is.
+            const fresh = outlookIsConfirmationChannel
+              ? await claim(attendees.map((a) => a.emailAddress.address))
+              : [];
             const invitees = attendees.filter((a) => fresh.includes(a.emailAddress.address));
             try {
               const created = await graph(
@@ -357,8 +383,14 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
               outlookId = (created as { id?: string })?.id ?? null;
               graphAction = "created";
               invitedNow = fresh;
+              await markConfirmations(db, { eventId: ev.id, emails: fresh, status: "sent" });
             } catch (e) {
-              await releaseInvites(fresh);
+              await markConfirmations(db, {
+                eventId: ev.id,
+                emails: fresh,
+                status: "uncertain",
+                note: String((e as Error).message).slice(0, 300),
+              });
               throw e;
             }
           }

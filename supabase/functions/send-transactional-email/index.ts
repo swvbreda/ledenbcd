@@ -286,9 +286,11 @@ Deno.serve(async (req) => {
     )
   }
 
-  // 2b. Aanmeldbevestigingen: hooguit één keer per bijeenkomst en per adres.
-  // De claim gebeurt in de database (uniek index), dus ook parallelle
-  // verzoeken kunnen samen niet meer dan één bevestiging opleveren.
+  // 2b. Aanmeldbevestigingen: hooguit één keer per bijeenkomst en per adres,
+  // gedeeld met het agenda-kanaal. De claim gebeurt atomair in de database, dus
+  // ook parallelle verzoeken leveren er samen nooit meer dan één op. Een claim
+  // wordt nooit teruggedraaid: bij een onzekere aflevering blijft hij staan.
+  let confirmationEventId: string | null = null
   if (templateName === 'agenda-registration-confirmation') {
     const rawEventId = String(
       (req.headers.get('x-agenda-event-id') ?? '') ||
@@ -303,12 +305,15 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
-    const { data: claimed, error: claimError } = await supabase.rpc('agenda_claim_invites', {
-      _event_id: rawEventId,
-      _channel: 'email',
-      _emails: [effectiveRecipient],
-      _source: 'send-transactional-email',
-    })
+    const { data: claimed, error: claimError } = await supabase.rpc(
+      'agenda_claim_confirmations',
+      {
+        _event_id: rawEventId,
+        _channel: 'email',
+        _emails: [effectiveRecipient],
+        _source: 'send-transactional-email',
+      },
+    )
     if (claimError) {
       console.error('Dedupe-controle mislukt — niet verzonden', claimError)
       return new Response(
@@ -333,6 +338,19 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
+    confirmationEventId = rawEventId
+  }
+
+  /** Legt de uitkomst vast; verwijdert nooit een claim. */
+  const markConfirmation = async (status: 'sent' | 'uncertain', note?: string) => {
+    if (!confirmationEventId) return
+    const { error } = await supabase.rpc('agenda_mark_confirmations', {
+      _event_id: confirmationEventId,
+      _emails: [effectiveRecipient],
+      _status: status,
+      _note: note ?? null,
+    })
+    if (error) console.error('agenda_mark_confirmations mislukt', error)
   }
 
   // 3. Get or create unsubscribe token (one token per email address)
@@ -552,6 +570,8 @@ Deno.serve(async (req) => {
 
     if (!resp.ok) {
       console.error('Resend send failed', { status: resp.status, data })
+      // Claim blijft staan: de aflevering kan al gebeurd zijn.
+      await markConfirmation('uncertain', `Resend ${resp.status}`)
       await supabase.from('email_send_log').insert({
         message_id: messageId,
         template_name: templateName,
@@ -565,6 +585,7 @@ Deno.serve(async (req) => {
       })
     }
 
+    await markConfirmation('sent')
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: templateName,
@@ -585,6 +606,8 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('Resend request error', err)
+    // Time-out of netwerkfout: onbekend of de mail eruit ging — nooit opnieuw.
+    await markConfirmation('uncertain', msg.slice(0, 300))
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: templateName,

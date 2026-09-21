@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_confirmation_gate: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          first_channel: string | null
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          first_channel?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          first_channel?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_confirmation_gate_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agenda_events: {
         Row: {
           cancel_reason: string | null
@@ -185,18 +226,21 @@ export type Database = {
       }
       agenda_outlook_settings: {
         Row: {
+          confirmation_channel: string
           id: boolean
           outlook_dispatch_enabled: boolean
           registration_sync_enabled: boolean
           updated_at: string
         }
         Insert: {
+          confirmation_channel?: string
           id?: boolean
           outlook_dispatch_enabled?: boolean
           registration_sync_enabled?: boolean
           updated_at?: string
         }
         Update: {
+          confirmation_channel?: string
           id?: boolean
           outlook_dispatch_enabled?: boolean
           registration_sync_enabled?: boolean
@@ -3784,6 +3828,17 @@ export type Database = {
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }
+      agenda_claim_confirmations: {
+        Args: {
+          _channel: string
+          _emails: string[]
+          _event_id: string
+          _source?: string
+        }
+        Returns: {
+          email: string
+        }[]
+      }
       agenda_claim_invites: {
         Args: {
           _channel: string
@@ -3794,6 +3849,15 @@ export type Database = {
         Returns: {
           email: string
         }[]
+      }
+      agenda_mark_confirmations: {
+        Args: {
+          _emails: string[]
+          _event_id: string
+          _note?: string
+          _status: string
+        }
+        Returns: number
       }
       agenda_normalize_email: { Args: { _email: string }; Returns: string }
       agenda_outlook_dispatch: {
