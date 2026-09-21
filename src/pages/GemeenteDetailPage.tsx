@@ -19,7 +19,7 @@ const GemeenteDetailPage = () => {
   const decodedGemeente = gemeente ? decodeURIComponent(gemeente) : "";
   const [filterStadsdeel, setFilterStadsdeel] = useState<string>("alle");
   const [searchQuery, setSearchQuery] = useState("");
-  // Deze pagina gaat uitsluitend over leden en ledenlocaties; geen registerverwijzingen.
+  // Deze pagina gaat uitsluitend over leden en ledenlocaties.
 
   const data = useMemo(() => {
     if (!decodedGemeente) return null;
