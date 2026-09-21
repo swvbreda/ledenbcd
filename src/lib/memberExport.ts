@@ -212,7 +212,7 @@ export function buildLedenRows(members: Member[]): LedenRow[] {
 }
 
 export function buildLocatieRows(groups: MemberGroup[]): LocatieRow[] {
-  const rows: Omit<LocatieRow, "nr">[] = [];
+  const rows: LocatieRow[] = [];
   for (const group of groups) {
     for (const m of sortMembersByNumber(group.members)) {
       const locaties = [...realLocations(m)].sort((a, b) =>
@@ -241,11 +241,11 @@ export function buildLocatieRows(groups: MemberGroup[]): LocatieRow[] {
       }
     }
   }
-  return rows.map((r, i) => ({ nr: i + 1, ...r }));
+  return rows;
 }
 
 export function buildContactRows(groups: MemberGroup[]): ContactRow[] {
-  const rows: Omit<ContactRow, "nr">[] = [];
+  const rows: ContactRow[] = [];
   for (const group of groups) {
     for (const m of sortMembersByNumber(group.members)) {
       for (const c of effectiveContacts(m)) {
@@ -262,7 +262,7 @@ export function buildContactRows(groups: MemberGroup[]): ContactRow[] {
       }
     }
   }
-  return rows.map((r, i) => ({ nr: i + 1, ...r }));
+  return rows;
 }
 
 export interface WorkbookInput {
