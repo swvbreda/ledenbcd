@@ -1,4 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  claimConfirmations,
+  DispatchPausedError,
+  loadDispatchSettings,
+  markConfirmations,
+  type ConfirmationDb,
+  type DispatchSettings,
+} from "@/lib/agendaConfirmations";
 
 /**
  * Zet een evenement als afspraak in de Outlook-agenda van het secretariaat en
@@ -97,6 +105,22 @@ export const Route = createFileRoute("/api/public/agenda-outlook-sync")({
           eventId = body.event_id ?? null;
           const action = body.action ?? "sync";
           if (!eventId) return Response.json({ error: "event_id ontbreekt" }, { status: 400 });
+
+          // --- Globale noodpauze: vóór elke Graph-aanroep, fail closed -------
+          let settings: DispatchSettings;
+          try {
+            settings = await loadDispatchSettings(supabaseAdmin as unknown as ConfirmationDb);
+          } catch (e) {
+            const reason = e instanceof DispatchPausedError ? e.reason : "settings_error";
+            console.warn("agenda-outlook-sync geblokkeerd:", reason);
+            return Response.json({ ok: false, skipped: reason }, { status: 200 });
+          }
+          if (!settings.dispatchEnabled) {
+            return Response.json({ ok: false, skipped: "dispatch_paused" }, { status: 200 });
+          }
+          if (action === "attendees" && !settings.registrationSyncEnabled) {
+            return Response.json({ ok: false, skipped: "registration_sync_paused" }, { status: 200 });
+          }
 
           const { data: ev, error: evErr } = await supabaseAdmin
             .from("agenda_events")
