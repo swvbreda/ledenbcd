@@ -36,13 +36,13 @@ export const Route = createFileRoute("/api/public/tmp-export-verify")({
           old: [],
         };
         for (const r of rows ?? []) {
-          const base = ((r.data ?? {}) as Record<string, unknown>) ?? {};
-          const baseLoc = (base.locaties ?? []) as Record<string, unknown>[];
+          const base = (r.data ?? {}) as Record<string, unknown>;
+          const baseLoc = (base.locaties ?? []) as never[];
           basisLocaties += baseLoc.length;
           const overlay = editMap.get(r.id as number) ?? {};
           const merged = mergeMemberLocations(
             baseLoc,
-            (overlay.locaties ?? []) as Record<string, unknown>[],
+            (overlay.locaties ?? []) as never[],
             (overlay._verwijderdeLocaties ?? []) as string[],
           );
           const m = {

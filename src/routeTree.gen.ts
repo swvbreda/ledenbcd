@@ -53,6 +53,7 @@ import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
+import { Route as ApiPublicTmpExportVerifyRouteImport } from './routes/api/public/tmp-export-verify'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
@@ -292,6 +293,12 @@ const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   path: '/api/public/register-enrich',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTmpExportVerifyRoute =
+  ApiPublicTmpExportVerifyRouteImport.update({
+    id: '/api/public/tmp-export-verify',
+    path: '/api/public/tmp-export-verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp-webhook',
@@ -385,6 +392,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/tmp-export-verify': typeof ApiPublicTmpExportVerifyRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -440,6 +448,7 @@ export interface FileRoutesByTo {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/tmp-export-verify': typeof ApiPublicTmpExportVerifyRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -497,6 +506,7 @@ export interface FileRoutesById {
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
+  '/api/public/tmp-export-verify': typeof ApiPublicTmpExportVerifyRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
   '/extern/gemeente/$gemeente': typeof ExternGemeenteGemeenteRoute
@@ -554,6 +564,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/tmp-export-verify'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -609,6 +620,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/tmp-export-verify'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -665,6 +677,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
     | '/api/public/register-enrich'
+    | '/api/public/tmp-export-verify'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
     | '/extern/gemeente/$gemeente'
@@ -703,6 +716,7 @@ export interface RootRouteChildren {
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
+  ApiPublicTmpExportVerifyRoute: typeof ApiPublicTmpExportVerifyRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
   ExternGemeenteGemeenteRoute: typeof ExternGemeenteGemeenteRoute
@@ -1022,6 +1036,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRegisterEnrichRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tmp-export-verify': {
+      id: '/api/public/tmp-export-verify'
+      path: '/api/public/tmp-export-verify'
+      fullPath: '/api/public/tmp-export-verify'
+      preLoaderRoute: typeof ApiPublicTmpExportVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp-webhook': {
       id: '/api/public/whatsapp-webhook'
       path: '/api/public/whatsapp-webhook'
@@ -1183,6 +1204,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
+  ApiPublicTmpExportVerifyRoute: ApiPublicTmpExportVerifyRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
   ExternGemeenteGemeenteRoute: ExternGemeenteGemeenteRoute,
