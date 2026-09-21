@@ -83,17 +83,41 @@ const ExportButton = ({ filename }: ExportButtonProps) => {
       const workbook = new ExcelJS.Workbook();
       workbook.created = new Date();
 
-      const sheets: [string, typeof HEADERS_LEDEN, Record<string, unknown>[], string[]][] = [
-        ["Leden", HEADERS_LEDEN, leden as unknown as Record<string, unknown>[], ["locaties"]],
-        ["Locaties", HEADERS_LOCATIES, locaties as unknown as Record<string, unknown>[], []],
-        ["Contactpersonen", HEADERS_CONTACTEN, contacten as unknown as Record<string, unknown>[], []],
+      const sheets: [
+        string,
+        typeof HEADERS_LEDEN,
+        Record<string, unknown>[],
+        string[],
+      ][] = [
+        [
+          "Leden",
+          HEADERS_LEDEN,
+          leden as unknown as Record<string, unknown>[],
+          ["locaties"],
+        ],
+        [
+          "Locaties",
+          HEADERS_LOCATIES,
+          locaties as unknown as Record<string, unknown>[],
+          [],
+        ],
+        [
+          "Contactpersonen",
+          HEADERS_CONTACTEN,
+          contacten as unknown as Record<string, unknown>[],
+          [],
+        ],
       ];
 
       for (const [name, columns, rows, wrapKeys] of sheets) {
         const sheet = workbook.addWorksheet(name, {
           views: [{ state: "frozen", ySplit: 1 }],
         });
-        sheet.columns = columns.map((c) => ({ header: c.header, key: c.key, width: c.width }));
+        sheet.columns = columns.map((c) => ({
+          header: c.header,
+          key: c.key,
+          width: c.width,
+        }));
         sheet.getRow(1).font = { bold: true };
         sheet.getRow(1).alignment = { vertical: "middle" };
         rows.forEach((row) => sheet.addRow(row));

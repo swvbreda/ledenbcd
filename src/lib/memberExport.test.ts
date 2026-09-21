@@ -53,7 +53,9 @@ describe("memberExport", () => {
   });
 
   it("exporteert elk lid precies één keer, ongeacht filters of paginering", () => {
-    const alle = Array.from({ length: 131 }, (_, i) => member({ id: i + 1, naam: `Lid ${i + 1}` }));
+    const alle = Array.from({ length: 131 }, (_, i) =>
+      member({ id: i + 1, naam: `Lid ${i + 1}` }),
+    );
     const rows = buildLedenRows(alle);
     expect(rows).toHaveLength(131);
     expect(new Set(rows.map((r) => r.lidnr)).size).toBe(131);
@@ -63,8 +65,18 @@ describe("memberExport", () => {
     const m = member({
       id: 5,
       locaties: [
-        { naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam" },
-        { naam: "B", adres: "Kerkstraat 2", postcode: "1017 GG", plaats: "Amsterdam" },
+        {
+          naam: "A",
+          adres: "Tolstraat 91",
+          postcode: "1074 VK",
+          plaats: "Amsterdam",
+        },
+        {
+          naam: "B",
+          adres: "Kerkstraat 2",
+          postcode: "1017 GG",
+          plaats: "Amsterdam",
+        },
       ],
     });
     const leden = buildLedenRows([m]);
@@ -73,32 +85,77 @@ describe("memberExport", () => {
     const locaties = buildLocatieRows([m]);
     expect(locaties).toHaveLength(2);
     expect(locaties.map((l) => l.locatienaam)).toEqual(["A", "B"]);
-    expect(locaties[0]).toMatchObject({ straat: "Tolstraat", huisnummer: "91", postcode: "1074 VK" });
+    expect(locaties[0]).toMatchObject({
+      straat: "Tolstraat",
+      huisnummer: "91",
+      postcode: "1074 VK",
+    });
   });
 
   it("gebruikt de samengevoegde locaties en laat verwijderde locaties weg", () => {
     const base = [
-      { naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam" },
-      { naam: "Oud", adres: "Kerkstraat 2", postcode: "1017 GG", plaats: "Amsterdam" },
+      {
+        naam: "A",
+        adres: "Tolstraat 91",
+        postcode: "1074 VK",
+        plaats: "Amsterdam",
+      },
+      {
+        naam: "Oud",
+        adres: "Kerkstraat 2",
+        postcode: "1017 GG",
+        plaats: "Amsterdam",
+      },
     ];
-    const overlay = [{ naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam", stadsdeel: "Zuid" }];
-    const merged = mergeMemberLocations(base, overlay, ["locatie:1017GG|kerkstraat2"]);
+    const overlay = [
+      {
+        naam: "A",
+        adres: "Tolstraat 91",
+        postcode: "1074 VK",
+        plaats: "Amsterdam",
+        stadsdeel: "Zuid",
+      },
+    ];
+    const merged = mergeMemberLocations(base, overlay, [
+      "locatie:1017GG|kerkstraat2",
+    ]);
     const rows = buildLocatieRows([member({ id: 7, locaties: merged })]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ locatienaam: "A", stadsdeel: "Zuid" });
   });
 
   it("splitst huisnummer en toevoeging", () => {
-    expect(splitAddress("Schapenkamp 192 A")).toEqual({ straat: "Schapenkamp", huisnummer: "192", toevoeging: "A" });
-    expect(splitAddress("Knollendamstraat 5hs")).toEqual({ straat: "Knollendamstraat", huisnummer: "5", toevoeging: "hs" });
-    expect(splitAddress("Binnen Oranjestraat 9-H")).toEqual({ straat: "Binnen Oranjestraat", huisnummer: "9", toevoeging: "H" });
-    expect(splitAddress("Marktplein")).toEqual({ straat: "Marktplein", huisnummer: "", toevoeging: "" });
+    expect(splitAddress("Schapenkamp 192 A")).toEqual({
+      straat: "Schapenkamp",
+      huisnummer: "192",
+      toevoeging: "A",
+    });
+    expect(splitAddress("Knollendamstraat 5hs")).toEqual({
+      straat: "Knollendamstraat",
+      huisnummer: "5",
+      toevoeging: "hs",
+    });
+    expect(splitAddress("Binnen Oranjestraat 9-H")).toEqual({
+      straat: "Binnen Oranjestraat",
+      huisnummer: "9",
+      toevoeging: "H",
+    });
+    expect(splitAddress("Marktplein")).toEqual({
+      straat: "Marktplein",
+      huisnummer: "",
+      toevoeging: "",
+    });
   });
 
   it("toont locatieregels met naam en volledig adres", () => {
-    expect(formatLocationLine({ naam: "A", adres: "Tolstraat 91", postcode: "1074 VK", plaats: "Amsterdam" })).toBe(
-      "A — Tolstraat 91, 1074 VK Amsterdam",
-    );
+    expect(
+      formatLocationLine({
+        naam: "A",
+        adres: "Tolstraat 91",
+        postcode: "1074 VK",
+        plaats: "Amsterdam",
+      }),
+    ).toBe("A — Tolstraat 91, 1074 VK Amsterdam");
   });
 
   it("neemt alle contactpersonen mee zonder dubbel primair record", () => {
@@ -109,8 +166,18 @@ describe("memberExport", () => {
       email: "jan@shop.nl",
       telefoon: "0612345678",
       contacten: [
-        { naam: "Jan Jansen", functie: "Eigenaar", telefoon: "0612345678", email: "jan@shop.nl" },
-        { naam: "Piet Pietersen", functie: "Manager", telefoon: "0687654321", email: "piet@shop.nl" },
+        {
+          naam: "Jan Jansen",
+          functie: "Eigenaar",
+          telefoon: "0612345678",
+          email: "jan@shop.nl",
+        },
+        {
+          naam: "Piet Pietersen",
+          functie: "Manager",
+          telefoon: "0687654321",
+          email: "piet@shop.nl",
+        },
       ],
     });
     const contacts = effectiveContacts(m);
@@ -122,15 +189,25 @@ describe("memberExport", () => {
   });
 
   it("neemt de hoofdvelden op als er geen contactenlijst is", () => {
-    const rows = buildContactRows([member({ id: 4, contactpersoon: "Alleen Hoofd", email: "a@b.nl" })]);
+    const rows = buildContactRows([
+      member({ id: 4, contactpersoon: "Alleen Hoofd", email: "a@b.nl" }),
+    ]);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ naam: "Alleen Hoofd", primair: "Ja" });
   });
 
   it("bouwt alle drie de bladen consistent", () => {
     const data = buildWorkbookData([
-      member({ id: 2, contactpersoon: "B", locaties: [{ naam: "L2", adres: "Straat 2", plaats: "Utrecht" }] }),
-      member({ id: 1, contactpersoon: "A", locaties: [{ naam: "L1", adres: "Straat 1", plaats: "Utrecht" }] }),
+      member({
+        id: 2,
+        contactpersoon: "B",
+        locaties: [{ naam: "L2", adres: "Straat 2", plaats: "Utrecht" }],
+      }),
+      member({
+        id: 1,
+        contactpersoon: "A",
+        locaties: [{ naam: "L1", adres: "Straat 1", plaats: "Utrecht" }],
+      }),
     ]);
     expect(data.leden.map((r) => r.lidnr)).toEqual([1, 2]);
     expect(data.locaties.map((r) => r.lidnr)).toEqual([1, 2]);
@@ -138,6 +215,8 @@ describe("memberExport", () => {
   });
 
   it("gebruikt de juiste bestandsnaam", () => {
-    expect(exportFileName(new Date("2026-09-21T10:00:00Z"))).toBe("bcd-leden-2026-09-21.xlsx");
+    expect(exportFileName(new Date("2026-09-21T10:00:00Z"))).toBe(
+      "bcd-leden-2026-09-21.xlsx",
+    );
   });
 });

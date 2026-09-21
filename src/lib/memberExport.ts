@@ -65,10 +65,15 @@ const text = (value: unknown): string => String(value ?? "").trim();
  * Leden numeriek oplopend op lidnummer; niet-numerieke of lege nummers achteraan
  * (op naam), zodat de lijst altijd bij het laagste echte lidnummer begint.
  */
-export function sortMembersByNumber<T extends { id: unknown; naam?: string }>(members: T[]): T[] {
+export function sortMembersByNumber<T extends { id: unknown; naam?: string }>(
+  members: T[],
+): T[] {
   const numeric = (m: T): number | null => {
-    const raw = typeof m.id === "number" ? m.id : Number(String(m.id ?? "").trim());
-    return Number.isFinite(raw) && String(m.id ?? "").trim() !== "" ? Number(raw) : null;
+    const raw =
+      typeof m.id === "number" ? m.id : Number(String(m.id ?? "").trim());
+    return Number.isFinite(raw) && String(m.id ?? "").trim() !== ""
+      ? Number(raw)
+      : null;
   };
   return [...members].sort((a, b) => {
     const na = numeric(a);
@@ -99,7 +104,10 @@ export function splitAddress(adres: unknown): {
 
 /** Eén regel per locatie: naam plus volledig adres. */
 export function formatLocationLine(loc: Location): string {
-  const adresDeel = [text(loc.adres), [text(loc.postcode), text(loc.plaats)].filter(Boolean).join(" ")]
+  const adresDeel = [
+    text(loc.adres),
+    [text(loc.postcode), text(loc.plaats)].filter(Boolean).join(" "),
+  ]
     .filter(Boolean)
     .join(", ");
   const naam = text(loc.naam);
@@ -115,7 +123,9 @@ const realLocations = (member: Member): Location[] =>
  * Effectieve contactpersonen: de hoofdvelden van het lid gelden als primaire
  * contactpersoon, tenzij dezelfde persoon al in `contacten` staat.
  */
-export function effectiveContacts(member: Member): (Contact & { primair: boolean })[] {
+export function effectiveContacts(
+  member: Member,
+): (Contact & { primair: boolean })[] {
   const rows: (Contact & { primair: boolean })[] = [];
   const seen = new Set<string>();
   const key = (naam: string, email: string) =>
@@ -150,7 +160,14 @@ export function effectiveContacts(member: Member): (Contact & { primair: boolean
       continue;
     }
     seen.add(k);
-    rows.push({ ...c, naam, email, functie: text(c.functie), telefoon: text(c.telefoon), primair: false });
+    rows.push({
+      ...c,
+      naam,
+      email,
+      functie: text(c.functie),
+      telefoon: text(c.telefoon),
+      primair: false,
+    });
   }
 
   return rows;
@@ -167,7 +184,8 @@ export function buildLedenRows(members: Member[]): LedenRow[] {
       stadsdeel: text(m.stadsdeel),
       jarenLid: getMembershipYears(m) ?? "",
       lidSinds: typeof m.lidSinds === "number" ? m.lidSinds : "",
-      oprichtingsjaar: typeof m.oprichtingJaar === "number" ? m.oprichtingJaar : "",
+      oprichtingsjaar:
+        typeof m.oprichtingJaar === "number" ? m.oprichtingJaar : "",
       contactpersoon: text(m.contactpersoon),
       functie: text(m.functie),
       telefoon: text(m.telefoon),
@@ -203,7 +221,8 @@ export function buildLocatieRows(members: Member[]): LocatieRow[] {
         toevoeging,
         postcode: text(loc.postcode),
         plaats: text(loc.plaats) || text(m.plaats),
-        gemeente: text(loc.gemeente) || text(getLocationGemeente(loc, m.plaats)),
+        gemeente:
+          text(loc.gemeente) || text(getLocationGemeente(loc, m.plaats)),
         stadsdeel: text(loc.stadsdeel) || text(m.stadsdeel),
         kvk: text(loc.kvk),
         bedrijfsnaam: text(loc.vergunninghouder) || text(loc.exploitant),
