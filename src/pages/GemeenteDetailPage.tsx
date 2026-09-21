@@ -113,8 +113,8 @@ const GemeenteDetailPage = () => {
       return a.localeCompare(b);
     });
 
-    return { totaalNL, aangesloten, marktPct, stadsdelen, perStadsdeel, sortedKeys, locaties };
-  }, [perStad, decodedGemeente, mergedRepresented, canSeeRegister]);
+    return { aangesloten, stadsdelen, perStadsdeel, sortedKeys, locaties };
+  }, [decodedGemeente, mergedRepresented]);
 
   if (!data) {
     return (
