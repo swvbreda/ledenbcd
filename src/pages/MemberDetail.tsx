@@ -1043,7 +1043,9 @@ const MemberDetail = () => {
                         );
                       })()}
                       <div className="space-y-0.5">
-                        {loc.kvk && <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>}
+                        {loc.kvk && canSeeOwnerInfo && (
+                          <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                        )}
                         {loc.website && (
                           <a
                             href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
