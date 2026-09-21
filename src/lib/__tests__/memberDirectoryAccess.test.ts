@@ -42,7 +42,7 @@ describe("ledenoverzichten verbergen gevoelige gegevens voor gewone leden", () =
   it("de ledenpagina toont contact-, eigenaars- en KvK-gegevens alleen bij eigen rij of bestuur/beheer", () => {
     const source = readFileSync("src/pages/MemberDetail.tsx", "utf8");
     expect(source).toContain("const canSeeContacts = isAdmin || isBoard || isInhuur || isOwnProfile;");
-    expect(source).toContain("loc.vergunninghouder && !canSeeRegister && canSeeOwnerInfo");
+    expect(source).toContain("loc.vergunninghouder && canSeeOwnerInfo");
     expect(source).toContain("{loc.kvk && canSeeOwnerInfo && (");
   });
 
