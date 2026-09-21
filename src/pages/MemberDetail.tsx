@@ -1062,46 +1062,8 @@ const MemberDetail = () => {
                 </div>
                 );
               })}
-
-              {/* Registershops die aan dit lid gekoppeld zijn, maar (nog) niet aan een vestiging */}
-              {canSeeRegister &&
-                memberLinks
-                  .filter((l) => !matchedLinkIds.has(l.id))
-                  .map((l) => {
-                    const shop = shopById.get(l.register_id);
-                    if (!shop) return null;
-                    return (
-                      <div key={l.id} className="border border-dashed border-border rounded-md p-4 bg-muted/10">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium font-display">{shop.naam}</span>
-                          <span className="px-2 py-0.5 bg-muted rounded-sm text-xs text-muted-foreground">
-                            Alleen in register
-                          </span>
-                        </div>
-                        <LocationRegisterInfo link={l} shop={shop} />
-                        {isAdmin && (
-                          <div className="mt-3">
-                            <p className="text-xs text-muted-foreground mb-1">Koppel aan vestiging:</p>
-                            <Select
-                              onValueChange={(v) => assignLocation.mutate({ linkId: l.id, location_key: v })}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="Kies vestiging…" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {member.locaties.map((loc, li) => (
-                                  <SelectItem key={li} value={locationKey(loc as any)} className="text-xs">
-                                    {loc.naam} — {loc.adres || loc.plaats}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
             </div>
+
           </div>
 
 
