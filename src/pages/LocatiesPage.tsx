@@ -8,7 +8,6 @@ import CityMap from "@/components/CityMap";
 import DocumentenZoeker from "@/components/DocumentenZoeker";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
-import RegisterCoverageCard from "@/components/register/RegisterCoverageCard";
 import { useAuth } from "@/hooks/useAuth";
 
 
@@ -227,8 +226,6 @@ const LocatiesPage = () => {
           </div>
         ))}
       </div>
-
-      {canSeeRegister && <RegisterCoverageCard />}
 
       <DocumentenZoeker />
 
