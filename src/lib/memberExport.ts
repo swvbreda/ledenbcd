@@ -182,10 +182,9 @@ export function effectiveContacts(
 }
 
 export function buildLedenRows(members: Member[]): LedenRow[] {
-  return sortMembersByNumber(members).map((m, index) => {
+  return sortMembersByNumber(members).map((m) => {
     const locaties = realLocations(m);
     return {
-      nr: index + 1,
       lidnr: m.id,
       naam: text(m.naam),
       plaats: text(m.plaats),
