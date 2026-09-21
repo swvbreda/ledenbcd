@@ -1008,57 +1008,37 @@ const MemberDetail = () => {
                     })()}
                   </div>
 
-                  {canSeeRegister ? (
-                    <div className="flex flex-1 flex-col">
-                      <LocationRegisterInfo
-                        link={link}
-                        shop={shop}
-                        memberKvk={loc.kvk}
-                        memberVergunninghouder={loc.vergunninghouder}
-                        memberExploitant={loc.exploitant}
-                        memberWebsite={loc.website}
-                        memberLogo={loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc))}
-                      />
-                      {isAdmin && link && (
-                        <>
-                          <ShopLogoReview registerId={link.register_id} />
-                          <ShopLogoOptoutToggle registerId={link.register_id} memberId={member.id} />
-                        </>
+                  <div className="mt-1 flex items-start gap-3">
+                    {(() => {
+                      const vestigingLogo =
+                        loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc));
+                      if (!vestigingLogo) return null;
+                      return (
+                        <img
+                          src={vestigingLogo}
+                          alt={`Logo ${loc.naam || member.naam}`}
+                          loading="lazy"
+                          className="h-10 w-10 rounded-md border border-border object-contain bg-background"
+                        />
+                      );
+                    })()}
+                    <div className="space-y-0.5">
+                      {loc.kvk && canSeeOwnerInfo && (
+                        <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
+                      )}
+                      {loc.website && (
+                        <a
+                          href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-muted-foreground hover:underline"
+                        >
+                          {cleanUrl(loc.website)}
+                        </a>
                       )}
                     </div>
+                  </div>
 
-                  ) : (
-                    <div className="mt-1 flex items-start gap-3">
-                      {(() => {
-                        const vestigingLogo =
-                          loc.logo || registerLogos?.byLocation.get(locationKeyOf(loc));
-                        if (!vestigingLogo) return null;
-                        return (
-                          <img
-                            src={vestigingLogo}
-                            alt={`Logo ${loc.naam || member.naam}`}
-                            loading="lazy"
-                            className="h-10 w-10 rounded-md border border-border object-contain bg-background"
-                          />
-                        );
-                      })()}
-                      <div className="space-y-0.5">
-                        {loc.kvk && canSeeOwnerInfo && (
-                          <p className="font-mono text-xs text-muted-foreground">KvK {loc.kvk}</p>
-                        )}
-                        {loc.website && (
-                          <a
-                            href={loc.website.startsWith("http") ? loc.website : `https://${loc.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block text-xs text-muted-foreground hover:underline"
-                          >
-                            {cleanUrl(loc.website)}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 );
               })}
