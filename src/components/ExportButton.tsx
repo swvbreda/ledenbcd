@@ -39,6 +39,7 @@ const HEADERS_LEDEN = [
 
 const HEADERS_LOCATIES = [
   { header: "Nr.", key: "nr", width: 6 },
+  { header: "Type", key: "type", width: 10 },
   { header: "Lidnr", key: "lidnr", width: 9 },
   { header: "Lidnaam", key: "lidnaam", width: 28 },
   { header: "Locatienaam", key: "locatienaam", width: 28 },
