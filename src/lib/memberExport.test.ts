@@ -40,8 +40,9 @@ describe("memberExport", () => {
       member({ id: 1, naam: "Een" }),
     ]);
     expect(rows.map((r) => r.lidnr)).toEqual([1, 2, 10]);
-    expect(rows[0].nr).toBe(1);
-    expect(rows.map((r) => r.nr)).toEqual([1, 2, 3]);
+    // Geen aparte doorlopende nummering meer: Lidnr is de eerste kolom.
+    expect(Object.keys(rows[0])[0]).toBe("lidnr");
+    expect(rows.every((r) => !("nr" in r))).toBe(true);
   });
 
   it("zet niet-numerieke lidnummers achteraan", () => {
@@ -187,7 +188,7 @@ describe("memberExport", () => {
     expect(contacts[0].primair).toBe(true);
     const rows = buildContactRows([{ type: "Lid", members: [m] }]);
     expect(rows.map((r) => r.primair)).toEqual(["Ja", "Nee"]);
-    expect(rows.map((r) => r.nr)).toEqual([1, 2]);
+    expect(Object.keys(rows[0]).slice(0, 2)).toEqual(["type", "lidnr"]);
   });
 
   it("neemt de hoofdvelden op als er geen contactenlijst is", () => {
@@ -252,9 +253,10 @@ describe("memberExport", () => {
     expect(data.leden.length + data.leads.length + data.oudLeden.length).toBe(
       131,
     );
-    expect(data.leden[0].nr).toBe(1);
-    expect(data.leads[0].nr).toBe(1);
-    expect(data.oudLeden[0].nr).toBe(1);
+    expect(data.leden[0].lidnr).toBe(1);
+    expect(Object.keys(data.leden[0])[0]).toBe("lidnr");
+    expect(Object.keys(data.leads[0])[0]).toBe("lidnr");
+    expect(Object.keys(data.oudLeden[0])[0]).toBe("lidnr");
     expect(data.oudLeden.map((r) => r.lidnr)).toEqual([
       300, 301, 302, 303, 304,
     ]);
@@ -267,9 +269,12 @@ describe("memberExport", () => {
     expect(data.locaties.filter((r) => r.type === "Oud-lid")).toHaveLength(5);
     expect(data.contacten.filter((r) => r.type === "Lead")).toHaveLength(10);
     expect(data.locaties[0].type).toBe("Lid");
-    expect(data.locaties.map((r) => r.nr)).toEqual(
-      data.locaties.map((_, i) => i + 1),
-    );
+    expect(Object.keys(data.locaties[0]).slice(0, 2)).toEqual([
+      "type",
+      "lidnr",
+    ]);
+    expect(data.locaties.every((r) => !("nr" in r))).toBe(true);
+    expect(data.contacten.every((r) => !("nr" in r))).toBe(true);
   });
 
   it("past de effectieve merge ook op oud-leden toe en laat verwijderde locaties weg", () => {

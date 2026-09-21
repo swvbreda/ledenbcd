@@ -4,7 +4,6 @@ import { getLocationGemeente } from "@/data/gemeenteMapping";
 
 /** Rij op het blad "Leden". */
 export interface LedenRow {
-  nr: number;
   lidnr: number | string;
   naam: string;
   plaats: string;
@@ -39,7 +38,6 @@ export interface MemberGroup {
 
 /** Rij op het blad "Locaties". */
 export interface LocatieRow {
-  nr: number;
   type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
@@ -59,7 +57,6 @@ export interface LocatieRow {
 
 /** Rij op het blad "Contactpersonen". */
 export interface ContactRow {
-  nr: number;
   type: MemberCategory;
   lidnr: number | string;
   lidnaam: string;
@@ -185,10 +182,9 @@ export function effectiveContacts(
 }
 
 export function buildLedenRows(members: Member[]): LedenRow[] {
-  return sortMembersByNumber(members).map((m, index) => {
+  return sortMembersByNumber(members).map((m) => {
     const locaties = realLocations(m);
     return {
-      nr: index + 1,
       lidnr: m.id,
       naam: text(m.naam),
       plaats: text(m.plaats),
@@ -216,7 +212,7 @@ export function buildLedenRows(members: Member[]): LedenRow[] {
 }
 
 export function buildLocatieRows(groups: MemberGroup[]): LocatieRow[] {
-  const rows: Omit<LocatieRow, "nr">[] = [];
+  const rows: LocatieRow[] = [];
   for (const group of groups) {
     for (const m of sortMembersByNumber(group.members)) {
       const locaties = [...realLocations(m)].sort((a, b) =>
@@ -245,11 +241,11 @@ export function buildLocatieRows(groups: MemberGroup[]): LocatieRow[] {
       }
     }
   }
-  return rows.map((r, i) => ({ nr: i + 1, ...r }));
+  return rows;
 }
 
 export function buildContactRows(groups: MemberGroup[]): ContactRow[] {
-  const rows: Omit<ContactRow, "nr">[] = [];
+  const rows: ContactRow[] = [];
   for (const group of groups) {
     for (const m of sortMembersByNumber(group.members)) {
       for (const c of effectiveContacts(m)) {
@@ -266,7 +262,7 @@ export function buildContactRows(groups: MemberGroup[]): ContactRow[] {
       }
     }
   }
-  return rows.map((r, i) => ({ nr: i + 1, ...r }));
+  return rows;
 }
 
 export interface WorkbookInput {
