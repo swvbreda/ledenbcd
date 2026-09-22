@@ -53,6 +53,27 @@ describe("mergeMemberLocations", () => {
     expect(result[0]).toMatchObject({ postcode: "8331 JK", adres: "Korte Woldpromenade 8" });
   });
 
+  it("herkent Alien ook bij kleine fouten in straatnaam en postcode", () => {
+    const result = dedupeLocations([
+      { naam: "Coffeeshop Alien", adres: "Korte Woldpromenade 8", postcode: "8331 JK", plaats: "Steenwijk" },
+      {
+        naam: "Alien",
+        adres: "Kort Walspromenade 8",
+        postcode: "8331 JP",
+        plaats: "Steenwijk",
+        kvk: "83928103",
+      },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      naam: "Coffeeshop Alien",
+      adres: "Korte Woldpromenade 8",
+      postcode: "8331 JK",
+      kvk: "83928103",
+    });
+  });
+
   it("voegt hetzelfde adres in verschillende plaatsen niet samen", () => {
     expect(dedupeLocations([
       { naam: "Shop A", adres: "Dorpsstraat 1", plaats: "Tiel" },

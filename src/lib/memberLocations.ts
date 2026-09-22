@@ -8,6 +8,51 @@ const normalize = (value: unknown) =>
 
 const normalizePostcode = (value: unknown) => normalize(value).toUpperCase();
 
+const parseAddress = (value: unknown) => {
+  const raw = String(value ?? "").toLowerCase();
+  const houseNumber = raw.match(/\b\d+\s*[a-z]?\b/)?.[0] ?? "";
+  return {
+    houseNumber: normalize(houseNumber),
+    street: normalize(raw.replace(houseNumber, "")),
+  };
+};
+
+const editDistance = (left: string, right: string): number => {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+
+  return previous[right.length];
+};
+
+const approximatelySameAddress = (left: Partial<Location>, right: Partial<Location>): boolean => {
+  const leftPlace = normalize(left.plaats);
+  const rightPlace = normalize(right.plaats);
+  if (!leftPlace || !rightPlace || leftPlace !== rightPlace) return false;
+
+  const leftAddress = parseAddress(left.adres);
+  const rightAddress = parseAddress(right.adres);
+  if (
+    !leftAddress.houseNumber ||
+    leftAddress.houseNumber !== rightAddress.houseNumber ||
+    leftAddress.street.length < 8 ||
+    rightAddress.street.length < 8
+  ) return false;
+
+  const longestLength = Math.max(leftAddress.street.length, rightAddress.street.length);
+  return editDistance(leftAddress.street, rightAddress.street) / longestLength <= 0.22;
+};
+
 export const locationIdentity = (location: Partial<Location>): string => {
   const postcode = normalizePostcode(location.postcode);
   if (postcode) return `postcode:${postcode}`;
@@ -52,6 +97,8 @@ const physicalLocationsMatch = (left: Partial<Location>, right: Partial<Location
   ) return true;
 
   if (leftAddress && rightAddress && leftAddress === rightAddress && compatiblePlace) return true;
+
+  if (approximatelySameAddress(left, right)) return true;
 
   return false;
 };
@@ -102,11 +149,6 @@ export function mergeMemberLocations(
   return dedupeLocations(result);
 }
 
-const filledFields = (location: Partial<Location>) =>
-  Object.values(location ?? {}).filter((value) =>
-    typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined,
-  ).length;
-
 /** Voegt vestigingen met hetzelfde adres samen tot één kaart, met de rijkste gegevens. */
 export function dedupeLocations(locations: Location[]): Location[] {
   const result: Location[] = [];
@@ -119,12 +161,14 @@ export function dedupeLocations(locations: Location[]): Location[] {
     }
 
     const existing = result[existingIndex];
-    const [primary, secondary] =
-      filledFields(location) > filledFields(existing) ? [location, existing] : [existing, location];
-    const merged: Location = { ...secondary };
-    for (const [field, value] of Object.entries(primary)) {
+    const merged: Location = { ...existing };
+    for (const [field, value] of Object.entries(location)) {
       const isEmpty = typeof value === "string" ? value.trim() === "" : value === null || value === undefined;
-      if (!isEmpty) (merged as unknown as Record<string, unknown>)[field] = value;
+      const currentValue = (merged as unknown as Record<string, unknown>)[field];
+      const currentIsEmpty = typeof currentValue === "string"
+        ? currentValue.trim() === ""
+        : currentValue === null || currentValue === undefined;
+      if (!isEmpty && currentIsEmpty) (merged as unknown as Record<string, unknown>)[field] = value;
     }
     result[existingIndex] = merged;
   }
