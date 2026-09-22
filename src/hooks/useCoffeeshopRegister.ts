@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { findMemberLocation, locationKeyOf } from "@/lib/registerLocationMatch";
-import { mergeMemberLocations } from "@/lib/memberLocations";
+import { mergeMemberLocations, replacementDeletionIdentities } from "@/lib/memberLocations";
 
 export type RegisterShop = {
   id: string;
@@ -363,6 +363,7 @@ export function useResolveProposal() {
             ?.current_value;
           const match = findMemberLocation(effectief, proposal.location_key, shop, [oldPostcode]);
           if (!match) throw new Error("Locatie niet gevonden bij dit lid");
+          const baseMatch = findMemberLocation(baseLocaties, proposal.location_key, shop, [oldPostcode]);
 
           // De wijziging landt op de bestaande overlay-vestiging, of anders als
           // nieuwe overlay-vestiging die op identiteit met de basis samenvalt.
@@ -371,6 +372,17 @@ export function useResolveProposal() {
           doel[proposal.field] = proposal.proposed_value;
           if (!overlayMatch) overlayLocaties.push(doel);
           overlay.locaties = overlayLocaties;
+
+          // Een bevestigd nieuw adres/nieuwe plaats is een vervanging van de
+          // gekoppelde vestiging, geen extra filiaal. Bewaar het oude adres als
+          // expliciet verwijderd zodat het niet opnieuw uit de basis opduikt.
+          if (["adres", "postcode", "plaats", "gemeente"].includes(proposal.field)) {
+            overlay._verwijderdeLocaties = replacementDeletionIdentities(
+              verwijderd,
+              baseMatch,
+              doel,
+            );
+          }
 
           // Bij een verhuizing (adres/postcode) verschuift alleen de
           // locatiesleutel van de koppeling mee; de koppeling blijft aan

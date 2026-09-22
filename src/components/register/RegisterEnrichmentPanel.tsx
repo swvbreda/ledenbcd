@@ -49,7 +49,7 @@ type Group = {
 };
 
 /** Adres- en postcodewijzigingen van een gekoppelde vestiging = verhuizing. */
-const MOVE_FIELDS = new Set(["adres", "postcode"]);
+const MOVE_FIELDS = new Set(["adres", "postcode", "plaats", "gemeente"]);
 
 const normalizeValue = (value: unknown) =>
   String(value ?? "")

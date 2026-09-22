@@ -10,11 +10,24 @@ const normalizePostcode = (value: unknown) => normalize(value).toUpperCase();
 
 const parseAddress = (value: unknown) => {
   const raw = String(value ?? "").toLowerCase();
-  const houseNumber = raw.match(/\b\d+\s*[a-z]?\b/)?.[0] ?? "";
+  const houseNumberWithSuffix = raw.match(/\b\d+\s*[a-z]{0,3}\b/)?.[0] ?? "";
+  const houseNumber = houseNumberWithSuffix.match(/\d+/)?.[0] ?? "";
   return {
     houseNumber: normalize(houseNumber),
-    street: normalize(raw.replace(houseNumber, "")),
+    suffix: normalize(houseNumberWithSuffix.replace(houseNumber, "")),
+    street: normalize(raw.replace(houseNumberWithSuffix, "")),
   };
+};
+
+const comparableName = (value: unknown) => normalize(value).replace(/^coffeeshop/, "");
+
+const approximatelySameName = (left: unknown, right: unknown): boolean => {
+  const a = comparableName(left);
+  const b = comparableName(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (Math.min(a.length, b.length) < 7) return false;
+  return editDistance(a, b) / Math.max(a.length, b.length) <= 0.25;
 };
 
 const editDistance = (left: string, right: string): number => {
@@ -50,7 +63,17 @@ const approximatelySameAddress = (left: Partial<Location>, right: Partial<Locati
   ) return false;
 
   const longestLength = Math.max(leftAddress.street.length, rightAddress.street.length);
-  return editDistance(leftAddress.street, rightAddress.street) / longestLength <= 0.22;
+  const sameStreet = editDistance(leftAddress.street, rightAddress.street) / longestLength <= 0.22;
+  if (!sameStreet) return false;
+
+  // Een ontbrekende/toegevoegde huisnummertoevoeging (5 ↔ 5hs, 8 ↔ 8h)
+  // komt in de brondata regelmatig voor. Alleen samenvoegen als ook postcode
+  // en vestigingsnaam overeenkomen, zodat echte units A/B apart blijven.
+  if (leftAddress.suffix !== rightAddress.suffix) {
+    return normalizePostcode(left.postcode) === normalizePostcode(right.postcode)
+      && approximatelySameName(left.naam, right.naam);
+  }
+  return true;
 };
 
 export const locationIdentity = (location: Partial<Location>): string => {
@@ -154,7 +177,16 @@ export function dedupeLocations(locations: Location[]): Location[] {
   const result: Location[] = [];
 
   for (const location of locations) {
-    const existingIndex = result.findIndex((existing) => physicalLocationsMatch(existing, location));
+    const existingIndex = result.findIndex((existing) => {
+      if (physicalLocationsMatch(existing, location)) return true;
+
+      const existingHasPhysicalIdentity = !!(normalizePostcode(existing.postcode) || normalize(existing.adres));
+      const locationHasPhysicalIdentity = !!(normalizePostcode(location.postcode) || normalize(location.adres));
+      if (existingHasPhysicalIdentity && locationHasPhysicalIdentity) return false;
+
+      const samePlace = normalize(existing.plaats) === normalize(location.plaats);
+      return samePlace && approximatelySameName(existing.naam, location.naam);
+    });
     if (existingIndex < 0) {
       result.push(location);
       continue;
@@ -174,4 +206,21 @@ export function dedupeLocations(locations: Location[]): Location[] {
   }
 
   return result;
+}
+
+/**
+ * Markeert het oude adres als vervangen wanneer een bevestigde registerkoppeling
+ * verhuist. De nieuwe locatie blijft in de overlay staan; de oude basislocatie
+ * kan daardoor niet opnieuw als extra vestiging terugkomen.
+ */
+export function replacementDeletionIdentities(
+  current: string[] | null | undefined,
+  previous: Partial<Location> | null | undefined,
+  replacement: Partial<Location> | null | undefined,
+): string[] {
+  const result = new Set(Array.isArray(current) ? current : []);
+  if (!previous || !replacement) return Array.from(result);
+  const previousIdentity = locationDeletionIdentity(previous);
+  if (previousIdentity !== locationDeletionIdentity(replacement)) result.add(previousIdentity);
+  return Array.from(result);
 }

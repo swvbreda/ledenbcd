@@ -47,6 +47,23 @@ describe("effectiveMember", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0]!.telefoon).toBe("0201234567");
   });
+
+  it("voegt bronvarianten 5/5hs en een lege doublure samen", () => {
+    expect(mergeMemberLocations(
+      [
+        { naam: "Yin Yang", adres: "Knollendamstraat 5", postcode: "1013 TL", plaats: "Amsterdam" },
+        { naam: "Ying Yang", adres: "Knollendamstraat 5hs", postcode: "1013TL", plaats: "Amsterdam" },
+      ],
+      [],
+    )).toHaveLength(1);
+    expect(mergeMemberLocations(
+      [
+        { naam: "Huzur 33", adres: "Sloterbeekstraat 33", postcode: "5912 GT", plaats: "Venlo" },
+        { naam: "Huzur 33", plaats: "Venlo" },
+      ],
+      [],
+    )).toHaveLength(1);
+  });
 });
 
 describe("locationTarget", () => {

@@ -42,6 +42,58 @@ export const normCompare = (value: unknown): string =>
 export const normPostcode = (value: unknown): string =>
   String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
+const editDistance = (left: string, right: string): number => {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length];
+};
+
+const parseAddress = (value: unknown) => {
+  const raw = String(value ?? "").toLowerCase();
+  const withSuffix = raw.match(/\b\d+\s*[a-z]{0,3}\b/)?.[0] ?? "";
+  const number = withSuffix.match(/\d+/)?.[0] ?? "";
+  return {
+    number: normText(number),
+    suffix: normText(withSuffix.replace(number, "")),
+    street: normText(raw.replace(withSuffix, "")),
+  };
+};
+
+const comparableName = (value: unknown) => normText(value).replace(/^coffeeshop/, "");
+const approximatelySameName = (left: unknown, right: unknown): boolean => {
+  const a = comparableName(left);
+  const b = comparableName(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  return Math.min(a.length, b.length) >= 7
+    && editDistance(a, b) / Math.max(a.length, b.length) <= 0.25;
+};
+
+const approximatelySameAddress = (left: LocationLike, right: LocationLike): boolean => {
+  const leftPlace = normText(left.plaats);
+  const rightPlace = normText(right.plaats);
+  if (!leftPlace || !rightPlace || leftPlace !== rightPlace) return false;
+  const a = parseAddress(left.adres);
+  const b = parseAddress(right.adres);
+  if (!a.number || a.number !== b.number || a.street.length < 8 || b.street.length < 8) return false;
+  if (editDistance(a.street, b.street) / Math.max(a.street.length, b.street.length) > 0.22) return false;
+  if (a.suffix !== b.suffix) {
+    return normPostcode(left.postcode) === normPostcode(right.postcode)
+      && approximatelySameName(left.naam, right.naam);
+  }
+  return true;
+};
+
 /** Vergelijkt twee waarden van hetzelfde veld genormaliseerd. */
 export function sameFieldValue(field: string, a: unknown, b: unknown): boolean {
   if (field === "postcode") return normPostcode(a) === normPostcode(b);
@@ -74,15 +126,22 @@ export function isLocationDeleted(
   );
 }
 
-/** Zelfde fysieke vestiging? Postcode, adres of naam+plaats. */
-export function locationsMatch(left: LocationLike, right: LocationLike): boolean {
+const physicalLocationsMatch = (left: LocationLike, right: LocationLike): boolean => {
   const leftPostcode = normPostcode(left?.postcode);
   const rightPostcode = normPostcode(right?.postcode);
-  if (leftPostcode && rightPostcode && leftPostcode === rightPostcode) return true;
-
   const leftAddress = normText(left?.adres);
   const rightAddress = normText(right?.adres);
-  if (leftAddress && rightAddress && leftAddress === rightAddress) return true;
+  const leftPlace = normText(left?.plaats);
+  const rightPlace = normText(right?.plaats);
+  const compatiblePlace = !leftPlace || !rightPlace || leftPlace === rightPlace;
+  if (leftPostcode && rightPostcode && leftPostcode === rightPostcode && (!leftAddress || !rightAddress || leftAddress === rightAddress)) return true;
+  if (leftAddress && rightAddress && leftAddress === rightAddress && compatiblePlace) return true;
+  return approximatelySameAddress(left, right);
+};
+
+/** Zelfde gekoppelde vestiging? Fysiek adres, of dezelfde naam binnen dezelfde plaats. */
+export function locationsMatch(left: LocationLike, right: LocationLike): boolean {
+  if (physicalLocationsMatch(left, right)) return true;
 
   const leftName = normText(left?.naam);
   const rightName = normText(right?.naam);
@@ -93,41 +152,33 @@ export function locationsMatch(left: LocationLike, right: LocationLike): boolean
   );
 }
 
-const dedupeKey = (location: LocationLike): string | null => {
-  const postcode = normPostcode(location?.postcode);
-  const address = normText(location?.adres);
-  if (postcode && address) return `${postcode}|${address}`;
-  if (postcode) return `pc:${postcode}`;
-  if (address) return `ad:${address}`;
-  return null;
-};
-
-const filledFields = (location: LocationLike): number =>
-  Object.values(location ?? {}).filter((value) =>
-    typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined,
-  ).length;
-
 /** Voegt vestigingen met hetzelfde adres samen; de rijkste gegevens winnen. */
 export function dedupeLocations(locations: LocationLike[]): LocationLike[] {
-  const byKey = new Map<string, number>();
   const result: LocationLike[] = [];
 
   for (const location of locations) {
-    const key = dedupeKey(location);
-    const existingIndex = key !== null ? byKey.get(key) : undefined;
-    if (existingIndex === undefined) {
-      if (key !== null) byKey.set(key, result.length);
+    const existingIndex = result.findIndex((existing) => {
+      if (physicalLocationsMatch(existing, location)) return true;
+      const existingHasIdentity = !!(normPostcode(existing.postcode) || normText(existing.adres));
+      const locationHasIdentity = !!(normPostcode(location.postcode) || normText(location.adres));
+      return !(existingHasIdentity && locationHasIdentity)
+        && normText(existing.plaats) === normText(location.plaats)
+        && approximatelySameName(existing.naam, location.naam);
+    });
+    if (existingIndex < 0) {
       result.push(location);
       continue;
     }
     const existing = result[existingIndex];
-    const [primary, secondary] =
-      filledFields(location) > filledFields(existing) ? [location, existing] : [existing, location];
-    const merged: LocationLike = { ...secondary };
-    for (const [field, value] of Object.entries(primary)) {
+    const merged: LocationLike = { ...existing };
+    for (const [field, value] of Object.entries(location)) {
       const isEmpty =
         typeof value === "string" ? value.trim() === "" : value === null || value === undefined;
-      if (!isEmpty) merged[field] = value;
+      const current = merged[field];
+      const currentIsEmpty = typeof current === "string"
+        ? current.trim() === ""
+        : current === null || current === undefined;
+      if (!isEmpty && currentIsEmpty) merged[field] = value;
     }
     result[existingIndex] = merged;
   }
