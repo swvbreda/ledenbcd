@@ -35,20 +35,36 @@ export const isLocationDeleted = (
   return deleted.has(locationDeletionIdentity(location)) || deleted.has(locationIdentity(location));
 };
 
-const locationsMatch = (left: Partial<Location>, right: Partial<Location>): boolean => {
+const physicalLocationsMatch = (left: Partial<Location>, right: Partial<Location>): boolean => {
   const leftPostcode = normalizePostcode(left.postcode);
   const rightPostcode = normalizePostcode(right.postcode);
-  if (leftPostcode && rightPostcode && leftPostcode === rightPostcode) return true;
-
   const leftAddress = normalize(left.adres);
   const rightAddress = normalize(right.adres);
-  if (leftAddress && rightAddress && leftAddress === rightAddress) return true;
+  const leftPlace = normalize(left.plaats);
+  const rightPlace = normalize(right.plaats);
+  const compatiblePlace = !leftPlace || !rightPlace || leftPlace === rightPlace;
+
+  if (
+    leftPostcode &&
+    rightPostcode &&
+    leftPostcode === rightPostcode &&
+    (!leftAddress || !rightAddress || leftAddress === rightAddress)
+  ) return true;
+
+  if (leftAddress && rightAddress && leftAddress === rightAddress && compatiblePlace) return true;
+
+  return false;
+};
+
+const locationsMatch = (left: Partial<Location>, right: Partial<Location>): boolean => {
+  if (physicalLocationsMatch(left, right)) return true;
 
   const leftName = normalize(left.naam);
   const rightName = normalize(right.naam);
   const leftPlace = normalize(left.plaats);
   const rightPlace = normalize(right.plaats);
-  return !!leftName && leftName === rightName && (!leftPlace || !rightPlace || leftPlace === rightPlace);
+  const compatiblePlace = !leftPlace || !rightPlace || leftPlace === rightPlace;
+  return !!leftName && leftName === rightName && compatiblePlace;
 };
 
 /**
@@ -86,16 +102,6 @@ export function mergeMemberLocations(
   return dedupeLocations(result);
 }
 
-/** Sleutel waarop twee vestigingen als dezelfde fysieke locatie gelden. */
-const dedupeKey = (location: Partial<Location>): string | null => {
-  const postcode = normalizePostcode(location.postcode);
-  const address = normalize(location.adres);
-  if (postcode && address) return `${postcode}|${address}`;
-  if (postcode) return `pc:${postcode}`;
-  if (address) return `ad:${address}`;
-  return null;
-};
-
 const filledFields = (location: Partial<Location>) =>
   Object.values(location ?? {}).filter((value) =>
     typeof value === "string" ? value.trim() !== "" : value !== null && value !== undefined,
@@ -103,14 +109,11 @@ const filledFields = (location: Partial<Location>) =>
 
 /** Voegt vestigingen met hetzelfde adres samen tot één kaart, met de rijkste gegevens. */
 export function dedupeLocations(locations: Location[]): Location[] {
-  const byKey = new Map<string, number>();
   const result: Location[] = [];
 
   for (const location of locations) {
-    const key = dedupeKey(location);
-    const existingIndex = key !== null ? byKey.get(key) : undefined;
-    if (existingIndex === undefined) {
-      if (key !== null) byKey.set(key, result.length);
+    const existingIndex = result.findIndex((existing) => physicalLocationsMatch(existing, location));
+    if (existingIndex < 0) {
       result.push(location);
       continue;
     }
@@ -128,4 +131,3 @@ export function dedupeLocations(locations: Location[]): Location[] {
 
   return result;
 }
-

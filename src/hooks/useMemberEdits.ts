@@ -136,7 +136,12 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
 
   // Start with base, apply approved edits, then overlay pending edit for own profile
   const edits = editsMap?.get(memberId);
-  let merged: Member = baseMember;
+  const baseLocaties = cleanLocaties(mergeMemberLocations(baseMember.locaties, []));
+  let merged: Member = {
+    ...baseMember,
+    locaties: baseLocaties,
+    aantalLocaties: baseLocaties.length,
+  };
 
   if (edits) {
     const mergedLocaties = cleanLocaties(
@@ -177,7 +182,6 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
       const mergedLocaties = cleanLocaties(
         mergeMemberLocations(m.locaties, edits?.locaties, edits?._verwijderdeLocaties),
       );
-      if (!edits && mergedLocaties.length === (m.locaties?.length ?? 0)) return m;
       return {
         ...m,
         ...(edits || {}),
