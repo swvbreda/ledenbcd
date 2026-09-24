@@ -39,6 +39,10 @@ import AgendaAnnounceDialog from "./AgendaAnnounceDialog";
 import AgendaCancelDialog from "./AgendaCancelDialog";
 
 
+function normOrg(v: string | null | undefined): string {
+  return (v ?? "").toLowerCase().replace(/&/g, "en").replace(/\bcoffeeshop\b/g, "").replace(/[^a-z0-9]/g, "");
+}
+
 interface Props {
   event: AgendaEvent;
   registrations: AgendaRegistration[];
@@ -85,7 +89,16 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
       if (names.length === 0) return [{ name: base, detail: null as string | null }];
       return names.map((n) => ({ name: n, detail: base }));
     })
-    .concat(gasten.map((g) => ({ name: g.naam, detail: `${g.organisatie ?? "Gast"} · geen lid` })));
+    .concat(
+      gasten.flatMap((g) => {
+        // Gastaanmelding van een shop die wél lid is: toon als lid, en
+        // sla over als dat lid zelf al is aangemeld (anders dubbel).
+        const org = normOrg(g.organisatie);
+        const match = org ? [...memberNames.entries()].find(([, n]) => normOrg(n) === org) : undefined;
+        if (match && registrations.some((r) => r.member_id === match[0])) return [];
+        return [{ name: g.naam, detail: match ? match[1] : `${g.organisatie ?? "Gast"} · geen lid` }];
+      }),
+    );
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
