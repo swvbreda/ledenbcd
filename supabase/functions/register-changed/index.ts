@@ -56,7 +56,8 @@ Deno.serve(async (req) => {
       .update({ last_push_at: new Date().toISOString(), last_trigger: "push" })
       .eq("id", 1);
 
-    const res = await fetch(
+    // Start de sync op de achtergrond; wacht niet op afronding (voorkomt 504/503).
+    const job = fetch(
       `${Deno.env.get("SUPABASE_URL")}/functions/v1/sync-coffeeshopregister`,
       {
         method: "POST",
@@ -66,12 +67,20 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({ trigger: "push" }),
       },
-    );
-    const detail = await res.text().catch(() => "");
+    )
+      .then(async (res) => {
+        const detail = await res.text().catch(() => "");
+        if (!res.ok) console.error("sync-coffeeshopregister faalde:", res.status, detail.slice(0, 500));
+        else console.log("sync-coffeeshopregister gestart/afgerond:", res.status);
+      })
+      .catch((e) => console.error("sync-coffeeshopregister onbereikbaar:", e));
+    // deno-lint-ignore no-explicit-any
+    const rt = (globalThis as any).EdgeRuntime;
+    if (rt?.waitUntil) rt.waitUntil(job);
 
     return new Response(
-      JSON.stringify({ ok: res.ok, status: res.status, detail: detail.slice(0, 500) }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ ok: true, accepted: true }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("register-changed mislukt:", e);
