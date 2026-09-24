@@ -226,10 +226,37 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
         ? boardName.get(selection.id) ?? "Bestuurslid"
         : memberName.get(selection.id) ?? `Lid #${selection.id}`;
 
+  const memberPlaats = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const m of candidates) if (m.plaats) map.set(m.id, m.plaats);
+    return map;
+  }, [candidates]);
+  const [listSearch, setListSearch] = useState("");
+
   const rowLabel = (r: AgendaRegistration) =>
     r.board_member_id
       ? boardName.get(r.board_member_id) ?? "Bestuurslid"
       : memberName.get(r.member_id as number) ?? `Lid #${r.member_id}`;
+
+  const sortedRegistrations = [...registrations]
+    .sort((a, b) => {
+      if (!!a.board_member_id !== !!b.board_member_id) return a.board_member_id ? -1 : 1;
+      return rowLabel(a).localeCompare(rowLabel(b), "nl");
+    })
+    .filter((r) => {
+      const q = listSearch.trim().toLowerCase();
+      if (!q) return true;
+      return [
+        rowLabel(r),
+        r.member_id != null ? memberPlaats.get(r.member_id) : "",
+        r.contact_name,
+        ...(r.attendee_names ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
 
   const resetForm = () => {
     setSelection(null);
@@ -421,7 +448,19 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {registrations.map((r) => {
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={listSearch}
+                      onChange={(e) => setListSearch(e.target.value)}
+                      placeholder="Zoek op naam, plaats of contactpersoon…"
+                      className="bg-background pl-9"
+                    />
+                  </div>
+                  {sortedRegistrations.length === 0 && (
+                    <p className="text-center text-sm text-muted-foreground">Geen deelnemers gevonden</p>
+                  )}
+                  {sortedRegistrations.map((r) => {
                     const rowNames = (r.attendee_names ?? []).filter((n) => n.trim().length > 0);
                     return (
                       <div
@@ -432,6 +471,11 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-semibold">{rowLabel(r)}</span>
+                              {r.member_id != null && memberPlaats.get(r.member_id) && (
+                                <span className="text-xs text-muted-foreground">
+                                  {memberPlaats.get(r.member_id)}
+                                </span>
+                              )}
                               <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
                                 {r.board_member_id ? "Bestuur" : "Lid"}
                               </span>
