@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useAgenda";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import AttendanceList from "./AttendanceList";
+import { useAgendaGuests } from "@/hooks/useAgendaGuests";
 import AgendaEventDialog from "./AgendaEventDialog";
 import AgendaRegistrationDialog from "./AgendaRegistrationDialog";
 import AgendaDeelnemersDialog from "./AgendaDeelnemersDialog";
@@ -52,6 +53,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const { data: boardAttendance = [] } = useAgendaBoardAttendance();
   const { rawMembers, rawLeads } = useMembersData();
   const boardPresent = boardAttendance.filter((b) => b.event_id === event.id);
+  const { data: gasten = [] } = useAgendaGuests(event.id, isAdmin || isBoard);
   const [editOpen, setEditOpen] = useState(false);
 
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -65,7 +67,8 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const cancelled = isCancelled(event);
   const upcoming = isUpcoming(event) && !cancelled;
   const own = memberId != null ? registrations.find((r) => r.member_id === memberId) : undefined;
-  const totalGuests = registrations.reduce((s, r) => s + r.guests, 0);
+  const totalGuests =
+    registrations.reduce((s, r) => s + r.guests, 0) + gasten.reduce((s, g) => s + g.guests, 0);
   const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
   const full = seatsLeft != null && seatsLeft <= 0 && !own;
 
@@ -81,7 +84,8 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
       const names = (r.attendee_names ?? []).filter((n) => n.trim().length > 0);
       if (names.length === 0) return [{ name: base, detail: null as string | null }];
       return names.map((n) => ({ name: n, detail: base }));
-    });
+    })
+    .concat(gasten.map((g) => ({ name: g.naam, detail: `${g.organisatie ?? "Gast"} · geen lid` })));
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
