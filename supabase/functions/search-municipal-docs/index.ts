@@ -515,7 +515,10 @@ async function searchRaadzaam(gemeentenaam: string, keywords: string) {
       if (!tuple) continue;
 
       const attrs = tuple.attributes || {};
-      const names = attrs["https://schema.org/name"] || [];
+      const rawNames = attrs["https://schema.org/name"];
+      const names: string[] = (Array.isArray(rawNames) ? rawNames : rawNames != null ? [rawNames] : [])
+        .map((n: unknown) => (typeof n === "string" ? n : n && typeof n === "object" ? String((n as any)["@value"] ?? (n as any).value ?? "") : String(n ?? "")))
+        .filter(Boolean);
       const name = names[0] || "Onbekend raadsstuk";
 
       // Skip generic/irrelevant items

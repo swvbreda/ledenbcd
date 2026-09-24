@@ -159,7 +159,7 @@ export function useUnlinkedBankTransactions(year: number) {
 
       const { data, error } = await client
         .from("ponto_transactions")
-        .select("id, executed_at, amount, counterparty_name, remittance_information, dossier")
+        .select("id, executed_at, amount, counterparty_name, remittance_information:remittance_info, dossier")
         .gte("executed_at", `${year}-01-01`)
         .lt("executed_at", `${year + 1}-01-01`)
         .order("executed_at", { ascending: false })
