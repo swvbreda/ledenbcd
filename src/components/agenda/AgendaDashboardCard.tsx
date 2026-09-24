@@ -37,7 +37,7 @@ function AgendaPoster({ event }: { event: AgendaEvent }) {
         src={url}
         alt={`Poster van ${event.title}`}
         loading="lazy"
-        className="aspect-[3/4] w-full object-contain transition-transform duration-700 group-hover:scale-105"
+        className="h-auto max-h-[480px] w-full object-contain transition-transform duration-700 group-hover:scale-105"
       />
     </div>
   );
