@@ -1,4 +1,5 @@
 import type { Member } from "@/data/types";
+import historyJson from "@/data/verloop.json";
 
 const BOND_START_YEAR = 1994;
 
@@ -34,7 +35,8 @@ export const getStartYear = (member: MemberLike, currentYear: number): number | 
 
 export const buildVerloopSeries = (
   members: MemberLike[],
-  currentYear: number = new Date().getFullYear()
+  currentYear: number = new Date().getFullYear(),
+  history: Record<string, number> = historyJson as Record<string, number>
 ): VerloopSeries => {
   const total = members.length;
   const starts = members
@@ -42,6 +44,23 @@ export const buildVerloopSeries = (
     .filter((y): y is number => y !== null);
 
   const coverage = total > 0 ? starts.length / total : 0;
+
+  // Vastgestelde historie (totalen per jaar) voor jaren vóór het huidige jaar;
+  // het huidige jaar komt altijd uit de live ledenlijst.
+  const histYears = Object.keys(history)
+    .map(Number)
+    .filter((y) => Number.isInteger(y) && y < currentYear && Number.isFinite(history[String(y)]))
+    .sort((a, b) => a - b);
+  if (total > 0 && histYears.length > 0) {
+    const data: VerloopPoint[] = [];
+    for (let year = histYears[0]; year < currentYear; year++) {
+      const v = history[String(year)];
+      data.push({ year, leden: Number.isFinite(v) ? v : starts.filter((s) => s <= year).length });
+    }
+    data.push({ year: currentYear, leden: total });
+    return { current: total, data, reliable: true, coverage };
+  }
+
   const reliable = total > 0 && coverage >= 0.8;
 
   if (!reliable) {
