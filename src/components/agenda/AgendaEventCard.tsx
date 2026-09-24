@@ -150,7 +150,7 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
                 src={imageUrl}
                 alt={`Afbeelding bij ${event.title}`}
                 loading="lazy"
-                className="aspect-[3/4] w-full rounded-md border border-border bg-muted/40 object-contain"
+                className="h-auto max-h-[480px] w-full rounded-md border border-border bg-muted/40 object-contain"
               />
 
             </a>
