@@ -40,7 +40,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAgendaGuests, useDeleteAgendaGuest } from "@/hooks/useAgendaGuests";
+import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -59,7 +62,14 @@ interface Props {
   registrations: AgendaRegistration[];
 }
 
-type Selection = { kind: "member"; id: number } | { kind: "board"; id: string } | null;
+type Selection =
+  | { kind: "member"; id: number }
+  | { kind: "board"; id: string }
+  | { kind: "register"; id: string }
+  | null;
+
+const normKey = (v?: string | null) =>
+  (v ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^coffeeshop\s+/, "").replace(/[^a-z0-9]/g, "");
 
 /** Zorgt dat de namenlijst exact `count` velden heeft. */
 function resizeNames(names: string[], count: number) {
@@ -102,7 +112,11 @@ function Stepper({
 }
 
 export default function AgendaDeelnemersDialog({ open, onOpenChange, event, registrations }: Props) {
-  const { rawMembers, rawLeads } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers } = useMembersData();
+  const qc = useQueryClient();
+  const [savingGuest, setSavingGuest] = useState(false);
+  const { data: registerShops = [] } = useCoffeeshopRegister(open);
+  const { data: registerLinks = [] } = useRegisterLinks(open);
   const { data: boardMembers = [] } = useBoardMemberOptions();
   const { register, unregister } = useAgendaMutations();
   const { isAdmin } = useAuth();
@@ -153,12 +167,13 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const candidates = useMemo(
     () =>
       [
-        ...rawMembers.map((m) => ({ ...m, isLead: false })),
-        ...rawLeads.map((m) => ({ ...m, isLead: true })),
+        ...rawMembers.map((m) => ({ ...m, isLead: false, isOld: false })),
+        ...rawLeads.map((m) => ({ ...m, isLead: true, isOld: false })),
+        ...rawOldMembers.map((m) => ({ ...m, isLead: false, isOld: true })),
       ].sort((a, b) =>
         (a.naam || a.bedrijfsnaam || "").localeCompare(b.naam || b.bedrijfsnaam || "", "nl"),
       ),
-    [rawMembers, rawLeads],
+    [rawMembers, rawLeads, rawOldMembers],
   );
 
   const memberName = useMemo(() => {
@@ -182,13 +197,32 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const takenBoard = new Set(
     registrations.map((r) => r.board_member_id).filter(Boolean) as string[],
   );
-  const availableMembers = candidates.filter((m) => !takenMembers.has(m.id));
-  const availableBoard = boardMembers.filter((b) => !takenBoard.has(b.id));
+  const takenGuestOrgs = new Set(gasten.map((g) => normKey(g.organisatie)));
+
+  // Registershops die geen lid, lead of oud-lid zijn.
+  const otherShops = useMemo(() => {
+    const linked = new Set(
+      registerLinks.filter((l) => l.status === "bevestigd").map((l) => l.register_id),
+    );
+    const known = new Set(candidates.map((m) => normKey(m.naam || m.bedrijfsnaam) + "|" + normKey(m.plaats)));
+    return registerShops.filter(
+      (s) =>
+        !s.vervallen &&
+        !linked.has(s.id) &&
+        !known.has(normKey(s.naam) + "|" + normKey(s.plaats)),
+    );
+  }, [registerShops, registerLinks, candidates]);
+  const shopLabel = (id: string) => {
+    const s = otherShops.find((x) => x.id === id);
+    return s ? `${s.naam}${s.plaats ? ` (${s.plaats})` : ""}` : "Coffeeshop";
+  };
 
   const selectionLabel =
     selection == null
-      ? "Zoek een bestuurslid, lid of lead…"
-      : selection.kind === "board"
+      ? "Zoek een bestuurslid, lid, oud-lid of coffeeshop…"
+      : selection.kind === "register"
+        ? shopLabel(selection.id)
+        : selection.kind === "board"
         ? boardName.get(selection.id) ?? "Bestuurslid"
         : memberName.get(selection.id) ?? `Lid #${selection.id}`;
 
@@ -207,6 +241,35 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const addAttendee = () => {
     if (!selection) {
       toast.error("Kies eerst een deelnemer");
+      return;
+    }
+    if (selection.kind === "register") {
+      const naam = customContactName.trim();
+      const email = customContactEmail.trim().toLowerCase();
+      if (!naam) return void toast.error("Vul de naam van de contactpersoon in");
+      if (!/^\S+@\S+\.\S+$/.test(email)) return void toast.error("Vul een geldig e-mailadres in");
+      const extra = names.map((n) => n.trim()).filter(Boolean);
+      setSavingGuest(true);
+      void supabase
+        .from("agenda_guest_registrations")
+        .insert({
+          event_id: event.id,
+          naam,
+          email,
+          organisatie: shopLabel(selection.id),
+          guests,
+          note: [note.trim(), extra.length ? `Personen: ${extra.join(", ")}` : ""].filter(Boolean).join("\n") || null,
+          status: "bevestigd",
+        })
+        .then(({ error }) => {
+          setSavingGuest(false);
+          if (error) return void toast.error(error.message || "Aanmelden mislukt");
+          toast.success("Coffeeshop aangemeld (geen mail verstuurd)");
+          void qc.invalidateQueries({ queryKey: ["agenda-guests"] });
+          setCustomContactName("");
+          setCustomContactEmail("");
+          resetForm();
+        });
       return;
     }
     if (selection.kind === "member") {
@@ -527,9 +590,10 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                         <CommandList>
                           <CommandEmpty>Geen resultaten</CommandEmpty>
                           <CommandGroup heading="Bestuur">
-                            {availableBoard.map((b) => (
+                            {boardMembers.map((b) => (
                               <CommandItem
                                 key={b.id}
+                                disabled={takenBoard.has(b.id)}
                                 value={`${b.naam} ${b.functie ?? ""} bestuur`}
                                 onSelect={() => {
                                   setSelection({ kind: "board", id: b.id });
@@ -554,15 +618,16 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                   </span>
                                 )}
                                 <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase">
-                                  Bestuur
+                                  {takenBoard.has(b.id) ? "Al aangemeld" : "Bestuur"}
                                 </span>
                               </CommandItem>
                             ))}
                           </CommandGroup>
-                          <CommandGroup heading="Leden & leads">
-                            {availableMembers.map((m) => (
+                          <CommandGroup heading="Leden, leads & oud-leden">
+                            {candidates.map((m) => (
                               <CommandItem
                                 key={m.id}
+                                disabled={takenMembers.has(m.id)}
                                 value={`${m.naam || m.bedrijfsnaam} ${m.plaats ?? ""} ${m.id}`}
                                 onSelect={() => {
                                   setSelection({ kind: "member", id: m.id });
@@ -583,19 +648,76 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                                     {m.plaats}
                                   </span>
                                 )}
-                                {m.isLead && (
+                                {(takenMembers.has(m.id) || m.isLead || m.isOld) && (
                                   <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase">
-                                    Lead
+                                    {takenMembers.has(m.id) ? "Al aangemeld" : m.isOld ? "Oud-lid" : "Lead"}
                                   </span>
                                 )}
                               </CommandItem>
                             ))}
+                          </CommandGroup>
+                          <CommandGroup heading="Overige coffeeshops">
+                            {otherShops.map((s) => {
+                              const taken = takenGuestOrgs.has(normKey(`${s.naam}${s.plaats ? ` (${s.plaats})` : ""}`));
+                              return (
+                                <CommandItem
+                                  key={s.id}
+                                  disabled={taken}
+                                  value={`${s.naam} ${s.plaats ?? ""} ${s.id}`}
+                                  onSelect={() => {
+                                    setSelection({ kind: "register", id: s.id });
+                                    setCustomContactName("");
+                                    setCustomContactEmail("");
+                                    setPickerOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selection?.kind === "register" && selection.id === s.id
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  <span className="truncate">{s.naam}</span>
+                                  {s.plaats && (
+                                    <span className="ml-2 truncate text-xs text-muted-foreground">{s.plaats}</span>
+                                  )}
+                                  <span className="ml-auto rounded-sm bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                                    {taken ? "Al aangemeld" : "Geen lid"}
+                                  </span>
+                                </CommandItem>
+                              );
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
                     </PopoverContent>
                   </Popover>
                 </div>
+
+                {selection?.kind === "register" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase text-muted-foreground">
+                      Contactpersoon van de coffeeshop
+                    </Label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        value={customContactName}
+                        placeholder="Naam contactpersoon"
+                        className="bg-background"
+                        onChange={(e) => setCustomContactName(e.target.value)}
+                      />
+                      <Input
+                        type="email"
+                        value={customContactEmail}
+                        placeholder="naam@voorbeeld.nl"
+                        className="bg-background"
+                        onChange={(e) => setCustomContactEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {selection?.kind === "member" && (
                   <div className="space-y-3">
@@ -684,7 +806,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                 <Button
                   className="w-full uppercase tracking-wide"
                   onClick={addAttendee}
-                  disabled={register.isPending}
+                  disabled={register.isPending || savingGuest}
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
                   Aanmelding opslaan
