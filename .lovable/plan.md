@@ -1,34 +1,15 @@
-# Diagnose: pushbericht komt niet aan (sent: 0)
+# Ledenverloop weer tonen
 
-## Wat de log zegt
+## Wat er aan de hand is
+De grafiek verschijnt alleen als van minstens 80% van de leden het startjaar bekend is. Dat is nu bij 57 van de 117 leden zo (49%), dus de grafiek blijft leeg. Dat komt uit een eerdere correctie, waarbij de vaste historie is weggehaald.
 
-De laatste poging van `send-push` gaf van Apple:
+## Oplossing
+- De grafiek toont weer de bekende historie per jaar (2005–2025: 29 → 91 leden). Die cijfers stonden al in de app.
+- Het huidige jaar gebruikt altijd het echte, actuele aantal leden uit het ledenbestand (nu 117). Er staat dus geen vast getal in.
+- "t.o.v. vorig jaar" en "5 jaar" worden weer berekend (bijvoorbeeld 91 → 117).
+- Voor gewone leden verandert er niets aan wat ze mogen zien. De historie bestaat alleen uit totalen per jaar, zonder namen.
 
-```text
-APNs status 403 — reason: BadEnvironmentKeyInToken
-```
-
-Daarom telt `sent: 0` bij `total: 1`: het bericht is wel verstuurd naar Apple, maar Apple weigert het.
-
-## Oorzaak
-
-Het apparaat dat zich heeft aangemeld, is een **testbuild** (ontwikkelomgeving). Zo'n apparaatcode hoort bij Apple's testserver. De functie stuurt echter altijd naar Apple's **productieserver** (`api.push.apple.com`); er is geen testvariant (`api.sandbox.push.apple.com`) in de code. Apple antwoordt dan precies met `BadEnvironmentKeyInToken`.
-
-In het iOS-project staat inderdaad: Debug-build = `development`, Release-build = `production`. Een via Xcode/TestFlight-debug geïnstalleerde app levert dus een testcode op.
-
-Het is dus geen fout in de sleutels of de app-identificatie.
-
-## Controle instellingen (geen waarden getoond)
-
-- `APNS_KEY_ID` — aanwezig
-- `APNS_TEAM_ID` — aanwezig
-- `APNS_PRIVATE_KEY` — aanwezig
-- `APNS_BUNDLE_ID` — niet ingesteld; de code valt terug op `nl.coffeeshopbond.leden`, wat overeenkomt met de app-identificatie in het iOS-project. Consistent, geen probleem.
-
-Let op: als de sleutel of het team wél fout waren, zou Apple `InvalidProviderToken` of `TopicDisallowed` geven, niet deze melding.
-
-## Mogelijke oplossing (nog niet uitgevoerd)
-
-Bij het opslaan van een apparaatcode ook vastleggen of het om een test- of productie-app gaat, en bij verzending de bijbehorende Apple-server kiezen. Alternatief zonder codewijziging: alleen testen met een App Store-/TestFlight-release-build.
-
-Zeg welke richting je wilt, dan werk ik het uit.
+## Technisch
+- `src/lib/verloop.ts`: `buildVerloopSeries` gebruikt eerst `src/data/verloop.json` voor alle jaren vóór het huidige jaar en zet het huidige jaar op `members.length`. Als het bestand een jaar mist, valt het terug op de afleiding uit de startjaren. `reliable` wordt true zodra er historie is.
+- `src/components/VerloopChart.tsx`: geen wijziging in de opmaak. De subtitel en de lege toestand volgen vanzelf.
+- `src/lib/verloop.test.ts` bijwerken: de historie komt uit het bestand, het huidige jaar is live, en er zijn geen vaste 117.
