@@ -275,6 +275,17 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
       const email = customContactEmail.trim().toLowerCase();
       if (!naam) return void toast.error("Vul de naam van de contactpersoon in");
       if (!/^\S+@\S+\.\S+$/.test(email)) return void toast.error("Vul een geldig e-mailadres in");
+      // Voorkom dubbele aanmelding: shop die al als lid is aangemeld, niet ook als gast.
+      const shop = otherShops.find((x) => x.id === (selection as { id: string }).id);
+      const registeredNames = new Set(
+        registrations
+          .map((r) => (r.member_id != null ? memberName.get(r.member_id) : null))
+          .filter((n): n is string => !!n)
+          .map((n) => normKey(n)),
+      );
+      if (shop && registeredNames.has(normKey(shop.naam))) {
+        return void toast.error("Deze shop is al als lid aangemeld");
+      }
       const extra = names.map((n) => n.trim()).filter(Boolean);
       setSavingGuest(true);
       void supabase

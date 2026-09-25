@@ -71,16 +71,22 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
   const cancelled = isCancelled(event);
   const upcoming = isUpcoming(event) && !cancelled;
   const own = memberId != null ? registrations.find((r) => r.member_id === memberId) : undefined;
-  const totalGuests =
-    registrations.reduce((s, r) => s + r.guests, 0) + gasten.reduce((s, g) => s + g.guests, 0);
-  const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
-  const full = seatsLeft != null && seatsLeft <= 0 && !own;
-
   // Namen van aangemelde deelnemers (leden/leads); bestuur staat al in de eigen regel.
   const memberNames = new Map<number, string>();
   for (const m of [...rawMembers, ...rawLeads]) {
     memberNames.set(m.id, m.naam || m.bedrijfsnaam || `Lid #${m.id}`);
   }
+  // Gasten van een shop die al als lid is aangemeld, tellen niet dubbel mee.
+  const countedGasten = gasten.filter((g) => {
+    const org = normOrg(g.organisatie);
+    const match = org ? [...memberNames.entries()].find(([, n]) => normOrg(n) === org) : undefined;
+    return !(match && registrations.some((r) => r.member_id === match[0]));
+  });
+  const totalGuests =
+    registrations.reduce((s, r) => s + r.guests, 0) + countedGasten.reduce((s, g) => s + g.guests, 0);
+  const seatsLeft = event.max_seats != null ? Math.max(event.max_seats - totalGuests, 0) : null;
+  const full = seatsLeft != null && seatsLeft <= 0 && !own;
+
   const attendeeEntries = registrations
     .filter((r) => !r.board_member_id)
     .flatMap((r) => {
@@ -90,12 +96,10 @@ export default function AgendaEventCard({ event, registrations, isAdmin, memberI
       return names.map((n) => ({ name: n, detail: base }));
     })
     .concat(
-      gasten.flatMap((g) => {
-        // Gastaanmelding van een shop die wél lid is: toon als lid, en
-        // sla over als dat lid zelf al is aangemeld (anders dubbel).
+      countedGasten.flatMap((g) => {
+        // Gastaanmelding van een shop die wél lid is: toon de lidnaam als detail.
         const org = normOrg(g.organisatie);
         const match = org ? [...memberNames.entries()].find(([, n]) => normOrg(n) === org) : undefined;
-        if (match && registrations.some((r) => r.member_id === match[0])) return [];
         return [{ name: g.naam, detail: match ? match[1] : `${g.organisatie ?? "Gast"} · geen lid` }];
       }),
     );
