@@ -39,3 +39,9 @@ export function aggregateByGemeente(perPlaats: Record<string, number>): Record<s
   }
   return result;
 }
+
+/** De 10 gemeenten die deelnemen aan het wietexperiment. */
+export const EXPERIMENT_GEMEENTEN = [
+  "Arnhem", "Breda", "Groningen", "Heerlen", "Voorne aan Zee",
+  "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
+];

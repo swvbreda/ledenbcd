@@ -5,7 +5,7 @@ import { stadsdeelCategorieen, getStadsdeelCategorie } from "@/data/stadsdeelCat
 import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversions";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente, EXPERIMENT_GEMEENTEN } from "@/data/gemeenteMapping";
 
 export function useMembers() {
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
@@ -15,6 +15,7 @@ export function useMembers() {
   const [filterCity, setFilterCity] = useState("");
   const [filterStadsdeel, setFilterStadsdeel] = useState("");
   const [filterJaren, setFilterJaren] = useState("");
+  const [filterExperiment, setFilterExperiment] = useState(false);
   const { conversions } = useLeadConversions();
 
   const effectiveAll = useMemo(
@@ -35,11 +36,21 @@ export function useMembers() {
   );
   const stadsdelen = useMemo(() => [...stadsdeelCategorieen], []);
 
-  const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren);
+  const hasActiveFilters = !!(filterCity || filterStadsdeel || filterJaren || filterExperiment);
 
   const filteredMembers = useMemo(() => {
     return allIncludingLeads.filter((m) => {
-      if (filterCity && m.plaats !== filterCity) return false;
+      if (
+        filterCity &&
+        m.plaats !== filterCity &&
+        !m.locaties?.some((l) => (l.plaats || "") === filterCity)
+      ) return false;
+      if (filterExperiment) {
+        const inExp =
+          EXPERIMENT_GEMEENTEN.includes(getGemeente(m.plaats) || "") ||
+          m.locaties?.some((l) => EXPERIMENT_GEMEENTEN.includes(getLocationGemeente(l, m.plaats) || ""));
+        if (!inExp) return false;
+      }
       if (filterStadsdeel && (!m.stadsdeel || getStadsdeelCategorie(m.stadsdeel) !== filterStadsdeel)) return false;
       if (filterJaren) {
         const [min, max] = filterJaren.split("-").map(Number);
@@ -49,7 +60,7 @@ export function useMembers() {
       }
       return true;
     });
-  }, [allIncludingLeads, filterCity, filterStadsdeel, filterJaren]);
+  }, [allIncludingLeads, filterCity, filterStadsdeel, filterJaren, filterExperiment]);
 
   const searchedMembers = useMemo(() => {
     if (!searchQuery) return filteredMembers;
@@ -83,6 +94,7 @@ export function useMembers() {
     setFilterCity("");
     setFilterStadsdeel("");
     setFilterJaren("");
+    setFilterExperiment(false);
   };
 
   return {
@@ -94,6 +106,8 @@ export function useMembers() {
     setFilterStadsdeel,
     filterJaren,
     setFilterJaren,
+    filterExperiment,
+    setFilterExperiment,
     cities,
     stadsdelen,
     hasActiveFilters,
