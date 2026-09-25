@@ -10,6 +10,8 @@ interface MemberFiltersProps {
   onCityChange: (v: string) => void;
   onStadsdeelChange: (v: string) => void;
   onJarenChange: (v: string) => void;
+  experimentOnly?: boolean;
+  onExperimentChange?: (v: boolean) => void;
   onClear: () => void;
   hasActiveFilters: boolean;
 }
@@ -27,7 +29,7 @@ const MemberFilters = ({
   cities, stadsdelen,
   selectedCity, selectedStadsdeel, selectedJaren,
   onCityChange, onStadsdeelChange, onJarenChange,
-  onClear, hasActiveFilters,
+  onClear, hasActiveFilters, experimentOnly = false, onExperimentChange,
 }: MemberFiltersProps) => {
   return (
     <div className="grid w-full max-w-full min-w-0 grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:w-auto sm:gap-3">
@@ -64,6 +66,21 @@ const MemberFilters = ({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
+
+      {onExperimentChange && (
+        <button
+          type="button"
+          onClick={() => onExperimentChange(!experimentOnly)}
+          aria-pressed={experimentOnly}
+          className={`w-full sm:w-auto px-3 py-1.5 rounded-md border text-sm transition-colors ${
+            experimentOnly
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-input bg-background text-foreground hover:bg-muted"
+          }`}
+        >
+          Experiment-shops
+        </button>
+      )}
 
       {hasActiveFilters && (
         <button

@@ -45,6 +45,7 @@ const LedenPage = () => {
     filterCity, setFilterCity,
     filterStadsdeel, setFilterStadsdeel,
     filterJaren, setFilterJaren,
+    filterExperiment, setFilterExperiment,
     cities, stadsdelen,
     hasActiveFilters,
     searchedMembers,
@@ -165,6 +166,8 @@ const LedenPage = () => {
                 onCityChange={setFilterCity}
                 onStadsdeelChange={setFilterStadsdeel}
                 onJarenChange={setFilterJaren}
+                experimentOnly={filterExperiment}
+                onExperimentChange={setFilterExperiment}
                 onClear={clearFilters}
                 hasActiveFilters={hasActiveFilters}
               />

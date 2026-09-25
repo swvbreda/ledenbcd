@@ -3,7 +3,7 @@ import { useNavigate } from "@/lib/router-compat";
 import { ArrowRight } from "lucide-react";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente, getLocationGemeente } from "@/data/gemeenteMapping";
+import { getGemeente, getLocationGemeente, EXPERIMENT_GEMEENTEN } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { pctColor } from "@/lib/pctColor";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,10 +43,6 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
   );
 };
 
-const EXPERIMENT_GEMEENTEN = [
-  "Arnhem", "Breda", "Groningen", "Heerlen", "Voorne aan Zee",
-  "Maastricht", "Nijmegen", "Tilburg", "Zaanstad", "Almere",
-];
 
 /** Check if a member/location belongs to a gemeente */
 const isInGemeente = (m: Member, gemeente: string): boolean => {
