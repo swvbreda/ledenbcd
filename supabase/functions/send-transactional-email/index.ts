@@ -168,7 +168,12 @@ Deno.serve(async (req) => {
   // phishing from our verified sending domain. Require either the service_role
   // bearer (used by DB triggers / server-to-server) or an authenticated admin
   // JWT before rendering such a template.
-  const FREE_FORM_TEMPLATES = new Set(['member-welcome', 'login-reminder'])
+  const FREE_FORM_TEMPLATES = new Set([
+    'member-welcome',
+    'login-reminder',
+    'agenda-new-registration-admin',
+    'agenda-guest-declined',
+  ])
   if (FREE_FORM_TEMPLATES.has(templateName)) {
     const authHeader = req.headers.get('authorization') ?? ''
     const isServiceRole =
