@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronsUpDown,
+  Mail,
   Minus,
   Pencil,
   Plus,
@@ -42,7 +43,12 @@ import {
 } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAgendaGuests, useDeleteAgendaGuest } from "@/hooks/useAgendaGuests";
+import {
+  useAgendaGuests,
+  useDeleteAgendaGuest,
+  type AgendaGuestRegistration,
+} from "@/hooks/useAgendaGuests";
+import AgendaGuestDeclineDialog from "./AgendaGuestDeclineDialog";
 import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -191,6 +197,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const { data: gastenData } = useAgendaGuests(event.id, open);
   const gasten = gastenData ?? [];
   const deleteGuest = useDeleteAgendaGuest();
+  const [declineGuest, setDeclineGuest] = useState<AgendaGuestRegistration | null>(null);
   const totalGuests =
     registrations.reduce((s, r) => s + r.guests, 0) + gasten.reduce((s, g) => s + g.guests, 0);
   const takenMembers = new Set(registrations.map((r) => r.member_id).filter(Boolean) as number[]);
@@ -434,18 +441,34 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
                           </p>
                           {g.note && <p className="mt-1 text-xs italic">{g.note}</p>}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Aanmelding verwijderen"
-                          onClick={() => deleteGuest.mutate(g.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeclineGuest(g)}
+                          >
+                            <Mail className="mr-1 h-4 w-4 text-brand-red" />
+                            Weigeren en mailen
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Aanmelding verwijderen zonder mail"
+                            title="Verwijderen zonder mail"
+                            onClick={() => deleteGuest.mutate(g.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
+                <AgendaGuestDeclineDialog
+                  guest={declineGuest}
+                  event={event}
+                  onClose={() => setDeclineGuest(null)}
+                />
               </section>
             )}
 
