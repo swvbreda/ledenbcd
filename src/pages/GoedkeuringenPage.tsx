@@ -260,7 +260,6 @@ export default function GoedkeuringenPage() {
   const navigate = useNavigate();
   const { rawMembers, rawLeads, rawOldMembers, refetch } = useMembersData();
   const [showAll, setShowAll] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [goedkeurTarget, setGoedkeurTarget] = useState<GoedkeurTarget | null>(null);
   const { data: requests, isLoading } = useEditRequests(showAll ? "all" : "pending");
@@ -268,7 +267,7 @@ export default function GoedkeuringenPage() {
   const updateSignup = useUpdateMembershipRequest();
 
   const handleAddAsMember = async (s: MembershipRequest) => {
-    setAddingId(s.id);
+    setApprovingId(s.id);
     try {
       const naam = s.coffeeshop_name.trim();
       const plaats = s.city.trim();
@@ -351,7 +350,7 @@ export default function GoedkeuringenPage() {
     } catch (err) {
       toast.error("Goedkeuren mislukt: " + (err as Error).message);
     } finally {
-      setAddingId(null);
+      setApprovingId(null);
     }
   };
 
