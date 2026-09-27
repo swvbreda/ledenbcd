@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus, Plus } from "lucide-react";
+import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,17 @@ import {
 } from "@/hooks/useMembershipRequests";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { nextMemberNumber } from "@/lib/memberNumber";
+import { convertLead } from "@/hooks/useLeadConversions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import LogoGoedkeuringPanel from "@/components/register/LogoGoedkeuringPanel";
 import type { Member } from "@/data/types";
 
@@ -233,12 +244,25 @@ function RequestCard({ request }: { request: EditRequest }) {
   );
 }
 
+/**
+ * Wat er gebeurt bij 'Goedkeuren' hangt af van het record dat bij de aanmelding
+ * is gevonden. Die keuze wordt vóóraf getoond, zodat een klik nooit onverwacht
+ * een lidmaatschap of factuur oplevert.
+ */
+interface GoedkeurTarget {
+  signup: MembershipRequest;
+  existing?: { m: Member; type: "member" | "lead" };
+  vrijstellingen: string[];
+}
+
 export default function GoedkeuringenPage() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const { rawMembers, rawLeads, rawOldMembers, refetch } = useMembersData();
   const [showAll, setShowAll] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [goedkeurTarget, setGoedkeurTarget] = useState<GoedkeurTarget | null>(null);
   const { data: requests, isLoading } = useEditRequests(showAll ? "all" : "pending");
   const { data: signups, isLoading: signupsLoading } = useMembershipRequests(showAll ? "all" : "pending");
   const updateSignup = useUpdateMembershipRequest();
@@ -322,12 +346,77 @@ export default function GoedkeuringenPage() {
 
       await updateSignup.mutateAsync({ id: s.id, status: "approved" });
       refetch();
-      toast.success(`${naam} toegevoegd als lid`);
+      toast.success(`${naam} is goedgekeurd en toegevoegd als lid`);
       navigate(`/leden/${nextId}`);
     } catch (err) {
-      toast.error("Toevoegen mislukt: " + (err as Error).message);
+      toast.error("Goedkeuren mislukt: " + (err as Error).message);
     } finally {
       setAddingId(null);
+    }
+  };
+
+  /**
+   * Goedkeuren is hier méér dan het berichtje op 'verwerkt' zetten: het
+   * bijbehorende record wordt daadwerkelijk lid. Bestaat er nog geen dossier,
+   * dan wordt die alsnog aangemaakt.
+   */
+  const openGoedkeur = async (
+    s: MembershipRequest,
+    existing?: { m: Member; type: "member" | "lead" },
+  ) => {
+    let vrijstellingen: string[] = [];
+    if (existing) {
+      const { data } = await (supabase as any)
+        .from("contribution_exemptions")
+        .select("year")
+        .eq("member_id", existing.m.id)
+        .order("year", { ascending: false });
+      vrijstellingen = ((data ?? []) as Array<{ year: number }>).map((r) => String(r.year));
+    }
+    setGoedkeurTarget({ signup: s, existing, vrijstellingen });
+  };
+
+  const handleApproveSignup = async (target: GoedkeurTarget) => {
+    const { signup, existing } = target;
+    if (!existing) {
+      setGoedkeurTarget(null);
+      await handleAddAsMember(signup);
+      return;
+    }
+
+    setApprovingId(signup.id);
+    try {
+      if (existing.type === "member") {
+        await updateSignup.mutateAsync({ id: signup.id, status: "approved" });
+        refetch();
+        toast.success(`${existing.m.naam} is goedgekeurd — dit dossier is al lid`);
+        navigate(`/leden/${existing.m.id}`);
+      } else {
+        const { lidnummer } = await convertLead({
+          leadId: existing.m.id,
+          lidnummer: await nextMemberNumber(),
+          lidSinds: new Date().getFullYear(),
+          leadEmail: signup.email || existing.m.email || "",
+        });
+        const mail = (signup.email || existing.m.email || "").trim();
+        if (mail) {
+          const { error: prefErr } = await supabase
+            .from("member_mailing_preferences")
+            .insert({ member_id: lidnummer, email: mail });
+          if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
+            console.error("Mailing preference insert failed", prefErr);
+          }
+        }
+        await updateSignup.mutateAsync({ id: signup.id, status: "approved" });
+        refetch();
+        toast.success(`${existing.m.naam} is goedgekeurd als lid ${lidnummer}`);
+        navigate(`/leden/${lidnummer}`);
+      }
+      setGoedkeurTarget(null);
+    } catch (err) {
+      toast.error("Goedkeuren mislukt: " + (err as Error).message);
+    } finally {
+      setApprovingId(null);
     }
   };
 
