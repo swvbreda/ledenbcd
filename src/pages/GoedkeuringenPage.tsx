@@ -411,25 +411,18 @@ export default function GoedkeuringenPage() {
                   <p className="text-sm bg-muted/50 rounded-sm p-2 whitespace-pre-wrap">{s.message}</p>
                 )}
                 {s.status === "new" && (
-                  <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    {existing ? (
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+                    <Button size="sm" className="gap-1.5"
+                      disabled={approvingId === s.id || updateSignup.isPending}
+                      onClick={() => openGoedkeur(s, existing)}>
+                      <Check size={14} /> {approvingId === s.id ? "Goedkeuren..." : "Goedkeuren"}
+                    </Button>
+                    {existing && (
                       <Button size="sm" variant="outline" className="gap-1.5"
                         onClick={() => navigate(`/leden/${existing.m.id}`)}>
                         <User size={14} /> Bekijk {existing.type === "lead" ? "lead" : "lid"}
                       </Button>
-                    ) : (
-                      <Button size="sm" className="gap-1.5" disabled={addingId === s.id || updateSignup.isPending}
-                        onClick={() => handleAddAsMember(s)}>
-                        <Plus size={14} /> {addingId === s.id ? "Toevoegen..." : "Voeg toe als lid"}
-                      </Button>
                     )}
-                    <Button variant="outline" size="sm" className="gap-1.5" disabled={updateSignup.isPending}
-                      onClick={() => updateSignup.mutate({ id: s.id, status: "approved" }, {
-                        onSuccess: () => toast.success("Aanmelding gemarkeerd als verwerkt"),
-                        onError: (e) => toast.error("Fout: " + (e as Error).message),
-                      })}>
-                      <Check size={14} /> Alleen markeren
-                    </Button>
                     <Button variant="outline" size="sm" className="gap-1.5 text-destructive" disabled={updateSignup.isPending}
                       onClick={() => updateSignup.mutate({ id: s.id, status: "rejected" }, {
                         onSuccess: () => toast.success("Aanmelding afgewezen"),
@@ -470,6 +463,58 @@ export default function GoedkeuringenPage() {
           </p>
         </div>
       )}
+
+      <AlertDialog
+        open={goedkeurTarget !== null}
+        onOpenChange={(open) => { if (!open) setGoedkeurTarget(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aanmelding goedkeuren</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                {goedkeurTarget && (
+                  <>
+                    <p className="font-semibold text-foreground">
+                      {goedkeurTarget.signup.coffeeshop_name}
+                      {goedkeurTarget.signup.city ? ` (${goedkeurTarget.signup.city})` : ""}
+                    </p>
+                    {goedkeurTarget.existing?.type === "lead" && (
+                      <p>Lead #{goedkeurTarget.existing.m.id} wordt een lidmaatschap. De aanmelding wordt als verwerkt gesloten.</p>
+                    )}
+                    {goedkeurTarget.existing?.type === "member" && (
+                      <p>{goedkeurTarget.existing.m.naam} is al lid (#{goedkeurTarget.existing.m.id}). De aanmelding wordt alleen gesloten; het dossier blijft zoals het is.</p>
+                    )}
+                    {!goedkeurTarget.existing && (
+                      <p>Er wordt een nieuw liddossier aangemaakt voor {goedkeurTarget.signup.coffeeshop_name}.</p>
+                    )}
+                    {goedkeurTarget.vrijstellingen.length > 0 && (
+                      <p className="font-medium text-brand-red">
+                        Geen contributiefactuur voor {goedkeurTarget.vrijstellingen.join(", ")} — de vrijstelling staat.
+                      </p>
+                    )}
+                    {goedkeurTarget.vrijstellingen.length === 0 && goedkeurTarget.existing?.type === "lead" && (
+                      <p>De contributiefactuur wordt later klaargezet via Financiën — "Ontbrekende facturen klaarzetten".</p>
+                    )}
+                    {!goedkeurTarget.existing && (
+                      <p>Er wordt een contributiefactuur voor dit nieuwe lid klaargezet en verstuurd via de boekhoudkoppeling.</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={approvingId !== null || updateSignup.isPending}
+              onClick={() => goedkeurTarget && handleApproveSignup(goedkeurTarget)}
+            >
+              Goedkeuren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
