@@ -18,22 +18,28 @@ describe("Goedkeuren van een aanmelding", () => {
   });
 
   it("zet een lead bij goedkeuren daadwerkelijk om naar een lidmaatschap", () => {
-    expect(source).toContain('import { convertLead } from "@/hooks/useLeadConversions"');
+    expect(source).toContain(
+      'import { convertLead } from "@/hooks/useLeadConversions"',
+    );
     expect(source).toContain("leadId: existing.m.id");
     expect(source).toContain('existing.type === "member"');
   });
 
   it("maakt bij een onbekende shop alsnog een ledenrecord aan", () => {
-    expect(source).toContain('if (!existing) {');
+    expect(source).toContain("if (!existing) {");
     expect(source).toContain("handleAddAsMember(signup)");
-    expect(source).toContain('insert({ id: nextId, member_type: "member", data })');
+    expect(source).toContain(
+      'insert({ id: nextId, member_type: "member", data })',
+    );
   });
 
   it("vraagt bevestiging en toont de contributievrijstelling vóór de klik", () => {
     expect(source).toContain("<AlertDialog");
     expect(source).toContain("contribution_exemptions");
     expect(source).toContain("Geen contributiefactuur voor");
-    expect(source).toContain("<AlertDialogCancel>Annuleren</AlertDialogCancel>");
+    expect(source).toContain(
+      "<AlertDialogCancel>Annuleren</AlertDialogCancel>",
+    );
   });
 
   it("laat een geweigerde aanmelding gewoon wegkomen", () => {

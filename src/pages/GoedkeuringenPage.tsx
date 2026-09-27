@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
-import { Check, X, Clock, ChevronDown, ChevronUp, User, Mail, Phone, MapPin, Store, UserPlus } from "lucide-react";
+import {
+  Check,
+  X,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Store,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +69,13 @@ const fieldLabels: Record<string, string> = {
   locaties: "Locaties",
 };
 
-function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Member }) {
+function ChangeSummary({
+  data,
+  member,
+}: {
+  data: Partial<Member>;
+  member?: Member;
+}) {
   const entries = Object.entries(data).filter(([key, newVal]) => {
     if (key === "aantalLocaties") return false;
     if (!member) return true;
@@ -69,7 +87,11 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
   });
 
   if (entries.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">Geen wijzigingen gevonden.</p>;
+    return (
+      <p className="text-sm text-muted-foreground italic">
+        Geen wijzigingen gevonden.
+      </p>
+    );
   }
 
   return (
@@ -82,13 +104,20 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
           const oldLocs = (member?.locaties || []) as any[];
           return (
             <div key={key}>
-              <span className="font-medium text-muted-foreground">{label}:</span>
+              <span className="font-medium text-muted-foreground">
+                {label}:
+              </span>
               <div className="ml-3 mt-1 space-y-1">
                 {(newVal as any[]).map((loc, i) => {
                   const isNew = i >= oldLocs.length;
                   return (
-                    <div key={i} className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
-                      {isNew && <span className="font-medium mr-1">Nieuw:</span>}
+                    <div
+                      key={i}
+                      className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}
+                    >
+                      {isNew && (
+                        <span className="font-medium mr-1">Nieuw:</span>
+                      )}
                       {loc.naam} — {loc.plaats || "?"}, {loc.adres || ""}
                     </div>
                   );
@@ -102,13 +131,20 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
           const oldContacts = (member?.contacten || []) as any[];
           return (
             <div key={key}>
-              <span className="font-medium text-muted-foreground">{label}:</span>
+              <span className="font-medium text-muted-foreground">
+                {label}:
+              </span>
               <div className="ml-3 mt-1 space-y-1">
                 {(newVal as any[]).map((c, i) => {
                   const isNew = i >= oldContacts.length;
                   return (
-                    <div key={i} className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}>
-                      {isNew && <span className="font-medium mr-1">Nieuw:</span>}
+                    <div
+                      key={i}
+                      className={`text-xs rounded-sm px-2 py-1 ${isNew ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-muted/50"}`}
+                    >
+                      {isNew && (
+                        <span className="font-medium mr-1">Nieuw:</span>
+                      )}
                       {c.naam} ({c.functie}) — {c.email}
                     </div>
                   );
@@ -126,7 +162,9 @@ function ChangeSummary({ data, member }: { data: Partial<Member>; member?: Membe
             <span className="font-medium text-muted-foreground">{label}:</span>
             {member ? (
               <>
-                <span className="line-through text-muted-foreground/60">{oldStr}</span>
+                <span className="line-through text-muted-foreground/60">
+                  {oldStr}
+                </span>
                 <span className="text-foreground">→ {newStr}</span>
               </>
             ) : (
@@ -152,7 +190,7 @@ function RequestCard({ request }: { request: EditRequest }) {
       {
         onSuccess: () => toast.success("Wijziging goedgekeurd en verwerkt"),
         onError: (err) => toast.error("Fout: " + (err as Error).message),
-      }
+      },
     );
   };
 
@@ -162,7 +200,7 @@ function RequestCard({ request }: { request: EditRequest }) {
       {
         onSuccess: () => toast.success("Wijziging afgewezen"),
         onError: (err) => toast.error("Fout: " + (err as Error).message),
-      }
+      },
     );
   };
 
@@ -181,15 +219,15 @@ function RequestCard({ request }: { request: EditRequest }) {
                 request.status === "approved"
                   ? "default"
                   : request.status === "rejected"
-                  ? "destructive"
-                  : "secondary"
+                    ? "destructive"
+                    : "secondary"
               }
             >
               {request.status === "pending"
                 ? "In afwachting"
                 : request.status === "approved"
-                ? "Goedgekeurd"
-                : "Afgewezen"}
+                  ? "Goedgekeurd"
+                  : "Afgewezen"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -261,9 +299,15 @@ export default function GoedkeuringenPage() {
   const { rawMembers, rawLeads, rawOldMembers, refetch } = useMembersData();
   const [showAll, setShowAll] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
-  const [goedkeurTarget, setGoedkeurTarget] = useState<GoedkeurTarget | null>(null);
-  const { data: requests, isLoading } = useEditRequests(showAll ? "all" : "pending");
-  const { data: signups, isLoading: signupsLoading } = useMembershipRequests(showAll ? "all" : "pending");
+  const [goedkeurTarget, setGoedkeurTarget] = useState<GoedkeurTarget | null>(
+    null,
+  );
+  const { data: requests, isLoading } = useEditRequests(
+    showAll ? "all" : "pending",
+  );
+  const { data: signups, isLoading: signupsLoading } = useMembershipRequests(
+    showAll ? "all" : "pending",
+  );
   const updateSignup = useUpdateMembershipRequest();
 
   const handleAddAsMember = async (s: MembershipRequest) => {
@@ -282,22 +326,28 @@ export default function GoedkeuringenPage() {
         _naam: naam,
         _plaats: plaats,
       });
-      const matchList = (matches ?? []) as Array<{ member_id: number; naam: string }>;
+      const matchList = (matches ?? []) as Array<{
+        member_id: number;
+        naam: string;
+      }>;
       if (matchList.length === 1) {
         const existingId = matchList[0].member_id;
         await updateSignup.mutateAsync({ id: s.id, status: "approved" });
         refetch();
-        toast.success(`Aanmelding gekoppeld aan bestaand dossier ${existingId} (${matchList[0].naam})`);
+        toast.success(
+          `Aanmelding gekoppeld aan bestaand dossier ${existingId} (${matchList[0].naam})`,
+        );
         navigate(`/leden/${existingId}`);
         return;
       }
       if (matchList.length > 1) {
-        toast.error("Meerdere bestaande dossiers gevonden — beoordeel dit handmatig, er is niets aangemaakt.");
+        toast.error(
+          "Meerdere bestaande dossiers gevonden — beoordeel dit handmatig, er is niets aangemaakt.",
+        );
         return;
       }
 
       const nextId = await nextMemberNumber();
-
 
       const data = {
         id: nextId,
@@ -318,9 +368,10 @@ export default function GoedkeuringenPage() {
         factuurPlaats: plaats,
         factuurEmail: emailAddr,
         factuurTelefoon: telefoon,
-        contacten: (contactNaam || emailAddr || telefoon)
-          ? [{ naam: contactNaam, functie: "", email: emailAddr, telefoon }]
-          : [],
+        contacten:
+          contactNaam || emailAddr || telefoon
+            ? [{ naam: contactNaam, functie: "", email: emailAddr, telefoon }]
+            : [],
       };
 
       const { error } = await supabase
@@ -332,13 +383,23 @@ export default function GoedkeuringenPage() {
         const { error: allowErr } = await supabase
           .from("member_allowed_emails")
           .insert({ member_id: nextId, email: emailAddr.toLowerCase() });
-        if (allowErr && !String(allowErr.message || "").toLowerCase().includes("duplicate")) {
+        if (
+          allowErr &&
+          !String(allowErr.message || "")
+            .toLowerCase()
+            .includes("duplicate")
+        ) {
           console.error("Allowed email insert failed", allowErr);
         }
         const { error: prefErr } = await supabase
           .from("member_mailing_preferences")
           .insert({ member_id: nextId, email: emailAddr });
-        if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
+        if (
+          prefErr &&
+          !String(prefErr.message || "")
+            .toLowerCase()
+            .includes("duplicate")
+        ) {
           console.error("Mailing preference insert failed", prefErr);
         }
       }
@@ -370,7 +431,9 @@ export default function GoedkeuringenPage() {
         .select("year")
         .eq("member_id", existing.m.id)
         .order("year", { ascending: false });
-      vrijstellingen = ((data ?? []) as Array<{ year: number }>).map((r) => String(r.year));
+      vrijstellingen = ((data ?? []) as Array<{ year: number }>).map((r) =>
+        String(r.year),
+      );
     }
     setGoedkeurTarget({ signup: s, existing, vrijstellingen });
   };
@@ -388,7 +451,9 @@ export default function GoedkeuringenPage() {
       if (existing.type === "member") {
         await updateSignup.mutateAsync({ id: signup.id, status: "approved" });
         refetch();
-        toast.success(`${existing.m.naam} is goedgekeurd — dit dossier is al lid`);
+        toast.success(
+          `${existing.m.naam} is goedgekeurd — dit dossier is al lid`,
+        );
         navigate(`/leden/${existing.m.id}`);
       } else {
         const { lidnummer } = await convertLead({
@@ -402,7 +467,12 @@ export default function GoedkeuringenPage() {
           const { error: prefErr } = await supabase
             .from("member_mailing_preferences")
             .insert({ member_id: lidnummer, email: mail });
-          if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
+          if (
+            prefErr &&
+            !String(prefErr.message || "")
+              .toLowerCase()
+              .includes("duplicate")
+          ) {
             console.error("Mailing preference insert failed", prefErr);
           }
         }
@@ -427,7 +497,8 @@ export default function GoedkeuringenPage() {
     );
   }
 
-  const pendingCount = requests?.filter((r) => r.status === "pending").length ?? 0;
+  const pendingCount =
+    requests?.filter((r) => r.status === "pending").length ?? 0;
   const pendingSignups = signups?.filter((s) => s.status === "new").length ?? 0;
   const totalPending = pendingCount + pendingSignups;
 
@@ -435,11 +506,17 @@ export default function GoedkeuringenPage() {
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden max-w-full">
       <BcdHeroBanner
         title="Goedkeuringen"
-        subtitle={totalPending > 0
-          ? `${totalPending} item${totalPending === 1 ? "" : "s"} wacht${totalPending === 1 ? "" : "en"} op goedkeuring`
-          : "Geen openstaande zaken"}
+        subtitle={
+          totalPending > 0
+            ? `${totalPending} item${totalPending === 1 ? "" : "s"} wacht${totalPending === 1 ? "" : "en"} op goedkeuring`
+            : "Geen openstaande zaken"
+        }
       >
-        <Button variant="secondary" size="sm" onClick={() => setShowAll(!showAll)}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setShowAll(!showAll)}
+        >
           {showAll ? "Alleen openstaand" : "Toon alles"}
         </Button>
       </BcdHeroBanner>
@@ -447,83 +524,159 @@ export default function GoedkeuringenPage() {
       {/* Logo's van coffeeshops beoordelen */}
       <LogoGoedkeuringPanel />
 
-
       {/* Nieuwe aanmeldingen via publieke site */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
           <UserPlus size={14} /> Nieuwe aanmeldingen
-          {pendingSignups > 0 && <Badge variant="secondary">{pendingSignups}</Badge>}
+          {pendingSignups > 0 && (
+            <Badge variant="secondary">{pendingSignups}</Badge>
+          )}
         </h2>
         {signupsLoading ? (
           <div className="text-sm text-muted-foreground py-4">Laden...</div>
         ) : signups && signups.length > 0 ? (
           <div className="space-y-3">
-            {signups.map((s) => (
+            {signups.map((s) =>
               (() => {
-              const tagged = [
-                ...rawMembers.map((m) => ({ m, type: "member" as const })),
-                ...rawLeads.map((m) => ({ m, type: "lead" as const })),
-              ];
-              const existing = tagged.find(
-                ({ m }) =>
-                  (m.email || "").toLowerCase().trim() === s.email.toLowerCase().trim() ||
-                  (m.naam || "").toLowerCase().trim() === s.coffeeshop_name.toLowerCase().trim()
-              );
-              return (
-              <Card key={s.id} className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold font-display">{s.coffeeshop_name}</span>
-                      <Badge variant={s.status === "new" ? "secondary" : s.status === "approved" ? "default" : "destructive"}>
-                        {s.status === "new" ? "Nieuw" : s.status === "approved" ? "Verwerkt" : "Afgewezen"}
-                      </Badge>
-                      {existing && (
-                        <Badge variant="outline" className="text-xs">
-                          Auto-aangemaakt als {existing.type === "lead" ? "lead" : "lid"} #{existing.m.id}
-                        </Badge>
+                const tagged = [
+                  ...rawMembers.map((m) => ({ m, type: "member" as const })),
+                  ...rawLeads.map((m) => ({ m, type: "lead" as const })),
+                ];
+                const existing = tagged.find(
+                  ({ m }) =>
+                    (m.email || "").toLowerCase().trim() ===
+                      s.email.toLowerCase().trim() ||
+                    (m.naam || "").toLowerCase().trim() ===
+                      s.coffeeshop_name.toLowerCase().trim(),
+                );
+                return (
+                  <Card key={s.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold font-display">
+                            {s.coffeeshop_name}
+                          </span>
+                          <Badge
+                            variant={
+                              s.status === "new"
+                                ? "secondary"
+                                : s.status === "approved"
+                                  ? "default"
+                                  : "destructive"
+                            }
+                          >
+                            {s.status === "new"
+                              ? "Nieuw"
+                              : s.status === "approved"
+                                ? "Verwerkt"
+                                : "Afgewezen"}
+                          </Badge>
+                          {existing && (
+                            <Badge variant="outline" className="text-xs">
+                              Auto-aangemaakt als{" "}
+                              {existing.type === "lead" ? "lead" : "lid"} #
+                              {existing.m.id}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(s.created_at).toLocaleString("nl-NL", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-sm grid sm:grid-cols-2 gap-x-4 gap-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <User size={12} className="text-muted-foreground" />
+                        {s.full_name}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <MapPin size={12} className="text-muted-foreground" />
+                        {s.city}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Mail size={12} className="text-muted-foreground" />
+                        <a
+                          href={`mailto:${s.email}`}
+                          className="hover:underline"
+                        >
+                          {s.email}
+                        </a>
+                      </div>
+                      {s.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <Phone size={12} className="text-muted-foreground" />
+                          <a
+                            href={`tel:${s.phone}`}
+                            className="hover:underline"
+                          >
+                            {s.phone}
+                          </a>
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(s.created_at).toLocaleString("nl-NL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-sm grid sm:grid-cols-2 gap-x-4 gap-y-1">
-                  <div className="flex items-center gap-1.5"><User size={12} className="text-muted-foreground" />{s.full_name}</div>
-                  <div className="flex items-center gap-1.5"><MapPin size={12} className="text-muted-foreground" />{s.city}</div>
-                  <div className="flex items-center gap-1.5"><Mail size={12} className="text-muted-foreground" /><a href={`mailto:${s.email}`} className="hover:underline">{s.email}</a></div>
-                  {s.phone && <div className="flex items-center gap-1.5"><Phone size={12} className="text-muted-foreground" /><a href={`tel:${s.phone}`} className="hover:underline">{s.phone}</a></div>}
-                </div>
-                {s.message && (
-                  <p className="text-sm bg-muted/50 rounded-sm p-2 whitespace-pre-wrap">{s.message}</p>
-                )}
-                {s.status === "new" && (
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
-                    <Button size="sm" className="gap-1.5"
-                      disabled={approvingId === s.id || updateSignup.isPending}
-                      onClick={() => openGoedkeur(s, existing)}>
-                      <Check size={14} /> {approvingId === s.id ? "Goedkeuren..." : "Goedkeuren"}
-                    </Button>
-                    {existing && (
-                      <Button size="sm" variant="outline" className="gap-1.5"
-                        onClick={() => navigate(`/leden/${existing.m.id}`)}>
-                        <User size={14} /> Bekijk {existing.type === "lead" ? "lead" : "lid"}
-                      </Button>
+                    {s.message && (
+                      <p className="text-sm bg-muted/50 rounded-sm p-2 whitespace-pre-wrap">
+                        {s.message}
+                      </p>
                     )}
-                    <Button variant="outline" size="sm" className="gap-1.5 text-destructive" disabled={updateSignup.isPending}
-                      onClick={() => updateSignup.mutate({ id: s.id, status: "rejected" }, {
-                        onSuccess: () => toast.success("Aanmelding afgewezen"),
-                        onError: (e) => toast.error("Fout: " + (e as Error).message),
-                      })}>
-                      <X size={14} /> Afwijzen
-                    </Button>
-                  </div>
-                )}
-              </Card>
-              );
-              })()
-            ))}
+                    {s.status === "new" && (
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={
+                            approvingId === s.id || updateSignup.isPending
+                          }
+                          onClick={() => openGoedkeur(s, existing)}
+                        >
+                          <Check size={14} />{" "}
+                          {approvingId === s.id
+                            ? "Goedkeuren..."
+                            : "Goedkeuren"}
+                        </Button>
+                        {existing && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5"
+                            onClick={() => navigate(`/leden/${existing.m.id}`)}
+                          >
+                            <User size={14} /> Bekijk{" "}
+                            {existing.type === "lead" ? "lead" : "lid"}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-destructive"
+                          disabled={updateSignup.isPending}
+                          onClick={() =>
+                            updateSignup.mutate(
+                              { id: s.id, status: "rejected" },
+                              {
+                                onSuccess: () =>
+                                  toast.success("Aanmelding afgewezen"),
+                                onError: (e) =>
+                                  toast.error("Fout: " + (e as Error).message),
+                              },
+                            )
+                          }
+                        >
+                          <X size={14} /> Afwijzen
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                );
+              })(),
+            )}
           </div>
         ) : (
           <div className="bg-card rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
@@ -547,14 +700,18 @@ export default function GoedkeuringenPage() {
         <div className="bg-card rounded-lg border border-border p-12 text-center">
           <Clock size={40} className="mx-auto text-muted-foreground/30 mb-3" />
           <p className="text-muted-foreground font-medium">
-            {showAll ? "Nog geen wijzigingsverzoeken" : "Geen openstaande verzoeken"}
+            {showAll
+              ? "Nog geen wijzigingsverzoeken"
+              : "Geen openstaande verzoeken"}
           </p>
         </div>
       )}
 
       <AlertDialog
         open={goedkeurTarget !== null}
-        onOpenChange={(open) => { if (!open) setGoedkeurTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setGoedkeurTarget(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -565,27 +722,48 @@ export default function GoedkeuringenPage() {
                   <>
                     <p className="font-semibold text-foreground">
                       {goedkeurTarget.signup.coffeeshop_name}
-                      {goedkeurTarget.signup.city ? ` (${goedkeurTarget.signup.city})` : ""}
+                      {goedkeurTarget.signup.city
+                        ? ` (${goedkeurTarget.signup.city})`
+                        : ""}
                     </p>
                     {goedkeurTarget.existing?.type === "lead" && (
-                      <p>Lead #{goedkeurTarget.existing.m.id} wordt een lidmaatschap. De aanmelding wordt als verwerkt gesloten.</p>
+                      <p>
+                        Lead #{goedkeurTarget.existing.m.id} wordt een
+                        lidmaatschap. De aanmelding wordt als verwerkt gesloten.
+                      </p>
                     )}
                     {goedkeurTarget.existing?.type === "member" && (
-                      <p>{goedkeurTarget.existing.m.naam} is al lid (#{goedkeurTarget.existing.m.id}). De aanmelding wordt alleen gesloten; het dossier blijft zoals het is.</p>
+                      <p>
+                        {goedkeurTarget.existing.m.naam} is al lid (#
+                        {goedkeurTarget.existing.m.id}). De aanmelding wordt
+                        alleen gesloten; het dossier blijft zoals het is.
+                      </p>
                     )}
                     {!goedkeurTarget.existing && (
-                      <p>Er wordt een nieuw liddossier aangemaakt voor {goedkeurTarget.signup.coffeeshop_name}.</p>
+                      <p>
+                        Er wordt een nieuw liddossier aangemaakt voor{" "}
+                        {goedkeurTarget.signup.coffeeshop_name}.
+                      </p>
                     )}
                     {goedkeurTarget.vrijstellingen.length > 0 && (
                       <p className="font-medium text-brand-red">
-                        Geen contributiefactuur voor {goedkeurTarget.vrijstellingen.join(", ")} — de vrijstelling staat.
+                        Geen contributiefactuur voor{" "}
+                        {goedkeurTarget.vrijstellingen.join(", ")} — de
+                        vrijstelling staat.
                       </p>
                     )}
-                    {goedkeurTarget.vrijstellingen.length === 0 && goedkeurTarget.existing?.type === "lead" && (
-                      <p>De contributiefactuur wordt later klaargezet via Financiën — "Ontbrekende facturen klaarzetten".</p>
-                    )}
+                    {goedkeurTarget.vrijstellingen.length === 0 &&
+                      goedkeurTarget.existing?.type === "lead" && (
+                        <p>
+                          De contributiefactuur wordt later klaargezet via
+                          Financiën — "Ontbrekende facturen klaarzetten".
+                        </p>
+                      )}
                     {!goedkeurTarget.existing && (
-                      <p>Er wordt een contributiefactuur voor dit nieuwe lid klaargezet en verstuurd via de boekhoudkoppeling.</p>
+                      <p>
+                        Er wordt een contributiefactuur voor dit nieuwe lid
+                        klaargezet en verstuurd via de boekhoudkoppeling.
+                      </p>
                     )}
                   </>
                 )}
@@ -596,7 +774,9 @@ export default function GoedkeuringenPage() {
             <AlertDialogCancel>Annuleren</AlertDialogCancel>
             <AlertDialogAction
               disabled={approvingId !== null || updateSignup.isPending}
-              onClick={() => goedkeurTarget && handleApproveSignup(goedkeurTarget)}
+              onClick={() =>
+                goedkeurTarget && handleApproveSignup(goedkeurTarget)
+              }
             >
               Goedkeuren
             </AlertDialogAction>
