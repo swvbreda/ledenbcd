@@ -426,14 +426,12 @@ export default function GoedkeuringenPage() {
   ) => {
     let vrijstellingen: string[] = [];
     if (existing) {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("contribution_exemptions")
         .select("year")
         .eq("member_id", existing.m.id)
         .order("year", { ascending: false });
-      vrijstellingen = ((data ?? []) as Array<{ year: number }>).map((r) =>
-        String(r.year),
-      );
+      vrijstellingen = (data ?? []).map((r) => String(r.year));
     }
     setGoedkeurTarget({ signup: s, existing, vrijstellingen });
   };
