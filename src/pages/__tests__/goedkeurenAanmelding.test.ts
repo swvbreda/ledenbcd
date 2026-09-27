@@ -10,7 +10,8 @@ const source = readFileSync("src/pages/GoedkeuringenPage.tsx", "utf8");
  */
 describe("Goedkeuren van een aanmelding", () => {
   it("biedt een duidelijke goedkeurknop in plaats van alleen maar markeren", () => {
-    expect(source).toContain(">Goedkeuren<");
+    expect(source).toMatch(/:\s*"Goedkeuren"\}/);
+    expect(source).toMatch(/>\s*Goedkeuren\s*</);
     expect(source).toContain("openGoedkeur(s, existing)");
     expect(source).not.toContain("Alleen markeren");
     expect(source).not.toContain("gemarkeerd als verwerkt");
@@ -28,7 +29,7 @@ describe("Goedkeuren van een aanmelding", () => {
     expect(source).toContain('insert({ id: nextId, member_type: "member", data })');
   });
 
-  it("vraagt bevestiging en noolt de contributievrijstelling vóór de klik", () => {
+  it("vraagt bevestiging en toont de contributievrijstelling vóór de klik", () => {
     expect(source).toContain("<AlertDialog");
     expect(source).toContain("contribution_exemptions");
     expect(source).toContain("Geen contributiefactuur voor");
@@ -37,6 +38,6 @@ describe("Goedkeuren van een aanmelding", () => {
 
   it("laat een geweigerde aanmelding gewoon wegkomen", () => {
     expect(source).toContain('status: "rejected"');
-    expect(source).toContain(">Afwijzen");
+    expect(source).toContain("Afwijzen");
   });
 });
