@@ -7,6 +7,8 @@ import {
   RecipientsChangedError,
   runParticipantMail,
   type MailDeps,
+  type MemberContactInfo,
+  type PriorMapping,
   type MailReport,
   type RecipientResult,
 } from "./agendaParticipantMail";
@@ -32,13 +34,37 @@ async function loadRecipients(admin: any, eventId: string): Promise<RecipientRes
   const boardIds = [...new Set(rows.filter((r) => r.board_member_id).map((r) => r.board_member_id as string))];
 
   const emailsByMember = new Map<number, string[]>();
+  const memberInfo = new Map<number, MemberContactInfo>();
+  const priorMappings = new Map<number, PriorMapping[]>();
   if (memberIds.length) {
-    const { data, error } = await admin.from("member_allowed_emails").select("member_id, email").in("member_id", memberIds);
-    if (error) throw new Error("Contactadressen van leden laden mislukt");
-    for (const row of (data ?? []) as { member_id: number; email: string }[]) {
+    const [allowed, md, prior] = await Promise.all([
+      admin.from("member_allowed_emails").select("member_id, email").in("member_id", memberIds),
+      admin.from("members_data").select("id, data").in("id", memberIds),
+      admin
+        .from("agenda_registrations")
+        .select("member_id, contact_name, contact_email")
+        .in("member_id", memberIds)
+        .not("contact_email", "is", null)
+        .not("contact_name", "is", null),
+    ]);
+    if (allowed.error || md.error || prior.error) throw new Error("Contactadressen van leden laden mislukt");
+    for (const row of (allowed.data ?? []) as { member_id: number; email: string }[]) {
       const list = emailsByMember.get(row.member_id) ?? [];
       list.push(row.email ?? "");
       emailsByMember.set(row.member_id, list);
+    }
+    for (const row of (md.data ?? []) as { id: number; data: any }[]) {
+      const d = row.data ?? {};
+      memberInfo.set(row.id, {
+        email: d.email ?? null,
+        contactpersoon: d.contactpersoon ?? null,
+        contacten: Array.isArray(d.contacten) ? d.contacten : [],
+      });
+    }
+    for (const row of (prior.data ?? []) as { member_id: number; contact_name: string; contact_email: string }[]) {
+      const list = priorMappings.get(row.member_id) ?? [];
+      list.push({ name: row.contact_name, email: row.contact_email });
+      priorMappings.set(row.member_id, list);
     }
   }
   const emailByBoard = new Map<string, string>();
@@ -56,6 +82,8 @@ async function loadRecipients(admin: any, eventId: string): Promise<RecipientRes
     registrations: rows,
     guests: (guests ?? []) as any[],
     emailsByMember,
+    memberInfo,
+    priorMappings,
     emailByBoard,
     nameByBoard,
   });
