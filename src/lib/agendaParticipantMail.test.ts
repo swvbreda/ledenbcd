@@ -110,6 +110,58 @@ describe("ontvangers", () => {
     expect(r.recipients.map((x) => x.email)).toEqual(["een@x.nl"]);
     expect(r.missing.map((m) => m.reason).sort()).toEqual(["ambiguous", "missing"]);
   });
+
+  it("resolver: evenement Experiment bijeenkomst (Alex, Job Joris, Joost+Nizar, leeg)", () => {
+    const reg = (id: string, member_id: number, attendee_names: string[], contact_email: string | null = null, contact_name: string | null = null) =>
+      ({ id, member_id, board_member_id: null, contact_email, contact_name, attendee_names });
+    const r = buildParticipantRecipients({
+      registrations: [
+        reg("a", 132, ["Alex van Veen"]),
+        reg("j", 137, ["Job Joris"]),
+        reg("jc", 100, ["Joost Vriens", "Nizar"]),
+        reg("e", 89, []),
+        reg("x", 2, ["Rob Bierings"], "hipporecords@gmail.com", "Rob Bierings"),
+      ],
+      guests: [],
+      emailsByMember: new Map([[100, ["joost@john-en-co.nl", "nizar@john-en-co.nl"]]]),
+      memberInfo: new Map([
+        [132, { email: "alex@toermalijn.com", contactpersoon: "Alex van Veen", contacten: [{ naam: "Alex van Veen", email: "alex@toermalijn.com" }] }],
+        [137, { email: "job@coffeeshoptakeaway.nl", contactpersoon: "Job Joris Arnold", contacten: [{ naam: "Job Joris Arnold", email: "job@coffeeshoptakeaway.nl" }] }],
+        [100, { email: "nizar@john-en-co.nl", contactpersoon: "Nizar", contacten: [{ naam: "Nizar", email: "nizar@john-en-co.nl" }] }],
+        [89, { email: "vandenberg42@outlook.com", contactpersoon: "Dirk van den Berg", contacten: [] }],
+      ]),
+      priorMappings: new Map([[100, [{ name: "Joost Vriens", email: "joost@john-en-co.nl" }]]]),
+      emailByBoard: new Map(),
+    });
+    expect(r.missing).toEqual([]);
+    const m = Object.fromEntries(r.recipients.map((x) => [x.naam, x.email]));
+    expect(m).toEqual({
+      "Alex van Veen": "alex@toermalijn.com",
+      "Job Joris": "job@coffeeshoptakeaway.nl",
+      "Joost Vriens": "joost@john-en-co.nl",
+      Nizar: "nizar@john-en-co.nl",
+      "Dirk van den Berg": "vandenberg42@outlook.com",
+      "Rob Bierings": "hipporecords@gmail.com",
+    });
+  });
+
+  it("resolver: echte ambiguïteit blijft geblokkeerd, geen losse fuzzy match", () => {
+    const r = buildParticipantRecipients({
+      registrations: [
+        { id: "1", member_id: 5, board_member_id: null, contact_email: null, contact_name: null, attendee_names: ["Piet Jansen"] },
+        { id: "2", member_id: 6, board_member_id: null, contact_email: null, contact_name: null, attendee_names: ["Alex"] },
+      ],
+      guests: [],
+      emailsByMember: new Map([[6, ["a@x.nl", "b@x.nl"]]]),
+      memberInfo: new Map([
+        [5, { contacten: [{ naam: "Piet Jansen", email: "p1@x.nl" }, { naam: "piet jansen", email: "p2@x.nl" }] }],
+        [6, { contacten: [{ naam: "Alex van Veen", email: "a@x.nl" }] }],
+      ]),
+      emailByBoard: new Map(),
+    });
+    expect(r.recipients).toEqual([]);
+    expect(r.missing.map((x) => [x.naam, x.reason])).toEqual([["Piet Jansen", "ambiguous"], ["Alex", "ambiguous"]]);
+  });
 });
 
 describe("verzendresultaat eerlijk", () => {
