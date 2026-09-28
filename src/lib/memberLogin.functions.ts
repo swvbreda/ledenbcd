@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 
@@ -27,6 +26,7 @@ export const requestMemberLoginLink = createServerFn({ method: "POST" })
     const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
     const url = process.env['SUPABASE_URL'];
     if (!key || !url) return generic;
+    const { createClient } = await import("@supabase/supabase-js");
     const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const redirectOrigin = process.env["MEMBER_PORTAL_ORIGIN"];
     if (!redirectOrigin || !/^https:\/\/[^/]+$/.test(redirectOrigin)) return generic;
