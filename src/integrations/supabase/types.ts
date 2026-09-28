@@ -2581,6 +2581,24 @@ export type Database = {
         }
         Relationships: []
       }
+      member_login_link_requests: {
+        Row: {
+          email: string
+          requested_at: string
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          requested_at?: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          requested_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_mailing_preferences: {
         Row: {
           created_at: string
@@ -3873,6 +3891,7 @@ export type Database = {
         Returns: number
       }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
+      claim_member_login_link: { Args: { _email: string }; Returns: boolean }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
       delete_email: {
