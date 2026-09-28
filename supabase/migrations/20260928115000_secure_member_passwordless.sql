@@ -71,3 +71,16 @@ GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticate
 DROP POLICY IF EXISTS "Members can view their own preference" ON public.whatsapp_preferences;
 CREATE POLICY "Members can view their active own preference" ON public.whatsapp_preferences
 FOR SELECT TO authenticated USING (member_id = public.current_member_id());
+
+-- A non-member identity cannot inherit board access from a stale profile.
+CREATE OR REPLACE FUNCTION public.is_board_member(_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.board_members bm
+    WHERE _user_id = auth.uid() AND public.current_member_id() IS NOT NULL
+      AND (bm.lid_id = public.current_member_id()
+        OR public.current_member_id() = ANY(COALESCE(bm.lid_ids, '{}'::integer[])))
+  );
+$$;
+REVOKE EXECUTE ON FUNCTION public.is_board_member(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_board_member(uuid) TO authenticated;
