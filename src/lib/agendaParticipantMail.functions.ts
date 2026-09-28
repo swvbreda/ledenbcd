@@ -3,7 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   assertUuid,
   buildParticipantRecipients,
+  interpretSendResponse,
+  RecipientsChangedError,
   runParticipantMail,
+  type MailDeps,
   type MailReport,
   type RecipientResult,
 } from "./agendaParticipantMail";
@@ -28,18 +31,21 @@ async function loadRecipients(admin: any, eventId: string): Promise<RecipientRes
   const memberIds = [...new Set(rows.filter((r) => !r.contact_email && r.member_id != null).map((r) => r.member_id as number))];
   const boardIds = [...new Set(rows.filter((r) => r.board_member_id).map((r) => r.board_member_id as string))];
 
-  const emailByMember = new Map<number, string>();
+  const emailsByMember = new Map<number, string[]>();
   if (memberIds.length) {
-    const { data } = await admin.from("member_allowed_emails").select("member_id, email").in("member_id", memberIds);
+    const { data, error } = await admin.from("member_allowed_emails").select("member_id, email").in("member_id", memberIds);
+    if (error) throw new Error("Contactadressen van leden laden mislukt");
     for (const row of (data ?? []) as { member_id: number; email: string }[]) {
-      const e = (row.email ?? "").trim().toLowerCase();
-      if (e && !emailByMember.has(row.member_id)) emailByMember.set(row.member_id, e);
+      const list = emailsByMember.get(row.member_id) ?? [];
+      list.push(row.email ?? "");
+      emailsByMember.set(row.member_id, list);
     }
   }
   const emailByBoard = new Map<string, string>();
   const nameByBoard = new Map<string, string>();
   if (boardIds.length) {
-    const { data } = await admin.from("board_members").select("id, naam, email, bond_email").in("id", boardIds);
+    const { data, error } = await admin.from("board_members").select("id, naam, email, bond_email").in("id", boardIds);
+    if (error) throw new Error("Bestuursleden laden mislukt");
     for (const row of (data ?? []) as any[]) {
       const e = String(row.bond_email || row.email || "").trim().toLowerCase();
       if (e) emailByBoard.set(row.id, e);
@@ -49,7 +55,7 @@ async function loadRecipients(admin: any, eventId: string): Promise<RecipientRes
   return buildParticipantRecipients({
     registrations: rows,
     guests: (guests ?? []) as any[],
-    emailByMember,
+    emailsByMember,
     emailByBoard,
     nameByBoard,
   });
@@ -65,81 +71,118 @@ export const previewParticipantMail = createServerFn({ method: "POST" })
     return loadRecipients(supabaseAdmin, data.eventId);
   });
 
+function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
+  return {
+    isAdmin: async () => admin,
+    loadEvent: async (id) => {
+      const { data: ev, error } = await db.from("agenda_events").select("id, title").eq("id", id).maybeSingle();
+      if (error) throw new Error("Evenement laden mislukt");
+      return ev ?? null;
+    },
+    loadRecipients: (id) => loadRecipients(db, id),
+    getBatch: async (id) => {
+      const { data: b, error } = await db
+        .from("agenda_participant_mail_batches")
+        .select("id, event_id, subject, body")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw new Error("Verzending laden mislukt");
+      return b ?? null;
+    },
+    createBatch: async (b, snapshot) => {
+      const { error } = await db.rpc("agenda_create_participant_mail_batch", {
+        _batch_id: b.id,
+        _event_id: b.event_id,
+        _subject: b.subject,
+        _body: b.body,
+        _created_by: userId,
+        _recipients: snapshot.map((r) => ({ email: r.email, naam: r.naam })),
+      });
+      if (error) throw new Error("Verzending vastleggen mislukt");
+    },
+    claim: async (batchId, stillActive) => {
+      const { data: rows, error } = await db.rpc("agenda_claim_participant_mail", {
+        _batch_id: batchId,
+        _still_active: stillActive,
+      });
+      if (error) throw new Error("Claimen mislukt");
+      return ((rows ?? []) as any[]).map((r) => (typeof r === "string" ? r : r.email));
+    },
+    send: async (a) => {
+      const { data: res, error } = await db.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "agenda-participant-message",
+          recipientEmail: a.email,
+          idempotencyKey: a.idempotencyKey,
+          templateData: {
+            subject: a.subject,
+            message: a.body,
+            eventTitle: a.eventTitle,
+            recipientName: a.naam,
+          },
+        },
+      });
+      const status = (error as any)?.context?.status as number | undefined;
+      return interpretSendResponse(res, error ? { status, message: error.message } : null);
+    },
+    mark: async (batchId, email, o) => {
+      const { error } = await db
+        .from("agenda_participant_mail_sends")
+        .update({ status: o.status, note: o.note ?? null })
+        .eq("batch_id", batchId)
+        .eq("email", email);
+      if (error) throw new Error(`Status vastleggen mislukt voor ${email}`);
+    },
+    listStatuses: async (batchId) => {
+      const { data: rows, error } = await db
+        .from("agenda_participant_mail_sends")
+        .select("email, naam, status, note")
+        .eq("batch_id", batchId)
+        .order("email");
+      if (error) throw new Error("Verzendstatus laden mislukt");
+      return (rows ?? []) as any[];
+    },
+  };
+}
+
 /** Verstuurt of hervat één verzending; ontvangers worden server-side bepaald. */
 export const sendParticipantMail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { eventId: string; batchId: string; subject: string; body: string }) => d)
+  .inputValidator(
+    (d: { eventId: string; batchId: string; subject: string; body: string; expectedEmails?: string[] }) => ({
+      eventId: String(d?.eventId ?? ""),
+      batchId: String(d?.batchId ?? ""),
+      subject: String(d?.subject ?? ""),
+      body: String(d?.body ?? ""),
+      expectedEmails: Array.isArray(d?.expectedEmails) ? d.expectedEmails.map(String).slice(0, 5000) : undefined,
+    }),
+  )
   .handler(async ({ data, context }): Promise<MailReport> => {
     const admin = await isAdmin(context);
-    const { supabaseAdmin: db } = admin
-      ? await import("@/integrations/supabase/client.server")
-      : { supabaseAdmin: null as any };
-    return runParticipantMail(
-      {
-        isAdmin: async () => admin,
-        loadEvent: async (id) => {
-          const { data: ev } = await db.from("agenda_events").select("id, title").eq("id", id).maybeSingle();
-          return ev ?? null;
-        },
-        loadRecipients: (id) => loadRecipients(db, id),
-        getBatch: async (id) => {
-          const { data: b } = await db
-            .from("agenda_participant_mail_batches")
-            .select("event_id, subject, body")
-            .eq("id", id)
-            .maybeSingle();
-          return b ?? null;
-        },
-        createBatch: async (b) => {
-          const { error } = await db
-            .from("agenda_participant_mail_batches")
-            .insert({ ...b, created_by: context.userId });
-          // Gelijktijdige dubbelklik: de ander heeft hem net aangemaakt; claim beschermt verder.
-          if (error && error.code !== "23505") throw new Error("Verzending vastleggen mislukt");
-        },
-        claim: async (batchId, eventId, emails) => {
-          if (!emails.length) return [];
-          const { data: rows, error } = await db.rpc("agenda_claim_participant_mail", {
-            _batch_id: batchId,
-            _event_id: eventId,
-            _emails: emails,
-          });
-          if (error) throw new Error("Claimen mislukt");
-          return ((rows ?? []) as any[]).map((r) => (typeof r === "string" ? r : r.email));
-        },
-        send: async (a) => {
-          const { data: res, error } = await db.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "agenda-participant-message",
-              recipientEmail: a.email,
-              idempotencyKey: a.idempotencyKey,
-              templateData: {
-                subject: a.subject,
-                message: a.body,
-                eventTitle: a.eventTitle,
-                recipientName: a.naam,
-              },
-            },
-          });
-          if (error) return { status: "failed", note: "verzendfout" };
-          if (res && res.success === false) return { status: "skipped", note: String(res.reason ?? "geweigerd") };
-          return { status: "sent" };
-        },
-        mark: async (batchId, email, o) => {
-          await db
-            .from("agenda_participant_mail_sends")
-            .update({ status: o.status, note: o.note ?? null })
-            .eq("batch_id", batchId)
-            .eq("email", email);
-        },
-        listStatuses: async (batchId) => {
-          const { data: rows } = await db
-            .from("agenda_participant_mail_sends")
-            .select("email, status")
-            .eq("batch_id", batchId);
-          return (rows ?? []) as any[];
-        },
-      },
-      data,
-    );
+    if (!admin) throw new Error("Geen toegang");
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    try {
+      return await runParticipantMail(makeDeps(db, admin, context.userId), data);
+    } catch (e) {
+      if (e instanceof RecipientsChangedError)
+        throw new Error(`${e.message} Nieuw: ${e.added.length}, vervallen: ${e.removed.length}.`);
+      throw e;
+    }
+  });
+
+/** Alleen-lezen herstelstatus van een bestaande verzending (zonder te versturen). */
+export const getParticipantMailStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { eventId: string; batchId: string }) => ({
+    eventId: assertUuid(d?.eventId, "evenement"),
+    batchId: assertUuid(d?.batchId, "batchId"),
+  }))
+  .handler(async ({ data, context }) => {
+    if (!(await isAdmin(context))) throw new Error("Geen toegang");
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const deps = makeDeps(db, true, context.userId);
+    const batch = await deps.getBatch(data.batchId);
+    if (!batch) return null;
+    if (batch.event_id !== data.eventId) throw new Error("Verzending hoort bij een ander evenement");
+    return { subject: batch.subject, body: batch.body, rows: await deps.listStatuses(batch.id) };
   });
