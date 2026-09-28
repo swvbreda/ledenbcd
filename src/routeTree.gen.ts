@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/_dashboard'
 import { Route as ExternLoginRouteImport } from './routes/extern-login'
 import { Route as KoppelenRouteImport } from './routes/koppelen'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MemberConfirmRouteImport } from './routes/member-confirm'
 import { Route as MfaSetupRouteImport } from './routes/mfa-setup'
 import { Route as MfaVerifyRouteImport } from './routes/mfa-verify'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -81,6 +82,11 @@ const KoppelenRoute = KoppelenRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemberConfirmRoute = MemberConfirmRouteImport.update({
+  id: '/member-confirm',
+  path: '/member-confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MfaSetupRoute = MfaSetupRouteImport.update({
@@ -353,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -464,6 +472,7 @@ export interface FileRoutesById {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -522,6 +531,7 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
@@ -576,6 +586,7 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
@@ -632,6 +643,7 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
@@ -689,6 +701,7 @@ export interface RootRouteChildren {
   ExternLoginRoute: typeof ExternLoginRoute
   KoppelenRoute: typeof KoppelenRoute
   LoginRoute: typeof LoginRoute
+  MemberConfirmRoute: typeof MemberConfirmRoute
   MfaSetupRoute: typeof MfaSetupRoute
   MfaVerifyRoute: typeof MfaVerifyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/member-confirm': {
+      id: '/member-confirm'
+      path: '/member-confirm'
+      fullPath: '/member-confirm'
+      preLoaderRoute: typeof MemberConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mfa-setup': {
@@ -1169,6 +1189,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExternLoginRoute: ExternLoginRoute,
   KoppelenRoute: KoppelenRoute,
   LoginRoute: LoginRoute,
+  MemberConfirmRoute: MemberConfirmRoute,
   MfaSetupRoute: MfaSetupRoute,
   MfaVerifyRoute: MfaVerifyRoute,
   ResetPasswordRoute: ResetPasswordRoute,

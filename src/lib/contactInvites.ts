@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Contact, Member } from "@/data/types";
+import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
+import { requestMemberLoginLink } from "@/lib/memberLogin.functions";
 
 const EMAIL_RE = /^[^\s@"'<>,;:]+@[^\s@"'<>,;:]+\.[^\s@"'<>,;:]{2,}$/;
 
@@ -91,6 +93,12 @@ export async function sendContactInvites(
         .insert({ member_id: memberId, email });
       if (prefErr && !String(prefErr.message || "").toLowerCase().includes("duplicate")) {
         console.error("Mailing preference insert failed", prefErr);
+      }
+
+      if (memberPasswordlessEnabled && memberType === "member") {
+        await requestMemberLoginLink({ data: { email } });
+        results.push({ email, status: "sent" });
+        continue;
       }
 
       if (!tpl) {

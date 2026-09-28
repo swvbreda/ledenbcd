@@ -4,6 +4,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
+import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
 
 interface AuthContextType {
   user: User | null;
@@ -120,11 +121,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn("ensure_member_link mislukt", e);
     }
 
-    const { data: profileData } = await supabase
-      .from("member_profiles")
-      .select("member_id")
-      .eq("user_id", userId);
-    const memberIds = profileData?.map((p) => p.member_id) ?? [];
+    const memberIds: number[] = memberPasswordlessEnabled
+      ? await (async () => {
+          const { data } = await (supabase as any).rpc("current_member_id");
+          return typeof data === "number" ? [data] : [];
+        })()
+      : (await supabase.from("member_profiles").select("member_id").eq("user_id", userId)).data?.map(p => p.member_id) ?? [];
     setLinkedMemberIds(memberIds);
 
     if (memberIds.length > 0) {
