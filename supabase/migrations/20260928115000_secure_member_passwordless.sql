@@ -67,5 +67,7 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
 
--- The authenticated agenda policy used a raw email lookup; remove that shortcut.
-DROP POLICY IF EXISTS "Members can view own agenda registrations" ON public.agenda_registrations;
+-- The old preference policy used a raw email lookup; require the current member.
+DROP POLICY IF EXISTS "Members can view their own preference" ON public.whatsapp_preferences;
+CREATE POLICY "Members can view their active own preference" ON public.whatsapp_preferences
+FOR SELECT TO authenticated USING (member_id = public.current_member_id());
