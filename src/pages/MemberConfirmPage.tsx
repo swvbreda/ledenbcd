@@ -11,7 +11,7 @@ export default function MemberConfirmPage() {
   const navigate = useNavigate();
   const { user, linkedMemberId, loading: authLoading, isExtern, isAdmin, mfaStatus } = useAuth();
   const [hash, setHash] = useState("");
-  const [tokenType, setTokenType] = useState<"magiclink" | "email">("magiclink");
+  const [tokenType, setTokenType] = useState<"magiclink" | "signup">("magiclink");
   const [status, setStatus] = useState<"ready" | "verifying" | "checking" | "expired">("ready");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -20,7 +20,7 @@ export default function MemberConfirmPage() {
     // Fragment is not included in HTTP requests, Referrer, or server-rendered HTML.
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const value = fragment.get("token_hash");
-    if (value && /^[a-f0-9]{64}$/i.test(value) && ["magiclink", "email"].includes(fragment.get("type") || "")) { setHash(value); setTokenType(fragment.get("type") as "magiclink" | "email"); }
+    if (value && /^[a-f0-9]{64}$/i.test(value) && ["magiclink", "signup"].includes(fragment.get("type") || "")) { setHash(value); setTokenType(fragment.get("type") as "magiclink" | "signup"); }
     else setStatus("expired");
     window.history.replaceState(null, "", window.location.pathname);
   }, []);
@@ -44,8 +44,8 @@ export default function MemberConfirmPage() {
     if (result.error || !result.data.user) { setStatus("expired"); return; }
     // This only invokes the server-validated, verified-email linkage; the
     // AuthProvider refreshes the profile before we allow navigation.
-    const { error } = await supabase.rpc("ensure_member_link");
-    if (error) { await supabase.auth.signOut(); setStatus("expired"); return; }
+    const { data: memberId, error } = await supabase.rpc("ensure_member_link");
+    if (error || !memberId) { await supabase.auth.signOut(); setStatus("expired"); return; }
     setStatus("checking");
   }
 
