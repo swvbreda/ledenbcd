@@ -53,7 +53,7 @@ export interface ParticipantRecipient {
 export interface MissingParticipant {
   naam: string;
   source: "lid" | "bestuur" | "gast" | "aanmelding";
-  reason: "missing" | "invalid";
+  reason: "missing" | "invalid" | "ambiguous";
   value?: string;
 }
 
@@ -66,8 +66,8 @@ export interface RecipientResult {
 export function buildParticipantRecipients(input: {
   registrations: RegistrationRow[];
   guests: GuestRow[];
-  /** Gecontroleerde terugval: eerste toegestane adres van het lid. */
-  emailByMember: Map<number, string>;
+  /** Alle toegestane adressen per lid; alleen een eenduidig geldig adres telt als terugval. */
+  emailsByMember: Map<number, string[]>;
   nameByMember?: Map<number, string>;
   /** Gecontroleerde terugval: bond_email || email van het bestuurslid. */
   emailByBoard: Map<string, string>;
@@ -100,11 +100,6 @@ export function buildParticipantRecipients(input: {
       : r.member_id != null
         ? "lid"
         : "aanmelding";
-    const fallback = r.board_member_id
-      ? input.emailByBoard.get(r.board_member_id) ?? ""
-      : r.member_id != null
-        ? input.emailByMember.get(r.member_id) ?? ""
-        : "";
     const naam =
       (r.contact_name ?? "").trim() ||
       (r.board_member_id ? input.nameByBoard?.get(r.board_member_id) : undefined) ||
@@ -112,8 +107,26 @@ export function buildParticipantRecipients(input: {
       (r.attendee_names ?? []).find((n) => n && n.trim())?.trim() ||
       "deelnemer";
     // Registratie-adres eerst; alleen als dat leeg is de gecontroleerde terugval.
-    const chosen = normalizeEmail(r.contact_email) ? String(r.contact_email) : fallback;
-    add(chosen, naam, source);
+    if (normalizeEmail(r.contact_email)) {
+      add(String(r.contact_email), naam, source);
+      continue;
+    }
+    if (r.board_member_id) {
+      add(input.emailByBoard.get(r.board_member_id) ?? "", naam, source);
+      continue;
+    }
+    if (r.member_id != null) {
+      const valid = [
+        ...new Set((input.emailsByMember.get(r.member_id) ?? []).map(normalizeEmail).filter(isValidEmail)),
+      ];
+      if (valid.length > 1) {
+        missing.push({ naam, source, reason: "ambiguous", value: `${valid.length} adressen` });
+        continue;
+      }
+      add(valid[0] ?? "", naam, source);
+      continue;
+    }
+    add("", naam, source);
   }
 
   for (const g of input.guests) {
@@ -146,118 +159,180 @@ export function assertUuid(v: unknown, label: string): string {
   return s.toLowerCase();
 }
 
-export type SendOutcome = { status: "sent" | "skipped" | "failed"; note?: string };
+/**
+ * Uitkomst van één verzendpoging, eerlijk vertaald uit de verzendfunctie:
+ *  - sent:      provider bevestigde aflevering-aanname (sent:true)
+ *  - accepted:  alleen 'success'/'queued' zonder bevestiging → NIET als verzonden tellen
+ *  - skipped:   afgeschreven adres
+ *  - failed:    provider/validatie weigerde zeker → mag opnieuw
+ *  - uncertain: netwerk/5xx; mail kan zijn aangekomen → nooit automatisch opnieuw
+ */
+export type SendOutcome = {
+  status: "sent" | "accepted" | "skipped" | "failed" | "uncertain";
+  note?: string;
+};
+
+export function interpretSendResponse(
+  data: unknown,
+  error: { status?: number; message?: string } | null,
+): SendOutcome {
+  if (error) {
+    const s = error.status;
+    if (s != null && s >= 400 && s < 500) return { status: "failed", note: `HTTP ${s}` };
+    if (s === 502) return { status: "failed", note: "Mailprovider weigerde" };
+    return { status: "uncertain", note: error.message ?? `HTTP ${s ?? "?"}` };
+  }
+  const d = (data ?? {}) as Record<string, unknown>;
+  if (d.suppressed === true || d.reason === "email_suppressed" || d.skipped === true)
+    return { status: "skipped", note: "Afgeschreven adres" };
+  if (d.success === false && d.reason === "already_sent")
+    return { status: "sent", note: "Eerder al verzonden" };
+  if (d.success === false) return { status: "failed", note: String(d.reason ?? "geweigerd") };
+  if (d.sent === true) return { status: "sent" };
+  if (d.success === true || d.queued === true)
+    return { status: "accepted", note: "Aangenomen, verzending niet bevestigd" };
+  return { status: "uncertain", note: "Onbekend antwoord" };
+}
+
+export interface BatchRow {
+  id: string;
+  event_id: string;
+  subject: string;
+  body: string;
+}
+export interface SendRow {
+  email: string;
+  naam: string | null;
+  status: "pending" | "claimed" | "sent" | "accepted" | "skipped" | "failed" | "uncertain";
+  note: string | null;
+}
 
 export interface MailDeps {
-  isAdmin: () => Promise<boolean>;
-  loadEvent: (eventId: string) => Promise<{ id: string; title: string } | null>;
-  loadRecipients: (eventId: string) => Promise<RecipientResult>;
-  getBatch: (
-    batchId: string,
-  ) => Promise<{ event_id: string; subject: string; body: string } | null>;
-  createBatch: (b: {
-    id: string;
-    event_id: string;
-    subject: string;
-    body: string;
-  }) => Promise<void>;
-  /** Atomair: geeft alleen adressen terug die nieuw of eerder mislukt zijn. */
-  claim: (batchId: string, eventId: string, emails: string[]) => Promise<string[]>;
-  send: (args: {
+  isAdmin(): Promise<boolean>;
+  loadEvent(eventId: string): Promise<{ id: string; title: string } | null>;
+  /** Actuele deelnemers volgens de server; gooit bij leesfouten. */
+  loadRecipients(eventId: string): Promise<RecipientResult>;
+  /** Atomair: batch + ontvangerssnapshot; niets bij bestaande id. */
+  createBatch(b: BatchRow, snapshot: ParticipantRecipient[]): Promise<void>;
+  getBatch(batchId: string): Promise<BatchRow | null>;
+  /** Claimt uitsluitend snapshot-rijen (pending/failed) die nog actief zijn. */
+  claim(batchId: string, stillActive: string[]): Promise<string[]>;
+  mark(batchId: string, email: string, outcome: SendOutcome): Promise<void>;
+  listStatuses(batchId: string): Promise<SendRow[]>;
+  send(input: {
     email: string;
     naam: string;
     subject: string;
     body: string;
     eventTitle: string;
     idempotencyKey: string;
-  }) => Promise<SendOutcome>;
-  mark: (batchId: string, email: string, outcome: SendOutcome) => Promise<void>;
-  listStatuses: (batchId: string) => Promise<{ email: string; status: string }[]>;
+  }): Promise<SendOutcome>;
 }
 
 export interface MailReport {
   batchId: string;
-  total: number;
+  subject: string;
+  body: string;
   sent: number;
+  accepted: number;
   skipped: number;
   failed: number;
-  alreadyDone: number;
+  uncertain: number;
   inProgress: number;
+  /** Snapshot-ontvangers die intussen geen deelnemer meer zijn. */
+  noLongerParticipant: string[];
   failedEmails: string[];
+  rows: SendRow[];
+}
+
+export class RecipientsChangedError extends Error {
+  constructor(public added: string[], public removed: string[]) {
+    super("De deelnemerslijst is gewijzigd sinds de voorbeeldweergave. Controleer opnieuw.");
+  }
+}
+
+function sameSet(a: string[], b: string[]) {
+  const A = new Set(a), B = new Set(b);
+  return {
+    added: [...B].filter((x) => !A.has(x)),
+    removed: [...A].filter((x) => !B.has(x)),
+  };
 }
 
 export async function runParticipantMail(
   deps: MailDeps,
-  input: { eventId: unknown; batchId: unknown; subject: unknown; body: unknown },
+  input: {
+    batchId: string;
+    eventId: string;
+    subject: string;
+    body: string;
+    /** Adressen uit de preview die de beheerder bevestigde (alleen bij nieuwe batch). */
+    expectedEmails?: string[];
+  },
 ): Promise<MailReport> {
-  if (!(await deps.isAdmin())) throw new Error("Geen rechten");
-  const eventId = assertUuid(input.eventId, "evenement");
-  const batchId = assertUuid(input.batchId, "verzending");
-
-  const event = await deps.loadEvent(eventId);
+  assertUuid(input.batchId, "batchId");
+  assertUuid(input.eventId, "eventId");
+  if (!(await deps.isAdmin())) throw new Error("Geen toegang");
+  const event = await deps.loadEvent(input.eventId);
   if (!event) throw new Error("Evenement niet gevonden");
 
-  // Bestaande verzending: altijd het oorspronkelijke bericht, nooit een ander event.
-  let batch = await deps.getBatch(batchId);
-  if (batch) {
-    if (batch.event_id !== eventId) throw new Error("Verzending hoort bij een ander evenement");
-  } else {
+  const current = await deps.loadRecipients(input.eventId);
+  const currentEmails = current.recipients.map((r) => r.email);
+
+  let batch = await deps.getBatch(input.batchId);
+  if (!batch) {
     const msg = validateMessage(input.subject, input.body);
-    await deps.createBatch({ id: batchId, event_id: eventId, ...msg });
-    batch = { event_id: eventId, ...msg };
+    if (!input.expectedEmails) throw new Error("Ontvangersbevestiging ontbreekt");
+    const diff = sameSet(input.expectedEmails.map(normalizeEmail), currentEmails);
+    if (diff.added.length || diff.removed.length)
+      throw new RecipientsChangedError(diff.added, diff.removed);
+    await deps.createBatch(
+      { id: input.batchId, event_id: input.eventId, subject: msg.subject, body: msg.body },
+      current.recipients,
+    );
+    // Canonieke batch herlezen: bij een race wint de opgeslagen tekst.
+    batch = await deps.getBatch(input.batchId);
+    if (!batch) throw new Error("Verzending kon niet worden vastgelegd");
   }
+  if (batch.event_id !== input.eventId) throw new Error("Verzending hoort bij een ander evenement");
 
-  const { recipients } = await deps.loadRecipients(eventId);
-  const byEmail = new Map(recipients.map((r) => [r.email, r]));
-  const claimed = new Set(
-    await deps.claim(
-      batchId,
-      eventId,
-      recipients.map((r) => r.email),
-    ),
-  );
-
-  let sent = 0;
-  let skipped = 0;
-  let failed = 0;
+  const claimed = await deps.claim(batch.id, currentEmails);
+  const byEmail = new Map(current.recipients.map((r) => [r.email, r]));
   for (const email of claimed) {
     const r = byEmail.get(email);
-    if (!r) continue;
     let outcome: SendOutcome;
     try {
       outcome = await deps.send({
         email,
-        naam: r.naam,
+        naam: r?.naam ?? "deelnemer",
         subject: batch.subject,
         body: batch.body,
         eventTitle: event.title,
-        idempotencyKey: `agenda-mail-${batchId}-${email}`,
+        idempotencyKey: `agenda-mail-${batch.id}-${email}`,
       });
     } catch (e) {
-      outcome = { status: "failed", note: e instanceof Error ? e.message.slice(0, 200) : "fout" };
+      outcome = { status: "uncertain", note: e instanceof Error ? e.message : "Onbekende fout" };
     }
-    await deps.mark(batchId, email, outcome);
-    if (outcome.status === "sent") sent++;
-    else if (outcome.status === "skipped") skipped++;
-    else failed++;
+    await deps.mark(batch.id, email, outcome); // fouten hier niet inslikken
   }
 
-  const statuses = await deps.listStatuses(batchId);
-  const inScope = statuses.filter((s) => byEmail.has(s.email) && !claimed.has(s.email));
-  const alreadyDone = inScope.filter((s) => s.status === "sent" || s.status === "skipped").length;
-  const inProgress = inScope.filter((s) => s.status === "claimed").length;
-  const failedEmails = statuses
-    .filter((s) => s.status === "failed" && byEmail.has(s.email))
-    .map((s) => s.email);
-
+  const rows = await deps.listStatuses(batch.id);
+  const active = new Set(currentEmails);
+  const count = (s: SendRow["status"]) => rows.filter((x) => x.status === s).length;
   return {
-    batchId,
-    total: recipients.length,
-    sent,
-    skipped,
-    failed,
-    alreadyDone,
-    inProgress,
-    failedEmails,
+    batchId: batch.id,
+    subject: batch.subject,
+    body: batch.body,
+    sent: count("sent"),
+    accepted: count("accepted"),
+    skipped: count("skipped"),
+    failed: count("failed"),
+    uncertain: count("uncertain"),
+    inProgress: count("claimed"),
+    noLongerParticipant: rows
+      .filter((x) => (x.status === "pending" || x.status === "failed") && !active.has(x.email))
+      .map((x) => x.email),
+    failedEmails: rows.filter((x) => x.status === "failed").map((x) => x.email),
+    rows,
   };
 }

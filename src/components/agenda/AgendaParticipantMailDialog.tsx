@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,6 +18,7 @@ import {
 import {
   previewParticipantMail,
   sendParticipantMail,
+  getParticipantMailStatus,
 } from "@/lib/agendaParticipantMail.functions";
 import type { MailReport, RecipientResult } from "@/lib/agendaParticipantMail";
 import type { AgendaEvent } from "@/hooks/useAgenda";
@@ -30,50 +31,124 @@ interface Props {
 
 const SOURCE_LABEL = { lid: "lid", bestuur: "bestuur", gast: "gast", aanmelding: "aanmelding" } as const;
 
+type Attempt = { batchId: string; subject: string; body: string };
+type StatusRow = MailReport["rows"][number];
+const storeKey = (eventId: string) => `bcd-participant-mail:${eventId}`;
+const loadAttempt = (eventId: string): Attempt | null => {
+  try {
+    const v = JSON.parse(localStorage.getItem(storeKey(eventId)) ?? "null");
+    return v && typeof v.batchId === "string" ? v : null;
+  } catch {
+    return null;
+  }
+};
+const STATUS_LABEL: Record<StatusRow["status"], string> = {
+  pending: "wacht",
+  claimed: "bezig/onbekend",
+  sent: "verzonden",
+  accepted: "aangenomen, niet bevestigd",
+  skipped: "overgeslagen",
+  failed: "mislukt",
+  uncertain: "onzeker (mogelijk aangekomen)",
+};
+
 export default function AgendaParticipantMailDialog({ open, onOpenChange, event }: Props) {
   const preview = useServerFn(previewParticipantMail);
   const send = useServerFn(sendParticipantMail);
+  const getStatus = useServerFn(getParticipantMailStatus);
   const [data, setData] = useState<RecipientResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [sending, setSending] = useState(false);
-  const [report, setReport] = useState<MailReport | null>(null);
-  // Eén id per nieuw bericht: retry/dubbelklik hergebruikt hem, een nieuw bericht niet.
-  const batchId = useRef<string>("");
+  const [rows, setRows] = useState<StatusRow[] | null>(null);
+  // Poging blijft bewaard (ook na sluiten/netwerkfout); alleen "Nieuw bericht" maakt een nieuwe.
+  const [attempt, setAttempt] = useState<Attempt | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    batchId.current = crypto.randomUUID();
-    setSubject(`Bericht over ${event.title}`);
-    setBody("");
-    setConfirm(false);
-    setReport(null);
-    setData(null);
+  const saveAttempt = (a: Attempt | null) => {
+    setAttempt(a);
+    if (a) localStorage.setItem(storeKey(event.id), JSON.stringify(a));
+    else localStorage.removeItem(storeKey(event.id));
+  };
+
+  const loadPreview = () => {
     setLoading(true);
+    setData(null);
     preview({ data: { eventId: event.id } })
       .then(setData)
       .catch((e: any) => toast.error(e?.message || "Ontvangers laden mislukt"))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    setConfirm(false);
+    setRows(null);
+    const a = loadAttempt(event.id);
+    setAttempt(a);
+    if (a) {
+      setSubject(a.subject);
+      setBody(a.body);
+      getStatus({ data: { eventId: event.id, batchId: a.batchId } })
+        .then((st) => {
+          if (st) {
+            setSubject(st.subject);
+            setBody(st.body);
+            setRows(st.rows);
+          }
+        })
+        .catch((e: any) => toast.error(e?.message || "Status laden mislukt"));
+    } else {
+      setSubject(`Bericht over ${event.title}`);
+      setBody("");
+    }
+    loadPreview();
   }, [open, event.id]);
 
-  const locked = !!report; // na eerste poging: bericht vast, alleen hervatten
+  const newMessage = () => {
+    saveAttempt(null);
+    setRows(null);
+    setConfirm(false);
+    setSubject(`Bericht over ${event.title}`);
+    setBody("");
+    loadPreview();
+  };
+
+  const locked = !!attempt;
+  const failedCount = rows?.filter((r) => r.status === "failed" || r.status === "pending").length ?? 0;
   const doSend = async () => {
     if (sending) return;
     setSending(true);
+    const a = attempt ?? { batchId: crypto.randomUUID(), subject, body };
+    saveAttempt(a); // vóór het netwerkverzoek: bij fout/sluiten wordt dezelfde batch hervat
     try {
       const r = await send({
-        data: { eventId: event.id, batchId: batchId.current, subject, body },
+        data: {
+          eventId: event.id,
+          batchId: a.batchId,
+          subject: a.subject,
+          body: a.body,
+          expectedEmails: data?.recipients.map((x) => x.email),
+        },
       });
-      setReport(r);
-      const msg = `${r.sent} verzonden, ${r.skipped} overgeslagen, ${r.failed} mislukt${
-        r.alreadyDone ? `, ${r.alreadyDone} al eerder verzonden` : ""
-      }`;
-      if (r.failed || r.inProgress) toast.warning(msg);
+      setRows(r.rows);
+      setSubject(r.subject);
+      setBody(r.body);
+      saveAttempt({ batchId: r.batchId, subject: r.subject, body: r.body });
+      const msg = `${r.sent} verzonden, ${r.accepted} aangenomen (niet bevestigd), ${r.skipped} overgeslagen, ${r.failed} mislukt, ${r.uncertain} onzeker`;
+      if (r.failed || r.uncertain || r.inProgress || r.accepted) toast.warning(msg);
       else toast.success(msg);
+      if (r.noLongerParticipant.length)
+        toast.info(`${r.noLongerParticipant.length} oorspronkelijke ontvanger(s) zijn geen deelnemer meer en krijgen niets.`);
     } catch (e: any) {
       toast.error(e?.message || "Versturen mislukt");
+      // Als nog geen batch is vastgelegd (bv. deelnemerslijst gewijzigd), mag de tekst weer bewerkt worden.
+      const st = await getStatus({ data: { eventId: event.id, batchId: a.batchId } }).catch(() => undefined);
+      if (st === null) {
+        saveAttempt(null);
+        loadPreview();
+      } else if (st) setRows(st.rows);
     } finally {
       setSending(false);
     }
@@ -103,7 +178,24 @@ export default function AgendaParticipantMailDialog({ open, onOpenChange, event 
           </div>
 
           <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
-            {loading ? (
+            {rows ? (
+              <>
+                <p className="font-semibold">Ontvangers van deze verzending (vastgelegd bij versturen)</p>
+                <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto text-xs">
+                  {rows.map((r) => (
+                    <li key={r.email} className="flex justify-between gap-2">
+                      <span className="truncate">{r.naam ?? "deelnemer"} · {r.email}</span>
+                      <span className={`shrink-0 ${r.status === "failed" || r.status === "uncertain" ? "text-destructive" : "text-muted-foreground"}`}>
+                        {STATUS_LABEL[r.status]}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Later aangemelde deelnemers vallen buiten deze verzending; afgemelde ontvangers worden overgeslagen.
+                </p>
+              </>
+            ) : loading ? (
               <p className="text-muted-foreground">Ontvangers laden…</p>
             ) : data ? (
               <>
@@ -125,7 +217,11 @@ export default function AgendaParticipantMailDialog({ open, onOpenChange, event 
                       {data.missing.map((m, i) => (
                         <li key={i}>
                           {m.naam} ({SOURCE_LABEL[m.source]}) —{" "}
-                          {m.reason === "missing" ? "geen e-mailadres" : `ongeldig adres: ${m.value}`}
+                          {m.reason === "missing"
+                            ? "geen e-mailadres"
+                            : m.reason === "ambiguous"
+                              ? `meerdere contactadressen (${m.value}); vul het adres bij de aanmelding in`
+                              : `ongeldig adres: ${m.value}`}
                         </li>
                       ))}
                     </ul>
@@ -140,19 +236,7 @@ export default function AgendaParticipantMailDialog({ open, onOpenChange, event 
             ) : null}
           </div>
 
-          {report && (
-            <div className="rounded-md border border-border p-3 text-sm tabular-nums">
-              <p>Verzonden: {report.sent}</p>
-              <p>Overgeslagen (afgemeld/geblokkeerd): {report.skipped}</p>
-              <p>Al eerder verzonden in deze ronde: {report.alreadyDone}</p>
-              {report.inProgress > 0 && <p>Nog bezig: {report.inProgress}</p>}
-              <p className={report.failedEmails.length ? "text-destructive" : ""}>
-                Mislukt: {report.failedEmails.length}
-              </p>
-            </div>
-          )}
-
-          {!report && (
+          {!attempt && (
             <label className="flex items-start gap-2 text-sm">
               <Checkbox checked={confirm} onCheckedChange={(v) => setConfirm(v === true)} />
               <span>Ik bevestig dat dit bericht naar {count} deelnemer{count === 1 ? "" : "s"} van dit evenement gaat.</span>
@@ -164,16 +248,19 @@ export default function AgendaParticipantMailDialog({ open, onOpenChange, event 
           <Button variant="outline" disabled={sending} onClick={() => onOpenChange(false)}>
             Sluiten
           </Button>
-          {report ? (
-            report.failedEmails.length > 0 && (
-              <Button onClick={doSend} disabled={sending}>
-                {sending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}
-                Alleen mislukte opnieuw ({report.failedEmails.length})
-              </Button>
-            )
+          {attempt ? (
+            <>
+              <Button variant="outline" disabled={sending} onClick={newMessage}>Nieuw bericht</Button>
+              {(!rows || failedCount > 0) && (
+                <Button onClick={doSend} disabled={sending}>
+                  {sending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}
+                  {rows ? `Alleen mislukte opnieuw (${failedCount})` : "Verzending hervatten"}
+                </Button>
+              )}
+            </>
           ) : (
             <Button onClick={doSend}
-              disabled={sending || loading || !confirm || count === 0 || !subject.trim() || !body.trim()}>
+              disabled={sending || loading || !data || !confirm || count === 0 || !subject.trim() || !body.trim()}>
               {sending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}
               Versturen ({count})
             </Button>

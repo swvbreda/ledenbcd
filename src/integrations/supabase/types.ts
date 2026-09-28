@@ -290,6 +290,7 @@ export type Database = {
           email: string
           event_id: string
           id: string
+          naam: string | null
           note: string | null
           status: string
           updated_at: string
@@ -300,6 +301,7 @@ export type Database = {
           email: string
           event_id: string
           id?: string
+          naam?: string | null
           note?: string | null
           status: string
           updated_at?: string
@@ -310,6 +312,7 @@ export type Database = {
           email?: string
           event_id?: string
           id?: string
+          naam?: string | null
           note?: string | null
           status?: string
           updated_at?: string
@@ -3945,10 +3948,21 @@ export type Database = {
         }[]
       }
       agenda_claim_participant_mail: {
-        Args: { _batch_id: string; _emails: string[]; _event_id: string }
+        Args: { _batch_id: string; _still_active: string[] }
         Returns: {
           email: string
         }[]
+      }
+      agenda_create_participant_mail_batch: {
+        Args: {
+          _batch_id: string
+          _body: string
+          _created_by: string
+          _event_id: string
+          _recipients: Json
+          _subject: string
+        }
+        Returns: boolean
       }
       agenda_mark_confirmations: {
         Args: {
