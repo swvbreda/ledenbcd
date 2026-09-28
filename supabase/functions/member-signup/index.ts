@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { registerAllowedMember, SignupFailure } from "./signup.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,89 +13,74 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: "E-mail en wachtwoord zijn verplicht" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (password.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "Wachtwoord moet minimaal 8 tekens zijn" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const input = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if email is in allowed list
-    const { data: allowed, error: lookupError } = await supabase
-      .from("member_allowed_emails")
-      .select("member_id")
-      .eq("email", email.toLowerCase().trim())
-      .maybeSingle();
+    const result = await registerAllowedMember(input, {
+      reference: () => `REG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      log: (event, reference, details = {}) => console.error(JSON.stringify({ event, reference, ...details })),
+      findAllowedMember: async (normalizedEmail) => {
+        const { data: memberId, error: lookupError } = await supabase.rpc("get_member_id_for_email", {
+          _email: normalizedEmail,
+        });
+        if (lookupError) throw lookupError;
+        if (typeof memberId !== "number") return null;
 
-    if (lookupError) {
-      console.error("Lookup error:", lookupError);
-      return new Response(
-        JSON.stringify({ error: "Fout bij controleren e-mailadres" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!allowed) {
-      return new Response(
-        JSON.stringify({ error: "Dit e-mailadres is niet geregistreerd als lid. Neem contact op met het bestuur." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Create the user
-    const { data: authData, error: signupError } = await supabase.auth.admin.createUser({
-      email: email.toLowerCase().trim(),
-      password,
-      email_confirm: true, // Auto-confirm since we validated the email
-      user_metadata: { member_id: allowed.member_id },
-    });
-
-    if (signupError) {
-      if (signupError.message?.includes("already been registered")) {
-        return new Response(
-          JSON.stringify({ error: "Dit e-mailadres is al geregistreerd. Probeer in te loggen." }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        const { data: member, error: memberError } = await supabase
+          .from("members_data")
+          .select("id")
+          .eq("id", memberId)
+          .eq("member_type", "member")
+          .maybeSingle();
+        if (memberError) throw memberError;
+        return member ? { memberId } : null;
+      },
+      createUser: async ({ email, password, memberId }) => {
+        const { data, error } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { member_id: memberId },
+        });
+        if (error) throw error;
+        if (!data.user) throw new SignupFailure("internal");
+        return { id: data.user.id };
+      },
+      linkProfile: async (userId, memberId) => {
+        const { error } = await supabase.from("member_profiles").upsert(
+          { user_id: userId, member_id: memberId },
+          { onConflict: "user_id" },
         );
-      }
-      console.error("Signup error:", signupError);
-      return new Response(
-        JSON.stringify({ error: "Registratie mislukt. Probeer het opnieuw of neem contact op met het bestuur." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const userId = authData.user.id;
-
-    // Assign 'user' role
-    await supabase.from("user_roles").insert({ user_id: userId, role: "user" });
-
-    // Link user to member
-    await supabase.from("member_profiles").insert({
-      user_id: userId,
-      member_id: allowed.member_id,
+        if (error) throw error;
+      },
+      assignMemberRole: async (userId) => {
+        const { error } = await supabase.from("user_roles").upsert(
+          { user_id: userId, role: "user" },
+          { onConflict: "user_id,role", ignoreDuplicates: true },
+        );
+        if (error) throw error;
+      },
+      unlinkProfile: async (userId) => {
+        const { error } = await supabase.from("member_profiles").delete().eq("user_id", userId);
+        if (error) throw error;
+      },
+      deleteUser: async (userId) => {
+        const { error } = await supabase.auth.admin.deleteUser(userId);
+        if (error) throw error;
+      },
     });
-
     return new Response(
-      JSON.stringify({ success: true, member_id: allowed.member_id }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify(result.body),
+      { status: result.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (err) {
-    console.error("Unexpected error:", err);
+  } catch {
+    const reference = `REG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    console.error(JSON.stringify({ event: "invalid_signup_request", reference }));
     return new Response(
-      JSON.stringify({ error: "Er is een onverwachte fout opgetreden" }),
+      JSON.stringify({ error: `Registratie kon niet worden verwerkt. Vermeld ${reference}.`, reference }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
