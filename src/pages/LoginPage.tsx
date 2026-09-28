@@ -113,7 +113,8 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try {
-      await requestMemberLoginLink({ data: { email } });
+      const result = await requestMemberLoginLink({ data: { email } });
+      if (!result.accepted) throw new Error("Inloglinks zijn nog niet beschikbaar");
       setLinkSent(true);
     } catch {
       setError("Aanvragen is tijdelijk niet mogelijk. Probeer het later opnieuw.");

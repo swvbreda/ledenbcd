@@ -52,8 +52,8 @@ export default function MemberConfirmPage() {
   async function resend(e: React.FormEvent) {
     e.preventDefault();
     if (!memberPasswordlessEnabled) return;
-    await requestMemberLoginLink({ data: { email } });
-    setSent(true);
+    const result = await requestMemberLoginLink({ data: { email } });
+    setSent(result.accepted);
   }
 
   return <main className="min-h-screen flex items-center justify-center bg-background p-4">

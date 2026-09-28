@@ -96,8 +96,8 @@ export async function sendContactInvites(
       }
 
       if (memberPasswordlessEnabled && memberType === "member") {
-        await requestMemberLoginLink({ data: { email } });
-        results.push({ email, status: "sent" });
+        const result = await requestMemberLoginLink({ data: { email } });
+        results.push({ email, status: result.accepted ? "sent" : "error", reason: result.accepted ? undefined : "inloglinks zijn nog niet beschikbaar" });
         continue;
       }
 

@@ -106,8 +106,9 @@ export default function NewMemberDialog({ type }: Props) {
 
       if (sendWelcome && email.trim()) {
         if (memberPasswordlessEnabled && type === "member") {
-          await requestMemberLoginLink({ data: { email: email.trim() } });
-          toast.success("Persoonlijke inloglink aangevraagd");
+          const result = await requestMemberLoginLink({ data: { email: email.trim() } });
+          if (result.accepted) toast.success("Persoonlijke inloglink aangevraagd");
+          else toast.error("Inloglinks zijn nog niet beschikbaar");
         } else {
         const tplKey = type === "member" ? "member_welcome" : "lead_welcome";
         const { data: tpl } = await supabase
