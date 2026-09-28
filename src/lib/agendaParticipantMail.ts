@@ -53,7 +53,7 @@ export interface ParticipantRecipient {
 export interface MissingParticipant {
   naam: string;
   source: "lid" | "bestuur" | "gast" | "aanmelding";
-  reason: "missing" | "invalid";
+  reason: "missing" | "invalid" | "ambiguous";
   value?: string;
 }
 
@@ -66,8 +66,8 @@ export interface RecipientResult {
 export function buildParticipantRecipients(input: {
   registrations: RegistrationRow[];
   guests: GuestRow[];
-  /** Gecontroleerde terugval: eerste toegestane adres van het lid. */
-  emailByMember: Map<number, string>;
+  /** Alle toegestane adressen per lid; alleen een eenduidig geldig adres telt als terugval. */
+  emailsByMember: Map<number, string[]>;
   nameByMember?: Map<number, string>;
   /** Gecontroleerde terugval: bond_email || email van het bestuurslid. */
   emailByBoard: Map<string, string>;
@@ -100,11 +100,6 @@ export function buildParticipantRecipients(input: {
       : r.member_id != null
         ? "lid"
         : "aanmelding";
-    const fallback = r.board_member_id
-      ? input.emailByBoard.get(r.board_member_id) ?? ""
-      : r.member_id != null
-        ? input.emailByMember.get(r.member_id) ?? ""
-        : "";
     const naam =
       (r.contact_name ?? "").trim() ||
       (r.board_member_id ? input.nameByBoard?.get(r.board_member_id) : undefined) ||
@@ -112,8 +107,26 @@ export function buildParticipantRecipients(input: {
       (r.attendee_names ?? []).find((n) => n && n.trim())?.trim() ||
       "deelnemer";
     // Registratie-adres eerst; alleen als dat leeg is de gecontroleerde terugval.
-    const chosen = normalizeEmail(r.contact_email) ? String(r.contact_email) : fallback;
-    add(chosen, naam, source);
+    if (normalizeEmail(r.contact_email)) {
+      add(String(r.contact_email), naam, source);
+      continue;
+    }
+    if (r.board_member_id) {
+      add(input.emailByBoard.get(r.board_member_id) ?? "", naam, source);
+      continue;
+    }
+    if (r.member_id != null) {
+      const valid = [
+        ...new Set((input.emailsByMember.get(r.member_id) ?? []).map(normalizeEmail).filter(isValidEmail)),
+      ];
+      if (valid.length > 1) {
+        missing.push({ naam, source, reason: "ambiguous", value: `${valid.length} adressen` });
+        continue;
+      }
+      add(valid[0] ?? "", naam, source);
+      continue;
+    }
+    add("", naam, source);
   }
 
   for (const g of input.guests) {
