@@ -39,8 +39,19 @@ export const Route = createFileRoute("/a/$shareCode")({
       return {
         meta: [
           { title: "Uitnodiging niet gevonden — BCD Ledenportaal" },
+          { name: "description", content: "Deze uitnodiging is niet (meer) beschikbaar." },
           { name: "robots", content: "noindex" },
+          { property: "og:type", content: "article" },
+          { property: "og:title", content: "Uitnodiging niet gevonden — BCD Ledenportaal" },
+          { property: "og:description", content: "Deze uitnodiging is niet (meer) beschikbaar." },
+          { property: "og:url", content: url },
+          { property: "og:image", content: `${PORTAL}/social/login.jpg` },
+          { name: "twitter:card", content: "summary_large_image" },
+          { name: "twitter:title", content: "Uitnodiging niet gevonden — BCD Ledenportaal" },
+          { name: "twitter:description", content: "Deze uitnodiging is niet (meer) beschikbaar." },
+          { name: "twitter:image", content: `${PORTAL}/social/login.jpg` },
         ],
+        links: [{ rel: "canonical", href: url }],
       };
     }
     const cancelled = !!loaderData.cancelled_at;
@@ -55,7 +66,7 @@ export const Route = createFileRoute("/a/$shareCode")({
     const title = `${cancelled ? "Geannuleerd: " : ""}${loaderData.title} — BCD Ledenportaal`;
     const image = loaderData.image_path
       ? `${PORTAL}/api/public/agenda-image/${code}`
-      : `${PORTAL}/og-image.png`;
+      : `${PORTAL}/social/login.jpg`;
     return {
       meta: [
         { title },
