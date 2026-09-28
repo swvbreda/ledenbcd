@@ -88,15 +88,17 @@ Deno.test("profile failure rolls back the new account and never assigns a role",
 });
 
 Deno.test("role failure rolls back profile and account without assigning another role", async () => {
-  const { deps, calls } = dependencies({
-    assignMemberRole: async () => { calls.push("role:user"); throw new Error("storage failure"); },
-  });
+  const setup = dependencies();
+  setup.deps.assignMemberRole = async () => {
+    setup.calls.push("role:user");
+    throw new Error("storage failure");
+  };
   const result = await registerAllowedMember(
     { email: "allowed@example.nl", password: "safe-long-password" },
-    deps,
+    setup.deps,
   );
   assertEquals(result.status, 500);
-  assertEquals(calls, ["profile:100", "role:user", "log:member_link_failed", "unlink-profile", "delete-user"]);
+  assertEquals(setup.calls, ["profile:100", "role:user", "log:member_link_failed", "unlink-profile", "delete-user"]);
 });
 
 Deno.test("concurrent duplicate requests produce one member account and one existing-account response", async () => {
