@@ -64,3 +64,8 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
       ))
   );
 $$;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+
+-- The authenticated agenda policy used a raw email lookup; remove that shortcut.
+DROP POLICY IF EXISTS "Members can view own agenda registrations" ON public.agenda_registrations;
