@@ -63,12 +63,112 @@ export interface RecipientResult {
   excluded: number;
 }
 
+export interface MemberContactInfo {
+  email?: string | null;
+  contactpersoon?: string | null;
+  contacten?: { naam?: string | null; email?: string | null }[] | null;
+}
+
+export interface PriorMapping {
+  name: string;
+  email: string;
+}
+
+/** Naam normaliseren: hoofdletters, accenten, leestekens en spaties tolerant. */
+export function normalizeName(v: unknown): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+const GENERIC_NAMES = new Set(["", "deelnemer", "gast", "lid", "onbekend", "nvt", "n v t", "x", "-"]);
+export function isGenericName(v: string | null | undefined): boolean {
+  return GENERIC_NAMES.has(normalizeName(v));
+}
+
+/**
+ * Gelijk, of de ene volledige naam begint met de andere (hele woorden, min. 2
+ * woorden). Zo matcht 'Job Joris' op 'Job Joris Arnold', maar 'Alex' niet
+ * los op 'Alex van Veen' en geen fuzzy matches tussen verschillende personen.
+ */
+export function namesMatch(a: unknown, b: unknown): boolean {
+  const x = normalizeName(a).split(" ").filter(Boolean);
+  const y = normalizeName(b).split(" ").filter(Boolean);
+  if (!x.length || !y.length) return false;
+  const [s, l] = x.length <= y.length ? [x, y] : [y, x];
+  if (s.length === l.length) return s.every((t, i) => t === l[i]);
+  return s.length >= 2 && s.every((t, i) => t === l[i]);
+}
+
+const splitValid = (v: unknown) =>
+  String(v ?? "")
+    .split(/[,;/\s]+/)
+    .map(normalizeEmail)
+    .filter(isValidEmail);
+
+type Resolution =
+  | { kind: "ok"; email: string; naam: string }
+  | { kind: "ambiguous"; naam: string; count: number }
+  | { kind: "missing"; naam: string };
+
+/** Structurele resolver per deelnemer van een lid (stappen 2–7). */
+export function resolveMemberAttendee(
+  memberId: number,
+  person: string | null,
+  input: {
+    memberInfo?: Map<number, MemberContactInfo>;
+    priorMappings?: Map<number, PriorMapping[]>;
+    emailsByMember: Map<number, string[]>;
+    nameByMember?: Map<number, string>;
+  },
+): Resolution {
+  const info = input.memberInfo?.get(memberId);
+  const stage = (emails: string[], naam: string): Resolution | null => {
+    const set = [...new Set(emails)];
+    if (set.length === 1) return { kind: "ok", email: set[0], naam };
+    if (set.length > 1) return { kind: "ambiguous", naam, count: set.length };
+    return null;
+  };
+  const allowed = () => [...new Set((input.emailsByMember.get(memberId) ?? []).map(normalizeEmail).filter(isValidEmail))];
+
+  if (person) {
+    const fromContacts = (info?.contacten ?? [])
+      .filter((c) => namesMatch(c?.naam, person))
+      .flatMap((c) => splitValid(c?.email));
+    const s2 = stage(fromContacts, person);
+    if (s2) return s2;
+    if (namesMatch(info?.contactpersoon, person)) {
+      const s3 = stage(splitValid(info?.email), person);
+      if (s3) return s3;
+    }
+    const prior = (input.priorMappings?.get(memberId) ?? [])
+      .filter((p) => namesMatch(p.name, person))
+      .flatMap((p) => splitValid(p.email));
+    const s4 = stage(prior, person);
+    if (s4) return s4;
+    const s5 = stage(allowed(), person);
+    return s5 ?? { kind: "missing", naam: person };
+  }
+
+  const naam = (info?.contactpersoon ?? "").trim() || input.nameByMember?.get(memberId) || "deelnemer";
+  const s6 = stage(splitValid(info?.email), naam);
+  if (s6) return s6;
+  return stage(allowed(), naam) ?? { kind: "missing", naam };
+}
+
 export function buildParticipantRecipients(input: {
   registrations: RegistrationRow[];
   guests: GuestRow[];
   /** Alle toegestane adressen per lid; alleen een eenduidig geldig adres telt als terugval. */
   emailsByMember: Map<number, string[]>;
   nameByMember?: Map<number, string>;
+  /** members_data.data (email, contactpersoon, contacten) per lid. */
+  memberInfo?: Map<number, MemberContactInfo>;
+  /** Eerder expliciet bevestigde naam/e-mail uit aanmeldingen per lid. */
+  priorMappings?: Map<number, PriorMapping[]>;
   /** Gecontroleerde terugval: bond_email || email van het bestuurslid. */
   emailByBoard: Map<string, string>;
   nameByBoard?: Map<string, string>;
@@ -116,14 +216,15 @@ export function buildParticipantRecipients(input: {
       continue;
     }
     if (r.member_id != null) {
-      const valid = [
-        ...new Set((input.emailsByMember.get(r.member_id) ?? []).map(normalizeEmail).filter(isValidEmail)),
-      ];
-      if (valid.length > 1) {
-        missing.push({ naam, source, reason: "ambiguous", value: `${valid.length} adressen` });
-        continue;
+      const named = (r.attendee_names ?? []).map((n) => (n ?? "").trim()).filter((n) => !isGenericName(n));
+      const people = named.length ? named : !isGenericName(r.contact_name ?? "") ? [r.contact_name!.trim()] : [null];
+      for (const person of people) {
+        const res = resolveMemberAttendee(r.member_id, person, input);
+        if (res.kind === "ok") add(res.email, res.naam, source);
+        else if (res.kind === "ambiguous")
+          missing.push({ naam: res.naam, source, reason: "ambiguous", value: `${res.count} adressen` });
+        else missing.push({ naam: res.naam, source, reason: "missing" });
       }
-      add(valid[0] ?? "", naam, source);
       continue;
     }
     add("", naam, source);
