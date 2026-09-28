@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { registerAllowedMember, SignupFailure } from "./signup.ts";
+import { invalidRequest, registerAllowedMember, SignupFailure } from "./signup.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,8 +12,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+  let input: unknown;
   try {
-    const input = await req.json();
+    input = await req.json();
+  } catch {
+    const reference = `REG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    console.error(JSON.stringify({ event: "malformed_json", reference }));
+    return new Response(JSON.stringify(invalidRequest(reference).body), { status: 400, headers: jsonHeaders });
+  }
+
+  try {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
