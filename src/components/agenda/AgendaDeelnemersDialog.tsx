@@ -49,6 +49,7 @@ import {
   type AgendaGuestRegistration,
 } from "@/hooks/useAgendaGuests";
 import AgendaGuestDeclineDialog from "./AgendaGuestDeclineDialog";
+import AgendaParticipantMailDialog from "./AgendaParticipantMailDialog";
 import { useCoffeeshopRegister, useRegisterLinks } from "@/hooks/useCoffeeshopRegister";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -126,6 +127,7 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
   const { data: boardMembers = [] } = useBoardMemberOptions();
   const { register, unregister } = useAgendaMutations();
   const { isAdmin } = useAuth();
+  const [mailAllOpen, setMailAllOpen] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
   const [guests, setGuests] = useState(1);
   const [names, setNames] = useState<string[]>([""]);
@@ -413,6 +415,14 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
               </span>
             </span>
           </div>
+          {isAdmin && (
+            <div className="pt-3">
+              <Button variant="outline" size="sm" onClick={() => setMailAllOpen(true)}>
+                <Mail className="mr-1 h-4 w-4 text-brand-red" />
+                Mail alle deelnemers
+              </Button>
+            </div>
+          )}
         </DialogHeader>
 
         <ScrollArea className="max-h-[65vh]">
