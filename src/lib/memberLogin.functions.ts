@@ -18,8 +18,6 @@ export const requestMemberLoginLink = createServerFn({ method: "POST" })
     const { data: member } = await supabaseAdmin.from("members_data")
       .select("member_type").eq("id", allowed[0].member_id).maybeSingle();
     if (member?.member_type !== "member") return generic;
-    const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_member_login_link", { _email: email });
-    if (claimError || !claimed) return generic;
 
     // Auth, not this function, creates/owns the one-time token and delivers it through
     // the configured Auth email sender. Never use generateLink or an app email here.
@@ -30,6 +28,8 @@ export const requestMemberLoginLink = createServerFn({ method: "POST" })
     const auth = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const redirectOrigin = process.env["MEMBER_PORTAL_ORIGIN"];
     if (!redirectOrigin || !/^https:\/\/[^/]+$/.test(redirectOrigin)) return generic;
+    const { data: claimed, error: claimError } = await supabaseAdmin.rpc("claim_member_login_link", { _email: email });
+    if (claimError || !claimed) return generic;
     await auth.auth.signInWithOtp({
       email,
       options: {
