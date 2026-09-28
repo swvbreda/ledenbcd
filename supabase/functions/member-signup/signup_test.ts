@@ -1,119 +1,150 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-  registerAllowedMember,
-  SignupFailure,
-  type SignupDependencies,
-} from "./signup.ts";
+import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { classifyAuthFailure, registerAllowedMember, type SignupDependencies } from "./signup.ts";
+
+const PW = "safe-long-password";
 
 function dependencies(overrides: Partial<SignupDependencies> = {}) {
   const calls: string[] = [];
+  let n = 0;
   const deps: SignupDependencies = {
     findAllowedMember: async () => ({ memberId: 100 }),
     createUser: async () => ({ id: "new-user" }),
-    linkProfile: async (_userId, memberId) => { calls.push(`profile:${memberId}`); },
-    assignMemberRole: async () => { calls.push("role:user"); },
-    unlinkProfile: async () => { calls.push("unlink-profile"); },
-    deleteUser: async () => { calls.push("delete-user"); },
-    log: (event) => { calls.push(`log:${event}`); },
-    reference: () => "REG-TEST01",
+    linkProfile: async (u, m) => { calls.push(`profile:${u}:${m}`); },
+    assignMemberRole: async (u) => { calls.push(`role:${u}`); },
+    unlinkProfile: async (u) => { calls.push(`unlink:${u}`); },
+    deleteUser: async (u) => { calls.push(`delete:${u}`); },
+    log: (event, _ref, d) => { calls.push(`log:${event}${d?.kind ? ":" + d.kind : ""}`); },
+    reference: () => `REG-T${++n}`,
     ...overrides,
   };
   return { deps, calls };
 }
 
-Deno.test("extra allowed contact is normalized and linked only to its allowed member", async () => {
-  let lookedUp = "";
-  let createdEmail = "";
-  const { deps, calls } = dependencies({
-    findAllowedMember: async (email) => { lookedUp = email; return { memberId: 100 }; },
-    createUser: async ({ email }) => { createdEmail = email; return { id: "new-user" }; },
-  });
-  const result = await registerAllowedMember(
-    { email: "  EXTRA.Contact@Example.NL ", password: "safe-long-password" },
-    deps,
-  );
-  assertEquals(result, { status: 200, body: { success: true } });
-  assertEquals(lookedUp, "extra.contact@example.nl");
-  assertEquals(createdEmail, "extra.contact@example.nl");
-  assertEquals(calls, ["profile:100", "role:user"]);
+function authError(status: number, code?: string, message = "x") {
+  return Object.assign(new Error(message), { status, code });
+}
+
+Deno.test("extra allowed contact normalized and linked", async () => {
+  let looked = "";
+  const { deps, calls } = dependencies({ findAllowedMember: async (e) => { looked = e; return { memberId: 100 }; } });
+  const r = await registerAllowedMember({ email: "  EXTRA.Contact@Example.NL ", password: PW }, deps);
+  assertEquals(r, { status: 200, body: { success: true } });
+  assertEquals(looked, "extra.contact@example.nl");
+  assertEquals(calls, ["profile:new-user:100", "role:new-user"]);
 });
 
-Deno.test("primary allowed contact follows the same safe path", async () => {
-  const { deps, calls } = dependencies();
-  const result = await registerAllowedMember(
-    { email: "primary@example.nl", password: "safe-long-password" },
-    deps,
-  );
-  assertEquals(result.status, 200);
-  assertEquals(calls, ["profile:100", "role:user"]);
+Deno.test("malformed input => 400 before any auth/db call", async () => {
+  for (const raw of [null, [], "x", 5, { email: null, password: PW }, { email: ["a"], password: PW }, { email: "a@b.nl", password: 12345678 }, {}]) {
+    let touched = 0;
+    const { deps } = dependencies({
+      findAllowedMember: async () => { touched++; return { memberId: 1 }; },
+      createUser: async () => { touched++; return { id: "x" }; },
+    });
+    const r = await registerAllowedMember(raw, deps);
+    assertEquals(r.status, 400);
+    assert(r.body.reference);
+    assertEquals(touched, 0);
+  }
 });
 
-Deno.test("not allowed email never creates an account", async () => {
-  let createCalls = 0;
-  const { deps } = dependencies({
-    findAllowedMember: async () => null,
-    createUser: async () => { createCalls += 1; return { id: "never" }; },
-  });
-  const result = await registerAllowedMember(
-    { email: "unknown@example.nl", password: "safe-long-password" },
-    deps,
-  );
-  assertEquals(result.status, 403);
-  assertEquals(createCalls, 0);
+Deno.test("not allowed => 403 without createUser", async () => {
+  let created = 0;
+  const { deps } = dependencies({ findAllowedMember: async () => null, createUser: async () => { created++; return { id: "n" }; } });
+  const r = await registerAllowedMember({ email: "u@example.nl", password: PW }, deps);
+  assertEquals(r.status, 403);
+  assertEquals(created, 0);
 });
 
-Deno.test("existing account is not reset, linked or taken over", async () => {
-  const { deps, calls } = dependencies({
-    createUser: async () => { throw new SignupFailure("existing_account"); },
-  });
-  const result = await registerAllowedMember(
-    { email: "existing@example.nl", password: "safe-long-password" },
-    deps,
-  );
-  assertEquals(result.status, 409);
-  assertEquals(calls, ["log:auth_user_create_failed"]);
+Deno.test("classification uses explicit codes only", () => {
+  assertEquals(classifyAuthFailure(authError(422, "weak_password")), "weak_password");
+  assertEquals(classifyAuthFailure(authError(422, "email_exists")), "existing_account");
+  assertEquals(classifyAuthFailure(authError(422, "user_already_exists")), "existing_account");
+  assertEquals(classifyAuthFailure(authError(400, "email_address_invalid")), "invalid_email");
+  assertEquals(classifyAuthFailure(authError(400, "validation_failed")), "validation_failed");
+  assertEquals(classifyAuthFailure(authError(429, "over_request_rate_limit")), "rate_limited");
+  assertEquals(classifyAuthFailure(authError(422, undefined, "Something about password hashing")), "unknown");
+  assertEquals(classifyAuthFailure(authError(400, "unexpected_failure")), "unknown");
+  assertEquals(classifyAuthFailure(authError(422)), "unknown");
 });
 
-Deno.test("profile failure rolls back the new account and never assigns a role", async () => {
-  const { deps, calls } = dependencies({
-    linkProfile: async () => { throw new Error("storage failure"); },
-  });
-  const result = await registerAllowedMember(
-    { email: "allowed@example.nl", password: "safe-long-password" },
-    deps,
-  );
-  assertEquals(result.status, 500);
-  assertEquals(result.body.reference, "REG-TEST01");
-  assertEquals(calls, ["log:member_link_failed", "unlink-profile", "delete-user"]);
-});
-
-Deno.test("role failure rolls back profile and account without assigning another role", async () => {
-  const setup = dependencies();
-  setup.deps.assignMemberRole = async () => {
-    setup.calls.push("role:user");
-    throw new Error("storage failure");
+Deno.test("weak_password vs unknown 422/400 responses", async () => {
+  const run = async (err: Error) => {
+    const { deps, calls } = dependencies({ createUser: async () => { throw err; } });
+    return { r: await registerAllowedMember({ email: "a@b.nl", password: PW }, deps), calls };
   };
-  const result = await registerAllowedMember(
-    { email: "allowed@example.nl", password: "safe-long-password" },
-    setup.deps,
-  );
-  assertEquals(result.status, 500);
-  assertEquals(setup.calls, ["profile:100", "role:user", "log:member_link_failed", "unlink-profile", "delete-user"]);
+  const weak = await run(authError(422, "weak_password"));
+  assertEquals(weak.r.status, 422);
+  assert(weak.r.body.error!.includes("wachtwoord"));
+  assert(weak.r.body.reference);
+  for (const err of [authError(422, undefined, "password thing"), authError(400, "something_new")]) {
+    const u = await run(err);
+    assertEquals(u.r.status, 500);
+    assert(!u.r.body.error!.toLowerCase().includes("wachtwoord"));
+    assert(u.r.body.error!.includes(u.r.body.reference!));
+    assert(u.calls.includes("log:auth_user_create_failed:unknown"));
+  }
 });
 
-Deno.test("concurrent duplicate requests produce one member account and one existing-account response", async () => {
-  let created = false;
+Deno.test("email_exists => 409, no link/compensation; rate limit => 429", async () => {
+  const { deps, calls } = dependencies({ createUser: async () => { throw authError(422, "email_exists"); } });
+  const r = await registerAllowedMember({ email: "a@b.nl", password: PW }, deps);
+  assertEquals(r.status, 409);
+  assert(r.body.reference);
+  assertEquals(calls, ["log:auth_user_create_failed:existing_account"]);
+  const rl = dependencies({ createUser: async () => { throw authError(429, "over_request_rate_limit"); } });
+  assertEquals((await registerAllowedMember({ email: "a@b.nl", password: PW }, rl.deps)).status, 429);
+});
+
+Deno.test("storage failure compensates only the new user", async () => {
+  const { deps, calls } = dependencies({ assignMemberRole: async () => { throw authError(500, "db"); } });
+  const r = await registerAllowedMember({ email: "a@b.nl", password: PW }, deps);
+  assertEquals(r.status, 500);
+  assertEquals(r.body.success, undefined);
+  assertEquals(calls, ["profile:new-user:100", "log:member_link_failed", "unlink:new-user", "delete:new-user"]);
+});
+
+Deno.test("failed compensation never reports success", async () => {
   const { deps, calls } = dependencies({
-    createUser: async () => {
-      if (created) throw new SignupFailure("existing_account");
-      created = true;
-      return { id: "new-user" };
-    },
+    linkProfile: async () => { throw authError(500, "db"); },
+    unlinkProfile: async () => { throw authError(500, "db"); },
+    deleteUser: async () => { throw authError(500, "auth"); },
   });
-  const input = { email: "repeat@example.nl", password: "safe-long-password" };
-  const first = await registerAllowedMember(input, deps);
-  const second = await registerAllowedMember(input, deps);
-  assertEquals([first.status, second.status], [200, 409]);
-  assertEquals(calls.filter((call) => call === "role:user").length, 1);
-  assertEquals(calls.filter((call) => call === "profile:100").length, 1);
+  const r = await registerAllowedMember({ email: "a@b.nl", password: PW }, deps);
+  assertEquals(r.status, 500);
+  assertEquals(r.body.success, undefined);
+  assert(calls.includes("log:profile_compensation_failed"));
+  assert(calls.includes("log:auth_user_compensation_failed"));
+});
+
+Deno.test("truly overlapping calls: one account, loser untouched, existing user never compensated", async () => {
+  const existing = new Set<string>();
+  const calls: string[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  let ids = 0;
+  let inFlight = 0, maxInFlight = 0;
+  const { deps } = dependencies({
+    createUser: async ({ email }) => {
+      inFlight++; maxInFlight = Math.max(maxInFlight, inFlight);
+      await gate; // both requests are inside createUser at the same time
+      inFlight--;
+      if (existing.has(email)) throw authError(422, "email_exists");
+      existing.add(email);
+      return { id: `user-${++ids}` };
+    },
+    linkProfile: async (u) => { calls.push(`profile:${u}`); },
+    assignMemberRole: async (u) => { calls.push(`role:${u}`); },
+    unlinkProfile: async (u) => { calls.push(`unlink:${u}`); },
+    deleteUser: async (u) => { calls.push(`delete:${u}`); },
+  });
+  const p = Promise.all([
+    registerAllowedMember({ email: "same@b.nl", password: PW }, deps),
+    registerAllowedMember({ email: " SAME@b.nl", password: PW }, deps),
+  ]);
+  await new Promise((r) => setTimeout(r, 0));
+  release();
+  const results = await p;
+  assertEquals(maxInFlight, 2);
+  assertEquals(results.map((r) => r.status).sort(), [200, 409]);
+  assertEquals(calls, ["profile:user-1", "role:user-1"]);
 });
