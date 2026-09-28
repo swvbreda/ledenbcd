@@ -1,21 +1,33 @@
-# Echte pagina-afbeeldingen voor deel-previews
+# Onderzoek: "alle deelnemers van één evenement mailen"
 
-## Wat verandert
-- Alle openbare schermen krijgen eigen, nauwkeurige titel, omschrijving, canonical, `og:url` en bijpassende Twitter-tags in de eerste HTML-respons.
-- De inlog-, externe inlog- en andere openbare toegangsschermen krijgen veilige 1200×630 schermafbeeldingen van hun publieke beginscherm; er komen geen leden- of andere privégegevens in beeld.
-- De openbare uitnodigingspagina behoudt haar bestaande, evenement-specifieke afbeelding. Zonder evenementafbeelding gebruikt zij een veilige schermafbeelding van de openbare uitnodigingspagina.
-- Beveiligde schermen krijgen geen schermafbeelding van ingelogde inhoud en houden een veilige algemene inlog-preview.
-- De zichtbare website blijft ongewijzigd.
+Alleen-lezen onderzoek. Niets gewijzigd, niets verstuurd, niets gepubliceerd.
 
-## Uitvoering
-1. Openbare routes en toegangsstatus definitief classificeren.
-2. Veilige publieke beginschermen op 1200×630 vastleggen en als versievaste JPG/PNG-bestanden opslaan.
-3. Metadata per openbare route toevoegen of corrigeren; dynamische routes krijgen passende, veilige terugvalmetadata.
-4. Alleen werkelijk statische openbare routes vooraf als HTML opbouwen; dynamische uitnodigingen blijven via de bestaande serverweergave werken.
-5. Productiebouw controleren en ruwe eerste HTML testen voor de hoofdpagina en twee openbare subpagina’s; alle afbeeldingsadressen op bestaan en afbeeldingsformaat controleren.
+## Conclusie
+Er is geen bewijs dat deze knop ooit heeft bestaan. Het lijkt dus geen regressie. In de volledige geschiedenis (5.897 wijzigingen) komt geen knop of tekst voor als "Mail deelnemers", "Deelnemers mailen", "Mail naar deelnemers" of "Kopieer e-mailadressen" bij de agenda. De enige treffer op "Alle deelnemers" komt uit de Community-takenlijst ("Alle deelnemers zijn gekoppeld"). Die heeft niets met evenementen te maken.
 
-## Technisch
-- TanStack Start `head()` blijft de enige metadata-oplossing; geen client-only Helmet.
-- Canonicals en afbeeldingen gebruiken absolute adressen onder `https://leden.coffeeshopbond.nl`.
-- Bestaande evenement-specifieke previewroute blijft leidend en wordt niet vervangen door een algemene afbeelding.
-- Geen publicatie; alleen preview en bronwijzigingen voor beoordeling.
+Wat waarschijnlijk wordt bedoeld, is een van deze drie bestaande opties. Ze staan nog allemaal op hun plek:
+
+1. **Aankondiging versturen** (sinds 3 september 2026). Deze mailt leden en leads, **niet** de aangemelde deelnemers.
+   Klikpad: Agenda → evenementkaart → onderste balk (alleen voor beheerders) → "Aankondiging versturen".
+   De knop is alleen zichtbaar als het item het type Evenement heeft **en** nog in de toekomst ligt. Bij een afgelopen evenement of een bestuursvergadering verdwijnt de knop. Dit werkt zo bedoeld en is geen fout.
+2. **Evenement annuleren**, met het vinkje "Aangemelde deelnemers per e-mail informeren". Dit is de enige plek die echt alle aangemelden tegelijk mailt, maar alleen bij annuleren.
+3. **Mailing-export (Outlook BCC)** in het ledenoverzicht. Die werkt op leden, niet op de deelnemers van één evenement.
+
+In het venster "Deelnemers" op de evenementkaart staat per aanmelding alleen een bevestiging of "Weigeren en mailen". Er is geen knop om iedereen tegelijk te mailen.
+
+## Bewijs (bestanden)
+- `src/components/agenda/AgendaEventCard.tsx` r. 258–268: de beheerbalk. De voorwaarde `isAdmin` + `isEvent && upcoming` bepaalt of "Aankondiging versturen" zichtbaar is.
+- `src/components/agenda/AgendaAnnounceDialog.tsx` r. 117–138: de ontvangers zijn leden en leads uit het ledenbestand, niet de aanmeldingen. Toegevoegd in wijzigingen e3228d63, b5fb465f en 25153acd (3 september 2026).
+- `src/components/agenda/AgendaCancelDialog.tsx` r. 92: het vinkje om aangemelden te mailen bij annuleren.
+- `src/components/agenda/AgendaDeelnemersDialog.tsx`: alleen mailacties per persoon, geen verzending naar iedereen.
+- `src/components/MailingExportButton.tsx`: Outlook-BCC-export voor leden (wijziging 15ae9e43, juni 2026).
+
+## Voorstel (aparte taak, alleen na akkoord)
+Een knop "Mail alle deelnemers" toevoegen in het venster Deelnemers (alleen voor beheerders). Daarbij:
+- ontvangers zijn alleen de aangemelde deelnemers en gasten van dit evenement, elk adres één keer;
+- je ziet eerst hoeveel adressen het zijn en typt zelf onderwerp en tekst;
+- er wordt pas iets verstuurd als je op Versturen klikt;
+- de bestaande verzendfunctie slaat afgemelde adressen over en elke mail wordt maar één keer verstuurd (idempotency key per evenement en adres);
+- geen testmails, en publiceren alleen na jouw akkoord.
+
+Vraag: bedoelt de gebruiker misschien optie 1 of 2 hierboven? Zo niet, dan kan ik dit voorstel bouwen.
