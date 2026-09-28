@@ -8,9 +8,12 @@ import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasske
 import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace, HelpCircle } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { captureRedirectFromQuery, hasPendingRedirect, maybeRedirectAfterLogin } from "@/lib/ssoRedirect";
+import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
+import { requestMemberLoginLink } from "@/lib/memberLogin.functions";
+import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
-  const { user, loading: authLoading, isExtern, mfaStatus } = useAuth();
+  const { user, loading: authLoading, isExtern, isAdmin, linkedMemberId, mfaStatus } = useAuth();
   const biometric = useBiometricAuth();
   const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
@@ -23,6 +26,8 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [resetMode, setResetMode] = useState(false);
   const [registerMode, setRegisterMode] = useState(false);
+  const [passwordFallback, setPasswordFallback] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
@@ -61,6 +66,9 @@ const LoginPage = () => {
   }
 
   if (user) {
+    if (memberPasswordlessEnabled && !isExtern && !isAdmin && !linkedMemberId) {
+      return <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">Dit e-mailadres heeft geen actief liddossier. <Button variant="ghost" onClick={() => void supabase.auth.signOut()}>Afmelden</Button></div>;
+    }
     // Wacht met interne navigate als er een SSO-redirect gepland staat
     if (hasPendingRedirect()) {
       return (
@@ -96,6 +104,21 @@ const LoginPage = () => {
         setPendingCredentials({ email, password });
         setShowBiometricPrompt(true);
       }
+      setLoading(false);
+    }
+  };
+
+  const handleLinkRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const result = await requestMemberLoginLink({ data: { email } });
+      if (!result.accepted) throw new Error("Inloglinks zijn nog niet beschikbaar");
+      setLinkSent(true);
+    } catch {
+      setError("Aanvragen is tijdelijk niet mogelijk. Probeer het later opnieuw.");
+    } finally {
       setLoading(false);
     }
   };
@@ -267,7 +290,7 @@ const LoginPage = () => {
   const getSubtitle = () => {
     if (resetMode) return "Voer je e-mailadres in om je wachtwoord te herstellen";
     if (registerMode) return "Gebruik het e-mailadres waarop je de updates van de bond ontvangt en kies zelf een wachtwoord";
-    return "Log in om verder te gaan";
+    return memberPasswordlessEnabled ? "Ontvang een persoonlijke inloglink per e-mail" : "Log in om verder te gaan";
   };
 
   return (
@@ -328,6 +351,18 @@ const LoginPage = () => {
               >
                 <LogIn size={16} /> Inloggen
               </button>
+            </div>
+          ) : memberPasswordlessEnabled && !resetMode && !registerMode && !passwordFallback ? (
+            <div className="space-y-4">
+              {linkSent ? <p className="text-sm text-muted-foreground">Als dit adres toegang heeft, ontvang je een persoonlijke inloglink. Registreren of een wachtwoord maken is niet nodig.</p> :
+                <form onSubmit={handleLinkRequest} className="space-y-4">
+                  <label htmlFor="login-link-email" className="block text-sm font-medium">E-mailadres</label>
+                  <input id="login-link-email" type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full border border-input bg-background rounded-md px-3 py-2" />
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button className="w-full" type="submit" disabled={loading}>Stuur mij een inloglink</Button>
+                </form>}
+              <Button variant="ghost" className="w-full" onClick={() => setPasswordFallback(true)}>Inloggen met wachtwoord</Button>
+              <a href="/extern-login" className="block text-center text-sm text-muted-foreground">Inloggen als externe partij →</a>
             </div>
           ) : (
             <form
@@ -455,7 +490,7 @@ const LoginPage = () => {
               </button>
 
               <div className="text-center space-y-1">
-                {!resetMode && (
+                {!resetMode && !memberPasswordlessEnabled && (
                   <button
                     type="button"
                     onClick={() => switchMode(registerMode ? "login" : "register")}

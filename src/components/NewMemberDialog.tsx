@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { nextMemberNumber } from "@/lib/memberNumber";
+import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
+import { requestMemberLoginLink } from "@/lib/memberLogin.functions";
 
 interface Props {
   type: "member" | "lead";
@@ -103,6 +105,11 @@ export default function NewMemberDialog({ type }: Props) {
       toast.success(type === "member" ? "Nieuw lid toegevoegd" : "Nieuwe lead toegevoegd");
 
       if (sendWelcome && email.trim()) {
+        if (memberPasswordlessEnabled && type === "member") {
+          const result = await requestMemberLoginLink({ data: { email: email.trim() } });
+          if (result.accepted) toast.success("Persoonlijke inloglink aangevraagd");
+          else toast.error("Inloglinks zijn nog niet beschikbaar");
+        } else {
         const tplKey = type === "member" ? "member_welcome" : "lead_welcome";
         const { data: tpl } = await supabase
           .from("email_templates")
@@ -129,6 +136,7 @@ export default function NewMemberDialog({ type }: Props) {
           });
           if (mailErr) toast.error("Welkomstmail mislukt: " + mailErr.message);
           else toast.success("Welkomstmail verstuurd");
+        }
         }
       }
 
