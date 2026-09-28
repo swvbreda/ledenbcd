@@ -27,21 +27,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "BCD Ledenportaal" },
       { name: "description", content: "Ledenportaal van de Bond van Cannabis Detaillisten" },
       { name: "robots", content: "noindex, nofollow, noarchive, nosnippet, noimageindex" },
-      { property: "og:title", content: "BCD Ledenportaal" },
-      {
-        property: "og:description",
-        content: "Ledenportaal van de Bond van Cannabis Detaillisten",
-      },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://leden.coffeeshopbond.nl/" },
-      { property: "og:image", content: "https://leden.coffeeshopbond.nl/og-image.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "BCD Ledenportaal" },
-      {
-        name: "twitter:description",
-        content: "Ledenportaal van de Bond van Cannabis Detaillisten",
-      },
-      { name: "twitter:image", content: "https://leden.coffeeshopbond.nl/og-image.png" },
+      { property: "og:site_name", content: "BCD Ledenportaal" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
