@@ -904,6 +904,9 @@ export default function AgendaDeelnemersDialog({ open, onOpenChange, event, regi
           </div>
         </ScrollArea>
       </DialogContent>
+      {isAdmin && (
+        <AgendaParticipantMailDialog open={mailAllOpen} onOpenChange={setMailAllOpen} event={event} />
+      )}
     </Dialog>
   );
 }
