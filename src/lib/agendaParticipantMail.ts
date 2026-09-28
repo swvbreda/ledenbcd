@@ -185,6 +185,9 @@ export function interpretSendResponse(
   const d = (data ?? {}) as Record<string, unknown>;
   if (d.suppressed === true || d.reason === "email_suppressed" || d.skipped === true)
     return { status: "skipped", note: "Afgeschreven adres" };
+  if (d.success === false && d.reason === "already_sent")
+    return { status: "sent", note: "Eerder al verzonden" };
+  if (d.success === false) return { status: "failed", note: String(d.reason ?? "geweigerd") };
   if (d.sent === true) return { status: "sent" };
   if (d.success === true || d.queued === true)
     return { status: "accepted", note: "Aangenomen, verzending niet bevestigd" };
