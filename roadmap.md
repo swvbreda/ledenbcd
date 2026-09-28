@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Open
+- [ ] Vereenvoudigde ledentoegang met persoonlijke bevestigings-/inloglinks; veilig koppelen en geïsoleerd testen; niet publiceren.
+- [ ] Deel-previews: bestaand plan wacht op beoordeling; niet uitvoeren of publiceren.
 - [ ] Financiële module: Informer als enige bron (canonieke tabellen, jaarsync, overrides, betaalkoppelingen, controlemodule)
 - [x] Veldmapping verkoop-/inkoopfacturen 2026 gevalideerd (totals, status, ledger_id->rubriek, relation_id->naam) + tests
 - [x] Readiness/reconciliatiestatus (ledgerReadiness) zichtbaar in Controle & sync
