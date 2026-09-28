@@ -173,6 +173,7 @@ Deno.serve(async (req) => {
     'login-reminder',
     'agenda-new-registration-admin',
     'agenda-guest-declined',
+    'agenda-participant-message',
   ])
   if (FREE_FORM_TEMPLATES.has(templateName)) {
     const authHeader = req.headers.get('authorization') ?? ''

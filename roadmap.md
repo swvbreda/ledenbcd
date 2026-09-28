@@ -21,4 +21,4 @@
 - [x] Voorbereide inlog-, bevestigings- en aanvraagcode achter standaard uitgeschakelde schakelaars; bestaande toegang blijft actief.
 - [ ] Auth-mailtemplate/redirects veilig configureren, RLS-migratie toetsen en toepassen, geïsoleerde positieve Auth + mailopvang + sessie + eigen-dossier-ketentest uitvoeren. Blokkade: geen afgeschermde Auth-/mailomgeving of goedkeuring om productieconfiguratie te wijzigen.
 - [ ] Welkomstmail met één persoonlijke knop veilig aansluiten zonder tweede mail; blokkade: Auth-mailafhandeling moet eerst positief bevestigd zijn.
-- [ ] Afzonderlijk: alle evenementdeelnemers mailen; buiten deze toegangstaak.
+- [x] Afzonderlijk: "Mail alle deelnemers" in Agenda > Deelnemers (beheer, preview; niet gepubliceerd, geen mail verstuurd).

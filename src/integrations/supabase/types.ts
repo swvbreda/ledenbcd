@@ -248,6 +248,82 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_participant_mail_batches: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          event_id: string
+          id: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          event_id: string
+          id: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          event_id?: string
+          id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_participant_mail_batches_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agenda_participant_mail_sends: {
+        Row: {
+          batch_id: string
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          note?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_participant_mail_sends_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_participant_mail_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agenda_registrations: {
         Row: {
           attendee_names: string[]
@@ -3864,6 +3940,12 @@ export type Database = {
           _event_id: string
           _source?: string
         }
+        Returns: {
+          email: string
+        }[]
+      }
+      agenda_claim_participant_mail: {
+        Args: { _batch_id: string; _emails: string[]; _event_id: string }
         Returns: {
           email: string
         }[]

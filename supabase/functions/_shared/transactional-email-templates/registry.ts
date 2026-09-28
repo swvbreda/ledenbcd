@@ -17,6 +17,7 @@ import { template as agendaEventAnnouncement } from './agenda-event-announcement
 import { template as agendaEventCancelled } from './agenda-event-cancelled.tsx'
 import { template as agendaNewRegistrationAdmin } from './agenda-new-registration-admin.tsx'
 import { template as agendaGuestDeclined } from './agenda-guest-declined.tsx'
+import { template as agendaParticipantMessage } from './agenda-participant-message.tsx'
 import { template as loginReminder } from './login-reminder.tsx'
 import { template as externInvite } from './extern-invite.tsx'
 import { template as contactDetailsChanged } from './contact-details-changed.tsx'
@@ -30,6 +31,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'agenda-event-cancelled': agendaEventCancelled,
   'agenda-new-registration-admin': agendaNewRegistrationAdmin,
   'agenda-guest-declined': agendaGuestDeclined,
+  'agenda-participant-message': agendaParticipantMessage,
   'login-reminder': loginReminder,
   'extern-invite': externInvite,
   'contact-details-changed': contactDetailsChanged,
