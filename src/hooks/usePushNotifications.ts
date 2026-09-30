@@ -21,6 +21,24 @@ export function usePushNotifications() {
       // Dynamically import to avoid issues on web
       const { PushNotifications } =
         await import("@capacitor/push-notifications");
+      const { App } = await import("@capacitor/app");
+
+      const clearDeliveredNotifications = async () => {
+        try {
+          await PushNotifications.removeAllDeliveredNotifications();
+        } catch (error) {
+          console.warn("Failed to clear delivered notifications:", error);
+        }
+      };
+
+      // Opening or returning to the app means the user has seen the alert.
+      // Clear both the delivered notification and its app-icon badge.
+      await clearDeliveredNotifications();
+      rememberListener(
+        await App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) void clearDeliveredNotifications();
+        }),
+      );
 
       // Register listeners before register(); iOS can return the APNs token immediately.
       rememberListener(
@@ -50,6 +68,9 @@ export function usePushNotifications() {
           "pushNotificationReceived",
           (notification) => {
             console.log("Push received:", notification);
+            if (document.visibilityState === "visible") {
+              void clearDeliveredNotifications();
+            }
           },
         ),
       );
@@ -58,6 +79,7 @@ export function usePushNotifications() {
         await PushNotifications.addListener(
           "pushNotificationActionPerformed",
           (action) => {
+            void clearDeliveredNotifications();
             const route = action.notification.data?.route;
             if (
               typeof route === "string" &&
