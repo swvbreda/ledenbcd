@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
+import { fetchRolesWithSessionRecovery } from "@/lib/authAccess";
 
 interface AuthContextType {
   user: User | null;
@@ -89,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isReviewer, setIsReviewer] = useState(false);
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
+  const accessCheckId = useRef(0);
 
   const markEmailMfaVerified = useCallback(() => {
     if (user?.id) {
@@ -104,12 +106,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const checkRoleAndProfile = async (userId: string) => {
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    
-    const roles = roleData?.map(r => r.role) ?? [];
+    const checkId = ++accessCheckId.current;
+    const roles = await fetchRolesWithSessionRecovery({
+      expectedUserId: userId,
+      getAuthenticatedUserId: async () => {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        return data.user?.id ?? null;
+      },
+      fetchRoles: async () => {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        if (error) throw error;
+        return data?.map((row) => row.role) ?? [];
+      },
+      refreshSession: async () => {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) throw error;
+        if (data.session?.user.id !== userId) {
+          throw new Error("De vernieuwde sessie hoort niet bij de ingelogde gebruiker");
+        }
+      },
+    });
+
+    // Een oudere, tragere controle mag een nieuwere sessie niet overschrijven.
+    if (checkId !== accessCheckId.current) return;
     setIsAdmin(roles.includes("admin"));
     setIsExtern(roles.includes("extern"));
 
@@ -165,13 +188,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (emailMfaOk) {
           setMfaStatus("verified");
         }
-        Promise.all([
-          checkRoleAndProfile(session.user.id),
-          ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
-        ]).finally(() => {
-          if (mounted) setLoading(false);
-        });
+        // Supabase raadt aan om overige clientaanroepen buiten de auth callback
+        // uit te voeren. Dit voorkomt dat een native WebView met een nog niet
+        // hersteld bearer token tijdelijk als gebruiker zonder rechten start.
+        window.setTimeout(() => {
+          Promise.all([
+            checkRoleAndProfile(session.user.id),
+            ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
+          ])
+            .catch((error) => {
+              console.error("Gebruikersrechten laden mislukt", error);
+              toast.error("Rechten konden niet worden geladen. Probeer de app opnieuw te openen.");
+            })
+            .finally(() => {
+              if (mounted) setLoading(false);
+            });
+        }, 0);
       } else {
+        accessCheckId.current += 1;
         setIsAdmin(false);
         setIsExtern(false);
         setIsBoard(false);
@@ -193,10 +227,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (emailMfaOk) {
           setMfaStatus("verified");
         }
-        await Promise.all([
-          checkRoleAndProfile(session.user.id),
-          ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
-        ]);
+        try {
+          await Promise.all([
+            checkRoleAndProfile(session.user.id),
+            ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
+          ]);
+        } catch (error) {
+          console.error("Gebruikersrechten laden mislukt", error);
+          toast.error("Rechten konden niet worden geladen. Probeer de app opnieuw te openen.");
+        }
       }
       if (mounted) setLoading(false);
     });
@@ -214,6 +253,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch {}
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Een iOS/Android WebView kan lang in het geheugen blijven staan. Bij het
+    // terugkeren naar de app verversen we de sessie en rechten; na een langere
+    // achtergrondperiode laden we ook de actuele live webversie opnieuw.
+    let backgroundedAt: number | null = null;
+    let appStateHandle: { remove: () => Promise<void> } | undefined;
+    if (Capacitor.isNativePlatform()) {
+      void import("@capacitor/app")
+        .then(({ App }) =>
+          App.addListener("appStateChange", ({ isActive }) => {
+            if (!isActive) {
+              backgroundedAt = Date.now();
+              return;
+            }
+
+            if (backgroundedAt && Date.now() - backgroundedAt > 5 * 60_000) {
+              window.location.reload();
+              return;
+            }
+            backgroundedAt = null;
+
+            void supabase.auth.refreshSession().then(({ data, error }) => {
+              if (error || !data.session?.user) return;
+              setSession(data.session);
+              setUser(data.session.user);
+              void checkRoleAndProfile(data.session.user.id).catch((accessError) => {
+                console.error("Gebruikersrechten verversen mislukt", accessError);
+              });
+            });
+          }),
+        )
+        .then((handle) => {
+          appStateHandle = handle;
+        });
+    }
 
     // Global handler: when invokeWithAuth detects an unrecoverable auth failure,
     // sign the user out and send them to the login page with a single toast.
@@ -245,6 +319,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener(SESSION_EXPIRED_EVENT_NAME, handleSessionExpired);
+      void appStateHandle?.remove();
     };
   }, []);
 
