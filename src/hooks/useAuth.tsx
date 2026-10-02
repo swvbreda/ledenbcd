@@ -269,8 +269,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             if (backgroundedAt && Date.now() - backgroundedAt > 5 * 60_000) {
-              window.location.reload();
-              return;
+              // Alleen volledig herladen als er geen onopgeslagen invoer is,
+              // zodat een half ingevuld formulier of bericht niet verloren gaat.
+              const hasUnsavedInput = Array.from(
+                document.querySelectorAll("input, textarea"),
+              ).some((el) => {
+                if (el instanceof HTMLTextAreaElement) return el.value !== el.defaultValue;
+                if (el instanceof HTMLInputElement)
+                  return el.type !== "password" && el.value !== el.defaultValue;
+                return false;
+              });
+              if (!hasUnsavedInput) {
+                window.location.reload();
+                return;
+              }
             }
             backgroundedAt = null;
 
