@@ -79,6 +79,18 @@ export default function InternalDeclarationsView({
   const [bankAccount, setBankAccount] = useState("");
   const [accountHolder, setAccountHolder] = useState("");
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [eventId, setEventId] = useState("");
+  const [agendaEvents, setAgendaEvents] = useState<{ id: string; title: string; event_date: string; location: string | null }[]>([]);
+  useEffect(() => {
+    const from = new Date(); from.setMonth(from.getMonth() - 3);
+    const to = new Date(); to.setMonth(to.getMonth() + 1);
+    supabase.from("agenda_events").select("id,title,event_date,location")
+      .is("cancelled_at", null)
+      .gte("event_date", from.toISOString().slice(0, 10))
+      .lte("event_date", to.toISOString().slice(0, 10))
+      .order("event_date", { ascending: false })
+      .then(({ data }) => setAgendaEvents((data as any) ?? []));
+  }, []);
 
   const selectedMember = boardMembers.find((member) => member.id === memberId);
   const calculation = oneWayKm == null ? null : calculateTravelDeclaration(oneWayKm, returnTrip, DEFAULT_KM_RATE);
@@ -149,8 +161,18 @@ export default function InternalDeclarationsView({
     }
   };
 
+  const pickEvent = (id: string) => {
+    if (id === "none") { setEventId(""); return; }
+    const ev = agendaEvents.find((e) => e.id === id);
+    if (!ev) return;
+    setEventId(id);
+    setDescription(ev.title);
+    setExpenseDate(String(ev.event_date).slice(0, 10));
+    if (!destination.trim() && ev.location) setDestination(ev.location);
+  };
+
   const resetForm = () => {
-    setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
+    setEventId(""); setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
 
@@ -241,6 +263,17 @@ export default function InternalDeclarationsView({
               <Select value={kind} onValueChange={(value: "reiskosten" | "overig") => { setKind(value); setOneWayKm(null); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reiskosten">Reiskosten</SelectItem><SelectItem value="overig">Overige kosten</SelectItem></SelectContent></Select>
             </label>
             <label className="space-y-1.5"><span className="text-sm font-medium">Datum</span><Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} /></label>
+            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Evenement / bijeenkomst (optioneel)</span>
+              <Select value={eventId || "none"} onValueChange={pickEvent}>
+                <SelectTrigger><SelectValue placeholder="Kies een evenement of bijeenkomst" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Geen evenement</SelectItem>
+                  {agendaEvents.map((ev) => (
+                    <SelectItem key={ev.id} value={ev.id}>{new Date(ev.event_date).toLocaleDateString("nl-NL")} — {ev.title}{ev.location ? ` (${ev.location})` : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Omschrijving</span><Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={kind === "reiskosten" ? "Bijvoorbeeld: bestuursvergadering Utrecht" : "Waarvoor waren de kosten?"} /></label>
 
             {kind === "reiskosten" ? <>
