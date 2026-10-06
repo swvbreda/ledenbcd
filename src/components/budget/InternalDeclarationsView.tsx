@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
@@ -94,17 +94,39 @@ export default function InternalDeclarationsView({
 
   const total = filtered.reduce((sum, item) => sum + item.amount, 0);
 
-  const chooseMember = (id: string) => {
+  const chooseMember = async (id: string) => {
     setMemberId(id);
     const member = boardMembers.find((item) => item.id === id);
     setOrigin(memberAddress(member));
     setAccountHolder(member?.naam || "");
     setOneWayKm(null);
+    const local = [...declarations]
+      .filter((d) => d.bank_account && (d.board_member_id === id || (member && d.board_member_name === member.naam)))
+      .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""))[0];
+    if (local?.bank_account) { setBankAccount(local.bank_account); if (local.account_holder) setAccountHolder(local.account_holder); return; }
+    setBankAccount("");
+    const { data } = await supabase
+      .from("internal_declarations")
+      .select("bank_account, account_holder, board_member_id, board_member_name, expense_date")
+      .not("bank_account", "is", null)
+      .or(`board_member_id.eq.${id}${member ? `,board_member_name.eq."${member.naam.replace(/"/g, "")}"` : ""}`)
+      .order("expense_date", { ascending: false })
+      .limit(1);
+    const prev = data?.[0];
+    if (prev?.bank_account) { setBankAccount(prev.bank_account); if (prev.account_holder) setAccountHolder(prev.account_holder); }
   };
 
-  const calculateRoute = async () => {
+  const [manualKm, setManualKm] = useState("");
+  useEffect(() => {
+    if (kind !== "reiskosten" || !origin.trim() || !destination.trim() || oneWayKm != null) return;
+    const t = setTimeout(() => { void calculateRoute(true); }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin, destination, kind]);
+
+  const calculateRoute = async (silent = false) => {
     if (!origin.trim() || !destination.trim()) {
-      toast.error("Vul eerst het vertrek- en bestemmingsadres in");
+      if (!silent) toast.error("Vul eerst het vertrek- en bestemmingsadres in");
       return;
     }
     setCalculating(true);
@@ -114,7 +136,7 @@ export default function InternalDeclarationsView({
       });
       if (error) throw error;
       if (!data?.one_way_km) throw new Error(data?.error || "De afstand kon niet worden berekend");
-      setOneWayKm(Number(data.one_way_km));
+      setOneWayKm(Number(data.one_way_km)); setManualKm("");
       toast.success(`Afstand berekend: ${Number(data.one_way_km).toLocaleString("nl-NL")} km enkele reis`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "De afstand kon niet worden berekend");
@@ -124,7 +146,7 @@ export default function InternalDeclarationsView({
   };
 
   const resetForm = () => {
-    setDescription(""); setDestination(""); setOneWayKm(null); setOtherAmount(""); setReceipt(null);
+    setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
 
@@ -218,12 +240,14 @@ export default function InternalDeclarationsView({
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Omschrijving</span><Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={kind === "reiskosten" ? "Bijvoorbeeld: bestuursvergadering Utrecht" : "Waarvoor waren de kosten?"} /></label>
 
             {kind === "reiskosten" ? <>
-              <label className="space-y-1.5"><span className="text-sm font-medium">Van</span><Input value={origin} onChange={(e) => { setOrigin(e.target.value); setOneWayKm(null); }} placeholder="Vertrekadres" /></label>
-              <label className="space-y-1.5"><span className="text-sm font-medium">Naar</span><Input value={destination} onChange={(e) => { setDestination(e.target.value); setOneWayKm(null); }} placeholder="Bestemmingsadres" /></label>
+              <label className="space-y-1.5"><span className="text-sm font-medium">Van</span><Input value={origin} onChange={(e) => { setOrigin(e.target.value); setOneWayKm(null); setManualKm(""); }} placeholder="Vertrekadres" /></label>
+              <label className="space-y-1.5"><span className="text-sm font-medium">Naar</span><Input value={destination} onChange={(e) => { setDestination(e.target.value); setOneWayKm(null); setManualKm(""); }} placeholder="Bestemmingsadres" /></label>
               <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
-                <label className="flex items-center gap-2 text-sm"><Checkbox checked={returnTrip} onCheckedChange={(checked) => setReturnTrip(checked === true)} />Heen en terug</label>
-                <Button type="button" variant="outline" onClick={calculateRoute} disabled={calculating}><MapPin className="mr-2 h-4 w-4" />{calculating ? "Afstand berekenen…" : "Bereken afstand"}</Button>
+                <label className="flex items-center gap-2 text-sm"><Checkbox checked={returnTrip} onCheckedChange={(checked) => { const rt = checked === true; if (manualKm) { const v = Number(manualKm.replace(",", ".")); setOneWayKm(v > 0 ? v / (rt ? 2 : 1) : null); } setReturnTrip(rt); }} />Heen en terug</label>
+                <Button type="button" variant="outline" onClick={() => calculateRoute()} disabled={calculating}><MapPin className="mr-2 h-4 w-4" />{calculating ? "Afstand berekenen…" : "Bereken afstand"}</Button>
               </div>
+              <label className="space-y-1.5"><span className="text-sm font-medium">Km (totaal)</span><Input type="number" min="0" step="0.1" inputMode="decimal" value={manualKm !== "" ? manualKm : calculation ? String(calculation.totalKm) : ""} onChange={(e) => { setManualKm(e.target.value); const v = Number(e.target.value.replace(",", ".")); setOneWayKm(e.target.value && v > 0 ? v / (returnTrip ? 2 : 1) : null); }} placeholder="Wordt automatisch berekend" /></label>
+              <div className="hidden md:block" />
               {calculation && <div className="grid grid-cols-2 gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-950 md:col-span-2 sm:grid-cols-3">
                 <div><span className="block text-xs text-green-700">Enkele reis</span><strong>{calculation.oneWayKm.toLocaleString("nl-NL")} km</strong></div>
                 <div><span className="block text-xs text-green-700">Totaal</span><strong>{calculation.totalKm.toLocaleString("nl-NL")} km</strong></div>
