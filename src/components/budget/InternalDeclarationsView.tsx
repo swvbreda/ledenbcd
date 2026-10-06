@@ -94,17 +94,39 @@ export default function InternalDeclarationsView({
 
   const total = filtered.reduce((sum, item) => sum + item.amount, 0);
 
-  const chooseMember = (id: string) => {
+  const chooseMember = async (id: string) => {
     setMemberId(id);
     const member = boardMembers.find((item) => item.id === id);
     setOrigin(memberAddress(member));
     setAccountHolder(member?.naam || "");
     setOneWayKm(null);
+    const local = [...declarations]
+      .filter((d) => d.bank_account && (d.board_member_id === id || (member && d.board_member_name === member.naam)))
+      .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""))[0];
+    if (local?.bank_account) { setBankAccount(local.bank_account); if (local.account_holder) setAccountHolder(local.account_holder); return; }
+    setBankAccount("");
+    const { data } = await supabase
+      .from("internal_declarations")
+      .select("bank_account, account_holder, board_member_id, board_member_name, expense_date")
+      .not("bank_account", "is", null)
+      .or(`board_member_id.eq.${id}${member ? `,board_member_name.eq."${member.naam.replace(/"/g, "")}"` : ""}`)
+      .order("expense_date", { ascending: false })
+      .limit(1);
+    const prev = data?.[0];
+    if (prev?.bank_account) { setBankAccount(prev.bank_account); if (prev.account_holder) setAccountHolder(prev.account_holder); }
   };
 
-  const calculateRoute = async () => {
+  const [manualKm, setManualKm] = useState("");
+  useEffect(() => {
+    if (kind !== "reiskosten" || !origin.trim() || !destination.trim() || oneWayKm != null) return;
+    const t = setTimeout(() => { void calculateRoute(true); }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin, destination, kind]);
+
+  const calculateRoute = async (silent = false) => {
     if (!origin.trim() || !destination.trim()) {
-      toast.error("Vul eerst het vertrek- en bestemmingsadres in");
+      if (!silent) toast.error("Vul eerst het vertrek- en bestemmingsadres in");
       return;
     }
     setCalculating(true);
