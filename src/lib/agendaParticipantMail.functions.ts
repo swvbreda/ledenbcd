@@ -99,7 +99,37 @@ export const previewParticipantMail = createServerFn({ method: "POST" })
     return loadRecipients(supabaseAdmin, data.eventId);
   });
 
-function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
+export type MailAttachment = { path: string; name: string; size: number; type: string };
+const ATTACH_BUCKET = "agenda-mail-attachments";
+const ATTACH_MAX = 3;
+const ATTACH_MAX_BYTES = 10 * 1024 * 1024;
+const ATTACH_EXT = /\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|webp|heic)$/i;
+const SIGN_SECONDS = 30 * 24 * 3600;
+
+/** Server-side controle: alleen bestanden in de map van dit evenement + deze verzending. */
+async function verifyAttachments(db: any, eventId: string, batchId: string, paths: string[]): Promise<MailAttachment[]> {
+  const uniq = [...new Set(paths)];
+  if (uniq.length > ATTACH_MAX) throw new Error(`Maximaal ${ATTACH_MAX} bijlagen`);
+  if (!uniq.length) return [];
+  const folder = `${eventId}/${batchId}`;
+  const { data: files, error } = await db.storage.from(ATTACH_BUCKET).list(folder, { limit: 100 });
+  if (error) throw new Error("Bijlagen controleren mislukt");
+  return uniq.map((p) => {
+    if (!p.startsWith(folder + "/") || p.slice(folder.length + 1).includes("/"))
+      throw new Error("Bijlage hoort niet bij deze verzending");
+    const fname = p.slice(folder.length + 1);
+    const f = (files ?? []).find((x: any) => x.name === fname);
+    if (!f) throw new Error("Bijlage niet gevonden; voeg hem opnieuw toe");
+    const size = Number(f.metadata?.size ?? 0);
+    if (size > ATTACH_MAX_BYTES) throw new Error("Bijlage is groter dan 10 MB");
+    if (!ATTACH_EXT.test(fname)) throw new Error("Dit bestandstype is niet toegestaan");
+    const name = fname.replace(/^[0-9a-f-]{36}-/, "");
+    return { path: p, name, size, type: String(f.metadata?.mimetype ?? "") };
+  });
+}
+
+function makeDeps(db: any, admin: boolean, userId: string, attachmentPaths: string[] = []): MailDeps {
+  let batchAttachments: MailAttachment[] = [];
   return {
     isAdmin: async () => admin,
     loadEvent: async (id) => {
@@ -111,13 +141,16 @@ function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
     getBatch: async (id) => {
       const { data: b, error } = await db
         .from("agenda_participant_mail_batches")
-        .select("id, event_id, subject, body")
+        .select("id, event_id, subject, body, attachments")
         .eq("id", id)
         .maybeSingle();
       if (error) throw new Error("Verzending laden mislukt");
+      // Opgeslagen bijlagen van de batch winnen altijd (ook bij retry/race).
+      batchAttachments = Array.isArray(b?.attachments) ? b.attachments : [];
       return b ?? null;
     },
     createBatch: async (b, snapshot) => {
+      const attachments = await verifyAttachments(db, b.event_id, b.id, attachmentPaths);
       const { error } = await db.rpc("agenda_create_participant_mail_batch", {
         _batch_id: b.id,
         _event_id: b.event_id,
@@ -125,6 +158,7 @@ function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
         _body: b.body,
         _created_by: userId,
         _recipients: snapshot.map((r) => ({ email: r.email, naam: r.naam })),
+        _attachments: attachments,
       });
       if (error) throw new Error("Verzending vastleggen mislukt");
     },
@@ -137,6 +171,14 @@ function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
       return ((rows ?? []) as any[]).map((r) => (typeof r === "string" ? r : r.email));
     },
     send: async (a) => {
+      const links: { name: string; url: string }[] = [];
+      for (const att of batchAttachments) {
+        const { data: signed, error: se } = await db.storage
+          .from(ATTACH_BUCKET)
+          .createSignedUrl(att.path, SIGN_SECONDS, { download: att.name });
+        if (se || !signed?.signedUrl) return { status: "failed", note: "Downloadlink bijlage maken mislukt" };
+        links.push({ name: att.name, url: signed.signedUrl });
+      }
       const { data: res, error } = await db.functions.invoke("send-transactional-email", {
         body: {
           templateName: "agenda-participant-message",
@@ -147,6 +189,7 @@ function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
             message: a.body,
             eventTitle: a.eventTitle,
             recipientName: a.naam,
+            attachments: links,
           },
         },
       });
@@ -177,7 +220,8 @@ function makeDeps(db: any, admin: boolean, userId: string): MailDeps {
 export const sendParticipantMail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { eventId: string; batchId: string; subject: string; body: string; expectedEmails?: string[] }) => ({
+    (d: { eventId: string; batchId: string; subject: string; body: string; expectedEmails?: string[]; attachmentPaths?: string[] }) => ({
+      attachmentPaths: Array.isArray(d?.attachmentPaths) ? d.attachmentPaths.map(String).slice(0, 10) : [],
       eventId: String(d?.eventId ?? ""),
       batchId: String(d?.batchId ?? ""),
       subject: String(d?.subject ?? ""),
@@ -190,7 +234,7 @@ export const sendParticipantMail = createServerFn({ method: "POST" })
     if (!admin) throw new Error("Geen toegang");
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     try {
-      return await runParticipantMail(makeDeps(db, admin, context.userId), data);
+      return await runParticipantMail(makeDeps(db, admin, context.userId, data.attachmentPaths), data);
     } catch (e) {
       if (e instanceof RecipientsChangedError)
         throw new Error(`${e.message} Nieuw: ${e.added.length}, vervallen: ${e.removed.length}.`);
@@ -212,5 +256,10 @@ export const getParticipantMailStatus = createServerFn({ method: "POST" })
     const batch = await deps.getBatch(data.batchId);
     if (!batch) return null;
     if (batch.event_id !== data.eventId) throw new Error("Verzending hoort bij een ander evenement");
-    return { subject: batch.subject, body: batch.body, rows: await deps.listStatuses(batch.id) };
+    return {
+      subject: batch.subject,
+      body: batch.body,
+      attachments: ((batch as any).attachments ?? []) as MailAttachment[],
+      rows: await deps.listStatuses(batch.id),
+    };
   });
