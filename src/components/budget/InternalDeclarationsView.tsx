@@ -134,7 +134,11 @@ export default function InternalDeclarationsView({
       const { data, error } = await supabase.functions.invoke("calculate-route", {
         body: { origin: origin.trim(), destination: destination.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        let msg = "De afstand kon niet worden berekend. Vul de kilometers zelf in.";
+        try { const body = await (error as any).context?.json?.(); if (body?.error) msg = body.error; } catch { /* ignore */ }
+        throw new Error(msg);
+      }
       if (!data?.one_way_km) throw new Error(data?.error || "De afstand kon niet worden berekend");
       setOneWayKm(Number(data.one_way_km)); setManualKm("");
       toast.success(`Afstand berekend: ${Number(data.one_way_km).toLocaleString("nl-NL")} km enkele reis`);
