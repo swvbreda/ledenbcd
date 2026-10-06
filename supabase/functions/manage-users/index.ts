@@ -124,8 +124,14 @@ Deno.serve(async (req) => {
     const action = (url.searchParams.get("action") || (payload.action as string) || "list").toLowerCase();
 
     if (action === "list") {
-      const { data: { users }, error } = await adminClient.auth.admin.listUsers();
-      if (error) throw error;
+      // Auth returns max 50 per page by default; fetch all pages.
+      const users: any[] = [];
+      for (let page = 1; page <= 50; page++) {
+        const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+        if (error) throw error;
+        users.push(...data.users);
+        if (data.users.length < 1000) break;
+      }
 
       const { data: roles } = await adminClient.from("user_roles").select("*");
       const roleMap = new Map<string, string>();
