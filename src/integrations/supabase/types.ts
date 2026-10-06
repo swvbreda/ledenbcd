@@ -250,6 +250,7 @@ export type Database = {
       }
       agenda_participant_mail_batches: {
         Row: {
+          attachments: Json
           body: string
           created_at: string
           created_by: string
@@ -258,6 +259,7 @@ export type Database = {
           subject: string
         }
         Insert: {
+          attachments?: Json
           body: string
           created_at?: string
           created_by: string
@@ -266,6 +268,7 @@ export type Database = {
           subject: string
         }
         Update: {
+          attachments?: Json
           body?: string
           created_at?: string
           created_by?: string
@@ -3955,6 +3958,7 @@ export type Database = {
       }
       agenda_create_participant_mail_batch: {
         Args: {
+          _attachments?: Json
           _batch_id: string
           _body: string
           _created_by: string
