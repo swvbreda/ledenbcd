@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -82,7 +83,7 @@ function RootComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void; info?: unknown }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
