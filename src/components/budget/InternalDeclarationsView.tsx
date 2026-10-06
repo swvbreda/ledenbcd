@@ -161,8 +161,18 @@ export default function InternalDeclarationsView({
     }
   };
 
+  const pickEvent = (id: string) => {
+    if (id === "none") { setEventId(""); return; }
+    const ev = agendaEvents.find((e) => e.id === id);
+    if (!ev) return;
+    setEventId(id);
+    setDescription(ev.title);
+    setExpenseDate(String(ev.event_date).slice(0, 10));
+    if (!destination.trim() && ev.location) setDestination(ev.location);
+  };
+
   const resetForm = () => {
-    setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
+    setEventId(""); setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
 
