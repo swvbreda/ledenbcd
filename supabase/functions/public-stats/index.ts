@@ -35,8 +35,20 @@ const PLAATS_TO_PROVINCIE: Record<string, string> = {
   Eindhoven: "Noord-Brabant", Oss: "Noord-Brabant", Tilburg: "Noord-Brabant",
 };
 
+// Per-instance cache: de representatieberekening is zwaar; deel het resultaat
+// tussen aanvragen en serveer bij een database-timeout de laatst bekende cijfers.
+const CACHE_MS = 60_000;
+let cached: { at: number; body: string } | null = null;
+
+const jsonResponse = (body: string, extra: Record<string, string> = {}) =>
+  new Response(body, {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=60, s-maxage=60", ...extra },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (cached && Date.now() - cached.at < CACHE_MS) return jsonResponse(cached.body, { "X-Stats-Cache": "hit" });
 
   try {
     const supabase = createClient(
@@ -44,8 +56,14 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: representationRows, error: representationError } = await supabase
-      .rpc("get_representation_stats");
+    let representationRows: any[] | null = null;
+    let representationError: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await supabase.rpc("get_representation_stats");
+      representationRows = res.data as any[] | null;
+      representationError = res.error;
+      if (!res.error) break;
+    }
     if (representationError) throw representationError;
 
     const gemeenten = new Set<string>();
@@ -117,17 +135,13 @@ Deno.serve(async (req) => {
       laatst_bijgewerkt: new Date().toISOString(),
     };
 
-    return new Response(JSON.stringify(payload), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=300, s-maxage=300",
-      },
-      status: 200,
-    });
+    const body = JSON.stringify(payload);
+    cached = { at: Date.now(), body };
+    return jsonResponse(body);
   } catch (e) {
     console.error("public-stats error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    if (cached) return jsonResponse(cached.body, { "X-Stats-Cache": "stale" });
+    return new Response(JSON.stringify({ error: (e as any)?.message ?? "Statistieken tijdelijk niet beschikbaar" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

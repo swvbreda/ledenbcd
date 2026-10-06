@@ -24,12 +24,26 @@ export function useRegisterStats(enabled = true) {
     queryKey: ["register-plaats-stats"],
     enabled,
     staleTime: 60 * 1000,
+    retry: 2,
+    retryDelay: (n) => 1500 * (n + 1),
     queryFn: async (): Promise<RegisterStats> => {
-      // cache-bust zodat de edge-cache (max-age 300) verse cijfers teruggeeft na een wijziging
-      const { data, error } = await supabase.functions.invoke(`public-stats?t=${Date.now()}`, {
+      const { data, error } = await supabase.functions.invoke("public-stats", {
         method: "GET",
       });
-      if (error) throw error;
+      if (error) {
+        // Geen harde fout tonen: val terug op de statische landelijke cijfers.
+        console.warn("public-stats tijdelijk niet beschikbaar", error);
+        return {
+          perGemeente: fallbackPerGemeente,
+          totaalNL: fallbackTotal,
+          representedPerGemeente: {},
+          totaalRepresented: 0,
+          gekoppeldeRegistershops: 0,
+          nietGekoppeldeLocaties: 0,
+          koppelingenZonderVestiging: 0,
+          fromRegister: false,
+        };
+      }
       const payload = (data ?? {}) as Record<string, unknown>;
       const perPlaats = (payload.landelijk_per_gemeente ?? {}) as Record<string, number>;
       const representedPerPlaats = (payload.vertegenwoordiging_per_gemeente ?? {}) as Record<string, number>;
