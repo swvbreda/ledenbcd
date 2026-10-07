@@ -1535,9 +1535,6 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function _unusedReceiptPathsShim(declaration: any): string[] {
-  return declarationReceiptPaths(declaration);
-}
 
 // Voegt alle bonnen samen tot één PDF (Informer accepteert één document per inkoopfactuur).
 async function declarationReceiptPdf(supabase: any, declaration: any): Promise<string | undefined> {
@@ -2214,16 +2211,19 @@ Deno.serve(async (req) => {
       });
     }
     // Niet-beheerders mogen alleen hun eigen, net ingediende declaratie eenmalig versturen.
-    if (!callerIsAdmin) {
-      const { data: own } = await supabase.from("internal_declarations")
-        .select("submitted_by, informer_status, status").eq("id", body.declaration_id).maybeSingle();
-      if (!own || own.submitted_by !== callerUserId || body.retry || own.informer_status !== "not_sent" || own.status !== "pending") {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const { data: own } = await supabase.from("internal_declarations")
+      .select("submitted_by, informer_status, status").eq("id", body.declaration_id).maybeSingle();
+    const auth = authorizeDeclarationCall(
+      { userId: callerUserId, isAdminOrTreasurer: callerIsAdmin, isServiceCall: false },
+      own ?? null,
+      Boolean(body.retry),
+    );
+    if (!auth.allowed) {
+      return new Response(JSON.stringify({ error: auth.status === 401 ? "Unauthorized" : "Forbidden" }), {
+        status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    const result = await sendDeclarationToInformer(supabase, body.declaration_id, { retry: Boolean(body.retry) && callerIsAdmin });
+    const result = await sendDeclarationToInformer(supabase, body.declaration_id, { retry: auth.retry });
     await logResult(supabase, result);
     return new Response(JSON.stringify({ success: result.success, results: [result] }), {
       status: result.success ? 200 : 207,
