@@ -25,7 +25,12 @@ export interface InternalDeclaration {
   paid_at: string | null;
   bank_transaction_id: string | null;
   receipt_path: string | null;
-  informer_status: "not_sent" | "queued" | "synced" | "error";
+  receipt_paths?: string[];
+  event_id?: string | null;
+  budget_reference?: string | null;
+  submitted_at?: string | null;
+  informer_payment_status?: "open" | "paid" | null;
+  informer_status: "not_sent" | "queued" | "sending" | "synced" | "error";
   informer_external_id: string | null;
   informer_error: string | null;
   informer_synced_at: string | null;
@@ -80,51 +85,71 @@ export function useInternalDeclarationMutations(year: number) {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ["internal-declarations", year] });
 
+  const sendToInformer = async (id: string, retry = false) => {
+    const { data, error } = await supabase.functions.invoke(
+      `informer-sync?action=declaration_to_informer`,
+      { body: { declaration_id: id, retry } },
+    );
+    return !error && data?.success !== false;
+  };
+
   const add = useMutation({
     mutationFn: async ({
       declaration,
-      receipt,
+      receipts = [],
+      asConcept = false,
     }: {
       declaration: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">;
-      receipt?: File | null;
+      receipts?: File[];
+      asConcept?: boolean;
     }) => {
-      let receiptPath: string | null = null;
-      if (receipt) {
-        if (receipt.size > 10 * 1024 * 1024) throw new Error("De bon mag maximaal 10 MB zijn");
-        const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-        if (!allowed.includes(receipt.type)) throw new Error("Gebruik een JPG, PNG, WebP of PDF als bon");
+      const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+      const paths: string[] = [];
+      if (receipts.length > 0) {
         const { data: sessionData } = await supabase.auth.getSession();
         const uid = sessionData.session?.user.id;
         if (!uid) throw new Error("Log opnieuw in om een bon te uploaden");
-        receiptPath = `${uid}/${crypto.randomUUID()}-${sanitizeReceiptName(receipt.name)}`;
-        const { error: uploadError } = await supabase.storage
-          .from("declaration-receipts")
-          .upload(receiptPath, receipt, { contentType: receipt.type, upsert: false });
-        if (uploadError) throw uploadError;
+        for (const receipt of receipts) {
+          if (receipt.size > 10 * 1024 * 1024) throw new Error("Een bon mag maximaal 10 MB zijn");
+          if (!allowed.includes(receipt.type)) throw new Error("Gebruik een JPG, PNG, WebP of PDF als bon");
+          const path = `${uid}/${crypto.randomUUID()}-${sanitizeReceiptName(receipt.name)}`;
+          const { error: uploadError } = await supabase.storage
+            .from("declaration-receipts")
+            .upload(path, receipt, { contentType: receipt.type, upsert: false });
+          if (uploadError) throw uploadError;
+          paths.push(path);
+        }
       }
 
       const { data, error } = await supabase
         .from("internal_declarations")
-        .insert({ ...declaration, receipt_path: receiptPath, informer_status: "queued" } as any)
+        .insert({
+          ...declaration,
+          status: asConcept ? "concept" : "pending",
+          receipt_path: paths[0] ?? null,
+          receipt_paths: paths,
+          informer_status: "not_sent",
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
-      const { data: informerData, error: informerError } = await supabase.functions.invoke(
-        `informer-sync?action=declaration_to_informer`,
-        { body: { declaration_id: data.id } },
-      );
-      const informerSynced = !informerError && informerData?.success !== false;
-      if (!informerSynced) {
-        const message = informerError?.message
-          || informerData?.results?.[0]?.error_message
-          || "Informer heeft de declaratie niet aangenomen";
-        await supabase.from("internal_declarations").update({
-          informer_status: "error",
-          informer_error: message,
-        } as any).eq("id", data.id);
-      }
-      return { id: data.id, informerSynced };
+      if (asConcept) return { id: data.id, informerSynced: false, concept: true };
+      return { id: data.id, informerSynced: await sendToInformer(data.id), concept: false };
     },
+    onSuccess: invalidate,
+  });
+
+  const submitConcept = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("internal_declarations").update({ status: "pending" } as any).eq("id", id);
+      if (error) throw error;
+      return { informerSynced: await sendToInformer(id) };
+    },
+    onSuccess: invalidate,
+  });
+
+  const retryInformer = useMutation({
+    mutationFn: async (id: string) => ({ informerSynced: await sendToInformer(id, true) }),
     onSuccess: invalidate,
   });
 
@@ -167,5 +192,5 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, update, remove, approve, reject };
+  return { add, update, remove, approve, reject, submitConcept, retryInformer };
 }
