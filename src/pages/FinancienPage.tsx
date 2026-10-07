@@ -350,6 +350,8 @@ export default function FinancienPage() {
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
                 onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
+                onSubmitConcept={(id) => internalMutations.submitConcept.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Ingediend en naar Informer verzonden") : toast.warning("Ingediend; versturen naar Informer is mislukt"), onError: (e) => toast.error(e instanceof Error ? e.message : "Indienen mislukt") })}
+                onRetryInformer={(id) => internalMutations.retryInformer.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Naar Informer verzonden") : toast.error("Synchronisatie opnieuw mislukt"), onError: () => toast.error("Synchronisatie opnieuw mislukt") })}
               />
             </div>
           </TabsContent>
