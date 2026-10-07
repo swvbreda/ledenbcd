@@ -13,10 +13,11 @@ import { toast } from "sonner";
 
 type AddDeclarationInput = {
   declaration: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">;
-  receipt?: File | null;
+  receipts?: File[];
+  asConcept?: boolean;
 };
 
-type AddDeclarationResult = { id: string; informerSynced: boolean } | void;
+type AddDeclarationResult = { id: string; informerSynced: boolean; concept?: boolean } | void;
 
 interface Props {
   declarations: InternalDeclaration[];
@@ -28,6 +29,8 @@ interface Props {
   onDelete: (id: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onSubmitConcept?: (id: string) => void;
+  onRetryInformer?: (id: string) => void;
 }
 
 const fmtDate = (value: string | null) => value
@@ -40,19 +43,25 @@ const money = (value: number) => new Intl.NumberFormat("nl-NL", {
 }).format(value);
 
 const statusBadge = (status: string) => {
+  if (status === "concept") return <Badge variant="outline">Concept</Badge>;
   if (status === "approved") return <Badge className="bg-green-600">Goedgekeurd</Badge>;
   if (status === "rejected") return <Badge variant="destructive">Afgewezen</Badge>;
   return <Badge variant="secondary">In afwachting</Badge>;
 };
 
-const informerBadge = (declaration: InternalDeclaration) => {
-  if (declaration.informer_status === "synced") return <Badge className="bg-green-600">In Informer</Badge>;
-  if (declaration.informer_status === "error") {
-    return <Badge variant="destructive" title={declaration.informer_error || undefined}>Informer: actie nodig</Badge>;
+const informerBadge = (declaration: InternalDeclaration, showError: boolean) => {
+  if (declaration.status === "concept") return null;
+  if (declaration.informer_status === "sent" || declaration.informer_status === "synced") {
+    return <Badge className="bg-green-600">Naar Informer verzonden</Badge>;
   }
-  if (declaration.informer_status === "queued") return <Badge variant="outline">Naar Informer…</Badge>;
-  return null;
+  if (declaration.informer_status === "error") {
+    return <Badge variant="destructive" title={showError ? declaration.informer_error || undefined : undefined}>Synchronisatie mislukt</Badge>;
+  }
+  return <Badge variant="outline">Ingediend</Badge>;
 };
+
+const canRetry = (d: InternalDeclaration) =>
+  d.status !== "concept" && d.status !== "rejected" && (d.informer_status === "error" || d.informer_status === "not_sent" || d.informer_status === "queued");
 
 const memberAddress = (member?: DeclarationBoardMember) => [
   member?.prive_adres,
@@ -60,7 +69,7 @@ const memberAddress = (member?: DeclarationBoardMember) => [
 ].filter(Boolean).join(", ");
 
 export default function InternalDeclarationsView({
-  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject,
+  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -176,7 +185,7 @@ export default function InternalDeclarationsView({
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
 
-  const submit = async () => {
+  const submit = async (asConcept = false) => {
     const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
       : !expenseDate ? "Kies de datum van de kosten"
       : !description.trim() ? "Vul een korte omschrijving in"
@@ -204,14 +213,16 @@ export default function InternalDeclarationsView({
           amount: kind === "reiskosten" ? calculation!.amount : Number(otherAmount),
           expense_date: expenseDate, bank_account: bankAccount.trim(), account_holder: accountHolder.trim(),
           max_allowance_note: null, status: "pending", submitted_by: userId,
-          paid_at: null, bank_transaction_id: null, receipt_path: null, informer_status: "queued",
+          paid_at: null, bank_transaction_id: null, receipt_path: null, informer_status: "not_sent", event_id: eventId || null,
           informer_external_id: null, informer_error: null, informer_synced_at: null,
-        }, receipt,
+        }, receipts: receipt ? [receipt] : [], asConcept,
       });
-      if (result && !result.informerSynced) {
-        toast.warning("Declaratie is opgeslagen. Informer vraagt nog aandacht; er is een financieel actiepunt aangemaakt.");
+      if (result && result.concept) {
+        toast.success("Concept opgeslagen; dien het later definitief in");
+      } else if (result && !result.informerSynced) {
+        toast.warning("Declaratie is ingediend, maar het versturen naar Informer is mislukt. De penningmeester kan het opnieuw proberen.");
       } else {
-        toast.success("Declaratie ingediend en als open post naar Informer gestuurd");
+        toast.success("Declaratie ingediend en naar Informer verzonden");
       }
       resetForm(); setAdding(false);
     } catch (error) {
@@ -296,7 +307,7 @@ export default function InternalDeclarationsView({
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind === "overig" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
-          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button onClick={submit} disabled={saving}>{saving ? "Indienen…" : "Declaratie indienen"}</Button></div>
+          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button variant="outline" onClick={() => submit(true)} disabled={saving}>Opslaan als concept</Button><Button onClick={() => submit(false)} disabled={saving}>{saving ? "Indienen…" : "Declaratie definitief indienen"}</Button></div>
         </section>
       )}
 
@@ -306,10 +317,12 @@ export default function InternalDeclarationsView({
           return <article key={item.id} className="min-w-0 rounded-xl border bg-card p-4 shadow-sm">
             <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {item.declaration_type === "reiskosten" ? "Reiskosten" : "Overige kosten"}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
             <p className="mt-3 break-words text-sm">{item.appointment || "Geen omschrijving"}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
-            <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item)}</div>
+            <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item, isAdmin)}</div>{isAdmin && item.informer_status === "error" && item.informer_error && <p className="mt-2 break-words text-xs text-destructive">{item.informer_error}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
               {item.receipt_path && <Button size="sm" variant="outline" onClick={() => viewReceipt(item.receipt_path!)}><Receipt className="mr-1 h-4 w-4" />Bon</Button>}
               {isAdmin && item.status !== "approved" && <Button size="sm" variant="outline" onClick={() => onApprove(item.id)}><Check className="mr-1 h-4 w-4" />Goedkeuren</Button>}
+              {item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" onClick={() => onSubmitConcept(item.id)}>Definitief indienen</Button>}
+              {isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}
               {isAdmin && item.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
               {canModify && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(item.id)}><Trash2 className="mr-1 h-4 w-4" />Verwijderen</Button>}
             </div>
@@ -320,8 +333,8 @@ export default function InternalDeclarationsView({
       <div className="hidden overflow-x-auto rounded-xl border lg:block">
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
           <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
-            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{item.appointment || "–"}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item)}</td>
-            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
+            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{item.appointment || "–"}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, isAdmin)}{isAdmin && item.informer_status === "error" && item.informer_error && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{item.informer_error}</p>}</td>
+            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
         </table>

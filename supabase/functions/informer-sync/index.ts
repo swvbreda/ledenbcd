@@ -1579,7 +1579,7 @@ function redactIban(text: string): string {
 }
 
 function declarationReference(declaration: { id: string; year: number }): string {
-  return `DECL-${String(declaration.year)}-${String(declaration.id).slice(0, 8).toUpperCase()}`;
+  return `DECL-${String(declaration.id).toUpperCase()}`;
 }
 
 function validateDeclarationForInformer(declaration: any): string | null {
@@ -1686,13 +1686,13 @@ async function sendDeclarationToInformer(
   try {
     const { data: declaration, error } = await supabase.from("internal_declarations").select("*").eq("id", declarationId).single();
     if (error || !declaration) throw new Error("Declaratie niet gevonden");
-    if (declaration.informer_status === "synced" && declaration.informer_external_id) {
+    if (["sent", "synced"].includes(declaration.informer_status) && declaration.informer_external_id) {
       return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, already_synced: true }, api_calls: [] };
     }
     const invalid = validateDeclarationForInformer(declaration);
     if (invalid) {
       if (declaration.status !== "concept") {
-        await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: invalid }).eq("id", declarationId).neq("informer_status", "synced");
+        await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: invalid }).eq("id", declarationId).in("informer_status", ["not_sent", "queued", "error"]);
       }
       return { action, success: false, items_processed: 0, error_message: invalid, details: { declaration_id: declarationId }, api_calls: [] };
     }
@@ -1711,11 +1711,11 @@ async function sendDeclarationToInformer(
     claimed = true;
 
     const reference = declarationReference(declaration);
-    // Na een eerdere poging kan het document al bestaan (antwoord verloren): eerst zoeken.
-    if (declaration.informer_last_attempt_at) {
+    // Altijd eerst zoeken op de vaste referentie: bestaat het document al, dan hergebruiken.
+    {
       const existing = await findExistingPurchaseByReference(reference, apiCalls);
       if (existing) {
-        await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: existing, informer_error: null, informer_synced_at: new Date().toISOString(), informer_payment_status: "open" }).eq("id", declarationId);
+        await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: existing, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
         return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, reference, reused_existing: true }, api_calls: redactApiCalls(apiCalls) };
       }
     }
@@ -1765,7 +1765,7 @@ async function sendDeclarationToInformer(
     if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
     const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
     const externalId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
-    await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString(), informer_payment_status: "open" }).eq("id", declarationId);
+    await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
     await supabase.from("finance_todos").update({ status: "done", completed_at: new Date().toISOString() })
       .eq("todo_type", "declaration_informer_error").eq("reference_id", declarationId).eq("status", "pending");
     console.log(`[declaration] verzonden ${reference}`);
@@ -1797,7 +1797,7 @@ async function syncDeclarationPaymentStatus(supabase: any): Promise<ActionResult
   try {
     const { data: decls, error } = await supabase.from("internal_declarations")
       .select("id, informer_external_id, informer_payment_status, paid_at")
-      .eq("informer_status", "synced").not("informer_external_id", "is", null);
+      .in("informer_status", ["sent", "synced"]).not("informer_external_id", "is", null);
     if (error) throw error;
     const ids = (decls ?? []).map((d: any) => String(d.informer_external_id));
     if (ids.length === 0) return { action, success: true, items_processed: 0 };
@@ -2209,6 +2209,14 @@ Deno.serve(async (req) => {
       const { data: isAdmin } = await admin.rpc("has_role", { _user_id: userRes.user.id, _role: "admin" });
       callerUserId = userRes.user.id;
       callerIsAdmin = Boolean(isAdmin);
+      // Penningmeester (bestuurslid met die functie en hetzelfde e-mailadres) mag ook retryen.
+      const callerEmail = String(userRes.user.email ?? "").trim().toLowerCase();
+      if (!callerIsAdmin && callerEmail) {
+        const { data: treasurers } = await admin.from("board_members")
+          .select("email, bond_email").ilike("functie", "%penningmeester%");
+        callerIsAdmin = (treasurers ?? []).some((t: any) =>
+          [t.email, t.bond_email].some((e: any) => String(e ?? "").trim().toLowerCase() === callerEmail));
+      }
       const requestedAction = new URL(req.url).searchParams.get("action");
       if (!isAdmin && requestedAction !== "declaration_to_informer") {
         return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
@@ -2538,7 +2546,8 @@ Deno.serve(async (req) => {
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
     if (action === "pull_invoice_documents") results.push(await pullInvoiceDocuments(supabase));
     if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
-    if (action === "declaration_payment_status" || action === "all" || action === "sync_year") results.push(await syncDeclarationPaymentStatus(supabase));
+    // Fase 2: betaalstatus terugsynchroniseren — alleen op expliciete actie, nog niet in "all".
+    if (action === "declaration_payment_status") results.push(await syncDeclarationPaymentStatus(supabase));
 
     for (const r of results) await logResult(supabase, r);
 

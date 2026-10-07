@@ -8,6 +8,13 @@
       "when": 1791406355031,
       "tag": "0000_declaration_informer_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791406639171,
+      "tag": "0001_declaration_informer_sent_status",
+      "breakpoints": true
     }
   ]
 }

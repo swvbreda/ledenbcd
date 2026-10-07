@@ -30,7 +30,7 @@ export interface InternalDeclaration {
   budget_reference?: string | null;
   submitted_at?: string | null;
   informer_payment_status?: "open" | "paid" | null;
-  informer_status: "not_sent" | "queued" | "sending" | "synced" | "error";
+  informer_status: "not_sent" | "queued" | "sending" | "sent" | "synced" | "error";
   informer_external_id: string | null;
   informer_error: string | null;
   informer_synced_at: string | null;
