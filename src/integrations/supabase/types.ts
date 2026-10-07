@@ -2070,12 +2070,16 @@ export type Database = {
           bank_transaction_id: string | null
           board_member_id: string | null
           board_member_name: string
+          budget_reference: string | null
           created_at: string
           declaration_type: string
+          event_id: string | null
           expense_date: string | null
           id: string
           informer_error: string | null
           informer_external_id: string | null
+          informer_last_attempt_at: string | null
+          informer_payment_status: string | null
           informer_status: string
           informer_synced_at: string | null
           km_rate: number
@@ -2084,9 +2088,11 @@ export type Database = {
           max_allowance_note: string | null
           paid_at: string | null
           receipt_path: string | null
+          receipt_paths: string[]
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          submitted_at: string | null
           submitted_by: string | null
           trajectory: string | null
           updated_at: string
@@ -2100,12 +2106,16 @@ export type Database = {
           bank_transaction_id?: string | null
           board_member_id?: string | null
           board_member_name: string
+          budget_reference?: string | null
           created_at?: string
           declaration_type?: string
+          event_id?: string | null
           expense_date?: string | null
           id?: string
           informer_error?: string | null
           informer_external_id?: string | null
+          informer_last_attempt_at?: string | null
+          informer_payment_status?: string | null
           informer_status?: string
           informer_synced_at?: string | null
           km_rate?: number
@@ -2114,9 +2124,11 @@ export type Database = {
           max_allowance_note?: string | null
           paid_at?: string | null
           receipt_path?: string | null
+          receipt_paths?: string[]
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submitted_at?: string | null
           submitted_by?: string | null
           trajectory?: string | null
           updated_at?: string
@@ -2130,12 +2142,16 @@ export type Database = {
           bank_transaction_id?: string | null
           board_member_id?: string | null
           board_member_name?: string
+          budget_reference?: string | null
           created_at?: string
           declaration_type?: string
+          event_id?: string | null
           expense_date?: string | null
           id?: string
           informer_error?: string | null
           informer_external_id?: string | null
+          informer_last_attempt_at?: string | null
+          informer_payment_status?: string | null
           informer_status?: string
           informer_synced_at?: string | null
           km_rate?: number
@@ -2144,9 +2160,11 @@ export type Database = {
           max_allowance_note?: string | null
           paid_at?: string | null
           receipt_path?: string | null
+          receipt_paths?: string[]
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submitted_at?: string | null
           submitted_by?: string | null
           trajectory?: string | null
           updated_at?: string
