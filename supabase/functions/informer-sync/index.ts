@@ -2167,6 +2167,8 @@ Deno.serve(async (req) => {
   const isServiceRole = SERVICE_ROLE && authHeader === `Bearer ${SERVICE_ROLE}`;
   const isInternal = INTERNAL_WEBHOOK_SECRET && internalSecret === INTERNAL_WEBHOOK_SECRET;
   let authorized = isServiceRole || isInternal;
+  let callerUserId: string | null = null;
+  let callerIsAdmin = Boolean(authorized);
   // Also accept any valid service_role JWT (handles key rotation where the
   // env-provided service key no longer matches tokens stored in vault).
   if (!authorized && authHeader.startsWith("Bearer ")) {
@@ -2205,7 +2207,10 @@ Deno.serve(async (req) => {
       }
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
       const { data: isAdmin } = await admin.rpc("has_role", { _user_id: userRes.user.id, _role: "admin" });
-      if (!isAdmin) {
+      callerUserId = userRes.user.id;
+      callerIsAdmin = Boolean(isAdmin);
+      const requestedAction = new URL(req.url).searchParams.get("action");
+      if (!isAdmin && requestedAction !== "declaration_to_informer") {
         return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -2229,13 +2234,23 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get("action") ?? "all";
 
   if (action === "declaration_to_informer") {
-    const body = await req.json().catch(() => ({})) as { declaration_id?: string };
+    const body = await req.json().catch(() => ({})) as { declaration_id?: string; retry?: boolean };
     if (!body.declaration_id) {
       return new Response(JSON.stringify({ error: "declaration_id is verplicht" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const result = await sendDeclarationToInformer(supabase, body.declaration_id);
+    // Niet-beheerders mogen alleen hun eigen, net ingediende declaratie eenmalig versturen.
+    if (!callerIsAdmin) {
+      const { data: own } = await supabase.from("internal_declarations")
+        .select("submitted_by, informer_status, status").eq("id", body.declaration_id).maybeSingle();
+      if (!own || own.submitted_by !== callerUserId || body.retry || own.informer_status !== "not_sent" || own.status !== "pending") {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    const result = await sendDeclarationToInformer(supabase, body.declaration_id, { retry: Boolean(body.retry) && callerIsAdmin });
     await logResult(supabase, result);
     return new Response(JSON.stringify({ success: result.success, results: [result] }), {
       status: result.success ? 200 : 207,
@@ -2523,6 +2538,7 @@ Deno.serve(async (req) => {
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
     if (action === "pull_invoice_documents") results.push(await pullInvoiceDocuments(supabase));
     if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
+    if (action === "declaration_payment_status" || action === "all" || action === "sync_year") results.push(await syncDeclarationPaymentStatus(supabase));
 
     for (const r of results) await logResult(supabase, r);
 
