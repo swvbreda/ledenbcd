@@ -2061,6 +2061,38 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_declaration_sync_attempts: {
+        Row: {
+          attempted_at: string
+          declaration_id: string
+          id: string
+          sanitized_error: string | null
+          status: string
+        }
+        Insert: {
+          attempted_at?: string
+          declaration_id: string
+          id?: string
+          sanitized_error?: string | null
+          status: string
+        }
+        Update: {
+          attempted_at?: string
+          declaration_id?: string
+          id?: string
+          sanitized_error?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_declaration_sync_attempts_declaration_id_fkey"
+            columns: ["declaration_id"]
+            isOneToOne: false
+            referencedRelation: "internal_declarations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_declarations: {
         Row: {
           account_holder: string | null
@@ -4172,6 +4204,7 @@ export type Database = {
         Returns: boolean
       }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
+      is_treasurer: { Args: { _user_id: string }; Returns: boolean }
       member_directory_payload: {
         Args: { _base: Json; _overlay: Json }
         Returns: Json

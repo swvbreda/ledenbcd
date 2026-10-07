@@ -17,7 +17,7 @@ function baseDecl(over: Record<string, unknown> = {}) {
     id: ID, year: 2026, status: "pending", submitted_by: "user-1", board_member_id: "bm-1",
     board_member_name: "Test Bestuurder", declaration_type: "reiskosten", appointment: "Vergadering",
     amount: 10.42, bank_account: IBAN, account_holder: "Test Bestuurder", expense_date: "2026-10-01",
-    informer_status: "not_sent", informer_external_id: null, informer_error: null, ...over,
+    informer_status: "not_sent", informer_external_id: null, ...over,
   };
 }
 
@@ -25,6 +25,7 @@ function baseDecl(over: Record<string, unknown> = {}) {
 function fakeStore(initial: any) {
   const row = { ...initial };
   const todos: string[] = [];
+  const attempts: { status: string; error: string | null }[] = [];
   let resolved = 0;
   const store: DeclarationStore = {
     async load() { return { ...row }; },
@@ -32,16 +33,15 @@ function fakeStore(initial: any) {
       const ok = retry ? ["not_sent", "queued", "error"].includes(row.informer_status) : ["not_sent", "queued"].includes(row.informer_status);
       if (!ok) return false;
       row.informer_status = "sending";
-      row.informer_error = null;
       return true;
     },
-    async markSent(_id, doc) { row.informer_status = "sent"; row.informer_external_id = doc; row.informer_error = null; },
-    async markError(_id, msg) { if (row.informer_status === "sending") { row.informer_status = "error"; row.informer_error = msg; } },
-    async markInvalid(_id, msg) { row.informer_status = "error"; row.informer_error = msg; },
+    async markSent(_id, doc) { row.informer_status = "sent"; row.informer_external_id = doc; attempts.push({ status: "sent", error: null }); },
+    async markError(_id, msg) { if (row.informer_status === "sending") row.informer_status = "error"; attempts.push({ status: "error", error: msg }); },
+    async markInvalid(_id, msg) { row.informer_status = "error"; attempts.push({ status: "error", error: msg }); },
     async recordTodo(_id, msg) { todos.push(msg); },
     async resolveTodo() { resolved++; },
   };
-  return { store, row, todos, get resolved() { return resolved; } };
+  return { store, row, todos, attempts, get resolved() { return resolved; } };
 }
 
 function fakeInformer(opts: { existing?: string | null; fail?: string } = {}) {
@@ -103,12 +103,13 @@ describe("declaratie naar Informer", () => {
     expect(r.success).toBe(false);
     expect(s.row.informer_status).toBe("error");
     expect(s.row.status).toBe("pending");
-    for (const text of [s.row.informer_error, r.error_message, s.todos[0]]) {
+    expect(s.row.informer_error).toBeUndefined(); // foutdetail nooit op de declaratie zelf
+    for (const text of [s.attempts[0].error, r.error_message, s.todos[0]]) {
       expect(text).not.toContain(IBAN);
       expect(text).not.toContain("eyJhbGciOiJIUzI1NiJ9");
       expect(text).not.toContain(b64);
     }
-    expect(s.row.informer_error).toContain("[IBAN]");
+    expect(s.attempts[0].error).toContain("[IBAN]");
   });
 
   it("4. retry na error: opnieuw zoeken, maximaal één document", async () => {

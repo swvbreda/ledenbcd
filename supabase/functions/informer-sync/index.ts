@@ -1650,18 +1650,22 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
         ? `informer_status.in.(not_sent,queued,error),and(informer_status.eq.sending,informer_last_attempt_at.lt.${staleBefore})`
         : "informer_status.in.(not_sent,queued)";
       const { data } = await supabase.from("internal_declarations")
-        .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString(), informer_error: null })
+        .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString() })
         .eq("id", id).or(allowed).select("id");
       return Array.isArray(data) && data.length > 0;
     },
+    // Foutdetails gaan uitsluitend naar de afgeschermde pogingentabel (alleen admin/penningmeester leesbaar).
     async markSent(id, documentId) {
-      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_synced_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "sent", sanitized_error: null });
     },
     async markError(id, message) {
-      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", id).eq("informer_status", "sending");
+      await supabase.from("internal_declarations").update({ informer_status: "error" }).eq("id", id).eq("informer_status", "sending");
+      await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "error", sanitized_error: message });
     },
     async markInvalid(id, message) {
-      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", id).in("informer_status", ["not_sent", "queued", "error"]);
+      await supabase.from("internal_declarations").update({ informer_status: "error" }).eq("id", id).in("informer_status", ["not_sent", "queued", "error"]);
+      await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "error", sanitized_error: message });
     },
     async recordTodo(id, message) {
       const { data: d } = await supabase.from("internal_declarations").select("year, board_member_name, amount").eq("id", id).maybeSingle();

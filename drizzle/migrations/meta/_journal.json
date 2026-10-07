@@ -15,6 +15,13 @@
       "when": 1791406639171,
       "tag": "0001_declaration_informer_sent_status",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791407355470,
+      "tag": "0002_declaration_sync_attempts",
+      "breakpoints": true
     }
   ]
 }
