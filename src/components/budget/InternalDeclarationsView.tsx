@@ -13,10 +13,11 @@ import { toast } from "sonner";
 
 type AddDeclarationInput = {
   declaration: Omit<InternalDeclaration, "id" | "reviewed_by" | "reviewed_at">;
-  receipt?: File | null;
+  receipts?: File[];
+  asConcept?: boolean;
 };
 
-type AddDeclarationResult = { id: string; informerSynced: boolean } | void;
+type AddDeclarationResult = { id: string; informerSynced: boolean; concept?: boolean } | void;
 
 interface Props {
   declarations: InternalDeclaration[];
@@ -28,6 +29,8 @@ interface Props {
   onDelete: (id: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onSubmitConcept?: (id: string) => void;
+  onRetryInformer?: (id: string) => void;
 }
 
 const fmtDate = (value: string | null) => value
@@ -40,19 +43,25 @@ const money = (value: number) => new Intl.NumberFormat("nl-NL", {
 }).format(value);
 
 const statusBadge = (status: string) => {
+  if (status === "concept") return <Badge variant="outline">Concept</Badge>;
   if (status === "approved") return <Badge className="bg-green-600">Goedgekeurd</Badge>;
   if (status === "rejected") return <Badge variant="destructive">Afgewezen</Badge>;
   return <Badge variant="secondary">In afwachting</Badge>;
 };
 
-const informerBadge = (declaration: InternalDeclaration) => {
-  if (declaration.informer_status === "synced") return <Badge className="bg-green-600">In Informer</Badge>;
-  if (declaration.informer_status === "error") {
-    return <Badge variant="destructive" title={declaration.informer_error || undefined}>Informer: actie nodig</Badge>;
+const informerBadge = (declaration: InternalDeclaration, showError: boolean) => {
+  if (declaration.status === "concept") return null;
+  if (declaration.informer_status === "sent" || declaration.informer_status === "synced") {
+    return <Badge className="bg-green-600">Naar Informer verzonden</Badge>;
   }
-  if (declaration.informer_status === "queued") return <Badge variant="outline">Naar Informer…</Badge>;
-  return null;
+  if (declaration.informer_status === "error") {
+    return <Badge variant="destructive" title={showError ? declaration.informer_error || undefined : undefined}>Synchronisatie mislukt</Badge>;
+  }
+  return <Badge variant="outline">Ingediend</Badge>;
 };
+
+const canRetry = (d: InternalDeclaration) =>
+  d.status !== "concept" && d.status !== "rejected" && (d.informer_status === "error" || d.informer_status === "not_sent" || d.informer_status === "queued");
 
 const memberAddress = (member?: DeclarationBoardMember) => [
   member?.prive_adres,
