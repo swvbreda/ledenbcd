@@ -1519,35 +1519,95 @@ function optionId(value: any): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  return btoa(binary);
+}
+
+function declarationReceiptPaths(declaration: any): string[] {
+  const paths = [...(Array.isArray(declaration.receipt_paths) ? declaration.receipt_paths : []), declaration.receipt_path]
+    .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
+  return [...new Set(paths)];
+}
+
+// Voegt alle bonnen samen tot één PDF (Informer accepteert één document per inkoopfactuur).
 async function declarationReceiptPdf(supabase: any, declaration: any): Promise<string | undefined> {
-  if (!declaration.receipt_path) return undefined;
-  const { data, error } = await supabase.storage.from("declaration-receipts").download(declaration.receipt_path);
-  if (error || !data) throw new Error(`bon ophalen mislukt: ${error?.message ?? "geen bestand"}`);
-  const bytes = new Uint8Array(await data.arrayBuffer());
-  const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
-  let pdfBytes = bytes;
-  if (!isPdf) {
-    const { PDFDocument } = await import("npm:pdf-lib@1.17.1");
-    const pdf = await PDFDocument.create();
-    const mime = String(data.type || "").toLowerCase();
-    const image = mime.includes("png") ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
+  const paths = declarationReceiptPaths(declaration);
+  if (paths.length === 0) return undefined;
+  const { PDFDocument } = await import("npm:pdf-lib@1.17.1");
+  const merged = await PDFDocument.create();
+  for (const path of paths) {
+    const { data, error } = await supabase.storage.from("declaration-receipts").download(path);
+    if (error || !data) throw new Error("Een bon kon niet worden opgehaald uit de opslag");
+    const bytes = new Uint8Array(await data.arrayBuffer());
+    const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+    if (isPdf) {
+      const src = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const pages = await merged.copyPages(src, src.getPageIndices());
+      pages.forEach((page: any) => merged.addPage(page));
+      continue;
+    }
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50;
+    const isJpg = bytes[0] === 0xff && bytes[1] === 0xd8;
+    if (!isPng && !isJpg) throw new Error("Een bon heeft een formaat dat Informer niet accepteert (gebruik PDF, JPG of PNG)");
+    const image = isPng ? await merged.embedPng(bytes) : await merged.embedJpg(bytes);
     const size = image.scale(1);
-    const maxWidth = 540;
-    const maxHeight = 760;
-    const scale = Math.min(maxWidth / size.width, maxHeight / size.height, 1);
-    const page = pdf.addPage([595, 842]);
+    const scale = Math.min(540 / size.width, 760 / size.height, 1);
+    const page = merged.addPage([595, 842]);
     page.drawImage(image, {
       x: (595 - size.width * scale) / 2,
       y: (842 - size.height * scale) / 2,
       width: size.width * scale,
       height: size.height * scale,
     });
-    pdfBytes = await pdf.save();
   }
-  let binary = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < pdfBytes.length; i += chunk) binary += String.fromCharCode(...pdfBytes.subarray(i, i + chunk));
-  return btoa(binary);
+  return bytesToBase64(await merged.save());
+}
+
+// Logs mogen geen IBAN, tokens of documentinhoud bevatten.
+function redactApiCalls(calls: ApiCall[]): ApiCall[] {
+  return calls.map((c) => ({
+    ts: c.ts, method: c.method, url: c.url, status: c.status, ok: c.ok,
+    duration_ms: c.duration_ms, request_id: c.request_id, error: c.error, auth_mode: c.auth_mode,
+  } as ApiCall));
+}
+
+function redactIban(text: string): string {
+  return text.replace(/\b[A-Z]{2}\d{2}[A-Z0-9 ]{10,30}\b/gi, "[IBAN]");
+}
+
+function declarationReference(declaration: { id: string; year: number }): string {
+  return `DECL-${String(declaration.year)}-${String(declaration.id).slice(0, 8).toUpperCase()}`;
+}
+
+function validateDeclarationForInformer(declaration: any): string | null {
+  if (declaration.status === "concept") return "Declaratie is nog een concept";
+  if (declaration.status === "rejected") return "Afgewezen declaraties worden niet naar Informer gestuurd";
+  if (!declaration.board_member_id) return "Bestuurslid ontbreekt";
+  if (!(Number(declaration.amount) > 0)) return "Bedrag ontbreekt";
+  if (!declaration.bank_account || !declaration.account_holder) return "Rekeningnummer of rekeninghouder ontbreekt";
+  if (!declaration.appointment) return "Omschrijving ontbreekt";
+  if (declaration.declaration_type !== "reiskosten" && declarationReceiptPaths(declaration).length === 0) {
+    return "Bon ontbreekt; voeg eerst een bon toe";
+  }
+  return null;
+}
+
+function declarationLineDescription(declaration: any, eventTitle: string | null): string {
+  const kind = declaration.declaration_type === "reiskosten" ? "Reiskosten" : "Declaratie";
+  const parts = [
+    `${kind}: ${declaration.appointment || declaration.board_member_name}`,
+    `Indiener: ${declaration.board_member_name}`,
+    declaration.expense_date ? `Datum: ${declaration.expense_date}` : null,
+    declaration.trajectory ? `Traject: ${declaration.trajectory}${declaration.km_return ? ` (${declaration.km_return} km)` : ""}` : null,
+    eventTitle ? `Evenement: ${eventTitle}` : null,
+    declaration.budget_reference ? `Dossier/begroting: ${declaration.budget_reference}` : null,
+    `Uitbetalen aan: ${declaration.account_holder} ${String(declaration.bank_account).replace(/\s/g, "").toUpperCase()}`,
+    `Ref: ${declarationReference(declaration)}`,
+  ].filter(Boolean);
+  return parts.join(" | ").slice(0, 1000);
 }
 
 async function ensureSupplierForBoardMember(supabase: any, declaration: any, apiCalls: ApiCall[]) {
@@ -1608,14 +1668,56 @@ async function ensureSupplierForBoardMember(supabase: any, declaration: any, api
   return id;
 }
 
-async function sendDeclarationToInformer(supabase: any, declarationId: string): Promise<ActionResult> {
+async function findExistingPurchaseByReference(reference: string, apiCalls: ApiCall[]): Promise<string | null> {
+  const invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], apiCalls);
+  const match = invoices.find((inv: any) => String(inv?.number ?? inv?.invoice_number ?? inv?.reference ?? "").trim().toUpperCase() === reference);
+  const id = match ? String(match?.id ?? match?.invoice_id ?? "") : "";
+  return id || null;
+}
+
+async function sendDeclarationToInformer(
+  supabase: any,
+  declarationId: string,
+  opts: { retry: boolean },
+): Promise<ActionResult> {
   const action = "declaration_to_informer";
   const apiCalls: ApiCall[] = [];
+  let claimed = false;
   try {
     const { data: declaration, error } = await supabase.from("internal_declarations").select("*").eq("id", declarationId).single();
     if (error || !declaration) throw new Error("Declaratie niet gevonden");
     if (declaration.informer_status === "synced" && declaration.informer_external_id) {
-      return { action, success: true, items_processed: 0, details: { already_synced: true, id: declaration.informer_external_id }, api_calls: apiCalls };
+      return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, already_synced: true }, api_calls: [] };
+    }
+    const invalid = validateDeclarationForInformer(declaration);
+    if (invalid) {
+      if (declaration.status !== "concept") {
+        await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: invalid }).eq("id", declarationId).neq("informer_status", "synced");
+      }
+      return { action, success: false, items_processed: 0, error_message: invalid, details: { declaration_id: declarationId }, api_calls: [] };
+    }
+
+    // Atomische claim: dubbelklik of gelijktijdige retry kan nooit twee documenten maken.
+    const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
+    const allowed = opts.retry
+      ? `informer_status.in.(not_sent,queued,error),and(informer_status.eq.sending,informer_last_attempt_at.lt.${staleBefore})`
+      : "informer_status.in.(not_sent,queued)";
+    const { data: claim } = await supabase.from("internal_declarations")
+      .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString(), informer_error: null })
+      .eq("id", declarationId).or(allowed).select("id");
+    if (!claim || claim.length === 0) {
+      return { action, success: false, items_processed: 0, error_message: "Declaratie wordt al verwerkt of is al verzonden", details: { declaration_id: declarationId, skipped: true }, api_calls: [] };
+    }
+    claimed = true;
+
+    const reference = declarationReference(declaration);
+    // Na een eerdere poging kan het document al bestaan (antwoord verloren): eerst zoeken.
+    if (declaration.informer_last_attempt_at) {
+      const existing = await findExistingPurchaseByReference(reference, apiCalls);
+      if (existing) {
+        await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: existing, informer_error: null, informer_synced_at: new Date().toISOString(), informer_payment_status: "open" }).eq("id", declarationId);
+        return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, reference, reused_existing: true }, api_calls: redactApiCalls(apiCalls) };
+      }
     }
 
     const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
@@ -1636,8 +1738,13 @@ async function sendDeclarationToInformer(supabase: any, declarationId: string): 
     const vatId = optionId(vat);
     if (!ledgerId || !vatId) throw new Error("Informer heeft geen bruikbaar grootboek of btw-tarief teruggegeven");
 
-    const reference = `DECL-${String(declaration.year)}-${String(declaration.id).slice(0, 8).toUpperCase()}`;
+    let eventTitle: string | null = null;
+    if (declaration.event_id) {
+      const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
+      if (ev) eventTitle = `${ev.title} (${ev.event_date})`;
+    }
     const pdf = await declarationReceiptPdf(supabase, declaration);
+    // Te verwerken inkoopfactuur: geen betaling, geen incasso.
     const payload: Record<string, unknown> = {
       relation_id: Number(relationId),
       invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
@@ -1645,7 +1752,7 @@ async function sendDeclarationToInformer(supabase: any, declarationId: string): 
       vat_option: "incl",
       collect: 0,
       lines: [{
-        description: `${declaration.declaration_type === "reiskosten" ? "Reiskosten" : "Declaratie"}: ${declaration.appointment || declaration.board_member_name}`,
+        description: declarationLineDescription(declaration, eventTitle),
         amount: Number(declaration.amount),
         vat_amount: 0,
         vat_id: vatId,
@@ -1658,22 +1765,63 @@ async function sendDeclarationToInformer(supabase: any, declarationId: string): 
     if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
     const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
     const externalId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
-    await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
-    return { action, success: true, items_processed: 1, details: { declaration_id: declarationId, external_id: externalId, reference }, api_calls: apiCalls };
+    await supabase.from("internal_declarations").update({ informer_status: "synced", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString(), informer_payment_status: "open" }).eq("id", declarationId);
+    await supabase.from("finance_todos").update({ status: "done", completed_at: new Date().toISOString() })
+      .eq("todo_type", "declaration_informer_error").eq("reference_id", declarationId).eq("status", "pending");
+    console.log(`[declaration] verzonden ${reference}`);
+    return { action, success: true, items_processed: 1, details: { declaration_id: declarationId, reference }, api_calls: redactApiCalls(apiCalls) };
   } catch (error) {
-    const message = (error as Error).message;
-    await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", declarationId);
+    const message = redactIban((error as Error).message).slice(0, 500);
+    console.error(`[declaration] mislukt ${declarationId}: ${message}`);
+    if (claimed) {
+      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", declarationId).eq("informer_status", "sending");
+    }
     const { data: declaration } = await supabase.from("internal_declarations").select("year, board_member_name, amount").eq("id", declarationId).maybeSingle();
     await supabase.from("finance_todos").upsert({
       todo_type: "declaration_informer_error",
-      title: `Declaratie handmatig verwerken: ${declaration?.board_member_name ?? declarationId}`,
-      description: `De declaratie van € ${Number(declaration?.amount ?? 0).toFixed(2)} kon niet automatisch als open inkoopfactuur in Informer worden gezet. Reden: ${message}`,
+      title: `Declaratie opnieuw naar Informer sturen: ${declaration?.board_member_name ?? declarationId}`,
+      description: `De declaratie van € ${Number(declaration?.amount ?? 0).toFixed(2)} kon niet automatisch als inkoopfactuur in Informer worden gezet. Reden: ${message}`,
       assigned_to: "penningmeester",
       reference_id: declarationId,
       status: "pending",
       year: Number(declaration?.year ?? new Date().getFullYear()),
     }, { onConflict: "todo_type,reference_id,year" });
-    return { action, success: false, items_processed: 0, error_message: message, api_calls: apiCalls };
+    return { action, success: false, items_processed: 0, error_message: message, details: { declaration_id: declarationId }, api_calls: redactApiCalls(apiCalls) };
+  }
+}
+
+// Betaalstatus terug uit de al gesynchroniseerde Informer-inkoopfacturen.
+// Wijzigt alleen betaalstatus/-datum, nooit bedragen.
+async function syncDeclarationPaymentStatus(supabase: any): Promise<ActionResult> {
+  const action = "declaration_payment_status";
+  try {
+    const { data: decls, error } = await supabase.from("internal_declarations")
+      .select("id, informer_external_id, informer_payment_status, paid_at")
+      .eq("informer_status", "synced").not("informer_external_id", "is", null);
+    if (error) throw error;
+    const ids = (decls ?? []).map((d: any) => String(d.informer_external_id));
+    if (ids.length === 0) return { action, success: true, items_processed: 0 };
+    const { data: entries, error: ledgerError } = await supabase.from("informer_ledger_entries")
+      .select("informer_id, status, open_amount, amount_incl")
+      .eq("doc_type", "purchase_invoice").in("informer_id", ids);
+    if (ledgerError) throw ledgerError;
+    const byId = new Map((entries ?? []).map((e: any) => [String(e.informer_id), e]));
+    let updated = 0;
+    for (const d of decls ?? []) {
+      const entry: any = byId.get(String(d.informer_external_id));
+      if (!entry) continue;
+      const paid = entry.status === "paid" || (Number(entry.amount_incl) > 0 && Number(entry.open_amount) <= 0);
+      const next = paid ? "paid" : "open";
+      if (next === d.informer_payment_status && (!paid || d.paid_at)) continue;
+      await supabase.from("internal_declarations").update({
+        informer_payment_status: next,
+        paid_at: paid ? (d.paid_at ?? new Date().toISOString().slice(0, 10)) : d.paid_at,
+      }).eq("id", d.id);
+      updated++;
+    }
+    return { action, success: true, items_processed: updated };
+  } catch (e) {
+    return { action, success: false, items_processed: 0, error_message: (e as Error).message };
   }
 }
 
@@ -2019,6 +2167,8 @@ Deno.serve(async (req) => {
   const isServiceRole = SERVICE_ROLE && authHeader === `Bearer ${SERVICE_ROLE}`;
   const isInternal = INTERNAL_WEBHOOK_SECRET && internalSecret === INTERNAL_WEBHOOK_SECRET;
   let authorized = isServiceRole || isInternal;
+  let callerUserId: string | null = null;
+  let callerIsAdmin = Boolean(authorized);
   // Also accept any valid service_role JWT (handles key rotation where the
   // env-provided service key no longer matches tokens stored in vault).
   if (!authorized && authHeader.startsWith("Bearer ")) {
@@ -2057,7 +2207,10 @@ Deno.serve(async (req) => {
       }
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
       const { data: isAdmin } = await admin.rpc("has_role", { _user_id: userRes.user.id, _role: "admin" });
-      if (!isAdmin) {
+      callerUserId = userRes.user.id;
+      callerIsAdmin = Boolean(isAdmin);
+      const requestedAction = new URL(req.url).searchParams.get("action");
+      if (!isAdmin && requestedAction !== "declaration_to_informer") {
         return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -2081,13 +2234,23 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get("action") ?? "all";
 
   if (action === "declaration_to_informer") {
-    const body = await req.json().catch(() => ({})) as { declaration_id?: string };
+    const body = await req.json().catch(() => ({})) as { declaration_id?: string; retry?: boolean };
     if (!body.declaration_id) {
       return new Response(JSON.stringify({ error: "declaration_id is verplicht" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const result = await sendDeclarationToInformer(supabase, body.declaration_id);
+    // Niet-beheerders mogen alleen hun eigen, net ingediende declaratie eenmalig versturen.
+    if (!callerIsAdmin) {
+      const { data: own } = await supabase.from("internal_declarations")
+        .select("submitted_by, informer_status, status").eq("id", body.declaration_id).maybeSingle();
+      if (!own || own.submitted_by !== callerUserId || body.retry || own.informer_status !== "not_sent" || own.status !== "pending") {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    const result = await sendDeclarationToInformer(supabase, body.declaration_id, { retry: Boolean(body.retry) && callerIsAdmin });
     await logResult(supabase, result);
     return new Response(JSON.stringify({ success: result.success, results: [result] }), {
       status: result.success ? 200 : 207,
@@ -2375,6 +2538,7 @@ Deno.serve(async (req) => {
     if (action === "pull_creditors"|| action === "all") results.push(await pullCreditors(supabase));
     if (action === "pull_invoice_documents") results.push(await pullInvoiceDocuments(supabase));
     if (action === "pull_bank_balances" || action === "all") results.push(await pullBankBalances(supabase));
+    if (action === "declaration_payment_status" || action === "all" || action === "sync_year") results.push(await syncDeclarationPaymentStatus(supabase));
 
     for (const r of results) await logResult(supabase, r);
 
