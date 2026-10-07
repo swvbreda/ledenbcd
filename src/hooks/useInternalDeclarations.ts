@@ -32,7 +32,6 @@ export interface InternalDeclaration {
   informer_payment_status?: "open" | "paid" | null;
   informer_status: "not_sent" | "queued" | "sending" | "sent" | "synced" | "error";
   informer_external_id: string | null;
-  informer_error: string | null;
   informer_synced_at: string | null;
 }
 
@@ -81,9 +80,36 @@ export function useInternalDeclarations(year: number) {
   });
 }
 
+/** Laatste foutdetail per declaratie; RLS laat alleen admin/penningmeester lezen. */
+export function useDeclarationSyncErrors(enabled: boolean) {
+  return useQuery({
+    queryKey: ["declaration-sync-errors"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("internal_declaration_sync_attempts")
+        .select("declaration_id, status, sanitized_error, attempted_at")
+        .order("attempted_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const latest: Record<string, string> = {};
+      const seen = new Set<string>();
+      for (const row of data ?? []) {
+        if (seen.has(row.declaration_id)) continue;
+        seen.add(row.declaration_id);
+        if (row.status === "error" && row.sanitized_error) latest[row.declaration_id] = row.sanitized_error;
+      }
+      return latest;
+    },
+  });
+}
+
 export function useInternalDeclarationMutations(year: number) {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["internal-declarations", year] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["internal-declarations", year] });
+    qc.invalidateQueries({ queryKey: ["declaration-sync-errors"] });
+  };
 
   const sendToInformer = async (id: string, retry = false) => {
     const { data, error } = await supabase.functions.invoke(
