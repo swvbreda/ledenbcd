@@ -2,6 +2,15 @@
 // Uses the Informer REST API. Endpoints assume the public v2 spec; can be overridden
 // via INFORMER_BASE_URL secret if Informer uses a different host for this account.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  authorizeDeclarationCall,
+  declarationLineDescription,
+  declarationReceiptPaths,
+  redactApiCalls,
+  runDeclarationSync,
+  type DeclarationStore,
+  type InformerPort,
+} from "./declarationSync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1526,10 +1535,8 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function declarationReceiptPaths(declaration: any): string[] {
-  const paths = [...(Array.isArray(declaration.receipt_paths) ? declaration.receipt_paths : []), declaration.receipt_path]
-    .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
-  return [...new Set(paths)];
+function _unusedReceiptPathsShim(declaration: any): string[] {
+  return declarationReceiptPaths(declaration);
 }
 
 // Voegt alle bonnen samen tot één PDF (Informer accepteert één document per inkoopfactuur).
@@ -1566,49 +1573,6 @@ async function declarationReceiptPdf(supabase: any, declaration: any): Promise<s
   return bytesToBase64(await merged.save());
 }
 
-// Logs mogen geen IBAN, tokens of documentinhoud bevatten.
-function redactApiCalls(calls: ApiCall[]): ApiCall[] {
-  return calls.map((c) => ({
-    ts: c.ts, method: c.method, url: c.url, status: c.status, ok: c.ok,
-    duration_ms: c.duration_ms, request_id: c.request_id, error: c.error, auth_mode: c.auth_mode,
-  } as ApiCall));
-}
-
-function redactIban(text: string): string {
-  return text.replace(/\b[A-Z]{2}\d{2}[A-Z0-9 ]{10,30}\b/gi, "[IBAN]");
-}
-
-function declarationReference(declaration: { id: string; year: number }): string {
-  return `DECL-${String(declaration.id).toUpperCase()}`;
-}
-
-function validateDeclarationForInformer(declaration: any): string | null {
-  if (declaration.status === "concept") return "Declaratie is nog een concept";
-  if (declaration.status === "rejected") return "Afgewezen declaraties worden niet naar Informer gestuurd";
-  if (!declaration.board_member_id) return "Bestuurslid ontbreekt";
-  if (!(Number(declaration.amount) > 0)) return "Bedrag ontbreekt";
-  if (!declaration.bank_account || !declaration.account_holder) return "Rekeningnummer of rekeninghouder ontbreekt";
-  if (!declaration.appointment) return "Omschrijving ontbreekt";
-  if (declaration.declaration_type !== "reiskosten" && declarationReceiptPaths(declaration).length === 0) {
-    return "Bon ontbreekt; voeg eerst een bon toe";
-  }
-  return null;
-}
-
-function declarationLineDescription(declaration: any, eventTitle: string | null): string {
-  const kind = declaration.declaration_type === "reiskosten" ? "Reiskosten" : "Declaratie";
-  const parts = [
-    `${kind}: ${declaration.appointment || declaration.board_member_name}`,
-    `Indiener: ${declaration.board_member_name}`,
-    declaration.expense_date ? `Datum: ${declaration.expense_date}` : null,
-    declaration.trajectory ? `Traject: ${declaration.trajectory}${declaration.km_return ? ` (${declaration.km_return} km)` : ""}` : null,
-    eventTitle ? `Evenement: ${eventTitle}` : null,
-    declaration.budget_reference ? `Dossier/begroting: ${declaration.budget_reference}` : null,
-    `Uitbetalen aan: ${declaration.account_holder} ${String(declaration.bank_account).replace(/\s/g, "").toUpperCase()}`,
-    `Ref: ${declarationReference(declaration)}`,
-  ].filter(Boolean);
-  return parts.join(" | ").slice(0, 1000);
-}
 
 async function ensureSupplierForBoardMember(supabase: any, declaration: any, apiCalls: ApiCall[]) {
   const { data: boardMember, error } = await supabase
@@ -1675,119 +1639,120 @@ async function findExistingPurchaseByReference(reference: string, apiCalls: ApiC
   return id || null;
 }
 
+function supabaseDeclarationStore(supabase: any): DeclarationStore {
+  return {
+    async load(id) {
+      const { data, error } = await supabase.from("internal_declarations").select("*").eq("id", id).maybeSingle();
+      if (error) throw new Error("Declaratie kon niet worden geladen");
+      return data;
+    },
+    async claim(id, retry) {
+      // Atomische claim: dubbelklik of gelijktijdige retry kan nooit twee documenten maken.
+      const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
+      const allowed = retry
+        ? `informer_status.in.(not_sent,queued,error),and(informer_status.eq.sending,informer_last_attempt_at.lt.${staleBefore})`
+        : "informer_status.in.(not_sent,queued)";
+      const { data } = await supabase.from("internal_declarations")
+        .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString(), informer_error: null })
+        .eq("id", id).or(allowed).select("id");
+      return Array.isArray(data) && data.length > 0;
+    },
+    async markSent(id, documentId) {
+      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", id);
+    },
+    async markError(id, message) {
+      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", id).eq("informer_status", "sending");
+    },
+    async markInvalid(id, message) {
+      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", id).in("informer_status", ["not_sent", "queued", "error"]);
+    },
+    async recordTodo(id, message) {
+      const { data: d } = await supabase.from("internal_declarations").select("year, board_member_name, amount").eq("id", id).maybeSingle();
+      await supabase.from("finance_todos").upsert({
+        todo_type: "declaration_informer_error",
+        title: `Declaratie opnieuw naar Informer sturen: ${d?.board_member_name ?? id}`,
+        description: `De declaratie van € ${Number(d?.amount ?? 0).toFixed(2)} kon niet automatisch als inkoopfactuur in Informer worden gezet. Reden: ${message}`,
+        assigned_to: "penningmeester",
+        reference_id: id,
+        status: "pending",
+        year: Number(d?.year ?? new Date().getFullYear()),
+      }, { onConflict: "todo_type,reference_id,year" });
+    },
+    async resolveTodo(id) {
+      await supabase.from("finance_todos").update({ status: "done", completed_at: new Date().toISOString() })
+        .eq("todo_type", "declaration_informer_error").eq("reference_id", id).eq("status", "pending");
+    },
+  };
+}
+
+function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
+  return {
+    findByReference: (reference) => findExistingPurchaseByReference(reference, apiCalls),
+    async createPurchase(declaration, reference) {
+      const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
+      const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
+      const optionsError = hasInformerError(optionsCall.response_body);
+      if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
+      const ledgers = findNestedArray(optionsCall.response_body, /ledger/i);
+      const vats = findNestedArray(optionsCall.response_body, /vat/i);
+      const configuredLedger = Number(Deno.env.get("INFORMER_DECLARATION_LEDGER_ID") ?? "");
+      const ledger = ledgers.find((item: any) => configuredLedger && optionId(item) === configuredLedger)
+        ?? ledgers.find((item: any) => /reis|onkosten|bestuur|algemene kosten|vrijwillig/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
+        ?? ledgers[0];
+      const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
+        ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
+        ?? vats[0];
+      const ledgerId = optionId(ledger);
+      const vatId = optionId(vat);
+      if (!ledgerId || !vatId) throw new Error("Informer heeft geen bruikbaar grootboek of btw-tarief teruggegeven");
+      let eventTitle: string | null = null;
+      if (declaration.event_id) {
+        const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
+        if (ev) eventTitle = `${ev.title} (${ev.event_date})`;
+      }
+      const pdf = await declarationReceiptPdf(supabase, declaration);
+      // Te verwerken inkoopfactuur: geen betaling, geen incasso.
+      const payload: Record<string, unknown> = {
+        relation_id: Number(relationId),
+        invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
+        number: reference,
+        vat_option: "incl",
+        collect: 0,
+        lines: [{
+          description: declarationLineDescription(declaration, eventTitle),
+          amount: Number(declaration.amount),
+          vat_amount: 0,
+          vat_id: vatId,
+          ledger_id: ledgerId,
+        }],
+        ...(pdf ? { pdf } : {}),
+      };
+      const call = await informerCall("/invoices/purchase", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
+      const apiError = hasInformerError(call.response_body);
+      if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+      const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
+      return String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
+    },
+  };
+}
+
 async function sendDeclarationToInformer(
   supabase: any,
   declarationId: string,
   opts: { retry: boolean },
 ): Promise<ActionResult> {
-  const action = "declaration_to_informer";
   const apiCalls: ApiCall[] = [];
-  let claimed = false;
-  try {
-    const { data: declaration, error } = await supabase.from("internal_declarations").select("*").eq("id", declarationId).single();
-    if (error || !declaration) throw new Error("Declaratie niet gevonden");
-    if (["sent", "synced"].includes(declaration.informer_status) && declaration.informer_external_id) {
-      return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, already_synced: true }, api_calls: [] };
-    }
-    const invalid = validateDeclarationForInformer(declaration);
-    if (invalid) {
-      if (declaration.status !== "concept") {
-        await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: invalid }).eq("id", declarationId).in("informer_status", ["not_sent", "queued", "error"]);
-      }
-      return { action, success: false, items_processed: 0, error_message: invalid, details: { declaration_id: declarationId }, api_calls: [] };
-    }
-
-    // Atomische claim: dubbelklik of gelijktijdige retry kan nooit twee documenten maken.
-    const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
-    const allowed = opts.retry
-      ? `informer_status.in.(not_sent,queued,error),and(informer_status.eq.sending,informer_last_attempt_at.lt.${staleBefore})`
-      : "informer_status.in.(not_sent,queued)";
-    const { data: claim } = await supabase.from("internal_declarations")
-      .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString(), informer_error: null })
-      .eq("id", declarationId).or(allowed).select("id");
-    if (!claim || claim.length === 0) {
-      return { action, success: false, items_processed: 0, error_message: "Declaratie wordt al verwerkt of is al verzonden", details: { declaration_id: declarationId, skipped: true }, api_calls: [] };
-    }
-    claimed = true;
-
-    const reference = declarationReference(declaration);
-    // Altijd eerst zoeken op de vaste referentie: bestaat het document al, dan hergebruiken.
-    {
-      const existing = await findExistingPurchaseByReference(reference, apiCalls);
-      if (existing) {
-        await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: existing, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
-        return { action, success: true, items_processed: 0, details: { declaration_id: declarationId, reference, reused_existing: true }, api_calls: redactApiCalls(apiCalls) };
-      }
-    }
-
-    const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
-    const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
-    const optionsError = hasInformerError(optionsCall.response_body);
-    if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
-
-    const ledgers = findNestedArray(optionsCall.response_body, /ledger/i);
-    const vats = findNestedArray(optionsCall.response_body, /vat/i);
-    const configuredLedger = Number(Deno.env.get("INFORMER_DECLARATION_LEDGER_ID") ?? "");
-    const ledger = ledgers.find((item: any) => configuredLedger && optionId(item) === configuredLedger)
-      ?? ledgers.find((item: any) => /reis|onkosten|bestuur|algemene kosten|vrijwillig/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
-      ?? ledgers[0];
-    const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
-      ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
-      ?? vats[0];
-    const ledgerId = optionId(ledger);
-    const vatId = optionId(vat);
-    if (!ledgerId || !vatId) throw new Error("Informer heeft geen bruikbaar grootboek of btw-tarief teruggegeven");
-
-    let eventTitle: string | null = null;
-    if (declaration.event_id) {
-      const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
-      if (ev) eventTitle = `${ev.title} (${ev.event_date})`;
-    }
-    const pdf = await declarationReceiptPdf(supabase, declaration);
-    // Te verwerken inkoopfactuur: geen betaling, geen incasso.
-    const payload: Record<string, unknown> = {
-      relation_id: Number(relationId),
-      invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
-      number: reference,
-      vat_option: "incl",
-      collect: 0,
-      lines: [{
-        description: declarationLineDescription(declaration, eventTitle),
-        amount: Number(declaration.amount),
-        vat_amount: 0,
-        vat_id: vatId,
-        ledger_id: ledgerId,
-      }],
-      ...(pdf ? { pdf } : {}),
-    };
-    const call = await informerCall("/invoices/purchase", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
-    const apiError = hasInformerError(call.response_body);
-    if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
-    const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
-    const externalId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
-    await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: externalId, informer_error: null, informer_synced_at: new Date().toISOString() }).eq("id", declarationId);
-    await supabase.from("finance_todos").update({ status: "done", completed_at: new Date().toISOString() })
-      .eq("todo_type", "declaration_informer_error").eq("reference_id", declarationId).eq("status", "pending");
-    console.log(`[declaration] verzonden ${reference}`);
-    return { action, success: true, items_processed: 1, details: { declaration_id: declarationId, reference }, api_calls: redactApiCalls(apiCalls) };
-  } catch (error) {
-    const message = redactIban((error as Error).message).slice(0, 500);
-    console.error(`[declaration] mislukt ${declarationId}: ${message}`);
-    if (claimed) {
-      await supabase.from("internal_declarations").update({ informer_status: "error", informer_error: message }).eq("id", declarationId).eq("informer_status", "sending");
-    }
-    const { data: declaration } = await supabase.from("internal_declarations").select("year, board_member_name, amount").eq("id", declarationId).maybeSingle();
-    await supabase.from("finance_todos").upsert({
-      todo_type: "declaration_informer_error",
-      title: `Declaratie opnieuw naar Informer sturen: ${declaration?.board_member_name ?? declarationId}`,
-      description: `De declaratie van € ${Number(declaration?.amount ?? 0).toFixed(2)} kon niet automatisch als inkoopfactuur in Informer worden gezet. Reden: ${message}`,
-      assigned_to: "penningmeester",
-      reference_id: declarationId,
-      status: "pending",
-      year: Number(declaration?.year ?? new Date().getFullYear()),
-    }, { onConflict: "todo_type,reference_id,year" });
-    return { action, success: false, items_processed: 0, error_message: message, details: { declaration_id: declarationId }, api_calls: redactApiCalls(apiCalls) };
-  }
+  const r = await runDeclarationSync(declarationId, opts, supabaseDeclarationStore(supabase), liveInformerPort(supabase, apiCalls));
+  if (r.success) console.log(`[declaration] verzonden ${declarationId}`);
+  else console.error(`[declaration] mislukt ${declarationId}: ${r.error_message}`);
+  return {
+    action: "declaration_to_informer",
+    success: r.success,
+    items_processed: r.success && !r.details.reused_existing && !r.details.already_synced ? 1 : 0,
+    error_message: r.error_message,
+    details: r.details,
+    api_calls: redactApiCalls(apiCalls) as unknown as ApiCall[],
+  };
 }
 
 // Betaalstatus terug uit de al gesynchroniseerde Informer-inkoopfacturen.
