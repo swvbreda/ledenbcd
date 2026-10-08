@@ -36,6 +36,9 @@ interface Props {
   onSubmitConcept?: (id: string) => void;
   onRetryInformer?: (id: string) => void;
   /** Wijzigt een bestaand record (zelfde id); ontbreekt dit, dan is er geen Wijzigen-knop. */
+  /** Admin: posten/dossiers om aan te koppelen; ontbreekt dit, dan geen Indelen-knop. */
+  allocationOptions?: { lineItems: { id: string; name: string }[]; dossiers: string[] };
+  onAllocate?: (input: { id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[] }) => Promise<unknown>;
   onEdit?: (input: { id: string; expectedStatus: string; fields: DeclarationEditFields; existingReceipts: string[]; receipts?: File[]; submit?: boolean })
     => Promise<{ id: string; informerSynced: boolean; submitted: boolean } | void>;
 }
@@ -76,7 +79,7 @@ const memberAddress = (member?: DeclarationBoardMember) => [
 ].filter(Boolean).join(", ");
 
 export default function InternalDeclarationsView({
-  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer, onEdit,
+  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer, onEdit, allocationOptions, onAllocate,
 }: Props) {
   const { data: syncErrorData } = useDeclarationSyncErrors(isAdmin);
   const syncErrors: Record<string, string> = isAdmin ? syncErrorData ?? {} : {};
@@ -132,6 +135,31 @@ export default function InternalDeclarationsView({
   const openRows = useMemo(() => selectOpenDeclarations(declarations, { year, isAdmin, userId })
     .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || "")), [declarations, year, isAdmin, userId]);
   const [drill, setDrill] = useState<{ key: string | null; name: string } | null>(null);
+  const [allocating, setAllocating] = useState<{ d: InternalDeclaration; lineItemId: string; dossier: string } | null>(null);
+  const [allocSaving, setAllocSaving] = useState(false);
+  const lineItemName = (id: string | null | undefined) => id ? allocationOptions?.lineItems.find((li) => li.id === id)?.name ?? "Onbekende post" : null;
+  const canAllocate = isAdmin && !!onAllocate && !!allocationOptions;
+  const allocateButton = (d: InternalDeclaration) => canAllocate
+    ? <Button size="sm" variant="outline" onClick={() => setAllocating({ d, lineItemId: (d as any).budget_line_item_id ?? "", dossier: (d as any).dossier ?? "" })}>Indelen</Button>
+    : null;
+  const saveAllocation = async () => {
+    if (!allocating || !onAllocate || !allocationOptions) return;
+    setAllocSaving(true);
+    try {
+      await onAllocate({ id: allocating.d.id, informerExternalId: allocating.d.informer_external_id, lineItemId: allocating.lineItemId || null,
+        dossier: allocating.dossier.trim() || null, validLineItemIds: allocationOptions.lineItems.map((li) => li.id) });
+      toast.success("Post en dossier opgeslagen");
+      setAllocating(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Toewijzen is niet gelukt");
+    } finally { setAllocSaving(false); }
+  };
+  const allocationText = (d: InternalDeclaration) => {
+    const post = lineItemName((d as any).budget_line_item_id);
+    const dossier = (d as any).dossier as string | null;
+    if (!post && !dossier) return isAdmin ? "Nog niet ingedeeld" : null;
+    return [post, dossier ? `dossier ${dossier}` : null].filter(Boolean).join(" · ");
+  };
   const drillRows = drill ? openRows.filter((d) => drill.key === null || openMemberKey(d) === drill.key) : [];
   const drillCents = drillRows.reduce((sum, d) => sum + Math.round(Number(d.amount) * 100), 0);
   const formNote = formOpenNote(openTotals, { year, isAdmin, member: boardMembers.find((m) => m.id === memberId) ?? null });
@@ -424,10 +452,32 @@ export default function InternalDeclarationsView({
                 <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
                   <strong className="tabular-nums">{money(d.amount)}</strong>
                   {editButton(d)}
+                  {allocateButton(d)}
                   {onEdit && !editCheck(d).ok && <span className="max-w-[16rem] text-xs text-muted-foreground">{(editCheck(d) as { reason: string }).reason}</span>}
                 </div>
               </li>)}
             </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={allocating !== null} onOpenChange={(o) => { if (!o) setAllocating(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Declaratie indelen</DialogTitle></DialogHeader>
+          {allocating && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{allocating.d.board_member_name} · {declarationDescription(allocating.d)} · {money(allocating.d.amount)}</p>
+              <label className="block space-y-1.5"><span className="text-sm font-medium">Begrotingspost</span>
+                <select aria-label="Begrotingspost" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={allocating.lineItemId}
+                  onChange={(e) => setAllocating({ ...allocating, lineItemId: e.target.value })}>
+                  <option value="">Geen post</option>
+                  {allocationOptions?.lineItems.map((li) => <option key={li.id} value={li.id}>{li.name}</option>)}
+                </select></label>
+              <label className="block space-y-1.5"><span className="text-sm font-medium">Dossier (optioneel)</span>
+                <Input aria-label="Dossier" list="declaration-dossiers" value={allocating.dossier} onChange={(e) => setAllocating({ ...allocating, dossier: e.target.value })} />
+                <datalist id="declaration-dossiers">{allocationOptions?.dossiers.map((d) => <option key={d} value={d} />)}</datalist></label>
+              {allocating.d.informer_external_id && <p className="text-xs text-muted-foreground">Deze declaratie staat in Informer; de indeling geldt ook in begroting en dossiers. Een bestaande andere toewijzing wordt niet overschreven.</p>}
+              <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setAllocating(null)} disabled={allocSaving}>Annuleren</Button><Button onClick={saveAllocation} disabled={allocSaving}>{allocSaving ? "Opslaan…" : "Opslaan"}</Button></div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -508,6 +558,7 @@ export default function InternalDeclarationsView({
               {isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}
               {isAdmin && item.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
               {editButton(item)}
+              {allocateButton(item)}
               {canModify && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(item.id)}><Trash2 className="mr-1 h-4 w-4" />Verwijderen</Button>}
             </div>
           </article>;
@@ -517,8 +568,8 @@ export default function InternalDeclarationsView({
       <div className="hidden overflow-x-auto rounded-xl border lg:block">
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
           <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
-            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span></td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
-            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
+            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span>{allocationText(item) && <span className="block text-xs text-muted-foreground">{allocationText(item)}</span>}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
+            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{allocateButton(item)}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
         </table>
