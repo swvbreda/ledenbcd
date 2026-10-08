@@ -3,6 +3,7 @@ import { Check, ChevronRight, Pencil, Download, FileText, MapPin, Plus, Receipt,
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
 import { computeOpenTotals, formOpenNote, openMemberKey, selectOpenDeclarations } from "@/lib/declarationOpenTotals";
+import { declarationDescription, declarationTypeLabel } from "@/lib/declarationLabels";
 import { canEditDeclaration, validateEditAmount, type DeclarationEditFields } from "@/lib/declarationEdit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDeclarationSyncErrors, type DeclarationBoardMember, type InternalDeclaration } from "@/hooks/useInternalDeclarations";
@@ -119,7 +120,7 @@ export default function InternalDeclarationsView({
     const needle = search.trim().toLowerCase();
     return declarations
       .filter((item) => statusFilter === "all" || item.status === statusFilter)
-      .filter((item) => !needle || [item.board_member_name, item.appointment, item.trajectory, item.declaration_type]
+      .filter((item) => !needle || [item.board_member_name, item.appointment, item.trajectory, item.declaration_type, declarationTypeLabel(item.declaration_type), declarationDescription(item, "")]
         .some((value) => (value || "").toLowerCase().includes(needle)))
       .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || ""));
   }, [declarations, search, statusFilter]);
@@ -360,8 +361,8 @@ export default function InternalDeclarationsView({
   };
 
   const handleExport = () => {
-    const rows = filtered.map((item) => [item.expense_date || "", item.board_member_name, item.declaration_type,
-      item.appointment || "", item.trajectory || "", item.km_return || "", item.amount, item.status, item.informer_status]);
+    const rows = filtered.map((item) => [item.expense_date || "", item.board_member_name, declarationTypeLabel(item.declaration_type),
+      declarationDescription(item, ""), item.trajectory || "", item.km_return || "", item.amount, item.status, item.informer_status]);
     const csv = [["Datum", "Bestuurslid", "Soort", "Omschrijving", "Traject", "Km totaal", "Bedrag", "Status", "Informer"], ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";")).join("\n");
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
@@ -416,8 +417,8 @@ export default function InternalDeclarationsView({
             <ul className="divide-y text-sm" data-testid="drill-list">
               {drillRows.map((d) => <li key={d.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium break-words">{d.appointment || "Geen omschrijving"}</p>
-                  <p className="text-xs text-muted-foreground">{fmtDate(d.expense_date)} · {d.declaration_type === "reiskosten" ? "Kilometervergoeding" : d.declaration_type === "overig" ? "Overige reiskosten" : d.declaration_type}{drill?.key === null && isAdmin ? ` · ${d.board_member_name}` : ""}</p>
+                  <p className="font-medium break-words">{declarationDescription(d)}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDate(d.expense_date)} · {declarationTypeLabel(d.declaration_type)}{drill?.key === null && isAdmin ? ` · ${d.board_member_name}` : ""}</p>
                   <div className="mt-1 flex flex-wrap gap-1">{statusBadge(d.status)}{informerBadge(d)}</div>
                 </div>
                 <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
@@ -497,8 +498,8 @@ export default function InternalDeclarationsView({
         {filtered.map((item) => {
           const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId);
           return <article key={item.id} className="min-w-0 rounded-xl border bg-card p-4 shadow-sm">
-            <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {item.declaration_type === "reiskosten" ? "Reiskosten" : "Overige kosten"}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
-            <p className="mt-3 break-words text-sm">{item.appointment || "Geen omschrijving"}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
+            <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {declarationTypeLabel(item.declaration_type)}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
+            <p className="mt-3 break-words text-sm">{declarationDescription(item)}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
             <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item, syncErrors[item.id])}</div>{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-2 break-words text-xs text-destructive">{syncErrors[item.id]}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
               {item.receipt_path && <Button size="sm" variant="outline" onClick={() => viewReceipt(item.receipt_path!)}><Receipt className="mr-1 h-4 w-4" />Bon</Button>}
@@ -516,7 +517,7 @@ export default function InternalDeclarationsView({
       <div className="hidden overflow-x-auto rounded-xl border lg:block">
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
           <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
-            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{item.appointment || "–"}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
+            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span></td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
             <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
