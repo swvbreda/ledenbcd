@@ -57,7 +57,8 @@ export function redactApiCalls<T extends Record<string, any>>(calls: T[]): Recor
 /** Vastgezette, in Informer gecontroleerde grootboekrekeningen per declaratiesoort. */
 export const DECLARATION_LEDGERS: Readonly<Record<string, { code: string; ledgerId: number; description: string }>> = {
   reiskosten: { code: "4495", ledgerId: 15391231, description: "Kilometervergoeding" },
-  overige_reiskosten: { code: "5010", ledgerId: 15391263, description: "Reiskosten" },
+  // Bestaand type "overig" = overige reiskosten (OV, parkeren e.d.).
+  overig: { code: "5010", ledgerId: 15391263, description: "Reiskosten" },
 };
 
 export function declarationLedgerFor(type: unknown): { code: string; ledgerId: number; description: string } | null {
@@ -107,11 +108,7 @@ export function selectDeclarationLedger(declarationType: unknown, ledgerOptions:
 export function validateDeclarationForInformer(declaration: any): string | null {
   if (declaration.status === "concept") return "Declaratie is nog een concept";
   if (declaration.status === "rejected") return "Afgewezen declaraties worden niet naar Informer gestuurd";
-  if (!declarationLedgerFor(declaration.declaration_type)) {
-    return declaration.declaration_type === "overig"
-      ? "Voor algemene overige kosten is nog geen grootboekrekening ingesteld; niet naar Informer gestuurd"
-      : "Onbekende declaratiesoort; niet naar Informer gestuurd";
-  }
+  if (!declarationLedgerFor(declaration.declaration_type)) return "Onbekende declaratiesoort; niet naar Informer gestuurd";
   if (!declaration.board_member_id) return "Bestuurslid ontbreekt";
   if (!(Number(declaration.amount) > 0)) return "Bedrag ontbreekt";
   if (!declaration.bank_account || !declaration.account_holder) return "Rekeningnummer of rekeninghouder ontbreekt";
@@ -124,7 +121,7 @@ export function validateDeclarationForInformer(declaration: any): string | null 
 
 export function declarationLineDescription(declaration: any, eventTitle: string | null): string {
   const kind = declaration.declaration_type === "reiskosten" ? "Kilometervergoeding"
-    : declaration.declaration_type === "overige_reiskosten" ? "Overige reiskosten" : "Declaratie";
+    : declaration.declaration_type === "overig" ? "Overige reiskosten" : "Declaratie";
   const parts = [
     `${kind}: ${declaration.appointment || declaration.board_member_name}`,
     `Indiener: ${declaration.board_member_name}`,
