@@ -91,7 +91,7 @@ describe("declaratie naar Informer", () => {
     expect(inf.calls.create).toBe(1);
     expect(s.row.informer_status).toBe("sent");
     expect(s.row.informer_external_id).toBe("INF-900");
-    expect(s.row.status).toBe("pending");
+    expect(s.row.status).toBe("approved");
   });
 
   it("1b. dubbelklik / gelijktijdige aanroep maakt maximaal één document", async () => {
@@ -123,7 +123,7 @@ describe("declaratie naar Informer", () => {
     const r = await runDeclarationSync(ID, { retry: false }, s.store, inf.port);
     expect(r.success).toBe(false);
     expect(s.row.informer_status).toBe("error");
-    expect(s.row.status).toBe("pending");
+    expect(s.row.status).toBe("approved");
     expect(s.row.informer_error).toBeUndefined(); // foutdetail nooit op de declaratie zelf
     for (const text of [s.attempts[0].error, r.error_message, s.todos[0]]) {
       expect(text).not.toContain(IBAN);

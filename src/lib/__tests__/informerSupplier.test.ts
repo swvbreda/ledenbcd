@@ -107,7 +107,7 @@ describe("ongewijzigd: rekeningen en idempotentie", () => {
   });
 
   it("422 bij leverancier: status fout, geen tweede create bij retry als document bestaat", async () => {
-    const decl = { id: "11111111-2222-3333-4444-555555555555", status: "pending", board_member_id: "bm", amount: 12,
+    const decl = { id: "11111111-2222-3333-4444-555555555555", status: "approved", board_member_id: "bm", amount: 12,
       declaration_type: "overig", receipt_path: "r.pdf", bank_account: "NL91ABNA0417164300", account_holder: "X", appointment: "Vergadering", informer_status: "not_sent" };
     const state: any = { ...decl };
     const store: DeclarationStore = {
