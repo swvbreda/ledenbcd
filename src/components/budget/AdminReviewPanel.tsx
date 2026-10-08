@@ -1,9 +1,11 @@
+import { reviewKey } from "@/lib/reviewKey";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { contributionEvidence, closedYearsFromAttempts, contributionsToReview, declarationsToReview, countWithoutDossier, ledgerExceptions, type DeclLite } from "@/lib/adminReview";
 
 const eur = (n: number) => n.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
+
 
 /** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
 /** Haalt alle rijen op in pagina's van 1000 (Data API-limiet). */
@@ -17,6 +19,7 @@ export async function fetchAll<T>(build: (from: number, to: number) => PromiseLi
   }
 }
 
+
 /** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
 export function useAdminReview(year: number, enabled: boolean) {
   return useQuery({
@@ -28,8 +31,8 @@ export function useAdminReview(year: number, enabled: boolean) {
         fetchAll<any>((f, t) => supabase.from("member_contributions").select("id, member_id, year, amount, paid, external_invoice_id").eq("year", year).eq("paid", true).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("ponto_transactions").select("dossier, amount, executed_at, value_date").not("dossier", "is", null).gt("amount", 0).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("bank_transactions").select("id, amount, invoice_reference, dossier, year, direction").not("dossier", "is", null).eq("direction", "in").eq("year", year).order("id").range(f, t)),
-        fetchAll<any>((f, t) => supabase.from("informer_ledger_entries").select("informer_id, ledger_account, amount_incl, relation_name, entry_date").eq("year", year).eq("doc_type", "purchase_invoice").is("deleted_at", null).order("informer_id").range(f, t)),
-        fetchAll<any>((f, t) => supabase.from("ledger_entry_overrides").select("informer_id, line_item_id, dossier").eq("doc_type", "purchase_invoice").order("informer_id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("informer_ledger_entries").select("informer_id, doc_type, ledger_account, amount_incl, relation_name, entry_date").eq("year", year).in("doc_type", ["purchase_invoice", "receipt"]).is("deleted_at", null).order("informer_id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("ledger_entry_overrides").select("informer_id, doc_type, line_item_id, dossier").in("doc_type", ["purchase_invoice", "receipt"]).order("informer_id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("budget_expenses").select("external_id, line_item_id, amount, source").not("external_id", "is", null).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("ledger_payment_links").select("informer_id, ponto_transaction_id").order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("budget_line_items").select("id, name").order("id").range(f, t)),
@@ -40,8 +43,9 @@ export function useAdminReview(year: number, enabled: boolean) {
       const declTx = new Set(declBank.map((d: any) => String(d.bank_transaction_id)));
       const evidence = contributionEvidence(contrib, bank.map((b: any) => ({ id: b.id, amount: Math.abs(Number(b.amount)), year: Number(b.year), dossier: b.dossier, invoice_reference: b.invoice_reference, declLinked: declTx.has(String(b.id)) })), cLinks, year);
       const itemName = new Map(items.map((i: any) => [i.id, i.name as string]));
-      const ovPost = new Map(overrides.map((o: any) => [o.informer_id, o.line_item_id]));
-      const ovDossier = new Map(overrides.map((o: any) => [o.informer_id, o.dossier]));
+      // Informer-ID's zijn niet uniek over documentsoorten: bonnetjes krijgen een eigen sleutel.
+      const ovPost = new Map(overrides.map((o: any) => [reviewKey(o.doc_type, o.informer_id), o.line_item_id]));
+      const ovDossier = new Map(overrides.map((o: any) => [reviewKey(o.doc_type, o.informer_id), o.dossier]));
       const legacy = new Map<string, { id: string | null; name: string }>();
       for (const e of expenses) if (!(e.source === "informer" && Number(e.amount) === 0) && e.line_item_id) legacy.set(e.external_id, { id: e.line_item_id, name: itemName.get(e.line_item_id) ?? "Onbekende post" });
       const linkIds = [...new Set(links.map((l: any) => l.ponto_transaction_id))];
@@ -72,7 +76,7 @@ export function useAdminReview(year: number, enabled: boolean) {
       return {
         evidence,
         contributions: pre.map((c) => ({ ...c, name: names.get(c.member_id) ?? c.name })),
-        exceptions: ledgerExceptions(ledger, ovPost, legacy, ovDossier, itemName),
+        exceptions: ledgerExceptions(ledger.map((l: any) => ({ ...l, informer_id: reviewKey(l.doc_type, l.informer_id) })), ovPost, legacy, ovDossier, itemName),
         closedYears: closedYearsFromAttempts(attempts.map((a: any) => ({ sanitized_error: a.sanitized_error, year: Number(String(a.internal_declarations?.expense_date ?? "").slice(0, 4)) }))),
       };
     },
@@ -99,7 +103,7 @@ export default function AdminReviewPanel({ year, declarations }: { year: number;
             <section>
               <p className="font-medium">Boekingen met afwijkende post ({q.data.exceptions.length})</p>
               <ul className="list-disc pl-5">{q.data.exceptions.map((e) => (
-                <li key={e.informer_id}>{e.entry_date} · {e.relation_name ?? "—"} · {eur(Number(e.amount_incl ?? 0))} · rekening {e.ledger_account} — nu {e.manual ? "handmatig " : ""}op “{e.currentPost}”{e.dossier ? `, dossier ${e.dossier}` : ""}; regel zou “{e.intended}” geven. Niet overschreven; aanpassen via Boekingen.</li>
+                <li key={e.informer_id}>{String(e.informer_id).startsWith("receipt:") ? "Bonnetje · " : ""}{e.entry_date} · {e.relation_name ?? "—"} · {eur(Number(e.amount_incl ?? 0))} · rekening {e.ledger_account} — nu {e.manual ? "handmatig " : ""}op “{e.currentPost}”{e.dossier ? `, dossier ${e.dossier}` : ""}; regel zou “{e.intended}” geven. Niet overschreven; aanpassen via Boekingen.</li>
               ))}</ul>
             </section>
             <section>

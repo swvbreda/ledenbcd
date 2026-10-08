@@ -19,3 +19,11 @@ describe("automatische maandvergoeding", () => {
     expect(src).not.toMatch(/status:\s*["']approved["']/);
   });
 });
+
+import { reviewKey } from "../reviewKey";
+describe("reviewscherm bonnetjes", () => {
+  it("houdt bonnetje en inkoopfactuur met zelfde ID gescheiden", () => {
+    expect(reviewKey("purchase_invoice", "123")).toBe("123");
+    expect(reviewKey("receipt", "123")).toBe("receipt:123");
+  });
+});
