@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
-import { computeOpenTotals } from "@/lib/declarationOpenTotals";
+import { computeOpenTotals, formOpenNote } from "@/lib/declarationOpenTotals";
 import { useDeclarationSyncErrors, type DeclarationBoardMember, type InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,6 +119,8 @@ export default function InternalDeclarationsView({
 
   const total = filtered.reduce((sum, item) => sum + item.amount, 0);
   const openTotals = useMemo(() => computeOpenTotals(declarations as any, { year, isAdmin, userId }), [declarations, year, isAdmin, userId]);
+  // Melding onder het formulier: per gekozen bestuurslid (binnen de eigen toegankelijke cijfers), anders algemeen.
+  const formNote = formOpenNote(openTotals, { year, isAdmin, member: boardMembers.find((m) => m.id === memberId) ?? null });
 
   const chooseMember = async (id: string) => {
     setMemberId(id);
@@ -307,11 +309,6 @@ export default function InternalDeclarationsView({
       {adding && (
         <section ref={formRef} aria-label="Nieuwe declaratie" className="scroll-mt-4 rounded-xl border bg-card p-4 shadow-sm sm:p-5">
           <div className="mb-5"><h2 className="text-lg font-semibold">Nieuwe declaratie</h2><p className="text-sm text-muted-foreground">Kies eerst voor welk bestuurslid de kosten zijn gemaakt.</p></div>
-          {openTotals.count > 0 && (
-            <p data-testid="form-open-total" className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-              Je hebt al {openTotals.count} open {openTotals.count === 1 ? "declaratie" : "declaraties"} ({money(openTotals.cents / 100)}). Deze nieuwe declaratie wordt apart ingediend en bij het openstaande totaal opgeteld.
-            </p>
-          )}
           <div className="grid min-w-0 gap-4 md:grid-cols-2">
             <label className="min-w-0 space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bestuurslid</span>
               <Select value={memberId} onValueChange={chooseMember}><SelectTrigger><SelectValue placeholder="Selecteer een bestuurslid" /></SelectTrigger><SelectContent>{boardMembers.map((member) => <SelectItem key={member.id} value={member.id}>{member.naam}{member.functie ? ` — ${member.functie}` : ""}</SelectItem>)}</SelectContent></Select>
@@ -353,6 +350,9 @@ export default function InternalDeclarationsView({
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind !== "reiskosten" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
+          {formNote && (
+            <p data-testid="form-open-total" className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">{formNote}</p>
+          )}
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button variant="outline" onClick={() => submit(true)} disabled={saving}>Opslaan als concept</Button><Button onClick={() => submit(false)} disabled={saving}>{saving ? "Indienen…" : "Declaratie definitief indienen"}</Button></div>
         </section>
       )}

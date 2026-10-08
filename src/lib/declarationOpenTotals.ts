@@ -41,3 +41,21 @@ export function computeOpenTotals(
   }
   return { count: rows.length, cents, perMember: [...map.values()].sort((a, b) => b.cents - a.cents || a.name.localeCompare(b.name)) };
 }
+
+const fmtEur = (cents: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(cents / 100);
+const nOpen = (c: number) => `${c} open ${c === 1 ? "declaratie" : "declaraties"}`;
+
+/** Tekst onder het formulier: per gekozen bestuurslid uit de eigen toegankelijke cijfers, anders algemeen. */
+export function formOpenNote(
+  totals: OpenTotals,
+  opts: { year: number; isAdmin: boolean; member?: { id: string; naam: string } | null },
+): string | null {
+  if (opts.member) {
+    const m = opts.member;
+    const entry = totals.perMember.find((p) => p.key === m.id || p.key === `naam:${m.naam}`);
+    if (!entry) return null;
+    return `Er staan voor ${m.naam} al ${nOpen(entry.count)} (${fmtEur(entry.cents)}). Deze nieuwe declaratie wordt apart ingediend en bij dat openstaande totaal opgeteld.`;
+  }
+  if (totals.count === 0) return null;
+  return `Er staan in ${opts.year} ${nOpen(totals.count)} (${fmtEur(totals.cents)})${opts.isAdmin ? " over alle bestuurders" : ""}. Elke nieuwe declaratie wordt apart ingediend en bij het openstaande totaal opgeteld.`;
+}

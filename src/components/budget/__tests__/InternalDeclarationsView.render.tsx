@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+vi.setConfig({ testTimeout: 20000 });
+import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 
 vi.mock("@/integrations/supabase/client", () => {
-  const q: any = { select: () => q, is: () => q, gte: () => q, lte: () => q, order: () => q, then: (cb: any) => cb({ data: [] }) };
+  const q: any = { select: () => q, not: () => q, or: () => q, limit: () => q, eq: () => q, is: () => q, gte: () => q, lte: () => q, order: () => q, then: (cb: any) => cb({ data: [] }) };
   return { supabase: { from: () => q, functions: { invoke: vi.fn() }, storage: { from: () => ({}) } } };
 });
 vi.mock("@/hooks/useInternalDeclarations", () => ({ useDeclarationSyncErrors: () => ({ data: {} }) }));
@@ -20,10 +21,30 @@ const decls: any[] = [
   { ...base, id: "4", amount: 99, status: "pending", submitted_by: "u2", board_member_name: "Bernard", board_member_id: "b2" },
 ];
 const noop = () => {};
-const renderView = (isAdmin = false) => render(<InternalDeclarationsView declarations={decls} boardMembers={[]} year={2026} isAdmin={isAdmin}
+const members: any[] = [{ id: "b1", naam: "Simone", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }, { id: "b2", naam: "Bernard", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }];
+const renderView = (isAdmin = false) => render(<InternalDeclarationsView declarations={decls} boardMembers={members} year={2026} isAdmin={isAdmin}
   userId="u1" onAdd={vi.fn()} onDelete={noop} onApprove={noop} onReject={noop} />);
 
 afterEach(cleanup);
+Object.assign(Element.prototype, { hasPointerCapture: () => false, releasePointerCapture: () => {}, setPointerCapture: () => {}, scrollIntoView: () => {} });
+async function pickMember(name: string) {
+  const form = document.querySelector<HTMLElement>('section[aria-label="Nieuwe declaratie"]')!;
+  const trigger = form.querySelector<HTMLElement>('[role="combobox"]')!;
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  const listbox = await waitFor(() => { const l = document.querySelector<HTMLElement>('[role="listbox"]'); if (!l) throw new Error("geen lijst"); return l; });
+  const opt = [...listbox.querySelectorAll('[role="option"]')].find((o) => o.textContent?.startsWith(name))!;
+  fireEvent.click(opt);
+}
+const noteIsBelowFormFields = () => {
+  const form = document.querySelector<HTMLElement>('section[aria-label="Nieuwe declaratie"]')!;
+  const note = within(form).getByTestId("form-open-total");
+  const submit = within(form).getByText("Declaratie definitief indienen");
+  const bon = within(form).getByText(/^Bon/);
+  expect(bon.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(note.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  return note;
+};
 
 describe("InternalDeclarationsView open totaal", () => {
   it("toont gewone gebruiker eigen open totaal vóór indienen, zonder betaalde of andermans declaraties", () => {
@@ -38,7 +59,8 @@ describe("InternalDeclarationsView open totaal", () => {
     renderView(false);
     fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
     const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
-    expect(within(form).getByTestId("form-open-total").textContent).toMatch(/2 open declaraties/);
+    expect(noteIsBelowFormFields().textContent).toMatch(/2 open declaraties \(.*28,17\)/);
+    expect(within(form).getAllByTestId("form-open-total")).toHaveLength(1);
     expect(screen.getByRole("region", { name: "Openstaand totaal" })).toBeTruthy();
     const desc = within(form).getByPlaceholderText(/bestuursvergadering/) as HTMLInputElement;
     fireEvent.change(desc, { target: { value: "Vergadering Utrecht" } });
@@ -52,5 +74,13 @@ describe("InternalDeclarationsView open totaal", () => {
     const block = screen.getByRole("region", { name: "Openstaand totaal" });
     expect(within(block).getByText(/3 declaraties/)).toBeTruthy();
     expect(within(block).getByText(/Bernard/)).toBeTruthy();
+  });
+
+  it("admin: algemene melding onderaan noemt alle bestuurders, geen persoonlijke claim", () => {
+    renderView(true);
+    fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
+    const t = noteIsBelowFormFields().textContent!;
+    expect(t).toMatch(/3 open declaraties.*over alle bestuurders/);
+    expect(t).not.toMatch(/Je hebt/);
   });
 });
