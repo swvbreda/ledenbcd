@@ -8,6 +8,10 @@ import {
   declarationReceiptPaths,
   redactApiCalls,
   runDeclarationSync,
+  declTokens,
+  matchReferenceAcross,
+  receiptDescription,
+  type ListedDoc,
   type DeclarationStore,
   type InformerPort,
 } from "./declarationSync.ts";
@@ -1609,11 +1613,31 @@ async function ensureSupplierForBoardMember(supabase: any, declaration: any, api
   return id;
 }
 
-async function findExistingPurchaseByReference(reference: string, apiCalls: ApiCall[]): Promise<string | null> {
+/** Beide Informer-namespaces (inkoopfacturen + bonnetjes), gepagineerd; elke lijstfout gooit (faalt dicht). */
+async function fetchDeclarationDocs(apiCalls: ApiCall[]): Promise<ListedDoc[]> {
   const invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], apiCalls);
-  const match = invoices.find((inv: any) => String(inv?.number ?? inv?.invoice_number ?? inv?.reference ?? "").trim().toUpperCase() === reference);
-  const id = match ? String(match?.id ?? match?.invoice_id ?? "") : "";
-  return id || null;
+  const receipts = await fetchAllInformerPages("/receipts", ["receipts", "receipt", "data"], apiCalls);
+  const docs: ListedDoc[] = [];
+  for (const inv of invoices) {
+    const id = String(inv?.id ?? inv?.invoice_id ?? "");
+    const num = String(inv?.number ?? inv?.invoice_number ?? inv?.reference ?? "").trim().toUpperCase();
+    if (id) docs.push({ id, type: "purchase_invoice", ref: num ? [num] : [], amount: invoiceAmount(inv), date: inv?.invoice_date ?? null, paid: inv?.totals?.paid ?? inv?.paid ?? null });
+  }
+  for (const r of receipts) {
+    const id = String(r?.id ?? "");
+    if (id) docs.push({ id, type: "receipt", ref: declTokens(r?.description), amount: toAmount(r?.amount), date: r?.date ? String(r.date).slice(0, 10) : null, paid: r?.paid != null ? toAmount(r.paid) : null });
+  }
+  return docs;
+}
+
+async function findExistingDeclarationDoc(reference: string, apiCalls: ApiCall[]) {
+  const hit = matchReferenceAcross(reference, await fetchDeclarationDocs(apiCalls));
+  return hit ? { id: hit.id, type: hit.type, amount: hit.amount, date: hit.date } : null;
+}
+
+/** Voor de betaalde-batchcontrole: één rij per (document, kenmerk) zodat dubbele kenmerken over beide soorten zichtbaar worden. */
+async function fetchDeclarationDocsForPreflight(apiCalls: ApiCall[]) {
+  return (await fetchDeclarationDocs(apiCalls)).flatMap((d) => d.ref.map((number) => ({ id: d.id, number, total: d.amount, date: d.date, paid: d.paid ?? null, type: d.type })));
 }
 
 function supabaseDeclarationStore(supabase: any): DeclarationStore {
@@ -1635,8 +1659,8 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
       return Array.isArray(data) && data.length > 0;
     },
     // Foutdetails gaan uitsluitend naar de afgeschermde pogingentabel (alleen admin/penningmeester leesbaar).
-    async markSent(id, documentId) {
-      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_synced_at: new Date().toISOString() }).eq("id", id);
+    async markSent(id, documentId, docType) {
+      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_doc_type: docType, informer_synced_at: new Date().toISOString() }).eq("id", id);
       await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "sent", sanitized_error: null });
     },
     async markError(id, message) {
@@ -1668,58 +1692,39 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
 
 function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
   return {
-    findByReference: (reference) => findExistingPurchaseByReference(reference, apiCalls),
-    async createPurchase(declaration, reference) {
+    findByReference: (reference) => findExistingDeclarationDoc(reference, apiCalls),
+    // Bonnetje (Uitgaven) via officiële POST /receipts: date, payment_type=bank, amount, description, ledger_id, pdf.
+    // Geen leverancier, geen inkoopfactuur, geen betaling of bankboeking.
+    async createReceipt(declaration, reference) {
       const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
       const optionsError = hasInformerError(optionsCall.response_body);
-      if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
-      // Exact de afgesproken rekening, gecontroleerd tegen de actuele opties; anders afbreken
-      // vóór er een relatie of inkoopfactuur wordt aangemaakt.
+      if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-grootboekopties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
+      // Exact de afgesproken rekening (4495/5010/4009), gecontroleerd tegen de actuele opties; anders afbreken vóór POST.
       const ledgerId = selectDeclarationLedger(declaration.declaration_type, extractLedgerOptions(optionsCall.response_body));
-      const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
-      const vats = findNestedArray(optionsCall.response_body, /vat/i);
-      const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
-        ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
-        ?? vats[0];
-      const vatId = optionId(vat);
-      if (!vatId) throw new Error("Informer heeft geen bruikbaar btw-tarief teruggegeven");
-      let eventTitle: string | null = null;
-      if (declaration.event_id) {
-        const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
-        if (ev) eventTitle = `${ev.title} (${ev.event_date})`;
-      }
       const pdf = await declarationReceiptPdf(supabase, declaration);
-      // Te verwerken inkoopfactuur: geen betaling, geen incasso.
+      const date = String(declaration.expense_date ?? "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Uitgavedatum ontbreekt; geen bonnetje aangemaakt");
       const payload: Record<string, unknown> = {
-        relation_id: Number(relationId),
-        invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
-        number: reference,
-        vat_option: "incl",
-        collect: 0,
-        lines: [{
-          description: declarationLineDescription(declaration, eventTitle),
-          amount: Number(declaration.amount),
-          vat_amount: 0,
-          vat_id: vatId,
-          ledger_id: ledgerId,
-        }],
+        date,
+        payment_type: "bank",
+        amount: Number(declaration.amount),
+        description: receiptDescription(declaration, reference),
+        ledger_id: Number(ledgerId),
         ...(pdf ? { pdf } : {}),
       };
-      const call = await informerCall("/invoices/purchase", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
+      const call = await informerCall("/receipts", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
       const apiError = hasInformerError(call.response_body);
-      if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
-      const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
-      let docId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? "");
-      if (!/^\d+$/.test(docId)) docId = (await findExistingPurchaseByReference(reference, apiCalls)) ?? "";
-      if (!/^\d+$/.test(docId)) throw new Error("Inkoopfactuur aangemaakt, maar document-id kon niet worden teruggelezen");
-      // Terugleescontrole: kenmerk en bedrag moeten exact kloppen.
-      const back = await informerCall(`/invoices/purchase/${docId}`, {}, apiCalls);
-      const doc: any = firstInformerItem(back.response_body, ["purchase", "invoice", "data"]) ?? back.response_body;
-      if (!back.ok || String(doc?.number ?? "").trim().toUpperCase() !== reference
-        || Math.abs(toAmount(doc?.totals?.incl_vat) - Number(declaration.amount)) > 0.005) {
-        throw new Error("Terugleescontrole van inkoopfactuur mislukt (kenmerk of bedrag wijkt af)");
+      if (call.error || !call.ok || apiError) throw new Error(`Bonnetje aanmaken mislukt (mogelijk toch aangemaakt; eerst opnieuw controleren): ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+      const created = firstInformerItem(call.response_body, ["receipt", "receipts", "data"]) ?? call.response_body;
+      const postedId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? "");
+      // Terugleescontrole via GET /receipts (gepagineerd, faalt dicht): exact één treffer, soort bonnetje, bedrag en datum gelijk.
+      const back = await findExistingDeclarationDoc(reference, apiCalls);
+      if (!back || back.type !== "receipt") throw new Error("Bonnetje niet teruggevonden in Informer na aanmaken; eerst opnieuw controleren");
+      if (/^\d+$/.test(postedId) && postedId !== back.id) throw new Error("Teruggelezen bonnetje-id wijkt af van aangemaakt id");
+      if (back.amount == null || Math.abs(Number(back.amount) - Number(declaration.amount)) > 0.005 || String(back.date ?? "").slice(0, 10) !== date) {
+        throw new Error("Terugleescontrole van bonnetje mislukt (bedrag of datum wijkt af)");
       }
-      return docId;
+      return back.id;
     },
   };
 }
