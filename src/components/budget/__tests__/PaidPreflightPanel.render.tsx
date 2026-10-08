@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+afterEach(cleanup);
 vi.mock("@/lib/invokeFunction", () => ({ invokeWithAuth: vi.fn() }));
 import PaidPreflightPanel from "../PaidPreflightPanel";
 
