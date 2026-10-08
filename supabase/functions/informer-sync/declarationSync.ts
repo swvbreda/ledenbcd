@@ -183,7 +183,15 @@ export const DECLARATION_LEDGERS: Readonly<Record<string, { code: string; ledger
   reiskosten: { code: "4495", ledgerId: 15391231, description: "Kilometervergoeding" },
   // Bestaand type "overig" = overige reiskosten (OV, parkeren e.d.).
   overig: { code: "5010", ledgerId: 15391263, description: "Reiskosten" },
+  // Maandelijkse vrijwilligersvergoedingen (auto-monthly-allowances): vaste soorten per functie.
+  penningmeester: { code: "4009", ledgerId: 15391211, description: "Vrijwilligersvergoedingen" },
+  woordvoering: { code: "4009", ledgerId: 15391211, description: "Vrijwilligersvergoedingen" },
 };
+
+export const MONTHLY_ALLOWANCE_TYPES: readonly string[] = ["penningmeester", "woordvoering"];
+export function isMonthlyAllowance(type: unknown): boolean {
+  return MONTHLY_ALLOWANCE_TYPES.includes(String(type));
+}
 
 export function declarationLedgerFor(type: unknown): { code: string; ledgerId: number; description: string } | null {
   const key = String(type ?? "");
