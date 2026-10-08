@@ -8,6 +8,10 @@ import {
   declarationReceiptPaths,
   redactApiCalls,
   runDeclarationSync,
+  declTokens,
+  matchReferenceAcross,
+  receiptDescription,
+  type ListedDoc,
   type DeclarationStore,
   type InformerPort,
 } from "./declarationSync.ts";
@@ -951,6 +955,7 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
     const sources: Array<{ doc_type: string; path: string; keys: string[] }> = [
       { doc_type: "sales_invoice", path: "/invoices/sales", keys: ["sales", "invoices", "data"] },
       { doc_type: "purchase_invoice", path: "/invoices/purchase", keys: ["purchase", "invoices", "data"] },
+      { doc_type: "receipt", path: "/receipts", keys: ["receipts", "receipt", "data"] },
     ];
 
     let upserted = 0;
@@ -1021,6 +1026,8 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
       for (const inv of invoices) {
         const informerId = String(inv?.id ?? inv?.invoice_id ?? "").trim();
         if (!informerId) continue;
+        // Alleen bonnetjes van declaraties (canoniek DECL-kenmerk) tellen; overige bonnetjes blijven buiten de begroting.
+        if (src.doc_type === "receipt" && declTokens(inv?.description).length === 0) continue;
         const entryDate = entryDateOf(inv);
         const invYear = entryDate ? Number(entryDate.slice(0, 4)) : detectYear(inv);
         if (invYear !== year) { skippedOtherYear++; continue; }
@@ -1047,8 +1054,10 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
             relationNames.get(String(invoiceRelationId(inv) ?? "")) ||
             null,
           relation_number: String(inv?.relation?.relation_number ?? inv?.relation_number ?? "") || null,
-          invoice_number: String(inv?.invoice_number ?? inv?.number ?? "") || null,
-          ledger_account: ledgerAccountOf(inv, ledgerNames),
+          invoice_number: src.doc_type === "receipt" ? (declTokens(inv?.description)[0] ?? null) : (String(inv?.invoice_number ?? inv?.number ?? "") || null),
+          ledger_account: src.doc_type === "receipt" && inv?.ledger_id != null
+            ? (ledgerNames.get(String(inv.ledger_id)) ?? String(inv.ledger_id))
+            : ledgerAccountOf(inv, ledgerNames),
           description: String(inv?.description ?? inv?.reference ?? "") || null,
           currency: String(inv?.currency ?? "EUR"),
           raw: inv,
@@ -1609,11 +1618,31 @@ async function ensureSupplierForBoardMember(supabase: any, declaration: any, api
   return id;
 }
 
-async function findExistingPurchaseByReference(reference: string, apiCalls: ApiCall[]): Promise<string | null> {
+/** Beide Informer-namespaces (inkoopfacturen + bonnetjes), gepagineerd; elke lijstfout gooit (faalt dicht). */
+async function fetchDeclarationDocs(apiCalls: ApiCall[]): Promise<ListedDoc[]> {
   const invoices = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], apiCalls);
-  const match = invoices.find((inv: any) => String(inv?.number ?? inv?.invoice_number ?? inv?.reference ?? "").trim().toUpperCase() === reference);
-  const id = match ? String(match?.id ?? match?.invoice_id ?? "") : "";
-  return id || null;
+  const receipts = await fetchAllInformerPages("/receipts", ["receipts", "receipt", "data"], apiCalls);
+  const docs: ListedDoc[] = [];
+  for (const inv of invoices) {
+    const id = String(inv?.id ?? inv?.invoice_id ?? "");
+    const num = String(inv?.number ?? inv?.invoice_number ?? inv?.reference ?? "").trim().toUpperCase();
+    if (id) docs.push({ id, type: "purchase_invoice", ref: num ? [num] : [], amount: invoiceAmount(inv), date: inv?.invoice_date ?? null, paid: inv?.totals?.paid ?? inv?.paid ?? null });
+  }
+  for (const r of receipts) {
+    const id = String(r?.id ?? "");
+    if (id) docs.push({ id, type: "receipt", ref: declTokens(r?.description), amount: toAmount(r?.amount), date: r?.date ? String(r.date).slice(0, 10) : null, paid: r?.paid != null ? toAmount(r.paid) : null });
+  }
+  return docs;
+}
+
+async function findExistingDeclarationDoc(reference: string, apiCalls: ApiCall[]) {
+  const hit = matchReferenceAcross(reference, await fetchDeclarationDocs(apiCalls));
+  return hit ? { id: hit.id, type: hit.type, amount: hit.amount, date: hit.date } : null;
+}
+
+/** Voor de betaalde-batchcontrole: één rij per (document, kenmerk) zodat dubbele kenmerken over beide soorten zichtbaar worden. */
+async function fetchDeclarationDocsForPreflight(apiCalls: ApiCall[]) {
+  return (await fetchDeclarationDocs(apiCalls)).flatMap((d) => d.ref.map((number) => ({ id: d.id, number, total: d.amount, date: d.date, paid: d.paid ?? null, type: d.type })));
 }
 
 function supabaseDeclarationStore(supabase: any): DeclarationStore {
@@ -1635,8 +1664,8 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
       return Array.isArray(data) && data.length > 0;
     },
     // Foutdetails gaan uitsluitend naar de afgeschermde pogingentabel (alleen admin/penningmeester leesbaar).
-    async markSent(id, documentId) {
-      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_synced_at: new Date().toISOString() }).eq("id", id);
+    async markSent(id, documentId, docType) {
+      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_doc_type: docType, informer_synced_at: new Date().toISOString() }).eq("id", id);
       await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "sent", sanitized_error: null });
     },
     async markError(id, message) {
@@ -1668,58 +1697,39 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
 
 function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
   return {
-    findByReference: (reference) => findExistingPurchaseByReference(reference, apiCalls),
-    async createPurchase(declaration, reference) {
+    findByReference: (reference) => findExistingDeclarationDoc(reference, apiCalls),
+    // Bonnetje (Uitgaven) via officiële POST /receipts: date, payment_type=bank, amount, description, ledger_id, pdf.
+    // Geen leverancier, geen inkoopfactuur, geen betaling of bankboeking.
+    async createReceipt(declaration, reference) {
       const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
       const optionsError = hasInformerError(optionsCall.response_body);
-      if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
-      // Exact de afgesproken rekening, gecontroleerd tegen de actuele opties; anders afbreken
-      // vóór er een relatie of inkoopfactuur wordt aangemaakt.
+      if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-grootboekopties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
+      // Exact de afgesproken rekening (4495/5010/4009), gecontroleerd tegen de actuele opties; anders afbreken vóór POST.
       const ledgerId = selectDeclarationLedger(declaration.declaration_type, extractLedgerOptions(optionsCall.response_body));
-      const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
-      const vats = findNestedArray(optionsCall.response_body, /vat/i);
-      const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
-        ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
-        ?? vats[0];
-      const vatId = optionId(vat);
-      if (!vatId) throw new Error("Informer heeft geen bruikbaar btw-tarief teruggegeven");
-      let eventTitle: string | null = null;
-      if (declaration.event_id) {
-        const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
-        if (ev) eventTitle = `${ev.title} (${ev.event_date})`;
-      }
       const pdf = await declarationReceiptPdf(supabase, declaration);
-      // Te verwerken inkoopfactuur: geen betaling, geen incasso.
+      const date = String(declaration.expense_date ?? "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Uitgavedatum ontbreekt; geen bonnetje aangemaakt");
       const payload: Record<string, unknown> = {
-        relation_id: Number(relationId),
-        invoice_date: declaration.expense_date || new Date().toISOString().slice(0, 10),
-        number: reference,
-        vat_option: "incl",
-        collect: 0,
-        lines: [{
-          description: declarationLineDescription(declaration, eventTitle),
-          amount: Number(declaration.amount),
-          vat_amount: 0,
-          vat_id: vatId,
-          ledger_id: ledgerId,
-        }],
+        date,
+        payment_type: "bank",
+        amount: Number(declaration.amount),
+        description: receiptDescription(declaration, reference),
+        ledger_id: Number(ledgerId),
         ...(pdf ? { pdf } : {}),
       };
-      const call = await informerCall("/invoices/purchase", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
+      const call = await informerCall("/receipts", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
       const apiError = hasInformerError(call.response_body);
-      if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
-      const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
-      let docId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? "");
-      if (!/^\d+$/.test(docId)) docId = (await findExistingPurchaseByReference(reference, apiCalls)) ?? "";
-      if (!/^\d+$/.test(docId)) throw new Error("Inkoopfactuur aangemaakt, maar document-id kon niet worden teruggelezen");
-      // Terugleescontrole: kenmerk en bedrag moeten exact kloppen.
-      const back = await informerCall(`/invoices/purchase/${docId}`, {}, apiCalls);
-      const doc: any = firstInformerItem(back.response_body, ["purchase", "invoice", "data"]) ?? back.response_body;
-      if (!back.ok || String(doc?.number ?? "").trim().toUpperCase() !== reference
-        || Math.abs(toAmount(doc?.totals?.incl_vat) - Number(declaration.amount)) > 0.005) {
-        throw new Error("Terugleescontrole van inkoopfactuur mislukt (kenmerk of bedrag wijkt af)");
+      if (call.error || !call.ok || apiError) throw new Error(`Bonnetje aanmaken mislukt (mogelijk toch aangemaakt; eerst opnieuw controleren): ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+      const created = firstInformerItem(call.response_body, ["receipt", "receipts", "data"]) ?? call.response_body;
+      const postedId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? "");
+      // Terugleescontrole via GET /receipts (gepagineerd, faalt dicht): exact één treffer, soort bonnetje, bedrag en datum gelijk.
+      const back = await findExistingDeclarationDoc(reference, apiCalls);
+      if (!back || back.type !== "receipt") throw new Error("Bonnetje niet teruggevonden in Informer na aanmaken; eerst opnieuw controleren");
+      if (/^\d+$/.test(postedId) && postedId !== back.id) throw new Error("Teruggelezen bonnetje-id wijkt af van aangemaakt id");
+      if (back.amount == null || Math.abs(Number(back.amount) - Number(declaration.amount)) > 0.005 || String(back.date ?? "").slice(0, 10) !== date) {
+        throw new Error("Terugleescontrole van bonnetje mislukt (bedrag of datum wijkt af)");
       }
-      return docId;
+      return back.id;
     },
   };
 }
@@ -1749,26 +1759,29 @@ async function syncDeclarationPaymentStatus(supabase: any): Promise<ActionResult
   const action = "declaration_payment_status";
   try {
     const { data: decls, error } = await supabase.from("internal_declarations")
-      .select("id, informer_external_id, informer_payment_status, paid_at")
-      .in("informer_status", ["sent", "synced"]).not("informer_external_id", "is", null);
+      .select("id, informer_external_id, informer_doc_type, informer_payment_status, paid_at")
+      .in("informer_status", ["sent", "synced"]).not("informer_external_id", "is", null).not("informer_doc_type", "is", null);
     if (error) throw error;
     const ids = (decls ?? []).map((d: any) => String(d.informer_external_id));
     if (ids.length === 0) return { action, success: true, items_processed: 0 };
+    // Id-nummers zijn niet uniek over soorten heen: altijd op (soort, id) koppelen.
     const { data: entries, error: ledgerError } = await supabase.from("informer_ledger_entries")
-      .select("informer_id, status, open_amount, amount_incl")
-      .eq("doc_type", "purchase_invoice").in("informer_id", ids);
+      .select("doc_type, informer_id, status, open_amount, amount_incl")
+      .in("doc_type", ["purchase_invoice", "receipt"]).in("informer_id", ids);
     if (ledgerError) throw ledgerError;
-    const byId = new Map((entries ?? []).map((e: any) => [String(e.informer_id), e]));
+    const byId = new Map((entries ?? []).map((e: any) => [`${e.doc_type}:${e.informer_id}`, e]));
     let updated = 0;
     for (const d of decls ?? []) {
-      const entry: any = byId.get(String(d.informer_external_id));
+      const entry: any = byId.get(`${d.informer_doc_type}:${d.informer_external_id}`);
       if (!entry) continue;
       const paid = entry.status === "paid" || (Number(entry.amount_incl) > 0 && Number(entry.open_amount) <= 0);
       const next = paid ? "paid" : "open";
-      if (next === d.informer_payment_status && (!paid || d.paid_at)) continue;
+      // Bonnetje verwerkt in Informer ≠ bekende betaaldatum: geen betaaldatum verzinnen.
+      const isReceipt = d.informer_doc_type === "receipt";
+      if (next === d.informer_payment_status && (!paid || d.paid_at || isReceipt)) continue;
       await supabase.from("internal_declarations").update({
         informer_payment_status: next,
-        paid_at: paid ? (d.paid_at ?? new Date().toISOString().slice(0, 10)) : d.paid_at,
+        paid_at: paid && !isReceipt ? (d.paid_at ?? new Date().toISOString().slice(0, 10)) : d.paid_at,
       }).eq("id", d.id);
       updated++;
     }
@@ -2231,17 +2244,13 @@ Deno.serve(async (req) => {
     const api_calls: ApiCall[] = [];
     try {
       const { data: decls } = await supabase.from("internal_declarations")
-        .select("id, amount, expense_date, bank_transaction_id, paid_at, informer_external_id")
+        .select("id, amount, expense_date, bank_transaction_id, paid_at, informer_external_id, informer_doc_type")
         .not("paid_at", "is", null).gt("amount", 0).neq("status", "rejected").gte("year", 2026);
       const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
       const { data: bank } = txIds.length
         ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
         : { data: [] };
-      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
-      const purchases = raw.map((p: any) => ({
-        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? ""),
-        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
-      }));
+      const purchases = await fetchDeclarationDocsForPreflight(api_calls);
       const rows = paidPreflight(decls ?? [], (bank ?? []) as any, purchases, await bankUseCounts(supabase, txIds));
       return new Response(JSON.stringify({ success: true, checked_purchases: purchases.length, rows }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -2272,18 +2281,14 @@ Deno.serve(async (req) => {
     let started = false;
     try {
       const { data: decls, error: dErr } = await supabase.from("internal_declarations")
-        .select("id, amount, expense_date, year, status, informer_status, bank_transaction_id, paid_at, informer_external_id")
+        .select("id, amount, expense_date, year, status, informer_status, bank_transaction_id, paid_at, informer_external_id, informer_doc_type")
         .in("id", (body.declaration_ids ?? []).slice(0, PAID_BATCH_MAX + 1).map(String));
       if (dErr) throw dErr;
       const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
       const { data: bank } = txIds.length
         ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
         : { data: [] };
-      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
-      const purchases = raw.map((p: any) => ({
-        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? "").trim().toUpperCase(),
-        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
-      }));
+      const purchases = await fetchDeclarationDocsForPreflight(api_calls);
       const rows = paidPreflight((decls ?? []) as any, (bank ?? []) as any, purchases, await bankUseCounts(supabase, txIds));
       const { data: attempts } = await supabase.from("internal_declaration_sync_attempts")
         .select("sanitized_error, internal_declarations(expense_date)").not("sanitized_error", "is", null).limit(1000);
@@ -2304,17 +2309,17 @@ Deno.serve(async (req) => {
       const results: any[] = [];
       for (const r of core) {
         const d: any = (decls ?? []).find((x: any) => x.id === r.declaration_id);
-        const { data: after } = await supabase.from("internal_declarations").select("informer_external_id, informer_status, paid_at, bank_transaction_id, amount, status").eq("id", r.declaration_id).maybeSingle();
+        const { data: after } = await supabase.from("internal_declarations").select("informer_external_id, informer_doc_type, informer_status, paid_at, bank_transaction_id, amount, status").eq("id", r.declaration_id).maybeSingle();
         const tx: any = bankBy.get(d?.bank_transaction_id);
         results.push({
-          ...r, informer_document_id: after?.informer_external_id ?? null,
+          ...r, informer_document_id: after?.informer_external_id ?? null, informer_document_type: after?.informer_doc_type ?? null,
           bank_transaction_id: d?.bank_transaction_id ?? null, bank_date: tx?.value_date ?? null, bank_amount: tx ? Math.abs(Number(tx.amount)) : null,
           paid_preserved: Boolean(after?.paid_at) && after?.bank_transaction_id === d?.bank_transaction_id && after?.status === "approved" && Number(after?.amount) === Number(d?.amount),
         });
       }
       const count = (o: string) => results.filter((r) => r.outcome === o).length;
-      await logResult(supabase, { action: "paid_declarations_book", success: results.every((r) => r.success), items_processed: count("created"), details: { batch, results: results.map((r) => ({ id: r.declaration_id, outcome: r.outcome, doc: r.informer_document_id })), blocked }, api_calls: redactApiCalls(api_calls) as any });
-      return new Response(JSON.stringify({ success: true, batch, created: count("created"), reused: count("reused"), failed: count("failed"), uncertain: count("uncertain"), results, blocked, note: "Opgenomen als inkoopfactuur; afletteren tegen de bestaande bankbetaling gebeurt handmatig in Informer." }), {
+      await logResult(supabase, { action: "paid_declarations_book", success: results.every((r) => r.success), items_processed: count("created"), details: { batch, results: results.map((r) => ({ id: r.declaration_id, outcome: r.outcome, doc: r.informer_document_id, type: r.informer_document_type })), blocked }, api_calls: redactApiCalls(api_calls) as any });
+      return new Response(JSON.stringify({ success: true, batch, created: count("created"), reused: count("reused"), failed: count("failed"), uncertain: count("uncertain"), results, blocked, note: "Nieuw opgenomen als bonnetje (Uitgaven, betaalwijze bank); afletteren tegen de bestaande bankbetaling gebeurt handmatig in Informer." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (e) {

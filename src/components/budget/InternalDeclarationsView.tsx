@@ -484,7 +484,7 @@ export default function InternalDeclarationsView({
               <label className="block space-y-1.5"><span className="text-sm font-medium">Dossier (optioneel)</span>
                 <Input aria-label="Dossier" list="declaration-dossiers" value={allocating.dossier} onChange={(e) => setAllocating({ ...allocating, dossier: e.target.value })} />
                 <datalist id="declaration-dossiers">{allocationOptions?.dossiers.map((d) => <option key={d} value={d} />)}</datalist></label>
-              {allocating.d.informer_external_id && <p className="text-xs text-muted-foreground">Deze declaratie staat in Informer; de indeling geldt ook in begroting en dossiers. Een bestaande andere toewijzing wordt niet overschreven.</p>}
+              {allocating.d.informer_external_id && <p className="text-xs text-muted-foreground">Deze declaratie staat in Informer ({allocating.d.informer_doc_type === "receipt" ? "bonnetje" : allocating.d.informer_doc_type === "purchase_invoice" ? "inkoopfactuur" : "soort onbekend"} {allocating.d.informer_external_id}); de indeling geldt ook in begroting en dossiers. Een bestaande andere toewijzing wordt niet overschreven.</p>}
               <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setAllocating(null)} disabled={allocSaving}>Annuleren</Button><Button onClick={saveAllocation} disabled={allocSaving}>{allocSaving ? "Opslaan…" : "Opslaan"}</Button></div>
             </div>
           )}

@@ -5,7 +5,7 @@ export interface DeclarationStore {
   load(id: string): Promise<any | null>;
   /** Atomische claim (informer_status -> sending). Geeft true als deze aanroep de claim kreeg. */
   claim(id: string, retry: boolean): Promise<boolean>;
-  markSent(id: string, documentId: string): Promise<void>;
+  markSent(id: string, documentId: string, docType: InformerDocType): Promise<void>;
   /** Alleen toepassen zolang de status nog 'sending' is. */
   markError(id: string, message: string): Promise<void>;
   markInvalid(id: string, message: string): Promise<void>;
@@ -13,10 +13,50 @@ export interface DeclarationStore {
   resolveTodo(id: string): Promise<void>;
 }
 
+export type InformerDocType = "purchase_invoice" | "receipt";
+/** Gevonden Informer-document. id-nummers zijn niet uniek over soorten heen: altijd met type. */
+export type InformerDocRef = { id: string; type: InformerDocType; amount?: number | null; date?: string | null };
+
 export interface InformerPort {
-  findByReference(reference: string): Promise<string | null>;
-  /** Maakt één te verwerken inkoopfactuur (nooit betaald). Geeft het document-id terug. */
-  createPurchase(declaration: any, reference: string): Promise<string>;
+  /**
+   * Zoekt exact het DECL-kenmerk in BEIDE namespaces (inkoopfacturen.number én bonnetjes.description).
+   * Faalt dicht: lijstfout of meer dan één treffer => throw.
+   */
+  findByReference(reference: string): Promise<InformerDocRef | null>;
+  /** Maakt één bonnetje (Uitgaven, payment_type bank; geen betaling/bankboeking). Geeft het id terug. */
+  createReceipt(declaration: any, reference: string): Promise<string>;
+}
+
+const DECL_TOKEN = /\bDECL-[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\b/gi;
+/** Alle DECL-kenmerken in een tekst (hoofdletters, uniek). */
+export function declTokens(text: unknown): string[] {
+  return [...new Set((String(text ?? "").match(DECL_TOKEN) ?? []).map((t) => t.toUpperCase()))];
+}
+/** Bonnetje-omschrijving: canoniek kenmerk vooraan + leesbaar label (soort, persoon, datum). */
+export function receiptDescription(declaration: any, reference: string): string {
+  const who = String(declaration?.board_member_name ?? "").replace(/\s+/g, " ").trim();
+  const what = String(declaration?.declaration_type ?? "declaratie").trim();
+  const date = String(declaration?.expense_date ?? "").slice(0, 10);
+  return `${reference} | Declaratie ${what}${who ? ` ${who}` : ""}${date ? ` ${date}` : ""}`.slice(0, 250);
+}
+export type ListedDoc = { id: string; type: InformerDocType; ref: string[]; amount: number | null; date: string | null; paid?: number | null };
+/** Exacte kenmerkmatch over beide namespaces; meer dan één treffer => throw (ambigu). */
+export function matchReferenceAcross(reference: string, docs: ListedDoc[]): ListedDoc | null {
+  const ref = reference.toUpperCase();
+  const hits = docs.filter((d) => d.ref.includes(ref));
+  if (hits.length > 1) throw new Error(`Meerdere Informer-documenten met kenmerk ${ref} (${hits.map((h) => `${h.type}:${h.id}`).join(", ")}); handmatig controleren`);
+  return hits[0] ?? null;
+}
+const centsOf = (n: unknown) => Math.round(Math.abs(Number(n)) * 100);
+/** Hergebruik alleen als lokale koppeling, soort, bedrag en datum exact passen. */
+export function reuseMismatch(declaration: any, doc: InformerDocRef): string | null {
+  if (declaration.informer_external_id && (String(declaration.informer_external_id) !== doc.id
+      || (declaration.informer_doc_type && declaration.informer_doc_type !== doc.type))) {
+    return "Lokaal gekoppeld Informer-document wijkt af van gevonden document";
+  }
+  if (doc.amount != null && centsOf(doc.amount) !== centsOf(declaration.amount)) return "Bestaand Informer-document heeft een ander bedrag";
+  if (doc.date && declaration.expense_date && String(doc.date).slice(0, 10) !== String(declaration.expense_date).slice(0, 10)) return "Bestaand Informer-document heeft een andere datum";
+  return null;
 }
 
 export type DeclarationSyncResult = {
@@ -318,14 +358,18 @@ export async function runDeclarationSync(
     const reference = declarationReference(declaration);
     const existing = await informer.findByReference(reference);
     if (existing) {
-      await store.markSent(declarationId, existing);
+      const mismatch = reuseMismatch(declaration, existing);
+      if (mismatch) throw new Error(mismatch);
+      await store.markSent(declarationId, existing.id, existing.type);
       await store.resolveTodo(declarationId);
-      return { success: true, details: { declaration_id: declarationId, reference, reused_existing: true } };
+      return { success: true, details: { declaration_id: declarationId, reference, reused_existing: true, document_type: existing.type, document_id: existing.id } };
     }
-    const documentId = await informer.createPurchase(declaration, reference);
-    await store.markSent(declarationId, documentId);
+    // Lokaal al een document-id maar remote niets gevonden: nooit opnieuw aanmaken.
+    if (declaration.informer_external_id) throw new Error("Lokaal Informer-document niet teruggevonden; handmatig controleren, niets aangemaakt");
+    const documentId = await informer.createReceipt(declaration, reference);
+    await store.markSent(declarationId, documentId, "receipt");
     await store.resolveTodo(declarationId);
-    return { success: true, details: { declaration_id: declarationId, reference } };
+    return { success: true, details: { declaration_id: declarationId, reference, document_type: "receipt", document_id: documentId } };
   } catch (error) {
     const message = redactSensitive((error as Error)?.message ?? String(error)).slice(0, 500);
     if (claimed) await store.markError(declarationId, message);

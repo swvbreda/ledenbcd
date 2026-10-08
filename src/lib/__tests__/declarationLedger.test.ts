@@ -64,7 +64,7 @@ describe("grootboekkeuze declaraties", () => {
     };
     const port: InformerPort = {
       async findByReference() { calls++; return null; },
-      async createPurchase() { calls++; return "X"; },
+      async createReceipt() { calls++; return "X"; },
     };
     const r = await runDeclarationSync("id", { retry: false }, store, port);
     expect(r.success).toBe(false);

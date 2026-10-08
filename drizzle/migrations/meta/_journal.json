@@ -92,6 +92,13 @@
       "when": 1791498078658,
       "tag": "0012_declaration_approvers",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791498484725,
+      "tag": "0013_declaration_informer_doc_type",
+      "breakpoints": true
     }
   ]
 }

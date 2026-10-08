@@ -2217,6 +2217,7 @@ export type Database = {
           event_id: string | null
           expense_date: string | null
           id: string
+          informer_doc_type: string | null
           informer_error: string | null
           informer_external_id: string | null
           informer_last_attempt_at: string | null
@@ -2255,6 +2256,7 @@ export type Database = {
           event_id?: string | null
           expense_date?: string | null
           id?: string
+          informer_doc_type?: string | null
           informer_error?: string | null
           informer_external_id?: string | null
           informer_last_attempt_at?: string | null
@@ -2293,6 +2295,7 @@ export type Database = {
           event_id?: string | null
           expense_date?: string | null
           id?: string
+          informer_doc_type?: string | null
           informer_error?: string | null
           informer_external_id?: string | null
           informer_last_attempt_at?: string | null

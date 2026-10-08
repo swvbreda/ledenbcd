@@ -49,8 +49,8 @@ function fakeInformer(opts: { existing?: string | null; fail?: string } = {}) {
   let existing = opts.existing ?? null;
   let fail = opts.fail;
   const port: InformerPort = {
-    async findByReference(ref) { calls.find.push(ref); return existing; },
-    async createPurchase() {
+    async findByReference(ref) { calls.find.push(ref); return existing ? { id: existing, type: "receipt" as const } : null; },
+    async createReceipt() {
       calls.create++;
       if (fail) throw new Error(fail);
       existing = "INF-900"; // na aanmaken vindbaar op referentie
