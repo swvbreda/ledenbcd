@@ -36,6 +36,7 @@ export const ACCOUNT_POST_RULES: { prefix: string; post: string }[] = [
   { prefix: "4495", post: "Reiskosten" },
   { prefix: "5010", post: "Reiskosten" },
   { prefix: "4340", post: "Juridische kosten / bestuurlijk advies" },
+  { prefix: "4350", post: "Administratiekosten / accountantskosten" },
 ];
 export const intendedPost = (account: string | null) => ACCOUNT_POST_RULES.find((r) => String(account ?? "").startsWith(r.prefix))?.post ?? null;
 

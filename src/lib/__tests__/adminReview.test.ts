@@ -71,3 +71,11 @@ describe("rekening → bedoelde post (correctie reiskosten)", () => {
     expect(_ip("9999 Onbekend")).toBeNull();
   });
 });
+
+import { intendedPost as _ip } from "../adminReview";
+describe("rekening 4350", () => {
+  it("gaat naar Administratiekosten / accountantskosten; onbekende rekening krijgt geen post", () => {
+    expect(_ip("4350 Administratiekosten")).toBe("Administratiekosten / accountantskosten");
+    expect(_ip("4001 Inhuur personeel organisatie")).toBeNull();
+  });
+});
