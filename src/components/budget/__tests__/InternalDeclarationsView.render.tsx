@@ -28,18 +28,18 @@ const renderView = (isAdmin = false) => render(<InternalDeclarationsView declara
 afterEach(cleanup);
 Object.assign(Element.prototype, { hasPointerCapture: () => false, releasePointerCapture: () => {}, setPointerCapture: () => {}, scrollIntoView: () => {} });
 async function pickMember(name: string) {
-  const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
-  const trigger = within(form).getAllByRole("combobox")[0];
+  const form = document.querySelector<HTMLElement>('section[aria-label="Nieuwe declaratie"]')!;
+  const trigger = form.querySelector<HTMLElement>('[role="combobox"]')!;
   trigger.focus();
   fireEvent.keyDown(trigger, { key: "Enter" });
-  console.log("T open"); const listbox = await screen.findByRole("listbox"); console.log("T listbox");
+  const listbox = await screen.findByRole("listbox");
   const opt = [...listbox.querySelectorAll('[role="option"]')].find((o) => o.textContent?.startsWith(name))!;
-  fireEvent.click(opt); console.log("T clicked");
+  fireEvent.click(opt);
 }
 const noteIsBelowFormFields = () => {
-  const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
+  const form = document.querySelector<HTMLElement>('section[aria-label="Nieuwe declaratie"]')!;
   const note = within(form).getByTestId("form-open-total");
-  const submit = within(form).getByRole("button", { name: "Declaratie definitief indienen" });
+  const submit = within(form).getByText("Declaratie definitief indienen");
   const bon = within(form).getByText(/^Bon/);
   expect(bon.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(note.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
