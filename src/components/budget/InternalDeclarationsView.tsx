@@ -38,7 +38,7 @@ interface Props {
   /** Wijzigt een bestaand record (zelfde id); ontbreekt dit, dan is er geen Wijzigen-knop. */
   /** Admin: posten/dossiers om aan te koppelen; ontbreekt dit, dan geen Indelen-knop. */
   allocationOptions?: { lineItems: { id: string; name: string }[]; dossiers: string[] };
-  onAllocate?: (input: { id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[] }) => Promise<unknown>;
+  onAllocate?: (input: { id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[]; updatedAt?: string | null }) => Promise<unknown>;
   onEdit?: (input: { id: string; expectedStatus: string; fields: DeclarationEditFields; existingReceipts: string[]; receipts?: File[]; submit?: boolean })
     => Promise<{ id: string; informerSynced: boolean; submitted: boolean } | void>;
 }
@@ -148,7 +148,7 @@ export default function InternalDeclarationsView({
     setAllocSaving(true);
     try {
       await onAllocate({ id: allocating.d.id, informerExternalId: allocating.d.informer_external_id, lineItemId: allocating.lineItemId || null,
-        dossier: allocating.dossier.trim() || null, validLineItemIds: allocationOptions.lineItems.map((li) => li.id) });
+        dossier: allocating.dossier.trim() || null, validLineItemIds: allocationOptions.lineItems.map((li) => li.id), updatedAt: (allocating.d as any).updated_at ?? null });
       toast.success("Post en dossier opgeslagen");
       setAllocating(null);
     } catch (error) {
