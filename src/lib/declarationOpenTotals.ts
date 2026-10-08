@@ -23,18 +23,29 @@ const toCents = (v: unknown) => {
 };
 
 /** Niet-admins tellen alleen eigen declaraties; statusfilter speelt geen rol. */
+/** Exact de declaraties die in het open totaal meetellen (zelfde jaar-, scope- en openregels). */
+export function selectOpenDeclarations<T extends OpenTotalInput>(
+  declarations: T[],
+  opts: { year: number; isAdmin: boolean; userId: string },
+): T[] {
+  return declarations.filter((d) => d.year === opts.year && isOpenDeclaration(d)
+    && (opts.isAdmin || d.submitted_by === opts.userId));
+}
+
+export const openMemberKey = (d: Pick<OpenTotalInput, "board_member_id" | "board_member_name">) =>
+  d.board_member_id ?? `naam:${d.board_member_name}`;
+
 export function computeOpenTotals(
   declarations: OpenTotalInput[],
   opts: { year: number; isAdmin: boolean; userId: string },
 ): OpenTotals {
-  const rows = declarations.filter((d) => d.year === opts.year && isOpenDeclaration(d)
-    && (opts.isAdmin || d.submitted_by === opts.userId));
+  const rows = selectOpenDeclarations(declarations, opts);
   const map = new Map<string, OpenTotal & { key: string; name: string }>();
   let cents = 0;
   for (const d of rows) {
     const c = toCents(d.amount);
     cents += c;
-    const key = d.board_member_id ?? `naam:${d.board_member_name}`;
+    const key = openMemberKey(d);
     const entry = map.get(key) ?? { key, name: d.board_member_name, count: 0, cents: 0 };
     entry.count += 1; entry.cents += c;
     map.set(key, entry);

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
-import { computeOpenTotals, formOpenNote } from "@/lib/declarationOpenTotals";
+import { computeOpenTotals, formOpenNote, openMemberKey, selectOpenDeclarations } from "@/lib/declarationOpenTotals";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDeclarationSyncErrors, type DeclarationBoardMember, type InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,6 +121,12 @@ export default function InternalDeclarationsView({
   const total = filtered.reduce((sum, item) => sum + item.amount, 0);
   const openTotals = useMemo(() => computeOpenTotals(declarations as any, { year, isAdmin, userId }), [declarations, year, isAdmin, userId]);
   // Melding onder het formulier: per gekozen bestuurslid (binnen de eigen toegankelijke cijfers), anders algemeen.
+  // Drilldown: exact dezelfde records als het open totaal, los van zoek- en statusfilter.
+  const openRows = useMemo(() => selectOpenDeclarations(declarations, { year, isAdmin, userId })
+    .sort((a, b) => (b.expense_date || "").localeCompare(a.expense_date || "")), [declarations, year, isAdmin, userId]);
+  const [drill, setDrill] = useState<{ key: string | null; name: string } | null>(null);
+  const drillRows = drill ? openRows.filter((d) => drill.key === null || openMemberKey(d) === drill.key) : [];
+  const drillCents = drillRows.reduce((sum, d) => sum + Math.round(Number(d.amount) * 100), 0);
   const formNote = formOpenNote(openTotals, { year, isAdmin, member: boardMembers.find((m) => m.id === memberId) ?? null });
 
   const chooseMember = async (id: string) => {
@@ -284,20 +291,49 @@ export default function InternalDeclarationsView({
         <Button onClick={startNew}><Plus className="mr-2 h-4 w-4" />{openTotals.count > 0 ? "Nieuwe aparte declaratie" : "Declaratie indienen"}</Button>
       </div>
 
-      <section aria-label="Openstaand totaal" className="rounded-lg border bg-card p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <section aria-label="Openstaand totaal" className="rounded-lg border bg-card">
+        <button type="button" onClick={() => setDrill({ key: null, name: isAdmin ? "alle bestuurders" : "mijn declaraties" })}
+          aria-label="Bekijk openstaande declaraties"
+          className="flex w-full flex-wrap items-baseline justify-between gap-2 rounded-lg p-4 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <div>
             <h3 className="text-sm font-semibold">Openstaand {year}{isAdmin ? "" : " (mijn declaraties)"}</h3>
-            <p className="text-xs text-muted-foreground">Ingediend of goedgekeurd en nog niet betaald. Telt los van het statusfilter.</p>
+            <p className="text-xs text-muted-foreground">Ingediend of goedgekeurd en nog niet betaald. Telt los van het statusfilter. Klik om ze te bekijken.</p>
           </div>
-          <div className="text-right"><strong className="text-lg tabular-nums"><CurrencyCell value={openTotals.cents / 100} /></strong><span className="block text-xs text-muted-foreground">{openTotals.count} {openTotals.count === 1 ? "declaratie" : "declaraties"}</span></div>
-        </div>
+          <div className="flex items-center gap-2 text-right"><div><strong className="text-lg tabular-nums"><CurrencyCell value={openTotals.cents / 100} /></strong><span className="block text-xs text-muted-foreground">{openTotals.count} {openTotals.count === 1 ? "declaratie" : "declaraties"}</span></div><ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden /></div>
+        </button>
         {isAdmin && openTotals.perMember.length > 0 && (
-          <ul className="mt-3 divide-y border-t text-sm">
-            {openTotals.perMember.map((m) => <li key={m.key} className="flex justify-between gap-2 py-1.5"><span>{m.name} <span className="text-muted-foreground">({m.count})</span></span><span className="tabular-nums"><CurrencyCell value={m.cents / 100} /></span></li>)}
+          <ul className="mx-4 mb-3 divide-y border-t text-sm">
+            {openTotals.perMember.map((m) => <li key={m.key}>
+              <button type="button" onClick={() => setDrill({ key: m.key, name: m.name })} aria-label={`Bekijk openstaande declaraties van ${m.name}`}
+                className="flex w-full items-center justify-between gap-2 rounded px-1 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <span>{m.name} <span className="text-muted-foreground">({m.count})</span></span>
+                <span className="flex items-center gap-1 tabular-nums"><CurrencyCell value={m.cents / 100} /><ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden /></span>
+              </button>
+            </li>)}
           </ul>
         )}
       </section>
+
+      <Dialog open={drill !== null} onOpenChange={(o) => { if (!o) setDrill(null); }}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Openstaand {year} — {drill?.name}</DialogTitle>
+            <DialogDescription data-testid="drill-summary">{drillRows.length} {drillRows.length === 1 ? "declaratie" : "declaraties"} · {money(drillCents / 100)}</DialogDescription>
+          </DialogHeader>
+          {drillRows.length === 0 ? <p className="text-sm text-muted-foreground">Geen openstaande declaraties.</p> : (
+            <ul className="divide-y text-sm" data-testid="drill-list">
+              {drillRows.map((d) => <li key={d.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-medium break-words">{d.appointment || "Geen omschrijving"}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDate(d.expense_date)} · {d.declaration_type === "reiskosten" ? "Kilometervergoeding" : d.declaration_type === "overig" ? "Overige reiskosten" : d.declaration_type}{drill?.key === null && isAdmin ? ` · ${d.board_member_name}` : ""}</p>
+                  <div className="mt-1 flex flex-wrap gap-1">{statusBadge(d.status)}{informerBadge(d)}</div>
+                </div>
+                <strong className="shrink-0 tabular-nums">{money(d.amount)}</strong>
+              </li>)}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {justSubmitted && !adding && (
         <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
