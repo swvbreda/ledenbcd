@@ -11,7 +11,14 @@ import {
   type DeclarationStore,
   type InformerPort,
 } from "./declarationSync.ts";
-import { extractLedgerOptions, selectDeclarationLedger } from "./declarationSync.ts";
+import {
+  buildSupplierRelationPayload,
+  describeInformerError,
+  findExistingSupplierId,
+  extractLedgerOptions,
+  redactSensitive as redactSensitiveText,
+  selectDeclarationLedger,
+} from "./declarationSync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1583,41 +1590,39 @@ async function ensureSupplierForBoardMember(supabase: any, declaration: any, api
   const relations = await fetchInformerRelations(apiCalls);
   const emails = [boardMember.bond_email, boardMember.email].map(normalizeText).filter(Boolean);
   const iban = normalizeText(declaration.bank_account).replace(/\s/g, "");
-  const name = normalizeText(boardMember.naam);
-  const existing = relations.find((relation: any) => {
-    const relationEmails = [relation?.email, relation?.email_invoice].map(normalizeText);
-    const relationIban = normalizeText(relation?.iban).replace(/\s/g, "");
-    const relationName = normalizeText([relation?.firstname, relation?.surname_prefix, relation?.surname].filter(Boolean).join(" ") || relation?.company_name || relation?.name);
-    return emails.some((email) => relationEmails.includes(email)) || (iban && relationIban === iban) || relationName === name;
+  const existingId = findExistingSupplierId(relations, {
+    emails: [boardMember.bond_email, boardMember.email],
+    iban: declaration.bank_account,
+    name: boardMember.naam,
   });
-  const existingId = existing ? informerRelationId(existing) : "";
-  if (existingId && /^\d+$/.test(existingId)) return existingId;
+  if (existingId) return existingId;
 
   const address = parseAddressLine(String(boardMember.prive_adres ?? ""));
   if (!address.street || !address.houseNumber || !boardMember.prive_postcode || !boardMember.prive_plaats) {
     throw new Error("Adresgegevens van het bestuurslid zijn niet compleet; Informer-relatie kan niet worden aangemaakt");
   }
   const person = splitPersonName(boardMember.naam);
-  const payload = {
-    relation_type: 1,
+  // Payload volgens officieel RelationInput-schema (zie declarationSync.ts).
+  const payload = buildSupplierRelationPayload({
     firstname: person.firstname,
     surname_prefix: person.surname_prefix,
     surname: person.surname,
     street: address.street,
-    house_number: address.houseNumber,
-    house_number_suffix: address.suffix,
+    houseNumber: address.houseNumber,
+    suffix: address.suffix,
     zip: boardMember.prive_postcode,
     city: boardMember.prive_plaats,
-    country: "NL",
     email: boardMember.bond_email || boardMember.email || undefined,
-    email_invoice: boardMember.bond_email || boardMember.email || undefined,
     phone: boardMember.telefoon || undefined,
     iban: declaration.bank_account || undefined,
-    subtype: { supplier: 1, active: 1 },
-  };
+  });
   const call = await informerCall("/relations", { method: "POST", body: JSON.stringify(payload) }, apiCalls);
   const apiError = hasInformerError(call.response_body);
-  if (call.error || !call.ok || apiError) throw new Error(`Leverancier aanmaken in Informer mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
+  if (call.error || !call.ok || apiError) {
+    const detail = describeInformerError(call.status, call.response_body)
+      ?? (call.error ? redactSensitiveText(call.error) : `HTTP ${call.status}`);
+    throw new Error(`Leverancier aanmaken in Informer mislukt: ${detail}`);
+  }
 
   const created = firstInformerItem(call.response_body, ["relation", "relations", "data"]);
   let id = informerRelationId(created) || String((call.response_body as any)?.id ?? "");
