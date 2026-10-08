@@ -266,35 +266,19 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  /** Admin: begrotingspost/dossier toewijzen; loopt bij een Informer-document ook via de boekhoud-override. */
+  /**
+   * Admin: begrotingspost/dossier toewijzen. De server (admin_allocate_declaration) controleert rol, jaar,
+   * versie en herkomst van een bestaande boekingstoewijzing, en schrijft declaratie + boeking in één transactie.
+   */
   const allocate = useMutation({
-    mutationFn: async ({ id, informerExternalId, lineItemId, dossier, validLineItemIds }: {
-      id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[];
+    mutationFn: async ({ id, lineItemId, dossier, updatedAt }: {
+      id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[]; updatedAt?: string | null;
     }) => {
-      const client = supabase as any;
-      let existing = null;
-      if (informerExternalId) {
-        const { data, error } = await client.from("ledger_entry_overrides")
-          .select("id, line_item_id, dossier, excluded, note, created_by")
-          .eq("doc_type", "purchase_invoice").eq("informer_id", informerExternalId).maybeSingle();
-        if (error) throw error;
-        existing = data;
-      }
-      const plan = planDeclarationAllocation({ informer_external_id: informerExternalId }, { lineItemId, dossier }, existing,
-        { isAdmin: true, validLineItemIds });
-      if (!plan.ok) throw new Error(plan.reason);
-      const { data: rows, error } = await client.from("internal_declarations").update(plan.declarationPatch).eq("id", id).select("id");
-      if (error) throw error;
-      if (!rows || rows.length !== 1) throw new Error("Toewijzen is niet gelukt: geen rechten of declaratie niet gevonden.");
-      if (plan.override === "upsert" && plan.overridePatch) {
-        const payload: any = { doc_type: "purchase_invoice", informer_id: informerExternalId, ...plan.overridePatch, updated_at: new Date().toISOString() };
-        if (existing) Object.assign(payload, { id: existing.id, note: existing.note ?? null, excluded: existing.excluded ?? false, created_by: existing.created_by ?? null });
-        const { data: saved, error: oErr } = await client.from("ledger_entry_overrides")
-          .upsert(payload, { onConflict: "doc_type,informer_id" }).select("id");
-        if (oErr) throw oErr;
-        if (!saved || saved.length !== 1) throw new Error("De boekhoudtoewijzing kon niet worden opgeslagen.");
-      }
-      return plan;
+      const { data, error } = await (supabase as any).rpc("admin_allocate_declaration", {
+        _declaration_id: id, _line_item_id: lineItemId || null, _dossier: dossier, _expected_updated_at: updatedAt ?? null,
+      });
+      if (error) throw new Error(error.message || "Toewijzen is niet gelukt.");
+      return data as { declaration: "updated" | "unchanged"; override: "none" | "created" | "updated" | "unchanged" };
     },
     onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ["ledger"] }); qc.invalidateQueries({ queryKey: ["budget-categories"] }); qc.invalidateQueries({ queryKey: ["dossier-mutations"] }); },
   });
