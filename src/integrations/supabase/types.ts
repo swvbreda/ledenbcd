@@ -4063,6 +4063,15 @@ export type Database = {
     }
     Functions: {
       _list_vault_secret_names: { Args: never; Returns: string[] }
+      admin_allocate_declaration: {
+        Args: {
+          _declaration_id: string
+          _dossier: string
+          _expected_updated_at: string
+          _line_item_id: string
+        }
+        Returns: Json
+      }
       agenda_claim_confirmations: {
         Args: {
           _channel: string
@@ -4294,6 +4303,12 @@ export type Database = {
       }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
       is_treasurer: { Args: { _user_id: string }; Returns: boolean }
+      ledger_override_is_automatic: {
+        Args: {
+          _o: Database["public"]["Tables"]["ledger_entry_overrides"]["Row"]
+        }
+        Returns: boolean
+      }
       member_directory_payload: {
         Args: { _base: Json; _overlay: Json }
         Returns: Json
