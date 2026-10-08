@@ -3,11 +3,12 @@
 // bankmutatie/betaling aan een inkoopfactuur te koppelen; afletteren gebeurt in Informer zelf.
 // Deze controle boekt daarom niets en geeft alleen per declaratie een status terug.
 
-import { runDeclarationSync, type DeclarationStore, type InformerPort } from "./declarationSync.ts";
+import { runDeclarationSync, type DeclarationStore, type InformerPort, type InformerDocType } from "./declarationSync.ts";
 
-export type PaidDecl = { id: string; amount: number; expense_date: string; bank_transaction_id: string | null; paid_at: string | null; informer_external_id: string | null };
+export type PaidDecl = { id: string; amount: number; expense_date: string; bank_transaction_id: string | null; paid_at: string | null; informer_external_id: string | null; informer_doc_type?: InformerDocType | null };
 export type BankTx = { id: string; amount: number; value_date: string | null };
-export type InformerPurchase = { id: string; number: string; total: number | null; date: string | null; paid: number | null };
+/** Informer-document uit inkoopfacturen óf bonnetjes. number = DECL-kenmerk (factuurnummer, of uit bonnetje-omschrijving). paid = verwerkt/afgeletterd bedrag, staat los van lokale betaling. */
+export type InformerPurchase = { id: string; number: string; total: number | null; date: string | null; paid: number | null; type?: InformerDocType };
 
 export type PreflightStatus =
   | "al_in_informer" | "dubbele_referentie" | "geen_bankbewijs" | "bedrag_wijkt_af"
@@ -20,6 +21,7 @@ export type PreflightRow = {
   status: PreflightStatus;
   informer_id?: string;
   informer_paid?: number | null;
+  informer_type?: InformerDocType;
 };
 
 export const declarationReference = (id: string) => `DECL-${id.toUpperCase()}`;
@@ -41,7 +43,7 @@ export function paidPreflight(decls: PaidDecl[], bank: BankTx[], purchases: Info
     const hits = purchases.filter((p) => String(p.number).trim().toUpperCase() === reference);
     if (hits.length > 1) return row("dubbele_referentie");
     // Lokaal al gekoppeld: alleen rapporteren, nooit opnieuw aanmaken of overschrijven.
-    if (d.informer_external_id) return row("al_in_informer", { informer_id: d.informer_external_id, informer_paid: hits[0]?.paid ?? null });
+    if (d.informer_external_id) return row("al_in_informer", { informer_id: d.informer_external_id, informer_paid: hits[0]?.paid ?? null, informer_type: hits[0]?.type ?? d.informer_doc_type ?? undefined });
     const tx = d.bank_transaction_id ? bankById.get(d.bank_transaction_id) : undefined;
     if (!d.paid_at || !tx) return row("geen_bankbewijs");
     if (!(Number(tx.amount) < 0)) return row("bank_niet_uitgaand");
@@ -50,10 +52,11 @@ export function paidPreflight(decls: PaidDecl[], bank: BankTx[], purchases: Info
     if (!tx.value_date || day(tx.value_date) !== day(d.paid_at)) return row("bankdatum_wijkt_af");
     if (hits.length === 1) {
       const h = hits[0];
+      const t = h.type ?? "purchase_invoice";
       const dateOk = !h.date || day(h.date) === day(d.expense_date);
-      if (h.total == null || cents(h.total) !== cents(d.amount) || !dateOk) return row("informer_bedrag_wijkt_af", { informer_id: h.id, informer_paid: h.paid });
+      if (h.total == null || cents(h.total) !== cents(d.amount) || !dateOk) return row("informer_bedrag_wijkt_af", { informer_id: h.id, informer_paid: h.paid, informer_type: t });
       // Eerder (bijv. vóór een timeout) aangemaakt document met exact deze referentie: alleen hergebruiken.
-      return row("herstel_bestaand_document", { informer_id: h.id, informer_paid: h.paid });
+      return row("herstel_bestaand_document", { informer_id: h.id, informer_paid: h.paid, informer_type: t });
     }
     return row("klaar_voor_handmatige_aflettering");
   });
@@ -120,12 +123,12 @@ export async function runPaidBatch(args: {
     if (!(await args.snapshot(id))) { results.push({ declaration_id: id, reference, success: false, outcome: "failed", recheck_required: false, error: "Snapshot mislukt; niets verstuurd" }); continue; }
     let posted = false;
     const port: InformerPort = row.status === "herstel_bestaand_document"
-      ? { findByReference: async () => row.informer_id ?? null, createPurchase: async () => { throw new Error("Bestaand document verwacht; geen nieuwe factuur aangemaakt"); } }
-      : { findByReference: (ref) => args.informer.findByReference(ref), createPurchase: (decl, ref) => { posted = true; return args.informer.createPurchase(decl, ref); } };
+      ? { findByReference: async () => (row.informer_id ? { id: row.informer_id, type: row.informer_type ?? "purchase_invoice" } : null), createReceipt: async () => { throw new Error("Bestaand document verwacht; geen nieuw bonnetje aangemaakt"); } }
+      : { findByReference: (ref) => args.informer.findByReference(ref), createReceipt: (decl, ref) => { posted = true; return args.informer.createReceipt(decl, ref); } };
     try {
       const r = await sync(id, { retry: d.informer_status === "error" }, args.store, port);
       if (r.success) results.push({ declaration_id: id, reference, success: true, outcome: r.details.reused_existing ? "reused" : "created", recheck_required: false, error: null });
-      else results.push({ declaration_id: id, reference, success: false, outcome: posted ? "uncertain" : "failed", recheck_required: posted, error: posted ? "Uitkomst onzeker: factuur mogelijk aangemaakt. Voer eerst opnieuw de controle uit." : (r.error_message ?? null) });
+      else results.push({ declaration_id: id, reference, success: false, outcome: posted ? "uncertain" : "failed", recheck_required: posted, error: posted ? "Uitkomst onzeker: bonnetje mogelijk aangemaakt. Voer eerst opnieuw de controle uit." : (r.error_message ?? null) });
     } catch {
       results.push({ declaration_id: id, reference, success: false, outcome: "uncertain", recheck_required: true, error: "Uitkomst onzeker; voer eerst opnieuw de controle uit." });
     }
