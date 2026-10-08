@@ -43,6 +43,7 @@ export default function FinancienPage() {
   // ongeacht welk financieel tabblad actief is.
   const autoSync = useAutoYearSync(year);
   const { user, isAdmin } = useAuth();
+  const allocationOptions = useDeclarationAllocationOptions(year, !!isAdmin);
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
   const { data: categories, isLoading } = useBudgetCategories(year);
@@ -54,7 +55,6 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const { data: declarationBoardMembers } = useDeclarationBoardMembers();
   const internalMutations = useInternalDeclarationMutations(year);
-  const allocationOptions = useDeclarationAllocationOptions(year, ALLOC_ADMIN);
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
   const allMembersForLookup = useMemo(
