@@ -99,6 +99,13 @@
       "when": 1791498484725,
       "tag": "0013_declaration_informer_doc_type",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791499070936,
+      "tag": "0014_declaration_approval_requires_approver",
+      "breakpoints": true
     }
   ]
 }
