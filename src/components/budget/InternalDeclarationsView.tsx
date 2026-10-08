@@ -59,10 +59,17 @@ const statusBadge = (status: string) => {
   return <Badge variant="secondary">In afwachting</Badge>;
 };
 
+const paymentBadge = (d: InternalDeclaration) => {
+  const l = paymentLabel(d);
+  if (l === "bank_gekoppeld") return <Badge className="bg-green-600">Betaald — bank gekoppeld</Badge>;
+  if (l === "betaald_bevestigd") return <Badge variant="secondary" title="Bevestigd door beheerder; betaaldatum en bankbewijs onbekend. Niet klaar voor Informer-aflettering.">Betaald bevestigd</Badge>;
+  return null;
+};
+
 const informerBadge = (declaration: InternalDeclaration, showError?: string) => {
   if (declaration.status === "concept") return null;
   if (declaration.informer_status === "sent" || declaration.informer_status === "synced") {
-    if (declaration.paid_at && declaration.informer_payment_status !== "paid") return <Badge variant="secondary">Opgenomen — aflettering nog nodig</Badge>;
+    if ((declaration.paid_at || declaration.payment_confirmed_at) && declaration.informer_payment_status !== "paid") return <Badge variant="secondary">Opgenomen — aflettering nog nodig</Badge>;
     return <Badge className="bg-green-600">Naar Informer verzonden</Badge>;
   }
   if (declaration.informer_status === "error") {

@@ -25,6 +25,8 @@ export interface InternalDeclaration {
   reviewed_at: string | null;
   paid_at: string | null;
   bank_transaction_id: string | null;
+  /** Uit declaration_payment_confirmations: tijdstip van beheerdersbevestiging, geen betaaldatum. */
+  payment_confirmed_at?: string | null;
   receipt_path: string | null;
   receipt_paths?: string[];
   event_id?: string | null;
@@ -70,8 +72,17 @@ export function useInternalDeclarations(year: number) {
         .eq("year", year)
         .order("expense_date", { ascending: true });
       if (error) throw error;
+      const ids = (data || []).map((d: any) => d.id);
+      const confirmed = new Map<string, string>();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data: c, error: cErr } = await supabase.from("declaration_payment_confirmations")
+          .select("declaration_id, confirmed_at").in("declaration_id", ids.slice(i, i + 200));
+        if (cErr) throw cErr;
+        for (const r of c ?? []) confirmed.set(r.declaration_id, r.confirmed_at);
+      }
       return (data || []).map((d: any) => ({
         ...d,
+        payment_confirmed_at: confirmed.get(d.id) ?? null,
         km_single: d.km_single ? Number(d.km_single) : null,
         km_return: d.km_return ? Number(d.km_return) : null,
         km_rate: Number(d.km_rate),

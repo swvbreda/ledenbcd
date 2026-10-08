@@ -5,6 +5,8 @@ export type OpenTotalInput = {
   status: string;
   paid_at: string | null;
   bank_transaction_id?: string | null;
+  /** Lokale beheerdersbevestiging 'betaald' (tijdstip van bevestigen, geen betaaldatum). */
+  payment_confirmed_at?: string | null;
   submitted_by: string | null;
   board_member_id: string | null;
   board_member_name: string;
@@ -13,8 +15,21 @@ export type OpenTotalInput = {
 export type OpenTotal = { count: number; cents: number };
 export type OpenTotals = OpenTotal & { perMember: Array<OpenTotal & { key: string; name: string }> };
 
+/** Betaald = bankbewijs/betaaldatum of lokale beheerdersbevestiging. */
+export function isPaidDeclaration(d: Pick<OpenTotalInput, "paid_at" | "bank_transaction_id" | "payment_confirmed_at">): boolean {
+  return !!d.paid_at || !!d.bank_transaction_id || !!d.payment_confirmed_at;
+}
+
+export type PaymentLabel = "bank_gekoppeld" | "betaald_bevestigd" | null;
+/** Bank gaat voor bevestiging; Informer-aflettering is altijd een aparte status. */
+export function paymentLabel(d: Pick<OpenTotalInput, "paid_at" | "bank_transaction_id" | "payment_confirmed_at">): PaymentLabel {
+  if (d.paid_at || d.bank_transaction_id) return "bank_gekoppeld";
+  if (d.payment_confirmed_at) return "betaald_bevestigd";
+  return null;
+}
+
 export function isOpenDeclaration(d: OpenTotalInput): boolean {
-  return (d.status === "pending" || d.status === "approved") && !d.paid_at && !d.bank_transaction_id;
+  return (d.status === "pending" || d.status === "approved") && !isPaidDeclaration(d);
 }
 
 const toCents = (v: unknown) => {
