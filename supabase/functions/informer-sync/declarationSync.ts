@@ -134,7 +134,10 @@ export function describeInformerError(status: number | null | undefined, body: u
         collect(obj.message, String(obj.field ?? obj.property));
         return;
       }
-      for (const [k, v] of Object.entries(obj)) collect(v, k === "message" ? field : k);
+      for (const [k, v] of Object.entries(obj)) {
+        if (["code", "status", "success", "url"].includes(k)) continue;
+        collect(v, k === "message" ? field : k);
+      }
     }
   };
 
