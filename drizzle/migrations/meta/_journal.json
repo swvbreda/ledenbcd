@@ -71,6 +71,13 @@
       "when": 1791497361079,
       "tag": "0009_declaration_payment_confirmations",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791497560754,
+      "tag": "0010_guard_confirmed_declaration_edits",
+      "breakpoints": true
     }
   ]
 }
