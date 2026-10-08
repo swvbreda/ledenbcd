@@ -31,7 +31,7 @@ export default function PaidPreflightPanel({ declarations, invoke = invokeWithAu
   const [booking, setBooking] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [book, setBook] = useState<{ results: BookResult[]; blocked: { declaration_id: string; reason: string }[] } | null>(null);
-  const ready = (rows ?? []).filter((r) => r.status === "klaar_voor_handmatige_aflettering").map((r) => r.declaration_id);
+  const ready = (rows ?? []).filter((r) => r.status === "klaar_voor_handmatige_aflettering" || r.status === "herstel_bestaand_document").map((r) => r.declaration_id);
   const runBook = async () => {
     setBooking(true); setErr(null);
     try {
@@ -81,7 +81,7 @@ export default function PaidPreflightPanel({ declarations, invoke = invokeWithAu
                 <div data-testid="book-result" className="space-y-1">
                   <p className="font-medium">Opgenomen — aflettering nog nodig</p>
                   <ul className="list-disc pl-5">{book.results.map((r) => { const d = byId.get(r.declaration_id); return (
-                    <li key={r.declaration_id}>{d ? month(d.expense_date) : "—"} · {d?.board_member_name ?? "—"} · {r.reference} — {r.outcome === "created" ? `nieuw document ${r.informer_document_id}` : r.outcome === "reused" ? `bestaand document ${r.informer_document_id} hergebruikt` : `mislukt: ${r.error ?? "onbekend"}`}{r.bank_transaction_id ? ` · afletteren tegen bankbetaling ${r.bank_date ?? ""} ${r.bank_amount != null ? eur(Math.round(r.bank_amount * 100)) : ""} (bankregel ${r.bank_transaction_id})` : ""}</li>); })}</ul>
+                    <li key={r.declaration_id}>{d ? month(d.expense_date) : "—"} · {d?.board_member_name ?? "—"} · {r.reference} — {r.outcome === "created" ? `nieuw document ${r.informer_document_id}` : r.outcome === "reused" ? `bestaand document ${r.informer_document_id} hergebruikt` : r.outcome === "uncertain" ? `onzeker — eerst opnieuw controleren: ${r.error ?? ""}` : `mislukt: ${r.error ?? "onbekend"}`}{r.bank_transaction_id ? ` · afletteren tegen bankbetaling ${r.bank_date ?? ""} ${r.bank_amount != null ? eur(Math.round(r.bank_amount * 100)) : ""} (bankregel ${r.bank_transaction_id})` : ""}</li>); })}</ul>
                   {book.blocked.length > 0 && <ul className="list-disc pl-5 text-muted-foreground">{book.blocked.map((b) => <li key={b.declaration_id}>Niet opgenomen: {b.reason}</li>)}</ul>}
                 </div>
               )}
