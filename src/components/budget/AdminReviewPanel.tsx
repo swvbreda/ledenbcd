@@ -1,9 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { contributionsToReview, declarationsToReview, countWithoutDossier, ledgerExceptions, type DeclLite } from "@/lib/adminReview";
+import { closedYearsFromAttempts, contributionsToReview, declarationsToReview, countWithoutDossier, ledgerExceptions, type DeclLite } from "@/lib/adminReview";
 
 const eur = (n: number) => n.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
+
+/** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
+/** Haalt alle rijen op in pagina's van 1000 (Data API-limiet). */
+export async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>, page = 1000): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await build(from, from + page - 1);
+    if (error) throw error;
+    out.push(...(data ?? []));
+    if (!data || data.length < page) return out;
+  }
+}
 
 /** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
 export function useAdminReview(year: number, enabled: boolean) {
@@ -12,46 +24,59 @@ export function useAdminReview(year: number, enabled: boolean) {
     enabled,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const [contrib, ponto, bank, members, ledger, overrides, expenses, links, items] = await Promise.all([
-        supabase.from("member_contributions").select("id, member_id, year, amount, paid, external_invoice_id").eq("year", year).eq("paid", true),
-        supabase.from("ponto_transactions").select("dossier").not("dossier", "is", null).limit(10000),
-        supabase.from("bank_transactions").select("dossier").not("dossier", "is", null).limit(10000),
-        supabase.from("members_data").select("id, data"),
-        supabase.from("informer_ledger_entries").select("informer_id, ledger_account, amount_incl, relation_name, entry_date").eq("year", year).eq("doc_type", "purchase_invoice").is("deleted_at", null),
-        supabase.from("ledger_entry_overrides").select("informer_id, line_item_id, dossier").eq("doc_type", "purchase_invoice"),
-        supabase.from("budget_expenses").select("external_id, line_item_id, amount, source").not("external_id", "is", null),
-        supabase.from("ledger_payment_links").select("informer_id, ponto_transaction_id"),
-        supabase.from("budget_line_items").select("id, name"),
+      const [contrib, ponto, bank, ledger, overrides, expenses, links, items, attempts] = await Promise.all([
+        fetchAll<any>((f, t) => supabase.from("member_contributions").select("id, member_id, year, amount, paid, external_invoice_id").eq("year", year).eq("paid", true).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("ponto_transactions").select("dossier, amount, executed_at, value_date").not("dossier", "is", null).gt("amount", 0).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("bank_transactions").select("dossier, year, direction").not("dossier", "is", null).eq("direction", "in").eq("year", year).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("informer_ledger_entries").select("informer_id, ledger_account, amount_incl, relation_name, entry_date").eq("year", year).eq("doc_type", "purchase_invoice").is("deleted_at", null).order("informer_id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("ledger_entry_overrides").select("informer_id, line_item_id, dossier").eq("doc_type", "purchase_invoice").order("informer_id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("budget_expenses").select("external_id, line_item_id, amount, source").not("external_id", "is", null).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("ledger_payment_links").select("informer_id, ponto_transaction_id").order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("budget_line_items").select("id, name").order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("internal_declaration_sync_attempts").select("sanitized_error, internal_declarations(expense_date)").not("sanitized_error", "is", null).order("id").range(f, t)),
       ]);
-      const err = [contrib, ponto, bank, members, ledger, overrides, expenses, links, items].find((r) => r.error)?.error;
-      if (err) throw err;
-      const names = new Map<number, string>((members.data ?? []).map((m: any) => [Number(m.id), String(m.data?.naam ?? m.data?.bedrijfsnaam ?? `Lid ${m.id}`)]));
-      const itemName = new Map((items.data ?? []).map((i: any) => [i.id, i.name as string]));
-      const ovPost = new Map((overrides.data ?? []).map((o: any) => [o.informer_id, o.line_item_id]));
-      const ovDossier = new Map((overrides.data ?? []).map((o: any) => [o.informer_id, o.dossier]));
-      const legacy = new Map<string, string>();
-      for (const e of expenses.data ?? []) if (!(e.source === "informer" && Number(e.amount) === 0) && e.line_item_id) legacy.set(e.external_id!, itemName.get(e.line_item_id) ?? "Onbekende post");
-      const linkIds = (links.data ?? []).map((l: any) => l.ponto_transaction_id);
-      if (linkIds.length) {
-        const { data: tx } = await supabase.from("ponto_transactions").select("id, budget_line_item_id, dossier").in("id", linkIds);
-        const txById = new Map((tx ?? []).map((t: any) => [t.id, t]));
-        for (const l of links.data ?? []) {
-          const t: any = txById.get(l.ponto_transaction_id);
-          if (t?.budget_line_item_id && !legacy.has(l.informer_id)) legacy.set(l.informer_id, itemName.get(t.budget_line_item_id) ?? "Onbekende post");
-          if (t?.dossier && !ovDossier.get(l.informer_id)) ovDossier.set(l.informer_id, t.dossier);
-        }
+      const itemName = new Map(items.map((i: any) => [i.id, i.name as string]));
+      const ovPost = new Map(overrides.map((o: any) => [o.informer_id, o.line_item_id]));
+      const ovDossier = new Map(overrides.map((o: any) => [o.informer_id, o.dossier]));
+      const legacy = new Map<string, { id: string | null; name: string }>();
+      for (const e of expenses) if (!(e.source === "informer" && Number(e.amount) === 0) && e.line_item_id) legacy.set(e.external_id, { id: e.line_item_id, name: itemName.get(e.line_item_id) ?? "Onbekende post" });
+      const linkIds = [...new Set(links.map((l: any) => l.ponto_transaction_id))];
+      const tx: any[] = [];
+      for (let i = 0; i < linkIds.length; i += 200) {
+        const { data, error } = await supabase.from("ponto_transactions").select("id, budget_line_item_id, dossier").in("id", linkIds.slice(i, i + 200));
+        if (error) throw error;
+        tx.push(...(data ?? []));
+      }
+      const txById = new Map(tx.map((t) => [t.id, t]));
+      for (const l of links) {
+        const t: any = txById.get(l.ponto_transaction_id);
+        if (t?.budget_line_item_id && !legacy.has(l.informer_id)) legacy.set(l.informer_id, { id: t.budget_line_item_id, name: itemName.get(t.budget_line_item_id) ?? "Onbekende post" });
+        if (t?.dossier && !ovDossier.get(l.informer_id)) ovDossier.set(l.informer_id, t.dossier);
+      }
+      const bankTags = [
+        ...bank.map((b: any) => ({ dossier: b.dossier, year: Number(b.year), incoming: b.direction === "in" })),
+        ...ponto.map((p: any) => ({ dossier: p.dossier, year: Number(String(p.value_date ?? p.executed_at ?? "").slice(0, 4)), incoming: Number(p.amount) > 0 })),
+      ];
+      const pre = contributionsToReview(contrib, bankTags, new Map(), year);
+      const ids = [...new Set(pre.map((c) => c.member_id))];
+      const names = new Map<number, string>();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data, error } = await supabase.from("members_data").select("id, naam:data->>naam, bedrijf:data->>bedrijfsnaam").in("id", ids.slice(i, i + 200));
+        if (error) throw error;
+        for (const m of (data ?? []) as any[]) names.set(Number(m.id), String(m.naam ?? m.bedrijf ?? `Lid ${m.id}`));
       }
       return {
-        contributions: contributionsToReview((contrib.data ?? []) as any, [...(ponto.data ?? []), ...(bank.data ?? [])].map((r: any) => r.dossier), names, year),
-        exceptions: ledgerExceptions((ledger.data ?? []) as any, ovPost, legacy, ovDossier),
+        contributions: pre.map((c) => ({ ...c, name: names.get(c.member_id) ?? c.name })),
+        exceptions: ledgerExceptions(ledger, ovPost, legacy, ovDossier, itemName),
+        closedYears: closedYearsFromAttempts(attempts.map((a: any) => ({ sanitized_error: a.sanitized_error, year: Number(String(a.internal_declarations?.expense_date ?? "").slice(0, 4)) }))),
       };
     },
   });
 }
 
-export default function AdminReviewPanel({ year, declarations, closedYears = [2025] }: { year: number; declarations: DeclLite[]; closedYears?: number[] }) {
+export default function AdminReviewPanel({ year, declarations }: { year: number; declarations: DeclLite[] }) {
   const q = useAdminReview(year, true);
-  const decl = declarationsToReview(declarations, closedYears);
+  const decl = declarationsToReview(declarations, q.data?.closedYears ?? []);
   return (
     <Card>
       <CardHeader><CardTitle className="text-base">Nog te beoordelen</CardTitle></CardHeader>
@@ -67,9 +92,9 @@ export default function AdminReviewPanel({ year, declarations, closedYears = [20
         {q.data && (
           <>
             <section>
-              <p className="font-medium">Boekingen met afwijkende eerdere post ({q.data.exceptions.length})</p>
+              <p className="font-medium">Boekingen met afwijkende post ({q.data.exceptions.length})</p>
               <ul className="list-disc pl-5">{q.data.exceptions.map((e) => (
-                <li key={e.informer_id}>{e.entry_date} · {e.relation_name ?? "—"} · {eur(Number(e.amount_incl ?? 0))} · rekening {e.ledger_account} — nu op “{e.currentPost}”{e.dossier ? `, dossier ${e.dossier}` : ""}; regel zou “{e.intended}” geven. Niet overschreven; aanpassen via Boekingen.</li>
+                <li key={e.informer_id}>{e.entry_date} · {e.relation_name ?? "—"} · {eur(Number(e.amount_incl ?? 0))} · rekening {e.ledger_account} — nu {e.manual ? "handmatig " : ""}op “{e.currentPost}”{e.dossier ? `, dossier ${e.dossier}` : ""}; regel zou “{e.intended}” geven. Niet overschreven; aanpassen via Boekingen.</li>
               ))}</ul>
             </section>
             <section>

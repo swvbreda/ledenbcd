@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contributionsToReview, declarationsToReview, ledgerExceptions, countWithoutDossier } from "../adminReview";
+import { closedYearsFromAttempts, contributionsToReview, declarationsToReview, ledgerExceptions, countWithoutDossier } from "../adminReview";
 
 describe("adminReview (alleen lezen)", () => {
   it("contributie: alleen betaald, zonder factuur én zonder bankdossier met lidnummer", () => {
@@ -9,7 +9,7 @@ describe("adminReview (alleen lezen)", () => {
       { id: "3", member_id: 7, year: 2026, amount: 3000, paid: true, external_invoice_id: "INV" },
       { id: "4", member_id: 8, year: 2026, amount: 3000, paid: false, external_invoice_id: null },
     ];
-    const r = contributionsToReview(rows, ["Contributie Shop (#6)", null], new Map([[5, "Shop A"]]), 2026);
+    const r = contributionsToReview(rows, [{ dossier: "Contributie Shop (#6)", year: 2026, incoming: true }, { dossier: "Contributie (#5)", year: 2025, incoming: true }, { dossier: "Terugbetaling (#5)", year: 2026, incoming: false }], new Map([[5, "Shop A"]]), 2026);
     expect(r.map((x) => x.member_id)).toEqual([5]);
     expect(r[0].name).toBe("Shop A");
   });
@@ -19,9 +19,13 @@ describe("adminReview (alleen lezen)", () => {
       { informer_id: "b", ledger_account: "4340 Advieskosten", amount_incl: 1, relation_name: null, entry_date: null },
       { informer_id: "c", ledger_account: "4340 Advieskosten", amount_incl: 1, relation_name: null, entry_date: null },
     ];
-    const ex = ledgerExceptions(rows, new Map([["c", "li"]]), new Map([["a", "Lobby & public affairs"], ["b", "Juridische kosten / bestuurlijk advies (incl. restbudget 2025)"], ["c", "Iets"]]), new Map([["a", "Lobby"]]));
-    expect(ex).toHaveLength(1);
-    expect(ex[0]).toMatchObject({ informer_id: "a", currentPost: "Lobby & public affairs", dossier: "Lobby" });
+    const ex = ledgerExceptions(rows, new Map([["c", "li"]]), new Map([["a", { id: "o", name: "Ondersteuning" }], ["b", { id: "j", name: "Juridische kosten / bestuurlijk advies (incl. restbudget 2025)" }]]), new Map([["a", "Lobby"]]), new Map([["li", "Iets"]]));
+    expect(ex.map((e) => e.informer_id)).toEqual(["a", "c"]);
+    expect(ex[0]).toMatchObject({ currentPost: "Ondersteuning", currentPostId: "o", manual: false, dossier: "Lobby" });
+    expect(ex[1]).toMatchObject({ currentPost: "Iets", manual: true });
+  });
+  it("gesloten jaren alleen uit echte Informer-weigering", () => {
+    expect(closedYearsFromAttempts([{ sanitized_error: "Inkoopfactuur aanmaken mislukt: You can no longer book in the specified period.", year: 2025 }, { sanitized_error: "422", year: 2026 }])).toEqual([2025]);
   });
   it("declaraties: €0, verzendfout, gesloten jaar en zonder post; afgewezen genegeerd", () => {
     const base = { status: "approved", informer_status: "not_sent", year: 2026, expense_date: "2026-01-01", board_member_name: "B", budget_line_item_id: "p", dossier: null };
