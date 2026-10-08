@@ -61,3 +61,13 @@ describe("contributie-bankbewijs", () => {
     expect(declYearMismatch({ id: "a", amount: 85.56, status: "approved", informer_status: "error", year: 2026, expense_date: "2025-01-01", board_member_name: null })).toBe(true);
   });
 });
+
+import { intendedPost as _ip } from "../adminReview";
+describe("rekening → bedoelde post (correctie reiskosten)", () => {
+  it("4495 kilometers en 5010 reiskosten → Reiskosten; 4009 vrijwilligers → Onkosten vergoedingen", () => {
+    expect(_ip("4495 Kilometervergoeding")).toBe("Reiskosten");
+    expect(_ip("5010 Reiskosten")).toBe("Reiskosten");
+    expect(_ip("4009 Vrijwilligersvergoedingen")).toBe("Onkosten vergoedingen");
+    expect(_ip("9999 Onbekend")).toBeNull();
+  });
+});
