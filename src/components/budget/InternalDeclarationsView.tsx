@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronRight, Pencil, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
-import { computeOpenTotals, formOpenNote, openMemberKey, selectOpenDeclarations } from "@/lib/declarationOpenTotals";
+import { computeOpenTotals, formOpenNote, openMemberKey, paymentLabel, selectOpenDeclarations } from "@/lib/declarationOpenTotals";
 import { declarationDescription, declarationTypeLabel } from "@/lib/declarationLabels";
 import { canEditDeclaration, validateEditAmount, type DeclarationEditFields } from "@/lib/declarationEdit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -455,7 +455,7 @@ export default function InternalDeclarationsView({
                 <div className="min-w-0">
                   <p className="font-medium break-words">{declarationDescription(d)}</p>
                   <p className="text-xs text-muted-foreground">{fmtDate(d.expense_date)} · {declarationTypeLabel(d.declaration_type)}{drill?.key === null && isAdmin ? ` · ${d.board_member_name}` : ""}</p>
-                  <div className="mt-1 flex flex-wrap gap-1">{statusBadge(d.status)}{informerBadge(d)}</div>
+                  <div className="mt-1 flex flex-wrap gap-1">{statusBadge(d.status)}{paymentBadge(d)}{informerBadge(d)}</div>
                 </div>
                 <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
                   <strong className="tabular-nums">{money(d.amount)}</strong>
@@ -554,11 +554,11 @@ export default function InternalDeclarationsView({
 
       <div className="grid gap-3 lg:hidden">
         {filtered.map((item) => {
-          const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId);
+          const canModify = isAdmin || (item.status === "pending" && !item.paid_at && !item.payment_confirmed_at && item.submitted_by === userId);
           return <article key={item.id} className="min-w-0 rounded-xl border bg-card p-4 shadow-sm">
             <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {declarationTypeLabel(item.declaration_type)}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
             <p className="mt-3 break-words text-sm">{declarationDescription(item)}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
-            <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item, syncErrors[item.id])}</div>{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-2 break-words text-xs text-destructive">{syncErrors[item.id]}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{paymentBadge(item)}{informerBadge(item, syncErrors[item.id])}</div>{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-2 break-words text-xs text-destructive">{syncErrors[item.id]}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
               {item.receipt_path && <Button size="sm" variant="outline" onClick={() => viewReceipt(item.receipt_path!)}><Receipt className="mr-1 h-4 w-4" />Bon</Button>}
               {isAdmin && item.status !== "approved" && <Button size="sm" variant="outline" onClick={() => onApprove(item.id)}><Check className="mr-1 h-4 w-4" />Goedkeuren</Button>}
@@ -575,8 +575,8 @@ export default function InternalDeclarationsView({
 
       <div className="hidden overflow-x-auto rounded-xl border lg:block">
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
-          <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
-            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span>{allocationText(item) && <span className="block text-xs text-muted-foreground">{allocationText(item)}</span>}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
+          <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && !item.payment_confirmed_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
+            <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span>{allocationText(item) && <span className="block text-xs text-muted-foreground">{allocationText(item)}</span>}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3"><div className="flex flex-wrap gap-1">{statusBadge(item.status)}{paymentBadge(item)}</div></td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
             <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{allocateButton(item)}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
