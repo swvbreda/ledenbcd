@@ -63,8 +63,8 @@ describe("maandelijkse vrijwilligersvergoeding", () => {
       async resolveTodo() {},
     };
     const port: InformerPort = {
-      async findByReference() { return existing; },
-      async createPurchase() { creates++; existing = "D1"; return "D1"; },
+      async findByReference() { return existing ? { id: existing, type: "receipt" as const } : null; },
+      async createReceipt() { creates++; existing = "D1"; return "D1"; },
     };
     await runDeclarationSync(row.id, { retry: true }, store, port);
     await runDeclarationSync(row.id, { retry: true }, store, port);

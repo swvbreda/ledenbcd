@@ -70,8 +70,8 @@ describe("runPaidBatch end-to-end: timeout na aanmaak → herstel zonder tweede 
       markInvalid: async () => {}, recordTodo: async () => {}, resolveTodo: async () => {},
     };
     const informer: InformerPort = {
-      findByReference: async (ref) => remote.find((p) => p.number === ref)?.id ?? null,
-      createPurchase: async (_x, ref) => { posts++; remote.push(inv("a", { id: "D1", number: ref })); return "D1"; },
+      findByReference: async (ref) => { const h = remote.find((p) => p.number === ref); return h ? { id: h.id, type: "receipt" as const } : null; },
+      createReceipt: async (_x, ref) => { posts++; remote.push(inv("a", { id: "D1", number: ref })); return "D1"; },
     };
     const snap = async () => true;
     const check = () => paidPreflight([decl], [tx("a")], remote, new Map([["tx-a", 1]]));
@@ -100,7 +100,7 @@ describe("runPaidBatch end-to-end: timeout na aanmaak → herstel zonder tweede 
     const rows = paidPreflight([decl], [tx("a")], [inv("a", { total: 999 })], new Map([["tx-a", 1]]));
     let posts = 0;
     const r = await runPaidBatch({ requested: ["a"], rows, decls: [decl], closedYears: [], snapshot: async () => true,
-      store: {} as any, informer: { findByReference: async () => null, createPurchase: async () => { posts++; return "x"; } } });
+      store: {} as any, informer: { findByReference: async () => null, createReceipt: async () => { posts++; return "x"; } } });
     expect(r.results).toEqual([]);
     expect(r.blocked[0].reason).toMatch(/informer_bedrag_wijkt_af/);
     expect(posts).toBe(0);
