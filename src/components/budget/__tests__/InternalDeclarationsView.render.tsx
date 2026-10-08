@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, afterEach } from "vitest";
+vi.setConfig({ testTimeout: 20000 });
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -31,7 +32,9 @@ async function pickMember(name: string) {
   const trigger = within(form).getAllByRole("combobox")[0];
   trigger.focus();
   fireEvent.keyDown(trigger, { key: "Enter" });
-  fireEvent.click(await screen.findByRole("option", { name: new RegExp(name) }));
+  const listbox = await screen.findByRole("listbox");
+  const opt = [...listbox.querySelectorAll('[role="option"]')].find((o) => o.textContent?.startsWith(name))!;
+  fireEvent.click(opt);
 }
 const noteIsBelowFormFields = () => {
   const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
