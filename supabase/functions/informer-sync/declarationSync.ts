@@ -54,9 +54,64 @@ export function redactApiCalls<T extends Record<string, any>>(calls: T[]): Recor
   }));
 }
 
+/** Vastgezette, in Informer gecontroleerde grootboekrekeningen per declaratiesoort. */
+export const DECLARATION_LEDGERS: Readonly<Record<string, { code: string; ledgerId: number; description: string }>> = {
+  reiskosten: { code: "4495", ledgerId: 15391231, description: "Kilometervergoeding" },
+  overige_reiskosten: { code: "5010", ledgerId: 15391263, description: "Reiskosten" },
+};
+
+export function declarationLedgerFor(type: unknown): { code: string; ledgerId: number; description: string } | null {
+  const key = String(type ?? "");
+  return Object.prototype.hasOwnProperty.call(DECLARATION_LEDGERS, key) ? DECLARATION_LEDGERS[key] : null;
+}
+
+/** Haalt grootboekopties uit het purchase/options-antwoord (array, of object op id). */
+export function extractLedgerOptions(body: unknown): any[] {
+  const visit = (value: unknown, depth: number): any[] | null => {
+    if (!value || typeof value !== "object" || depth > 4) return null;
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (!/ledger/i.test(key) || !nested || typeof nested !== "object") continue;
+      if (Array.isArray(nested)) return nested;
+      return Object.entries(nested as Record<string, any>).map(([id, item]) =>
+        item && typeof item === "object" ? { id, ...item } : { id, description: String(item) });
+    }
+    for (const nested of Object.values(value as Record<string, unknown>)) {
+      const found = visit(nested, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  };
+  return visit(body, 0) ?? [];
+}
+
+/**
+ * Kiest exact de afgesproken rekening en controleert die tegen de actuele opties.
+ * Geen naamzoeker en geen eerste-optie-fallback: bij twijfel wordt afgebroken.
+ */
+export function selectDeclarationLedger(declarationType: unknown, ledgerOptions: any[]): number {
+  const expected = declarationLedgerFor(declarationType);
+  if (!expected) throw new Error(`Geen grootboekrekening ingesteld voor declaratiesoort "${String(declarationType)}"`);
+  const match = ledgerOptions.find((item) => Number(item?.id ?? item?.ledger_id) === expected.ledgerId);
+  if (!match) throw new Error(`Grootboekrekening ${expected.code} (${expected.ledgerId}) niet gevonden in Informer`);
+  const code = match.number ?? match.code ?? match.ledger_number ?? match.account ?? match.ledger_account;
+  if (code != null && String(code).trim() !== expected.code) {
+    throw new Error(`Grootboekrekening ${expected.ledgerId} heeft in Informer code ${code}, verwacht ${expected.code}`);
+  }
+  const label = String(match.description ?? match.name ?? match.label ?? "");
+  if (code == null && !label.includes(expected.code) && !label.toLowerCase().includes(expected.description.toLowerCase())) {
+    throw new Error(`Grootboekrekening ${expected.ledgerId} komt niet overeen met ${expected.code} ${expected.description}`);
+  }
+  return expected.ledgerId;
+}
+
 export function validateDeclarationForInformer(declaration: any): string | null {
   if (declaration.status === "concept") return "Declaratie is nog een concept";
   if (declaration.status === "rejected") return "Afgewezen declaraties worden niet naar Informer gestuurd";
+  if (!declarationLedgerFor(declaration.declaration_type)) {
+    return declaration.declaration_type === "overig"
+      ? "Voor algemene overige kosten is nog geen grootboekrekening ingesteld; niet naar Informer gestuurd"
+      : "Onbekende declaratiesoort; niet naar Informer gestuurd";
+  }
   if (!declaration.board_member_id) return "Bestuurslid ontbreekt";
   if (!(Number(declaration.amount) > 0)) return "Bedrag ontbreekt";
   if (!declaration.bank_account || !declaration.account_holder) return "Rekeningnummer of rekeninghouder ontbreekt";
@@ -68,7 +123,8 @@ export function validateDeclarationForInformer(declaration: any): string | null 
 }
 
 export function declarationLineDescription(declaration: any, eventTitle: string | null): string {
-  const kind = declaration.declaration_type === "reiskosten" ? "Reiskosten" : "Declaratie";
+  const kind = declaration.declaration_type === "reiskosten" ? "Kilometervergoeding"
+    : declaration.declaration_type === "overige_reiskosten" ? "Overige reiskosten" : "Declaratie";
   const parts = [
     `${kind}: ${declaration.appointment || declaration.board_member_name}`,
     `Indiener: ${declaration.board_member_name}`,

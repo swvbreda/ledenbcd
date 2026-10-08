@@ -79,7 +79,7 @@ export default function InternalDeclarationsView({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [memberId, setMemberId] = useState("");
-  const [kind, setKind] = useState<"reiskosten" | "overig">("reiskosten");
+  const [kind, setKind] = useState<"reiskosten" | "overige_reiskosten" | "overig">("reiskosten");
   const [description, setDescription] = useState("");
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
   const [origin, setOrigin] = useState("");
@@ -194,8 +194,8 @@ export default function InternalDeclarationsView({
       : !bankAccount.trim() ? "Vul het rekeningnummer in"
       : !accountHolder.trim() ? "Vul de rekeninghouder in"
       : kind === "reiskosten" && !calculation ? "Bereken eerst de afstand"
-      : kind === "overig" && (!otherAmount || Number(otherAmount) <= 0) ? "Vul het bedrag in"
-      : kind === "overig" && !receipt ? "Voeg een foto of PDF van de bon toe"
+      : kind !== "reiskosten" && (!otherAmount || Number(otherAmount) <= 0) ? "Vul het bedrag in"
+      : kind !== "reiskosten" && !receipt ? "Voeg een foto of PDF van de bon toe"
       : null;
     if (validationError) {
       toast.error(validationError);
@@ -273,7 +273,7 @@ export default function InternalDeclarationsView({
               <Select value={memberId} onValueChange={chooseMember}><SelectTrigger><SelectValue placeholder="Selecteer een bestuurslid" /></SelectTrigger><SelectContent>{boardMembers.map((member) => <SelectItem key={member.id} value={member.id}>{member.naam}{member.functie ? ` — ${member.functie}` : ""}</SelectItem>)}</SelectContent></Select>
             </label>
             <label className="space-y-1.5"><span className="text-sm font-medium">Soort declaratie</span>
-              <Select value={kind} onValueChange={(value: "reiskosten" | "overig") => { setKind(value); setOneWayKm(null); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reiskosten">Reiskosten</SelectItem><SelectItem value="overig">Overige kosten</SelectItem></SelectContent></Select>
+              <Select value={kind} onValueChange={(value: "reiskosten" | "overige_reiskosten" | "overig") => { setKind(value); setOneWayKm(null); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reiskosten">Reiskosten (kilometers)</SelectItem><SelectItem value="overige_reiskosten">Overige reiskosten (OV, parkeren e.d.)</SelectItem><SelectItem value="overig">Overige kosten</SelectItem></SelectContent></Select>
             </label>
             <label className="space-y-1.5"><span className="text-sm font-medium">Datum</span><Input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} /></label>
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Evenement / bijeenkomst (optioneel)</span>
@@ -307,7 +307,7 @@ export default function InternalDeclarationsView({
 
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeningnummer</span><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoCapitalize="characters" placeholder="NL00 BANK 0000 0000 00" /></label>
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
-            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind === "overig" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
+            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind !== "reiskosten" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button variant="outline" onClick={() => submit(true)} disabled={saving}>Opslaan als concept</Button><Button onClick={() => submit(false)} disabled={saving}>{saving ? "Indienen…" : "Declaratie definitief indienen"}</Button></div>
         </section>
@@ -317,7 +317,7 @@ export default function InternalDeclarationsView({
         {filtered.map((item) => {
           const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId);
           return <article key={item.id} className="min-w-0 rounded-xl border bg-card p-4 shadow-sm">
-            <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {item.declaration_type === "reiskosten" ? "Reiskosten" : "Overige kosten"}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
+            <div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold">{item.board_member_name}</p><p className="text-sm text-muted-foreground">{fmtDate(item.expense_date)} · {item.declaration_type === "reiskosten" ? "Reiskosten" : item.declaration_type === "overige_reiskosten" ? "Overige reiskosten" : "Overige kosten"}</p></div><strong className="shrink-0">{money(item.amount)}</strong></div>
             <p className="mt-3 break-words text-sm">{item.appointment || "Geen omschrijving"}</p>{item.trajectory && <p className="mt-1 break-words text-sm text-muted-foreground">{item.trajectory}{item.km_return ? ` · ${item.km_return} km` : ""}</p>}
             <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{informerBadge(item, syncErrors[item.id])}</div>{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-2 break-words text-xs text-destructive">{syncErrors[item.id]}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
