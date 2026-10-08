@@ -955,6 +955,7 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
     const sources: Array<{ doc_type: string; path: string; keys: string[] }> = [
       { doc_type: "sales_invoice", path: "/invoices/sales", keys: ["sales", "invoices", "data"] },
       { doc_type: "purchase_invoice", path: "/invoices/purchase", keys: ["purchase", "invoices", "data"] },
+      { doc_type: "receipt", path: "/receipts", keys: ["receipts", "receipt", "data"] },
     ];
 
     let upserted = 0;
@@ -1025,6 +1026,8 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
       for (const inv of invoices) {
         const informerId = String(inv?.id ?? inv?.invoice_id ?? "").trim();
         if (!informerId) continue;
+        // Alleen bonnetjes van declaraties (canoniek DECL-kenmerk) tellen; overige bonnetjes blijven buiten de begroting.
+        if (src.doc_type === "receipt" && declTokens(inv?.description).length === 0) continue;
         const entryDate = entryDateOf(inv);
         const invYear = entryDate ? Number(entryDate.slice(0, 4)) : detectYear(inv);
         if (invYear !== year) { skippedOtherYear++; continue; }
@@ -1051,8 +1054,10 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
             relationNames.get(String(invoiceRelationId(inv) ?? "")) ||
             null,
           relation_number: String(inv?.relation?.relation_number ?? inv?.relation_number ?? "") || null,
-          invoice_number: String(inv?.invoice_number ?? inv?.number ?? "") || null,
-          ledger_account: ledgerAccountOf(inv, ledgerNames),
+          invoice_number: src.doc_type === "receipt" ? (declTokens(inv?.description)[0] ?? null) : (String(inv?.invoice_number ?? inv?.number ?? "") || null),
+          ledger_account: src.doc_type === "receipt" && inv?.ledger_id != null
+            ? (ledgerNames.get(String(inv.ledger_id)) ?? String(inv.ledger_id))
+            : ledgerAccountOf(inv, ledgerNames),
           description: String(inv?.description ?? inv?.reference ?? "") || null,
           currency: String(inv?.currency ?? "EUR"),
           raw: inv,
