@@ -72,7 +72,7 @@ export default function PaidPreflightPanel({ declarations, invoke = invokeWithAu
               </table>
               {ready.length > 0 && !book && (
                 <div className="space-y-2 rounded border p-3" data-testid="book-paid">
-                  <p className="font-medium">Deze declaraties zijn al betaald. Opnemen maakt per declaratie één inkoopfactuur in Informer (bestaande referentie). Er wordt géén betaling of bankboeking aangemaakt; daarna moet je in Informer handmatig afletteren tegen de bestaande bankbetaling.</p>
+                  <p className="font-medium">Deze declaraties zijn al betaald. Opnemen maakt per declaratie één bonnetje (Uitgaven) in Informer, of hergebruikt het bestaande document met dezelfde DECL-referentie. Er wordt géén betaling of bankboeking aangemaakt; daarna moet je in Informer handmatig afletteren tegen de bestaande bankbetaling.</p>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} /> Ik begrijp dat afletteren daarna handmatig nodig is</label>
                   <Button onClick={runBook} disabled={!confirm || booking}>{booking ? "Bezig met opnemen…" : `Betaalde declaraties opnemen in Informer (${ready.length})`}</Button>
                 </div>
