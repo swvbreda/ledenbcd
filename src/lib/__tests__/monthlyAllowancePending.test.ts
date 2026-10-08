@@ -20,7 +20,7 @@ describe("automatische maandvergoeding", () => {
   });
 });
 
-import { reviewKey } from "../../components/budget/AdminReviewPanel";
+import { reviewKey } from "../reviewKey";
 describe("reviewscherm bonnetjes", () => {
   it("houdt bonnetje en inkoopfactuur met zelfde ID gescheiden", () => {
     expect(reviewKey("purchase_invoice", "123")).toBe("123");

@@ -1,3 +1,4 @@
+import { reviewKey } from "@/lib/reviewKey";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,8 +6,6 @@ import { contributionEvidence, closedYearsFromAttempts, contributionsToReview, d
 
 const eur = (n: number) => n.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
 
-/** Inkoopfacturen houden hun kale ID (oude koppelingen); bonnetjes krijgen "receipt:". */
-export const reviewKey = (docType: string, id: string | number) => docType === "receipt" ? `receipt:${id}` : String(id);
 
 /** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
 /** Haalt alle rijen op in pagina's van 1000 (Data API-limiet). */
@@ -20,8 +19,6 @@ export async function fetchAll<T>(build: (from: number, to: number) => PromiseLi
   }
 }
 
-/** Inkoopfacturen houden hun kale ID (oude koppelingen); bonnetjes krijgen "receipt:". */
-export const reviewKey = (docType: string, id: string | number) => docType === "receipt" ? `receipt:${id}` : String(id);
 
 /** Admin: leest actuele data (RLS: alleen admins) en toont wat nog beoordeeld moet worden. Schrijft niets. */
 export function useAdminReview(year: number, enabled: boolean) {
