@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeReceiptName } from "@/lib/declarations";
-import { planDeclarationAllocation } from "@/lib/declarationAllocation";
 import { buildEditPatch, EDITABLE_INFORMER_STATUSES, type DeclarationEditFields } from "@/lib/declarationEdit";
 
 export interface InternalDeclaration {
