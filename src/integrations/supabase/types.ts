@@ -1705,6 +1705,36 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_repair_snapshots: {
+        Row: {
+          action: string
+          batch: string
+          before_row: Json | null
+          created_at: string
+          id: string
+          row_key: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          batch: string
+          before_row?: Json | null
+          created_at?: string
+          id?: string
+          row_key: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          batch?: string
+          before_row?: Json | null
+          created_at?: string
+          id?: string
+          row_key?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       finance_todos: {
         Row: {
           assigned_to: string

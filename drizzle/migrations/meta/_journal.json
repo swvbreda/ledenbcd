@@ -29,6 +29,13 @@
       "when": 1791492199389,
       "tag": "0003_declaration_budget_allocation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791492603836,
+      "tag": "0004_finance_repair_snapshots",
+      "breakpoints": true
     }
   ]
 }
