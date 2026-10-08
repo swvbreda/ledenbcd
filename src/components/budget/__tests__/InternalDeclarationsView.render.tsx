@@ -229,3 +229,22 @@ describe("betaald bevestigd", () => {
     expect(screen.getAllByText("Betaald bevestigd").length).toBeGreaterThan(0);
   });
 });
+
+describe("goedkeuren en Informer-label", () => {
+  const sentRow = { ...base, id: "g1", status: "approved", submitted_by: "u1", informer_status: "sent", informer_external_id: "16891349", amount: 210 };
+  const pendingRow = { ...base, id: "g2", status: "pending", submitted_by: "u2", informer_status: "not_sent", amount: 12 };
+  it("groene 'Naar Informer verzonden' staat nergens meer", () => {
+    renderView(true, [sentRow]);
+    expect(screen.queryByText("Naar Informer verzonden")).toBeNull();
+  });
+  it("admin zonder goedkeurrecht ziet geen Goedkeuren/Afwijzen", () => {
+    renderView(true, [pendingRow]);
+    expect(screen.queryByText("Goedkeuren")).toBeNull();
+    expect(screen.queryByTitle("Goedkeuren")).toBeNull();
+  });
+  it("aangewezen goedkeurder ziet Goedkeuren alleen bij ingediend", () => {
+    render(<InternalDeclarationsView declarations={[pendingRow, sentRow] as any} boardMembers={members} year={2026} isAdmin canApprove onEdit={onEdit} allocationOptions={allocOpts} onAllocate={onAllocate}
+      userId="u1" onAdd={vi.fn()} onDelete={noop} onApprove={noop} onReject={noop} />);
+    expect(screen.getAllByTitle("Goedkeuren")).toHaveLength(1);
+  });
+});

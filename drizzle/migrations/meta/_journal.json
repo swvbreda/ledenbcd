@@ -85,6 +85,13 @@
       "when": 1791497620422,
       "tag": "0011_tighten_payment_confirmation_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791498078658,
+      "tag": "0012_declaration_approvers",
+      "breakpoints": true
     }
   ]
 }

@@ -4336,6 +4336,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_declaration_approver: { Args: { _user_id: string }; Returns: boolean }
       is_pcn_reviewer: { Args: { _user_id: string }; Returns: boolean }
       is_treasurer: { Args: { _user_id: string }; Returns: boolean }
       ledger_override_is_automatic: {

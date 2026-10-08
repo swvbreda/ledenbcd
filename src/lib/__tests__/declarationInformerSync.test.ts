@@ -14,7 +14,7 @@ const IBAN = "NL91ABNA0417164300";
 
 function baseDecl(over: Record<string, unknown> = {}) {
   return {
-    id: ID, year: 2026, status: "pending", submitted_by: "user-1", board_member_id: "bm-1",
+    id: ID, year: 2026, status: "approved", submitted_by: "user-1", board_member_id: "bm-1",
     board_member_name: "Test Bestuurder", declaration_type: "reiskosten", appointment: "Vergadering",
     amount: 10.42, bank_account: IBAN, account_holder: "Test Bestuurder", expense_date: "2026-10-01",
     informer_status: "not_sent", informer_external_id: null, ...over,
@@ -91,7 +91,7 @@ describe("declaratie naar Informer", () => {
     expect(inf.calls.create).toBe(1);
     expect(s.row.informer_status).toBe("sent");
     expect(s.row.informer_external_id).toBe("INF-900");
-    expect(s.row.status).toBe("pending");
+    expect(s.row.status).toBe("approved");
   });
 
   it("1b. dubbelklik / gelijktijdige aanroep maakt maximaal één document", async () => {
@@ -123,7 +123,7 @@ describe("declaratie naar Informer", () => {
     const r = await runDeclarationSync(ID, { retry: false }, s.store, inf.port);
     expect(r.success).toBe(false);
     expect(s.row.informer_status).toBe("error");
-    expect(s.row.status).toBe("pending");
+    expect(s.row.status).toBe("approved");
     expect(s.row.informer_error).toBeUndefined(); // foutdetail nooit op de declaratie zelf
     for (const text of [s.attempts[0].error, r.error_message, s.todos[0]]) {
       expect(text).not.toContain(IBAN);
@@ -193,15 +193,44 @@ describe("toegang tot verzenden", () => {
   it("5b. andere gebruiker: 403", () => {
     expect(authorizeDeclarationCall({ userId: "user-2", isAdminOrTreasurer: false, isServiceCall: false }, own, false).status).toBe(403);
   });
-  it("5c. indiener mag geen retry en niet na error", () => {
+  it("5c. indiener mag nooit zelf versturen, ook niet eigen pending", () => {
     const u = { userId: "user-1", isAdminOrTreasurer: false, isServiceCall: false };
-    expect(authorizeDeclarationCall(u, own, true).allowed).toBe(false);
-    expect(authorizeDeclarationCall(u, { ...own, informer_status: "error" }, false).allowed).toBe(false);
-    expect(authorizeDeclarationCall(u, { ...own, status: "concept" }, false).allowed).toBe(false);
+    expect(authorizeDeclarationCall(u, own, false)).toEqual({ allowed: false, status: 403, retry: false });
+    expect(authorizeDeclarationCall(u, { ...own, status: "approved" }, false).allowed).toBe(false);
   });
-  it("5d. indiener mag eerste verzending; admin/penningmeester mag retry", () => {
-    expect(authorizeDeclarationCall({ userId: "user-1", isAdminOrTreasurer: false, isServiceCall: false }, own, false)).toEqual({ allowed: true, status: 200, retry: false });
-    expect(authorizeDeclarationCall({ userId: "admin", isAdminOrTreasurer: true, isServiceCall: false }, { ...own, informer_status: "error" }, true)).toEqual({ allowed: true, status: 200, retry: true });
+  it("5d. admin alleen bij goedgekeurd; pending/concept/afgewezen 409, ook voor service-aanroep", () => {
+    const admin = { userId: "admin", isAdminOrTreasurer: true, isServiceCall: false };
+    for (const st of ["pending", "concept", "rejected"]) {
+      expect(authorizeDeclarationCall(admin, { ...own, status: st }, true).status).toBe(409);
+      expect(authorizeDeclarationCall({ userId: null, isAdminOrTreasurer: false, isServiceCall: true }, { ...own, status: st }, false).status).toBe(409);
+    }
+    expect(authorizeDeclarationCall(admin, { ...own, status: "approved", informer_status: "error" }, true)).toEqual({ allowed: true, status: 200, retry: true });
+  });
+});
+
+describe("pas na goedkeuring naar Informer", () => {
+  for (const status of ["pending", "concept", "rejected"]) {
+    it(`${status}: geen claim, geen zoek- of aanmaakaanroep, ook niet bij retry`, async () => {
+      const s = fakeStore(baseDecl({ status }));
+      const inf = fakeInformer();
+      for (const retry of [false, true]) {
+        const r = await runDeclarationSync(ID, { retry }, s.store, inf.port);
+        expect(r.success).toBe(false);
+        expect((r.details as any).not_approved).toBe(true);
+      }
+      expect(inf.calls.find).toHaveLength(0);
+      expect(inf.calls.create).toBe(0);
+      expect(s.row.informer_status).toBe("not_sent");
+      expect(s.attempts).toHaveLength(0);
+    });
+  }
+  it("goedgekeurd: precies één document, betaalgegevens ongewijzigd", async () => {
+    const s = fakeStore(baseDecl({ status: "approved", paid_at: "2026-02-25", bank_transaction_id: "tx" }));
+    const inf = fakeInformer();
+    const r = await runDeclarationSync(ID, { retry: false }, s.store, inf.port);
+    expect(r.success).toBe(true);
+    expect(inf.calls.create).toBe(1);
+    expect(s.row).toMatchObject({ status: "approved", paid_at: "2026-02-25", bank_transaction_id: "tx", informer_external_id: "INF-900" });
   });
 });
 

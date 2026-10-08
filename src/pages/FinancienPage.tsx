@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
-import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations, useDeclarationAllocationOptions } from "@/hooks/useInternalDeclarations";
+import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations, useDeclarationAllocationOptions, useIsDeclarationApprover } from "@/hooks/useInternalDeclarations";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -57,6 +57,7 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const { data: declarationBoardMembers } = useDeclarationBoardMembers();
   const internalMutations = useInternalDeclarationMutations(year);
+  const { data: isDeclarationApprover } = useIsDeclarationApprover(user?.id);
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
   const allMembersForLookup = useMemo(
@@ -356,10 +357,11 @@ export default function FinancienPage() {
                 allocationOptions={allocationOptions.data}
                 onAllocate={(input) => internalMutations.allocate.mutateAsync(input)}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
-                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
-                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
-                onSubmitConcept={(id) => internalMutations.submitConcept.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Ingediend en naar Informer verzonden") : toast.warning("Ingediend; versturen naar Informer is mislukt"), onError: (e) => toast.error(e instanceof Error ? e.message : "Indienen mislukt") })}
-                onRetryInformer={(id) => internalMutations.retryInformer.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Naar Informer verzonden") : toast.error("Synchronisatie opnieuw mislukt"), onError: () => toast.error("Synchronisatie opnieuw mislukt") })}
+                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: (r) => r?.informerSynced ? toast.success("Declaratie goedgekeurd en verwerkt") : toast.warning("Declaratie goedgekeurd; verwerken in Informer is mislukt en kan opnieuw worden geprobeerd"), onError: (e) => toast.error(e instanceof Error ? e.message : "Goedkeuren mislukt") })}
+                canApprove={isDeclarationApprover === true}
+                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen"), onError: (e) => toast.error(e instanceof Error ? e.message : "Afwijzen mislukt") })}
+                onSubmitConcept={(id) => internalMutations.submitConcept.mutate(id, { onSuccess: () => toast.success("Ingediend. Na goedkeuring wordt de declaratie verwerkt."), onError: (e) => toast.error(e instanceof Error ? e.message : "Indienen mislukt") })}
+                onRetryInformer={(id) => internalMutations.retryInformer.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Opnieuw verwerkt") : toast.error("Synchronisatie opnieuw mislukt"), onError: () => toast.error("Synchronisatie opnieuw mislukt") })}
               />
             </div>
           </TabsContent>
