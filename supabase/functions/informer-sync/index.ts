@@ -19,6 +19,7 @@ import {
   redactSensitive as redactSensitiveText,
   selectDeclarationLedger,
 } from "./declarationSync.ts";
+import { planCreditorImport } from "./creditorImport.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1128,61 +1129,23 @@ async function pullCreditors(supabase: any): Promise<ActionResult> {
       return !d || d >= cutoff;
     });
 
-    // Find or create a default "Informer-import" line item to attach expenses to
+    // Geen nieuwe budget_expenses meer en geen "eerste post van het jaar":
+    // inkoopkosten komen uitsluitend uit informer_ledger_entries (pull_invoices).
+    // Bestaande regels worden niet gewijzigd; alleen het factuurbestand wordt bewaard.
     const year = new Date().getFullYear();
-    const { data: importLineItem } = await supabase.rpc("get_or_create_informer_line_item", { _year: year }).maybeSingle?.() ?? { data: null };
-    let lineItemId: string | null = importLineItem?.id ?? null;
-    if (!lineItemId) {
-      // Fallback: find first existing line_item in current year
-      const { data: anyLine } = await supabase
-        .from("budget_line_items")
-        .select("id, budget_categories!inner(year)")
-        .eq("budget_categories.year", year)
-        .limit(1)
-        .maybeSingle();
-      lineItemId = anyLine?.id ?? null;
-    }
-    if (!lineItemId) {
-      return { action, success: true, items_processed: 0, error_message: "Geen budget-post gevonden om crediteur aan te koppelen — maak eerst een categorie + post aan.", api_calls };
-    }
-
     let processed = 0;
+    let skippedNoExisting = 0;
     let documentsStored = 0;
     const docDiagnostics: any[] = [];
     const docReasons: Record<string, number> = {};
     for (const inv of invoices) {
       const externalId = String(inv.id ?? inv.invoice_id ?? "");
-      if (!externalId) continue;
-      const amount = toAmount(inv.total_price_incl_tax ?? inv.total ?? inv.amount ?? 0);
-      const creditor = inv.supplier?.name ?? inv.creditor_name ?? inv.creditor ?? "Onbekend";
-      const expenseDate = inv.invoice_date ?? inv.date ?? new Date().toISOString().slice(0, 10);
-      const description = inv.description ?? inv.reference ?? `Informer ${inv.invoice_number ?? externalId}`;
-
-      // Upsert on external_id
-      const { data: existing } = await supabase.from("budget_expenses").select("id").eq("external_id", externalId).maybeSingle();
-      let expenseId: string | null = existing?.id ?? null;
-      if (existing?.id) {
-        await supabase.from("budget_expenses").update({
-          amount, creditor_name: creditor, expense_date: expenseDate, description,
-          paid: toAmount(inv.paid ?? 0) >= amount, paid_date: inv.payment_date ?? inv.paid_date ?? null,
-        }).eq("id", existing.id);
-      } else {
-        const { data: inserted } = await supabase.from("budget_expenses").insert({
-          line_item_id: lineItemId,
-          amount,
-          direction: "out",
-          creditor_name: creditor,
-          expense_date: expenseDate,
-          description,
-          source: "informer",
-          external_id: externalId,
-          invoice_reference: inv.invoice_number ?? null,
-          paid: toAmount(inv.paid ?? 0) >= amount,
-          paid_date: inv.payment_date ?? inv.paid_date ?? null,
-          created_by: "00000000-0000-0000-0000-000000000000",
-        }).select("id").maybeSingle();
-        expenseId = inserted?.id ?? null;
-      }
+      const { data: existing } = externalId
+        ? await supabase.from("budget_expenses").select("id").eq("external_id", externalId).maybeSingle()
+        : { data: null };
+      const plan = planCreditorImport(externalId, existing);
+      if (plan.kind === "skip") { skippedNoExisting++; continue; }
+      const expenseId: string | null = plan.expenseId;
       if (expenseId) {
         try {
           const res = await storeInvoicePdf(supabase, expenseId, externalId, inv, year);
