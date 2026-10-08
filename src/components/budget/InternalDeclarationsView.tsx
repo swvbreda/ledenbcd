@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronRight, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Pencil, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
 import { computeOpenTotals, formOpenNote, openMemberKey, selectOpenDeclarations } from "@/lib/declarationOpenTotals";
+import { canEditDeclaration, validateEditAmount, type DeclarationEditFields } from "@/lib/declarationEdit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDeclarationSyncErrors, type DeclarationBoardMember, type InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,9 @@ interface Props {
   onReject: (id: string) => void;
   onSubmitConcept?: (id: string) => void;
   onRetryInformer?: (id: string) => void;
+  /** Wijzigt een bestaand record (zelfde id); ontbreekt dit, dan is er geen Wijzigen-knop. */
+  onEdit?: (input: { id: string; expectedStatus: string; fields: DeclarationEditFields; existingReceipts: string[]; receipts?: File[]; submit?: boolean })
+    => Promise<{ id: string; informerSynced: boolean; submitted: boolean } | void>;
 }
 
 const fmtDate = (value: string | null) => value
@@ -71,7 +75,7 @@ const memberAddress = (member?: DeclarationBoardMember) => [
 ].filter(Boolean).join(", ");
 
 export default function InternalDeclarationsView({
-  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer,
+  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer, onEdit,
 }: Props) {
   const { data: syncErrorData } = useDeclarationSyncErrors(isAdmin);
   const syncErrors: Record<string, string> = isAdmin ? syncErrorData ?? {} : {};
@@ -107,7 +111,9 @@ export default function InternalDeclarationsView({
   }, []);
 
   const selectedMember = boardMembers.find((member) => member.id === memberId);
-  const calculation = oneWayKm == null ? null : calculateTravelDeclaration(oneWayKm, returnTrip, DEFAULT_KM_RATE);
+  const [editing, setEditing] = useState<{ id: string; status: string; rate: number; receipts: string[] } | null>(null);
+  const kmRate = editing ? editing.rate : DEFAULT_KM_RATE;
+  const calculation = oneWayKm == null ? null : calculateTravelDeclaration(oneWayKm, returnTrip, kmRate);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -208,10 +214,96 @@ export default function InternalDeclarationsView({
   // Opent een leeg formulier; staat het formulier al open, dan blijft de invulling staan en scrollen we erheen.
   const startNew = () => {
     setJustSubmitted(false);
-    if (!adding) { resetForm(); setAdding(true); }
+    if (!adding) { setEditing(null); resetForm(); setAdding(true); }
     focusForm();
   };
   const startAnother = startNew;
+
+  const editCheck = (d: InternalDeclaration) => {
+    if (d.declaration_type !== "reiskosten" && d.declaration_type !== "overig")
+      return { ok: false as const, reason: "Maandvergoedingen worden hier niet gewijzigd." };
+    return canEditDeclaration(d, { isAdmin, userId });
+  };
+  const formDirty = () => adding && !editing && !!(description.trim() || otherAmount || destination.trim() || receipt);
+
+  // Vult het bestaande record in het formulier; opslaan werkt hetzelfde id bij.
+  const startEdit = (d: InternalDeclaration) => {
+    const check = editCheck(d);
+    if (!check.ok) { toast.error(check.reason); return; }
+    if (formDirty()) { toast.error("Sla eerst de declaratie op die je aan het invullen bent, of annuleer die."); focusForm(); return; }
+    const member = boardMembers.find((m) => m.id === d.board_member_id) ?? boardMembers.find((m) => m.naam === d.board_member_name);
+    setDrill(null); setJustSubmitted(false);
+    setMemberId(member?.id ?? "");
+    setKind(d.declaration_type as "reiskosten" | "overig");
+    setDescription(d.appointment ?? "");
+    setExpenseDate(d.expense_date ?? new Date().toISOString().slice(0, 10));
+    const [from = "", to = ""] = (d.trajectory ?? "").split(" – ");
+    setOrigin(from); setDestination(to);
+    const single = d.km_single != null ? Number(d.km_single) : null;
+    const total = d.km_return != null ? Number(d.km_return) : null;
+    const rt = single != null && total != null ? total > single + 0.001 : true;
+    setReturnTrip(rt);
+    setOneWayKm(single ?? (total != null ? total / (rt ? 2 : 1) : null));
+    setManualKm("");
+    setOtherAmount(d.declaration_type === "overig" ? String(d.amount) : "");
+    setBankAccount(d.bank_account ?? ""); setAccountHolder(d.account_holder ?? "");
+    setEventId(d.event_id ?? ""); setReceipt(null);
+    setEditing({ id: d.id, status: d.status, rate: Number(d.km_rate) || DEFAULT_KM_RATE,
+      receipts: d.receipt_paths && d.receipt_paths.length ? d.receipt_paths : d.receipt_path ? [d.receipt_path] : [] });
+    setAdding(true);
+    focusForm();
+  };
+
+  const cancelForm = () => {
+    if (editing) { setEditing(null); resetForm(); }
+    setAdding(false);
+  };
+
+  const saveEdit = async (submitConcept: boolean) => {
+    if (!editing || !onEdit) return;
+    const targetStatus = submitConcept ? "pending" : editing.status;
+    const amount = kind === "reiskosten" ? calculation?.amount ?? 0 : Number(otherAmount || 0);
+    const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
+      : !expenseDate ? "Kies de datum van de kosten"
+      : !description.trim() ? "Vul een korte omschrijving in"
+      : !bankAccount.trim() ? "Vul het rekeningnummer in"
+      : !accountHolder.trim() ? "Vul de rekeninghouder in"
+      : kind === "reiskosten" && !calculation && targetStatus !== "concept" ? "Bereken eerst de afstand"
+      : validateEditAmount(amount, targetStatus)
+      ?? (kind !== "reiskosten" && targetStatus !== "concept" && !receipt && editing.receipts.length === 0 ? "Voeg een foto of PDF van de bon toe" : null);
+    if (validationError) { toast.error(validationError); return; }
+    setSaving(true);
+    try {
+      const result = await onEdit({
+        id: editing.id, expectedStatus: editing.status, existingReceipts: editing.receipts, receipts: receipt ? [receipt] : [], submit: submitConcept,
+        fields: {
+          board_member_id: selectedMember!.id, board_member_name: selectedMember!.naam, declaration_type: kind,
+          appointment: description.trim(),
+          trajectory: kind === "reiskosten" ? `${origin.trim()} – ${destination.trim()}` : null,
+          km_single: kind === "reiskosten" ? calculation?.oneWayKm ?? null : null,
+          km_return: kind === "reiskosten" ? calculation?.totalKm ?? null : null,
+          km_rate: editing.rate, amount, expense_date: expenseDate,
+          bank_account: bankAccount.trim(), account_holder: accountHolder.trim(), event_id: eventId || null,
+        },
+      });
+      if (result && result.submitted) {
+        if (result.informerSynced) toast.success("Wijziging opgeslagen, ingediend en naar Informer verzonden");
+        else toast.warning("Wijziging opgeslagen en ingediend, maar het versturen naar Informer is mislukt. De penningmeester kan het opnieuw proberen.");
+      } else toast.success("Wijziging opgeslagen");
+      setEditing(null); resetForm(); setAdding(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Wijzigen is niet gelukt");
+    } finally { setSaving(false); }
+  };
+
+  const editButton = (d: InternalDeclaration, size: "sm" | "icon" = "sm") => {
+    if (!onEdit) return null;
+    const check = editCheck(d);
+    if (!check.ok) return null;
+    return size === "icon"
+      ? <Button size="icon" variant="ghost" title="Wijzigen" aria-label="Wijzigen" onClick={() => startEdit(d)}><Pencil className="h-4 w-4" /></Button>
+      : <Button size="sm" variant="outline" onClick={() => startEdit(d)}><Pencil className="mr-1 h-4 w-4" />Wijzigen</Button>;
+  };
 
   const submit = async (asConcept = false) => {
     const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
@@ -328,7 +420,11 @@ export default function InternalDeclarationsView({
                   <p className="text-xs text-muted-foreground">{fmtDate(d.expense_date)} · {d.declaration_type === "reiskosten" ? "Kilometervergoeding" : d.declaration_type === "overig" ? "Overige reiskosten" : d.declaration_type}{drill?.key === null && isAdmin ? ` · ${d.board_member_name}` : ""}</p>
                   <div className="mt-1 flex flex-wrap gap-1">{statusBadge(d.status)}{informerBadge(d)}</div>
                 </div>
-                <strong className="shrink-0 tabular-nums">{money(d.amount)}</strong>
+                <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+                  <strong className="tabular-nums">{money(d.amount)}</strong>
+                  {editButton(d)}
+                  {onEdit && !editCheck(d).ok && <span className="max-w-[16rem] text-xs text-muted-foreground">{(editCheck(d) as { reason: string }).reason}</span>}
+                </div>
               </li>)}
             </ul>
           )}
@@ -344,7 +440,7 @@ export default function InternalDeclarationsView({
 
       {adding && (
         <section ref={formRef} aria-label="Nieuwe declaratie" className="scroll-mt-4 rounded-xl border bg-card p-4 shadow-sm sm:p-5">
-          <div className="mb-5"><h2 className="text-lg font-semibold">Nieuwe declaratie</h2><p className="text-sm text-muted-foreground">Kies eerst voor welk bestuurslid de kosten zijn gemaakt.</p></div>
+          <div className="mb-5"><h2 className="text-lg font-semibold">{editing ? "Declaratie wijzigen" : "Nieuwe declaratie"}</h2><p className="text-sm text-muted-foreground">{editing ? "Je wijzigt een bestaande declaratie; die houdt hetzelfde nummer en dezelfde Informer-referentie." : "Kies eerst voor welk bestuurslid de kosten zijn gemaakt."}</p></div>
           <div className="grid min-w-0 gap-4 md:grid-cols-2">
             <label className="min-w-0 space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bestuurslid</span>
               <Select value={memberId} onValueChange={chooseMember}><SelectTrigger><SelectValue placeholder="Selecteer een bestuurslid" /></SelectTrigger><SelectContent>{boardMembers.map((member) => <SelectItem key={member.id} value={member.id}>{member.naam}{member.functie ? ` — ${member.functie}` : ""}</SelectItem>)}</SelectContent></Select>
@@ -384,12 +480,16 @@ export default function InternalDeclarationsView({
 
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeningnummer</span><Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoCapitalize="characters" placeholder="NL00 BANK 0000 0000 00" /></label>
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
-            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind !== "reiskosten" ? "(verplicht)" : "(optioneel)"}</span><Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
+            <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind !== "reiskosten" ? "(verplicht)" : "(optioneel)"}</span>{editing && editing.receipts.length > 0 && <span className="block text-xs text-muted-foreground">Bestaande bon blijft bewaard ({editing.receipts.length}). Een nieuwe bon wordt toegevoegd.</span>}<Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
           {formNote && (
             <p data-testid="form-open-total" className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">{formNote}</p>
           )}
-          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={() => setAdding(false)} disabled={saving}>Annuleren</Button><Button variant="outline" onClick={() => submit(true)} disabled={saving}>Opslaan als concept</Button><Button onClick={() => submit(false)} disabled={saving}>{saving ? "Indienen…" : "Declaratie definitief indienen"}</Button></div>
+          {editing ? (
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={cancelForm} disabled={saving}>Annuleren</Button>{editing.status === "concept" && <Button variant="outline" onClick={() => saveEdit(true)} disabled={saving}>Opslaan en definitief indienen</Button>}<Button onClick={() => saveEdit(false)} disabled={saving}>{saving ? "Opslaan…" : "Wijzigingen opslaan"}</Button></div>
+          ) : (
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="ghost" onClick={cancelForm} disabled={saving}>Annuleren</Button><Button variant="outline" onClick={() => submit(true)} disabled={saving}>Opslaan als concept</Button><Button onClick={() => submit(false)} disabled={saving}>{saving ? "Indienen…" : "Declaratie definitief indienen"}</Button></div>
+          )}
         </section>
       )}
 
@@ -406,6 +506,7 @@ export default function InternalDeclarationsView({
               {item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" onClick={() => onSubmitConcept(item.id)}>Definitief indienen</Button>}
               {isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}
               {isAdmin && item.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
+              {editButton(item)}
               {canModify && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(item.id)}><Trash2 className="mr-1 h-4 w-4" />Verwijderen</Button>}
             </div>
           </article>;
@@ -416,7 +517,7 @@ export default function InternalDeclarationsView({
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
           <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
             <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{item.appointment || "–"}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3">{statusBadge(item.status)}</td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
-            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
+            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
         </table>

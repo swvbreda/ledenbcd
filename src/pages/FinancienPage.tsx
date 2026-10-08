@@ -347,6 +347,7 @@ export default function FinancienPage() {
                 isAdmin={isAdmin}
                 userId={user?.id || ""}
                 onAdd={(input) => internalMutations.add.mutateAsync(input)}
+                onEdit={(input) => internalMutations.edit.mutateAsync(input)}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
                 onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
