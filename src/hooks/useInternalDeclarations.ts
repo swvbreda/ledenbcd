@@ -172,7 +172,8 @@ export function useInternalDeclarationMutations(year: number) {
         .single();
       if (error) throw error;
       if (asConcept) return { id: data.id, informerSynced: false, concept: true };
-      return { id: data.id, informerSynced: await sendToInformer(data.id), concept: false };
+      // Indienen is lokaal; Informer volgt pas na goedkeuring.
+      return { id: data.id, informerSynced: false, concept: false };
     },
     onSuccess: invalidate,
   });
@@ -181,7 +182,7 @@ export function useInternalDeclarationMutations(year: number) {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("internal_declarations").update({ status: "pending" } as any).eq("id", id);
       if (error) throw error;
-      return { informerSynced: await sendToInformer(id) };
+      return { informerSynced: false };
     },
     onSuccess: invalidate,
   });
@@ -239,7 +240,7 @@ export function useInternalDeclarationMutations(year: number) {
       if (!data || data.length !== 1) {
         throw new Error("Wijzigen is niet gelukt: de declaratie is intussen betaald, verstuurd naar Informer of gewijzigd. Ververs de pagina.");
       }
-      if (submit && expectedStatus === "concept") return { id, informerSynced: await sendToInformer(id), submitted: true };
+      if (submit && expectedStatus === "concept") return { id, informerSynced: false, submitted: true };
       return { id, informerSynced: false, submitted: false };
     },
     onSuccess: invalidate,
@@ -256,11 +257,14 @@ export function useInternalDeclarationMutations(year: number) {
 
   const approve = useMutation({
     mutationFn: async ({ id, reviewerId }: { id: string; reviewerId: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("internal_declarations")
         .update({ status: "approved", reviewed_by: reviewerId, reviewed_at: new Date().toISOString() } as any)
-        .eq("id", id);
-      if (error) throw error;
+        .eq("id", id).eq("status", "pending").select("id");
+      if (error) throw new Error(error.message || "Goedkeuren is niet gelukt");
+      if (!data || data.length !== 1) throw new Error("Goedkeuren is niet gelukt: de declaratie is intussen gewijzigd. Ververs de pagina.");
+      // Pas na goedkeuring verstuurt de server de declaratie naar Informer.
+      return { informerSynced: await sendToInformer(id) };
     },
     onSuccess: invalidate,
   });
@@ -270,7 +274,7 @@ export function useInternalDeclarationMutations(year: number) {
       const { error } = await supabase
         .from("internal_declarations")
         .update({ status: "rejected", reviewed_by: reviewerId, reviewed_at: new Date().toISOString() } as any)
-        .eq("id", id);
+        .eq("id", id).eq("status", "pending");
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -319,6 +323,19 @@ export function useDeclarationAllocationOptions(year: number, enabled: boolean) 
         lineItems: (items ?? []).map((li: any) => ({ id: li.id as string, name: `${catName.get(li.category_id) ?? ""} — ${li.name}` })),
         dossiers,
       };
+    },
+  });
+}
+
+/** Mag de ingelogde gebruiker declaraties goedkeuren (server bepaalt: Bernard of Simone). */
+export function useIsDeclarationApprover(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["declaration-approver", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("is_declaration_approver", { _user_id: userId });
+      if (error) return false;
+      return data === true;
     },
   });
 }
