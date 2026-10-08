@@ -1749,26 +1749,29 @@ async function syncDeclarationPaymentStatus(supabase: any): Promise<ActionResult
   const action = "declaration_payment_status";
   try {
     const { data: decls, error } = await supabase.from("internal_declarations")
-      .select("id, informer_external_id, informer_payment_status, paid_at")
-      .in("informer_status", ["sent", "synced"]).not("informer_external_id", "is", null);
+      .select("id, informer_external_id, informer_doc_type, informer_payment_status, paid_at")
+      .in("informer_status", ["sent", "synced"]).not("informer_external_id", "is", null).not("informer_doc_type", "is", null);
     if (error) throw error;
     const ids = (decls ?? []).map((d: any) => String(d.informer_external_id));
     if (ids.length === 0) return { action, success: true, items_processed: 0 };
+    // Id-nummers zijn niet uniek over soorten heen: altijd op (soort, id) koppelen.
     const { data: entries, error: ledgerError } = await supabase.from("informer_ledger_entries")
-      .select("informer_id, status, open_amount, amount_incl")
-      .eq("doc_type", "purchase_invoice").in("informer_id", ids);
+      .select("doc_type, informer_id, status, open_amount, amount_incl")
+      .in("doc_type", ["purchase_invoice", "receipt"]).in("informer_id", ids);
     if (ledgerError) throw ledgerError;
-    const byId = new Map((entries ?? []).map((e: any) => [String(e.informer_id), e]));
+    const byId = new Map((entries ?? []).map((e: any) => [`${e.doc_type}:${e.informer_id}`, e]));
     let updated = 0;
     for (const d of decls ?? []) {
-      const entry: any = byId.get(String(d.informer_external_id));
+      const entry: any = byId.get(`${d.informer_doc_type}:${d.informer_external_id}`);
       if (!entry) continue;
       const paid = entry.status === "paid" || (Number(entry.amount_incl) > 0 && Number(entry.open_amount) <= 0);
       const next = paid ? "paid" : "open";
-      if (next === d.informer_payment_status && (!paid || d.paid_at)) continue;
+      // Bonnetje verwerkt in Informer ≠ bekende betaaldatum: geen betaaldatum verzinnen.
+      const isReceipt = d.informer_doc_type === "receipt";
+      if (next === d.informer_payment_status && (!paid || d.paid_at || isReceipt)) continue;
       await supabase.from("internal_declarations").update({
         informer_payment_status: next,
-        paid_at: paid ? (d.paid_at ?? new Date().toISOString().slice(0, 10)) : d.paid_at,
+        paid_at: paid && !isReceipt ? (d.paid_at ?? new Date().toISOString().slice(0, 10)) : d.paid_at,
       }).eq("id", d.id);
       updated++;
     }
