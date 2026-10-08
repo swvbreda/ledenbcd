@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
+import { computeOpenTotals } from "@/lib/declarationOpenTotals";
 import { useDeclarationSyncErrors, type DeclarationBoardMember, type InternalDeclaration } from "@/hooks/useInternalDeclarations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,7 @@ export default function InternalDeclarationsView({
   const { data: syncErrorData } = useDeclarationSyncErrors(isAdmin);
   const syncErrors: Record<string, string> = isAdmin ? syncErrorData ?? {} : {};
   const [adding, setAdding] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [search, setSearch] = useState("");
@@ -116,6 +118,7 @@ export default function InternalDeclarationsView({
   }, [declarations, search, statusFilter]);
 
   const total = filtered.reduce((sum, item) => sum + item.amount, 0);
+  const openTotals = useMemo(() => computeOpenTotals(declarations as any, { year, isAdmin, userId }), [declarations, year, isAdmin, userId]);
 
   const chooseMember = async (id: string) => {
     setMemberId(id);
@@ -183,9 +186,12 @@ export default function InternalDeclarationsView({
   };
 
   const resetForm = () => {
+    // Bestuurslid, soort, vertrekadres en rekeninggegevens blijven; bon, bedrag, omschrijving en route niet.
     setEventId(""); setDescription(""); setDestination(""); setOneWayKm(null); setManualKm(""); setOtherAmount(""); setReceipt(null);
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
+
+  const startAnother = () => { resetForm(); setJustSubmitted(false); setAdding(true); };
 
   const submit = async (asConcept = false) => {
     const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
@@ -226,7 +232,7 @@ export default function InternalDeclarationsView({
       } else {
         toast.success("Declaratie ingediend en naar Informer verzonden");
       }
-      resetForm(); setAdding(false);
+      resetForm(); setAdding(false); setJustSubmitted(!(result && result.concept));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Declaratie kon niet worden ingediend");
     } finally { setSaving(false); }
@@ -259,11 +265,33 @@ export default function InternalDeclarationsView({
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Alle statussen</SelectItem><SelectItem value="pending">In afwachting</SelectItem><SelectItem value="approved">Goedgekeurd</SelectItem><SelectItem value="rejected">Afgewezen</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="all">Alle statussen</SelectItem><SelectItem value="concept">Concept</SelectItem><SelectItem value="pending">In afwachting</SelectItem><SelectItem value="approved">Goedgekeurd</SelectItem><SelectItem value="rejected">Afgewezen</SelectItem></SelectContent>
         </Select>
         <Button variant="outline" onClick={handleExport}><Download className="mr-2 h-4 w-4" />CSV</Button>
-        <Button onClick={() => setAdding((value) => !value)}><Plus className="mr-2 h-4 w-4" />Declaratie indienen</Button>
+        <Button onClick={() => { setJustSubmitted(false); setAdding((value) => !value); }}><Plus className="mr-2 h-4 w-4" />Declaratie indienen</Button>
       </div>
+
+      <section aria-label="Openstaand totaal" className="rounded-lg border bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold">Openstaand {year}{isAdmin ? "" : " (mijn declaraties)"}</h3>
+            <p className="text-xs text-muted-foreground">Ingediend of goedgekeurd en nog niet betaald. Telt los van het statusfilter.</p>
+          </div>
+          <div className="text-right"><strong className="text-lg tabular-nums"><CurrencyCell value={openTotals.cents / 100} /></strong><span className="block text-xs text-muted-foreground">{openTotals.count} {openTotals.count === 1 ? "declaratie" : "declaraties"}</span></div>
+        </div>
+        {isAdmin && openTotals.perMember.length > 0 && (
+          <ul className="mt-3 divide-y border-t text-sm">
+            {openTotals.perMember.map((m) => <li key={m.key} className="flex justify-between gap-2 py-1.5"><span>{m.name} <span className="text-muted-foreground">({m.count})</span></span><span className="tabular-nums"><CurrencyCell value={m.cents / 100} /></span></li>)}
+          </ul>
+        )}
+      </section>
+
+      {justSubmitted && !adding && (
+        <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm">Je declaratie is apart ingediend. Heb je nog meer kosten? Die worden bij het openstaande totaal opgeteld.</p>
+          <Button onClick={startAnother}><Plus className="mr-2 h-4 w-4" />Nog een declaratie indienen</Button>
+        </div>
+      )}
 
       {adding && (
         <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
