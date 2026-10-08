@@ -25,7 +25,8 @@ const decls: any[] = [
 ];
 const noop = () => {};
 const members: any[] = [{ id: "b1", naam: "Simone", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }, { id: "b2", naam: "Bernard", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }];
-const renderView = (isAdmin = false) => render(<InternalDeclarationsView declarations={decls} boardMembers={members} year={2026} isAdmin={isAdmin}
+let onEdit = vi.fn(async (i: any) => ({ id: i.id, informerSynced: false, submitted: false }));
+const renderView = (isAdmin = false, list: any[] = decls) => render(<InternalDeclarationsView declarations={list} boardMembers={members} year={2026} isAdmin={isAdmin} onEdit={onEdit}
   userId="u1" onAdd={vi.fn()} onDelete={noop} onApprove={noop} onReject={noop} />);
 
 afterEach(cleanup);
@@ -120,5 +121,51 @@ describe("InternalDeclarationsView open totaal", () => {
     fireEvent.keyDown(document.activeElement || document.body, { key: "Escape" });
     await waitFor(() => expect(document.querySelector('[data-testid="drill-summary"]')).toBeNull());
     expect((screen.getByPlaceholderText(/bestuursvergadering/) as HTMLInputElement).value).toBe("Behouden tekst");
+  });
+
+  const zeroKm = { ...base, id: "z1", amount: 0, status: "approved", submitted_by: "u1", km_single: 93, km_return: 186, km_rate: 0.23,
+    trajectory: "Amstelveen – Den Haag", appointment: "Afscheid burgemeester", receipt_path: "oud.pdf", receipt_paths: ["oud.pdf"], informer_status: "not_sent" };
+
+  it("admin wijzigt approved nulrecord: zelfde id, km opnieuw berekend uit bestaande km en tarief, bon behouden", async () => {
+    onEdit = vi.fn(async (i: any) => ({ id: i.id, informerSynced: false, submitted: false }));
+    renderView(true, [zeroKm]);
+    fireEvent.click(screen.getAllByRole("button", { name: /Wijzigen/ })[0]);
+    expect(screen.getByText("Declaratie wijzigen")).toBeTruthy();
+    expect((screen.getByPlaceholderText(/bestuursvergadering/) as HTMLInputElement).value).toBe("Afscheid burgemeester");
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigingen opslaan" }));
+    await waitFor(() => expect(onEdit).toHaveBeenCalledTimes(1));
+    const arg = onEdit.mock.calls[0][0];
+    expect(arg.id).toBe("z1");
+    expect(arg.expectedStatus).toBe("approved");
+    expect(arg.fields).toMatchObject({ km_single: 93, km_return: 186, km_rate: 0.23, amount: 42.78 });
+    expect(arg.existingReceipts).toEqual(["oud.pdf"]);
+    expect(arg.receipts).toEqual([]);
+  });
+
+  it("gewone gebruiker ziet geen Wijzigen bij approved, betaald of al in Informer; wel bij eigen pending", () => {
+    renderView(false, [zeroKm, { ...zeroKm, id: "p1", status: "pending" }, { ...zeroKm, id: "s1", status: "pending", informer_status: "sending" },
+      { ...zeroKm, id: "x1", status: "pending", informer_external_id: "123", informer_status: "sent" }, { ...zeroKm, id: "b1", status: "pending", paid_at: "2026-09-01" }]);
+    // één bewerkbaar record → één knop in de kaart en één in de tabel
+    expect(screen.getAllByRole("button", { name: /Wijzigen/ })).toHaveLength(2);
+  });
+
+  it("nul bedrag bij definitief record wordt geweigerd zonder opslaan; annuleren wijzigt niets", async () => {
+    onEdit = vi.fn(async (i: any) => ({ id: i.id, informerSynced: false, submitted: false }));
+    renderView(true, [{ ...zeroKm, km_single: null, km_return: null }]);
+    fireEvent.click(screen.getAllByRole("button", { name: /Wijzigen/ })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Wijzigingen opslaan" }));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(onEdit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Annuleren" }));
+    expect(screen.queryByText("Declaratie wijzigen")).toBeNull();
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it("Wijzigen staat ook in het openstaande-venster", async () => {
+    renderView(true, [zeroKm]);
+    fireEvent.click(screen.getByRole("button", { name: "Bekijk openstaande declaraties" }));
+    await waitFor(() => expect(document.querySelector('[data-testid="drill-list"]')).toBeTruthy());
+    const btn = document.querySelector('[data-testid="drill-list"] button')!;
+    expect(btn.textContent).toMatch(/Wijzigen/);
   });
 });
