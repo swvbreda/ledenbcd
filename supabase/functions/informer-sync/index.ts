@@ -1691,12 +1691,13 @@ function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
   return {
     findByReference: (reference) => findExistingPurchaseByReference(reference, apiCalls),
     async createPurchase(declaration, reference) {
-      const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
       const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
       const optionsError = hasInformerError(optionsCall.response_body);
       if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
-      // Exact de afgesproken rekening, gecontroleerd tegen de actuele opties; anders afbreken vóór CREATE.
+      // Exact de afgesproken rekening, gecontroleerd tegen de actuele opties; anders afbreken
+      // vóór er een relatie of inkoopfactuur wordt aangemaakt.
       const ledgerId = selectDeclarationLedger(declaration.declaration_type, extractLedgerOptions(optionsCall.response_body));
+      const relationId = await ensureSupplierForBoardMember(supabase, declaration, apiCalls);
       const vats = findNestedArray(optionsCall.response_body, /vat/i);
       const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
         ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
