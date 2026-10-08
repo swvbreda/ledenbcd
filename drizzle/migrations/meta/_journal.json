@@ -43,6 +43,13 @@
       "when": 1791494348860,
       "tag": "0005_contribution_bank_links",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791494554476,
+      "tag": "0006_tighten_contribution_bank_links_grants",
+      "breakpoints": true
     }
   ]
 }
