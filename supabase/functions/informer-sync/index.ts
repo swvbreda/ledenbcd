@@ -14,6 +14,7 @@ import {
 import {
   buildSupplierRelationPayload,
   describeInformerError,
+  findExistingSupplierId,
   extractLedgerOptions,
   redactSensitive as redactSensitiveText,
   selectDeclarationLedger,
@@ -1589,15 +1590,12 @@ async function ensureSupplierForBoardMember(supabase: any, declaration: any, api
   const relations = await fetchInformerRelations(apiCalls);
   const emails = [boardMember.bond_email, boardMember.email].map(normalizeText).filter(Boolean);
   const iban = normalizeText(declaration.bank_account).replace(/\s/g, "");
-  const name = normalizeText(boardMember.naam);
-  const existing = relations.find((relation: any) => {
-    const relationEmails = [relation?.email, relation?.email_invoice].map(normalizeText);
-    const relationIban = normalizeText(relation?.iban).replace(/\s/g, "");
-    const relationName = normalizeText([relation?.firstname, relation?.surname_prefix, relation?.surname].filter(Boolean).join(" ") || relation?.company_name || relation?.name);
-    return emails.some((email) => relationEmails.includes(email)) || (iban && relationIban === iban) || relationName === name;
+  const existingId = findExistingSupplierId(relations, {
+    emails: [boardMember.bond_email, boardMember.email],
+    iban: declaration.bank_account,
+    name: boardMember.naam,
   });
-  const existingId = existing ? informerRelationId(existing) : "";
-  if (existingId && /^\d+$/.test(existingId)) return existingId;
+  if (existingId) return existingId;
 
   const address = parseAddressLine(String(boardMember.prive_adres ?? ""));
   if (!address.street || !address.houseNumber || !boardMember.prive_postcode || !boardMember.prive_plaats) {

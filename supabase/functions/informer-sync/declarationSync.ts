@@ -45,6 +45,29 @@ export function redactSensitive(text: string): string {
     .replace(/\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]){10,30}\b/gi, "[IBAN]");
 }
 
+const normText = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/** Hergebruik een bestaande Informer-relatie (e-mail, IBAN of naam). Geeft numeriek id of "". */
+export function findExistingSupplierId(
+  relations: any[],
+  who: { emails: unknown[]; iban?: unknown; name?: unknown },
+): string {
+  const emails = who.emails.map(normText).filter(Boolean);
+  const iban = normText(who.iban).replace(/\s/g, "");
+  const name = normText(who.name);
+  const existing = (relations ?? []).find((relation: any) => {
+    const relationEmails = [relation?.email, relation?.email_invoice].map(normText).filter(Boolean);
+    const relationIban = normText(relation?.iban).replace(/\s/g, "");
+    const relationName = normText(
+      [relation?.firstname, relation?.surname_prefix, relation?.surname].filter(Boolean).join(" ")
+        || relation?.company_name || relation?.name,
+    );
+    return emails.some((e) => relationEmails.includes(e)) || (!!iban && relationIban === iban) || (!!name && relationName === name);
+  });
+  const id = existing ? String(existing?.id ?? existing?.relation_id ?? "").trim() : "";
+  return /^\d+$/.test(id) ? id : "";
+}
+
 // ---------------------------------------------------------------------------
 // Informer relatie (leverancier) — payload volgens de officiële OpenAPI-spec
 // (https://api.informer.eu/docs/v1/api-docs.json, schema RelationInput).
