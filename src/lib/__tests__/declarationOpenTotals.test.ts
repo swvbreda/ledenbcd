@@ -38,3 +38,29 @@ describe("computeOpenTotals", () => {
     ]);
   });
 });
+
+import { formOpenNote } from "@/lib/declarationOpenTotals";
+describe("formOpenNote", () => {
+  const rows: any[] = [
+    { year: 2026, amount: 18.17, status: "pending", paid_at: null, submitted_by: "u1", board_member_id: "b1", board_member_name: "Simone" },
+    { year: 2026, amount: 10, status: "approved", paid_at: null, submitted_by: "u1", board_member_id: "b1", board_member_name: "Simone" },
+    { year: 2026, amount: 99, status: "pending", paid_at: null, submitted_by: "u2", board_member_id: "b2", board_member_name: "Bernard" },
+  ];
+  const simone = { id: "b1", naam: "Simone" }, bernard = { id: "b2", naam: "Bernard" };
+  it("admin met gekozen ander bestuurslid krijgt diens cijfers", () => {
+    const t = computeOpenTotals(rows, { year: 2026, isAdmin: true, userId: "u1" });
+    expect(formOpenNote(t, { year: 2026, isAdmin: true, member: bernard })).toMatch(/voor Bernard al 1 open declaratie \(€\s?99,00\)/);
+  });
+  it("admin met zichzelf gekozen krijgt alleen eigen cijfers", () => {
+    const t = computeOpenTotals(rows, { year: 2026, isAdmin: true, userId: "u1" });
+    expect(formOpenNote(t, { year: 2026, isAdmin: true, member: simone })).toMatch(/voor Simone al 2 open declaraties \(€\s?28,17\)/);
+  });
+  it("zonder gekozen bestuurslid: algemeen, admin over alle bestuurders", () => {
+    const t = computeOpenTotals(rows, { year: 2026, isAdmin: true, userId: "u1" });
+    expect(formOpenNote(t, { year: 2026, isAdmin: true })).toMatch(/3 open declaraties.*over alle bestuurders/);
+  });
+  it("gewone gebruiker ziet bij een ander bestuurslid geen cijfers van die ander", () => {
+    const t = computeOpenTotals(rows, { year: 2026, isAdmin: false, userId: "u1" });
+    expect(formOpenNote(t, { year: 2026, isAdmin: false, member: bernard })).toBeNull();
+  });
+});

@@ -76,20 +76,11 @@ describe("InternalDeclarationsView open totaal", () => {
     expect(within(block).getByText(/Bernard/)).toBeTruthy();
   });
 
-  it("admin: melding onderaan volgt het gekozen bestuurslid, niet het totaal over iedereen", async () => {
+  it("admin: algemene melding onderaan noemt alle bestuurders, geen persoonlijke claim", () => {
     renderView(true);
     fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
-    expect(noteIsBelowFormFields().textContent).toMatch(/3 open declaraties.*over alle bestuurders/);
-    await pickMember("Bernard");
-    expect(noteIsBelowFormFields().textContent).toMatch(/voor Bernard al 1 open declaratie \(.*99,00\)/);
-    await pickMember("Simone");
-    expect(noteIsBelowFormFields().textContent).toMatch(/voor Simone al 2 open declaraties \(.*28,17\)/);
-  });
-
-  it("gewone gebruiker ziet bij een ander bestuurslid geen cijfers van die ander", async () => {
-    renderView(false);
-    fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
-    await pickMember("Bernard");
-    expect(screen.queryByTestId("form-open-total")).toBeNull();
+    const t = noteIsBelowFormFields().textContent!;
+    expect(t).toMatch(/3 open declaraties.*over alle bestuurders/);
+    expect(t).not.toMatch(/Je hebt/);
   });
 });
