@@ -2231,17 +2231,13 @@ Deno.serve(async (req) => {
     const api_calls: ApiCall[] = [];
     try {
       const { data: decls } = await supabase.from("internal_declarations")
-        .select("id, amount, expense_date, bank_transaction_id, paid_at, informer_external_id")
+        .select("id, amount, expense_date, bank_transaction_id, paid_at, informer_external_id, informer_doc_type")
         .not("paid_at", "is", null).gt("amount", 0).neq("status", "rejected").gte("year", 2026);
       const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
       const { data: bank } = txIds.length
         ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
         : { data: [] };
-      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
-      const purchases = raw.map((p: any) => ({
-        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? ""),
-        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
-      }));
+      const purchases = await fetchDeclarationDocsForPreflight(api_calls);
       const rows = paidPreflight(decls ?? [], (bank ?? []) as any, purchases, await bankUseCounts(supabase, txIds));
       return new Response(JSON.stringify({ success: true, checked_purchases: purchases.length, rows }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -2279,11 +2275,7 @@ Deno.serve(async (req) => {
       const { data: bank } = txIds.length
         ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
         : { data: [] };
-      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
-      const purchases = raw.map((p: any) => ({
-        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? "").trim().toUpperCase(),
-        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
-      }));
+      const purchases = await fetchDeclarationDocsForPreflight(api_calls);
       const rows = paidPreflight((decls ?? []) as any, (bank ?? []) as any, purchases, await bankUseCounts(supabase, txIds));
       const { data: attempts } = await supabase.from("internal_declaration_sync_attempts")
         .select("sanitized_error, internal_declarations(expense_date)").not("sanitized_error", "is", null).limit(1000);
