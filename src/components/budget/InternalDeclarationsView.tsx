@@ -32,6 +32,8 @@ interface Props {
   onAdd: (input: AddDeclarationInput) => Promise<AddDeclarationResult> | AddDeclarationResult;
   onDelete: (id: string) => void;
   onApprove: (id: string) => void;
+  /** Server-bepaald: alleen aangewezen goedkeurders (Bernard of Simone). */
+  canApprove?: boolean;
   onReject: (id: string) => void;
   onSubmitConcept?: (id: string) => void;
   onRetryInformer?: (id: string) => void;
@@ -70,16 +72,16 @@ const informerBadge = (declaration: InternalDeclaration, showError?: string) => 
   if (declaration.status === "concept") return null;
   if (declaration.informer_status === "sent" || declaration.informer_status === "synced") {
     if ((declaration.paid_at || declaration.payment_confirmed_at) && declaration.informer_payment_status !== "paid") return <Badge variant="secondary">Opgenomen — aflettering nog nodig</Badge>;
-    return <Badge className="bg-green-600">Naar Informer verzonden</Badge>;
+    return null;
   }
   if (declaration.informer_status === "error") {
     return <Badge variant="destructive" title={showError || undefined}>Synchronisatie mislukt</Badge>;
   }
-  return <Badge variant="outline">Ingediend</Badge>;
+  return null;
 };
 
 const canRetry = (d: InternalDeclaration) =>
-  d.status !== "concept" && d.status !== "rejected" && (d.informer_status === "error" || d.informer_status === "not_sent" || d.informer_status === "queued");
+  d.status === "approved" && (d.informer_status === "error" || d.informer_status === "not_sent" || d.informer_status === "queued");
 
 const memberAddress = (member?: DeclarationBoardMember) => [
   member?.prive_adres,
@@ -87,7 +89,7 @@ const memberAddress = (member?: DeclarationBoardMember) => [
 ].filter(Boolean).join(", ");
 
 export default function InternalDeclarationsView({
-  declarations, boardMembers, year, isAdmin, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer, onEdit, allocationOptions, onAllocate,
+  declarations, boardMembers, year, isAdmin, canApprove = false, userId, onAdd, onDelete, onApprove, onReject, onSubmitConcept, onRetryInformer, onEdit, allocationOptions, onAllocate,
 }: Props) {
   const { data: syncErrorData } = useDeclarationSyncErrors(isAdmin);
   const syncErrors: Record<string, string> = isAdmin ? syncErrorData ?? {} : {};
@@ -324,8 +326,7 @@ export default function InternalDeclarationsView({
         },
       });
       if (result && result.submitted) {
-        if (result.informerSynced) toast.success("Wijziging opgeslagen, ingediend en naar Informer verzonden");
-        else toast.warning("Wijziging opgeslagen en ingediend, maar het versturen naar Informer is mislukt. De penningmeester kan het opnieuw proberen.");
+        toast.success("Wijziging opgeslagen en ingediend. Na goedkeuring wordt de declaratie verwerkt.");
       } else toast.success("Wijziging opgeslagen");
       setEditing(null); resetForm(); setAdding(false);
     } catch (error) {
@@ -377,9 +378,9 @@ export default function InternalDeclarationsView({
       if (result && result.concept) {
         toast.success("Concept opgeslagen; dien het later definitief in");
       } else if (result && !result.informerSynced) {
-        toast.warning("Declaratie is ingediend, maar het versturen naar Informer is mislukt. De penningmeester kan het opnieuw proberen.");
+        toast.success("Declaratie ingediend. Na goedkeuring wordt de declaratie verwerkt.");
       } else {
-        toast.success("Declaratie ingediend en naar Informer verzonden");
+        toast.success("Declaratie ingediend. Na goedkeuring wordt de declaratie verwerkt.");
       }
       resetForm(); setAdding(false); setJustSubmitted(!(result && result.concept));
     } catch (error) {
@@ -561,10 +562,10 @@ export default function InternalDeclarationsView({
             <div className="mt-3 flex flex-wrap gap-2">{statusBadge(item.status)}{paymentBadge(item)}{informerBadge(item, syncErrors[item.id])}</div>{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-2 break-words text-xs text-destructive">{syncErrors[item.id]}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
               {item.receipt_path && <Button size="sm" variant="outline" onClick={() => viewReceipt(item.receipt_path!)}><Receipt className="mr-1 h-4 w-4" />Bon</Button>}
-              {isAdmin && item.status !== "approved" && <Button size="sm" variant="outline" onClick={() => onApprove(item.id)}><Check className="mr-1 h-4 w-4" />Goedkeuren</Button>}
+              {canApprove && item.status === "pending" && <Button size="sm" variant="outline" onClick={() => onApprove(item.id)}><Check className="mr-1 h-4 w-4" />Goedkeuren</Button>}
               {item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" onClick={() => onSubmitConcept(item.id)}>Definitief indienen</Button>}
               {isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}
-              {isAdmin && item.status !== "rejected" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
+              {canApprove && item.status === "pending" && <Button size="sm" variant="outline" onClick={() => onReject(item.id)}><X className="mr-1 h-4 w-4" />Afwijzen</Button>}
               {editButton(item)}
               {allocateButton(item)}
               {canModify && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(item.id)}><Trash2 className="mr-1 h-4 w-4" />Verwijderen</Button>}
@@ -577,7 +578,7 @@ export default function InternalDeclarationsView({
         <table className="w-full min-w-[72rem] text-sm"><thead className="bg-muted/50 text-left text-muted-foreground"><tr><th className="p-3">Datum</th><th className="p-3">Bestuurslid</th><th className="p-3">Omschrijving</th><th className="p-3">Traject</th><th className="p-3 text-right">Km</th><th className="p-3 text-right">Bedrag</th><th className="p-3">Status</th><th className="p-3">Informer</th><th className="p-3">Acties</th></tr></thead>
           <tbody>{filtered.map((item) => { const canModify = isAdmin || (item.status === "pending" && !item.paid_at && !item.payment_confirmed_at && item.submitted_by === userId); return <tr key={item.id} className="border-t align-top">
             <td className="p-3 whitespace-nowrap">{fmtDate(item.expense_date)}</td><td className="p-3 font-medium">{item.board_member_name}</td><td className="p-3">{declarationDescription(item, "–")}<span className="block text-xs text-muted-foreground">{declarationTypeLabel(item.declaration_type)}</span>{allocationText(item) && <span className="block text-xs text-muted-foreground">{allocationText(item)}</span>}</td><td className="max-w-xs p-3 break-words text-muted-foreground">{item.trajectory || "–"}</td><td className="p-3 text-right">{item.km_return ?? "–"}</td><td className="p-3 text-right"><CurrencyCell value={item.amount} /></td><td className="p-3"><div className="flex flex-wrap gap-1">{statusBadge(item.status)}{paymentBadge(item)}</div></td><td className="p-3">{informerBadge(item, syncErrors[item.id])}{isAdmin && item.informer_status === "error" && syncErrors[item.id] && <p className="mt-1 max-w-[16rem] break-words text-xs text-destructive">{syncErrors[item.id]}</p>}</td>
-            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{isAdmin && item.status !== "approved" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{isAdmin && item.status !== "rejected" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{allocateButton(item)}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
+            <td className="p-3"><div className="flex gap-1">{item.receipt_path && <Button size="icon" variant="ghost" title="Bekijk bon" onClick={() => viewReceipt(item.receipt_path!)}><FileText className="h-4 w-4" /></Button>}{canApprove && item.status === "pending" && <Button size="icon" variant="ghost" title="Goedkeuren" onClick={() => onApprove(item.id)}><Check className="h-4 w-4 text-green-600" /></Button>}{item.status === "concept" && item.submitted_by === userId && onSubmitConcept && <Button size="sm" variant="outline" onClick={() => onSubmitConcept(item.id)}>Indienen</Button>}{isAdmin && canRetry(item) && onRetryInformer && <Button size="sm" variant="outline" onClick={() => onRetryInformer(item.id)}>Opnieuw naar Informer sturen</Button>}{canApprove && item.status === "pending" && <Button size="icon" variant="ghost" title="Afwijzen" onClick={() => onReject(item.id)}><X className="h-4 w-4 text-destructive" /></Button>}{editButton(item, "icon")}{allocateButton(item)}{canModify && <Button size="icon" variant="ghost" title="Verwijderen" onClick={() => onDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div></td>
           </tr>; })}</tbody>
           <tfoot className="border-t bg-muted/40 font-semibold"><tr><td colSpan={5} className="p-3">Totaal ({filtered.length})</td><td className="p-3 text-right"><CurrencyCell value={total} /></td><td colSpan={3} /></tr></tfoot>
         </table>

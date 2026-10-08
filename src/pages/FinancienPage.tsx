@@ -356,10 +356,11 @@ export default function FinancienPage() {
                 allocationOptions={allocationOptions.data}
                 onAllocate={(input) => internalMutations.allocate.mutateAsync(input)}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
-                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
-                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}
-                onSubmitConcept={(id) => internalMutations.submitConcept.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Ingediend en naar Informer verzonden") : toast.warning("Ingediend; versturen naar Informer is mislukt"), onError: (e) => toast.error(e instanceof Error ? e.message : "Indienen mislukt") })}
-                onRetryInformer={(id) => internalMutations.retryInformer.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Naar Informer verzonden") : toast.error("Synchronisatie opnieuw mislukt"), onError: () => toast.error("Synchronisatie opnieuw mislukt") })}
+                onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: (r) => r?.informerSynced ? toast.success("Declaratie goedgekeurd en verwerkt") : toast.warning("Declaratie goedgekeurd; verwerken in Informer is mislukt en kan opnieuw worden geprobeerd"), onError: (e) => toast.error(e instanceof Error ? e.message : "Goedkeuren mislukt") })}
+                canApprove={isDeclarationApprover === true}
+                onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen"), onError: (e) => toast.error(e instanceof Error ? e.message : "Afwijzen mislukt") })}
+                onSubmitConcept={(id) => internalMutations.submitConcept.mutate(id, { onSuccess: () => toast.success("Ingediend. Na goedkeuring wordt de declaratie verwerkt."), onError: (e) => toast.error(e instanceof Error ? e.message : "Indienen mislukt") })}
+                onRetryInformer={(id) => internalMutations.retryInformer.mutate(id, { onSuccess: (r) => r.informerSynced ? toast.success("Opnieuw verwerkt") : toast.error("Synchronisatie opnieuw mislukt"), onError: () => toast.error("Synchronisatie opnieuw mislukt") })}
               />
             </div>
           </TabsContent>
