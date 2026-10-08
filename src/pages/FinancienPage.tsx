@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
-import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
+import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations, useDeclarationAllocationOptions } from "@/hooks/useInternalDeclarations";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -43,6 +43,7 @@ export default function FinancienPage() {
   // ongeacht welk financieel tabblad actief is.
   const autoSync = useAutoYearSync(year);
   const { user, isAdmin } = useAuth();
+  const allocationOptions = useDeclarationAllocationOptions(year, !!isAdmin);
   const { data: yearSettings } = useBudgetYearSettings(year);
   const yearSettingsMutation = useBudgetYearSettingsMutation(year);
   const { data: categories, isLoading } = useBudgetCategories(year);
@@ -348,6 +349,8 @@ export default function FinancienPage() {
                 userId={user?.id || ""}
                 onAdd={(input) => internalMutations.add.mutateAsync(input)}
                 onEdit={(input) => internalMutations.edit.mutateAsync(input)}
+                allocationOptions={allocationOptions.data}
+                onAllocate={(input) => internalMutations.allocate.mutateAsync(input)}
                 onDelete={(id) => internalMutations.remove.mutate(id, { onSuccess: () => toast.success("Declaratie verwijderd") })}
                 onApprove={(id) => internalMutations.approve.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie goedgekeurd") })}
                 onReject={(id) => internalMutations.reject.mutate({ id, reviewerId: user!.id }, { onSuccess: () => toast.success("Declaratie afgewezen") })}

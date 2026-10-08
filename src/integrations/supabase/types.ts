@@ -2102,9 +2102,11 @@ export type Database = {
           bank_transaction_id: string | null
           board_member_id: string | null
           board_member_name: string
+          budget_line_item_id: string | null
           budget_reference: string | null
           created_at: string
           declaration_type: string
+          dossier: string | null
           event_id: string | null
           expense_date: string | null
           id: string
@@ -2138,9 +2140,11 @@ export type Database = {
           bank_transaction_id?: string | null
           board_member_id?: string | null
           board_member_name: string
+          budget_line_item_id?: string | null
           budget_reference?: string | null
           created_at?: string
           declaration_type?: string
+          dossier?: string | null
           event_id?: string | null
           expense_date?: string | null
           id?: string
@@ -2174,9 +2178,11 @@ export type Database = {
           bank_transaction_id?: string | null
           board_member_id?: string | null
           board_member_name?: string
+          budget_line_item_id?: string | null
           budget_reference?: string | null
           created_at?: string
           declaration_type?: string
+          dossier?: string | null
           event_id?: string | null
           expense_date?: string | null
           id?: string
@@ -2215,6 +2221,13 @@ export type Database = {
             columns: ["board_member_id"]
             isOneToOne: false
             referencedRelation: "board_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_declarations_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
             referencedColumns: ["id"]
           },
         ]

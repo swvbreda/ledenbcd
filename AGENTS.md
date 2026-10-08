@@ -3,3 +3,5 @@
 - Use route-level `head()` and `src/lib/socialHead.ts` for social previews, keeping private route images mapped to the public login capture; this prevents disclosure while enabling unique initial-HTML metadata.
 - Member passwordless access uses Supabase Auth OTP and an independent server activation switch; this prevents the preview UI alone from enabling live mail before RLS and Auth templates are ready.
 - Component render tests live in src/components/**/__tests__/*.render.tsx and run via `bunx vitest run -c vitest.components.config.ts`; the app Vite config loads React twice under vitest.
+- Canonical source for purchase costs in budget/dossiers is `informer_ledger_entries` (via `ledger_entries_v`); `pull_creditors` never creates `budget_expenses` or picks a default line item, so imports cannot be miscategorised or counted twice.
+- Declaration post/dossier lives on `internal_declarations.budget_line_item_id`/`dossier` (admin-only via trigger); for declarations with an Informer document it is mirrored into `ledger_entry_overrides` without overwriting an existing different assignment, so budget and dossiers read one assignment.

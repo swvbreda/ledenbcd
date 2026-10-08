@@ -26,7 +26,9 @@ const decls: any[] = [
 const noop = () => {};
 const members: any[] = [{ id: "b1", naam: "Simone", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }, { id: "b2", naam: "Bernard", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }];
 let onEdit = vi.fn(async (i: any) => ({ id: i.id, informerSynced: false, submitted: false }));
-const renderView = (isAdmin = false, list: any[] = decls) => render(<InternalDeclarationsView declarations={list} boardMembers={members} year={2026} isAdmin={isAdmin} onEdit={onEdit}
+let onAllocate = vi.fn(async (_i: any) => ({}));
+const allocOpts = { lineItems: [{ id: "li-onk", name: "Dagelijks bestuur — Onkosten vergoedingen" }], dossiers: ["Amsterdam i-criterium"] };
+const renderView = (isAdmin = false, list: any[] = decls) => render(<InternalDeclarationsView declarations={list} boardMembers={members} year={2026} isAdmin={isAdmin} onEdit={onEdit} allocationOptions={allocOpts} onAllocate={onAllocate}
   userId="u1" onAdd={vi.fn()} onDelete={noop} onApprove={noop} onReject={noop} />);
 
 afterEach(cleanup);
@@ -192,5 +194,21 @@ describe("InternalDeclarationsView open totaal", () => {
     renderView(true, [{ ...base, id: "k1", declaration_type: "reiskosten", appointment: "Vergadering" }, { ...base, id: "o1", declaration_type: "overig", appointment: "Parkeren" }]);
     expect(screen.getAllByText(/Kilometervergoeding/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Overige reiskosten/).length).toBeGreaterThan(0);
+  });
+
+  it("admin deelt een Informer-declaratie in op post en dossier; gewone gebruiker ziet geen Indelen", async () => {
+    onAllocate = vi.fn(async (_i: any) => ({}));
+    const sent = { ...base, id: "s9", status: "approved", informer_status: "sent", informer_external_id: "16891349", declaration_type: "penningmeester", amount: 210, appointment: null, expense_date: "2026-01-31" };
+    const { unmount } = renderView(false, [{ ...sent, submitted_by: "u1" }]);
+    expect(screen.queryAllByRole("button", { name: "Indelen" })).toHaveLength(0);
+    unmount();
+    renderView(true, [sent]);
+    expect(screen.getByText("Nog niet ingedeeld")).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Indelen" })[0]);
+    fireEvent.change(screen.getByLabelText("Begrotingspost"), { target: { value: "li-onk" } });
+    fireEvent.change(screen.getByLabelText("Dossier"), { target: { value: " Amsterdam i-criterium " } });
+    fireEvent.click(screen.getByRole("button", { name: "Opslaan" }));
+    await waitFor(() => expect(onAllocate).toHaveBeenCalledTimes(1));
+    expect(onAllocate.mock.calls[0][0]).toEqual({ id: "s9", informerExternalId: "16891349", lineItemId: "li-onk", dossier: "Amsterdam i-criterium", validLineItemIds: ["li-onk"] });
   });
 });
