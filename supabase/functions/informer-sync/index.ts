@@ -2304,17 +2304,17 @@ Deno.serve(async (req) => {
       const results: any[] = [];
       for (const r of core) {
         const d: any = (decls ?? []).find((x: any) => x.id === r.declaration_id);
-        const { data: after } = await supabase.from("internal_declarations").select("informer_external_id, informer_status, paid_at, bank_transaction_id, amount, status").eq("id", r.declaration_id).maybeSingle();
+        const { data: after } = await supabase.from("internal_declarations").select("informer_external_id, informer_doc_type, informer_status, paid_at, bank_transaction_id, amount, status").eq("id", r.declaration_id).maybeSingle();
         const tx: any = bankBy.get(d?.bank_transaction_id);
         results.push({
-          ...r, informer_document_id: after?.informer_external_id ?? null,
+          ...r, informer_document_id: after?.informer_external_id ?? null, informer_document_type: after?.informer_doc_type ?? null,
           bank_transaction_id: d?.bank_transaction_id ?? null, bank_date: tx?.value_date ?? null, bank_amount: tx ? Math.abs(Number(tx.amount)) : null,
           paid_preserved: Boolean(after?.paid_at) && after?.bank_transaction_id === d?.bank_transaction_id && after?.status === "approved" && Number(after?.amount) === Number(d?.amount),
         });
       }
       const count = (o: string) => results.filter((r) => r.outcome === o).length;
-      await logResult(supabase, { action: "paid_declarations_book", success: results.every((r) => r.success), items_processed: count("created"), details: { batch, results: results.map((r) => ({ id: r.declaration_id, outcome: r.outcome, doc: r.informer_document_id })), blocked }, api_calls: redactApiCalls(api_calls) as any });
-      return new Response(JSON.stringify({ success: true, batch, created: count("created"), reused: count("reused"), failed: count("failed"), uncertain: count("uncertain"), results, blocked, note: "Opgenomen als inkoopfactuur; afletteren tegen de bestaande bankbetaling gebeurt handmatig in Informer." }), {
+      await logResult(supabase, { action: "paid_declarations_book", success: results.every((r) => r.success), items_processed: count("created"), details: { batch, results: results.map((r) => ({ id: r.declaration_id, outcome: r.outcome, doc: r.informer_document_id, type: r.informer_document_type })), blocked }, api_calls: redactApiCalls(api_calls) as any });
+      return new Response(JSON.stringify({ success: true, batch, created: count("created"), reused: count("reused"), failed: count("failed"), uncertain: count("uncertain"), results, blocked, note: "Nieuw opgenomen als bonnetje (Uitgaven, betaalwijze bank); afletteren tegen de bestaande bankbetaling gebeurt handmatig in Informer." }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (e) {
