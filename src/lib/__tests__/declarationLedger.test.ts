@@ -27,8 +27,8 @@ describe("grootboekkeuze declaraties", () => {
     expect(selectDeclarationLedger("reiskosten", extractLedgerOptions(OPTIONS))).toBe(15391231);
   });
 
-  it("overige reiskosten -> 5010 / 15391263", () => {
-    expect(selectDeclarationLedger("overige_reiskosten", extractLedgerOptions(OPTIONS))).toBe(15391263);
+  it("overig (overige reiskosten) -> 5010 / 15391263", () => {
+    expect(selectDeclarationLedger("overig", extractLedgerOptions(OPTIONS))).toBe(15391263);
   });
 
   it("opties als object op id worden ook herkend", () => {
@@ -36,11 +36,12 @@ describe("grootboekkeuze declaraties", () => {
     expect(selectDeclarationLedger("reiskosten", extractLedgerOptions(body))).toBe(15391231);
   });
 
-  it("oude algemene overige kosten en onbekende soort worden geblokkeerd", () => {
-    expect(() => selectDeclarationLedger("overig", extractLedgerOptions(OPTIONS))).toThrow(/Geen grootboekrekening/);
-    expect(validateDeclarationForInformer(decl({ declaration_type: "overig" }))).toMatch(/algemene overige kosten/);
+  it("onbekende soort wordt geblokkeerd; reiskosten en overig zijn geldig", () => {
+    expect(() => selectDeclarationLedger("iets", extractLedgerOptions(OPTIONS))).toThrow(/Geen grootboekrekening/);
     expect(validateDeclarationForInformer(decl({ declaration_type: "iets" }))).toMatch(/Onbekende declaratiesoort/);
-    expect(validateDeclarationForInformer(decl({ declaration_type: "overige_reiskosten" }))).toBeNull();
+    expect(validateDeclarationForInformer(decl({ declaration_type: "overige_reiskosten" }))).toMatch(/Onbekende declaratiesoort/);
+    expect(validateDeclarationForInformer(decl({ declaration_type: "overig" }))).toBeNull();
+    expect(validateDeclarationForInformer(decl({ declaration_type: "reiskosten" }))).toBeNull();
   });
 
   it("geen fallback naar eerste rekening als de afgesproken rekening ontbreekt", () => {
@@ -54,10 +55,10 @@ describe("grootboekkeuze declaraties", () => {
     expect(() => selectDeclarationLedger("reiskosten", extractLedgerOptions(body))).toThrow(/verwacht 4495/);
   });
 
-  it("oude overig-declaratie: geen claim en geen Informer-aanroep", async () => {
+  it("onbekende soort: geen claim en geen Informer-aanroep", async () => {
     let calls = 0; let claimed = false;
     const store: DeclarationStore = {
-      async load() { return decl({ declaration_type: "overig" }); },
+      async load() { return decl({ declaration_type: "iets" }); },
       async claim() { claimed = true; return true; },
       async markSent() {}, async markError() {}, async markInvalid() {}, async recordTodo() {}, async resolveTodo() {},
     };
