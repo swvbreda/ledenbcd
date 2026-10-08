@@ -20,10 +20,26 @@ const decls: any[] = [
   { ...base, id: "4", amount: 99, status: "pending", submitted_by: "u2", board_member_name: "Bernard", board_member_id: "b2" },
 ];
 const noop = () => {};
-const renderView = (isAdmin = false) => render(<InternalDeclarationsView declarations={decls} boardMembers={[]} year={2026} isAdmin={isAdmin}
+const members: any[] = [{ id: "b1", naam: "Simone", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }, { id: "b2", naam: "Bernard", functie: null, prive_adres: null, prive_postcode: null, prive_plaats: null }];
+const renderView = (isAdmin = false) => render(<InternalDeclarationsView declarations={decls} boardMembers={members} year={2026} isAdmin={isAdmin}
   userId="u1" onAdd={vi.fn()} onDelete={noop} onApprove={noop} onReject={noop} />);
 
 afterEach(cleanup);
+Object.assign(Element.prototype, { hasPointerCapture: () => false, releasePointerCapture: () => {}, setPointerCapture: () => {}, scrollIntoView: () => {} });
+async function pickMember(name: string) {
+  const trigger = screen.getByRole("combobox", { name: "" , hidden: false } as any);
+  fireEvent.pointerDown(trigger, { button: 0, pointerType: "mouse" });
+  fireEvent.click(await screen.findByRole("option", { name: new RegExp(name) }));
+}
+const noteIsBelowFormFields = () => {
+  const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
+  const note = within(form).getByTestId("form-open-total");
+  const submit = within(form).getByRole("button", { name: "Declaratie definitief indienen" });
+  const bon = within(form).getByText(/^Bon/);
+  expect(bon.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(note.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  return note;
+};
 
 describe("InternalDeclarationsView open totaal", () => {
   it("toont gewone gebruiker eigen open totaal vóór indienen, zonder betaalde of andermans declaraties", () => {
@@ -38,7 +54,8 @@ describe("InternalDeclarationsView open totaal", () => {
     renderView(false);
     fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
     const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
-    expect(within(form).getByTestId("form-open-total").textContent).toMatch(/2 open declaraties/);
+    expect(noteIsBelowFormFields().textContent).toMatch(/2 open declaraties \(.*28,17\)/);
+    expect(within(form).getAllByTestId("form-open-total")).toHaveLength(1);
     expect(screen.getByRole("region", { name: "Openstaand totaal" })).toBeTruthy();
     const desc = within(form).getByPlaceholderText(/bestuursvergadering/) as HTMLInputElement;
     fireEvent.change(desc, { target: { value: "Vergadering Utrecht" } });
@@ -52,5 +69,22 @@ describe("InternalDeclarationsView open totaal", () => {
     const block = screen.getByRole("region", { name: "Openstaand totaal" });
     expect(within(block).getByText(/3 declaraties/)).toBeTruthy();
     expect(within(block).getByText(/Bernard/)).toBeTruthy();
+  });
+
+  it("admin: melding onderaan volgt het gekozen bestuurslid, niet het totaal over iedereen", async () => {
+    renderView(true);
+    fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
+    expect(noteIsBelowFormFields().textContent).toMatch(/3 open declaraties.*over alle bestuurders/);
+    await pickMember("Bernard");
+    expect(noteIsBelowFormFields().textContent).toMatch(/voor Bernard al 1 open declaratie \(.*99,00\)/);
+    await pickMember("Simone");
+    expect(noteIsBelowFormFields().textContent).toMatch(/voor Simone al 2 open declaraties \(.*28,17\)/);
+  });
+
+  it("gewone gebruiker ziet bij een ander bestuurslid geen cijfers van die ander", async () => {
+    renderView(false);
+    fireEvent.click(screen.getByRole("button", { name: /Nieuwe aparte declaratie/ }));
+    await pickMember("Bernard");
+    expect(screen.queryByTestId("form-open-total")).toBeNull();
   });
 });
