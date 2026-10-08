@@ -57,6 +57,13 @@
       "when": 1791496107155,
       "tag": "0007_declaration_default_budget_post",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791496514406,
+      "tag": "0008_admin_allocate_declaration",
+      "breakpoints": true
     }
   ]
 }

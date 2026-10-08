@@ -209,6 +209,6 @@ describe("InternalDeclarationsView open totaal", () => {
     fireEvent.change(screen.getByLabelText("Dossier"), { target: { value: " Amsterdam i-criterium " } });
     fireEvent.click(screen.getByRole("button", { name: "Opslaan" }));
     await waitFor(() => expect(onAllocate).toHaveBeenCalledTimes(1));
-    expect(onAllocate.mock.calls[0][0]).toEqual({ id: "s9", informerExternalId: "16891349", lineItemId: "li-onk", dossier: "Amsterdam i-criterium", validLineItemIds: ["li-onk"] });
+    expect(onAllocate.mock.calls[0][0]).toEqual({ id: "s9", informerExternalId: "16891349", lineItemId: "li-onk", dossier: "Amsterdam i-criterium", validLineItemIds: ["li-onk"], updatedAt: null });
   });
 });
