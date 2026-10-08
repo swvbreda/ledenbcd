@@ -2268,7 +2268,7 @@ Deno.serve(async (req) => {
     let started = false;
     try {
       const { data: decls, error: dErr } = await supabase.from("internal_declarations")
-        .select("id, amount, expense_date, year, status, informer_status, bank_transaction_id, paid_at, informer_external_id")
+        .select("id, amount, expense_date, year, status, informer_status, bank_transaction_id, paid_at, informer_external_id, informer_doc_type")
         .in("id", (body.declaration_ids ?? []).slice(0, PAID_BATCH_MAX + 1).map(String));
       if (dErr) throw dErr;
       const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
