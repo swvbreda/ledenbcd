@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, FileText, MapPin, Plus, Receipt, Search, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_KM_RATE, calculateTravelDeclaration } from "@/lib/declarations";
@@ -191,7 +191,18 @@ export default function InternalDeclarationsView({
     setExpenseDate(new Date().toISOString().slice(0, 10));
   };
 
-  const startAnother = () => { resetForm(); setJustSubmitted(false); setAdding(true); };
+  const formRef = useRef<HTMLElement | null>(null);
+  const focusForm = () => setTimeout(() => {
+    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    formRef.current?.querySelector<HTMLElement>("button, input")?.focus({ preventScroll: true });
+  }, 0);
+  // Opent een leeg formulier; staat het formulier al open, dan blijft de invulling staan en scrollen we erheen.
+  const startNew = () => {
+    setJustSubmitted(false);
+    if (!adding) { resetForm(); setAdding(true); }
+    focusForm();
+  };
+  const startAnother = startNew;
 
   const submit = async (asConcept = false) => {
     const validationError = !selectedMember ? "Selecteer eerst het bestuurslid"
@@ -268,7 +279,7 @@ export default function InternalDeclarationsView({
           <SelectContent><SelectItem value="all">Alle statussen</SelectItem><SelectItem value="concept">Concept</SelectItem><SelectItem value="pending">In afwachting</SelectItem><SelectItem value="approved">Goedgekeurd</SelectItem><SelectItem value="rejected">Afgewezen</SelectItem></SelectContent>
         </Select>
         <Button variant="outline" onClick={handleExport}><Download className="mr-2 h-4 w-4" />CSV</Button>
-        <Button onClick={() => { setJustSubmitted(false); setAdding((value) => !value); }}><Plus className="mr-2 h-4 w-4" />Declaratie indienen</Button>
+        <Button onClick={startNew}><Plus className="mr-2 h-4 w-4" />{openTotals.count > 0 ? "Nieuwe aparte declaratie" : "Declaratie indienen"}</Button>
       </div>
 
       <section aria-label="Openstaand totaal" className="rounded-lg border bg-card p-4">
@@ -294,8 +305,13 @@ export default function InternalDeclarationsView({
       )}
 
       {adding && (
-        <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-5">
+        <section ref={formRef} aria-label="Nieuwe declaratie" className="scroll-mt-4 rounded-xl border bg-card p-4 shadow-sm sm:p-5">
           <div className="mb-5"><h2 className="text-lg font-semibold">Nieuwe declaratie</h2><p className="text-sm text-muted-foreground">Kies eerst voor welk bestuurslid de kosten zijn gemaakt.</p></div>
+          {openTotals.count > 0 && (
+            <p data-testid="form-open-total" className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+              Je hebt al {openTotals.count} open {openTotals.count === 1 ? "declaratie" : "declaraties"} ({money(openTotals.cents / 100)}). Deze nieuwe declaratie wordt apart ingediend en bij het openstaande totaal opgeteld.
+            </p>
+          )}
           <div className="grid min-w-0 gap-4 md:grid-cols-2">
             <label className="min-w-0 space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bestuurslid</span>
               <Select value={memberId} onValueChange={chooseMember}><SelectTrigger><SelectValue placeholder="Selecteer een bestuurslid" /></SelectTrigger><SelectContent>{boardMembers.map((member) => <SelectItem key={member.id} value={member.id}>{member.naam}{member.functie ? ` — ${member.functie}` : ""}</SelectItem>)}</SelectContent></Select>
