@@ -4,17 +4,18 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-const calls: any[] = [];
-let rows: any[] = [{ id: "d1" }];
-const invoke = vi.fn(async () => ({ data: { success: true }, error: null }));
+const h = vi.hoisted(() => ({ calls: [] as any[], rows: [{ id: "d1" }] as any[], invoke: null as any }));
+const calls = h.calls;
+const invoke = vi.fn(async (..._a: any[]) => ({ data: { success: true }, error: null }));
+h.invoke = invoke;
 vi.mock("@/integrations/supabase/client", () => {
   const chain = (): any => {
     const q: any = {};
     for (const m of ["update", "insert", "eq", "is", "in", "select"]) q[m] = (...a: any[]) => { calls.push([m, ...a]); return q; };
-    q.then = (cb: any) => cb({ data: rows, error: null });
+    q.then = (cb: any) => cb({ data: h.rows, error: null });
     return q;
   };
-  return { supabase: { from: () => chain(), functions: { invoke }, auth: { getSession: async () => ({ data: { session: { user: { id: "u1" } } } }) }, storage: { from: () => ({ upload: async () => ({ error: null }) }) } } };
+  return { supabase: { from: () => chain(), functions: { invoke: (...a: any[]) => h.invoke(...a) }, auth: { getSession: async () => ({ data: { session: { user: { id: "u1" } } } }) }, storage: { from: () => ({ upload: async () => ({ error: null }) }) } } };
 });
 import { useInternalDeclarationMutations } from "@/hooks/useInternalDeclarations";
 
@@ -22,7 +23,7 @@ const wrap = ({ children }: { children: ReactNode }) => <QueryClientProvider cli
 const fields: any = { board_member_id: "b1", board_member_name: "S", declaration_type: "reiskosten", appointment: "x", trajectory: "A – B",
   km_single: 93, km_return: 186, km_rate: 0.23, amount: 42.78, expense_date: "2026-08-25", bank_account: "NL", account_holder: "S", event_id: null };
 
-beforeEach(() => { calls.length = 0; rows = [{ id: "d1" }]; invoke.mockClear(); });
+beforeEach(() => { calls.length = 0; h.rows = [{ id: "d1" }]; invoke.mockClear(); });
 
 describe("edit-mutatie", () => {
   it("doet een voorwaardelijke UPDATE op hetzelfde id, geen INSERT en geen Informer-aanroep", async () => {
@@ -43,7 +44,7 @@ describe("edit-mutatie", () => {
   });
 
   it("0 rijen (intussen verstuurd/betaald) geeft een fout, geen stil succes", async () => {
-    rows = [];
+    h.rows = [];
     const { result } = renderHook(() => useInternalDeclarationMutations(2026), { wrapper: wrap });
     await expect(result.current.edit.mutateAsync({ id: "d1", expectedStatus: "pending", fields, existingReceipts: [] })).rejects.toThrow(/intussen/);
   });
