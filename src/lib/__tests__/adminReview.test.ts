@@ -31,9 +31,33 @@ describe("adminReview (alleen lezen)", () => {
     const base = { status: "approved", informer_status: "not_sent", year: 2026, expense_date: "2026-01-01", board_member_name: "B", budget_line_item_id: "p", dossier: null };
     const r = declarationsToReview([
       { ...base, id: "z", amount: 0 }, { ...base, id: "e", amount: 85.56, informer_status: "error" },
-      { ...base, id: "y", amount: 210, year: 2025 }, { ...base, id: "x", amount: 1, status: "rejected", budget_line_item_id: null },
+      { ...base, id: "y", amount: 210, year: 2025, expense_date: "2025-03-01" }, { ...base, id: "x", amount: 1, status: "rejected", budget_line_item_id: null },
     ], [2025]);
     expect(r.map((x) => x.id)).toEqual(["z", "e", "y"]);
     expect(countWithoutDossier([{ ...base, id: "z", amount: 0 }, { ...base, id: "d", amount: 1, dossier: "Worldline" }])).toBe(1);
+  });
+});
+
+import { contributionEvidence, declYearMismatch } from "../adminReview";
+describe("contributie-bankbewijs", () => {
+  const c = (id: string, m: number) => ({ id, member_id: m, year: 2026, amount: 3000, paid: true, external_invoice_id: null });
+  const b = (id: string, amount: number, dossier: string, year = 2026, extra = {}) => ({ id, amount, year, dossier, ...extra });
+  it("alleen vastgelegde unieke exacte koppeling is bewezen; overige uitzonderingen", () => {
+    const r = contributionEvidence(
+      [c("e", 1), c("o", 2), c("p", 3), c("m", 4), c("n", 5), c("x", 6), c("y", 7)],
+      [b("b1", 3000, "(#1)"), b("b2", 3000, "(#2)"), b("b3", 3000, "(#2)"), b("b4", 1334.9, "(#3)"), b("b5", 3000, "(#4) (#9)"),
+       b("b6", 3000, "(#5)"), b("b7", 3000, "(#6)", 2025), b("b8", 3000, "(#7)", 2026, { declLinked: true })],
+      [{ contribution_id: "e", bank_transaction_id: "b1" }], 2026);
+    expect(r.linked.map((x) => x.contribution_id)).toEqual(["e"]);
+    const why = Object.fromEntries(r.exceptions.map((x) => [x.contribution_id, x.reason]));
+    expect(why.o).toMatch(/Overbetaling/); expect(why.p).toMatch(/Gedeeltelijk/); expect(why.m).toMatch(/meerdere leden/);
+    expect(why.n).toMatch(/zonder vastgelegde/); expect(why.y).toMatch(/ander document/); expect(why.x).toBeUndefined();
+  });
+  it("koppeling naar verkeerde ontvangst of afwijkend bedrag is niet bewezen", () => {
+    const r = contributionEvidence([c("e", 1)], [b("b1", 2999, "(#1)")], [{ contribution_id: "e", bank_transaction_id: "b1" }], 2026);
+    expect(r.linked).toHaveLength(0);
+  });
+  it("jaarafwijking €85,56", () => {
+    expect(declYearMismatch({ id: "a", amount: 85.56, status: "approved", informer_status: "error", year: 2026, expense_date: "2025-01-01", board_member_name: null })).toBe(true);
   });
 });

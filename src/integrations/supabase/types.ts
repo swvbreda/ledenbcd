@@ -1245,6 +1245,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contribution_bank_links: {
+        Row: {
+          bank_transaction_id: string
+          batch: string | null
+          contribution_id: string
+          created_at: string
+          evidence: string
+          id: string
+        }
+        Insert: {
+          bank_transaction_id: string
+          batch?: string | null
+          contribution_id: string
+          created_at?: string
+          evidence?: string
+          id?: string
+        }
+        Update: {
+          bank_transaction_id?: string
+          batch?: string | null
+          contribution_id?: string
+          created_at?: string
+          evidence?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contribution_bank_links_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: true
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contribution_bank_links_contribution_id_fkey"
+            columns: ["contribution_id"]
+            isOneToOne: true
+            referencedRelation: "member_contributions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contribution_exemptions: {
         Row: {
           created_at: string

@@ -67,9 +67,47 @@ export function declarationsToReview(rows: DeclLite[], closedYears: number[]): D
     if (Number(d.amount) === 0) out.push({ id: d.id, label, reason: "Bedrag €0 — kan via Wijzigen worden aangevuld" });
     if (d.informer_status === "error") out.push({ id: d.id, label, reason: "Verzenden naar Informer mislukt — opnieuw proberen in de lijst" });
     if (closedYears.includes(d.year) && d.informer_status !== "sent") out.push({ id: d.id, label, reason: `Boekjaar ${d.year} is afgesloten in Informer — niet verzonden` });
+    if (declYearMismatch(d)) out.push({ id: d.id, label, reason: `Opgeslagen jaar ${d.year} wijkt af van uitgavedatum ${d.expense_date} — niet aangepast` });
     if (!d.budget_line_item_id) out.push({ id: d.id, label, reason: "Nog geen post — gebruik Indelen" });
   }
   return out;
 }
 
 export const countWithoutDossier = (rows: DeclLite[]) => rows.filter((d) => d.status !== "rejected" && !d.dossier).length;
+
+export type BankIn = { id: string; amount: number; year: number; dossier: string | null; invoice_reference?: string | null; declLinked?: boolean };
+export type EvidenceRow = { contribution_id: string; member_id: number; amount: number; bank_ids: string[]; bank_total: number; reason: string };
+
+/** Bewijs per contributie: alleen "bewezen" bij vastgelegde koppeling naar 1 unieke ontvangst met exact bedrag; al het andere is een uitzondering. */
+export function contributionEvidence(rows: Contribution[], bank: BankIn[], links: { contribution_id: string; bank_transaction_id: string }[], year: number) {
+  const byMember = new Map<number, BankIn[]>();
+  const tagCount = new Map<string, number>();
+  for (const b of bank) {
+    if (b.year !== year || Number(b.amount) <= 0) continue;
+    const ids = new Set([...String(b.dossier ?? "").matchAll(/\(#(\d+)\)/g)].map((m) => Number(m[1])));
+    tagCount.set(b.id, ids.size);
+    for (const id of ids) byMember.set(id, [...(byMember.get(id) ?? []), b]);
+  }
+  const linkBy = new Map(links.map((l) => [l.contribution_id, l.bank_transaction_id]));
+  const linked: EvidenceRow[] = [], exceptions: EvidenceRow[] = [];
+  for (const c of rows) {
+    if (c.year !== year || !c.paid || c.external_invoice_id) continue;
+    const tx = byMember.get(c.member_id) ?? [];
+    if (!tx.length) continue; // valt onder "zonder bankdossier"
+    const total = Math.round(tx.reduce((s, b) => s + Number(b.amount), 0) * 100) / 100;
+    const base = { contribution_id: c.id, member_id: c.member_id, amount: Number(c.amount), bank_ids: tx.map((b) => b.id), bank_total: total };
+    const lid = linkBy.get(c.id);
+    const one = tx.length === 1 ? tx[0] : null;
+    if (lid && one && one.id === lid && Number(one.amount) === Number(c.amount)) { linked.push({ ...base, reason: "Bewezen: 1 unieke ontvangst, exact bedrag" }); continue; }
+    let reason = "Lidtag zonder vastgelegde koppeling";
+    if (tx.some((b) => (tagCount.get(b.id) ?? 0) > 1)) reason = "Ontvangst noemt meerdere leden";
+    else if (tx.some((b) => b.declLinked || (b.invoice_reference ?? "") !== "")) reason = "Ontvangst hoort ook bij ander document";
+    else if (total > Number(c.amount)) reason = `Overbetaling: ${tx.length} ontvangsten`;
+    else if (total < Number(c.amount)) reason = "Gedeeltelijk betaald volgens bank";
+    exceptions.push({ ...base, reason });
+  }
+  return { linked, exceptions };
+}
+
+/** Opgeslagen jaar wijkt af van jaar van de uitgavedatum. */
+export const declYearMismatch = (d: DeclLite) => Number(String(d.expense_date).slice(0, 4)) !== Number(d.year);
