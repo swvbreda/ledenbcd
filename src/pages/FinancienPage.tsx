@@ -10,6 +10,7 @@ import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import BalancePanel from "@/components/budget/BalancePanel";
 import ExpenseDialog from "@/components/budget/ExpenseDialog";
 import InternalDeclarationsView from "@/components/budget/InternalDeclarationsView";
+import PaidPreflightPanel from "@/components/budget/PaidPreflightPanel";
 import ContributieTab from "@/components/budget/ContributieTab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
@@ -340,7 +341,8 @@ export default function FinancienPage() {
           </TabsContent>
 
           <TabsContent value="intern">
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
+              {isAdmin && <PaidPreflightPanel declarations={(internalDeclarations || []) as any} />}
               <InternalDeclarationsView
                 declarations={internalDeclarations || []}
                 boardMembers={declarationBoardMembers || []}
