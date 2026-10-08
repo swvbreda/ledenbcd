@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeReceiptName } from "@/lib/declarations";
+import { planDeclarationAllocation } from "@/lib/declarationAllocation";
 import { buildEditPatch, EDITABLE_INFORMER_STATUSES, type DeclarationEditFields } from "@/lib/declarationEdit";
 
 export interface InternalDeclaration {
@@ -265,5 +266,65 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, edit, update, remove, approve, reject, submitConcept, retryInformer };
+  /** Admin: begrotingspost/dossier toewijzen; loopt bij een Informer-document ook via de boekhoud-override. */
+  const allocate = useMutation({
+    mutationFn: async ({ id, informerExternalId, lineItemId, dossier, validLineItemIds }: {
+      id: string; informerExternalId: string | null; lineItemId: string | null; dossier: string | null; validLineItemIds: string[];
+    }) => {
+      const client = supabase as any;
+      let existing = null;
+      if (informerExternalId) {
+        const { data, error } = await client.from("ledger_entry_overrides")
+          .select("id, line_item_id, dossier, excluded, note, created_by")
+          .eq("doc_type", "purchase_invoice").eq("informer_id", informerExternalId).maybeSingle();
+        if (error) throw error;
+        existing = data;
+      }
+      const plan = planDeclarationAllocation({ informer_external_id: informerExternalId }, { lineItemId, dossier }, existing,
+        { isAdmin: true, validLineItemIds });
+      if (!plan.ok) throw new Error(plan.reason);
+      const { data: rows, error } = await client.from("internal_declarations").update(plan.declarationPatch).eq("id", id).select("id");
+      if (error) throw error;
+      if (!rows || rows.length !== 1) throw new Error("Toewijzen is niet gelukt: geen rechten of declaratie niet gevonden.");
+      if (plan.override === "upsert" && plan.overridePatch) {
+        const payload: any = { doc_type: "purchase_invoice", informer_id: informerExternalId, ...plan.overridePatch, updated_at: new Date().toISOString() };
+        if (existing) Object.assign(payload, { id: existing.id, note: existing.note ?? null, excluded: existing.excluded ?? false, created_by: existing.created_by ?? null });
+        const { data: saved, error: oErr } = await client.from("ledger_entry_overrides")
+          .upsert(payload, { onConflict: "doc_type,informer_id" }).select("id");
+        if (oErr) throw oErr;
+        if (!saved || saved.length !== 1) throw new Error("De boekhoudtoewijzing kon niet worden opgeslagen.");
+      }
+      return plan;
+    },
+    onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ["ledger"] }); qc.invalidateQueries({ queryKey: ["budget-categories"] }); qc.invalidateQueries({ queryKey: ["dossier-mutations"] }); },
+  });
+
+  return { add, edit, allocate, update, remove, approve, reject, submitConcept, retryInformer };
+}
+
+
+/** Posten van het jaar en bestaande dossiernamen (bestaande vrije-tekstconventie). */
+export function useDeclarationAllocationOptions(year: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["declaration-allocation-options", year],
+    enabled,
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data: cats, error } = await client.from("budget_categories").select("id, name, sort_order").eq("year", year).order("sort_order");
+      if (error) throw error;
+      const { data: items, error: liErr } = await client.from("budget_line_items").select("id, name, category_id, sort_order")
+        .in("category_id", (cats ?? []).map((c: any) => c.id)).order("sort_order");
+      if (liErr) throw liErr;
+      const catName = new Map((cats ?? []).map((c: any) => [c.id, c.name]));
+      const [o, p] = await Promise.all([
+        client.from("ledger_entry_overrides").select("dossier").not("dossier", "is", null).limit(1000),
+        client.from("ponto_transactions").select("dossier").not("dossier", "is", null).limit(2000),
+      ]);
+      const dossiers = [...new Set([...(o.data ?? []), ...(p.data ?? [])].map((r: any) => String(r.dossier).trim()).filter((d) => d && !/^Contributie/i.test(d)))].sort();
+      return {
+        lineItems: (items ?? []).map((li: any) => ({ id: li.id as string, name: `${catName.get(li.category_id) ?? ""} — ${li.name}` })),
+        dossiers,
+      };
+    },
+  });
 }
