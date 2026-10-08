@@ -11,6 +11,7 @@ import {
   type DeclarationStore,
   type InformerPort,
 } from "./declarationSync.ts";
+import { extractLedgerOptions, selectDeclarationLedger } from "./declarationSync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1694,18 +1695,14 @@ function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
       const optionsCall = await informerCall("/invoices/purchase/options", {}, apiCalls);
       const optionsError = hasInformerError(optionsCall.response_body);
       if (optionsCall.error || !optionsCall.ok || optionsError) throw new Error(`Informer-opties ophalen mislukt: ${optionsError ?? optionsCall.error ?? `HTTP ${optionsCall.status}`}`);
-      const ledgers = findNestedArray(optionsCall.response_body, /ledger/i);
+      // Exact de afgesproken rekening, gecontroleerd tegen de actuele opties; anders afbreken vóór CREATE.
+      const ledgerId = selectDeclarationLedger(declaration.declaration_type, extractLedgerOptions(optionsCall.response_body));
       const vats = findNestedArray(optionsCall.response_body, /vat/i);
-      const configuredLedger = Number(Deno.env.get("INFORMER_DECLARATION_LEDGER_ID") ?? "");
-      const ledger = ledgers.find((item: any) => configuredLedger && optionId(item) === configuredLedger)
-        ?? ledgers.find((item: any) => /reis|onkosten|bestuur|algemene kosten|vrijwillig/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
-        ?? ledgers[0];
       const vat = vats.find((item: any) => Number(item?.percentage ?? item?.rate ?? item?.value) === 0)
         ?? vats.find((item: any) => /0%|geen|vrijgesteld/i.test(String(item?.description ?? item?.name ?? item?.label ?? "")))
         ?? vats[0];
-      const ledgerId = optionId(ledger);
       const vatId = optionId(vat);
-      if (!ledgerId || !vatId) throw new Error("Informer heeft geen bruikbaar grootboek of btw-tarief teruggegeven");
+      if (!vatId) throw new Error("Informer heeft geen bruikbaar btw-tarief teruggegeven");
       let eventTitle: string | null = null;
       if (declaration.event_id) {
         const { data: ev } = await supabase.from("agenda_events").select("title, event_date").eq("id", declaration.event_id).maybeSingle();
