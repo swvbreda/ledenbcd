@@ -244,18 +244,24 @@ export function validateDeclarationForInformer(declaration: any): string | null 
   if (!declaration.board_member_id) return "Bestuurslid ontbreekt";
   if (!(Number(declaration.amount) > 0)) return "Bedrag ontbreekt";
   if (!declaration.bank_account || !declaration.account_holder) return "Rekeningnummer of rekeninghouder ontbreekt";
-  if (!declaration.appointment) return "Omschrijving ontbreekt";
-  if (declaration.declaration_type !== "reiskosten" && declarationReceiptPaths(declaration).length === 0) {
+  const monthly = isMonthlyAllowance(declaration.declaration_type);
+  if (!declaration.appointment && !monthly) return "Omschrijving ontbreekt";
+  if (monthly && !declaration.expense_date) return "Maand van de vergoeding ontbreekt";
+  // Kilometers en vaste maandvergoedingen hebben geen bon; overige reiskosten wel.
+  if (declaration.declaration_type !== "reiskosten" && !monthly && declarationReceiptPaths(declaration).length === 0) {
     return "Bon ontbreekt; voeg eerst een bon toe";
   }
   return null;
 }
 
 export function declarationLineDescription(declaration: any, eventTitle: string | null): string {
+  const monthly = isMonthlyAllowance(declaration.declaration_type);
   const kind = declaration.declaration_type === "reiskosten" ? "Kilometervergoeding"
-    : declaration.declaration_type === "overig" ? "Overige reiskosten" : "Declaratie";
+    : declaration.declaration_type === "overig" ? "Overige reiskosten"
+    : monthly ? `Vrijwilligersvergoeding ${declaration.declaration_type}` : "Declaratie";
+  const period = monthly && declaration.expense_date ? `maand ${String(declaration.expense_date).slice(0, 7)}` : null;
   const parts = [
-    `${kind}: ${declaration.appointment || declaration.board_member_name}`,
+    `${kind}: ${declaration.appointment || period || declaration.board_member_name}`,
     `Indiener: ${declaration.board_member_name}`,
     declaration.expense_date ? `Datum: ${declaration.expense_date}` : null,
     declaration.trajectory ? `Traject: ${declaration.trajectory}${declaration.km_return ? ` (${declaration.km_return} km)` : ""}` : null,
