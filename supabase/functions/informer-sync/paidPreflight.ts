@@ -3,6 +3,8 @@
 // bankmutatie/betaling aan een inkoopfactuur te koppelen; afletteren gebeurt in Informer zelf.
 // Deze controle boekt daarom niets en geeft alleen per declaratie een status terug.
 
+import { runDeclarationSync, type DeclarationStore, type InformerPort } from "./declarationSync.ts";
+
 export type PaidDecl = { id: string; amount: number; expense_date: string; bank_transaction_id: string | null; paid_at: string | null; informer_external_id: string | null };
 export type BankTx = { id: string; amount: number; value_date: string | null };
 export type InformerPurchase = { id: string; number: string; total: number | null; date: string | null; paid: number | null };
@@ -92,6 +94,43 @@ export function selectPaidBatch(requested: string[], rows: PreflightRow[], decls
     eligible.push(id);
   }
   return { eligible, blocked };
+}
+
+export type BatchOutcome = "created" | "reused" | "failed" | "uncertain";
+export type BatchResult = { declaration_id: string; reference: string; success: boolean; outcome: BatchOutcome; recheck_required: boolean; error: string | null };
+
+/**
+ * Voert een batch uit via de bestaande runDeclarationSync (claim, findByReference-hergebruik, markSent).
+ * - herstel_bestaand_document: findByReference geeft exact het live gevonden document; createPurchase is geblokkeerd.
+ * - Faalt iets nadat een POST is gestart, dan is de uitkomst "uncertain": eerst opnieuw controleren.
+ */
+export async function runPaidBatch(args: {
+  requested: string[]; rows: PreflightRow[]; decls: BatchDecl[]; closedYears: number[];
+  store: DeclarationStore; informer: InformerPort; snapshot: (id: string) => Promise<boolean>;
+  sync?: typeof runDeclarationSync;
+}): Promise<{ results: BatchResult[]; blocked: BatchBlock[] }> {
+  const { eligible, blocked } = selectPaidBatch(args.requested, args.rows, args.decls, args.closedYears);
+  const sync = args.sync ?? runDeclarationSync;
+  const rowBy = new Map(args.rows.map((r) => [r.declaration_id, r]));
+  const results: BatchResult[] = [];
+  for (const id of eligible) {
+    const reference = declarationReference(id);
+    const row = rowBy.get(id)!;
+    const d = args.decls.find((x) => x.id === id)!;
+    if (!(await args.snapshot(id))) { results.push({ declaration_id: id, reference, success: false, outcome: "failed", recheck_required: false, error: "Snapshot mislukt; niets verstuurd" }); continue; }
+    let posted = false;
+    const port: InformerPort = row.status === "herstel_bestaand_document"
+      ? { findByReference: async () => row.informer_id ?? null, createPurchase: async () => { throw new Error("Bestaand document verwacht; geen nieuwe factuur aangemaakt"); } }
+      : { findByReference: (ref) => args.informer.findByReference(ref), createPurchase: (decl, ref) => { posted = true; return args.informer.createPurchase(decl, ref); } };
+    try {
+      const r = await sync(id, { retry: d.informer_status === "error" }, args.store, port);
+      if (r.success) results.push({ declaration_id: id, reference, success: true, outcome: r.details.reused_existing ? "reused" : "created", recheck_required: false, error: null });
+      else results.push({ declaration_id: id, reference, success: false, outcome: posted ? "uncertain" : "failed", recheck_required: posted, error: posted ? "Uitkomst onzeker: factuur mogelijk aangemaakt. Voer eerst opnieuw de controle uit." : (r.error_message ?? null) });
+    } catch {
+      results.push({ declaration_id: id, reference, success: false, outcome: "uncertain", recheck_required: true, error: "Uitkomst onzeker; voer eerst opnieuw de controle uit." });
+    }
+  }
+  return { results, blocked };
 }
 
 export function closedYearsFromErrors(errors: { sanitized_error: string | null; year: number }[]): number[] {
