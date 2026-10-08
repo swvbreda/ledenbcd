@@ -31,7 +31,7 @@ describe("adminReview (alleen lezen)", () => {
     const base = { status: "approved", informer_status: "not_sent", year: 2026, expense_date: "2026-01-01", board_member_name: "B", budget_line_item_id: "p", dossier: null };
     const r = declarationsToReview([
       { ...base, id: "z", amount: 0 }, { ...base, id: "e", amount: 85.56, informer_status: "error" },
-      { ...base, id: "y", amount: 210, year: 2025 }, { ...base, id: "x", amount: 1, status: "rejected", budget_line_item_id: null },
+      { ...base, id: "y", amount: 210, year: 2025, expense_date: "2025-03-01" }, { ...base, id: "x", amount: 1, status: "rejected", budget_line_item_id: null },
     ], [2025]);
     expect(r.map((x) => x.id)).toEqual(["z", "e", "y"]);
     expect(countWithoutDossier([{ ...base, id: "z", amount: 0 }, { ...base, id: "d", amount: 1, dossier: "Worldline" }])).toBe(1);
