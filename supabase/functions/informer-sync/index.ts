@@ -2232,7 +2232,7 @@ Deno.serve(async (req) => {
         id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? ""),
         total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
       }));
-      const rows = paidPreflight(decls ?? [], (bank ?? []) as any, purchases);
+      const rows = paidPreflight(decls ?? [], (bank ?? []) as any, purchases, await bankUseCounts(supabase, txIds));
       return new Response(JSON.stringify({ success: true, checked_purchases: purchases.length, rows }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
