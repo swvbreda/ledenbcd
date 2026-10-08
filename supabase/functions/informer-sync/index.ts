@@ -20,6 +20,7 @@ import {
   selectDeclarationLedger,
 } from "./declarationSync.ts";
 import { planCreditorImport } from "./creditorImport.ts";
+import { paidPreflight } from "./paidPreflight.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2215,6 +2216,33 @@ Deno.serve(async (req) => {
   // Optional override via query ?code=... or JSON body { code }. Returns the
   // administration name/id when the API confirms authentication, so admins can
   // confirm the correct administration before saving INFORMER_ADMINISTRATION_ID.
+  // Alleen-lezen: betaalde declaraties naast Informer-inkoop en bankbewijs leggen. Boekt niets.
+  if (action === "paid_declarations_preflight") {
+    const api_calls: ApiCall[] = [];
+    try {
+      const { data: decls } = await supabase.from("internal_declarations")
+        .select("id, amount, expense_date, bank_transaction_id, paid_at, informer_external_id")
+        .not("paid_at", "is", null).gt("amount", 0).neq("status", "rejected").gte("year", 2026);
+      const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
+      const { data: bank } = txIds.length
+        ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
+        : { data: [] };
+      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
+      const purchases = raw.map((p: any) => ({
+        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? ""),
+        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
+      }));
+      const rows = paidPreflight(decls ?? [], (bank ?? []) as any, purchases);
+      return new Response(JSON.stringify({ success: true, checked_purchases: purchases.length, rows }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Informer niet bereikbaar of geweigerd", status: (e as any)?.status ?? null }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   if (action === "whoami") {
     const api_calls: ApiCall[] = [];
     let overrideCode: string | undefined;
