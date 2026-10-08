@@ -35,6 +35,8 @@ export interface InternalDeclaration {
   informer_payment_status?: "open" | "paid" | null;
   informer_status: "not_sent" | "queued" | "sending" | "sent" | "synced" | "error";
   informer_external_id: string | null;
+  /** Server-owned soort van het Informer-document. */
+  informer_doc_type?: "purchase_invoice" | "receipt" | null;
   informer_synced_at: string | null;
 }
 
