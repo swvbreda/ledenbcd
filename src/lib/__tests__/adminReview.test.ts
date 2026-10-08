@@ -72,7 +72,6 @@ describe("rekening → bedoelde post (correctie reiskosten)", () => {
   });
 });
 
-import { intendedPost as _ip } from "../adminReview";
 describe("rekening 4350", () => {
   it("gaat naar Administratiekosten / accountantskosten; onbekende rekening krijgt geen post", () => {
     expect(_ip("4350 Administratiekosten")).toBe("Administratiekosten / accountantskosten");
