@@ -3,7 +3,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 
 vi.mock("@/integrations/supabase/client", () => {
-  const q: any = { select: () => q, is: () => q, gte: () => q, lte: () => q, order: () => q, then: (cb: any) => cb({ data: [] }) };
+  const q: any = { select: () => q, not: () => q, or: () => q, limit: () => q, eq: () => q, is: () => q, gte: () => q, lte: () => q, order: () => q, then: (cb: any) => cb({ data: [] }) };
   return { supabase: { from: () => q, functions: { invoke: vi.fn() }, storage: { from: () => ({}) } } };
 });
 vi.mock("@/hooks/useInternalDeclarations", () => ({ useDeclarationSyncErrors: () => ({ data: {} }) }));
