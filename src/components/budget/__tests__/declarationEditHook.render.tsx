@@ -49,11 +49,11 @@ describe("edit-mutatie", () => {
     await expect(result.current.edit.mutateAsync({ id: "d1", expectedStatus: "pending", fields, existingReceipts: [] })).rejects.toThrow(/intussen/);
   });
 
-  it("concept opslaan en indienen: zelfde id naar status pending en via bestaande route naar Informer", async () => {
+  it("concept opslaan en indienen: zelfde id naar status pending zonder Informer-aanroep", async () => {
     const { result } = renderHook(() => useInternalDeclarationMutations(2026), { wrapper: wrap });
     const r = await result.current.edit.mutateAsync({ id: "d1", expectedStatus: "concept", fields, existingReceipts: [], submit: true });
     expect(calls.find((c) => c[0] === "update")![1].status).toBe("pending");
-    expect(invoke).toHaveBeenCalledWith("informer-sync?action=declaration_to_informer", { body: { declaration_id: "d1", retry: false } });
+    expect(invoke).not.toHaveBeenCalled();
     expect(r).toMatchObject({ id: "d1", submitted: true });
     await waitFor(() => expect(result.current.edit.isSuccess).toBe(true));
   });
