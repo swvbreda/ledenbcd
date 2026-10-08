@@ -108,18 +108,18 @@ describe("ongewijzigd: rekeningen en idempotentie", () => {
       markInvalid: async () => {}, recordTodo: async () => {}, resolveTodo: async () => {},
     };
     let creates = 0;
-    const first = await runDeclarationSync({ declarationId: decl.id, retry: false, store, informer: {
+    const first = await runDeclarationSync(decl.id, { retry: false }, store, {
       findByReference: async () => null,
       createPurchase: async () => { creates++; throw new Error(`Leverancier aanmaken in Informer mislukt: ${describeInformerError(422, { errors: { surname: "required" } })}`); },
-    } } as any);
+    });
     expect(first.success).toBe(false);
     expect(state.informer_status).toBe("error");
     expect(state.err).toContain("surname: required");
 
-    const second = await runDeclarationSync({ declarationId: decl.id, retry: true, store, informer: {
+    const second = await runDeclarationSync(decl.id, { retry: true }, store, {
       findByReference: async () => "999",
       createPurchase: async () => { creates++; return "x"; },
-    } } as any);
+    });
     expect(second.success).toBe(true);
     expect(creates).toBe(1);
     expect(state.informer_document_id).toBe("999");
