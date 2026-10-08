@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { useBankStatement, useBudgetCategories, useBudgetBalance, useBudgetMutations, useBudgetNotes, useBudgetYearSettings, useBudgetYearSettingsMutation, useFinancialResult } from "@/hooks/useBudget";
 import { useAuth } from "@/hooks/useAuth";
-import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations, useDeclarationAllocationOptions } from "@/hooks/useInternalDeclarations";
+import { useDeclarationBoardMembers, useInternalDeclarations, useInternalDeclarationMutations, useDeclarationAllocationOptions, useIsDeclarationApprover } from "@/hooks/useInternalDeclarations";
 import { useMembers } from "@/hooks/useMembers";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -57,6 +57,7 @@ export default function FinancienPage() {
   const { data: internalDeclarations } = useInternalDeclarations(year);
   const { data: declarationBoardMembers } = useDeclarationBoardMembers();
   const internalMutations = useInternalDeclarationMutations(year);
+  const { data: isDeclarationApprover } = useIsDeclarationApprover(user?.id);
   const { effectiveMembers } = useMembers();
   const { rawOldMembers } = useMembersData();
   const allMembersForLookup = useMemo(
