@@ -32,9 +32,9 @@ async function pickMember(name: string) {
   const trigger = within(form).getAllByRole("combobox")[0];
   trigger.focus();
   fireEvent.keyDown(trigger, { key: "Enter" });
-  const listbox = await screen.findByRole("listbox");
+  console.log("T open"); const listbox = await screen.findByRole("listbox"); console.log("T listbox");
   const opt = [...listbox.querySelectorAll('[role="option"]')].find((o) => o.textContent?.startsWith(name))!;
-  fireEvent.click(opt);
+  fireEvent.click(opt); console.log("T clicked");
 }
 const noteIsBelowFormFields = () => {
   const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
