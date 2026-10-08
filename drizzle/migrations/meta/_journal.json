@@ -50,6 +50,13 @@
       "when": 1791494554476,
       "tag": "0006_tighten_contribution_bank_links_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791496107155,
+      "tag": "0007_declaration_default_budget_post",
+      "breakpoints": true
     }
   ]
 }

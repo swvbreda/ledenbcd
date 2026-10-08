@@ -33,7 +33,7 @@ export function closedYearsFromAttempts(attempts: { sanitized_error: string | nu
 /** Rekening → bedoelde post (naam), volgens de keuzes van de administratie. */
 export const ACCOUNT_POST_RULES: { prefix: string; post: string }[] = [
   { prefix: "4009", post: "Onkosten vergoedingen" },
-  { prefix: "4495", post: "Onkosten vergoedingen" },
+  { prefix: "4495", post: "Reiskosten" },
   { prefix: "5010", post: "Reiskosten" },
   { prefix: "4340", post: "Juridische kosten / bestuurlijk advies" },
 ];

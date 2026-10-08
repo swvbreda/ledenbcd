@@ -4129,6 +4129,10 @@ export type Database = {
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
+      declaration_default_line_item: {
+        Args: { _expense_date: string; _type: string; _year: number }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
