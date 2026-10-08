@@ -62,6 +62,7 @@ const statusBadge = (status: string) => {
 const informerBadge = (declaration: InternalDeclaration, showError?: string) => {
   if (declaration.status === "concept") return null;
   if (declaration.informer_status === "sent" || declaration.informer_status === "synced") {
+    if (declaration.paid_at && declaration.informer_payment_status !== "paid") return <Badge variant="secondary">Opgenomen — aflettering nog nodig</Badge>;
     return <Badge className="bg-green-600">Naar Informer verzonden</Badge>;
   }
   if (declaration.informer_status === "error") {
