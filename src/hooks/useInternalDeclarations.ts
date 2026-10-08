@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeReceiptName } from "@/lib/declarations";
+import { buildEditPatch, EDITABLE_INFORMER_STATUSES, type DeclarationEditFields } from "@/lib/declarationEdit";
 
 export interface InternalDeclaration {
   id: string;
@@ -187,6 +188,52 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
+  /**
+   * Wijzigt een bestaande declaratie (zelfde id/Informer-referentie). De update is voorwaardelijk:
+   * alleen als hij nog niet betaald, niet in Informer en niet aan het versturen is; anders 0 rijen → fout.
+   * RLS en de beschermingstrigger bepalen daarnaast wie wat mag.
+   */
+  const edit = useMutation({
+    mutationFn: async ({ id, expectedStatus, fields, existingReceipts, receipts = [], submit = false }: {
+      id: string; expectedStatus: string; fields: DeclarationEditFields; existingReceipts: string[]; receipts?: File[]; submit?: boolean;
+    }) => {
+      const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+      const paths: string[] = [];
+      if (receipts.length > 0) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (!uid) throw new Error("Log opnieuw in om een bon te uploaden");
+        for (const receipt of receipts) {
+          if (receipt.size > 10 * 1024 * 1024) throw new Error("Een bon mag maximaal 10 MB zijn");
+          if (!allowed.includes(receipt.type)) throw new Error("Gebruik een JPG, PNG, WebP of PDF als bon");
+          const path = `${uid}/${crypto.randomUUID()}-${sanitizeReceiptName(receipt.name)}`;
+          const { error: uploadError } = await supabase.storage.from("declaration-receipts")
+            .upload(path, receipt, { contentType: receipt.type, upsert: false });
+          if (uploadError) throw uploadError;
+          paths.push(path);
+        }
+      }
+      const patch: Record<string, unknown> = buildEditPatch(fields, existingReceipts, paths);
+      if (submit && expectedStatus === "concept") patch.status = "pending";
+      const { data, error } = await supabase.from("internal_declarations")
+        .update(patch as any)
+        .eq("id", id)
+        .eq("status", expectedStatus)
+        .is("paid_at", null)
+        .is("bank_transaction_id", null)
+        .is("informer_external_id", null)
+        .in("informer_status", [...EDITABLE_INFORMER_STATUSES])
+        .select("id");
+      if (error) throw error;
+      if (!data || data.length !== 1) {
+        throw new Error("Wijzigen is niet gelukt: de declaratie is intussen betaald, verstuurd naar Informer of gewijzigd. Ververs de pagina.");
+      }
+      if (submit && expectedStatus === "concept") return { id, informerSynced: await sendToInformer(id), submitted: true };
+      return { id, informerSynced: false, submitted: false };
+    },
+    onSuccess: invalidate,
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("internal_declarations").delete().eq("id", id);
@@ -218,5 +265,5 @@ export function useInternalDeclarationMutations(year: number) {
     onSuccess: invalidate,
   });
 
-  return { add, update, remove, approve, reject, submitConcept, retryInformer };
+  return { add, edit, update, remove, approve, reject, submitConcept, retryInformer };
 }
