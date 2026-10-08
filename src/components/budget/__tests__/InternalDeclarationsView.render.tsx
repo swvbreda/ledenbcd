@@ -124,7 +124,7 @@ describe("InternalDeclarationsView open totaal", () => {
   });
 
   const zeroKm = { ...base, id: "z1", amount: 0, status: "approved", submitted_by: "u1", km_single: 93, km_return: 186, km_rate: 0.23,
-    trajectory: "Amstelveen – Den Haag", appointment: "Afscheid burgemeester", receipt_path: "oud.pdf", receipt_paths: ["oud.pdf"], informer_status: "not_sent" };
+    trajectory: "Amstelveen – Den Haag", appointment: "Afscheid burgemeester", receipt_path: "oud.pdf", receipt_paths: ["oud.pdf"], informer_status: "not_sent", bank_account: "NL00TEST0000000000", account_holder: "S. Test", expense_date: "2026-08-25" };
 
   it("admin wijzigt approved nulrecord: zelfde id, km opnieuw berekend uit bestaande km en tarief, bon behouden", async () => {
     onEdit = vi.fn(async (i: any) => ({ id: i.id, informerSynced: false, submitted: false }));
