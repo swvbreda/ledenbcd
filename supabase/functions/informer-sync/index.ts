@@ -1631,7 +1631,7 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
         : "informer_status.in.(not_sent,queued)";
       const { data } = await supabase.from("internal_declarations")
         .update({ informer_status: "sending", informer_last_attempt_at: new Date().toISOString() })
-        .eq("id", id).or(allowed).select("id");
+        .eq("id", id).eq("status", "approved").or(allowed).select("id");
       return Array.isArray(data) && data.length > 0;
     },
     // Foutdetails gaan uitsluitend naar de afgeschermde pogingentabel (alleen admin/penningmeester leesbaar).
@@ -2210,7 +2210,7 @@ Deno.serve(async (req) => {
       Boolean(body.retry),
     );
     if (!auth.allowed) {
-      return new Response(JSON.stringify({ error: auth.status === 401 ? "Unauthorized" : "Forbidden" }), {
+      return new Response(JSON.stringify({ error: auth.status === 401 ? "Unauthorized" : auth.status === 409 ? "Declaratie is nog niet goedgekeurd" : "Forbidden" }), {
         status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

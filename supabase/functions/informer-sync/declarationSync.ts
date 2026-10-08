@@ -281,13 +281,11 @@ export function authorizeDeclarationCall(
   declaration: { submitted_by: string | null; informer_status: string; status: string } | null,
   retry: boolean,
 ): { allowed: boolean; status: number; retry: boolean } {
-  if (caller.isServiceCall || caller.isAdminOrTreasurer) return { allowed: true, status: 200, retry };
-  if (!caller.userId) return { allowed: false, status: 401, retry: false };
-  if (!declaration || declaration.submitted_by !== caller.userId || retry
-    || declaration.informer_status !== "not_sent" || declaration.status !== "pending") {
-    return { allowed: false, status: 403, retry: false };
-  }
-  return { allowed: true, status: 200, retry: false };
+  if (!caller.userId && !caller.isServiceCall) return { allowed: false, status: 401, retry: false };
+  // Indieners versturen nooit zelf: verzending volgt pas na goedkeuring door een beheerder.
+  if (!caller.isServiceCall && !caller.isAdminOrTreasurer) return { allowed: false, status: 403, retry: false };
+  if (!declaration || declaration.status !== "approved") return { allowed: false, status: 409, retry: false };
+  return { allowed: true, status: 200, retry };
 }
 
 export async function runDeclarationSync(
@@ -300,6 +298,10 @@ export async function runDeclarationSync(
   try {
     const declaration = await store.load(declarationId);
     if (!declaration) throw new Error("Declaratie niet gevonden");
+    // Alleen goedgekeurde declaraties gaan naar Informer; concept, ingediend of afgewezen nooit.
+    if (declaration.status !== "approved") {
+      return { success: false, error_message: "Declaratie is nog niet goedgekeurd", details: { declaration_id: declarationId, skipped: true, not_approved: true } };
+    }
     if (["sent", "synced"].includes(declaration.informer_status) && declaration.informer_external_id) {
       return { success: true, details: { declaration_id: declarationId, already_synced: true } };
     }
