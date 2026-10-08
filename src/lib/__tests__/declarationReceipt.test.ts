@@ -5,7 +5,7 @@ import { expenseEntries } from "../ledger";
 
 const ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 const REF = `DECL-${ID.toUpperCase()}`;
-const decl = (o: any = {}) => ({ id: ID, year: 2026, status: "approved", board_member_name: "Test", declaration_type: "reiskosten", appointment: "Overleg", amount: 21.4, bank_account: "NL91ABNA0417164300", account_holder: "Test", expense_date: "2026-10-01", informer_status: "not_sent", informer_external_id: null, informer_doc_type: null, ...o });
+const decl = (o: any = {}) => ({ id: ID, year: 2026, status: "approved", submitted_by: "u1", board_member_id: "bm-1", board_member_name: "Test", declaration_type: "reiskosten", appointment: "Overleg", amount: 21.4, bank_account: "NL91ABNA0417164300", account_holder: "Test", expense_date: "2026-10-01", informer_status: "not_sent", informer_external_id: null, informer_doc_type: null, ...o });
 
 function store(row: any) {
   const s: DeclarationStore = {
