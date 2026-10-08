@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { closedYearsFromAttempts, contributionsToReview, declarationsToReview, countWithoutDossier, ledgerExceptions, type DeclLite } from "@/lib/adminReview";
+import { contributionEvidence, closedYearsFromAttempts, contributionsToReview, declarationsToReview, countWithoutDossier, ledgerExceptions, type DeclLite } from "@/lib/adminReview";
 
 const eur = (n: number) => n.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
 
@@ -24,17 +24,21 @@ export function useAdminReview(year: number, enabled: boolean) {
     enabled,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const [contrib, ponto, bank, ledger, overrides, expenses, links, items, attempts] = await Promise.all([
+      const [contrib, ponto, bank, ledger, overrides, expenses, links, items, attempts, cLinks, declBank] = await Promise.all([
         fetchAll<any>((f, t) => supabase.from("member_contributions").select("id, member_id, year, amount, paid, external_invoice_id").eq("year", year).eq("paid", true).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("ponto_transactions").select("dossier, amount, executed_at, value_date").not("dossier", "is", null).gt("amount", 0).order("id").range(f, t)),
-        fetchAll<any>((f, t) => supabase.from("bank_transactions").select("dossier, year, direction").not("dossier", "is", null).eq("direction", "in").eq("year", year).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("bank_transactions").select("id, amount, invoice_reference, dossier, year, direction").not("dossier", "is", null).eq("direction", "in").eq("year", year).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("informer_ledger_entries").select("informer_id, ledger_account, amount_incl, relation_name, entry_date").eq("year", year).eq("doc_type", "purchase_invoice").is("deleted_at", null).order("informer_id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("ledger_entry_overrides").select("informer_id, line_item_id, dossier").eq("doc_type", "purchase_invoice").order("informer_id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("budget_expenses").select("external_id, line_item_id, amount, source").not("external_id", "is", null).order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("ledger_payment_links").select("informer_id, ponto_transaction_id").order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("budget_line_items").select("id, name").order("id").range(f, t)),
         fetchAll<any>((f, t) => supabase.from("internal_declaration_sync_attempts").select("sanitized_error, internal_declarations(expense_date)").not("sanitized_error", "is", null).order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("contribution_bank_links").select("contribution_id, bank_transaction_id").order("id").range(f, t)),
+        fetchAll<any>((f, t) => supabase.from("internal_declarations").select("bank_transaction_id").not("bank_transaction_id", "is", null).order("id").range(f, t)),
       ]);
+      const declTx = new Set(declBank.map((d: any) => String(d.bank_transaction_id)));
+      const evidence = contributionEvidence(contrib, bank.map((b: any) => ({ id: b.id, amount: Math.abs(Number(b.amount)), year: Number(b.year), dossier: b.dossier, invoice_reference: b.invoice_reference, declLinked: declTx.has(String(b.id)) })), cLinks, year);
       const itemName = new Map(items.map((i: any) => [i.id, i.name as string]));
       const ovPost = new Map(overrides.map((o: any) => [o.informer_id, o.line_item_id]));
       const ovDossier = new Map(overrides.map((o: any) => [o.informer_id, o.dossier]));
@@ -66,6 +70,7 @@ export function useAdminReview(year: number, enabled: boolean) {
         for (const m of (data ?? []) as any[]) names.set(Number(m.id), String(m.naam ?? m.bedrijf ?? `Lid ${m.id}`));
       }
       return {
+        evidence,
         contributions: pre.map((c) => ({ ...c, name: names.get(c.member_id) ?? c.name })),
         exceptions: ledgerExceptions(ledger, ovPost, legacy, ovDossier, itemName),
         closedYears: closedYearsFromAttempts(attempts.map((a: any) => ({ sanitized_error: a.sanitized_error, year: Number(String(a.internal_declarations?.expense_date ?? "").slice(0, 4)) }))),
@@ -97,6 +102,18 @@ export default function AdminReviewPanel({ year, declarations }: { year: number;
                 <li key={e.informer_id}>{e.entry_date} · {e.relation_name ?? "—"} · {eur(Number(e.amount_incl ?? 0))} · rekening {e.ledger_account} — nu {e.manual ? "handmatig " : ""}op “{e.currentPost}”{e.dossier ? `, dossier ${e.dossier}` : ""}; regel zou “{e.intended}” geven. Niet overschreven; aanpassen via Boekingen.</li>
               ))}</ul>
             </section>
+            <section>
+              <p className="font-medium">Contributie met bankbewijs-uitzondering ({q.data.evidence.exceptions.length})</p>
+              <ul className="list-disc pl-5">{q.data.evidence.exceptions.map((e) => (
+                <li key={e.contribution_id}>Lid #{e.member_id} · contributie {eur(e.amount)} · bank {eur(e.bank_total)} ({e.bank_ids.length} ontvangst{e.bank_ids.length === 1 ? "" : "en"}) — {e.reason}. Niet gekoppeld.</li>
+              ))}</ul>
+            </section>
+            <details>
+              <summary className="font-medium cursor-pointer">Bewezen bankkoppelingen ({q.data.evidence.linked.length}, {eur(q.data.evidence.linked.reduce((s, e) => s + e.amount, 0))})</summary>
+              <ul className="list-disc pl-5">{q.data.evidence.linked.map((e) => (
+                <li key={e.contribution_id}>Lid #{e.member_id} · {eur(e.amount)} · contributie {e.contribution_id.slice(0, 8)} ↔ bankregel {e.bank_ids[0].slice(0, 8)}</li>
+              ))}</ul>
+            </details>
             <section>
               <p className="font-medium">Betaalde contributie zonder factuur of bankdossier ({q.data.contributions.length}, {eur(q.data.contributions.reduce((s, c) => s + c.amount, 0))})</p>
               <table className="w-full text-left">
