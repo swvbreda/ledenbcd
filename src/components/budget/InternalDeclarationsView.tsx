@@ -482,7 +482,7 @@ export default function InternalDeclarationsView({
             <label className="space-y-1.5"><span className="text-sm font-medium">Rekeninghouder</span><Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} /></label>
             <label className="space-y-1.5 md:col-span-2"><span className="text-sm font-medium">Bon {kind !== "reiskosten" ? "(verplicht)" : "(optioneel)"}</span>{editing && editing.receipts.length > 0 && <span className="block text-xs text-muted-foreground">Bestaande bon blijft bewaard ({editing.receipts.length}). Een nieuwe bon wordt toegevoegd.</span>}<Input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] || null)} className="h-auto py-2" /><span className="block text-xs text-muted-foreground">Foto, JPG, PNG, WebP of PDF — maximaal 10 MB.</span></label>
           </div>
-          {formNote && (
+          {formNote && !editing && (
             <p data-testid="form-open-total" className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">{formNote}</p>
           )}
           {editing ? (
