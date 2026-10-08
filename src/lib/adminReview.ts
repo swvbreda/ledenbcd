@@ -3,15 +3,31 @@
 export type Contribution = { id: string; member_id: number; year: number; amount: number; paid: boolean; external_invoice_id: string | null };
 export type ContributionReview = { id: string; member_id: number; name: string; year: number; amount: number; reason: string };
 
-/** Betaalde contributies zonder Informer-factuur én zonder bankdossier met "(#lidnummer)". */
-export function contributionsToReview(rows: Contribution[], dossiers: (string | null)[], names: Map<number, string>, year: number): ContributionReview[] {
+export type BankTag = { dossier: string | null; year: number; incoming: boolean };
+
+/** Lidnummers met exacte "(#lidnummer)"-tag op een INKOMENDE bankontvangst in precies dat jaar. */
+export function taggedMembers(bank: BankTag[], year: number): Set<number> {
   const tagged = new Set<number>();
-  for (const d of dossiers) for (const m of String(d ?? "").matchAll(/\(#(\d+)\)/g)) tagged.add(Number(m[1]));
+  for (const b of bank) {
+    if (!b.incoming || b.year !== year) continue;
+    for (const m of String(b.dossier ?? "").matchAll(/\(#(\d+)\)/g)) tagged.add(Number(m[1]));
+  }
+  return tagged;
+}
+
+/** Betaalde contributies zonder Informer-factuur én zonder bankontvangst met "(#lidnummer)" in hetzelfde jaar. */
+export function contributionsToReview(rows: Contribution[], bank: BankTag[], names: Map<number, string>, year: number): ContributionReview[] {
+  const tagged = taggedMembers(bank, year);
   return rows
     .filter((c) => c.year === year && c.paid && !c.external_invoice_id && !tagged.has(c.member_id))
     .map((c) => ({ id: c.id, member_id: c.member_id, name: names.get(c.member_id) ?? `Lid ${c.member_id}`, year: c.year, amount: Number(c.amount),
-      reason: "Geen Informer-factuur en geen bankafschrijving met dit lidnummer in het dossier" }))
+      reason: `Geen Informer-factuur en geen bankontvangst in ${year} met dit lidnummer in het dossier` }))
     .sort((a, b) => a.member_id - b.member_id);
+}
+
+/** Afgesloten boekjaren volgens echte Informer-weigeringen ("can no longer book in the specified period"). */
+export function closedYearsFromAttempts(attempts: { sanitized_error: string | null; year: number }[]): number[] {
+  return [...new Set(attempts.filter((a) => /no longer book in the specified period/i.test(a.sanitized_error ?? "")).map((a) => a.year))].sort();
 }
 
 /** Rekening → bedoelde post (naam), volgens de keuzes van de administratie. */
@@ -24,16 +40,17 @@ export const ACCOUNT_POST_RULES: { prefix: string; post: string }[] = [
 export const intendedPost = (account: string | null) => ACCOUNT_POST_RULES.find((r) => String(account ?? "").startsWith(r.prefix))?.post ?? null;
 
 export type LedgerRow = { informer_id: string; ledger_account: string | null; amount_incl: number | null; relation_name: string | null; entry_date: string | null };
-export type LedgerException = LedgerRow & { intended: string; currentPost: string; dossier: string | null };
+export type LedgerException = LedgerRow & { intended: string; currentPost: string; currentPostId: string | null; manual: boolean; dossier: string | null };
 
-/** Boekingen met een regelrekening maar zonder handmatige post, waar een eerdere toewijzing een andere post noemt: alleen tonen, niet overschrijven. */
-export function ledgerExceptions(rows: LedgerRow[], overrideLineItem: Map<string, string | null>, legacyPostName: Map<string, string>, dossier: Map<string, string | null>): LedgerException[] {
+/** Boekingen waarvan de werkelijke post (handmatige override, anders eerdere toewijzing) afwijkt van de rekeningregel: alleen tonen, nooit overschrijven. */
+export function ledgerExceptions(rows: LedgerRow[], overrideLineItem: Map<string, string | null>, legacyPost: Map<string, { id: string | null; name: string }>, dossier: Map<string, string | null>, itemName: Map<string, string>): LedgerException[] {
   const out: LedgerException[] = [];
   for (const r of rows) {
     const intended = intendedPost(r.ledger_account);
-    if (!intended || overrideLineItem.get(r.informer_id)) continue;
-    const current = legacyPostName.get(r.informer_id);
-    if (current && !current.startsWith(intended)) out.push({ ...r, intended, currentPost: current, dossier: dossier.get(r.informer_id) ?? null });
+    if (!intended) continue;
+    const ov = overrideLineItem.get(r.informer_id);
+    const cur = ov ? { id: ov, name: itemName.get(ov) ?? "Onbekende post" } : legacyPost.get(r.informer_id);
+    if (cur && !cur.name.startsWith(intended)) out.push({ ...r, intended, currentPost: cur.name, currentPostId: cur.id, manual: !!ov, dossier: dossier.get(r.informer_id) ?? null });
   }
   return out;
 }
