@@ -1735,7 +1735,17 @@ function liveInformerPort(supabase: any, apiCalls: ApiCall[]): InformerPort {
       const apiError = hasInformerError(call.response_body);
       if (call.error || !call.ok || apiError) throw new Error(`Inkoopfactuur aanmaken mislukt: ${apiError ?? call.error ?? `HTTP ${call.status}`}`);
       const created = firstInformerItem(call.response_body, ["purchase", "invoice", "invoices", "data"]) ?? call.response_body;
-      return String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? reference);
+      let docId = String((created as any)?.id ?? informerIdFromUrl((call.response_body as any)?.url) ?? "");
+      if (!/^\d+$/.test(docId)) docId = (await findExistingPurchaseByReference(reference, apiCalls)) ?? "";
+      if (!/^\d+$/.test(docId)) throw new Error("Inkoopfactuur aangemaakt, maar document-id kon niet worden teruggelezen");
+      // Terugleescontrole: kenmerk en bedrag moeten exact kloppen.
+      const back = await informerCall(`/invoices/purchase/${docId}`, {}, apiCalls);
+      const doc: any = firstInformerItem(back.response_body, ["purchase", "invoice", "data"]) ?? back.response_body;
+      if (!back.ok || String(doc?.number ?? "").trim().toUpperCase() !== reference
+        || Math.abs(toAmount(doc?.totals?.incl_vat) - Number(declaration.amount)) > 0.005) {
+        throw new Error("Terugleescontrole van inkoopfactuur mislukt (kenmerk of bedrag wijkt af)");
+      }
+      return docId;
     },
   };
 }
