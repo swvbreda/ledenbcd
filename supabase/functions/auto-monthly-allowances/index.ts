@@ -79,26 +79,58 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // Bestuurslid en uitbetaalgegevens overnemen van de vorige maandvergoeding (zelfde persoon/soort).
+    const { data: previous } = await supabase
+      .from("internal_declarations")
+      .select("board_member_id, bank_account, account_holder")
+      .eq("board_member_name", allowance.board_member_name)
+      .eq("declaration_type", allowance.declaration_type)
+      .not("board_member_id", "is", null)
+      .order("expense_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Insert the monthly allowance
-    const { error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from("internal_declarations")
       .insert({
         year,
         board_member_name: allowance.board_member_name,
+        board_member_id: previous?.board_member_id ?? null,
+        bank_account: previous?.bank_account ?? null,
+        account_holder: previous?.account_holder ?? null,
         declaration_type: allowance.declaration_type,
         amount: MAX_PER_MONTH,
         km_rate: 0.23,
         expense_date: expenseDate,
         status: "approved",
         max_allowance_note: `Auto: max €${MAX_PER_MONTH}/maand, ${MAX_MONTHS_PER_YEAR} maanden/jaar (€${MAX_PER_MONTH * MAX_MONTHS_PER_YEAR}/jaar)`,
-      });
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       results.push(`Error inserting ${allowance.board_member_name}: ${insertError.message}`);
-    } else {
-      results.push(
-        `✓ ${allowance.board_member_name} (${allowance.declaration_type}): €${MAX_PER_MONTH} voor ${monthStart.slice(0, 7)}`
-      );
+      continue;
+    }
+    results.push(
+      `✓ ${allowance.board_member_name} (${allowance.declaration_type}): €${MAX_PER_MONTH} voor ${monthStart.slice(0, 7)}`
+    );
+
+    // Direct naar Informer via de bestaande, idempotente declaratieroute (claim + DECL-referentiecheck).
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/informer-sync?action=declaration_to_informer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": Deno.env.get("INTERNAL_WEBHOOK_SECRET") ?? "",
+        },
+        body: JSON.stringify({ declaration_id: inserted.id, retry: false }),
+      });
+      const body = await res.json().catch(() => ({}));
+      results.push(`  Informer: HTTP ${res.status}${body?.success ? " verzonden" : " niet verzonden (zie syncpogingen)"}`);
+    } catch (_e) {
+      results.push(`  Informer: aanroep mislukt (zie syncpogingen)`);
     }
   }
 
