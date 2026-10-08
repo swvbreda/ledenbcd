@@ -31,3 +31,13 @@ export function preflightSummary(rows: PreflightRow[], amountById: Map<string, n
   }
   return out;
 }
+
+export type BookResult = { declaration_id: string; reference: string; success: boolean; outcome: "created" | "reused" | "failed"; informer_document_id: string | null; error: string | null; bank_transaction_id: string | null; bank_date: string | null; bank_amount: number | null; paid_preserved: boolean };
+export type BookResponse = { success: boolean; created?: number; reused?: number; failed?: number; results?: BookResult[]; blocked?: { declaration_id: string; reason: string }[]; error?: string };
+
+export function parseBook(data: unknown, error: { message?: string } | null): { ok: true; results: BookResult[]; blocked: { declaration_id: string; reason: string }[] } | { ok: false; message: string } {
+  if (error) return { ok: false, message: error.message?.includes("403") ? "Alleen beheerders kunnen dit uitvoeren." : "Opnemen mislukt: Informer niet bereikbaar of geen toegang. Er is niets als betaald geboekt." };
+  const d = data as BookResponse | null;
+  if (!d?.success || !Array.isArray(d.results)) return { ok: false, message: d?.error ?? "Opnemen mislukt." };
+  return { ok: true, results: d.results, blocked: d.blocked ?? [] };
+}
