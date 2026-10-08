@@ -64,6 +64,13 @@
       "when": 1791496514406,
       "tag": "0008_admin_allocate_declaration",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791497361079,
+      "tag": "0009_declaration_payment_confirmations",
+      "breakpoints": true
     }
   ]
 }

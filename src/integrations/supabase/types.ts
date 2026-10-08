@@ -1404,6 +1404,41 @@ export type Database = {
         }
         Relationships: []
       }
+      declaration_payment_confirmations: {
+        Row: {
+          batch: string | null
+          confirmed_at: string
+          confirmed_by: string | null
+          declaration_id: string
+          note: string | null
+          source: string
+        }
+        Insert: {
+          batch?: string | null
+          confirmed_at?: string
+          confirmed_by?: string | null
+          declaration_id: string
+          note?: string | null
+          source: string
+        }
+        Update: {
+          batch?: string | null
+          confirmed_at?: string
+          confirmed_by?: string | null
+          declaration_id?: string
+          note?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaration_payment_confirmations_declaration_id_fkey"
+            columns: ["declaration_id"]
+            isOneToOne: true
+            referencedRelation: "internal_declarations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
