@@ -45,6 +45,110 @@ export function redactSensitive(text: string): string {
     .replace(/\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]){10,30}\b/gi, "[IBAN]");
 }
 
+// ---------------------------------------------------------------------------
+// Informer relatie (leverancier) — payload volgens de officiële OpenAPI-spec
+// (https://api.informer.eu/docs/v1/api-docs.json, schema RelationInput).
+// Gedocumenteerd: relation_type is een string "0" (zakelijk) of "1" (privé),
+// telefoon heet phone_number, relation_number "0" laat Informer een nummer
+// genereren. Een veld "subtype" of "phone" bestaat niet in het schema.
+// ---------------------------------------------------------------------------
+
+export const RELATION_INPUT_FIELDS = [
+  "relation_number", "relation_type", "company_name", "firstname", "surname_prefix", "surname",
+  "street", "house_number", "house_number_suffix", "zip", "city", "country", "phone_number",
+  "fax_number", "web", "email", "coc", "vat", "iban", "bic", "email_invoice",
+  "sales_invoice_template_id", "payment_condition_id",
+] as const;
+
+export type SupplierInput = {
+  firstname: string;
+  surname_prefix?: string;
+  surname: string;
+  street: string;
+  houseNumber: string;
+  suffix?: string;
+  zip: string;
+  city: string;
+  email?: string | null;
+  phone?: string | null;
+  iban?: string | null;
+};
+
+export function buildSupplierRelationPayload(input: SupplierInput): Record<string, string> {
+  const raw: Record<string, unknown> = {
+    relation_number: "0",
+    relation_type: "1",
+    firstname: input.firstname,
+    surname_prefix: input.surname_prefix,
+    surname: input.surname,
+    street: input.street,
+    house_number: input.houseNumber,
+    house_number_suffix: input.suffix,
+    zip: String(input.zip ?? "").replace(/\s+/g, " ").trim().toUpperCase(),
+    city: input.city,
+    country: "NL",
+    email: input.email,
+    email_invoice: input.email,
+    phone_number: input.phone,
+    iban: input.iban ? String(input.iban).replace(/\s+/g, "").toUpperCase() : undefined,
+  };
+  const payload: Record<string, string> = {};
+  for (const field of RELATION_INPUT_FIELDS) {
+    const value = raw[field];
+    if (value === undefined || value === null) continue;
+    const text = String(value).trim();
+    if (text) payload[field] = text;
+  }
+  return payload;
+}
+
+function redactPersonal(text: string): string {
+  return redactSensitive(text)
+    .replace(/[^\s@"'<>]+@[^\s@"'<>]+\.[^\s@"'<>]+/g, "[EMAIL]")
+    .replace(/\b\d{4}\s?[A-Z]{2}\b/gi, "[POSTCODE]")
+    .replace(/\+?\d[\d\s-]{7,}\d/g, "[NUMMER]");
+}
+
+/**
+ * Zet een Informer-foutantwoord om naar een veilige, korte melding voor admin.
+ * Toont veldnamen (alleen bekende schemavelden) en geredigeerde meldingen;
+ * nooit ingevulde waarden zoals IBAN, adres, e-mail, tokens of base64.
+ */
+export function describeInformerError(status: number | null | undefined, body: unknown): string | null {
+  const parts: string[] = [];
+  const known = new Set<string>(RELATION_INPUT_FIELDS as readonly string[]);
+  const fieldLabel = (key: string) => (known.has(key) ? key : "veld");
+  const msg = (v: unknown) => redactPersonal(String(v ?? "")).replace(/\s+/g, " ").trim().slice(0, 120);
+
+  const collect = (value: unknown, field?: string) => {
+    if (value == null) return;
+    if (typeof value === "string" || typeof value === "number") {
+      const m = msg(value);
+      if (m) parts.push(field ? `${fieldLabel(field)}: ${m}` : m);
+      return;
+    }
+    if (Array.isArray(value)) { value.forEach((v) => collect(v, field)); return; }
+    if (typeof value === "object") {
+      const obj = value as Record<string, unknown>;
+      if (typeof obj.message === "string" && (obj.field || obj.property)) {
+        collect(obj.message, String(obj.field ?? obj.property));
+        return;
+      }
+      for (const [k, v] of Object.entries(obj)) collect(v, k === "message" ? field : k);
+    }
+  };
+
+  const b = body as any;
+  if (typeof body === "string") collect(body);
+  else if (b && typeof b === "object") {
+    const err = b.errors ?? b.error ?? b.validation_errors ?? (status && status >= 400 ? b.message : undefined);
+    collect(err);
+  }
+  const unique = [...new Set(parts)].slice(0, 8);
+  if (unique.length) return `${status ? `HTTP ${status}: ` : ""}${unique.join("; ")}`.slice(0, 500);
+  return status && status >= 400 ? `HTTP ${status}` : null;
+}
+
 /** Bewaart alleen metadata van API-calls; geen request/response bodies of headers. */
 export function redactApiCalls<T extends Record<string, any>>(calls: T[]): Record<string, unknown>[] {
   return calls.map((c) => ({
