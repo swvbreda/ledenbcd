@@ -18,6 +18,7 @@ import { MembersDataProvider } from "@/contexts/MembersDataContext";
 import { PushNotificationInit } from "@/components/PushNotificationInit";
 import NotFound from "@/pages/NotFound";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
+import { installStaleChunkHandler, isStaleChunkError, reloadOnceForStaleChunk } from "@/lib/staleChunkReload";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -65,6 +66,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => installStaleChunkHandler(), []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -87,6 +89,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    if (isStaleChunkError(error) && reloadOnceForStaleChunk()) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
   return (
