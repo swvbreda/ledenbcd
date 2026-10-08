@@ -15,58 +15,68 @@ const input = {
   email: "jan@example.test", phone: "0612345678", iban: "NL91 ABNA 0417 1643 00",
 };
 
-describe("leverancier-payload volgens officieel RelationInput-schema", () => {
-  const p = buildSupplierRelationPayload(input);
+describe("leverancier-payload volgens officieel v2 RelationInputPrivate", () => {
+  const p = buildSupplierRelationPayload(input) as Record<string, any>;
 
-  it("bevat alleen gedocumenteerde velden (geen subtype/phone)", () => {
+  it("bevat alleen gedocumenteerde v2-velden en alle verplichte velden", () => {
     for (const k of Object.keys(p)) expect(RELATION_INPUT_FIELDS).toContain(k);
-    expect(p).not.toHaveProperty("subtype");
-    expect(p).not.toHaveProperty("phone");
-    expect(p.phone_number).toBe("0612345678");
+    for (const k of ["relation_type", "street", "house_number", "zip", "city", "country", "firstname", "surname"]) {
+      expect(p[k]).toBeTruthy();
+    }
+    expect(p).not.toHaveProperty("company_name");
+    expect(p).not.toHaveProperty("phone_number");
   });
 
-  it("relation_type is string '1' (privé), relation_number '0', land NL", () => {
-    expect(p.relation_type).toBe("1");
-    expect(p.relation_number).toBe("0");
+  it("relation_type integer 1, phone, subtype leverancier, land NL", () => {
+    expect(p.relation_type).toBe(1);
+    expect(p.phone).toBe("0612345678");
+    expect(p.subtype).toEqual({ supplier: 1, active: 1 });
     expect(p.country).toBe("NL");
     expect(p.zip).toBe("1234 AB");
     expect(p.iban).toBe("NL91ABNA0417164300");
+    expect(p).not.toHaveProperty("relation_number");
   });
 
   it("laat lege optionele velden weg", () => {
     const q = buildSupplierRelationPayload({ ...input, suffix: undefined, phone: "", surname_prefix: undefined });
     expect(q).not.toHaveProperty("house_number_suffix");
-    expect(q).not.toHaveProperty("phone_number");
+    expect(q).not.toHaveProperty("phone");
     expect(q).not.toHaveProperty("surname_prefix");
   });
 });
 
-describe("Informer 422-foutmelding voor admin", () => {
-  it("toont veldnamen en meldingen", () => {
-    const msg = describeInformerError(422, { errors: { surname: ["is required"], country: "invalid" } });
-    expect(msg).toBe("HTTP 422: surname: is required; country: invalid");
+describe("Informer 422-foutmelding voor admin (alleen veld + vaste categorie)", () => {
+  const LEAKS = /Jan|Dijk|Teststraat|Kerkweg|Pietersen|NL91|example|1234|Bearer|AAAAAAAA/;
+
+  it("v2 ValidationError: velden met categorieën", () => {
+    const msg = describeInformerError(422, { error: {
+      surname: "surname is verplicht.", collection_date: "moet een geldige datum zijn (Y-m-d).", relation_number: "must be integer",
+    }, response_code: 422 });
+    expect(msg).toBe("HTTP 422: surname: verplicht; collection_date: ongeldig formaat; relation_number: ongeldig type");
   });
 
-  it("lekt geen IBAN, e-mail, postcode, token of base64", () => {
-    const body = {
-      error: [
-        "iban NL91ABNA0417164300 invalid",
-        "email jan@example.test exists",
-        "zip 1234 AB unknown",
-        "Bearer abc.def.ghi",
-        "A".repeat(120),
-      ],
-    };
-    const msg = describeInformerError(422, body)!;
-    expect(msg).not.toMatch(/NL91|jan@example|1234 AB|abc\.def|AAAAAAAAAA/);
-    expect(msg).toContain("[IBAN]");
-    expect(msg).toContain("[EMAIL]");
+  it("object-fout met straat- en persoonsnaam lekt niets", () => {
+    const msg = describeInformerError(422, { error: {
+      street: "Straat 'Teststraat' bestaat niet", surname: "Jan van Dijk is al bekend", iban: "NL91ABNA0417164300 ongeldig",
+    } })!;
+    expect(msg).not.toMatch(LEAKS);
+    expect(msg).toContain("street:");
+    expect(msg).toContain("iban: ongeldig formaat");
   });
 
-  it("onbekende veldnaam wordt generiek en lege body geeft HTTP-status", () => {
-    expect(describeInformerError(422, { errors: { secret_x: "bad" } })).toBe("HTTP 422: veld: bad");
+  it("string- en array-fouten met namen lekken niets", () => {
+    const s = describeInformerError(422, "Relatie Jan Pietersen, Kerkweg 5 bestaat al")!;
+    const a = describeInformerError(422, { errors: ["Kerkweg 5 onbekend", "Bearer abc.def", "A".repeat(100), { field: "email", message: "jan@example.test ongeldig" }] })!;
+    expect(s).not.toMatch(LEAKS);
+    expect(a).not.toMatch(LEAKS);
+    expect(s).toBe("HTTP 422: onbekend veld: afgekeurd");
+    expect(a).toContain("email: ongeldig formaat");
+  });
+
+  it("onbekende veldnaam generiek; lege body geeft HTTP-status", () => {
+    expect(describeInformerError(422, { error: { geheim_x: "verplicht" } })).toBe("HTTP 422: onbekend veld: verplicht");
     expect(describeInformerError(422, null)).toBe("HTTP 422");
-    expect(describeInformerError(200, { success: true })).toBeNull();
+    expect(describeInformerError(200, { success: "Relation saved" })).toBeNull();
   });
 });
 
@@ -110,11 +120,11 @@ describe("ongewijzigd: rekeningen en idempotentie", () => {
     let creates = 0;
     const first = await runDeclarationSync(decl.id, { retry: false }, store, {
       findByReference: async () => null,
-      createPurchase: async () => { creates++; throw new Error(`Leverancier aanmaken in Informer mislukt: ${describeInformerError(422, { errors: { surname: "required" } })}`); },
+      createPurchase: async () => { creates++; throw new Error(`Leverancier aanmaken in Informer mislukt: ${describeInformerError(422, { error: { surname: "required" } })}`); },
     });
     expect(first.success).toBe(false);
     expect(state.informer_status).toBe("error");
-    expect(state.err).toContain("surname: required");
+    expect(state.err).toContain("surname: verplicht");
 
     const second = await runDeclarationSync(decl.id, { retry: true }, store, {
       findByReference: async () => "999",
