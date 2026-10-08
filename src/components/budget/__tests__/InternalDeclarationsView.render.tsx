@@ -212,3 +212,20 @@ describe("InternalDeclarationsView open totaal", () => {
     expect(onAllocate.mock.calls[0][0]).toEqual({ id: "s9", informerExternalId: "16891349", lineItemId: "li-onk", dossier: "Amsterdam i-criterium", validLineItemIds: ["li-onk"], updatedAt: null });
   });
 });
+
+describe("betaald bevestigd", () => {
+  const conf: any[] = [
+    { ...base, id: "c1", amount: 85.56, status: "approved", submitted_by: "u1", informer_status: "error", payment_confirmed_at: "2026-10-08T22:10:00Z" },
+    { ...base, id: "c2", amount: 210, status: "approved", submitted_by: "u1", informer_status: "not_sent", paid_at: "2026-02-25", bank_transaction_id: "t1" },
+  ];
+  it("eigen lijst: label en open totaal nul", () => {
+    renderView(false, conf);
+    expect(screen.getAllByText("Betaald bevestigd").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Betaald — bank gekoppeld").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/85,56.*open|open.*85,56/)).toBeNull();
+  });
+  it("admin ziet dezelfde onderscheiden labels", () => {
+    renderView(true, conf);
+    expect(screen.getAllByText("Betaald bevestigd").length).toBeGreaterThan(0);
+  });
+});
