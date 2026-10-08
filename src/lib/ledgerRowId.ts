@@ -99,7 +99,7 @@ export function parseLedgerEntryKey(key: string): LedgerRowRef | null {
   return { doc_type, informer_id };
 }
 
-const LEDGER_DOC_TYPES = new Set(["sales_invoice", "purchase_invoice"]);
+const LEDGER_DOC_TYPES = new Set(["sales_invoice", "purchase_invoice", "receipt"]);
 
 /** True als deze dossiersleutel bij een canonieke Informer-regel hoort. */
 export function isLedgerEntryKey(key: string): boolean {

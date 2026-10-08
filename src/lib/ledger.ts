@@ -5,7 +5,10 @@
 
 import { isExcludedDossier } from "@/lib/budgetExclusions";
 
-export type LedgerDocType = "sales_invoice" | "purchase_invoice";
+export type LedgerDocType = "sales_invoice" | "purchase_invoice" | "receipt";
+/** Kostendocumenten: inkoopfacturen en (declaratie-)bonnetjes. Id-nummers alleen samen met soort uniek. */
+export const EXPENSE_DOC_TYPES: readonly string[] = ["purchase_invoice", "receipt"];
+export const isExpenseDocType = (t: string) => EXPENSE_DOC_TYPES.includes(t);
 export type LedgerStatus = "draft" | "open" | "paid" | "cancelled" | "unprocessed";
 
 export interface LedgerEntry {
@@ -72,7 +75,7 @@ export function countableEntries(entries: LedgerEntry[]): LedgerEntry[] {
 
 /** Meetellende inkoopfacturen — de enige bron voor het uitgaventotaal. */
 export function expenseEntries(entries: LedgerEntry[]): LedgerEntry[] {
-  return countableEntries(entries).filter((e) => e.doc_type === "purchase_invoice");
+  return countableEntries(entries).filter((e) => isExpenseDocType(e.doc_type));
 }
 
 /** Meetellende verkoopfacturen — de enige bron voor het opbrengstentotaal. */
@@ -160,7 +163,7 @@ export function totalsByDossier(
   };
 
   for (const entry of countableEntries(entries)) {
-    if (entry.doc_type !== "purchase_invoice") continue;
+    if (!isExpenseDocType(entry.doc_type)) continue;
     const key = `${entry.doc_type}:${entry.informer_id}`;
     const entrySplits = splitsByEntry.get(key);
     if (entrySplits && entrySplits.length > 0) {
