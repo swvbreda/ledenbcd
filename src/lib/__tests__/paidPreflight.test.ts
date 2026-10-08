@@ -23,3 +23,28 @@ describe("paidPreflight (alleen lezen)", () => {
     expect(JSON.stringify(bank)).toBe(before);
   });
 });
+
+import { selectPaidBatch, closedYearsFromErrors, PAID_BATCH_MAX } from "../../../supabase/functions/informer-sync/paidPreflight";
+describe("selectPaidBatch", () => {
+  const dd = (id: string, x: any = {}) => ({ ...d(id), status: "approved", year: 2026, informer_status: "not_sent", ...x });
+  const ready = (id: string) => ({ declaration_id: id, reference: "DECL-" + id, status: "klaar_voor_handmatige_aflettering" as const });
+  it("alleen expliciete, live klare, goedgekeurde, open-jaar records", () => {
+    const r = selectPaidBatch(["c", "b", "z", "y", "e", "q"],
+      [ready("c"), { declaration_id: "b", reference: "x", status: "bedrag_wijkt_af" }, ready("y"), ready("e"), ready("q")],
+      [dd("c"), dd("b"), dd("y", { year: 2025 }), dd("e", { informer_status: "sent" }), dd("q", { status: "pending" })], [2025]);
+    expect(r.eligible).toEqual(["c"]);
+    expect(r.blocked.map((b) => b.declaration_id)).toEqual(["b", "z", "y", "e", "q"]);
+  });
+  it("gesloten jaar blokkeert; leeg of te groot verzoek levert niets", () => {
+    expect(selectPaidBatch(["c"], [ready("c")], [dd("c", { expense_date: "2025-05-01", year: 2025 })], [2025]).eligible).toEqual([]);
+    expect(selectPaidBatch([], [], [], []).eligible).toEqual([]);
+    const many = Array.from({ length: PAID_BATCH_MAX + 1 }, (_, i) => "i" + i);
+    expect(selectPaidBatch(many, many.map(ready), many.map((i) => dd(i)), []).eligible).toEqual([]);
+  });
+  it("dubbel id telt één keer; foutstatus mag opnieuw", () => {
+    expect(selectPaidBatch(["c", "c"], [ready("c")], [dd("c", { informer_status: "error" })], []).eligible).toEqual(["c"]);
+  });
+  it("gesloten jaren uit echte Informer-weigering", () => {
+    expect(closedYearsFromErrors([{ sanitized_error: "You can no longer book in the specified period.", year: 2025 }, { sanitized_error: "x", year: 2026 }])).toEqual([2025]);
+  });
+});

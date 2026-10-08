@@ -20,7 +20,7 @@ import {
   selectDeclarationLedger,
 } from "./declarationSync.ts";
 import { planCreditorImport } from "./creditorImport.ts";
-import { paidPreflight } from "./paidPreflight.ts";
+import { paidPreflight, selectPaidBatch, closedYearsFromErrors, PAID_BATCH_MAX } from "./paidPreflight.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2238,6 +2238,76 @@ Deno.serve(async (req) => {
       });
     } catch (e) {
       return new Response(JSON.stringify({ success: false, error: "Informer niet bereikbaar of geweigerd", status: (e as any)?.status ?? null }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Admin-only: reeds betaalde declaraties als inkoopfactuur opnemen in Informer (bestaande DECL-referentie).
+  // Live preflight per uitvoering; nooit betaling/memoriaal; lokale betaal-/bank-/post-/dossiervelden blijven ongemoeid.
+  if (action === "paid_declarations_book") {
+    if (!callerUserId || !callerIsAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: realAdmin } = await supabase.rpc("has_role", { _user_id: callerUserId, _role: "admin" });
+    if (!realAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const body = await req.json().catch(() => ({})) as { declaration_ids?: string[] };
+    const api_calls: ApiCall[] = [];
+    try {
+      const { data: decls, error: dErr } = await supabase.from("internal_declarations")
+        .select("id, amount, expense_date, year, status, informer_status, bank_transaction_id, paid_at, informer_external_id")
+        .in("id", (body.declaration_ids ?? []).slice(0, PAID_BATCH_MAX + 1).map(String));
+      if (dErr) throw dErr;
+      const txIds = (decls ?? []).map((d: any) => d.bank_transaction_id).filter(Boolean);
+      const { data: bank } = txIds.length
+        ? await supabase.from("ponto_transactions").select("id, amount, value_date").in("id", txIds)
+        : { data: [] };
+      const raw = await fetchAllInformerPages("/invoices/purchase", ["purchase", "invoices", "data"], api_calls);
+      const purchases = raw.map((p: any) => ({
+        id: String(p.id ?? ""), number: String(p.number ?? p.invoice_number ?? "").trim().toUpperCase(),
+        total: invoiceAmount(p), date: p.invoice_date ?? null, paid: p?.totals?.paid ?? p?.paid ?? null,
+      }));
+      const rows = paidPreflight((decls ?? []) as any, (bank ?? []) as any, purchases);
+      const { data: attempts } = await supabase.from("internal_declaration_sync_attempts")
+        .select("sanitized_error, internal_declarations(expense_date)").not("sanitized_error", "is", null).limit(1000);
+      const closed = closedYearsFromErrors((attempts ?? []).map((a: any) => ({ sanitized_error: a.sanitized_error, year: Number(String(a.internal_declarations?.expense_date ?? "").slice(0, 4)) })));
+      const { eligible, blocked } = selectPaidBatch(body.declaration_ids ?? [], rows, (decls ?? []) as any, closed);
+      const batch = `paid-decl-informer-${new Date().toISOString().slice(0, 10)}`;
+      const bankBy = new Map((bank ?? []).map((b: any) => [b.id, b]));
+      const store = supabaseDeclarationStore(supabase);
+      // Gebruik de zojuist live opgehaalde lijst: een eerder (bijv. na timeout) aangemaakte factuur wordt hergebruikt.
+      const live = liveInformerPort(supabase, api_calls);
+      const port = { ...live, findByReference: async (ref: string) => purchases.find((p) => p.number === ref)?.id ?? live.findByReference(ref) };
+      const results: any[] = [];
+      for (const id of eligible) {
+        const { data: before } = await supabase.from("internal_declarations").select("*").eq("id", id).maybeSingle();
+        const { error: snapErr } = await supabase.from("finance_repair_snapshots").insert({ batch, table_name: "internal_declarations", row_key: id, before_row: before, action: "paid_declaration_to_informer" });
+        if (snapErr) { results.push({ declaration_id: id, success: false, error: "Snapshot mislukt; niets verstuurd" }); continue; }
+        const d: any = (decls ?? []).find((x: any) => x.id === id);
+        const r = await runDeclarationSync(id, { retry: d?.informer_status === "error" }, store, port);
+        const { data: after } = await supabase.from("internal_declarations").select("informer_external_id, informer_status, paid_at, bank_transaction_id, amount, status").eq("id", id).maybeSingle();
+        const tx: any = bankBy.get(d?.bank_transaction_id);
+        results.push({
+          declaration_id: id, reference: `DECL-${id.toUpperCase()}`, success: r.success,
+          outcome: r.success ? (r.details.reused_existing ? "reused" : "created") : "failed",
+          informer_document_id: after?.informer_external_id ?? null, error: r.success ? null : r.error_message,
+          bank_transaction_id: d?.bank_transaction_id ?? null, bank_date: tx?.value_date ?? null, bank_amount: tx ? Math.abs(Number(tx.amount)) : null,
+          paid_preserved: Boolean(after?.paid_at) && after?.bank_transaction_id === d?.bank_transaction_id && after?.status === "approved" && Number(after?.amount) === Number(d?.amount),
+        });
+      }
+      const created = results.filter((r) => r.outcome === "created").length;
+      await logResult(supabase, { action: "paid_declarations_book", success: results.every((r) => r.success), items_processed: created, details: { batch, results: results.map((r) => ({ id: r.declaration_id, outcome: r.outcome, doc: r.informer_document_id })), blocked }, api_calls: redactApiCalls(api_calls) as any });
+      return new Response(JSON.stringify({ success: true, batch, created, reused: results.filter((r) => r.outcome === "reused").length, failed: results.filter((r) => r.outcome === "failed").length, results, blocked, note: "Opgenomen als inkoopfactuur; afletteren tegen de bestaande bankbetaling gebeurt handmatig in Informer." }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ success: false, error: "Informer niet bereikbaar of geweigerd; niets aangemaakt in deze stap" }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -60,6 +60,27 @@ function fakeInformer(opts: { existing?: string | null; fail?: string } = {}) {
   return { port, calls, heal() { fail = undefined; }, setExisting(v: string) { existing = v; } };
 }
 
+describe("betaalde declaratie opnemen", () => {
+  const paid = { status: "approved", paid_at: "2026-03-02", bank_transaction_id: "tx-1", amount: 210, declaration_type: "penningmeester", appointment: null, budget_line_item_id: "post", dossier: "D" };
+  it("betaalvelden, post en dossier blijven gelijk; alleen Informer-id/status wijzigen", async () => {
+    const s = fakeStore(baseDecl(paid));
+    const r = await runDeclarationSync(ID, { retry: false }, s.store, fakeInformer().port);
+    expect(r.success).toBe(true);
+    expect(s.row).toMatchObject({ ...paid, informer_status: "sent", informer_external_id: "INF-900" });
+  });
+  it("timeout na aanmaken: retry hergebruikt bestaand document, geen tweede create", async () => {
+    const s = fakeStore(baseDecl(paid));
+    const inf = fakeInformer({ fail: "timeout" });
+    expect((await runDeclarationSync(ID, { retry: false }, s.store, inf.port)).success).toBe(false);
+    expect(s.row.informer_status).toBe("error");
+    inf.setExisting("INF-777");
+    const r = await runDeclarationSync(ID, { retry: true }, s.store, inf.port);
+    expect(r.details.reused_existing).toBe(true);
+    expect(inf.calls.create).toBe(1);
+    expect(s.row).toMatchObject({ paid_at: "2026-03-02", bank_transaction_id: "tx-1", informer_external_id: "INF-777" });
+  });
+});
+
 describe("declaratie naar Informer", () => {
   it("1. eerste verzending: claim, één create, status sent + document-id", async () => {
     const s = fakeStore(baseDecl());
