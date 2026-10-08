@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeOpenTotals, type OpenTotalInput } from "../declarationOpenTotals";
+import { computeOpenTotals, isOpenDeclaration, paymentLabel, type OpenTotalInput } from "../declarationOpenTotals";
 
 const base = (o: Partial<OpenTotalInput>): OpenTotalInput => ({
   year: 2026, amount: 10, status: "pending", paid_at: null, bank_transaction_id: null,
@@ -66,17 +66,17 @@ describe("formOpenNote", () => {
 });
 
 describe("beheerdersbevestiging betaald", () => {
-  const base = { year: 2026, amount: 85.56, status: "approved", paid_at: null, bank_transaction_id: null, submitted_by: "u", board_member_id: "bernard", board_member_name: "Bernard" };
+  const b0 = { year: 2026, amount: 85.56, status: "approved", paid_at: null, bank_transaction_id: null, submitted_by: "u", board_member_id: "bernard", board_member_name: "Bernard" };
   it("telt bevestigde declaratie niet meer als open", () => {
-    expect(isOpenDeclaration({ ...base, payment_confirmed_at: "2026-10-08T22:10:00Z" })).toBe(false);
-    expect(computeOpenTotals([{ ...base, payment_confirmed_at: "2026-10-08T22:10:00Z" }], { year: 2026, isAdmin: true, userId: "a" }).cents).toBe(0);
+    expect(isOpenDeclaration({ ...b0, payment_confirmed_at: "2026-10-08T22:10:00Z" })).toBe(false);
+    expect(computeOpenTotals([{ ...b0, payment_confirmed_at: "2026-10-08T22:10:00Z" }], { year: 2026, isAdmin: true, userId: "a" }).cents).toBe(0);
   });
   it("andere persoon of toekomstige declaratie zonder bevestiging blijft open", () => {
-    expect(isOpenDeclaration({ ...base, board_member_name: "Joachim" })).toBe(true);
+    expect(isOpenDeclaration({ ...b0, board_member_name: "Joachim" })).toBe(true);
   });
   it("label onderscheidt bank en bevestiging; bank gaat voor", () => {
-    expect(paymentLabel({ ...base, payment_confirmed_at: "x" })).toBe("betaald_bevestigd");
-    expect(paymentLabel({ ...base, paid_at: "2026-02-25", bank_transaction_id: "t" })).toBe("bank_gekoppeld");
-    expect(paymentLabel(base)).toBe(null);
+    expect(paymentLabel({ ...b0, payment_confirmed_at: "x" })).toBe("betaald_bevestigd");
+    expect(paymentLabel({ ...b0, paid_at: "2026-02-25", bank_transaction_id: "t" })).toBe("bank_gekoppeld");
+    expect(paymentLabel(b0)).toBe(null);
   });
 });
