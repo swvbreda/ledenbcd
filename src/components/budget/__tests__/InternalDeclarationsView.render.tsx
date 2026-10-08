@@ -168,4 +168,29 @@ describe("InternalDeclarationsView open totaal", () => {
     const btn = document.querySelector('[data-testid="drill-list"] button')!;
     expect(btn.textContent).toMatch(/Wijzigen/);
   });
+
+  it("maandvergoedingen tonen juiste soort en maand in kaart, tabel en openstaand-venster; geen Wijzigen", async () => {
+    const vol = (id: string, type: string, date: string, name: string, mid: string) => ({ ...base, id, declaration_type: type, expense_date: date,
+      appointment: null, amount: 210, status: "approved", board_member_name: name, board_member_id: mid, submitted_by: "u9", trajectory: null, km_single: null, km_return: null });
+    renderView(true, [vol("j6", "woordvoering", "2026-06-30", "Joachim", "b2"), vol("b6", "penningmeester", "2026-06-30", "Bernard", "b2"), vol("b5", "penningmeester", "2026-05-31", "Bernard", "b2")]);
+    expect(screen.queryByText(/Overige kosten/)).toBeNull();
+    expect(screen.queryByText("Geen omschrijving")).toBeNull();
+    expect(screen.getAllByText(/Vrijwilligersvergoeding — penningmeester/).length).toBeGreaterThanOrEqual(4);
+    expect(screen.getAllByText(/Vrijwilligersvergoeding — woordvoering/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Vrijwilligersvergoeding mei 2026").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Vrijwilligersvergoeding juni 2026").length).toBeGreaterThanOrEqual(4);
+    expect(screen.queryAllByRole("button", { name: /Wijzigen/ })).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Bekijk openstaande declaraties" }));
+    await waitFor(() => expect(document.querySelector('[data-testid="drill-list"]')).toBeTruthy());
+    const list = document.querySelector('[data-testid="drill-list"]')!.textContent!;
+    expect(list).toMatch(/Vrijwilligersvergoeding — woordvoering/);
+    expect(list).toMatch(/Vrijwilligersvergoeding mei 2026/);
+    expect(list).not.toMatch(/Overige/);
+  });
+
+  it("gewone kilometer- en overige reiskosten houden hun labels", () => {
+    renderView(true, [{ ...base, id: "k1", declaration_type: "reiskosten", appointment: "Vergadering" }, { ...base, id: "o1", declaration_type: "overig", appointment: "Parkeren" }]);
+    expect(screen.getAllByText(/Kilometervergoeding/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Overige reiskosten/).length).toBeGreaterThan(0);
+  });
 });
