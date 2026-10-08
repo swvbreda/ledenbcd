@@ -27,8 +27,10 @@ const renderView = (isAdmin = false) => render(<InternalDeclarationsView declara
 afterEach(cleanup);
 Object.assign(Element.prototype, { hasPointerCapture: () => false, releasePointerCapture: () => {}, setPointerCapture: () => {}, scrollIntoView: () => {} });
 async function pickMember(name: string) {
-  const trigger = screen.getByRole("combobox", { name: "" , hidden: false } as any);
-  fireEvent.pointerDown(trigger, { button: 0, pointerType: "mouse" });
+  const form = screen.getByRole("region", { name: "Nieuwe declaratie" });
+  const trigger = within(form).getAllByRole("combobox")[0];
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: "Enter" });
   fireEvent.click(await screen.findByRole("option", { name: new RegExp(name) }));
 }
 const noteIsBelowFormFields = () => {
