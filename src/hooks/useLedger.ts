@@ -296,7 +296,9 @@ export function useLedgerMutations(year: number) {
 export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number }) {
   const staleMs = options?.staleMs ?? YEAR_SYNC_STALE_MS;
   const intervalMs = options?.intervalMs ?? 60_000;
-  const { data: syncState, isLoading: logLoading } = useInformerSyncState();
+  const { data: syncState, isLoading: logLoadingRaw, error: logError } = useInformerSyncState();
+  // Bij een leesfout weten we niet wanneer de laatste sync was: niets starten.
+  const logLoading = logLoadingRaw || !!logError;
   const { syncYear } = useLedgerMutations(year);
   const [error, setError] = useState<string | null>(null);
   const attemptRef = useRef<Record<number, number>>({});
