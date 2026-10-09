@@ -11,7 +11,7 @@ const EXCEPTIONS: MatchOutcome[] = ["ambiguous_invoice", "multi_invoice", "split
 export default function KoppelOverzicht({ year, isAdmin }: { year: number; isAdmin: boolean }) {
   const plan = useAdministratiePlan(year);
   const { syncYear } = useLedgerMutations(year);
-  const bijwerken = useAdministratieBijwerken(year, () => syncYear.mutateAsync(undefined as any));
+  const bijwerken = useAdministratieBijwerken(year, () => syncYear.mutateAsync());
 
   if (plan.isLoading) return <div className="border border-border rounded-lg bg-card p-4 text-sm text-muted-foreground inline-flex items-center gap-2 w-full"><Loader2 size={14} className="animate-spin" /> Koppelingen laden…</div>;
   if (plan.error) return <div role="alert" className="border border-brand-red rounded-lg bg-card p-4 text-sm text-brand-red">Koppeloverzicht kon niet worden geladen: {(plan.error as any)?.message}. Dit is géén lege administratie.</div>;
