@@ -1,3 +1,4 @@
+import { lastSuccessfulYearSync } from "@/lib/ledgerSync";
 import { useState } from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,8 +60,10 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
   const { data: syncState, error: syncStateError } = useInformerSyncState();
 
   // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
-  const lastSync = autoSync?.lastSyncAt ?? null;
-  const itemsProcessed = autoSync?.lastItemsProcessed ?? null;
+  // Zelfde jaarselectie (details.year) als de automatische sync, ook als die prop leeg is.
+  const lastOkLog = lastSuccessfulYearSync((syncState?.log ?? []) as any, year);
+  const lastSync = autoSync?.lastSyncAt ?? lastOkLog?.run_at ?? null;
+  const itemsProcessed = autoSync?.lastItemsProcessed ?? lastOkLog?.items_processed ?? null;
   const lastLog = (syncState?.log ?? []).find(
     (l: any) => String(l.action ?? "").includes("sync_year") && Number(l?.details?.year) === year,
   );

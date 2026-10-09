@@ -38,6 +38,17 @@ export default function KoppelOverzicht({ year, isAdmin, memberNames }: { year: 
           </Button>
         )}
       </div>
+      {isAdmin && bijwerken.error && !bijwerken.isPending && (
+        <div role="alert" className="border border-brand-red rounded-md p-2 text-sm text-brand-red inline-flex items-start gap-2 w-full">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>Bijwerken mislukt: {(bijwerken.error as any)?.message ?? String(bijwerken.error)}</span>
+        </div>
+      )}
+      {isAdmin && bijwerken.data && !bijwerken.isPending && !bijwerken.error && (
+        <div role="status" className="border border-border rounded-md p-2 text-sm">
+          Laatste run: {bijwerken.data.bankLinked} bankkoppelingen, {bijwerken.data.membersLinked} contributiefacturen gekoppeld, {bijwerken.data.skipped} overgeslagen.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
         <div><div className="text-xs text-muted-foreground">Bank al gekoppeld</div><div className="font-semibold tabular-nums">{count("linked_already")}</div></div>
