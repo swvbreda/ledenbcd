@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { lastSuccessfulYearSync, syncSucceededSince } from "../ledgerSync";
 
 // Vorm zoals de database hem teruggeeft (live log 2026-10-09).
-const row = (run_at: string, year: unknown, success = true) => ({ action: "sync_year", success, run_at, items_processed: 161, details: { year, per_type: { purchase_invoice: 150 } } });
+const row = (run_at: string, year: number | string, success = true) => ({ action: "sync_year", success, run_at, items_processed: 161, details: { year, per_type: { purchase_invoice: 150 } } });
 
 describe("laatste jaarsync op details.year", () => {
   it("vindt live-rij 2026 (161 regels)", () => {
