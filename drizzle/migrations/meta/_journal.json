@@ -106,6 +106,13 @@
       "when": 1791499070936,
       "tag": "0014_declaration_approval_requires_approver",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791581815964,
+      "tag": "0015_allow_receipt_doc_type",
+      "breakpoints": true
     }
   ]
 }
