@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { matchBankToInvoices, type MatchResult } from "@/lib/bankInvoiceMatch";
 import { planMemberLinks, type MemberLinkResult } from "@/lib/memberInvoiceLink";
+import { isSourceSnapshotId } from "@/lib/ledgerSource";
 import { duplicateReceipts, expenseEntries } from "@/lib/ledger";
 
 const client = supabase as any;
@@ -24,12 +25,14 @@ export interface AdministratiePlan {
   duplicateReceipts: number;
   salesInList: number;
   contributionsWithNumber: number;
+  snapshotSales: number;
+  snapshotAt: string | null;
 }
 
 /** Koppeloverzicht 2026: alleen lezen. Leesfouten worden doorgegeven, nooit als nul getoond. */
-export function useAdministratiePlan(year: number) {
+export function useAdministratiePlan(year: number, memberNames?: Map<number, string>) {
   return useQuery({
-    queryKey: ["administratie-plan", year],
+    queryKey: ["administratie-plan", year, memberNames?.size ?? 0],
     queryFn: async (): Promise<AdministratiePlan> => {
       const [ledger, txs, links, contribs, debtors] = await Promise.all([
         all<any>((f, t) => client.from("ledger_entries_v").select("*").order("id").range(f, t)),
@@ -44,11 +47,13 @@ export function useAdministratiePlan(year: number) {
       const exp = expenseEntries(yearRows);
       return {
         bank: matchBankToInvoices(txs.map((t: any) => ({ ...t, amount: Number(t.amount) || 0 })), invoices, links, year),
-        members: planMemberLinks(yearRows.filter((e: any) => e.doc_type === "sales_invoice"), contribs, debtors, year),
+        members: planMemberLinks(yearRows.filter((e: any) => e.doc_type === "sales_invoice"), contribs, debtors, year, memberNames),
         expensesWithoutPost: exp.filter((e: any) => !e.line_item_id).length,
         expensesWithoutDossier: exp.filter((e: any) => !String(e.dossier ?? "").trim()).length,
         duplicateReceipts: duplicateReceipts(yearRows).length,
         salesInList: yearRows.filter((e: any) => e.doc_type === "sales_invoice" && !e.deleted_at).length,
+        snapshotSales: yearRows.filter((e: any) => e.doc_type === "sales_invoice" && !e.deleted_at && isSourceSnapshotId(e.informer_id)).length,
+        snapshotAt: yearRows.filter((e: any) => isSourceSnapshotId(e.informer_id)).map((e: any) => e.last_synced_at).filter(Boolean).sort().pop() ?? null,
         contributionsWithNumber: contribs.filter((c: any) => String(c.invoice_number ?? "").trim()).length,
       };
     },

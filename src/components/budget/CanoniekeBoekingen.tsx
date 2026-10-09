@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { CurrencyText } from "@/components/budget/CurrencyAmount";
 import { useLedgerTotals } from "@/hooks/useLedger";
+import { isSourceSnapshotId } from "@/lib/ledgerSource";
 
 /** Inkomsten/uitgaven uit dezelfde canonieke Informer-set als dashboard en dossiers. */
 export default function CanoniekeBoekingen({ year }: { year: number }) {
@@ -41,7 +42,7 @@ export default function CanoniekeBoekingen({ year }: { year: number }) {
                 <td className="pr-2">{e.relation_name ?? ""}</td>
                 <td className="pr-2">{e.invoice_number ?? e.informer_id}</td>
                 <td className="pr-2">{e.dossier ?? ""}</td>
-                <td className="pr-2">{e.status === "paid" ? "Betaald (Informer)" : "Open (Informer)"}{e.ponto_transaction_id ? " · bank gekoppeld" : ""}</td>
+                <td className="pr-2">{e.status === "paid" ? "Betaald (Informer)" : "Open (Informer)"}{e.ponto_transaction_id ? " · bank gekoppeld" : ""}{isSourceSnapshotId(e.informer_id) ? ` · bronsnapshot Informer-UI${(e as any).last_synced_at ? ` ${String((e as any).last_synced_at).slice(0, 10)}` : ""}` : ""}</td>
                 <td className="text-right"><CurrencyText value={e.amount_incl} /></td>
               </tr>
             ))}

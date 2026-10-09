@@ -8,8 +8,8 @@ import { OUTCOME_LABEL, type MatchOutcome } from "@/lib/bankInvoiceMatch";
 
 const EXCEPTIONS: MatchOutcome[] = ["ambiguous_invoice", "multi_invoice", "split_or_partial", "refund", "other_year", "invoice_already_paid_by_other", "duplicate_payment"];
 
-export default function KoppelOverzicht({ year, isAdmin }: { year: number; isAdmin: boolean }) {
-  const plan = useAdministratiePlan(year);
+export default function KoppelOverzicht({ year, isAdmin, memberNames }: { year: number; isAdmin: boolean; memberNames?: Map<number, string> }) {
+  const plan = useAdministratiePlan(year, memberNames);
   const { syncYear } = useLedgerMutations(year);
   const bijwerken = useAdministratieBijwerken(year, () => syncYear.mutateAsync());
 
@@ -52,7 +52,7 @@ export default function KoppelOverzicht({ year, isAdmin }: { year: number; isAdm
 
       <p className="text-xs text-muted-foreground inline-flex items-start gap-1">
         <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-        Bronbeperking: Informer geeft in de verkooplijst alleen de recentste facturen ({p.salesInList} opgehaald) en per document alleen bij een bekend Informer-nummer. {p.contributionsWithNumber} contributies hebben een factuurnummer; facturen (zoals januari) waarvan het Informer-nummer onbekend is, blijven ontbrekend tot ze in Informer zichtbaar zijn. Bankjournaalposten/aflettering levert de Informer-API niet.
+        Bronbeperking: de Informer-API geeft alleen de recentste verkoopfacturen; {p.snapshotSales} verkoopboekposten komen uit een vastgelegde Informer-bronsnapshot{p.snapshotAt ? ` van ${new Date(p.snapshotAt).toLocaleString("nl-NL")}` : ""} (worden niet automatisch bijgewerkt; een nieuwe stand vereist een nieuwe snapshot). Totaal {p.salesInList} verkoopdocumenten en per document alleen bij een bekend Informer-nummer. {p.contributionsWithNumber} contributies hebben een factuurnummer; facturen (zoals januari) waarvan het Informer-nummer onbekend is, blijven ontbrekend tot ze in Informer zichtbaar zijn. Bankjournaalposten/aflettering levert de Informer-API niet.
       </p>
 
       {exceptions.length > 0 && (
