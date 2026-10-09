@@ -81,7 +81,7 @@ export function useAdministratieBijwerken(year: number, syncYear: () => Promise<
         // Vlak vóór schrijven: factuur bestaat nog en is niet intussen (handmatig) gekoppeld.
         const [{ data: inv, error: e1 }, { data: existing, error: e2 }] = await Promise.all([
           client.from("informer_ledger_entries").select("amount_incl, year, deleted_at").eq("doc_type", l.doc_type).eq("informer_id", l.informer_id).maybeSingle(),
-          client.from("ledger_payment_links").select("id").or(`ponto_transaction_id.eq.${l.ponto_transaction_id},and(doc_type.eq.${l.doc_type},informer_id.eq.${l.informer_id})`).limit(1),
+          client.from("ledger_payment_links").select("id").or(`ponto_transaction_id.eq.${l.ponto_transaction_id},and(doc_type.eq.${l.doc_type},informer_id.eq."${l.informer_id}")`).limit(1),
         ]);
         if (e1 || e2) throw e1 ?? e2;
         const planned = fresh.bank.find((r) => r.tx.id === l.ponto_transaction_id)!;
