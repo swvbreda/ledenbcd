@@ -176,8 +176,7 @@ export function totalsByDossier(
     totals[key] = (totals[key] ?? 0) + amount;
   };
 
-  for (const entry of countableEntries(entries)) {
-    if (!isExpenseDocType(entry.doc_type)) continue;
+  for (const entry of expenseEntries(entries)) {
     const key = `${entry.doc_type}:${entry.informer_id}`;
     const entrySplits = splitsByEntry.get(key);
     if (entrySplits && entrySplits.length > 0) {
