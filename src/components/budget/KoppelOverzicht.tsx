@@ -11,7 +11,7 @@ const EXCEPTIONS: MatchOutcome[] = ["ambiguous_invoice", "multi_invoice", "split
 export default function KoppelOverzicht({ year, isAdmin, memberNames }: { year: number; isAdmin: boolean; memberNames?: Map<number, string> }) {
   const plan = useAdministratiePlan(year, memberNames);
   const { syncYear } = useLedgerMutations(year);
-  const bijwerken = useAdministratieBijwerken(year, () => syncYear.mutateAsync());
+  const bijwerken = useAdministratieBijwerken(year, () => syncYear.mutateAsync(), memberNames);
 
   if (plan.isLoading) return <div className="border border-border rounded-lg bg-card p-4 text-sm text-muted-foreground inline-flex items-center gap-2 w-full"><Loader2 size={14} className="animate-spin" /> Koppelingen laden…</div>;
   if (plan.error) return <div role="alert" className="border border-brand-red rounded-lg bg-card p-4 text-sm text-brand-red">Koppeloverzicht kon niet worden geladen: {(plan.error as any)?.message}. Dit is géén lege administratie.</div>;
@@ -30,8 +30,8 @@ export default function KoppelOverzicht({ year, isAdmin, memberNames }: { year: 
         </div>
         {isAdmin && (
           <Button size="sm" disabled={bijwerken.isPending}
-            onClick={() => bijwerken.mutate(p, {
-              onSuccess: (r) => toast.success(`Bijgewerkt: ${r.bankLinked} bankkoppelingen, ${r.membersLinked} contributiefacturen gekoppeld`),
+            onClick={() => bijwerken.mutate(undefined, {
+              onSuccess: (r) => toast.success(`Bijgewerkt: ${r.bankLinked} bankkoppelingen, ${r.membersLinked} contributiefacturen gekoppeld, ${r.skipped} overgeslagen (bron of koppeling gewijzigd)`),
               onError: (e: any) => toast.error(e?.message ?? "Bijwerken mislukt"),
             })}>
             {bijwerken.isPending ? "Bezig…" : `Administratie ${year} bijwerken`}
