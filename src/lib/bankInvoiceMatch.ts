@@ -93,6 +93,8 @@ export function matchBankToInvoices(
     if (refs.length > 1) return { tx, outcome: "multi_invoice", candidates };
     if (candidates.length > 1) return { tx, outcome: "ambiguous_invoice", candidates };
     const inv = candidates[0]!;
+    // Creditfacturen (negatief bedrag) en terugbetalingen nooit als gewone betaling.
+    if (Number(inv.amount_incl) < 0) return { tx, outcome: "refund", invoice: inv, candidates };
     const out = Number(tx.amount) < 0;
     if (out !== isExpense(inv.doc_type)) return { tx, outcome: "refund", invoice: inv, candidates };
     const txYear = tx.executed_at ? Number(String(tx.executed_at).slice(0, 4)) : NaN;
@@ -128,3 +130,13 @@ export const OUTCOME_LABEL: Record<MatchOutcome, string> = {
   invoice_already_paid_by_other: "Factuur al aan andere betaling gekoppeld",
   duplicate_payment: "Meerdere betalingen voor dezelfde factuur",
 };
+
+/**
+ * Te schrijven koppelingen uit een VERS berekend plan. Alleen 'match'; een
+ * oud plan mag nooit worden gebruikt (bron kan tussen plan en sync wijzigen).
+ */
+export function writableBankLinks(fresh: MatchResult[]): Array<{ doc_type: string; informer_id: string; ponto_transaction_id: string }> {
+  return fresh
+    .filter((r) => r.outcome === "match" && r.invoice && !r.invoice.deleted_at)
+    .map((r) => ({ doc_type: r.invoice!.doc_type, informer_id: r.invoice!.informer_id, ponto_transaction_id: r.tx.id }));
+}
