@@ -67,6 +67,10 @@ export default function FinancienPage() {
     [effectiveMembers, rawOldMembers]
   );
 
+  const memberNameMap = useMemo(
+    () => new Map<number, string>(allMembersForLookup.map((m: any) => [Number(m.id), String(m.naam ?? "")])),
+    [allMembersForLookup]
+  );
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [expenseDialog, setExpenseDialog] = useState<{ lineItemId: string; lineItemName: string; categoryName?: string } | null>(null);
@@ -389,7 +393,7 @@ export default function FinancienPage() {
           <TabsContent value="controle">
             {isAdmin && (
               <div className="mb-4">
-                <KoppelOverzicht year={year} isAdmin={!!isAdmin} />
+                <KoppelOverzicht year={year} isAdmin={!!isAdmin} memberNames={memberNameMap} />
               </div>
             )}
             <ControleSyncTab
