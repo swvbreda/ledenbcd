@@ -345,6 +345,7 @@ export default function FinancienPage() {
               onOpenPdfImport={() => setPdfImportOpen(true)}
               onOpenDuplicates={() => setDuplicatesOpen(true)}
             />
+            </details>
           </TabsContent>
 
           <TabsContent value="intern">
