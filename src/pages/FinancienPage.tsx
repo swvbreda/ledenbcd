@@ -20,6 +20,8 @@ import DossierOverzichtTab from "@/components/budget/DossierOverzichtTab";
 
 import FinancieelTodoTab from "@/components/budget/FinancieelTodoTab";
 import ControleSyncTab from "@/components/budget/ControleSyncTab";
+import KoppelOverzicht from "@/components/budget/KoppelOverzicht";
+import CanoniekeBoekingen from "@/components/budget/CanoniekeBoekingen";
 import { useAutoYearSync } from "@/hooks/useLedger";
 import BankBalancesCard from "@/components/budget/BankBalancesCard";
 import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
@@ -314,6 +316,9 @@ export default function FinancienPage() {
           <TabsContent value="boekingen">
             <BankBalancesCard />
             <div className="mt-4" />
+            <CanoniekeBoekingen year={year} />
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium">Bankmutaties en oude bewijsregels (tellen niet mee als kosten of inkomsten)</summary>
             <BankboekingenTab year={year} />
             <BoekingenOverzicht
               categories={categories || []}
@@ -381,6 +386,11 @@ export default function FinancienPage() {
 
 
           <TabsContent value="controle">
+            {isAdmin && (
+              <div className="mb-4">
+                <KoppelOverzicht year={year} isAdmin={!!isAdmin} />
+              </div>
+            )}
             <ControleSyncTab
               year={year}
               autoSync={{
