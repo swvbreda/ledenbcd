@@ -23,3 +23,12 @@ export function receiptStatus(amount: number, processed: number, isDecl: boolean
   if (a > 0 && p + 0.005 >= a) return "paid";
   return isDecl ? "open" : "unprocessed";
 }
+
+/**
+ * Records uit een vastgelegde Informer-bronsnapshot (UI), niet uit de API.
+ * Herkenbaar aan een niet-numeriek id met bronprefix, bijv. 'salesbook:SLUG'.
+ * De API-sync mag ze niet verwijderen, overschrijven of per id opvragen.
+ */
+export function isSourceSnapshotId(informerId: string): boolean {
+  return /^[a-z_]+:/i.test(String(informerId ?? ""));
+}

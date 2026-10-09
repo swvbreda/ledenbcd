@@ -24,7 +24,7 @@ import {
   selectDeclarationLedger,
 } from "./declarationSync.ts";
 import { planCreditorImport } from "./creditorImport.ts";
-import { isProvenDeleted, receiptStatus } from "./ledgerImport.ts";
+import { isProvenDeleted, isSourceSnapshotId, receiptStatus } from "./ledgerImport.ts";
 import { paidPreflight, runPaidBatch, closedYearsFromErrors, PAID_BATCH_MAX } from "./paidPreflight.ts";
 
 /** Aantal declaraties (hele tabel) per bankregel-id; >1 betekent gedeeld bankbewijs. */
@@ -1089,9 +1089,11 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
         .eq("doc_type", src.doc_type)
         .eq("year", year)
         .is("deleted_at", null);
+      // Bronsnapshots (bijv. 'salesbook:…' uit de Informer-UI) komen niet uit deze API
+      // en worden hier nooit als verwijderd gemarkeerd of per id opgevraagd.
       const gone = (existing ?? [])
         .map((r: any) => String(r.informer_id))
-        .filter((id: string) => !seen.has(id));
+        .filter((id: string) => !isSourceSnapshotId(id) && !seen.has(id));
       // Alleen aantoonbaar verwijderd: per document bij Informer nagevraagd.
       // Ontbreken in het beperkte lijstvenster is géén bewijs van verwijdering.
       if (gone.length > 0 && errors.length === 0) {
