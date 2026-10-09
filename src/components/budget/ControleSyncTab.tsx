@@ -56,7 +56,7 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
     expenses: parseAmount(expensesInput),
     revenue: parseAmount(revenueInput),
   });
-  const { data: syncState } = useInformerSyncState();
+  const { data: syncState, error: syncStateError } = useInformerSyncState();
 
   // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
   const lastSync = autoSync?.lastSyncAt ?? null;
@@ -83,8 +83,18 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
   const expensesOk = compare(expensesInput, totals.totalExpenses);
   const revenueOk = compare(revenueInput, totals.totalRevenue);
 
+  const loadError = (totals.error as any)?.message ?? (syncStateError as any)?.message ?? null;
+
   return (
     <div className="space-y-4">
+      {loadError && (
+        <div role="alert" className="border border-brand-red rounded-lg bg-card p-3 text-sm text-brand-red inline-flex items-start gap-2 w-full">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>
+            Administratie kon niet worden geladen: {loadError}. De getoonde nullen zijn dus géén echte stand.
+          </span>
+        </div>
+      )}
       <div className="border border-border rounded-lg bg-card p-4">
         <div className="mb-3">
           <h3 className="text-sm font-semibold">Synchronisatie boekjaar {year}</h3>

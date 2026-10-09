@@ -190,11 +190,20 @@ export function useInformerSyncState() {
   return useQuery({
     queryKey: ["informer-sync-state"],
     queryFn: async () => {
-      const [{ data: state }, { data: log }] = await Promise.all([
+      // Jaarsync-regels apart ophalen: anders verdringen frequente bank-/overige
+      // logregels ze uit het venster en lijkt het alsof er nooit gesynchroniseerd is.
+      const [stateRes, recentRes, yearRes] = await Promise.all([
         client.from("informer_sync_state").select("*").eq("id", 1).maybeSingle(),
         client.from("informer_sync_log").select("*").order("run_at", { ascending: false }).limit(20),
+        client.from("informer_sync_log").select("*").eq("action", "sync_year").order("run_at", { ascending: false }).limit(20),
       ]);
-      return { state: state ?? null, log: log ?? [] };
+      // Queryfouten nooit als "lege administratie" tonen.
+      const err = stateRes.error ?? recentRes.error ?? yearRes.error;
+      if (err) throw err;
+      const byId = new Map<string, any>();
+      for (const row of [...(recentRes.data ?? []), ...(yearRes.data ?? [])]) byId.set(String(row.id ?? row.run_at), row);
+      const log = Array.from(byId.values()).sort((a, b) => String(b.run_at).localeCompare(String(a.run_at)));
+      return { state: stateRes.data ?? null, log };
     },
   });
 }
@@ -287,7 +296,9 @@ export function useLedgerMutations(year: number) {
 export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number }) {
   const staleMs = options?.staleMs ?? YEAR_SYNC_STALE_MS;
   const intervalMs = options?.intervalMs ?? 60_000;
-  const { data: syncState, isLoading: logLoading } = useInformerSyncState();
+  const { data: syncState, isLoading: logLoadingRaw, error: logError } = useInformerSyncState();
+  // Bij een leesfout weten we niet wanneer de laatste sync was: niets starten.
+  const logLoading = logLoadingRaw || !!logError;
   const { syncYear } = useLedgerMutations(year);
   const [error, setError] = useState<string | null>(null);
   const attemptRef = useRef<Record<number, number>>({});

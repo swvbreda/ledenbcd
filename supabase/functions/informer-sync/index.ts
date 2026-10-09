@@ -24,6 +24,7 @@ import {
   selectDeclarationLedger,
 } from "./declarationSync.ts";
 import { planCreditorImport } from "./creditorImport.ts";
+import { isProvenDeleted, receiptStatus } from "./ledgerImport.ts";
 import { paidPreflight, runPaidBatch, closedYearsFromErrors, PAID_BATCH_MAX } from "./paidPreflight.ts";
 
 /** Aantal declaraties (hele tabel) per bankregel-id; >1 betekent gedeeld bankbewijs. */
@@ -961,6 +962,8 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
     let upserted = 0;
     let skippedOtherYear = 0;
     let removed = 0;
+    const unverifiedMissing: string[] = [];
+    const notInListWindow: string[] = [];
     const perType: Record<string, number> = {};
     const errors: string[] = [];
 
@@ -1027,13 +1030,16 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
         const informerId = String(inv?.id ?? inv?.invoice_id ?? "").trim();
         if (!informerId) continue;
         // Alleen bonnetjes van declaraties (canoniek DECL-kenmerk) tellen; overige bonnetjes blijven buiten de begroting.
-        if (src.doc_type === "receipt" && declTokens(inv?.description).length === 0) continue;
+        // DECL-bonnetjes én overige zakelijke bonnetjes; onverwerkte overige bonnetjes → 'unprocessed' (geen kosten).
+        const isDeclReceipt = src.doc_type === "receipt" && declTokens(inv?.description).length > 0;
         const entryDate = entryDateOf(inv);
         const invYear = entryDate ? Number(entryDate.slice(0, 4)) : detectYear(inv);
         if (invYear !== year) { skippedOtherYear++; continue; }
         const amountIncl = invoiceAmount(inv);
         const paid = invoicePaidAmount(inv);
-        const status = normalizeLedgerStatus(inv, amountIncl);
+        const status = src.doc_type === "receipt" && !isDeclReceipt
+          ? receiptStatus(amountIncl, Number(inv?.paid ?? 0), false)
+          : normalizeLedgerStatus(inv, amountIncl);
         const open = status === "paid" ? 0 : Math.max(0, amountIncl - paid);
         seen.add(informerId);
         rows.push({
@@ -1086,14 +1092,28 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
       const gone = (existing ?? [])
         .map((r: any) => String(r.informer_id))
         .filter((id: string) => !seen.has(id));
+      // Alleen aantoonbaar verwijderd: per document bij Informer nagevraagd.
+      // Ontbreken in het beperkte lijstvenster is géén bewijs van verwijdering.
       if (gone.length > 0 && errors.length === 0) {
-        const { error } = await supabase
-          .from("informer_ledger_entries")
-          .update({ deleted_at: new Date().toISOString() })
-          .eq("doc_type", src.doc_type)
-          .eq("year", year)
-          .in("informer_id", gone);
-        if (!error) removed += gone.length;
+        const proven: string[] = [];
+        for (const id of gone.slice(0, 50)) {
+          const call = await informerCall(`${src.path}/${encodeURIComponent(id)}`, {}, api_calls);
+          if (call.error) { unverifiedMissing.push(`${src.doc_type}:${id}`); continue; }
+          if (isProvenDeleted(call.status, call.response_body)) proven.push(id);
+          else if (call.ok && !hasInformerError(call.response_body)) notInListWindow.push(`${src.doc_type}:${id}`);
+          else unverifiedMissing.push(`${src.doc_type}:${id}`);
+        }
+        for (const id of gone.slice(50)) unverifiedMissing.push(`${src.doc_type}:${id}`);
+        if (proven.length > 0) {
+          const { error } = await supabase
+            .from("informer_ledger_entries")
+            .update({ deleted_at: new Date().toISOString() })
+            .eq("doc_type", src.doc_type)
+            .eq("year", year)
+            .in("informer_id", proven);
+          if (error) errors.push(`${src.doc_type} verwijderd markeren: ${error.message}`);
+          else removed += proven.length;
+        }
       }
     }
 
@@ -1107,7 +1127,7 @@ async function syncYear(supabase: any, year: number): Promise<ActionResult> {
       success: errors.length === 0,
       items_processed: upserted,
       error_message: errors.join(" | ") || undefined,
-      details: { year, per_type: perType, removed, skipped_other_year: skippedOtherYear, fetched_by_id: fetchedById },
+      details: { year, per_type: perType, removed, not_in_list_window: notInListWindow, unverified_missing: unverifiedMissing, skipped_other_year: skippedOtherYear, fetched_by_id: fetchedById, bank_journal_lines: "niet beschikbaar via Informer-API" },
       api_calls,
     };
   } catch (e) {
