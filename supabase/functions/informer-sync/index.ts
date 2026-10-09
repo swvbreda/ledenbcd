@@ -1665,7 +1665,9 @@ function supabaseDeclarationStore(supabase: any): DeclarationStore {
     },
     // Foutdetails gaan uitsluitend naar de afgeschermde pogingentabel (alleen admin/penningmeester leesbaar).
     async markSent(id, documentId, docType) {
-      await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_doc_type: docType, informer_synced_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase.from("internal_declarations").update({ informer_status: "sent", informer_external_id: documentId, informer_doc_type: docType, informer_synced_at: new Date().toISOString() }).eq("id", id);
+      // Niet stil slikken: anders blijft de declaratie op 'sending' hangen terwijl het document al bestaat.
+      if (error) throw new Error(`markSent: ${error.message}`);
       await supabase.from("internal_declaration_sync_attempts").insert({ declaration_id: id, status: "sent", sanitized_error: null });
     },
     async markError(id, message) {
