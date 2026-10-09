@@ -72,7 +72,24 @@ export function useAdministratieBijwerken(year: number, syncYear: () => Promise<
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      await syncYear();
+      const startedAt = Date.now();
+      try {
+        await syncYear();
+      } catch (e: any) {
+        // De sync kan server-side slagen terwijl de browser een time-out/netwerkfout krijgt
+        // (een volledige jaarsync duurt ~2 min). Dan in de log controleren of er ná de
+        // start een geslaagde sync voor dit jaar is; zo niet: duidelijk stoppen.
+        const { syncSucceededSince } = await import("@/lib/ledgerSync");
+        let ok = null;
+        for (let i = 0; i < 18 && !ok; i++) {
+          const { data, error } = await client.from("informer_sync_log").select("action, success, run_at, items_processed, details")
+            .eq("action", "sync_year").order("run_at", { ascending: false }).limit(5);
+          if (error) throw new Error(`Synchronisatie onduidelijk en log niet leesbaar: ${error.message}`);
+          ok = syncSucceededSince(data ?? [], year, startedAt);
+          if (!ok) await new Promise((r) => setTimeout(r, 10_000));
+        }
+        if (!ok) throw new Error(`Synchronisatie met Informer mislukt of niet bevestigd (${e?.message ?? e}). Er is niets gekoppeld.`);
+      }
       // Plan opnieuw uit verse gegevens NA de sync; nooit het eerder getoonde plan schrijven.
       const fresh = await loadAdministratiePlan(year, memberNames);
       const { data: auth } = await supabase.auth.getUser();

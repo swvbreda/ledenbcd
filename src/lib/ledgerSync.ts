@@ -65,3 +65,14 @@ export function shouldStartYearSync(input: ShouldSyncInput): boolean {
   if (!Number.isFinite(ts)) return true;
   return input.now - ts >= staleMs;
 }
+
+/**
+ * Na een time-out/netwerkfout van de sync-aanroep: telt de sync toch als geslaagd
+ * als er voor precies dit jaar een geslaagde sync_year-log is die ná de start
+ * (met 5 s klokmarge) is weggeschreven.
+ */
+export function syncSucceededSince(log: SyncLogRow[], year: number, startedAtMs: number): SyncLogRow | null {
+  const last = lastSuccessfulYearSync(log, year);
+  if (!last?.run_at) return null;
+  return new Date(last.run_at).getTime() >= startedAtMs - 5000 ? last : null;
+}
