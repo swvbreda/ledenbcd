@@ -87,6 +87,11 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
 
   return (
     <div className="space-y-4">
+      {totals.isLoading && !loadError && (
+        <div className="border border-border rounded-lg bg-card p-3 text-sm text-muted-foreground">
+          Administratie laden… (nog geen cijfers; nullen hieronder zijn nog niet de echte stand)
+        </div>
+      )}
       {loadError && (
         <div role="alert" className="border border-brand-red rounded-lg bg-card p-3 text-sm text-brand-red inline-flex items-start gap-2 w-full">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />

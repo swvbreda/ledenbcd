@@ -73,9 +73,23 @@ export function countableEntries(entries: LedgerEntry[]): LedgerEntry[] {
   return entries.filter((e) => countsInTotals(e) && !isExcludedDossier(e.dossier));
 }
 
-/** Meetellende inkoopfacturen — de enige bron voor het uitgaventotaal. */
+/**
+ * Meetellende inkoopfacturen en bonnetjes — de enige bron voor het uitgaventotaal.
+ * Heeft een bonnetje hetzelfde bronkenmerk (bijv. DECL-…) als een inkoopfactuur,
+ * dan telt alleen de inkoopfactuur: zo ontstaan geen dubbele kosten.
+ */
 export function expenseEntries(entries: LedgerEntry[]): LedgerEntry[] {
-  return countableEntries(entries).filter((e) => isExpenseDocType(e.doc_type));
+  const list = countableEntries(entries).filter((e) => isExpenseDocType(e.doc_type));
+  const purchaseRefs = new Set(
+    list.filter((e) => e.doc_type === "purchase_invoice" && e.invoice_number).map((e) => String(e.invoice_number).trim().toUpperCase()),
+  );
+  return list.filter((e) => !(e.doc_type === "receipt" && e.invoice_number && purchaseRefs.has(String(e.invoice_number).trim().toUpperCase())));
+}
+
+/** Bonnetjes die een inkoopfactuur met hetzelfde bronkenmerk dupliceren (tellen niet mee). */
+export function duplicateReceipts(entries: LedgerEntry[]): LedgerEntry[] {
+  const counted = new Set(expenseEntries(entries).map((e) => e.id));
+  return countableEntries(entries).filter((e) => e.doc_type === "receipt" && !counted.has(e.id));
 }
 
 /** Meetellende verkoopfacturen — de enige bron voor het opbrengstentotaal. */
@@ -162,8 +176,7 @@ export function totalsByDossier(
     totals[key] = (totals[key] ?? 0) + amount;
   };
 
-  for (const entry of countableEntries(entries)) {
-    if (!isExpenseDocType(entry.doc_type)) continue;
+  for (const entry of expenseEntries(entries)) {
     const key = `${entry.doc_type}:${entry.informer_id}`;
     const entrySplits = splitsByEntry.get(key);
     if (entrySplits && entrySplits.length > 0) {
