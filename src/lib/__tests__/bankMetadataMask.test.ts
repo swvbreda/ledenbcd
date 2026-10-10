@@ -36,4 +36,10 @@ describe("los fragment vs volwaardig nummer", () => {
     expect(containsRef("F-023 2026023", "F023")).toBe(true);
   });
 
+  it("kort nummer als achterdeel van gesplitst nummer matcht niet", () => {
+    expect(containsRef("Contributie 202 6002", "6002")).toBe(false);
+    expect(containsRef("202 6002", "6002")).toBe(false);
+    expect(containsRef("202 6002", "2026002")).toBe(true);
+    expect(containsRef("Betaling 2026/023AB", "2026023AB")).toBe(true);
+  });
 });

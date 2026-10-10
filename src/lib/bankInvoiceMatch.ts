@@ -103,8 +103,9 @@ export function containsRef(text: string, ref: string): boolean {
   if (!re) {
     // Numeriek begin/eind: geen los fragment van 1-3 cijfers achter/voor één
     // scheidingsteken, zodat '202607' niet als prefix van '202607 1' (= 2026071)
-    // matcht; twee volwaardige losse nummers ('F-023 2026023') blijven werken.
-    const pre = /^[0-9]/.test(ref) ? "(?<![A-Z0-9])(?<!(?<![A-Z0-9 \\-./])[0-9]{1,3}[ \\-./])" : "(?<![A-Z0-9])";
+    // matcht, en '6002' niet als achterdeel van '202 6002'. Een fragment dat zelf
+    // aan een kenmerk vastzit ('F-023 2026023') blokkeert niet.
+    const pre = /^[0-9]/.test(ref) ? "(?<![A-Z0-9])(?<!(?<![A-Z0-9])(?<![A-Z0-9][\\-./])[0-9]{1,3}[ \\-./])" : "(?<![A-Z0-9])";
     const post = /[0-9]$/.test(ref) ? "(?![A-Z0-9])(?![ \\-./][0-9]{1,3}(?![A-Z0-9]))" : "(?![A-Z0-9])";
     re = new RegExp(`${pre}${ref.split("").join("[ \\-./]?")}${post}`);
     refRegexCache.set(ref, re);
