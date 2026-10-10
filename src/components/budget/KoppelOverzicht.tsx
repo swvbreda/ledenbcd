@@ -66,6 +66,25 @@ export default function KoppelOverzicht({ year, isAdmin, memberNames }: { year: 
         Bronbeperking: de Informer-API geeft alleen de recentste verkoopfacturen; {p.snapshotSales} verkoopboekposten komen uit een vastgelegde Informer-bronsnapshot{p.snapshotAt ? ` van ${new Date(p.snapshotAt).toLocaleString("nl-NL")}` : ""} (worden niet automatisch bijgewerkt; een nieuwe stand vereist een nieuwe snapshot). Totaal {p.salesInList} verkoopdocumenten en per document alleen bij een bekend Informer-nummer. {p.contributionsWithNumber} contributies hebben een factuurnummer; facturen (zoals januari) waarvan het Informer-nummer onbekend is, blijven ontbrekend tot ze in Informer zichtbaar zijn. Bankjournaalposten/aflettering levert de Informer-API niet.
       </p>
 
+      {count("match") > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer font-medium">Voorgestelde bankkoppelingen ({count("match")})</summary>
+          <ul className="mt-2 space-y-1">
+            {p.bank.filter((r) => r.outcome === "match").map((r) => (
+              <li key={r.tx.id} className="flex flex-wrap gap-2">
+                <span className="tabular-nums">{String(r.tx.executed_at ?? "").slice(0, 10)}</span>
+                <CurrencyText value={r.tx.amount} />
+                <span>{r.invoice!.doc_type === "sales_invoice" ? "verkoop" : r.invoice!.doc_type === "receipt" ? "bon" : "inkoop"} {r.invoice!.informer_id} ({r.invoice!.invoice_number ?? "geen nummer"})</span>
+                <span className="text-muted-foreground">
+                  {r.viaAliases?.length
+                    ? `via geverifieerd contributienummer ${r.viaAliases.map((a) => a.ref).join(", ")}`
+                    : `via factuurnummer ${(r.matchedRefs ?? []).join(", ")}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {exceptions.length > 0 && (
         <details className="text-xs">
           <summary className="cursor-pointer font-medium">Bankuitzonderingen ({exceptions.length}) — handmatig beoordelen</summary>
