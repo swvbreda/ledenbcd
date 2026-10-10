@@ -73,6 +73,24 @@ export function textTokens(text: string): Set<string> {
   return out;
 }
 
+/**
+ * Maskeert herkenbare bankmetadata vóór kenmerkmatching: datum/tijd van
+ * pinbetalingen (21.09.26/13:25, 21.09.2026 13:25), losse datums/tijden, IBAN,
+ * BIC en PAS/NR/TERM-codes. Masker '|' is geen toegestaan scheidingsteken, dus
+ * tekens aan weerszijden kunnen nooit tot één kenmerk samensmelten.
+ */
+export function maskBankMetadata(text: string | null | undefined): string {
+  return String(text ?? "")
+    .toUpperCase()
+    .replace(/(?<![A-Z0-9])\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}(?:[ /T]+\d{1,2}[:.]\d{2}(?:[:.]\d{2})?)?(?![A-Z0-9])/g, "|")
+    .replace(/(?<![A-Z0-9])\d{1,2}:\d{2}(?::\d{2})?(?![A-Z0-9])/g, "|")
+    .replace(/(?<![A-Z0-9])[A-Z]{2}\d{2}[A-Z]{4}\d{7,}(?![A-Z0-9])/g, "|")
+    .replace(/\bBIC\s*[:.]?\s*[A-Z0-9]{8,11}(?![A-Z0-9])/g, "|")
+    .replace(/(?<![A-Z0-9])PAS\d{2,4}(?![A-Z0-9])/g, "|")
+    // Terminalcodes (NR:C487Z9) bevatten letters én cijfers; 'Factuur nr:202607' blijft.
+    .replace(/\b(?:NR|TERM|TERMINAL)\s*[:.]\s*(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+/g, "|");
+}
+
 const refRegexCache = new Map<string, RegExp>();
 /**
  * Nummerbegrensd zoeken in de originele omschrijving. Tussen tekens van het kenmerk
@@ -83,10 +101,15 @@ export function containsRef(text: string, ref: string): boolean {
   if (ref.length < MIN_REF_LEN || !/^[A-Z0-9]+$/.test(ref)) return false;
   let re = refRegexCache.get(ref);
   if (!re) {
-    re = new RegExp(`(?<![A-Z0-9])${ref.split("").join("[ \\-./]?")}(?![A-Z0-9])`);
+    // Numeriek begin/eind: geen los fragment van 1-3 cijfers achter/voor één
+    // scheidingsteken, zodat '202607' niet als prefix van '202607 1' (= 2026071)
+    // matcht; twee volwaardige losse nummers ('F-023 2026023') blijven werken.
+    const pre = /^[0-9]/.test(ref) ? "(?<![A-Z0-9])(?<!(?<![A-Z0-9 \\-./])[0-9]{1,3}[ \\-./])" : "(?<![A-Z0-9])";
+    const post = /[0-9]$/.test(ref) ? "(?![A-Z0-9])(?![ \\-./][0-9]{1,3}(?![A-Z0-9]))" : "(?![A-Z0-9])";
+    re = new RegExp(`${pre}${ref.split("").join("[ \\-./]?")}${post}`);
     refRegexCache.set(ref, re);
   }
-  return re.test(String(text ?? "").toUpperCase());
+  return re.test(maskBankMetadata(text));
 }
 
 export interface AliasContribution {
