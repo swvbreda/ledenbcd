@@ -7,6 +7,19 @@ type AuthAccessOptions = {
   retryDelayMs?: number;
 };
 
+/**
+ * Tijdelijke backendfout (5xx/time-out/netwerk). Dan NIET de sessie vernieuwen:
+ * een /token-aanroep die server-side doorloopt maar client-side time-out geeft,
+ * trekt het oude refresh token in zonder dat de client het nieuwe krijgt.
+ */
+export function isTransientAuthError(error: unknown): boolean {
+  const e = error as { status?: number; name?: string; message?: string; code?: string } | null;
+  if (!e) return false;
+  if (typeof e.status === "number" && (e.status === 0 || e.status >= 500)) return true;
+  if (e.name === "AuthRetryableFetchError" || e.name === "AuthTimeoutError") return true;
+  return /time-?out|timed out|deadline|failed to fetch|network|load failed|reageerde niet/i.test(String(e.message ?? ""));
+}
+
 const wait = (delayMs: number) =>
   delayMs > 0 ? new Promise<void>((resolve) => window.setTimeout(resolve, delayMs)) : Promise.resolve();
 
@@ -36,10 +49,12 @@ export async function fetchRolesWithSessionRecovery({
     } catch (error) {
       lastError = error;
       if (attempt >= attempts - 1) break;
-      try {
-        await refreshSession();
-      } catch (refreshError) {
-        lastError = refreshError;
+      if (!isTransientAuthError(error)) {
+        try {
+          await refreshSession();
+        } catch (refreshError) {
+          lastError = refreshError;
+        }
       }
       await wait(retryDelayMs * (attempt + 1));
     }
