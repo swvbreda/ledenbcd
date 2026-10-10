@@ -58,18 +58,6 @@ export const useAuth = () => useContext(AuthContext);
 const EMAIL_MFA_KEY_PREFIX = "emfa_";
 const PASSKEY_MFA_PENDING_KEY = "passkey_mfa_pending";
 
-function checkEmailMfaFlag(userId: string): boolean {
-  try {
-    const stored = localStorage.getItem(`${EMAIL_MFA_KEY_PREFIX}${userId}`);
-    if (!stored) return false;
-    const timestamp = parseInt(stored, 10);
-    // Valid for 30 days — keeps leden ingelogd zonder telkens opnieuw MFA
-    return Date.now() - timestamp < 30 * 24 * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
 function checkPendingPasskeyMfaFlag(): boolean {
   try {
     const stored = localStorage.getItem(PASSKEY_MFA_PENDING_KEY);

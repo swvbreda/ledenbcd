@@ -57,7 +57,7 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
     expenses: parseAmount(expensesInput),
     revenue: parseAmount(revenueInput),
   });
-  const { data: syncState, error: syncStateError } = useInformerSyncState();
+  const { data: syncState, error: syncStateError, isPending: syncStatePending } = useInformerSyncState();
 
   // Uitsluitend de jaar-specifieke waarden uit de automatische jaarsync.
   // Zelfde jaarselectie (details.year) als de automatische sync, ook als die prop leeg is.
@@ -111,7 +111,11 @@ export default function ControleSyncTab({ year, autoSync }: Props) {
               ? "Volledig boekjaar wordt automatisch bijgewerkt…"
               : lastSync
                 ? `Laatste volledige jaarsync ${formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nl })} (${new Date(lastSync).toLocaleString("nl-NL")})`
-                : "Nog geen volledige jaarsync uitgevoerd"}
+                : syncStatePending && !syncStateError
+                  ? "Synchronisatiestatus wordt geladen…"
+                  : syncStateError
+                    ? "Synchronisatiestatus kon niet worden gelezen"
+                    : "Nog geen volledige jaarsync uitgevoerd"}
             {!autoSync?.isSyncing && itemsProcessed != null
               ? ` — ${itemsProcessed} regels verwerkt`
               : ""}
