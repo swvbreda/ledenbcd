@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
-import { assertSyncSessionMatches, syncStateEnabled, syncStateQueryKey, SYNC_STATE_KEY } from "@/lib/syncStateScope";
+import { loadSyncState, SYNC_LOG_COLUMNS, syncStateEnabled, syncStateQueryKey, SYNC_STATE_KEY } from "@/lib/syncStateScope";
 import {
   shouldStartYearSync,
   lastSuccessfulYearSync,
@@ -195,26 +195,19 @@ export function useInformerSyncState() {
     // Per gebruiker gescoped en pas na auth+rol: RLS geeft anders stil [].
     queryKey: syncStateQueryKey(userId),
     enabled: syncStateEnabled({ loading, userId, isAdmin, isBoard }),
-    retry: 3,
-    queryFn: async () => {
-      // Alleen lezen met het bearer token van precies deze gebruiker (anders RLS → stil []).
-      const { data: sessionData } = await supabase.auth.getSession();
-      assertSyncSessionMatches(sessionData.session?.user?.id, userId);
-      // Jaarsync-regels apart ophalen: anders verdringen frequente bank-/overige
-      // logregels ze uit het venster en lijkt het alsof er nooit gesynchroniseerd is.
-      const [stateRes, recentRes, yearRes] = await Promise.all([
-        client.from("informer_sync_state").select("*").eq("id", 1).maybeSingle(),
-        client.from("informer_sync_log").select("*").order("run_at", { ascending: false }).limit(20),
-        client.from("informer_sync_log").select("*").eq("action", "sync_year").order("run_at", { ascending: false }).limit(20),
-      ]);
-      // Queryfouten nooit als "lege administratie" tonen.
-      const err = stateRes.error ?? recentRes.error ?? yearRes.error;
-      if (err) throw err;
-      const byId = new Map<string, any>();
-      for (const row of [...(recentRes.data ?? []), ...(yearRes.data ?? [])]) byId.set(String(row.id ?? row.run_at), row);
-      const log = Array.from(byId.values()).sort((a, b) => String(b.run_at).localeCompare(String(a.run_at)));
-      return { state: stateRes.data ?? null, log };
-    },
+    retry: 2,
+    retryDelay: (n) => Math.min(2000 * 2 ** n, 8000),
+    queryFn: () =>
+      loadSyncState(
+        {
+          getSessionUserId: () => supabase.auth.getSession().then((r) => r.data.session?.user?.id),
+          state: () => client.from("informer_sync_state").select("*").eq("id", 1).maybeSingle(),
+          recent: () => client.from("informer_sync_log").select(SYNC_LOG_COLUMNS).order("run_at", { ascending: false }).limit(20),
+          year: () =>
+            client.from("informer_sync_log").select(SYNC_LOG_COLUMNS).eq("action", "sync_year").order("run_at", { ascending: false }).limit(20),
+        },
+        userId,
+      ),
   });
 }
 
