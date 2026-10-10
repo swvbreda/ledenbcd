@@ -1,11 +1,14 @@
 import { Navigate, useLocation } from "@/lib/router-compat";
 import { useAuth } from "@/hooks/useAuth";
+import AuthUnavailable from "@/components/AuthUnavailable";
 import { savePostLoginPath } from "@/lib/postLoginPath";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, isExtern, isAdmin, linkedMemberId } = useAuth();
+  const { authError, retryAuth, user, loading, isExtern, isAdmin, linkedMemberId } = useAuth();
   const location = useLocation();
+
+  if (authError) return <AuthUnavailable message={authError} onRetry={retryAuth} />;
 
   if (loading) {
     return (

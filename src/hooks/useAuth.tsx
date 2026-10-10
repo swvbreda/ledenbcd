@@ -5,7 +5,7 @@ import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunc
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery } from "@/lib/authAccess";
+import { fetchRolesWithSessionRecovery, runAuthBootstrap, withAuthTimeout } from "@/lib/authAccess";
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +22,9 @@ interface AuthContextType {
   /** Mark email-based MFA as verified for this session */
   markEmailMfaVerified: () => void;
   signOut: () => Promise<void>;
+  /** Set when session/rights could not be verified (timeout or backend error). Access is denied while set. */
+  authError: string | null;
+  retryAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,6 +41,8 @@ const AuthContext = createContext<AuthContextType>({
   mfaStatus: "loading",
   markEmailMfaVerified: () => {},
   signOut: async () => {},
+  authError: null,
+  retryAuth: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -91,6 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
   const accessCheckId = useRef(0);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
 
   const markEmailMfaVerified = useCallback(() => {
     if (user?.id) {
@@ -192,13 +199,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // uit te voeren. Dit voorkomt dat een native WebView met een nog niet
         // hersteld bearer token tijdelijk als gebruiker zonder rechten start.
         window.setTimeout(() => {
-          Promise.all([
+          withAuthTimeout(Promise.all([
             checkRoleAndProfile(session.user.id),
             ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
-          ])
+          ]), 20_000, "Het laden van gebruikersrechten")
+            .then(() => { if (mounted) setAuthError(null); })
             .catch((error) => {
               console.error("Gebruikersrechten laden mislukt", error);
-              toast.error("Rechten konden niet worden geladen. Probeer de app opnieuw te openen.");
+              if (mounted) {
+                accessCheckId.current += 1;
+                setIsAdmin(false);
+                setIsExtern(false);
+                setIsBoard(false);
+                setLinkedMemberIds([]);
+                setAuthError(error instanceof Error ? error.message : "Rechten konden niet worden geladen");
+              }
             })
             .finally(() => {
               if (mounted) setLoading(false);
@@ -216,29 +231,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      const reviewer = updateReviewerFlag(session?.user ?? null);
-      if (session?.user) {
-        promotePendingPasskeyMfaFlag(session.user.id);
-        const emailMfaOk = reviewer || checkEmailMfaFlag(session.user.id);
-        if (emailMfaOk) {
-          setMfaStatus("verified");
-        }
-        try {
+    void (async () => {
+      let sessionUser: User | null = null;
+      const result = await runAuthBootstrap({
+        getSessionUserId: async () => {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          if (!mounted) return null;
+          setSession(session);
+          setUser(session?.user ?? null);
+          sessionUser = session?.user ?? null;
+          return session?.user?.id ?? null;
+        },
+        loadAccess: async (userId) => {
+          const reviewer = updateReviewerFlag(sessionUser);
+          promotePendingPasskeyMfaFlag(userId);
+          const emailMfaOk = reviewer || checkEmailMfaFlag(userId);
+          if (emailMfaOk) setMfaStatus("verified");
           await Promise.all([
-            checkRoleAndProfile(session.user.id),
-            ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
+            checkRoleAndProfile(userId),
+            ...(emailMfaOk ? [] : [checkMfaStatus(userId)]),
           ]);
-        } catch (error) {
-          console.error("Gebruikersrechten laden mislukt", error);
-          toast.error("Rechten konden niet worden geladen. Probeer de app opnieuw te openen.");
-        }
+        },
+      });
+      if (!mounted) return;
+      if (result.status === "error") {
+        console.error("Auth bootstrap mislukt", result.message);
+        // Geen rechten toekennen zolang niet geverifieerd.
+        accessCheckId.current += 1;
+        setIsAdmin(false);
+        setIsExtern(false);
+        setIsBoard(false);
+        setLinkedMemberIds([]);
+        setAuthError(result.message);
+      } else {
+        setAuthError(null);
       }
-      if (mounted) setLoading(false);
-    });
+      setLoading(false);
+    })();
 
     // "Onthoud mij" — clear session when browser closes if disabled
     const handleBeforeUnload = () => {
@@ -333,6 +363,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       window.removeEventListener(SESSION_EXPIRED_EVENT_NAME, handleSessionExpired);
       void appStateHandle?.remove();
     };
+  }, [bootstrapAttempt]);
+
+  const retryAuth = useCallback(() => {
+    setAuthError(null);
+    setLoading(true);
+    setBootstrapAttempt((n) => n + 1);
   }, []);
 
   const signOut = async () => {
@@ -347,7 +383,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isInhuur = !isAdmin && !isExtern && !!user && linkedMemberIds.length === 0;
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, isBoard, isReviewer, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isExtern, isInhuur, isBoard, isReviewer, linkedMemberId, linkedMemberIds, mfaStatus, markEmailMfaVerified, signOut, authError, retryAuth }}>
       {children}
     </AuthContext.Provider>
   );

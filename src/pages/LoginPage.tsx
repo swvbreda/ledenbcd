@@ -3,6 +3,7 @@ import { Navigate } from "@/lib/router-compat";
 import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import AuthUnavailable from "@/components/AuthUnavailable";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
 import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace, HelpCircle } from "lucide-react";
@@ -13,7 +14,7 @@ import { requestMemberLoginLink } from "@/lib/memberLogin.functions";
 import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
-  const { user, loading: authLoading, isExtern, isAdmin, linkedMemberId, mfaStatus } = useAuth();
+  const { authError, retryAuth, user, loading: authLoading, isExtern, isAdmin, linkedMemberId, mfaStatus } = useAuth();
   const biometric = useBiometricAuth();
   const passkeys = usePasskeys();
   const [email, setEmail] = useState("");
@@ -56,6 +57,8 @@ const LoginPage = () => {
       void maybeRedirectAfterLogin();
     }
   }, [user, mfaStatus]);
+
+  if (authError) return <AuthUnavailable message={authError} onRetry={retryAuth} />;
 
   if (authLoading) {
     return (

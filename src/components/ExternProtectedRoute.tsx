@@ -1,8 +1,11 @@
 import { Navigate } from "@/lib/router-compat";
 import { useAuth } from "@/hooks/useAuth";
+import AuthUnavailable from "@/components/AuthUnavailable";
 
 const ExternProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { authError, retryAuth, user, loading } = useAuth();
+
+  if (authError) return <AuthUnavailable message={authError} onRetry={retryAuth} />;
 
   if (loading) {
     return (
