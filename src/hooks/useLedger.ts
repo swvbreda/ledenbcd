@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
+import { useAuth } from "@/hooks/useAuth";
+import { syncStateEnabled, syncStateQueryKey, SYNC_STATE_KEY } from "@/lib/syncStateScope";
 import {
   shouldStartYearSync,
   lastSuccessfulYearSync,
@@ -187,8 +189,12 @@ export function useLedgerSplits(year: number) {
 }
 
 export function useInformerSyncState() {
+  const { user, loading, isAdmin, isBoard } = useAuth();
+  const userId = user?.id ?? null;
   return useQuery({
-    queryKey: ["informer-sync-state"],
+    // Per gebruiker gescoped en pas na auth+rol: RLS geeft anders stil [].
+    queryKey: syncStateQueryKey(userId),
+    enabled: syncStateEnabled({ loading, userId, isAdmin, isBoard }),
     queryFn: async () => {
       // Jaarsync-regels apart ophalen: anders verdringen frequente bank-/overige
       // logregels ze uit het venster en lijkt het alsof er nooit gesynchroniseerd is.
@@ -282,7 +288,7 @@ export function useLedgerMutations(year: number) {
     },
     onSuccess: () => {
       invalidate();
-      qc.invalidateQueries({ queryKey: ["informer-sync-state"] });
+      qc.invalidateQueries({ queryKey: [SYNC_STATE_KEY] });
     },
   });
 
@@ -296,7 +302,8 @@ export function useLedgerMutations(year: number) {
 export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number }) {
   const staleMs = options?.staleMs ?? YEAR_SYNC_STALE_MS;
   const intervalMs = options?.intervalMs ?? 60_000;
-  const { data: syncState, isLoading: logLoadingRaw, error: logError } = useInformerSyncState();
+  const { data: syncState, isPending: logLoadingRaw, error: logError } = useInformerSyncState();
+  // isPending blijft waar zolang de query (nog) uitgeschakeld is: geen sync op lege stand.
   // Bij een leesfout weten we niet wanneer de laatste sync was: niets starten.
   const logLoading = logLoadingRaw || !!logError;
   const { syncYear } = useLedgerMutations(year);
