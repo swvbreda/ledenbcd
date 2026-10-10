@@ -49,3 +49,49 @@ export async function fetchRolesWithSessionRecovery({
     ? lastError
     : new Error("Gebruikersrechten konden niet worden geladen");
 }
+
+export class AuthTimeoutError extends Error {
+  constructor(label: string, ms: number) {
+    super(`${label} reageerde niet binnen ${Math.round(ms / 1000)} seconden`);
+    this.name = "AuthTimeoutError";
+  }
+}
+
+/** Rejects when `promise` does not settle within `ms`, so auth bootstrap can never hang forever. */
+export function withAuthTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new AuthTimeoutError(label, ms)), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
+export type AuthBootstrapResult =
+  | { status: "ok"; userId: string | null }
+  | { status: "error"; message: string };
+
+/**
+ * Runs the auth bootstrap (session restore + access check) with a bounded wait.
+ * Any rejection or timeout yields an error result; access is never granted on error.
+ */
+export async function runAuthBootstrap({
+  getSessionUserId,
+  loadAccess,
+  sessionTimeoutMs = 15_000,
+  accessTimeoutMs = 20_000,
+}: {
+  getSessionUserId: () => Promise<string | null>;
+  loadAccess: (userId: string) => Promise<void>;
+  sessionTimeoutMs?: number;
+  accessTimeoutMs?: number;
+}): Promise<AuthBootstrapResult> {
+  try {
+    const userId = await withAuthTimeout(getSessionUserId(), sessionTimeoutMs, "De inlogservice");
+    if (userId) await withAuthTimeout(loadAccess(userId), accessTimeoutMs, "Het laden van gebruikersrechten");
+    return { status: "ok", userId };
+  } catch (error) {
+    return { status: "error", message: error instanceof Error ? error.message : "Onbekende fout bij inloggen" };
+  }
+}
