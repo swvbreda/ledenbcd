@@ -110,10 +110,10 @@ describe("rechten laden: single-flight en generatiebewaking", () => {
     void c.ensure("u1");
     void c.ensure("u2");
     a.resolve(ADMIN);
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(0);
     expect(last()).toEqual({ status: "loading", userId: "u2" });
     b.resolve(NONE);
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(0);
     expect(last()).toEqual({ status: "ready", userId: "u2", access: NONE });
 
     c.reset();
