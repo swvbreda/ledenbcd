@@ -85,7 +85,10 @@ export function maskBankMetadata(text: string | null | undefined): string {
     .replace(/(?<![A-Z0-9])\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}(?:[ /T]+\d{1,2}[:.]\d{2}(?:[:.]\d{2})?)?(?![A-Z0-9])/g, "|")
     .replace(/(?<![A-Z0-9])\d{1,2}:\d{2}(?::\d{2})?(?![A-Z0-9])/g, "|")
     .replace(/(?<![A-Z0-9])[A-Z]{2}\d{2}[A-Z]{4}\d{7,}(?![A-Z0-9])/g, "|")
-    .replace(/\b(?:BIC|PAS|NR|TERM|TERMINAL|AUTH|ID)\s*[:.]?\s*[A-Z0-9]+/g, "|");
+    .replace(/\bBIC\s*[:.]?\s*[A-Z0-9]{8,11}(?![A-Z0-9])/g, "|")
+    .replace(/(?<![A-Z0-9])PAS\d{2,4}(?![A-Z0-9])/g, "|")
+    // Terminalcodes (NR:C487Z9) bevatten letters én cijfers; 'Factuur nr:202607' blijft.
+    .replace(/\b(?:NR|TERM|TERMINAL)\s*[:.]\s*(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+/g, "|");
 }
 
 const refRegexCache = new Map<string, RegExp>();
