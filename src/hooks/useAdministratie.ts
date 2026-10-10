@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { matchBankToInvoices, writableBankLinks, type MatchResult } from "@/lib/bankInvoiceMatch";
+import { matchBankToInvoices, writableBankLinks, withContributionAliases, prewriteOk, type MatchResult } from "@/lib/bankInvoiceMatch";
 import { planMemberLinks, type MemberLinkResult } from "@/lib/memberInvoiceLink";
 import { isSourceSnapshotId } from "@/lib/ledgerSource";
 import { duplicateReceipts, expenseEntries } from "@/lib/ledger";
@@ -42,8 +42,11 @@ export async function loadAdministratiePlan(year: number, memberNames?: Map<numb
   const invoices = ledger.map((e: any) => ({ ...e, amount_incl: Number(e.amount_incl) || 0 }));
   const yearRows = invoices.filter((e: any) => e.year === year);
   const exp = expenseEntries(yearRows);
+  // Alle jaren contributies voor aliassen, zodat ook kandidaten buiten het jaar ambiguïteit tonen.
+  const allContribs = await all<any>((f, t) => client.from("member_contributions").select("id, year, amount, invoice_number, external_invoice_id").not("external_invoice_id", "is", null).order("id").range(f, t));
+  const withAliases = withContributionAliases(invoices, allContribs.map((c: any) => ({ ...c, amount: Number(c.amount) })));
   return {
-    bank: matchBankToInvoices(txs.map((t: any) => ({ ...t, amount: Number(t.amount) || 0 })), invoices, links, year),
+    bank: matchBankToInvoices(txs.map((t: any) => ({ ...t, amount: Number(t.amount) || 0 })), withAliases, links, year),
     members: planMemberLinks(yearRows.filter((e: any) => e.doc_type === "sales_invoice"), contribs, debtors, year, memberNames),
     expensesWithoutPost: exp.filter((e: any) => !e.line_item_id).length,
     expensesWithoutDossier: exp.filter((e: any) => !String(e.dossier ?? "").trim()).length,
@@ -95,14 +98,23 @@ export function useAdministratieBijwerken(year: number, syncYear: () => Promise<
       const { data: auth } = await supabase.auth.getUser();
       let bankLinked = 0, skipped = 0;
       for (const l of writableBankLinks(fresh.bank)) {
-        // Vlak vóór schrijven: factuur bestaat nog en is niet intussen (handmatig) gekoppeld.
-        const [{ data: inv, error: e1 }, { data: existing, error: e2 }] = await Promise.all([
+        const planned = fresh.bank.find((r) => r.tx.id === l.ponto_transaction_id)!;
+        const aliasIds = (planned.viaAliases ?? []).map((a) => a.contribution_id);
+        // Vlak vóór schrijven: factuur, huidige bankmutatie, aliascontributies en bestaande koppelingen opnieuw lezen.
+        const [{ data: inv, error: e1 }, { data: existing, error: e2 }, { data: curTx, error: e3 }, { data: aliasRows, error: e4 }] = await Promise.all([
           client.from("informer_ledger_entries").select("amount_incl, year, deleted_at").eq("doc_type", l.doc_type).eq("informer_id", l.informer_id).maybeSingle(),
           client.from("ledger_payment_links").select("id").or(`ponto_transaction_id.eq.${l.ponto_transaction_id},and(doc_type.eq.${l.doc_type},informer_id.eq."${l.informer_id}")`).limit(1),
+          client.from("ponto_transactions").select("amount, executed_at").eq("id", l.ponto_transaction_id).maybeSingle(),
+          aliasIds.length
+            ? client.from("member_contributions").select("id, year, amount, invoice_number, external_invoice_id").in("id", aliasIds)
+            : Promise.resolve({ data: [], error: null }),
         ]);
-        if (e1 || e2) throw e1 ?? e2;
-        const planned = fresh.bank.find((r) => r.tx.id === l.ponto_transaction_id)!;
-        if (!inv || inv.deleted_at || inv.year !== year || Math.abs(Number(inv.amount_incl) - Math.abs(planned.tx.amount)) >= 0.005 || (existing ?? []).length > 0) { skipped++; continue; }
+        if (e1 || e2 || e3 || e4) throw e1 ?? e2 ?? e3 ?? e4;
+        const ok = prewriteOk({
+          planned, year, invoice: inv, tx: curTx, existingLinks: (existing ?? []).length,
+          aliasContributions: aliasIds.map((id) => (aliasRows ?? []).find((c: any) => c.id === id) ?? null),
+        });
+        if (!ok) { skipped++; continue; }
         const { data, error } = await client.from("ledger_payment_links")
           .upsert({ ...l, matched_by: "auto", confidence: 1, created_by: auth?.user?.id ?? null }, { onConflict: "ponto_transaction_id", ignoreDuplicates: true }).select("id");
         if (error) throw error;
