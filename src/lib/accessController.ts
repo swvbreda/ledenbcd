@@ -153,7 +153,7 @@ export function deriveAccess(input: {
   if (input.sessionPending) return { loading: true, accessError: null, ...none };
   if (!input.userId) return { loading: false, accessError: null, ...none };
   const a = input.access;
-  if (a.userId !== input.userId || a.status === "idle" || a.status === "loading") {
+  if (a.status === "idle" || a.userId !== input.userId || a.status === "loading") {
     return { loading: true, accessError: null, ...none };
   }
   if (a.status === "error") return { loading: false, accessError: a.message, ...none };
