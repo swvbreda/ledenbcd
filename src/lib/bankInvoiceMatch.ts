@@ -101,10 +101,11 @@ export function containsRef(text: string, ref: string): boolean {
   if (ref.length < MIN_REF_LEN || !/^[A-Z0-9]+$/.test(ref)) return false;
   let re = refRegexCache.get(ref);
   if (!re) {
-    // Numeriek begin/eind: ook geen cijfer achter één scheidingsteken, zodat
-    // '202607' niet als prefix van '202607 1' (= 2026071) matcht.
-    const pre = /^[0-9]/.test(ref) ? "(?<![A-Z0-9])(?<![0-9][ \\-./])" : "(?<![A-Z0-9])";
-    const post = /[0-9]$/.test(ref) ? "(?![A-Z0-9])(?![ \\-./][0-9])" : "(?![A-Z0-9])";
+    // Numeriek begin/eind: geen los fragment van 1-3 cijfers achter/voor één
+    // scheidingsteken, zodat '202607' niet als prefix van '202607 1' (= 2026071)
+    // matcht; twee volwaardige losse nummers ('F-023 2026023') blijven werken.
+    const pre = /^[0-9]/.test(ref) ? "(?<![A-Z0-9])(?<!(?<![A-Z0-9])[0-9]{1,3}[ \\-./])" : "(?<![A-Z0-9])";
+    const post = /[0-9]$/.test(ref) ? "(?![A-Z0-9])(?![ \\-./][0-9]{1,3}(?![A-Z0-9]))" : "(?![A-Z0-9])";
     re = new RegExp(`${pre}${ref.split("").join("[ \\-./]?")}${post}`);
     refRegexCache.set(ref, re);
   }

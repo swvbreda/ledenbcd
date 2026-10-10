@@ -30,3 +30,12 @@ describe("bankmetadata vóór kenmerkmatching", () => {
     expect(containsRef("Contributie 202 6002", "2026002")).toBe(true);
   });
 });
+describe("los fragment vs volwaardig nummer", () => {
+  it("twee losse volwaardige nummers blijven elk vindbaar", () => {
+    expect(containsRef("F-023 2026023", "2026023")).toBe(true);
+    expect(containsRef("F-023 2026023", "F023")).toBe(true);
+  });
+  it("kort nummer als achterdeel van gesplitst nummer matcht niet", () => {
+    expect(containsRef("Contributie 202 6002", "6002")).toBe(false);
+  });
+});
