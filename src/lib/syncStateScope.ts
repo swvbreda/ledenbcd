@@ -19,3 +19,14 @@ export function syncStateQueryKey(userId: string | null | undefined) {
 export function syncStateEnabled(auth: SyncStateAuth): boolean {
   return !auth.loading && !!auth.userId && (auth.isAdmin || auth.isBoard);
 }
+
+/**
+ * Leest de synclog alleen met een sessie van precies deze gebruiker. Zonder bearer
+ * token geeft RLS stil [] terug; dat mag nooit als "nog nooit gesynchroniseerd" in de
+ * cache landen, dus gooien we in dat geval een fout (React Query probeert opnieuw).
+ */
+export function assertSyncSessionMatches(sessionUserId: string | null | undefined, expectedUserId: string | null | undefined): void {
+  if (!expectedUserId || !sessionUserId || sessionUserId !== expectedUserId) {
+    throw new Error("Sessie nog niet geverifieerd; synchronisatielog niet gelezen");
+  }
+}

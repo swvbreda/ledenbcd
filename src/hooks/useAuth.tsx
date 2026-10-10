@@ -5,7 +5,15 @@ import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunc
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery, runAuthBootstrap, withAuthTimeout } from "@/lib/authAccess";
+import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
+import {
+  createAccessController,
+  deriveAccess,
+  IDLE_ACCESS,
+  singleFlight,
+  type AccessSnapshot,
+  type AccessState,
+} from "@/lib/accessController";
 
 interface AuthContextType {
   user: User | null;
@@ -50,18 +58,6 @@ export const useAuth = () => useContext(AuthContext);
 const EMAIL_MFA_KEY_PREFIX = "emfa_";
 const PASSKEY_MFA_PENDING_KEY = "passkey_mfa_pending";
 
-function checkEmailMfaFlag(userId: string): boolean {
-  try {
-    const stored = localStorage.getItem(`${EMAIL_MFA_KEY_PREFIX}${userId}`);
-    if (!stored) return false;
-    const timestamp = parseInt(stored, 10);
-    // Valid for 30 days — keeps leden ingelogd zonder telkens opnieuw MFA
-    return Date.now() - timestamp < 30 * 24 * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
 function checkPendingPasskeyMfaFlag(): boolean {
   try {
     const stored = localStorage.getItem(PASSKEY_MFA_PENDING_KEY);
@@ -85,19 +81,81 @@ function promotePendingPasskeyMfaFlag(userId: string): boolean {
   }
 }
 
+// Gedeeld over de hele app: twee gelijktijdige refreshSession-aanroepen met hetzelfde
+// refresh token leveren "refresh_token_already_used" op en kunnen de sessie intrekken.
+const refreshSessionOnce = singleFlight(() => supabase.auth.refreshSession());
+
+const ACCESS_TIMEOUT_MS = 20_000;
+const SESSION_TIMEOUT_MS = 15_000;
+
+async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
+  const roles = await fetchRolesWithSessionRecovery({
+    expectedUserId: userId,
+    getAuthenticatedUserId: async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return data.user?.id ?? null;
+    },
+    fetchRoles: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return data?.map((row) => row.role) ?? [];
+    },
+    refreshSession: async () => {
+      const { data, error } = await refreshSessionOnce();
+      if (error) throw error;
+      if (data.session?.user.id !== userId) {
+        throw new Error("De vernieuwde sessie hoort niet bij de ingelogde gebruiker");
+      }
+    },
+  });
+
+  // Ledenkoppeling (eerst herstellen, dan lezen) en bestuursregels parallel ophalen;
+  // alles wordt pas als één geheel toegepast, nooit half.
+  const memberIdsPromise = (async () => {
+    try {
+      const { error: linkError } = await (supabase as any).rpc("ensure_member_link");
+      if (linkError && handleRpcAuthError(linkError)) {
+        throw new Error("Sessie verlopen tijdens het laden van de ledenkoppeling");
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("Sessie verlopen")) throw e;
+      console.warn("ensure_member_link mislukt", e);
+    }
+    if (memberPasswordlessEnabled) {
+      const { data } = await (supabase as any).rpc("current_member_id");
+      return typeof data === "number" ? [data] : [];
+    }
+    const { data } = await supabase.from("member_profiles").select("member_id").eq("user_id", userId);
+    return data?.map((p) => p.member_id) ?? [];
+  })();
+  const boardRowsPromise = supabase.from("board_members").select("lid_id, lid_ids").then((r) => r.data ?? []);
+
+  const [memberIds, boardRows] = await Promise.all([memberIdsPromise, boardRowsPromise]);
+  const isBoard =
+    memberIds.length > 0 &&
+    (boardRows as any[]).some((row) => {
+      if (row?.lid_id && memberIds.includes(row.lid_id)) return true;
+      const ids: number[] = Array.isArray(row?.lid_ids) ? row.lid_ids : [];
+      return ids.some((id) => memberIds.includes(id));
+    });
+  return { roles, memberIds, isBoard };
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isExtern, setIsExtern] = useState(false);
-  const [isBoard, setIsBoard] = useState(false);
+  const [sessionPending, setSessionPending] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [accessState, setAccessState] = useState<AccessState>(IDLE_ACCESS);
   const [isReviewer, setIsReviewer] = useState(false);
-  const [linkedMemberIds, setLinkedMemberIds] = useState<number[]>([]);
   const [mfaStatus, setMfaStatus] = useState<"verified" | "needs_verify" | "needs_setup" | "loading">("loading");
-  const accessCheckId = useRef(0);
-  const [authError, setAuthError] = useState<string | null>(null);
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
+  const userIdRef = useRef<string | null>(null);
+  userIdRef.current = user?.id ?? null;
 
   const markEmailMfaVerified = useCallback(() => {
     if (user?.id) {
@@ -106,169 +164,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.id]);
 
-  const checkMfaStatus = async (_userId: string, _reviewer = false) => {
-    // Dubbele verificatie is uitgeschakeld voor het ledenportaal. Een gewone,
-    // geldige Supabase-sessie geeft direct toegang.
-    setMfaStatus("verified");
-  };
-
-  const checkRoleAndProfile = async (userId: string) => {
-    const checkId = ++accessCheckId.current;
-    const roles = await fetchRolesWithSessionRecovery({
-      expectedUserId: userId,
-      getAuthenticatedUserId: async () => {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        return data.user?.id ?? null;
-      },
-      fetchRoles: async () => {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
-        if (error) throw error;
-        return data?.map((row) => row.role) ?? [];
-      },
-      refreshSession: async () => {
-        const { data, error } = await supabase.auth.refreshSession();
-        if (error) throw error;
-        if (data.session?.user.id !== userId) {
-          throw new Error("De vernieuwde sessie hoort niet bij de ingelogde gebruiker");
-        }
-      },
-    });
-
-    // Een oudere, tragere controle mag een nieuwere sessie niet overschrijven.
-    if (checkId !== accessCheckId.current) return;
-    setIsAdmin(roles.includes("admin"));
-    setIsExtern(roles.includes("extern"));
-
-    // Ontbrekende ledenkoppeling automatisch herstellen op basis van het e-mailadres
-    try {
-      const { error: linkError } = await (supabase as any).rpc("ensure_member_link");
-      if (linkError && handleRpcAuthError(linkError)) return;
-    } catch (e) {
-      console.warn("ensure_member_link mislukt", e);
-    }
-
-    const memberIds: number[] = memberPasswordlessEnabled
-      ? await (async () => {
-          const { data } = await (supabase as any).rpc("current_member_id");
-          return typeof data === "number" ? [data] : [];
-        })()
-      : (await supabase.from("member_profiles").select("member_id").eq("user_id", userId)).data?.map(p => p.member_id) ?? [];
-    setLinkedMemberIds(memberIds);
-
-    if (memberIds.length > 0) {
-      const { data: boardRows } = await supabase
-        .from("board_members")
-        .select("lid_id, lid_ids");
-      const isBoardMember = (boardRows ?? []).some((row: any) => {
-        if (row?.lid_id && memberIds.includes(row.lid_id)) return true;
-        const ids: number[] = Array.isArray(row?.lid_ids) ? row.lid_ids : [];
-        return ids.some((id) => memberIds.includes(id));
-      });
-      setIsBoard(isBoardMember);
-    } else {
-      setIsBoard(false);
-    }
-  };
-
   useEffect(() => {
     let mounted = true;
+    let sessionResolved = false;
 
-    const updateReviewerFlag = (user: User | null) => {
-      const reviewer = !!user?.user_metadata?.is_reviewer;
-      setIsReviewer(reviewer);
-      return reviewer;
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      const reviewer = updateReviewerFlag(session?.user ?? null);
-      if (session?.user) {
-        promotePendingPasskeyMfaFlag(session.user.id);
-        // Check email MFA flag synchronously to avoid unnecessary async MFA calls
-        const emailMfaOk = reviewer || checkEmailMfaFlag(session.user.id);
-        if (emailMfaOk) {
-          setMfaStatus("verified");
-        }
-        // Supabase raadt aan om overige clientaanroepen buiten de auth callback
-        // uit te voeren. Dit voorkomt dat een native WebView met een nog niet
-        // hersteld bearer token tijdelijk als gebruiker zonder rechten start.
-        window.setTimeout(() => {
-          withAuthTimeout(Promise.all([
-            checkRoleAndProfile(session.user.id),
-            ...(emailMfaOk ? [] : [checkMfaStatus(session.user.id)]),
-          ]), 20_000, "Het laden van gebruikersrechten")
-            .then(() => { if (mounted) setAuthError(null); })
-            .catch((error) => {
-              console.error("Gebruikersrechten laden mislukt", error);
-              if (mounted) {
-                accessCheckId.current += 1;
-                setIsAdmin(false);
-                setIsExtern(false);
-                setIsBoard(false);
-                setLinkedMemberIds([]);
-                setAuthError(error instanceof Error ? error.message : "Rechten konden niet worden geladen");
-              }
-            })
-            .finally(() => {
-              if (mounted) setLoading(false);
-            });
-        }, 0);
-      } else {
-        accessCheckId.current += 1;
-        setIsAdmin(false);
-        setIsExtern(false);
-        setIsBoard(false);
-        setIsReviewer(false);
-        setLinkedMemberIds([]);
-        setMfaStatus("loading");
-        setLoading(false);
-      }
+    const controller = createAccessController({
+      load: loadAccessSnapshot,
+      timeoutMs: ACCESS_TIMEOUT_MS,
+      timeoutLabel: "Het laden van gebruikersrechten",
+      onChange: (next) => {
+        if (!mounted) return;
+        if (next.status === "error") console.error("Gebruikersrechten laden mislukt", next.message);
+        setAccessState(next);
+      },
+      onBackgroundError: (e) => console.error("Gebruikersrechten verversen mislukt", e),
     });
 
-    void (async () => {
-      let sessionUser: User | null = null;
-      const result = await runAuthBootstrap({
-        getSessionUserId: async () => {
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (error) throw error;
-          if (!mounted) return null;
-          setSession(session);
-          setUser(session?.user ?? null);
-          sessionUser = session?.user ?? null;
-          return session?.user?.id ?? null;
-        },
-        loadAccess: async (userId) => {
-          const reviewer = updateReviewerFlag(sessionUser);
-          promotePendingPasskeyMfaFlag(userId);
-          const emailMfaOk = reviewer || checkEmailMfaFlag(userId);
-          if (emailMfaOk) setMfaStatus("verified");
-          await Promise.all([
-            checkRoleAndProfile(userId),
-            ...(emailMfaOk ? [] : [checkMfaStatus(userId)]),
-          ]);
-        },
-      });
-      if (!mounted) return;
-      if (result.status === "error") {
-        console.error("Auth bootstrap mislukt", result.message);
-        // Geen rechten toekennen zolang niet geverifieerd.
-        accessCheckId.current += 1;
-        setIsAdmin(false);
-        setIsExtern(false);
-        setIsBoard(false);
-        setLinkedMemberIds([]);
-        setAuthError(result.message);
+    const applySession = (nextSession: Session | null) => {
+      sessionResolved = true;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      setSessionPending(false);
+      setSessionError(null);
+      const sessionUser = nextSession?.user ?? null;
+      setIsReviewer(!!sessionUser?.user_metadata?.is_reviewer);
+      if (sessionUser) {
+        promotePendingPasskeyMfaFlag(sessionUser.id);
+        // Dubbele verificatie is uitgeschakeld voor het ledenportaal: een geldige sessie volstaat.
+        setMfaStatus("verified");
+        // Overige clientaanroepen buiten de auth-callback uitvoeren (Supabase-advies).
+        const id = sessionUser.id;
+        window.setTimeout(() => {
+          if (mounted) void controller.ensure(id);
+        }, 0);
       } else {
-        setAuthError(null);
+        setMfaStatus("loading");
+        controller.reset();
       }
-      setLoading(false);
-    })();
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      applySession(nextSession);
+    });
+
+    void withAuthTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, "De inlogservice")
+      .then(({ data, error }) => {
+        if (!mounted || sessionResolved) return; // de listener was eerder en is leidend
+        if (error) throw error;
+        applySession(data.session);
+      })
+      .catch((error) => {
+        if (!mounted || sessionResolved) return;
+        console.error("Auth bootstrap mislukt", error);
+        // Geen rechten toekennen zolang niet geverifieerd.
+        controller.reset();
+        setSessionPending(false);
+        setSessionError(error instanceof Error ? error.message : "Onbekende fout bij inloggen");
+      });
 
     // "Onthoud mij" — clear session when browser closes if disabled
     const handleBeforeUnload = () => {
@@ -316,13 +269,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             backgroundedAt = null;
 
-            void supabase.auth.refreshSession().then(({ data, error }) => {
-              if (error || !data.session?.user) return;
-              setSession(data.session);
-              setUser(data.session.user);
-              void checkRoleAndProfile(data.session.user.id).catch((accessError) => {
-                console.error("Gebruikersrechten verversen mislukt", accessError);
-              });
+            void refreshSessionOnce().then(({ data, error }) => {
+              if (error || !data.session?.user || !mounted) return;
+              // Herbeoordeling op de achtergrond: geverifieerde rechten blijven staan tot er nieuwe zijn.
+              void controller.ensure(data.session.user.id, { force: true });
             });
           }),
         )
@@ -335,8 +285,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // sign the user out and send them to the login page with a single toast.
     const handleSessionExpired = async () => {
       try {
-        if (user?.id) {
-          try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${user.id}`); } catch {}
+        const currentUserId = userIdRef.current;
+        if (currentUserId) {
+          try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${currentUserId}`); } catch {}
         }
         try { localStorage.removeItem(PASSKEY_MFA_PENDING_KEY); } catch {}
         await supabase.auth.signOut();
@@ -358,6 +309,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       mounted = false;
+      controller.dispose();
       subscription.unsubscribe();
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener(SESSION_EXPIRED_EVENT_NAME, handleSessionExpired);
@@ -366,10 +318,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [bootstrapAttempt]);
 
   const retryAuth = useCallback(() => {
-    setAuthError(null);
-    setLoading(true);
+    setSessionError(null);
+    setSessionPending(true);
+    setAccessState(IDLE_ACCESS);
     setBootstrapAttempt((n) => n + 1);
   }, []);
+
+  const derived = deriveAccess({ sessionPending, userId: user?.id ?? null, access: accessState });
+  const { loading, isAdmin, isExtern, isBoard, linkedMemberIds } = derived;
+  const authError = sessionError ?? derived.accessError;
 
   const signOut = async () => {
     if (user?.id) {

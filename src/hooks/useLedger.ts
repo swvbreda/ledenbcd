@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
-import { syncStateEnabled, syncStateQueryKey, SYNC_STATE_KEY } from "@/lib/syncStateScope";
+import { assertSyncSessionMatches, syncStateEnabled, syncStateQueryKey, SYNC_STATE_KEY } from "@/lib/syncStateScope";
 import {
   shouldStartYearSync,
   lastSuccessfulYearSync,
@@ -195,7 +195,11 @@ export function useInformerSyncState() {
     // Per gebruiker gescoped en pas na auth+rol: RLS geeft anders stil [].
     queryKey: syncStateQueryKey(userId),
     enabled: syncStateEnabled({ loading, userId, isAdmin, isBoard }),
+    retry: 3,
     queryFn: async () => {
+      // Alleen lezen met het bearer token van precies deze gebruiker (anders RLS → stil []).
+      const { data: sessionData } = await supabase.auth.getSession();
+      assertSyncSessionMatches(sessionData.session?.user?.id, userId);
       // Jaarsync-regels apart ophalen: anders verdringen frequente bank-/overige
       // logregels ze uit het venster en lijkt het alsof er nooit gesynchroniseerd is.
       const [stateRes, recentRes, yearRes] = await Promise.all([
