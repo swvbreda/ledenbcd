@@ -182,11 +182,12 @@ export function plannerPort(c: ReturnType<typeof makeGraphClient>, opts: { detai
   };
 }
 
-type RawTodo = { id: string; "@odata.etag"?: string; title?: string; status?: string; body?: { content?: string }; linkedResources?: { externalId?: string; webUrl?: string }[] };
+type RawTodo = { id: string; "@odata.etag"?: string; title?: string; status?: string; body?: { content?: string }; linkedResources?: { applicationName?: string; externalId?: string; webUrl?: string }[]; dueDateTime?: { dateTime?: string } | null };
 const asTodo = (t: RawTodo) => ({
   id: t.id, title: t.title ?? "", status: t.status ?? "", etag: t["@odata.etag"] ?? "",
-  body: [t.body?.content ?? "", ...(t.linkedResources ?? []).map((l) => l.webUrl ?? "")].join("\n"),
-  linkedExternalIds: (t.linkedResources ?? []).map((l) => String(l.externalId ?? "")).filter(Boolean),
+  body: t.body?.content ?? "",
+  due: t.dueDateTime?.dateTime?.slice(0, 10) ?? null,
+  linkedResources: (t.linkedResources ?? []).map((l) => ({ applicationName: String(l.applicationName ?? ""), externalId: String(l.externalId ?? ""), webUrl: String(l.webUrl ?? "") })),
 });
 const ID = /^[A-Za-z0-9_=-]+$/;
 function todoPath(userId: string, listId?: string, taskId?: string) {

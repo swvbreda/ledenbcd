@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { skipForGenericPlanner } from "@/lib/topicalLink";
 import { LockLostError, resolveConflictPatch, resolveUncertainPatch, safeMsg, syncOutcome, syncProject, type DbPort, type LocalTask, type TaskLink } from "@/lib/plannerSync";
 
 const GUID = z.string().regex(/^[0-9a-fA-F-]{36}$/);
@@ -16,8 +17,8 @@ const MAX_SYNC_MS = 10 * 60_000;
 const LOCK_MS = MAX_SYNC_MS + 2 * 60_000;
 
 /** Topical-importtaken lopen via het Topical-koppelpaneel; de gewone sync mag ze niet ophalen of dupliceren. */
-function withoutTopical<P extends { listBucketTasks: (b: string) => Promise<{ description: string | null }[]> }>(p: P): P {
-  return { ...p, listBucketTasks: async (b: string) => (await p.listBucketTasks(b)).filter((t) => !/Bron: Topical BCD — actie [0-9]/.test(t.description ?? "")) } as P;
+function withoutTopical<P extends { listBucketTasks: (b: string) => Promise<{ description: string | null; detailsError?: string | null }[]> }>(p: P): P {
+  return { ...p, listBucketTasks: async (b: string) => (await p.listBucketTasks(b)).filter((t) => !skipForGenericPlanner(t)) } as P;
 }
 
 type Ctx = { supabase: any; userId: string };
