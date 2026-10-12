@@ -118,7 +118,11 @@ describe("afronden", () => {
   });
   it("ETag-conflict bij Planner = partial; retry doet alleen Planner opnieuw", async () => {
     const db = dbMock();
-    const p1 = port({ completePlanner: vi.fn(async () => { throw new GraphError(412, "Microsoft 412"); }) });
+    let td = false;
+    const p1 = port({
+      getTodo: vi.fn(async () => ({ id: "T", title: "", body: "https://app.topicalmeetings.com/actions/85959", status: td ? "completed" : "notStarted", linkedResources: [], etag: "E1" })),
+      completeTodo: vi.fn(async () => { td = true; }),
+      completePlanner: vi.fn(async () => { throw new GraphError(412, "Microsoft 412"); }) });
     const r1 = await completeTopicalTask(link(), p1, db, PLAN);
     expect(r1.todo.state).toBe("done");
     expect(r1.planner.message).toMatch(/versieconflict/);
