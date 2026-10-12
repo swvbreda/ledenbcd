@@ -4,7 +4,7 @@ DO $$
 DECLARE adm uuid; usr uuid; tid uuid; r record; ok boolean;
 BEGIN
   SELECT user_id INTO adm FROM public.user_roles WHERE role='admin' LIMIT 1;
-  SELECT u.id INTO usr FROM auth.users u WHERE NOT public.has_role(u.id,'admin') LIMIT 1;
+  usr := gen_random_uuid();
   SELECT t.id INTO tid FROM public.internal_tasks t WHERE source_system='topical' AND status<>'afgerond'
     AND NOT EXISTS (SELECT 1 FROM public.topical_task_links l WHERE l.task_id=t.id AND l.todo_completed_at IS NOT NULL AND l.planner_completed_at IS NOT NULL) LIMIT 1;
   PERFORM set_config('request.jwt.claims', json_build_object('sub',adm,'role','authenticated')::text, true);
