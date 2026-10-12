@@ -141,7 +141,8 @@ describe("planner: conflicten en ETags", () => {
 
 describe("planner: Graph-client", () => {
   it("alleen vaste Microsoft-origin en toegestane paden (ook nextLink)", () => {
-    expect(assertGraphUrl("/planner/plans/abcDEF123456/tasks")).toBe("https://graph.microsoft.com/v1.0/planner/plans/abcDEF123456/tasks");
+    expect(assertGraphUrl("/planner/buckets/abcDEF123456/tasks")).toBe("https://graph.microsoft.com/v1.0/planner/buckets/abcDEF123456/tasks");
+    expect(() => assertGraphUrl("/planner/plans/abcDEF123456/tasks")).toThrow();
     expect(() => assertGraphUrl("https://evil.example/v1.0/planner/tasks")).toThrow();
     expect(() => assertGraphUrl("/me/sendMail")).toThrow();
     expect(() => assertGraphUrl("https://graph.microsoft.com/v1.0/users/x/sendMail")).toThrow();
@@ -152,7 +153,7 @@ describe("planner: Graph-client", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ value: [{ id: 1 }] }), { status: 200 }));
     const waits: number[] = [];
     const c = makeGraphClient("tok", f as any, { sleepFn: async (ms) => { waits.push(ms); } });
-    expect(await c.list("/planner/plans/abcDEF123456/tasks")).toHaveLength(1);
+    expect(await c.list("/planner/buckets/abcDEF123456/tasks")).toHaveLength(1);
     expect(waits).toEqual([1000]);
   });
   it("POST met 503 wordt niet herhaald en is 'onzeker'", async () => {
