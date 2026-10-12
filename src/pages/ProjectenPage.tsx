@@ -303,7 +303,7 @@ function ProjectenInner() {
         </TabsContent>
 
         <TabsContent value="topical" className="space-y-4">
-          <TopicalPanel tasks={(tasksQ.data ?? []).filter((t) => t.source_system === "topical").map((t) => ({ id: t.id, title: t.title }))} />
+          <TopicalPanel tasks={(tasksQ.data ?? []).filter((t) => t.source_system === "topical").map((t) => ({ id: t.id, title: t.title, status: t.status }))} onChanged={invalidate} />
         </TabsContent>
       </Tabs>
 
