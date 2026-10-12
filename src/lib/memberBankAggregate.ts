@@ -1,17 +1,26 @@
-import { bankFromIban, UNKNOWN_BANK } from "@/lib/bankFromIban";
-import type { BankAggregateRow } from "@/lib/representationSummary";
+import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 
 export type BankAggregateGroup = { bank: string; aantal: number; pct: number };
+/** Rij uit get_member_bank_groups: uitsluitend banknaam/categorie en aantallen. */
+export type BankGroupRow = { bank: string; aantal: number; totaal_leden: number };
+/** Rij uit get_member_psp_groups: bekende aanbieder of "Anders", aantal vestigingen, pct. */
+export type PspGroupRow = { naam: string; aantal: number; pct: number };
 
-/** Zet bankcode-aantallen om naar banknamen; geen individuele leden of IBANs. */
-export function bankGroupsFromAggregate(rows: BankAggregateRow[]): BankAggregateGroup[] {
+/** Sorteert en berekent percentages zoals de admin-bankgroepering. */
+export function bankGroupsFromAggregate(rows: BankGroupRow[]): BankAggregateGroup[] {
   const totaal = rows[0]?.totaal_leden ?? 0;
-  const map = new Map<string, number>();
-  for (const r of rows) {
-    const bank = r.bank_code ? bankFromIban(`NL00${r.bank_code}0000000000`) : UNKNOWN_BANK;
-    map.set(bank, (map.get(bank) ?? 0) + Number(r.aantal));
-  }
-  return Array.from(map.entries())
-    .map(([bank, aantal]) => ({ bank, aantal, pct: totaal ? Math.round((aantal / totaal) * 100) : 0 }))
+  return rows
+    .map((r) => ({
+      bank: r.bank || UNKNOWN_BANK,
+      aantal: Number(r.aantal),
+      pct: totaal ? Math.round((Number(r.aantal) / totaal) * 100) : 0,
+    }))
     .sort((a, b) => (a.bank === UNKNOWN_BANK ? 1 : b.bank === UNKNOWN_BANK ? -1 : b.aantal - a.aantal));
+}
+
+/** Zelfde sortering als usePinverwerkers ("Anders" achteraan). */
+export function pspGroupsFromAggregate(rows: PspGroupRow[]) {
+  return rows
+    .map((r) => ({ naam: r.naam, aantal: Number(r.aantal), pct: Number(r.pct) }))
+    .sort((a, b) => (a.naam === "Anders" ? 1 : b.naam === "Anders" ? -1 : b.aantal - a.aantal));
 }
