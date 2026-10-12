@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { summarizeRepresentation } from "@/lib/representationSummary";
-import { bankGroupsFromAggregate } from "@/lib/memberBankAggregate";
+import { bankGroupsFromAggregate, pspGroupsFromAggregate } from "@/lib/memberBankAggregate";
 
 const read = (p: string) => readFileSync(p, "utf8");
 const base = {
@@ -86,17 +86,49 @@ describe("ledendashboard: privacygrenzen kerngegevens", () => {
   it("leden krijgen bankverdeling alleen als aggregaat", () => {
     expect(src).toContain("useMemberBankAggregate(!privileged)");
   });
-  it("bankaggregaat bevat alleen aantallen per bank, geen rekeningnummers", () => {
+  it("leden krijgen betaalverwerkers alleen als serveraggregaat", () => {
+    expect(src).toContain("useMemberPspAggregate(!privileged)");
+    expect(src).not.toMatch(/\{privileged && \(\s*<Sectie titel="Betaalverwerkers"/);
+  });
+  it("aggregaatcaches zijn per account gescheiden", () => {
+    const h = read("src/hooks/useMemberBankAggregate.ts");
+    expect(h).toContain('["member-bank-groups", uid]');
+    expect(h).toContain('["member-psp-groups", uid]');
+    expect(h).not.toContain("get_member_bank_aggregate");
+  });
+  it("serveraggregaten weigeren anon/extern/inhuur en geven geen ruwe velden", () => {
+    const m = read("drizzle/migrations/0018_member_bank_psp_groups.sql");
+    expect(m).toContain("REVOKE ALL ON FUNCTION public.get_member_bank_groups() FROM PUBLIC, anon");
+    expect(m).toContain("REVOKE ALL ON FUNCTION public.get_member_psp_groups() FROM PUBLIC, anon");
+    expect(m).toContain("'extern'::app_role,'inhuur'::app_role");
+    expect(m).toContain("RETURNS TABLE(bank text, aantal integer, totaal_leden integer)");
+    expect(m).toContain("RETURNS TABLE(naam text, aantal integer, pct integer)");
+    expect(m).toContain("'Buitenlands (' || left(i.iban,2) || ')'");
+  });
+  it("bankaggregaat bevat alleen banknamen en aantallen, ook buitenlands", () => {
     const g = bankGroupsFromAggregate([
-      { bank_code: "INGB", aantal: 40, totaal_leden: 100 },
-      { bank_code: "RABO", aantal: 50, totaal_leden: 100 },
-      { bank_code: "", aantal: 10, totaal_leden: 100 },
+      { bank: "ING", aantal: 40, totaal_leden: 100 },
+      { bank: "Rabobank", aantal: 50, totaal_leden: 100 },
+      { bank: "Buitenlands (BE)", aantal: 3, totaal_leden: 100 },
+      { bank: "Onbekend", aantal: 7, totaal_leden: 100 },
     ]);
     expect(g).toEqual([
       { bank: "Rabobank", aantal: 50, pct: 50 },
       { bank: "ING", aantal: 40, pct: 40 },
-      { bank: "Onbekend", aantal: 10, pct: 10 },
+      { bank: "Buitenlands (BE)", aantal: 3, pct: 3 },
+      { bank: "Onbekend", aantal: 7, pct: 7 },
     ]);
-    expect(JSON.stringify(g)).not.toMatch(/NL\d{2}/);
+    expect(JSON.stringify(g)).not.toMatch(/NL\d{2}|Overig \(\d/);
+  });
+  it("betaalverwerkers: Anders achteraan, server-pct ongewijzigd", () => {
+    expect(pspGroupsFromAggregate([
+      { naam: "Anders", aantal: 9, pct: 30 },
+      { naam: "CCV", aantal: 5, pct: 17 },
+      { naam: "Worldline", aantal: 16, pct: 53 },
+    ])).toEqual([
+      { naam: "Worldline", aantal: 16, pct: 53 },
+      { naam: "CCV", aantal: 5, pct: 17 },
+      { naam: "Anders", aantal: 9, pct: 30 },
+    ]);
   });
 });
