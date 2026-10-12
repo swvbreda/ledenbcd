@@ -4091,6 +4091,68 @@ export type Database = {
         }
         Relationships: []
       }
+      task_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          event_key: string
+          id: string
+          kind: string
+          push_attempts: number
+          push_error: string | null
+          push_last_attempt_at: string | null
+          push_sent: number
+          push_status: string
+          push_total: number
+          read_at: string | null
+          recipient_id: string
+          task_id: string
+          title: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          event_key: string
+          id?: string
+          kind?: string
+          push_attempts?: number
+          push_error?: string | null
+          push_last_attempt_at?: string | null
+          push_sent?: number
+          push_status?: string
+          push_total?: number
+          read_at?: string | null
+          recipient_id: string
+          task_id: string
+          title?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          event_key?: string
+          id?: string
+          kind?: string
+          push_attempts?: number
+          push_error?: string | null
+          push_last_attempt_at?: string | null
+          push_sent?: number
+          push_status?: string
+          push_total?: number
+          read_at?: string | null
+          recipient_id?: string
+          task_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topical_task_links: {
         Row: {
           confirmed_by: string
@@ -4781,6 +4843,10 @@ export type Database = {
           email: string
           user_id: string
         }[]
+      }
+      mark_task_notifications_read: {
+        Args: { _ids: string[] }
+        Returns: number
       }
       member_directory_payload: {
         Args: { _base: Json; _overlay: Json }
