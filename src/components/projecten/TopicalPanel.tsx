@@ -90,7 +90,7 @@ export default function TopicalPanel({ tasks, onChanged }: { tasks: { id: string
               {s.error && <p className="text-destructive">{s.error}</p>}
               {!s.canWrite && (
                 <p className="flex gap-2 text-destructive"><AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  Zolang het applicatierecht Tasks.ReadWrite.All (met beheerderstoestemming) ontbreekt, kan Topical-afronden niet doorwerken en blijven deze taken lokaal open.</p>
+                  Zolang het applicatierecht Tasks.ReadWrite.All (met beheerderstoestemming) ontbreekt, kan overal afronden niet doorwerken. U kunt een actie wel expliciet alleen in het ledenbestand afronden; Teams en Topical worden dan niet bijgewerkt.</p>
               )}
             </div>
           )}
@@ -140,7 +140,7 @@ export default function TopicalPanel({ tasks, onChanged }: { tasks: { id: string
         )}
       </div>
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <h4 className="font-medium">Eerder lokaal afgerond, nog niet extern bevestigd</h4>
+        <h4 className="font-medium">Alleen hier afgerond — nog niet bijgewerkt in Teams/Topical</h4>
         {linksQ.isLoading ? <p className="text-sm text-muted-foreground">Laden…</p>
           : linksQ.error ? <p className="text-sm text-destructive">{errMsg(linksQ.error)}</p>
           : (() => {

@@ -215,3 +215,14 @@ export function pendingExternalCompletion<T extends { id: string; status: string
 export function canPushCompletion(canWrite: boolean, link: Pick<TopicalLink, "todo_task_id" | "planner_task_id"> | undefined): boolean {
   return canWrite && !!link?.todo_task_id && !!link?.planner_task_id;
 }
+
+export const LOCAL_ONLY_BADGE = "Alleen hier afgerond — nog niet bijgewerkt in Teams/Topical";
+
+/** Badge voor elke lokaal afgeronde Topical-taak zonder bevestiging van To Do én Planner (ook oude/expliciet lokale afrondingen). */
+export function localOnlyBadge(
+  task: { status: string; source_system?: string | null },
+  link: Pick<TopicalLink, "todo_completed_at" | "planner_completed_at"> | undefined,
+): string | null {
+  if (task.source_system !== "topical" || task.status !== "afgerond") return null;
+  return link?.todo_completed_at && link?.planner_completed_at ? null : LOCAL_ONLY_BADGE;
+}

@@ -2393,6 +2393,8 @@ export type Database = {
           deadline: string | null
           description: string | null
           id: string
+          local_only_completed_at: string | null
+          local_only_completed_by: string | null
           priority: string
           project_id: string | null
           source_ref: string | null
@@ -2409,6 +2411,8 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          local_only_completed_at?: string | null
+          local_only_completed_by?: string | null
           priority?: string
           project_id?: string | null
           source_ref?: string | null
@@ -2425,6 +2429,8 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          local_only_completed_at?: string | null
+          local_only_completed_by?: string | null
           priority?: string
           project_id?: string | null
           source_ref?: string | null
@@ -4839,6 +4845,10 @@ export type Database = {
       sync_member_allowed_emails: {
         Args: { _member_id: number }
         Returns: undefined
+      }
+      topical_complete_local_only: {
+        Args: { _task_id: string }
+        Returns: string
       }
       trigger_agenda_outlook_sync: {
         Args: { _action?: string; _event_id: string }

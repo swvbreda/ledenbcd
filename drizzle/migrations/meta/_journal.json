@@ -155,6 +155,13 @@
       "when": 1791815107525,
       "tag": "0021_topical_source_links",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791820573655,
+      "tag": "0022_topical_local_only_completion",
+      "breakpoints": true
     }
   ]
 }
