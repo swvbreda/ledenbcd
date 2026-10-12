@@ -92,8 +92,9 @@ const StatCards = ({ members }: StatCardsProps) => {
           <Users size={18} className="text-brand-red justify-self-end" />
         </div>
         <div className="mt-auto pt-3 text-center">
-          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{representedLocations}</p>
-          <p className="text-xs text-muted-foreground mt-1">aangesloten coffeeshops</p>
+          {ok ? (<>
+          <p className="text-3xl sm:text-4xl font-bold font-display tabular-nums">{ok.totaalRepresented}</p>
+          <p className="text-xs text-muted-foreground mt-1">aangesloten coffeeshops</p></>) : <Unavailable />}
           {ok && dataUpdatedAt > 0 && (
             <button
               onClick={(e) => {
