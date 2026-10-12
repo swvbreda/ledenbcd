@@ -57,11 +57,13 @@ export function tokenRoles(token: string): string[] {
   } catch { return []; }
 }
 
-export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetries?: number; timeoutMs?: number; sleepFn?: (ms: number) => Promise<void> } = {}) {
+export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetries?: number; timeoutMs?: number; sleepFn?: (ms: number) => Promise<void>; deadlineAt?: number } = {}) {
   const maxRetries = opts.maxRetries ?? 3, timeoutMs = opts.timeoutMs ?? 15_000, wait = opts.sleepFn ?? sleep;
   async function req(method: string, pathOrUrl: string, body?: unknown, ifMatch?: string, prefer?: string) {
     const url = assertGraphUrl(pathOrUrl);
     for (let attempt = 0; ; attempt++) {
+      // Harde einddatum: geen nieuw verzoek meer (ook geen retry/paginering); POST is dan zeker niet verstuurd.
+      if (opts.deadlineAt && Date.now() >= opts.deadlineAt) throw new GraphError(0, "Maximale synchronisatieduur bereikt", false);
       let res: Response;
       try {
         res = await f(url, {

@@ -11,8 +11,9 @@ export const PLANNER_TARGET_PLAN_ID = "ihOF3XJjZU-XVqZD1yqJ4JgAEVQ6";
 export function assertTargetPlan(planId: string) {
   if (planId !== PLANNER_TARGET_PLAN_ID) throw new Error("Alleen het gekozen plan 'To do' is toegestaan.");
 }
-const LOCK_MS = 3 * 60_000;
 const MAX_SYNC_MS = 10 * 60_000;
+/** Slot loopt altijd langer dan de harde maximale duur, zodat het nooit midden in een run verloopt. */
+const LOCK_MS = MAX_SYNC_MS + 2 * 60_000;
 
 type Ctx = { supabase: any; userId: string };
 
@@ -21,12 +22,12 @@ async function assertAdmin(ctx: Ctx) {
   if (error || data !== true) throw new Error("Geen toegang: alleen beheerders.");
 }
 
-async function graphSetup() {
+async function graphSetup(deadlineAt?: number) {
   const g = await import("@/lib/plannerGraph.server");
   const cfg = g.readGraphConfig(process.env);
   if (!cfg) throw new Error("Microsoft-koppeling niet ingesteld (servergegevens ontbreken).");
   const { token, roles } = await g.getAppToken(cfg);
-  return { g, cfg, roles, client: g.makeGraphClient(token) };
+  return { g, cfg, roles, client: g.makeGraphClient(token, fetch, { deadlineAt }) };
 }
 
 /** Status: alleen namen van rechten en of Planner-toegang werkt; nooit tokens of ids van de app. */
@@ -235,7 +236,7 @@ export const plannerSyncProject = createServerFn({ method: "POST" })
       lastBeat = now;
     };
     try {
-      const { g, cfg, client } = await graphSetup();
+      const { g, cfg, client } = await graphSetup(started + MAX_SYNC_MS);
       const db: DbPort = {
         async tasks(pid) {
           const { data: rows, error } = await sb.from("internal_tasks").select("id,title,description,deadline,priority,status,assignee_id").eq("project_id", pid);
