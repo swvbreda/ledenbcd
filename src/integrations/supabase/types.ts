@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      advies_eligibility_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          kind: string
+          subject_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          kind: string
+          subject_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          kind?: string
+          subject_hash?: string
+        }
+        Relationships: []
+      }
+      advies_eligibility_codes: {
+        Row: {
+          audience: string
+          code_challenge: string
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          audience: string
+          code_challenge: string
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          audience?: string
+          code_challenge?: string
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agenda_confirmation_gate: {
         Row: {
           created_at: string
@@ -4574,6 +4628,23 @@ export type Database = {
           _line_item_id: string
         }
         Returns: Json
+      }
+      advies_consume_code: {
+        Args: { _audience: string; _code_hash: string }
+        Returns: {
+          code_challenge: string
+          user_id: string
+        }[]
+      }
+      advies_is_current_member: { Args: { _user_id: string }; Returns: boolean }
+      advies_rate_limit: {
+        Args: {
+          _kind: string
+          _max: number
+          _subject_hash: string
+          _window_seconds: number
+        }
+        Returns: boolean
       }
       agenda_claim_confirmations: {
         Args: {
