@@ -38,7 +38,10 @@ export function summarizeRepresentation(s: RepresentationInput): RepresentationS
   // Noodfallback (statisch bestand) of fout: niet als feit presenteren.
   if (s.isError || !s.fromRegister || !(s.totaalNL > 0)) return { status: "error" };
   const gemeentenNL = Object.values(s.perGemeente).filter((n) => n > 0).length;
-  const gemeentenVertegenwoordigd = Object.values(s.representedPerGemeente).filter((n) => n > 0).length;
+  // Alleen vertegenwoordigde gemeenten die ook actieve landelijke gemeenten zijn.
+  const gemeentenVertegenwoordigd = Object.entries(s.representedPerGemeente).filter(
+    ([g, n]) => n > 0 && (s.perGemeente[g] || 0) > 0,
+  ).length;
   const g4Total = G4.reduce((t, c) => t + (s.perGemeente[c] || 0), 0);
   const g4Represented = G4.reduce((t, c) => t + (s.representedPerGemeente[c] || 0), 0);
   return {

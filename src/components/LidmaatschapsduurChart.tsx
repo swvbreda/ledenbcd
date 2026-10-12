@@ -7,9 +7,10 @@ import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { getMembershipYears } from "@/lib/membership";
 
 import { useRegisterStats } from "@/hooks/useRegisterStats";
+import { summarizeRepresentation } from "@/lib/representationSummary";
 
 const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
-  const { perGemeente: perStad, representedPerGemeente } = useRegisterStats();
+  const rep = summarizeRepresentation(useRegisterStats());
   const { rawLeads } = useMembersData();
   const { members: mergedLeads } = useMergedMembers(rawLeads);
   const { conversions } = useLeadConversions();
@@ -27,15 +28,6 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
 
   const longMembers = withYears.filter((x) => x.years >= 20);
   const longPct = allMembers.length ? Math.round((longMembers.length / allMembers.length) * 100) : 0;
-
-  // Gemeenten uit het coffeeshopregister waar wij vertegenwoordigd zijn
-  const registerGemeenten = Object.keys(perStad);
-  const citiesPresent = registerGemeenten.filter(
-    (gemeente) => (representedPerGemeente[gemeente] || 0) > 0,
-  );
-  const citiesPresentPct = registerGemeenten.length > 0
-    ? Math.round((citiesPresent.length / registerGemeenten.length) * 100)
-    : 0;
 
   // New members this year
   const currentYear = new Date().getFullYear();
@@ -80,8 +72,13 @@ const LidmaatschapsduurChart = ({ members }: { members?: Member[] }) => {
     {
       icon: Building2,
       label: "Aanwezig in gemeenten",
-      value: `${citiesPresentPct}%`,
-      detail: `${citiesPresent.length} van ${Object.keys(perStad).length} gemeenten`,
+      value: rep.status === "ok" ? `${rep.gemeentenPct}%` : rep.status === "loading" ? "…" : "—",
+      detail:
+        rep.status === "ok"
+          ? `${rep.gemeentenVertegenwoordigd} van ${rep.gemeentenNL} gemeenten`
+          : rep.status === "loading"
+            ? "Centrale telling laden…"
+            : "Centrale telling niet beschikbaar",
       color: "text-success",
     },
     {

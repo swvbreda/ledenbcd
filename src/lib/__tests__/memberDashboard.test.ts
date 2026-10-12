@@ -33,6 +33,24 @@ describe("ledendashboard: centrale vertegenwoordiging", () => {
     expect(r.g4Total).toBe(220);
   });
 
+  it("telt vertegenwoordigde gemeenten alleen binnen actieve landelijke gemeenten", () => {
+    const r = summarizeRepresentation({
+      ...base,
+      representedPerGemeente: { ...base.representedPerGemeente, Onbekend: 3, Goes: 1 },
+      perGemeente: { ...base.perGemeente, Goes: 0 },
+    });
+    if (r.status !== "ok") throw new Error("verwacht ok");
+    expect(r.gemeentenNL).toBe(5);
+    expect(r.gemeentenVertegenwoordigd).toBe(3);
+  });
+
+  it("lidmaatschapskaart 'Aanwezig in gemeenten' gebruikt dezelfde centrale samenvatting", () => {
+    const s = read("src/components/LidmaatschapsduurChart.tsx");
+    expect(s).toContain("summarizeRepresentation(useRegisterStats())");
+    expect(s).toContain("Centrale telling laden");
+    expect(s).not.toContain("Object.keys(perStad)");
+  });
+
   it("toont bij laden geen 0 als feit", () => {
     expect(summarizeRepresentation({ ...base, isLoading: true }).status).toBe("loading");
   });
