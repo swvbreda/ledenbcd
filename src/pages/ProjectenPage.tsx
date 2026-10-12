@@ -19,7 +19,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { topicalComplete } from "@/lib/topical.functions";
-import { completionSummary } from "@/lib/topicalLink";
+import { completionSummary, localOnlyBadge } from "@/lib/topicalLink";
 import {
   filterTasks,
   isOverdue,
@@ -122,6 +122,24 @@ function ProjectenInner() {
     mutationFn: (id: string) => topicalFn({ data: { taskId: id } }),
     onSuccess: (r, id) => { const s = completionSummary(r); setTopicalMsg((m) => ({ ...m, [id]: s })); s.ok ? toast.success("Topical-actie afgerond") : toast.error("Niet volledig afgerond"); invalidate(); },
     onError: (e, id) => setTopicalMsg((m) => ({ ...m, [id]: { ok: false, text: "Niet afgerond, taak blijft lokaal open: " + errMsg(e) } })),
+  });
+  const linksQ = useQuery({
+    queryKey: ["topical-links", uid],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { data, error } = await db.from("topical_task_links").select("task_id,todo_completed_at,planner_completed_at");
+      if (error) throw error;
+      return data as { task_id: string; todo_completed_at: string | null; planner_completed_at: string | null }[];
+    },
+  });
+  const [choiceFor, setChoiceFor] = useState<Task | null>(null);
+  const completeLocalOnly = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.rpc("topical_complete_local_only", { _task_id: id });
+      if (error) throw error;
+    },
+    onSuccess: (_r, id) => { setChoiceFor(null); setTopicalMsg((m) => { const n = { ...m }; delete n[id]; return n; }); toast.success("Alleen in het ledenbestand afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
+    onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const completeTask = useMutation({
     mutationFn: async (id: string) => {
@@ -233,15 +251,16 @@ function ProjectenInner() {
                         <span>· {staffName(t.assignee_id)}</span>
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
                         {t.source_system === "topical" && <Badge variant="secondary">Topical {t.source_ref}</Badge>}
+                        {(() => { const b = localOnlyBadge(t, linksQ.data?.find((l) => l.task_id === t.id)); return b ? <Badge variant="outline" className="border-destructive text-destructive whitespace-normal">{b}</Badge> : null; })()}
                       </div>
                       {t.source_system === "topical" && t.status !== "afgerond" && !topicalMsg[t.id] && (
-                        <p className="mt-1 text-xs text-muted-foreground">Afronden gaat via Microsoft To Do en Planner; lokaal pas afgerond als beide bevestigd zijn. Andere lokale wijzigingen werken niet door naar To Do, Planner of Topical.</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Bij afronden kiest u: overal afronden (via Microsoft To Do en Planner) of alleen in het ledenbestand. Andere lokale wijzigingen werken niet door naar To Do, Planner of Topical.</p>
                       )}
                       {topicalMsg[t.id] && <p role="status" className={`mt-1 text-xs ${topicalMsg[t.id].ok ? "text-muted-foreground" : "text-destructive"}`}>{topicalMsg[t.id].text}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {t.status !== "afgerond" && (
-                        <Button size="sm" variant="outline" disabled={completeTask.isPending || completeTopical.isPending} onClick={() => (t.source_system === "topical" ? completeTopical.mutate(t.id) : completeTask.mutate(t.id))}>
+                        <Button size="sm" variant="outline" disabled={completeTask.isPending || completeTopical.isPending} onClick={() => (t.source_system === "topical" ? setChoiceFor(t) : completeTask.mutate(t.id))}>
                           {completeTopical.isPending && completeTopical.variables === t.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}{t.source_system === "topical" && topicalMsg[t.id] && !topicalMsg[t.id].ok ? "Opnieuw proberen" : "Afronden"}
                         </Button>
                       )}
@@ -307,6 +326,25 @@ function ProjectenInner() {
         </TabsContent>
       </Tabs>
 
+      <Dialog open={!!choiceFor} onOpenChange={(o) => !o && setChoiceFor(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Topical-actie afronden</DialogTitle></DialogHeader>
+          <p className="text-sm break-words">{choiceFor?.title}</p>
+          <div className="space-y-3">
+            <div className="rounded border border-border p-3 space-y-2">
+              <Button className="w-full" disabled={completeTopical.isPending || completeLocalOnly.isPending} onClick={() => { const id = choiceFor!.id; setChoiceFor(null); completeTopical.mutate(id); }}>Overal afronden</Button>
+              <p className="text-xs text-muted-foreground">Zet de To Do-taak op voltooid en de Planner-taak op 100%. Lokaal pas afgerond als beide bevestigd zijn; vereist de Microsoft-koppeling.</p>
+            </div>
+            <div className="rounded border border-border p-3 space-y-2">
+              <Button variant="outline" className="w-full" disabled={completeTopical.isPending || completeLocalOnly.isPending} onClick={() => completeLocalOnly.mutate(choiceFor!.id)}>
+                {completeLocalOnly.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Alleen in het ledenbestand afronden
+              </Button>
+              <p className="text-xs text-muted-foreground">Teams en Topical worden hiermee niet bijgewerkt. Uw account en het tijdstip worden vastgelegd; overal afronden kan later nog.</p>
+            </div>
+          </div>
+          <DialogFooter><Button variant="ghost" onClick={() => setChoiceFor(null)}>Annuleren</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!editTask} onOpenChange={(o) => !o && setEditTask(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editTask?.id ? "Taak bewerken" : "Nieuwe taak"}</DialogTitle></DialogHeader>
@@ -334,7 +372,7 @@ function ProjectenInner() {
                 <div className="sm:col-span-2"><Label>Status</Label>
                   <Select value={editTask.status ?? "te_doen"} onValueChange={(v) => setEditTask({ ...editTask, status: v as TaskStatus })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{(Object.keys(TASK_STATUS_LABEL) as TaskStatus[]).map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
+                    <SelectContent>{(Object.keys(TASK_STATUS_LABEL) as TaskStatus[]).map((s) => <SelectItem key={s} value={s} disabled={s === "afgerond" && editTask.source_system === "topical" && (tasksQ.data ?? []).find((x) => x.id === editTask.id)?.status !== "afgerond"}>{TASK_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
                   </Select></div>
               </div>
               <DialogFooter><Button type="submit" disabled={saveTask.isPending}>{saveTask.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Opslaan</Button></DialogFooter>
