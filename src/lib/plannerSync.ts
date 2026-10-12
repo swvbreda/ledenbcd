@@ -118,16 +118,17 @@ export interface DbPort {
   userMap(): Promise<{ user_id: string; entra_id: string }[]>;
   saveLink(l: Partial<TaskLink> & { task_id: string }): Promise<void>;
   updateTask(id: string, patch: Partial<LocalTask>): Promise<void>;
+  insertTask(projectId: string, t: Omit<LocalTask, "id">): Promise<string>;
   newToken(): string;
   now(): string;
 }
-export interface SyncResult { created: number; updatedRemote: number; updatedLocal: number; conflicts: number; warnings: string[] }
+export interface SyncResult { imported: number; created: number; updatedRemote: number; updatedLocal: number; conflicts: number; warnings: string[] }
 
 const UNCERTAIN_GRACE_MS = 2 * 60_000;
 
 export async function syncProject(opts: { projectId: string; planId: string; appId: string; graph: GraphPort; db: DbPort }): Promise<SyncResult> {
   const { projectId, planId, appId, graph, db } = opts;
-  const res: SyncResult = { created: 0, updatedRemote: 0, updatedLocal: 0, conflicts: 0, warnings: [] };
+  const res: SyncResult = { imported: 0, created: 0, updatedRemote: 0, updatedLocal: 0, conflicts: 0, warnings: [] };
   const tasks = await db.tasks(projectId);
   const links = new Map((await db.links(tasks.map((t) => t.id))).map((l) => [l.task_id, l]));
   const map = await db.userMap();
@@ -271,6 +272,26 @@ export async function syncProject(opts: { projectId: string; planId: string; app
       await db.saveLink({ task_id: t.id, last_error: safeMsg(e) });
       res.warnings.push(`Lokaal bijwerken "${t.title}" mislukt: ${safeMsg(e)}`);
     }
+  }
+
+  // --- Nieuw in Planner: lokaal overnemen (alleen taken die niet door deze app zijn gemaakt) ---
+  for (const r of remote) {
+    if (linkedIds.has(r.id)) continue;
+    if (r.createdByAppId === appId) { res.warnings.push(`Planner-taak "${r.title}" is door deze koppeling gemaakt maar niet gekoppeld; handmatig controleren.`); continue; }
+    const a = remoteAssigneeToLocal(r.assigneeIds, userOf);
+    if (!a.ok) res.warnings.push(`"${r.title}": ${a.reason} Overgenomen zonder verantwoordelijke.`);
+    const t: Omit<LocalTask, "id"> = {
+      title: (r.title || "Planner-taak").slice(0, 200), description: r.description || null, deadline: plannerToDeadline(r.dueDateTime),
+      priority: plannerToPriority(r.priority), status: percentToStatus(r.percentComplete, null), assignee_id: a.ok ? a.userId : null,
+    };
+    try {
+      const id = await db.insertTask(projectId, t);
+      const lh = hashCanon(canonLocal({ id, ...t }, entraOf));
+      await db.saveLink({ task_id: id, plan_id: planId, planner_task_id: r.id, state: "linked", task_etag: r.etag, details_etag: r.detailsEtag,
+        last_local_hash: lh, last_remote_hash: hashCanon(canonRemote(r)), last_error: null });
+      linkedIds.add(r.id);
+      res.imported++;
+    } catch (e) { res.warnings.push(`Overnemen "${r.title}" mislukt: ${safeMsg(e)}`); }
   }
   return res;
 }

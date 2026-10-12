@@ -178,6 +178,11 @@ export const plannerSyncProject = createServerFn({ method: "POST" })
           const { error } = await sb.from("internal_tasks").update(patch).eq("id", id);
           if (error) throw new Error(error.message);
         },
+        async insertTask(pid, t) {
+          const { data: row, error } = await sb.from("internal_tasks").insert({ ...t, project_id: pid, created_by: ctx.userId }).select("id").single();
+          if (error) throw new Error(error.message);
+          return row.id as string;
+        },
         newToken: () => crypto.randomUUID(),
         now: () => new Date().toISOString(),
       };
