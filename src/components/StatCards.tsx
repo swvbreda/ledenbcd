@@ -6,7 +6,6 @@ import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { pctColor } from "@/lib/pctColor";
 
 
@@ -35,7 +34,6 @@ const StatCards = ({ members }: StatCardsProps) => {
   const totalMembers = mergedMembers.length + convertedAsMembers.length;
 
   // Use merged members + converted leads + active leads for all location/market calculations
-  const allRepresented = [...mergedMembers, ...convertedAsMembers, ...activeLeads];
   const stats = useRegisterStats();
   const { dataUpdatedAt, refetch: refetchStats, isFetching: statsFetching } = stats;
   const rep = summarizeRepresentation(stats);
@@ -172,7 +170,7 @@ const StatCards = ({ members }: StatCardsProps) => {
         </div>
         <div className="mt-auto space-y-1.5">
           {[
-            { name: "BCD", pct: ok ? marketPct : 0 },
+            ...(ok ? [{ name: "BCD", pct: marketPct }] : []),
             { name: "KHN", pct: 21 },
             { name: "CVAH", pct: 17 },
             { name: "MKB-NL", pct: 7 },
