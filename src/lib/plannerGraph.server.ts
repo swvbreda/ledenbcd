@@ -4,7 +4,8 @@ import { GraphError, safeMsg, type GraphPort, type RemoteTask } from "@/lib/plan
 export const GRAPH_ORIGIN = "https://graph.microsoft.com";
 const BASE = `${GRAPH_ORIGIN}/v1.0`;
 const ALLOWED = [
-  /^\/planner\/plans\/[A-Za-z0-9_-]+(\/tasks)?(\?.*)?$/,
+  /^\/planner\/plans\/[A-Za-z0-9_-]+(\/buckets)?(\?.*)?$/,
+  /^\/planner\/buckets(\/[A-Za-z0-9_-]+(\/tasks)?)?(\?.*)?$/,
   /^\/planner\/tasks(\/[A-Za-z0-9_-]+(\/details)?)?(\?.*)?$/,
   /^\/groups\/[0-9a-fA-F-]{36}(\/planner\/plans)?(\?.*)?$/,
   /^\/groups\?.*$/,
@@ -56,11 +57,13 @@ export function tokenRoles(token: string): string[] {
   } catch { return []; }
 }
 
-export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetries?: number; timeoutMs?: number; sleepFn?: (ms: number) => Promise<void> } = {}) {
+export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetries?: number; timeoutMs?: number; sleepFn?: (ms: number) => Promise<void>; deadlineAt?: number } = {}) {
   const maxRetries = opts.maxRetries ?? 3, timeoutMs = opts.timeoutMs ?? 15_000, wait = opts.sleepFn ?? sleep;
   async function req(method: string, pathOrUrl: string, body?: unknown, ifMatch?: string, prefer?: string) {
     const url = assertGraphUrl(pathOrUrl);
     for (let attempt = 0; ; attempt++) {
+      // Harde einddatum: geen nieuw verzoek meer (ook geen retry/paginering); POST is dan zeker niet verstuurd.
+      if (opts.deadlineAt && Date.now() >= opts.deadlineAt) throw new GraphError(0, "Maximale synchronisatieduur bereikt", false);
       let res: Response;
       try {
         res = await f(url, {
@@ -79,7 +82,8 @@ export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetr
         if (method === "GET" && attempt < maxRetries) { await wait(500 * 2 ** attempt); continue; }
         throw new GraphError(0, `Geen antwoord van Microsoft (${safeMsg(e)})`, method === "POST");
       }
-      if ((res.status === 429 || res.status >= 500) && attempt < maxRetries && (method !== "POST" || res.status === 429 || res.status === 503)) {
+      // POST alleen herhalen bij 429 (Microsoft heeft het verzoek zeker geweigerd); 5xx bij POST blijft onzeker.
+      if ((res.status === 429 || (res.status >= 500 && method !== "POST")) && attempt < maxRetries) {
         const ra = Number(res.headers.get("Retry-After"));
         await wait(Number.isFinite(ra) && ra > 0 ? Math.min(ra, 30) * 1000 : 500 * 2 ** attempt);
         continue;
@@ -108,25 +112,46 @@ export function makeGraphClient(token: string, f: Fetch = fetch, opts: { maxRetr
 
 type RawTask = {
   id: string; "@odata.etag": string; title: string; percentComplete: number; priority?: number; dueDateTime?: string | null;
-  assignments?: Record<string, unknown>; createdBy?: { application?: { id?: string } }; createdDateTime?: string;
-  details?: { description?: string; "@odata.etag"?: string };
+  bucketId?: string; assignments?: Record<string, unknown>; createdBy?: { application?: { id?: string } }; createdDateTime?: string;
 };
 
-export function plannerPort(c: ReturnType<typeof makeGraphClient>): GraphPort {
+/** Begrensde paralleliteit voor detail-aanroepen. */
+export async function mapLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k]); }
+  }));
+  return out;
+}
+
+export function plannerPort(c: ReturnType<typeof makeGraphClient>, opts: { detailsConcurrency?: number } = {}): GraphPort & {
+  getPlan(planId: string): Promise<{ id: string; title: string | null; groupId: string | null }>;
+  listBuckets(planId: string): Promise<{ id: string; name: string }[]>;
+  createBucket(planId: string, name: string): Promise<{ id: string; name: string }>;
+} {
+  const getDetails = async (id: string) => {
+    const r = await c.req("GET", `/planner/tasks/${id}/details`);
+    const etag = r.json["@odata.etag"] ?? r.etag;
+    if (!etag) throw new GraphError(0, "ETag van taakdetails ontbreekt");
+    return { description: (r.json.description ?? "") as string, etag: etag as string };
+  };
   return {
-    async listPlanTasks(planId) {
-      const raw = await c.list<RawTask>(`/planner/plans/${planId}/tasks?$expand=details`);
-      return raw.map((t): RemoteTask => ({
-        id: t.id, etag: t["@odata.etag"], title: t.title, percentComplete: t.percentComplete ?? 0, priority: t.priority ?? null,
-        dueDateTime: t.dueDateTime ?? null, assigneeIds: Object.keys(t.assignments ?? {}),
-        createdByAppId: t.createdBy?.application?.id ?? null, createdDateTime: t.createdDateTime ?? null,
-        description: t.details?.description ?? null, detailsEtag: t.details?.["@odata.etag"] ?? null,
-      }));
+    async listBucketTasks(bucketId) {
+      // Standaard v1-endpoint; details worden per taak expliciet opgehaald (geen $expand).
+      const raw = await c.list<RawTask>(`/planner/buckets/${bucketId}/tasks`);
+      return mapLimit(raw, opts.detailsConcurrency ?? 4, async (t): Promise<RemoteTask> => {
+        const base: RemoteTask = {
+          id: t.id, etag: t["@odata.etag"], title: t.title, percentComplete: t.percentComplete ?? 0, priority: t.priority ?? null,
+          dueDateTime: t.dueDateTime ?? null, assigneeIds: Object.keys(t.assignments ?? {}), bucketId: t.bucketId ?? null,
+          createdByAppId: t.createdBy?.application?.id ?? null, createdDateTime: t.createdDateTime ?? null,
+          description: null, detailsEtag: null, detailsError: null,
+        };
+        try { const d = await getDetails(t.id); return { ...base, description: d.description, detailsEtag: d.etag }; }
+        catch (e) { return { ...base, detailsError: safeMsg(e) }; }
+      });
     },
-    async getDetails(id) {
-      const { json } = await c.req("GET", `/planner/tasks/${id}/details`);
-      return { description: json.description ?? null, etag: json["@odata.etag"] };
-    },
+    getDetails,
     async createTask(body) {
       const { json } = await c.req("POST", "/planner/tasks", body);
       return { id: json.id, etag: json["@odata.etag"] };
@@ -138,6 +163,19 @@ export function plannerPort(c: ReturnType<typeof makeGraphClient>): GraphPort {
     async patchDetails(id, etag, body) {
       const r = await c.req("PATCH", `/planner/tasks/${id}/details`, body, etag, "return=representation");
       return { etag: r.json["@odata.etag"] ?? r.etag };
+    },
+    async getPlan(planId) {
+      const { json } = await c.req("GET", `/planner/plans/${planId}?$select=id,title,container,owner`);
+      const g = json.container?.type === "group" || !json.container ? (json.container?.containerId ?? json.owner ?? null) : null;
+      return { id: json.id, title: json.title ?? null, groupId: g ? String(g).toLowerCase() : null };
+    },
+    async listBuckets(planId) {
+      const rows = await c.list<{ id: string; name: string }>(`/planner/plans/${planId}/buckets`, 10);
+      return rows.map((b) => ({ id: b.id, name: b.name }));
+    },
+    async createBucket(planId, name) {
+      const { json } = await c.req("POST", "/planner/buckets", { name, planId, orderHint: " !" });
+      return { id: json.id, name: json.name };
     },
   };
 }

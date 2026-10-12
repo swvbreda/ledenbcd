@@ -3314,36 +3314,48 @@ export type Database = {
       }
       planner_project_links: {
         Row: {
+          bucket_id: string | null
+          bucket_name: string | null
           group_id: string
           last_error: string | null
+          last_outcome: string | null
           last_success_at: string | null
           last_sync_at: string | null
           linked_at: string
           linked_by: string
+          lock_token: string | null
           lock_until: string | null
           plan_id: string
           plan_title: string | null
           project_id: string
         }
         Insert: {
+          bucket_id?: string | null
+          bucket_name?: string | null
           group_id: string
           last_error?: string | null
+          last_outcome?: string | null
           last_success_at?: string | null
           last_sync_at?: string | null
           linked_at?: string
           linked_by?: string
+          lock_token?: string | null
           lock_until?: string | null
           plan_id: string
           plan_title?: string | null
           project_id: string
         }
         Update: {
+          bucket_id?: string | null
+          bucket_name?: string | null
           group_id?: string
           last_error?: string | null
+          last_outcome?: string | null
           last_success_at?: string | null
           last_sync_at?: string | null
           linked_at?: string
           linked_by?: string
+          lock_token?: string | null
           lock_until?: string | null
           plan_id?: string
           plan_title?: string | null
@@ -3368,10 +3380,12 @@ export type Database = {
           finished_at: string | null
           id: string
           ok: boolean | null
+          outcome: string | null
           project_id: string | null
           started_at: string
           updated_local: number
           updated_remote: number
+          warnings: number
         }
         Insert: {
           actor?: string
@@ -3381,10 +3395,12 @@ export type Database = {
           finished_at?: string | null
           id?: string
           ok?: boolean | null
+          outcome?: string | null
           project_id?: string | null
           started_at?: string
           updated_local?: number
           updated_remote?: number
+          warnings?: number
         }
         Update: {
           actor?: string
@@ -3394,10 +3410,12 @@ export type Database = {
           finished_at?: string | null
           id?: string
           ok?: boolean | null
+          outcome?: string | null
           project_id?: string | null
           started_at?: string
           updated_local?: number
           updated_remote?: number
+          warnings?: number
         }
         Relationships: [
           {

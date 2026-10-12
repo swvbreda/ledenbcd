@@ -141,6 +141,13 @@
       "when": 1791805055188,
       "tag": "0019_planner_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791805600665,
+      "tag": "0020_planner_bucket_scope",
+      "breakpoints": true
     }
   ]
 }
