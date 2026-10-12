@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
-import { topicalConfirmSource, topicalConfirmTitle, topicalLookupLists, topicalScan, topicalStatus } from "@/lib/topical.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { canPushCompletion, completionSummary, pendingExternalCompletion } from "@/lib/topicalLink";
+import { topicalComplete, topicalConfirmSource, topicalConfirmTitle, topicalLookupLists, topicalScan, topicalStatus } from "@/lib/topical.functions";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Onbekende fout");
 type ScanResult = Awaited<ReturnType<typeof topicalScan>>;
 
-export default function TopicalPanel({ tasks }: { tasks: { id: string; title: string }[] }) {
+export default function TopicalPanel({ tasks, onChanged }: { tasks: { id: string; title: string; status: string }[]; onChanged?: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const statusFn = useServerFn(topicalStatus);
@@ -22,6 +24,21 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
   const confirmFn = useServerFn(topicalConfirmSource);
   const scanFn = useServerFn(topicalScan);
   const titleFn = useServerFn(topicalConfirmTitle);
+  const completeFn = useServerFn(topicalComplete);
+  const linksQ = useQuery({
+    queryKey: ["topical-links", user?.id], enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("topical_task_links").select("task_id,todo_task_id,planner_task_id,todo_completed_at,planner_completed_at,last_error");
+      if (error) throw error;
+      return data as { task_id: string; todo_task_id: string | null; planner_task_id: string | null; todo_completed_at: string | null; planner_completed_at: string | null; last_error: string | null }[];
+    },
+  });
+  const [pushMsg, setPushMsg] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const push = useMutation({
+    mutationFn: (taskId: string) => completeFn({ data: { taskId } }),
+    onSuccess: (r, id) => { setPushMsg((m) => ({ ...m, [id]: completionSummary(r) })); qc.invalidateQueries({ queryKey: ["topical-links"] }); refresh(); onChanged?.(); },
+    onError: (e, id) => setPushMsg((m) => ({ ...m, [id]: { ok: false, text: errMsg(e) } })),
+  });
   const statusQ = useQuery({ queryKey: ["topical-status", user?.id], queryFn: () => statusFn(), enabled: !!user?.id });
   const [email, setEmail] = useState("simone@coffeeshopbond.nl");
   const [found, setFound] = useState<Awaited<ReturnType<typeof topicalLookupLists>> | null>(null);
@@ -121,6 +138,39 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
             ))}
           </div>
         )}
+      </div>
+      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <h4 className="font-medium">Eerder lokaal afgerond, nog niet extern bevestigd</h4>
+        {linksQ.isLoading ? <p className="text-sm text-muted-foreground">Laden…</p>
+          : linksQ.error ? <p className="text-sm text-destructive">{errMsg(linksQ.error)}</p>
+          : (() => {
+            const pending = pendingExternalCompletion(tasks, linksQ.data ?? []);
+            if (!pending.length) return <p className="text-sm text-muted-foreground">Geen.</p>;
+            return (
+              <>
+                <p className="text-sm text-muted-foreground">Deze {pending.length} acties staan lokaal op afgerond, maar To Do en Planner zijn niet bevestigd. Ze zijn dus nog niet overal afgerond.</p>
+                <ul className="space-y-2">
+                  {pending.map((t) => {
+                    const l = linksQ.data?.find((x) => x.task_id === t.id);
+                    const ok = canPushCompletion(!!s?.canWrite, l);
+                    const why = !s?.canWrite ? "Wacht op Microsoft-recht Tasks.ReadWrite.All (beheerderstoestemming)." : !l?.todo_task_id ? "To Do-taak nog niet gekoppeld." : !l?.planner_task_id ? "Planner-taak nog niet gekoppeld." : null;
+                    return (
+                      <li key={t.id} className="rounded border border-border p-2 space-y-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <p className="flex-1 break-words text-sm font-medium">{t.title}</p>
+                          <Button size="sm" variant="outline" disabled={!ok || push.isPending} onClick={() => push.mutate(t.id)}>
+                            {push.isPending && push.variables === t.id && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Afronding doorzetten
+                          </Button>
+                        </div>
+                        {why && <p className="text-xs text-muted-foreground">{why}</p>}
+                        {(pushMsg[t.id] || l?.last_error) && <p role="status" className={`text-xs ${pushMsg[t.id]?.ok ? "text-muted-foreground" : "text-destructive"}`}>{pushMsg[t.id]?.text ?? l?.last_error}</p>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            );
+          })()}
       </div>
       {error && <p role="alert" className="text-sm text-destructive flex gap-2"><AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />{error}</p>}
     </div>

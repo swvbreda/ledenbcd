@@ -198,3 +198,20 @@ export function completionSummary(r: CompletionResult): { ok: boolean; text: str
   const parts = [r.todo.state === "failed" ? r.todo.message : `To Do: ${r.todo.message}`, r.planner.state === "failed" ? r.planner.message : `Planner: ${r.planner.message}`];
   return { ok: false, text: `Niet volledig afgerond; taak blijft lokaal open. ${parts.join(" ")} Opnieuw proberen herhaalt alleen de mislukte stap.` };
 }
+
+/** Lokaal afgeronde Topical-taken zonder vastgelegde externe bevestiging van zowel To Do als Planner. */
+export function pendingExternalCompletion<T extends { id: string; status: string }>(
+  tasks: T[], links: Pick<TopicalLink, "task_id" | "todo_completed_at" | "planner_completed_at">[],
+): T[] {
+  const byId = new Map(links.map((l) => [l.task_id, l]));
+  return tasks.filter((t) => {
+    if (t.status !== "afgerond") return false;
+    const l = byId.get(t.id);
+    return !(l?.todo_completed_at && l?.planner_completed_at);
+  });
+}
+
+/** "Afronding doorzetten" kan alleen met schrijfrecht en beide id-koppelingen. */
+export function canPushCompletion(canWrite: boolean, link: Pick<TopicalLink, "todo_task_id" | "planner_task_id"> | undefined): boolean {
+  return canWrite && !!link?.todo_task_id && !!link?.planner_task_id;
+}

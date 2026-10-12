@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { GraphError } from "@/lib/plannerSync";
 import { assertGraphUrl } from "@/lib/plannerGraph.server";
 import {
-  skipForGenericPlanner, todoHasRef, completeTopicalTask, completionBlocker, completionSummary, matchPlanner, matchTodo, parseTopicalRef, textHasTopicalRef,
+  pendingExternalCompletion, canPushCompletion, skipForGenericPlanner, todoHasRef, completeTopicalTask, completionBlocker, completionSummary, matchPlanner, matchTodo, parseTopicalRef, textHasTopicalRef,
   type CompletionPort, type TopicalLink,
 } from "@/lib/topicalLink";
 
@@ -191,5 +191,22 @@ describe("beveiliging", () => {
     expect(sql).toMatch(/todo_completed_at IS NOT NULL AND l.planner_completed_at IS NOT NULL/);
     expect(sql.match(/has_role\(auth.uid\(\),'admin'\)/g)!.length).toBeGreaterThanOrEqual(6);
     expect(sql).not.toMatch(/TO anon/);
+  });
+});
+
+describe("eerder lokaal afgerond", () => {
+  const tasks = [{ id: "a", status: "afgerond" }, { id: "b", status: "afgerond" }, { id: "c", status: "afgerond" }, { id: "d", status: "te_doen" }];
+  it("lokaal afgerond zonder (volledige) bevestiging is pending; beide bevestigd en open taken niet", () => {
+    const r = pendingExternalCompletion(tasks, [
+      { task_id: "b", todo_completed_at: "x", planner_completed_at: null },
+      { task_id: "c", todo_completed_at: "x", planner_completed_at: "y" },
+    ]);
+    expect(r.map((t) => t.id)).toEqual(["a", "b"]);
+  });
+  it("doorzetten alleen met schrijfrecht én beide koppelingen", () => {
+    expect(canPushCompletion(false, { todo_task_id: "t", planner_task_id: "p" })).toBe(false);
+    expect(canPushCompletion(true, { todo_task_id: "t", planner_task_id: null })).toBe(false);
+    expect(canPushCompletion(true, undefined)).toBe(false);
+    expect(canPushCompletion(true, { todo_task_id: "t", planner_task_id: "p" })).toBe(true);
   });
 });
