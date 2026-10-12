@@ -16,6 +16,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus } from "lucide-react";
 import PlannerPanel from "@/components/projecten/PlannerPanel";
+import TopicalPanel from "@/components/projecten/TopicalPanel";
+import { useServerFn } from "@tanstack/react-start";
+import { topicalComplete } from "@/lib/topical.functions";
+import { completionSummary } from "@/lib/topicalLink";
 import {
   filterTasks,
   isOverdue,
@@ -35,7 +39,7 @@ type Project = {
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
-  deadline: string | null; priority: TaskPriority; status: TaskStatus;
+  deadline: string | null; priority: TaskPriority; status: TaskStatus; source_system?: string | null; source_ref?: string | null;
 };
 type Staff = { user_id: string; email: string };
 
@@ -112,6 +116,13 @@ function ProjectenInner() {
     onSuccess: () => { toast.success("Taak opgeslagen"); setEditTask(null); invalidate(); },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
   });
+  const topicalFn = useServerFn(topicalComplete);
+  const [topicalMsg, setTopicalMsg] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const completeTopical = useMutation({
+    mutationFn: (id: string) => topicalFn({ data: { taskId: id } }),
+    onSuccess: (r, id) => { const s = completionSummary(r); setTopicalMsg((m) => ({ ...m, [id]: s })); s.ok ? toast.success("Topical-actie afgerond") : toast.error("Niet volledig afgerond"); invalidate(); },
+    onError: (e, id) => setTopicalMsg((m) => ({ ...m, [id]: { ok: false, text: "Niet afgerond, taak blijft lokaal open: " + errMsg(e) } })),
+  });
   const completeTask = useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await db.from("internal_tasks").update({ status: "afgerond" }).eq("id", id).select("id");
@@ -167,6 +178,7 @@ function ProjectenInner() {
           <TabsTrigger value="taken">Taken</TabsTrigger>
           <TabsTrigger value="projecten">Projecten</TabsTrigger>
           <TabsTrigger value="planner">Planner</TabsTrigger>
+          <TabsTrigger value="topical">Topical</TabsTrigger>
         </TabsList>
 
         <TabsContent value="taken" className="space-y-4">
@@ -220,12 +232,17 @@ function ProjectenInner() {
                         <span>{projectTitle(t.project_id)}</span>
                         <span>· {staffName(t.assignee_id)}</span>
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
+                        {t.source_system === "topical" && <Badge variant="secondary">Topical {t.source_ref}</Badge>}
                       </div>
+                      {t.source_system === "topical" && t.status !== "afgerond" && !topicalMsg[t.id] && (
+                        <p className="mt-1 text-xs text-muted-foreground">Afronden gaat via Microsoft To Do en Planner; lokaal pas afgerond als beide bevestigd zijn. Andere lokale wijzigingen werken niet door naar To Do, Planner of Topical.</p>
+                      )}
+                      {topicalMsg[t.id] && <p role="status" className={`mt-1 text-xs ${topicalMsg[t.id].ok ? "text-muted-foreground" : "text-destructive"}`}>{topicalMsg[t.id].text}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {t.status !== "afgerond" && (
-                        <Button size="sm" variant="outline" disabled={completeTask.isPending} onClick={() => completeTask.mutate(t.id)}>
-                          <CheckCircle2 className="h-4 w-4 mr-1" />Afronden
+                        <Button size="sm" variant="outline" disabled={completeTask.isPending || completeTopical.isPending} onClick={() => (t.source_system === "topical" ? completeTopical.mutate(t.id) : completeTask.mutate(t.id))}>
+                          {completeTopical.isPending && completeTopical.variables === t.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}{t.source_system === "topical" && topicalMsg[t.id] && !topicalMsg[t.id].ok ? "Opnieuw proberen" : "Afronden"}
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" aria-label="Taak bewerken" onClick={() => setEditTask(t)}><Pencil className="h-4 w-4" /></Button>
@@ -283,6 +300,10 @@ function ProjectenInner() {
             tasks={(tasksQ.data ?? []).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
             onSynced={invalidate}
           />
+        </TabsContent>
+
+        <TabsContent value="topical" className="space-y-4">
+          <TopicalPanel tasks={(tasksQ.data ?? []).filter((t) => t.source_system === "topical").map((t) => ({ id: t.id, title: t.title }))} />
         </TabsContent>
       </Tabs>
 

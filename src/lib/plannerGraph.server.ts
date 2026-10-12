@@ -10,6 +10,8 @@ const ALLOWED = [
   /^\/groups\/[0-9a-fA-F-]{36}(\/planner\/plans)?(\?.*)?$/,
   /^\/groups\?.*$/,
   /^\/users\/[^/?#]+(\?.*)?$/,
+  // Microsoft To Do van één expliciet bevestigd account (Entra-GUID), alleen lijsten/taken.
+  /^\/users\/[0-9a-fA-F-]{36}\/todo\/lists(\/[A-Za-z0-9_=-]+(\/tasks(\/[A-Za-z0-9_=-]+)?)?)?(\?.*)?$/,
 ];
 
 /** Alleen vaste Microsoft-origin en toegestane paden; nextLink ook gecontroleerd. */
@@ -176,6 +178,42 @@ export function plannerPort(c: ReturnType<typeof makeGraphClient>, opts: { detai
     async createBucket(planId, name) {
       const { json } = await c.req("POST", "/planner/buckets", { name, planId, orderHint: " !" });
       return { id: json.id, name: json.name };
+    },
+  };
+}
+
+type RawTodo = { id: string; "@odata.etag"?: string; title?: string; status?: string; body?: { content?: string }; linkedResources?: { externalId?: string; webUrl?: string }[] };
+const asTodo = (t: RawTodo) => ({
+  id: t.id, title: t.title ?? "", status: t.status ?? "", etag: t["@odata.etag"] ?? "",
+  body: [t.body?.content ?? "", ...(t.linkedResources ?? []).map((l) => l.webUrl ?? "")].join("\n"),
+  linkedExternalIds: (t.linkedResources ?? []).map((l) => String(l.externalId ?? "")).filter(Boolean),
+});
+const ID = /^[A-Za-z0-9_=-]+$/;
+function todoPath(userId: string, listId?: string, taskId?: string) {
+  if (!/^[0-9a-fA-F-]{36}$/.test(userId) || (listId && !ID.test(listId)) || (taskId && !ID.test(taskId))) throw new GraphError(0, "Ongeldige To Do-id");
+  return `/users/${userId}/todo/lists${listId ? `/${listId}/tasks${taskId ? `/${taskId}` : ""}` : ""}`;
+}
+
+/** Microsoft To Do (app-only, vereist Tasks.Read.All / Tasks.ReadWrite.All). */
+export function todoPort(c: ReturnType<typeof makeGraphClient>) {
+  return {
+    async listLists(userId: string) {
+      const rows = await c.list<{ id: string; displayName: string; wellknownListName?: string }>(todoPath(userId), 10);
+      return rows.map((r) => ({ id: r.id, name: r.displayName, wellknown: r.wellknownListName ?? null }));
+    },
+    async listTasks(userId: string, listId: string) {
+      const rows = await c.list<RawTodo>(`${todoPath(userId, listId)}?$expand=linkedResources&$top=100`, 30);
+      return rows.map(asTodo);
+    },
+    async getTodo(userId: string, listId: string, taskId: string) {
+      const { json, etag } = await c.req("GET", `${todoPath(userId, listId, taskId)}?$expand=linkedResources`);
+      const t = asTodo(json as RawTodo);
+      if (!t.etag && etag) t.etag = etag;
+      if (!t.etag) throw new GraphError(0, "ETag van To Do-taak ontbreekt");
+      return t;
+    },
+    async completeTodo(userId: string, listId: string, taskId: string, etag: string) {
+      await c.req("PATCH", todoPath(userId, listId, taskId), { status: "completed" }, etag);
     },
   };
 }
