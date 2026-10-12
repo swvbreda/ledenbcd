@@ -138,7 +138,7 @@ function ProjectenInner() {
       const { error } = await db.rpc("topical_complete_local_only", { _task_id: id });
       if (error) throw error;
     },
-    onSuccess: (_r, id) => { setChoiceFor(null); setTopicalMsg((m) => { const n = { ...m }; delete n[id]; return n; }); toast.success("Alleen in het ledenbestand afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
+    onSuccess: (_r, id) => { setChoiceFor(null); setTopicalMsg((m) => { const n = { ...m }; delete n[id]; return n; }); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
     onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const completeTask = useMutation({
@@ -251,11 +251,7 @@ function ProjectenInner() {
                         <span>· {staffName(t.assignee_id)}</span>
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
                         {t.source_system === "topical" && <Badge variant="secondary">Topical {t.source_ref}</Badge>}
-                        {(() => { const b = localOnlyBadge(t, linksQ.data?.find((l) => l.task_id === t.id)); return b ? <Badge variant="outline" className="border-destructive text-destructive whitespace-normal">{b}</Badge> : null; })()}
                       </div>
-                      {t.source_system === "topical" && t.status !== "afgerond" && !topicalMsg[t.id] && (
-                        <p className="mt-1 text-xs text-muted-foreground">Bij afronden kiest u: overal afronden (via Microsoft To Do en Planner) of alleen in het ledenbestand. Andere lokale wijzigingen werken niet door naar To Do, Planner of Topical.</p>
-                      )}
                       {topicalMsg[t.id] && <p role="status" className={`mt-1 text-xs ${topicalMsg[t.id].ok ? "text-muted-foreground" : "text-destructive"}`}>{topicalMsg[t.id].text}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">
