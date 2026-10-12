@@ -9,27 +9,49 @@ export function parseTopicalRef(description: string | null | undefined): string 
   return TOPICAL_SOURCE_LINE.exec(first)?.[1] ?? null;
 }
 
-const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Exact onze eigen bronregel (eerste regel), zoals bij de import en in de Planner-notities. */
+export function firstLineHasRef(text: string | null | undefined, ref: string): boolean {
+  return parseTopicalRef(text) === ref;
+}
 
-/**
- * Betrouwbare bron-id in externe tekst: alleen "actie <nr>" (met optioneel #) of een Topical-URL
- * waarin het nummer een eigen padsegment/parameter is. Losse getallen tellen niet.
- */
+export function isTopicalHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  return h === "topicalmeetings.com" || h.endsWith(".topicalmeetings.com");
+}
+
+/** Echte Topical-URL (https, geldig domein) waarvan een padsegment of queryparameter exact het id is. */
+export function topicalUrlHasRef(raw: string, ref: string): boolean {
+  let u: URL;
+  try { u = new URL(raw); } catch { return false; }
+  if (u.protocol !== "https:" || u.username || u.password || !isTopicalHost(u.hostname)) return false;
+  return u.pathname.split("/").some((seg) => decodeURIComponent(seg) === ref) || [...u.searchParams.values()].includes(ref);
+}
+
+const urlsIn = (text: string) => text.match(/https:\/\/[^\s"'<>]+/gi)?.map((x) => x.replace(/&amp;/g, "&").replace(/[).,;]+$/, "")) ?? [];
+
+/** Betrouwbare bron-id: exacte eigen bronregel of een echte Topical-URL met exact id. Losse "actie N" telt niet. */
 export function textHasTopicalRef(text: string | null | undefined, ref: string): boolean {
   if (!text || !/^[0-9]{1,12}$/.test(ref)) return false;
-  const r = esc(ref);
-  if (new RegExp(`\\bactie\\s*#?\\s*${r}(?![0-9])`, "i").test(text)) return true;
-  return new RegExp(`https?://[^\\s"'<>]*topical[^\\s"'<>]*[/=]${r}(?![0-9A-Za-z])`, "i").test(text);
+  return firstLineHasRef(text, ref) || urlsIn(text).some((u) => topicalUrlHasRef(u, ref));
+}
+
+/** Generieke Planner-import: herkenbare Topical-taak of niet te controleren (details ontbreken) = overslaan. */
+export function skipForGenericPlanner(t: { description: string | null; detailsError?: string | null }): boolean {
+  if (t.detailsError || t.description === null) return true;
+  return /^Bron: Topical BCD — actie [0-9]{1,12}\s*$/.test(t.description.split("\n")[0]);
 }
 
 export const normTitle = (s: string) => s.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
 
 export interface LocalSourceTask { id: string; title: string; source_ref: string }
-export interface TodoTaskLite { id: string; title: string; body: string; status: string; linkedExternalIds: string[] }
+export interface TodoLinkedResource { applicationName: string; externalId: string; webUrl: string }
+export interface TodoTaskLite { id: string; title: string; body: string; status: string; linkedResources: TodoLinkedResource[]; due?: string | null }
 export interface PlannerTaskLite { id: string; title: string; description: string | null; planId: string }
 
 export function todoHasRef(t: TodoTaskLite, ref: string) {
-  return t.linkedExternalIds.includes(ref) || textHasTopicalRef(t.title, ref) || textHasTopicalRef(t.body, ref);
+  // linkedResource alleen met Topical-provider, exact id én echte Topical-URL.
+  const lr = t.linkedResources.some((l) => /topical/i.test(l.applicationName) && l.externalId === ref && topicalUrlHasRef(l.webUrl, ref));
+  return lr || firstLineHasRef(t.body, ref) || urlsIn(`${t.title}\n${t.body}`).some((u) => topicalUrlHasRef(u, ref));
 }
 
 export type TodoCandidate =
@@ -65,7 +87,7 @@ export function matchPlanner(locals: LocalSourceTask[], remote: PlannerTaskLite[
   const byRemote = new Map<string, number>();
   const hits = new Map<string, PlannerTaskLite[]>();
   for (const l of locals) {
-    const h = pool.filter((r) => textHasTopicalRef(r.description, l.source_ref));
+    const h = pool.filter((r) => firstLineHasRef(r.description, l.source_ref));
     hits.set(l.id, h);
     for (const r of h) byRemote.set(r.id, (byRemote.get(r.id) ?? 0) + 1);
   }
@@ -125,43 +147,49 @@ export function completionBlocker(link: TopicalLink | null, canWrite: boolean, p
 }
 
 /**
- * Idempotent: reeds bevestigde stappen worden overgeslagen. Elke schrijfactie gebruikt de zojuist gelezen ETag (If-Match),
- * controleert dat de externe taak nog dezelfde bron-id draagt, en lokaal wordt pas afgerond als beide bevestigd zijn.
+ * Leest altijd de actuele externe stand (ook bij retry; historische tijdstempels tellen niet als huidige stand).
+ * Alleen een nu-al-voltooide taak slaat PATCH over. PATCH uitsluitend met zojuist gelezen ETag (If-Match); daarna
+ * opnieuw lezen en pas als voltooid/100% bevestigd telt de stap. Lokaal pas afgerond als beide in déze run bevestigd zijn.
  */
 export async function completeTopicalTask(link: TopicalLink, port: CompletionPort, db: CompletionDb, planId: string): Promise<CompletionResult> {
   const res: CompletionResult = { todo: { state: "skipped", message: "" }, planner: { state: "skipped", message: "" }, local: "unchanged" };
   const errors: string[] = [];
-  let todoAt = link.todo_completed_at, plannerAt = link.planner_completed_at;
+  let todoOk = false, plannerOk = false;
 
-  if (todoAt) res.todo = { state: "already", message: "Eerder al naar Microsoft To Do verstuurd." };
-  else {
-    try {
-      const t = await port.getTodo(link.todo_user_id!, link.todo_list_id!, link.todo_task_id!);
-      if (link.todo_match === "source_id" && !todoHasRef(t, link.source_ref)) throw new Error("To Do-taak draagt de bron-id niet meer; koppeling opnieuw controleren.");
-      if (t.status !== "completed") await port.completeTodo(link.todo_user_id!, link.todo_list_id!, link.todo_task_id!, t.etag);
-      todoAt = db.now();
-      res.todo = { state: t.status === "completed" ? "already" : "done", message: TODO_SENT_MSG };
-    } catch (e) {
-      const m = stepError(e, "Microsoft To Do"); errors.push(m); res.todo = { state: "failed", message: m };
+  try {
+    const t = await port.getTodo(link.todo_user_id!, link.todo_list_id!, link.todo_task_id!);
+    if (link.todo_match === "source_id" && !todoHasRef(t, link.source_ref)) throw new Error("To Do-taak draagt de bron-id niet meer; koppeling opnieuw controleren.");
+    if (t.status !== "completed") {
+      if (!t.etag) throw new Error("ETag ontbreekt; niet verstuurd.");
+      await port.completeTodo(link.todo_user_id!, link.todo_list_id!, link.todo_task_id!, t.etag);
+      const after = await port.getTodo(link.todo_user_id!, link.todo_list_id!, link.todo_task_id!);
+      if (after.status !== "completed") throw new Error("Na verzenden staat de To Do-taak niet op voltooid.");
     }
+    todoOk = true;
+    res.todo = { state: t.status === "completed" ? "already" : "done", message: TODO_SENT_MSG };
+  } catch (e) {
+    const m = stepError(e, "Microsoft To Do"); errors.push(m); res.todo = { state: "failed", message: m };
   }
 
-  if (plannerAt) res.planner = { state: "already", message: "Planner stond al op 100%." };
-  else {
-    try {
-      const p = await port.getPlanner(link.planner_task_id!);
-      if (p.planId !== planId) throw new Error("Planner-taak hoort niet (meer) bij het vastgestelde plan.");
-      if (!textHasTopicalRef(p.description, link.source_ref)) throw new Error("Planner-notitie draagt de bron-id niet meer; koppeling opnieuw controleren.");
-      if (p.percentComplete !== 100) await port.completePlanner(link.planner_task_id!, p.etag);
-      plannerAt = db.now();
-      res.planner = { state: p.percentComplete === 100 ? "already" : "done", message: "Planner-taak op 100% gezet." };
-    } catch (e) {
-      const m = stepError(e, "Planner"); errors.push(m); res.planner = { state: "failed", message: m };
+  try {
+    const p = await port.getPlanner(link.planner_task_id!);
+    if (p.planId !== planId) throw new Error("Planner-taak hoort niet (meer) bij het vastgestelde plan.");
+    if (!firstLineHasRef(p.description, link.source_ref)) throw new Error("Planner-notitie draagt de bron-id niet meer; koppeling opnieuw controleren.");
+    if (p.percentComplete !== 100) {
+      if (!p.etag) throw new Error("ETag ontbreekt; niet verstuurd.");
+      await port.completePlanner(link.planner_task_id!, p.etag);
+      const after = await port.getPlanner(link.planner_task_id!);
+      if (after.percentComplete !== 100) throw new Error("Na verzenden staat de Planner-taak niet op 100%.");
     }
+    plannerOk = true;
+    res.planner = { state: p.percentComplete === 100 ? "already" : "done", message: "Planner-taak staat op 100%." };
+  } catch (e) {
+    const m = stepError(e, "Planner"); errors.push(m); res.planner = { state: "failed", message: m };
   }
 
-  await db.saveLink({ task_id: link.task_id, todo_completed_at: todoAt, planner_completed_at: plannerAt, last_error: errors.length ? errors.join(" | ").slice(0, 1000) : null });
-  if (todoAt && plannerAt) { await db.markLocalDone(); res.local = "afgerond"; }
+  const now = db.now();
+  await db.saveLink({ task_id: link.task_id, todo_completed_at: todoOk ? now : null, planner_completed_at: plannerOk ? now : null, last_error: errors.length ? errors.join(" | ").slice(0, 1000) : null });
+  if (todoOk && plannerOk) { await db.markLocalDone(); res.local = "afgerond"; }
   return res;
 }
 

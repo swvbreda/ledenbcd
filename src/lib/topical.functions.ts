@@ -134,11 +134,11 @@ export const topicalScan = createServerFn({ method: "POST" })
     for (const c of planC) if (c.kind === "source_id") {
       await save(c.taskId, { planner_plan_id: PLANNER_TARGET_PLAN_ID, planner_task_id: c.plannerId, planner_match: "source_id" }); autoPlanner++;
     }
-    const title = (id: string) => todos.find((t) => t.id === id)?.title ?? id;
+    const cand = (id: string) => { const t = todos.find((x) => x.id === id); return { id, title: t?.title ?? id, status: t?.status ?? "", due: t?.due ?? null }; };
     return {
-      todoTotal: todos.length, plannerTotal: planner.length, detailsFailed, autoTodo, autoPlanner,
+      account: source.account_display, listName: source.list_name, todoTotal: todos.length, plannerTotal: planner.length, detailsFailed, autoTodo, autoPlanner,
       review: todoC.filter((c) => c.kind !== "source_id").map((c) => ({
-        taskId: c.taskId, kind: c.kind, candidates: "todoIds" in c ? c.todoIds.map((id) => ({ id, title: title(id) })) : [],
+        taskId: c.taskId, kind: c.kind, candidates: "todoIds" in c ? c.todoIds.map(cand) : [],
       })),
       plannerMissing: planC.filter((c) => c.kind !== "source_id").map((c) => ({ taskId: c.taskId, kind: c.kind, count: c.plannerIds.length })),
     };
@@ -161,6 +161,8 @@ export const topicalConfirmTitle = createServerFn({ method: "POST" })
     if (normTitle(t.title) !== normTitle(local.title) && !todoHasRef(t, local.source_ref)) throw new Error("Titel komt niet (meer) overeen; niet gekoppeld.");
     const { data: used } = await ctx.supabase.from("topical_task_links").select("task_id").eq("todo_task_id", data.todoId).neq("task_id", data.taskId).maybeSingle();
     if (used) throw new Error("Deze To Do-taak is al aan een andere Topical-actie gekoppeld.");
+    const { data: own } = await ctx.supabase.from("topical_task_links").select("todo_task_id").eq("task_id", data.taskId).maybeSingle();
+    if (own?.todo_task_id) throw new Error("Deze actie heeft al een To Do-koppeling; die wordt niet overschreven.");
     const { error: e2 } = await ctx.supabase.from("topical_task_links").upsert({
       task_id: local.id, source_ref: local.source_ref, todo_user_id: source.entra_user_id, todo_list_id: source.list_id,
       todo_task_id: data.todoId, todo_match: "title_confirmed", confirmed_by: ctx.userId, updated_at: new Date().toISOString(),
@@ -193,7 +195,7 @@ export const topicalComplete = createServerFn({ method: "POST" })
       async getPlanner(id) {
         const { json } = await client.req("GET", `/planner/tasks/${id}?$select=id,planId,percentComplete`);
         const d = await pp.getDetails(id);
-        return { etag: json["@odata.etag"], planId: json.planId, percentComplete: json.percentComplete ?? 0, description: d.description };
+        return { etag: json["@odata.etag"] ?? "", planId: json.planId, percentComplete: json.percentComplete ?? 0, description: d.description };
       },
       async completePlanner(id, etag) { await pp.patchTask(id, etag, { percentComplete: 100 }); },
     }, {

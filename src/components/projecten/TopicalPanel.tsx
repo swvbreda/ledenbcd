@@ -81,6 +81,7 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
 
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
         <h4 className="font-medium">1. Microsoft-account en To Do-lijst bevestigen</h4>
+        <p className="text-xs text-muted-foreground">Wisselen naar een ander account (bijv. ander bestuurslid) geldt alleen voor nieuwe koppelingen; bestaande koppelingen houden hun eigen account en lijst.</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <Input value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Microsoft-account" />
           <Button variant="outline" onClick={() => lookup.mutate()} disabled={lookup.isPending}>{lookup.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Lijsten ophalen</Button>
@@ -105,6 +106,7 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
         </Button>
         {scan && (
           <div className="text-sm space-y-2">
+            <p>Bron: {scan.account ?? "account"} — lijst "{scan.listName ?? "?"}"</p>
             <p>To Do-taken gelezen: {scan.todoTotal} · Planner-taken: {scan.plannerTotal} · automatisch gekoppeld: To Do {scan.autoTodo}, Planner {scan.autoPlanner}</p>
             {scan.detailsFailed > 0 && <p className="text-destructive">{scan.detailsFailed} Planner-notities konden niet gelezen worden; die taken zijn niet gekoppeld.</p>}
             {scan.plannerMissing.length > 0 && <p className="text-destructive">Geen unieke Planner-taak voor: {scan.plannerMissing.map((m) => `${title(m.taskId)}${m.kind === "ambiguous" ? ` (${m.count} kandidaten)` : ""}`).join("; ")}</p>}
@@ -113,7 +115,7 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
                 <p className="font-medium">{title(r.taskId)}</p>
                 <p className="text-muted-foreground">{r.kind === "none" ? "Geen kandidaat in To Do." : r.kind === "ambiguous" ? "Meerdere To Do-taken dragen deze bron-id; niet automatisch gekoppeld." : "Alleen titel komt overeen — handmatig bevestigen."}</p>
                 {r.kind === "title_only" && r.candidates.map((c) => (
-                  <Button key={c.id} size="sm" variant="outline" disabled={confirmTitle.isPending} onClick={() => confirmTitle.mutate({ taskId: r.taskId, todoId: c.id })}>Koppel aan "{c.title}"</Button>
+                  <Button key={c.id} size="sm" variant="outline" disabled={confirmTitle.isPending} onClick={() => confirmTitle.mutate({ taskId: r.taskId, todoId: c.id })}>Koppel aan "{c.title}" · {c.status || "status onbekend"} · {c.due ? `deadline ${c.due}` : "geen deadline"} · id …{c.id.slice(-8)}</Button>
                 ))}
               </div>
             ))}
