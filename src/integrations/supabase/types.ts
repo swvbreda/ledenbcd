@@ -3312,6 +3312,192 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_project_links: {
+        Row: {
+          group_id: string
+          last_error: string | null
+          last_success_at: string | null
+          last_sync_at: string | null
+          linked_at: string
+          linked_by: string
+          lock_until: string | null
+          plan_id: string
+          plan_title: string | null
+          project_id: string
+        }
+        Insert: {
+          group_id: string
+          last_error?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          linked_at?: string
+          linked_by?: string
+          lock_until?: string | null
+          plan_id: string
+          plan_title?: string | null
+          project_id: string
+        }
+        Update: {
+          group_id?: string
+          last_error?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          linked_at?: string
+          linked_by?: string
+          lock_until?: string | null
+          plan_id?: string
+          plan_title?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_sync_log: {
+        Row: {
+          actor: string
+          conflicts: number
+          created_remote: number
+          error: string | null
+          finished_at: string | null
+          id: string
+          ok: boolean | null
+          project_id: string | null
+          started_at: string
+          updated_local: number
+          updated_remote: number
+        }
+        Insert: {
+          actor?: string
+          conflicts?: number
+          created_remote?: number
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          project_id?: string | null
+          started_at?: string
+          updated_local?: number
+          updated_remote?: number
+        }
+        Update: {
+          actor?: string
+          conflicts?: number
+          created_remote?: number
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          project_id?: string | null
+          started_at?: string
+          updated_local?: number
+          updated_remote?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_sync_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_task_links: {
+        Row: {
+          attempt_started_at: string | null
+          attempt_token: string | null
+          details_etag: string | null
+          last_error: string | null
+          last_local_hash: string | null
+          last_remote_hash: string | null
+          last_synced_at: string | null
+          local_dirty_at: string | null
+          plan_id: string
+          planner_task_id: string | null
+          seen_local_hash: string | null
+          seen_remote_hash: string | null
+          state: string
+          task_etag: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_started_at?: string | null
+          attempt_token?: string | null
+          details_etag?: string | null
+          last_error?: string | null
+          last_local_hash?: string | null
+          last_remote_hash?: string | null
+          last_synced_at?: string | null
+          local_dirty_at?: string | null
+          plan_id: string
+          planner_task_id?: string | null
+          seen_local_hash?: string | null
+          seen_remote_hash?: string | null
+          state?: string
+          task_etag?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_started_at?: string | null
+          attempt_token?: string | null
+          details_etag?: string | null
+          last_error?: string | null
+          last_local_hash?: string | null
+          last_remote_hash?: string | null
+          last_synced_at?: string | null
+          local_dirty_at?: string | null
+          plan_id?: string
+          planner_task_id?: string | null
+          seen_local_hash?: string | null
+          seen_remote_hash?: string | null
+          state?: string
+          task_etag?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_task_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planner_user_map: {
+        Row: {
+          confirmed_at: string
+          confirmed_by: string
+          entra_display: string | null
+          entra_id: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string
+          confirmed_by?: string
+          entra_display?: string | null
+          entra_id: string
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string
+          confirmed_by?: string
+          entra_display?: string | null
+          entra_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ponto_bank_balances: {
         Row: {
           account_id: string
