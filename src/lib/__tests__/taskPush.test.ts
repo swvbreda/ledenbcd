@@ -78,3 +78,11 @@ describe("taakpush", () => {
     expect(p.removeInvalidTokens).toHaveBeenCalledWith(ADMIN, ["aa", "bb"]);
   });
 });
+
+describe("ontbrekende verzender", () => {
+  it("claimt nooit 'sent' als APNs niet ingesteld is", async () => {
+    const { p, finish } = port();
+    await processTaskNotification(p, async () => ({ ok: false, status: 0, reason: "APNs niet ingesteld" }), "n1");
+    expect(finish.mock.calls[0]?.[1]).toMatchObject({ status: "failed", sent: 0 });
+  });
+});

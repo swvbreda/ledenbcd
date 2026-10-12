@@ -6,6 +6,8 @@ import { useNavigate } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { taskRoute } from "@/lib/taskPush";
+import { useServerFn } from "@tanstack/react-start";
+import { taskPushStatus } from "@/lib/taskNotifications.functions";
 
 type Row = { id: string; task_id: string; title: string; body: string; read_at: string | null; created_at: string };
 const db = supabase as any;
@@ -26,6 +28,13 @@ export default function TaskNotificationsBell() {
       if (error) throw error;
       return data as Row[];
     },
+  });
+  const statusFn = useServerFn(taskPushStatus);
+  const st = useQuery({
+    queryKey: ["task-push-status", uid],
+    enabled: !!uid && isAdmin,
+    staleTime: 60_000,
+    queryFn: () => statusFn(),
   });
   if (!uid || !isAdmin) return null;
   const rows = q.data ?? [];
@@ -71,6 +80,12 @@ export default function TaskNotificationsBell() {
             ))}
           </ul>
         )}
+        <div className="px-4 py-2 border-t border-border text-xs text-muted-foreground" role="status">
+          {st.isError ? "Telefoonmeldingen: status onbekend" : !st.data ? "Telefoonmeldingen: status laden…" : (
+            <>Telefoonmeldingen: {st.data.configured && st.data.keyValid ? "ingesteld" : "niet ingesteld (alleen meldingen in de app)"}
+              {" · "}wachtrij {st.data.queued} · mislukt {st.data.failed} · geen toestel {st.data.noDevices}</>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
