@@ -1,12 +1,10 @@
 import type { Member } from "@/data/types";
 import { useNavigate } from "@/lib/router-compat";
 import { ArrowRight } from "lucide-react";
-import { useMembersData } from "@/contexts/MembersDataContext";
-import { useMergedMembers } from "@/hooks/useMemberEdits";
-import { getGemeente, getLocationGemeente, EXPERIMENT_GEMEENTEN } from "@/data/gemeenteMapping";
+import { EXPERIMENT_GEMEENTEN } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { pctColor } from "@/lib/pctColor";
-import { useAuth } from "@/hooks/useAuth";
+import { summarizeRepresentation } from "@/lib/representationSummary";
 
 
 
@@ -44,35 +42,13 @@ const MiniDonut = ({ pct, size = 64, strokeWidth = 6 }: { pct: number; size?: nu
 };
 
 
-/** Check if a member/location belongs to a gemeente */
-const isInGemeente = (m: Member, gemeente: string): boolean => {
-  if (getGemeente(m.plaats) === gemeente) return true;
-  return m.locaties?.some((l) => getLocationGemeente(l, m.plaats) === gemeente) || false;
-};
-
 const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
   const navigate = useNavigate();
-  const { isAdmin, isBoard } = useAuth();
-  const canSeeRegister = isAdmin || isBoard;
-  const { rawLeads } = useMembersData();
-  const { members: mergedLeads } = useMergedMembers(rawLeads);
-  const {
-    perGemeente: perStad,
-    totaalNL: totalNL,
-    representedPerGemeente: cityCount,
-    totaalRepresented: totalLocaties,
-  } = useRegisterStats(canSeeRegister);
-  // Use merged members + merged leads for market share calculations
-  const represented = [...members, ...mergedLeads];
-  // Member counts remain local; shop counts come from the central register-backed calculation.
-  const cityMembers: Record<string, number> = {};
-  represented.forEach((m) => {
-    if (m.plaats) {
-      cityMembers[m.plaats] = (cityMembers[m.plaats] || 0) + 1;
-    }
-  });
-
-  const marketPct = Math.round((totalLocaties / totalNL) * 100);
+  const stats = useRegisterStats();
+  const { perGemeente: perStad, representedPerGemeente: cityCount } = stats;
+  const rep = summarizeRepresentation(stats);
+  const ok = rep.status === "ok" ? rep : null;
+  const marketPct = ok?.marketPct ?? 0;
 
   // Curated list: G4, provincial capitals, and key cities
   const featuredCities = [
@@ -86,12 +62,25 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
     .map((city) => {
       const total = perStad[city] || 0;
       const bcd = cityCount[city] || 0;
-      const leden = cityMembers[city] || 0;
       const pct = total > 0 ? Math.round((bcd / total) * 100) : 0;
-      return { city, total, bcd, leden, pct };
+      return { city, total, bcd, pct };
     });
 
-  if (!canSeeRegister) return null;
+  if (!ok) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-5">
+        <h3 className="text-sm font-semibold font-display mb-1">Vertegenwoordiging per gemeente</h3>
+        {rep.status === "loading" ? (
+          <p className="text-sm text-muted-foreground">Centrale cijfers laden…</p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-destructive">Centrale telling tijdelijk niet beschikbaar.</p>
+            <button onClick={() => stats.refetch()} className="text-xs text-primary hover:underline">Opnieuw proberen</button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card rounded-lg border border-border p-5">
@@ -118,7 +107,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
             <MiniDonut pct={marketPct} size={56} strokeWidth={5} />
             <div>
               <p className="text-sm font-semibold font-display">Landelijk: {marketPct}%</p>
-              <p className="text-xs text-muted-foreground">{totalLocaties} van {totalNL} coffeeshops</p>
+              <p className="text-xs text-muted-foreground">{ok.totaalRepresented} van {ok.totaalNL} coffeeshops</p>
             </div>
           </div>
 
@@ -145,18 +134,13 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
         <div>
           <h3 className="text-sm font-semibold font-display mb-1">Experiment gemeenten</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Aangesloten leden in de 10 experiment-gemeenten
+            Vertegenwoordigde coffeeshops in de 10 experiment-gemeenten
           </p>
           <div className="space-y-1">
             {EXPERIMENT_GEMEENTEN.map((gemeente) => {
-              const leden = represented.filter((m) => isInGemeente(m, gemeente));
-              const locs = leden.reduce((s, m) => {
-                const mainMatch = getGemeente(m.plaats) === gemeente;
-                if (mainMatch && (!m.locaties || m.locaties.length === 0)) return s + (m.aantalLocaties || 1);
-                return s + (m.locaties?.filter((l) => getLocationGemeente(l, m.plaats) === gemeente).length || 0);
-              }, 0);
+              const locs = cityCount[gemeente] || 0;
               const total = perStad[gemeente] || 0;
-              const hasBcd = leden.length > 0;
+              const hasBcd = locs > 0;
 
               return (
                 <div
@@ -172,11 +156,9 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
                   <div className="flex items-center gap-2">
                     {hasBcd ? (
                       <span className="text-xs tabular-nums">
-                        <span className="font-medium">{leden.length}</span>
-                        <span className="text-muted-foreground"> leden</span>
-                        {total > 0 && (
-                          <span className="text-muted-foreground ml-1">· {locs}/{total}</span>
-                        )}
+                        <span className="font-medium">{locs}</span>
+                        {total > 0 && <span className="text-muted-foreground">/{total}</span>}
+                        <span className="text-muted-foreground"> coffeeshops</span>
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
@@ -189,7 +171,7 @@ const GemeentenOverzicht = ({ members }: { members: Member[] }) => {
           <div className="mt-3 px-3 py-2 bg-muted/30 rounded-sm text-xs text-muted-foreground">
             In{" "}
             <span className="font-medium text-foreground">
-              {EXPERIMENT_GEMEENTEN.filter((g) => represented.some((m) => isInGemeente(m, g))).length}/10
+              {EXPERIMENT_GEMEENTEN.filter((g) => (cityCount[g] || 0) > 0).length}/10
             </span>
             {" "}gemeenten vertegenwoordigd binnen het experiment
           </div>

@@ -16,6 +16,7 @@ import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 import { bankColor, pspColor } from "@/lib/brandColors";
 import { usePinverwerkers } from "@/hooks/usePinverwerkers";
+import { useMemberBankAggregate } from "@/hooks/useMemberBankAggregate";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -155,21 +156,24 @@ const DonutDiagram = ({
 export const KerngegevensDashboard = () => {
   const navigate = useNavigate();
   const { isAdmin, isBoard } = useAuth();
-  const allowed = isAdmin || isBoard;
-  const k = useKerngegevens(allowed);
-  const { data: psp } = usePinverwerkers(allowed);
+  // Bestuur/beheer: bestaande bron. Gewone leden: alleen ledendirectory
+  // (volledige ledenpopulatie) + beveiligd bankaggregaat; geen register/UBO/enquête.
+  const privileged = isAdmin || isBoard;
+  const k = useKerngegevens(privileged);
+  const { data: psp } = usePinverwerkers(privileged);
+  const bankAgg = useMemberBankAggregate(!privileged);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
 
   const bankItems: DonutItem[] = useMemo(
     () =>
-      k.bankGroepen.map((b, i) => ({
+      (privileged ? k.bankGroepen : bankAgg.data ?? []).map((b, i) => ({
         label: b.bank,
         aantal: b.aantal,
         pct: b.pct,
         eenheid: b.aantal === 1 ? "lid" : "leden",
         color: b.bank === UNKNOWN_BANK ? bankColor(UNKNOWN_BANK) : bankColor(b.bank, i),
       })),
-    [k.bankGroepen],
+    [privileged, k.bankGroepen, bankAgg.data],
   );
 
   const pspItems: DonutItem[] = useMemo(
@@ -184,7 +188,9 @@ export const KerngegevensDashboard = () => {
     [psp],
   );
 
-  if (!allowed) return null;
+  if (k.isLoading) {
+    return <p className="text-sm text-muted-foreground">Kerngegevens laden…</p>;
+  }
 
   const maxDec = Math.max(1, ...k.decenniaRijen.map((d) => d.aantal));
 
@@ -252,13 +258,18 @@ export const KerngegevensDashboard = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Sectie titel="Bankiert bij">
-          {bankItems.length === 0 ? (
+          {!privileged && bankAgg.isLoading ? (
+            <p className="text-sm text-muted-foreground">Laden…</p>
+          ) : !privileged && bankAgg.isError ? (
+            <p className="text-sm text-destructive">Bankverdeling tijdelijk niet beschikbaar.</p>
+          ) : bankItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nog geen bankgegevens bekend.</p>
           ) : (
             <DonutDiagram items={bankItems} />
           )}
         </Sectie>
 
+        {privileged && (
         <Sectie titel="Betaalverwerkers">
           {pspItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -268,6 +279,7 @@ export const KerngegevensDashboard = () => {
             <DonutDiagram items={pspItems} />
           )}
         </Sectie>
+        )}
       </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>

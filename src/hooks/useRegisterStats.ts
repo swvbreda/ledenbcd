@@ -31,18 +31,8 @@ export function useRegisterStats(enabled = true) {
         method: "GET",
       });
       if (error) {
-        // Geen harde fout tonen: val terug op de statische landelijke cijfers.
-        console.warn("public-stats tijdelijk niet beschikbaar", error);
-        return {
-          perGemeente: fallbackPerGemeente,
-          totaalNL: fallbackTotal,
-          representedPerGemeente: {},
-          totaalRepresented: 0,
-          gekoppeldeRegistershops: 0,
-          nietGekoppeldeLocaties: 0,
-          koppelingenZonderVestiging: 0,
-          fromRegister: false,
-        };
+        // Geen statische noodcijfers als feit tonen: fout doorgeven zodat de UI dit meldt.
+        throw new Error("Centrale vertegenwoordigingscijfers tijdelijk niet beschikbaar");
       }
       const payload = (data ?? {}) as Record<string, unknown>;
       const perPlaats = (payload.landelijk_per_gemeente ?? {}) as Record<string, number>;

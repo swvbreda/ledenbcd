@@ -4346,6 +4346,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_member_bank_aggregate: {
+        Args: never
+        Returns: {
+          aantal: number
+          bank_code: string
+          totaal_leden: number
+        }[]
+      }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
       get_member_register_logos: {
         Args: never
