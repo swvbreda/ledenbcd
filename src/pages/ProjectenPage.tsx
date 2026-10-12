@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus } from "lucide-react";
+import PlannerPanel from "@/components/projecten/PlannerPanel";
 import {
   filterTasks,
   isOverdue,
@@ -165,6 +166,7 @@ function ProjectenInner() {
         <TabsList>
           <TabsTrigger value="taken">Taken</TabsTrigger>
           <TabsTrigger value="projecten">Projecten</TabsTrigger>
+          <TabsTrigger value="planner">Planner</TabsTrigger>
         </TabsList>
 
         <TabsContent value="taken" className="space-y-4">
@@ -272,6 +274,15 @@ function ProjectenInner() {
               })}
             </ul>
           )}
+        </TabsContent>
+
+        <TabsContent value="planner" className="space-y-4">
+          <PlannerPanel
+            projects={activeProjects.map((p) => ({ id: p.id, title: p.title }))}
+            staff={staffQ.data ?? []}
+            tasks={(tasksQ.data ?? []).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
+            onSynced={invalidate}
+          />
         </TabsContent>
       </Tabs>
 
