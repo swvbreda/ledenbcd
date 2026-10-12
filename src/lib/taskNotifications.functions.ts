@@ -49,7 +49,7 @@ export const dispatchTaskPushes = createServerFn({ method: "POST" })
         return t ?? null;
       },
       async deviceTokens(uid) {
-        const { data: t, error: e } = await db.from("push_device_tokens").select("device_token").eq("user_id", uid);
+        const { data: t, error: e } = await db.from("push_device_tokens").select("device_token").eq("user_id", uid).eq("platform", "ios");
         if (e) throw new Error("Apparaten konden niet worden gelezen");
         return (t ?? []).map((x: { device_token: string }) => x.device_token);
       },
@@ -64,4 +64,36 @@ export const dispatchTaskPushes = createServerFn({ method: "POST" })
     const results = [];
     for (const r of rows) results.push(await processTaskNotification(port, send, r.id));
     return { processed: results.length, results };
+  });
+
+/** Alleen-lezen bezorgstatus voor beheerders: booleans en aantallen, nooit geheime waarden. */
+export const taskPushStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin, error: roleErr } = await (context.supabase as any).rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (roleErr || isAdmin !== true) throw new Error("Geen toegang: alleen beheerders.");
+    const { makeApnsSender } = await import("@/lib/apns.server");
+    let configured = false;
+    let keyValid = false;
+    let configError: string | null = null;
+    try {
+      configured = !!(process.env["APNS_KEY_ID"] && process.env["APNS_TEAM_ID"] && process.env["APNS_PRIVATE_KEY"]);
+      if (configured) keyValid = !!(await makeApnsSender(process.env)); // lokaal ondertekenen, geen netwerk
+    } catch {
+      configError = "APNs-sleutel kon niet worden gelezen";
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const count = async (statuses: string[]) => {
+      const { count: c } = await db.from("task_notifications").select("id", { count: "exact", head: true }).in("push_status", statuses);
+      return c ?? 0;
+    };
+    return {
+      configured, keyValid, configError,
+      queued: await count(["pending", "sending"]),
+      failed: await count(["failed"]),
+      noDevices: await count(["no_devices"]),
+      sent: await count(["sent"]),
+      skipped: await count(["skipped"]),
+    };
   });
