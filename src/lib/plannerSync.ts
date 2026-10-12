@@ -192,7 +192,7 @@ export async function syncProject(opts: { projectId: string; planId: string; app
         }
         const h = hashCanon(local);
         await db.saveLink({ task_id: t.id, planner_task_id: created.id, state: "linked", task_etag: created.etag, details_etag: detailsEtag,
-          last_local_hash: h, last_remote_hash: detailsEtag || !local.description ? h : null, last_error: null });
+          last_local_hash: h, last_remote_hash: detailsEtag || !local.description ? h : hashCanon({ ...local, description: "" }), last_error: null });
         res.created++;
         continue;
       }
