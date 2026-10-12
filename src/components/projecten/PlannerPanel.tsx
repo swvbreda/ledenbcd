@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import {
-  plannerConfirmUser, plannerLinkProject, plannerListGroups, plannerListPlans, plannerLookupUser,
-  plannerResolveConflict, plannerStatus, plannerSyncProject,
+  plannerConfirmUser, plannerCreateBucket, plannerLinkProject, plannerLookupUser,
+  plannerResolveConflict, plannerResolveUncertain, plannerStatus, plannerSyncProject, plannerTargetPlan,
 } from "@/lib/planner.functions";
 import { plannerReadiness } from "@/lib/plannerStatus";
 
@@ -32,8 +32,9 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
   const uid = user?.id ?? null;
   const qc = useQueryClient();
   const statusFn = useServerFn(plannerStatus);
-  const groupsFn = useServerFn(plannerListGroups);
-  const plansFn = useServerFn(plannerListPlans);
+  const targetFn = useServerFn(plannerTargetPlan);
+  const mkBucketFn = useServerFn(plannerCreateBucket);
+  const uncertainFn = useServerFn(plannerResolveUncertain);
   const linkFn = useServerFn(plannerLinkProject);
   const lookupFn = useServerFn(plannerLookupUser);
   const confirmFn = useServerFn(plannerConfirmUser);
@@ -56,7 +57,7 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
   const logQ = useQuery({
     queryKey: ["planner-log", uid], enabled: !!uid,
     queryFn: async () => {
-      const { data, error } = await db.from("planner_sync_log").select("project_id,started_at,finished_at,ok,created_remote,updated_remote,updated_local,conflicts,error").order("started_at", { ascending: false }).limit(10);
+      const { data, error } = await db.from("planner_sync_log").select("project_id,started_at,finished_at,ok,outcome,warnings,created_remote,updated_remote,updated_local,conflicts,error").order("started_at", { ascending: false }).limit(10);
       if (error) throw error; return data as any[];
     },
   });
@@ -70,16 +71,25 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
 
   // --- planselectie ---
   const [projectId, setProjectId] = useState("");
-  const [groupId, setGroupId] = useState("");
-  const [planId, setPlanId] = useState("");
-  const groupsQ = useQuery({ queryKey: ["planner-groups", uid], enabled: !!uid && !!st?.canListGroups, queryFn: () => groupsFn(), retry: 0 });
-  const plansQ = useQuery({
-    queryKey: ["planner-plans", uid, groupId], enabled: !!uid && ready.canRead && /^[0-9a-fA-F-]{36}$/.test(groupId),
-    queryFn: () => plansFn({ data: { groupId } }), retry: 0,
-  });
+  const [bucketId, setBucketId] = useState("");
+  const [bucketName, setBucketName] = useState("");
+  const targetQ = useQuery({ queryKey: ["planner-target", uid], enabled: !!uid && ready.canRead, queryFn: () => targetFn(), retry: 0 });
+  const targetOk = !!targetQ.data?.ok;
+  const buckets = targetQ.data?.ok ? targetQ.data.buckets : [];
+  const usedBuckets = new Set((linksQ.data ?? []).filter((l) => l.project_id !== projectId).map((l) => l.bucket_id as string));
   const link = useMutation({
-    mutationFn: () => linkFn({ data: { projectId, groupId, planId } }),
-    onSuccess: (r) => { toast.success(`Gekoppeld aan plan "${r.planTitle}"`); setPlanId(""); refreshAll(); },
+    mutationFn: () => linkFn({ data: { projectId, planId: targetQ.data!.planId, bucketId } }),
+    onSuccess: (r) => { toast.success(`Gekoppeld aan bucket "${r.bucketName}"`); setBucketId(""); refreshAll(); },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const mkBucket = useMutation({
+    mutationFn: () => mkBucketFn({ data: { name: bucketName.trim(), confirm: true } }),
+    onSuccess: (b) => { toast.success(`Bucket "${b.name}" aangemaakt`); setBucketName(""); setBucketId(b.id); qc.invalidateQueries({ queryKey: ["planner-target"] }); },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  const uncertainFix = useMutation({
+    mutationFn: (taskId: string) => uncertainFn({ data: { taskId, action: "retry_create" } }),
+    onSuccess: () => { toast.success("Wordt bij volgende synchronisatie opnieuw aangemaakt"); refreshAll(); },
     onError: (e) => toast.error(errMsg(e)),
   });
 
@@ -101,8 +111,8 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
   const sync = useMutation({
     mutationFn: (pid: string) => syncFn({ data: { projectId: pid } }),
     onSuccess: (r, pid) => {
-      setSyncErr((m) => ({ ...m, [pid]: "" }));
-      toast.success(`Planner: ${r.created} aangemaakt, ${r.imported} overgenomen, ${r.updatedRemote} bijgewerkt in Planner, ${r.updatedLocal} lokaal, ${r.conflicts} conflicten`);
+      setSyncErr((m) => ({ ...m, [pid]: r.outcome === "partial" ? `Gedeeltelijk: ${r.conflicts} conflict(en), ${r.warnings.length} waarschuwing(en) — zie log.` : "" }));
+      (r.outcome === "partial" ? toast.warning : toast.success)(`Planner: ${r.created} aangemaakt, ${r.imported} overgenomen, ${r.updatedRemote} bijgewerkt in Planner, ${r.updatedLocal} lokaal, ${r.conflicts} conflicten`);
       refreshAll();
     },
     onError: (e, pid) => { setSyncErr((m) => ({ ...m, [pid]: errMsg(e) })); refreshAll(); },
@@ -119,6 +129,7 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
     if (autoDone.current || !ready.canWrite || !linksQ.data) return;
     autoDone.current = true;
     for (const l of linksQ.data) {
+      if (!projects.some((p) => p.id === l.project_id) || !l.bucket_id) continue; // gearchiveerd of zonder bucket: niet automatisch
       const last = l.last_sync_at ? Date.parse(l.last_sync_at) : 0;
       if (Date.now() - last > AUTO_SYNC_MS) sync.mutate(l.project_id);
     }
@@ -126,6 +137,7 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
 
   const linkOf = (pid: string) => linksQ.data?.find((l) => l.project_id === pid);
   const conflicts = (taskLinksQ.data ?? []).filter((l) => l.state === "conflict");
+  const uncertain = (taskLinksQ.data ?? []).filter((l) => l.state === "uncertain");
   const titleOf = (id: string) => tasks.find((t) => t.id === id)?.title ?? "Taak";
 
   return (
@@ -147,8 +159,13 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
       </section>
 
       <section className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <h2 className="font-display uppercase tracking-tight">Project koppelen aan bestaand plan</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <h2 className="font-display uppercase tracking-tight">Project koppelen aan bucket in plan "To do"</h2>
+        <p className="text-xs text-muted-foreground">Doelplan is vastgesteld: "To do" in team Bond van Cannabis Detailisten. Elk project krijgt een eigen bucket; alleen taken in die bucket worden gesynchroniseerd.</p>
+        {!ready.canRead ? <p className="text-sm text-muted-foreground">Plan kan pas gelezen worden zodra Planner-rechten zijn toegekend.</p>
+          : targetQ.isLoading ? <p className="text-sm text-muted-foreground">Plan laden…</p>
+          : targetQ.data && !targetQ.data.ok ? <p className="text-sm text-destructive">Plan niet leesbaar: {targetQ.data.error}</p>
+          : targetQ.error ? <p className="text-sm text-destructive">{errMsg(targetQ.error)}</p> : null}
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label>Project</Label>
             <Select value={projectId} onValueChange={setProjectId}>
@@ -157,29 +174,23 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Team / groep</Label>
-            {groupsQ.data ? (
-              <Select value={groupId} onValueChange={(v) => { setGroupId(v); setPlanId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Kies team" /></SelectTrigger>
-                <SelectContent>{groupsQ.data.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
-              </Select>
-            ) : (
-              <Input placeholder="Groeps-ID van het team" value={groupId} onChange={(e) => { setGroupId(e.target.value.trim()); setPlanId(""); }} />
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label>Plan</Label>
-            <Select value={planId} onValueChange={setPlanId} disabled={!plansQ.data?.length}>
-              <SelectTrigger><SelectValue placeholder={plansQ.isLoading ? "Laden…" : "Kies plan"} /></SelectTrigger>
-              <SelectContent>{(plansQ.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
+            <Label>Bucket</Label>
+            <Select value={bucketId} onValueChange={setBucketId} disabled={!buckets.length}>
+              <SelectTrigger><SelectValue placeholder={buckets.length ? "Kies bucket" : "Geen buckets"} /></SelectTrigger>
+              <SelectContent>{buckets.map((b) => <SelectItem key={b.id} value={b.id} disabled={usedBuckets.has(b.id)}>{b.name}{usedBuckets.has(b.id) ? " (al gekoppeld)" : ""}</SelectItem>)}</SelectContent>
             </Select>
           </div>
         </div>
-        {plansQ.error && <p className="text-sm text-destructive">{errMsg(plansQ.error)}</p>}
-        {plansQ.data && plansQ.data.length === 0 && <p className="text-sm text-muted-foreground">Dit team heeft nog geen plannen. Maak het plan eerst zelf aan in Planner.</p>}
-        <Button disabled={!ready.canRead || !projectId || !planId || link.isPending} onClick={() => link.mutate()}>
-          {link.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Koppelen
-        </Button>
+        <div className="flex flex-wrap gap-2 items-end">
+          <Button disabled={!targetOk || !projectId || !bucketId || link.isPending} onClick={() => link.mutate()}>
+            {link.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Koppelen
+          </Button>
+          <Input className="max-w-xs" placeholder="Naam nieuwe bucket" value={bucketName} onChange={(e) => setBucketName(e.target.value)} />
+          <Button variant="outline" disabled={!targetOk || !ready.canWrite || !bucketName.trim() || mkBucket.isPending}
+            onClick={() => { if (window.confirm(`Bucket "${bucketName.trim()}" aanmaken in Planner-plan "To do"?`)) mkBucket.mutate(); }}>
+            Bucket aanmaken in Planner
+          </Button>
+        </div>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -195,8 +206,9 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
                 <li key={l.project_id} className="rounded-md border border-border p-3 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{p?.title ?? "Project"}</span>
-                    <span className="text-sm text-muted-foreground">→ {l.plan_title ?? "plan"}</span>
-                    <Button size="sm" variant="outline" className="ml-auto" disabled={!ready.canWrite || busy} onClick={() => sync.mutate(l.project_id)}>
+                    <span className="text-sm text-muted-foreground">→ {l.plan_title ?? "plan"} / {l.bucket_name ?? "geen bucket"}</span>
+                    {l.last_outcome === "partial" && <Badge variant="outline">Gedeeltelijk</Badge>}
+                    <Button size="sm" variant="outline" className="ml-auto" disabled={!ready.canWrite || busy || !p || !l.bucket_id} onClick={() => sync.mutate(l.project_id)}>
                       {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}Nu synchroniseren
                     </Button>
                   </div>
@@ -219,6 +231,19 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
               <span className="flex-1">{titleOf(c.task_id)} — {c.last_error}</span>
               <Button size="sm" variant="outline" onClick={() => resolve.mutate({ taskId: c.task_id, keep: "local" })}>Ledenbestand aanhouden</Button>
               <Button size="sm" variant="outline" onClick={() => resolve.mutate({ taskId: c.task_id, keep: "planner" })}>Planner aanhouden</Button>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {uncertain.length > 0 && (
+        <section className="rounded-lg border border-destructive/40 bg-card p-4 space-y-2">
+          <h2 className="font-display uppercase tracking-tight">Onzeker aangemaakt</h2>
+          <p className="text-xs text-muted-foreground">Microsoft gaf geen zeker antwoord. Controleer eerst in Planner of de taak bestaat; kies alleen "opnieuw aanmaken" als hij er zeker niet is.</p>
+          {uncertain.map((c) => (
+            <div key={c.task_id} className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="flex-1">{titleOf(c.task_id)} — {c.last_error}</span>
+              <Button size="sm" variant="outline" disabled={uncertainFix.isPending} onClick={() => { if (window.confirm("Bevestig: deze taak staat zeker niet in Planner.")) uncertainFix.mutate(c.task_id); }}>Opnieuw aanmaken</Button>
             </div>
           ))}
         </section>
@@ -249,8 +274,8 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
           <ul className="text-sm space-y-1">
             {logQ.data.map((r, i) => (
               <li key={i} className={r.ok === false ? "text-destructive" : ""}>
-                {new Date(r.started_at).toLocaleString("nl-NL")} — {r.ok == null ? "bezig/onderbroken" : r.ok ? `ok: ${r.created_remote} aangemaakt, ${r.updated_remote} naar Planner, ${r.updated_local} lokaal, ${r.conflicts} conflicten` : `fout: ${r.error}`}
-                {r.ok && r.error ? <span className="block text-xs text-muted-foreground whitespace-pre-wrap">{r.error}</span> : null}
+                {new Date(r.started_at).toLocaleString("nl-NL")} — {r.ok == null ? "bezig/onderbroken" : r.outcome === "partial" ? `gedeeltelijk: ${r.created_remote} aangemaakt, ${r.updated_remote} naar Planner, ${r.updated_local} lokaal, ${r.conflicts} conflicten, ${r.warnings} waarschuwingen` : r.ok ? `ok: ${r.created_remote} aangemaakt, ${r.updated_remote} naar Planner, ${r.updated_local} lokaal, ${r.conflicts} conflicten` : `fout: ${r.error}`}
+                {r.ok !== false && r.error ? <span className="block text-xs text-muted-foreground whitespace-pre-wrap">{r.error}</span> : null}
               </li>
             ))}
           </ul>
