@@ -15,6 +15,11 @@ const MAX_SYNC_MS = 10 * 60_000;
 /** Slot loopt altijd langer dan de harde maximale duur, zodat het nooit midden in een run verloopt. */
 const LOCK_MS = MAX_SYNC_MS + 2 * 60_000;
 
+/** Topical-importtaken lopen via het Topical-koppelpaneel; de gewone sync mag ze niet ophalen of dupliceren. */
+function withoutTopical<P extends { listBucketTasks: (b: string) => Promise<{ description: string | null }[]> }>(p: P): P {
+  return { ...p, listBucketTasks: async (b: string) => (await p.listBucketTasks(b)).filter((t) => !/Bron: Topical BCD — actie [0-9]/.test(t.description ?? "")) } as P;
+}
+
 type Ctx = { supabase: any; userId: string };
 
 async function assertAdmin(ctx: Ctx) {
@@ -239,7 +244,7 @@ export const plannerSyncProject = createServerFn({ method: "POST" })
       const { g, cfg, client } = await graphSetup(started + MAX_SYNC_MS);
       const db: DbPort = {
         async tasks(pid) {
-          const { data: rows, error } = await sb.from("internal_tasks").select("id,title,description,deadline,priority,status,assignee_id").eq("project_id", pid);
+          const { data: rows, error } = await sb.from("internal_tasks").select("id,title,description,deadline,priority,status,assignee_id").eq("project_id", pid).is("source_system", null);
           if (error) throw new Error(error.message);
           return rows as LocalTask[];
         },
@@ -277,7 +282,7 @@ export const plannerSyncProject = createServerFn({ method: "POST" })
         newToken: () => crypto.randomUUID(),
         now: () => new Date().toISOString(),
       };
-      const r = await syncProject({ projectId: data.projectId, planId: locked.plan_id, bucketId: locked.bucket_id, appId: cfg.clientId, graph: g.plannerPort(client), db });
+      const r = await syncProject({ projectId: data.projectId, planId: locked.plan_id, bucketId: locked.bucket_id, appId: cfg.clientId, graph: withoutTopical(g.plannerPort(client)), db });
       const outcome = syncOutcome(r);
       await finish(
         { ok: outcome === "success", outcome, warnings: r.warnings.length, created_remote: r.created, updated_remote: r.updatedRemote, updated_local: r.updatedLocal, conflicts: r.conflicts, error: r.warnings.length ? r.warnings.join("\n").slice(0, 2000) : null },
