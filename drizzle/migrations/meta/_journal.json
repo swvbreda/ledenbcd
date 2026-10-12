@@ -134,6 +134,13 @@
       "when": 1791804408372,
       "tag": "0018_member_bank_psp_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791805055188,
+      "tag": "0019_planner_sync",
+      "breakpoints": true
     }
   ]
 }
