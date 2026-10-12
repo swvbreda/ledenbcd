@@ -16,7 +16,7 @@ import { memberLocationCount } from "@/lib/locationCount";
 import { UNKNOWN_BANK } from "@/lib/bankFromIban";
 import { bankColor, pspColor } from "@/lib/brandColors";
 import { usePinverwerkers } from "@/hooks/usePinverwerkers";
-import { useMemberBankAggregate } from "@/hooks/useMemberBankAggregate";
+import { useMemberBankAggregate, useMemberPspAggregate } from "@/hooks/useMemberBankAggregate";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -162,6 +162,7 @@ export const KerngegevensDashboard = () => {
   const k = useKerngegevens(privileged);
   const { data: psp } = usePinverwerkers(privileged);
   const bankAgg = useMemberBankAggregate(!privileged);
+  const pspAgg = useMemberPspAggregate(!privileged);
   const [detail, setDetail] = useState<{ titel: string; leden: Member[] } | null>(null);
 
   const bankItems: DonutItem[] = useMemo(
@@ -178,14 +179,14 @@ export const KerngegevensDashboard = () => {
 
   const pspItems: DonutItem[] = useMemo(
     () =>
-      (psp?.groepen ?? []).map((p, i) => ({
+      (privileged ? psp?.groepen ?? [] : pspAgg.data ?? []).map((p, i) => ({
         label: p.naam,
         aantal: p.aantal,
         pct: p.pct,
         eenheid: p.aantal === 1 ? "vestiging" : "vestigingen",
         color: pspColor(p.naam, i),
       })),
-    [psp],
+    [privileged, psp, pspAgg.data],
   );
 
   if (k.isLoading) {
@@ -269,9 +270,12 @@ export const KerngegevensDashboard = () => {
           )}
         </Sectie>
 
-        {privileged && (
         <Sectie titel="Betaalverwerkers">
-          {pspItems.length === 0 ? (
+          {!privileged && pspAgg.isLoading ? (
+            <p className="text-sm text-muted-foreground">Laden…</p>
+          ) : !privileged && pspAgg.isError ? (
+            <p className="text-sm text-destructive">Betaalverwerkers tijdelijk niet beschikbaar.</p>
+          ) : pspItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nog geen enquêteantwoorden over betaalverwerkers.
             </p>
@@ -279,7 +283,6 @@ export const KerngegevensDashboard = () => {
             <DonutDiagram items={pspItems} />
           )}
         </Sectie>
-        )}
       </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>

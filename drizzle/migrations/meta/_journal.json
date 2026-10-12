@@ -127,6 +127,13 @@
       "when": 1791802979464,
       "tag": "0017_member_bank_aggregate",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791804408372,
+      "tag": "0018_member_bank_psp_groups",
+      "breakpoints": true
     }
   ]
 }
