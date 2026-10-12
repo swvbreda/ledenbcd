@@ -19,7 +19,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { topicalComplete } from "@/lib/topical.functions";
-import { completionSummary, localOnlyBadge } from "@/lib/topicalLink";
+import { completionSummary } from "@/lib/topicalLink";
 import {
   filterTasks,
   isOverdue,
