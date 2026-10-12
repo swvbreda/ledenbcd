@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { GraphError } from "@/lib/plannerSync";
 import { assertGraphUrl } from "@/lib/plannerGraph.server";
 import {
-  completeTopicalTask, completionBlocker, completionSummary, matchPlanner, matchTodo, parseTopicalRef, textHasTopicalRef,
+  skipForGenericPlanner, todoHasRef, completeTopicalTask, completionBlocker, completionSummary, matchPlanner, matchTodo, parseTopicalRef, textHasTopicalRef,
   type CompletionPort, type TopicalLink,
 } from "@/lib/topicalLink";
 
@@ -15,7 +15,7 @@ const link = (o: Partial<TopicalLink> = {}): TopicalLink => ({
 });
 function port(o: Partial<CompletionPort> = {}): CompletionPort {
   return {
-    getTodo: vi.fn(async () => ({ id: "TODOAAAAAAAA", title: "X", body: "Topical actie 85959", status: "notStarted", linkedExternalIds: [], etag: "E1" })),
+    getTodo: vi.fn(async () => ({ id: "TODOAAAAAAAA", title: "X", body: "https://app.topicalmeetings.com/actions/85959", status: "notStarted", linkedResources: [], etag: "E1" })),
     completeTodo: vi.fn(async () => {}),
     getPlanner: vi.fn(async () => ({ etag: "P1", planId: PLAN, percentComplete: 50, description: "Bron: Topical BCD — actie 85959" })),
     completePlanner: vi.fn(async () => {}),
@@ -29,10 +29,31 @@ describe("bron-id", () => {
     expect(parseTopicalRef("Bron: Topical BCD — actie 85959\nmeer")).toBe("85959");
     expect(parseTopicalRef("Iets anders")).toBeNull();
   });
+  it("generieke 'actie N' en nep-Topical-URL worden niet geaccepteerd", () => {
+    expect(textHasTopicalRef("actie 85959", "85959")).toBe(false);
+    expect(textHasTopicalRef("https://evil.test/topical/85959", "85959")).toBe(false);
+    expect(textHasTopicalRef("https://topicalmeetings.com.evil.test/a/85959", "85959")).toBe(false);
+    expect(textHasTopicalRef("http://app.topicalmeetings.com/a/85959", "85959")).toBe(false);
+    expect(textHasTopicalRef("Bron: Topical BCD — actie 85959", "85959")).toBe(true);
+  });
+  it("linkedResource alleen met Topical-provider, exact id én echte Topical-URL", () => {
+    const t = (l: any) => ({ id: "x", title: "", body: "", status: "", linkedResources: [l] });
+    expect(todoHasRef(t({ applicationName: "Other", externalId: "85959", webUrl: "" }), "85959")).toBe(false);
+    expect(todoHasRef(t({ applicationName: "Topical", externalId: "85959", webUrl: "https://evil.test/85959" }), "85959")).toBe(false);
+    expect(todoHasRef(t({ applicationName: "Topical", externalId: "85959", webUrl: "https://app.topicalmeetings.com/actions/85959" }), "85959")).toBe(true);
+  });
+  it("generieke Planner-import slaat Topical-taken en onleesbare notities over", () => {
+    expect(skipForGenericPlanner({ description: "Bron: Topical BCD — actie 85959\nx" })).toBe(true);
+    expect(skipForGenericPlanner({ description: null, detailsError: "403" })).toBe(true);
+    expect(skipForGenericPlanner({ description: "Gewone taak" })).toBe(false);
+    const all = Array.from({ length: 33 }, (_, i) => ({ description: `Bron: Topical BCD — actie ${80000 + i}` }));
+    expect(all.filter((t) => !skipForGenericPlanner(t))).toHaveLength(0);
+  });
   it("matcht geen langer nummer of los getal", () => {
     expect(textHasTopicalRef("actie 859590", "85959")).toBe(false);
     expect(textHasTopicalRef("bedrag 85959", "85959")).toBe(false);
     expect(textHasTopicalRef("https://app.topicalmeetings.com/action/85959", "85959")).toBe(true);
+    expect(textHasTopicalRef("https://app.topicalmeetings.com/action/859590", "85959")).toBe(false);
   });
 });
 
@@ -40,18 +61,18 @@ describe("matchen", () => {
   const locals = [{ id: "a", title: "Brief gemeente", source_ref: "1" }, { id: "b", title: "Agenda", source_ref: "2" }];
   it("koppelt alleen unieke bron-id automatisch; titel vraagt bevestiging", () => {
     const r = matchTodo(locals, [
-      { id: "x", title: "iets", body: "actie 1", status: "notStarted", linkedExternalIds: [] },
-      { id: "y", title: " agenda ", body: "", status: "notStarted", linkedExternalIds: [] },
+      { id: "x", title: "iets", body: "https://topicalmeetings.com/a/1", status: "notStarted", linkedResources: [] },
+      { id: "y", title: " agenda ", body: "", status: "notStarted", linkedResources: [] },
     ]);
     expect(r[0]).toEqual({ taskId: "a", kind: "source_id", todoId: "x" });
     expect(r[1]).toEqual({ taskId: "b", kind: "title_only", todoIds: ["y"] });
   });
   it("dubbele titels/bron-id worden nooit automatisch gekoppeld", () => {
     const r = matchTodo(locals, [
-      { id: "x", title: "a", body: "actie 1", status: "", linkedExternalIds: [] },
-      { id: "z", title: "b", body: "actie 1", status: "", linkedExternalIds: [] },
-      { id: "y1", title: "Agenda", body: "", status: "", linkedExternalIds: [] },
-      { id: "y2", title: "Agenda", body: "", status: "", linkedExternalIds: [] },
+      { id: "x", title: "a", body: "https://topicalmeetings.com/a/1", status: "", linkedResources: [] },
+      { id: "z", title: "b", body: "https://topicalmeetings.com/a/1", status: "", linkedResources: [] },
+      { id: "y1", title: "Agenda", body: "", status: "", linkedResources: [] },
+      { id: "y2", title: "Agenda", body: "", status: "", linkedResources: [] },
     ]);
     expect(r[0].kind).toBe("ambiguous");
     expect(r[1]).toEqual({ taskId: "b", kind: "title_only", todoIds: ["y1", "y2"] });
@@ -73,7 +94,13 @@ describe("afronden", () => {
     expect(completionBlocker(link(), true, PLAN)).toBeNull();
   });
   it("succes: beide met gelezen ETag, daarna pas lokaal afgerond", async () => {
-    const p = port(), db = dbMock();
+    let done = false, pct = 50;
+    const p = port({
+      getTodo: vi.fn(async () => ({ id: "T", title: "X", body: "https://app.topicalmeetings.com/actions/85959", status: done ? "completed" : "notStarted", linkedResources: [], etag: "E1" })),
+      completeTodo: vi.fn(async () => { done = true; }),
+      getPlanner: vi.fn(async () => ({ etag: "P1", planId: PLAN, percentComplete: pct, description: "Bron: Topical BCD — actie 85959" })),
+      completePlanner: vi.fn(async () => { pct = 100; }),
+    }), db = dbMock();
     const r = await completeTopicalTask(link(), p, db, PLAN);
     expect(p.completeTodo).toHaveBeenCalledWith(U, "LISTAAAAAAAA", "TODOAAAAAAAA", "E1");
     expect(p.completePlanner).toHaveBeenCalledWith("PLANTASKAAAA", "P1");
@@ -97,11 +124,33 @@ describe("afronden", () => {
     expect(r1.planner.message).toMatch(/versieconflict/);
     expect(db.saved[0].todo_completed_at).toBeTruthy();
     expect(db.saved[0].planner_completed_at).toBeNull();
-    const p2 = port();
+    const p2 = port({
+      getTodo: vi.fn(async () => ({ id: "T", title: "", body: "https://app.topicalmeetings.com/actions/85959", status: "completed", linkedResources: [], etag: "E2" })),
+      getPlanner: vi.fn().mockResolvedValueOnce({ etag: "P2", planId: PLAN, percentComplete: 50, description: "Bron: Topical BCD — actie 85959" })
+        .mockResolvedValueOnce({ etag: "P3", planId: PLAN, percentComplete: 100, description: "Bron: Topical BCD — actie 85959" }),
+    });
     const r2 = await completeTopicalTask(link({ todo_completed_at: db.saved[0].todo_completed_at }), p2, db, PLAN);
-    expect(p2.getTodo).not.toHaveBeenCalled();
+    expect(p2.getTodo).toHaveBeenCalled();
     expect(p2.completeTodo).not.toHaveBeenCalled();
+    expect(p2.completePlanner).toHaveBeenCalledWith("PLANTASKAAAA", "P2");
     expect(r2.local).toBe("afgerond");
+  });
+  it("historische tijdstempel telt niet: elders heropende taak wordt niet lokaal afgerond zonder bevestiging", async () => {
+    const db = dbMock();
+    const p = port({ completeTodo: vi.fn(async () => {}) }); // PATCH 'lukt' maar taak blijft open
+    const r = await completeTopicalTask(link({ todo_completed_at: "2026-10-01", planner_completed_at: "2026-10-01" }), p, db, PLAN);
+    expect(p.getTodo).toHaveBeenCalled();
+    expect(r.todo.state).toBe("failed");
+    expect(db.saved[0].todo_completed_at).toBeNull();
+    expect(db.markLocalDone).not.toHaveBeenCalled();
+  });
+  it("ontbrekende ETag: geen PATCH", async () => {
+    const p = port({ getTodo: vi.fn(async () => ({ id: "T", title: "", body: "https://app.topicalmeetings.com/a/85959", status: "notStarted", linkedResources: [], etag: "" })),
+      getPlanner: vi.fn(async () => ({ etag: "", planId: PLAN, percentComplete: 0, description: "Bron: Topical BCD — actie 85959" })) });
+    const r = await completeTopicalTask(link(), p, dbMock(), PLAN);
+    expect(p.completeTodo).not.toHaveBeenCalled();
+    expect(p.completePlanner).not.toHaveBeenCalled();
+    expect(r.todo.message + r.planner.message).toMatch(/ETag ontbreekt.*ETag ontbreekt/);
   });
   it("ontbrekende taak (404) en verloren bron-id schrijven niets", async () => {
     const p = port({
@@ -117,7 +166,7 @@ describe("afronden", () => {
     expect(db.markLocalDone).not.toHaveBeenCalled();
   });
   it("al voltooid extern: geen schrijfactie", async () => {
-    const p = port({ getTodo: vi.fn(async () => ({ id: "x", title: "", body: "actie 85959", status: "completed", linkedExternalIds: [], etag: "E" })),
+    const p = port({ getTodo: vi.fn(async () => ({ id: "x", title: "", body: "https://app.topicalmeetings.com/actions/85959", status: "completed", linkedResources: [], etag: "E" })),
       getPlanner: vi.fn(async () => ({ etag: "P", planId: PLAN, percentComplete: 100, description: "Bron: Topical BCD — actie 85959" })) });
     const r = await completeTopicalTask(link(), p, dbMock(), PLAN);
     expect(p.completeTodo).not.toHaveBeenCalled();

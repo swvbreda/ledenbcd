@@ -115,7 +115,7 @@ export default function TopicalPanel({ tasks }: { tasks: { id: string; title: st
                 <p className="font-medium">{title(r.taskId)}</p>
                 <p className="text-muted-foreground">{r.kind === "none" ? "Geen kandidaat in To Do." : r.kind === "ambiguous" ? "Meerdere To Do-taken dragen deze bron-id; niet automatisch gekoppeld." : "Alleen titel komt overeen — handmatig bevestigen."}</p>
                 {r.kind === "title_only" && r.candidates.map((c) => (
-                  <Button key={c.id} size="sm" variant="outline" disabled={confirmTitle.isPending} onClick={() => confirmTitle.mutate({ taskId: r.taskId, todoId: c.id })}>Koppel aan "{c.title}" · {c.status || "status onbekend"} · {c.due ? `deadline ${c.due}` : "geen deadline"} · id …{c.id.slice(-8)}</Button>
+                  <Button key={c.id} size="sm" variant="outline" className="h-auto whitespace-normal text-left" disabled={confirmTitle.isPending} onClick={() => confirmTitle.mutate({ taskId: r.taskId, todoId: c.id })}>Koppel aan "{c.title}" · {c.status || "status onbekend"} · {c.due ? `deadline ${c.due}` : "geen deadline"} · id …{c.id.slice(-8)}</Button>
                 ))}
               </div>
             ))}
