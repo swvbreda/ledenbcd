@@ -221,6 +221,19 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
                         <NavLink
+                          to="/projecten"
+                          className="hover:bg-sidebar-accent/50"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                          onClick={closeMobile}
+                        >
+                          <ListChecks className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>Projecten & taken</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink
                           to="/financien"
                           className="hover:bg-sidebar-accent/50"
                           activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
