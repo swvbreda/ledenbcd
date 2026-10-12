@@ -176,6 +176,13 @@
       "when": 1791821494154,
       "tag": "0024_task_assignment_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791821662961,
+      "tag": "0025_task_notifications_readonly_grants",
+      "breakpoints": true
     }
   ]
 }
