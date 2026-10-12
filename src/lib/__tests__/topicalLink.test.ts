@@ -6,6 +6,7 @@ import {
   pendingExternalCompletion, canPushCompletion, skipForGenericPlanner, todoHasRef, completeTopicalTask, completionBlocker, completionSummary, matchPlanner, matchTodo, parseTopicalRef, textHasTopicalRef,
   type CompletionPort, type TopicalLink,
 } from "@/lib/topicalLink";
+import { LOCAL_ONLY_BADGE, localOnlyBadge } from "@/lib/topicalLink";
 
 const PLAN = "ihOF3XJjZU-XVqZD1yqJ4JgAEVQ6";
 const U = "11111111-1111-1111-1111-111111111111";
@@ -208,5 +209,20 @@ describe("eerder lokaal afgerond", () => {
     expect(canPushCompletion(true, { todo_task_id: "t", planner_task_id: null })).toBe(false);
     expect(canPushCompletion(true, undefined)).toBe(false);
     expect(canPushCompletion(true, { todo_task_id: "t", planner_task_id: "p" })).toBe(true);
+  });
+});
+
+describe("localOnlyBadge", () => {
+  const t = (status: string, source_system: string | null = "topical") => ({ status, source_system });
+  it("toont badge voor lokaal afgeronde Topical-taak zonder externe bevestiging (ook oude afrondingen)", () => {
+    expect(localOnlyBadge(t("afgerond"), undefined)).toBe(LOCAL_ONLY_BADGE);
+    expect(localOnlyBadge(t("afgerond"), { todo_completed_at: "2026-10-01T00:00:00Z", planner_completed_at: null })).toBe(LOCAL_ONLY_BADGE);
+  });
+  it("verdwijnt na extern bevestigde afronding (To Do én Planner)", () => {
+    expect(localOnlyBadge(t("afgerond"), { todo_completed_at: "2026-10-01T00:00:00Z", planner_completed_at: "2026-10-01T00:00:01Z" })).toBeNull();
+  });
+  it("geen badge voor open of niet-Topical taken", () => {
+    expect(localOnlyBadge(t("te_doen"), undefined)).toBeNull();
+    expect(localOnlyBadge(t("afgerond", null), undefined)).toBeNull();
   });
 });
