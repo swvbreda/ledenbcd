@@ -7,7 +7,7 @@ const TASK = "33333333-3333-3333-3333-333333333333";
 
 function port(over: Partial<TaskPushPort> = {}) {
   let claimed = false;
-  const finish = vi.fn(async () => {});
+  const finish = vi.fn(async (_id: string, _r: unknown) => {});
   const p: TaskPushPort = {
     claim: async (id) => (claimed ? null : ((claimed = true), { id, recipient_id: ADMIN, task_id: TASK, push_attempts: 1 })),
     isAdmin: async (u) => u === ADMIN,
