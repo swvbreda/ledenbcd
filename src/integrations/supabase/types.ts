@@ -2342,6 +2342,101 @@ export type Database = {
           },
         ]
       }
+      internal_projects: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          owner_id: string | null
+          status: string
+          teams_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          status?: string
+          teams_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          status?: string
+          teams_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      internal_tasks: {
+        Row: {
+          assignee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          deadline: string | null
+          description: string | null
+          id: string
+          priority: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_conversions: {
         Row: {
           created_at: string
@@ -4347,6 +4442,13 @@ export type Database = {
           _o: Database["public"]["Tables"]["ledger_entry_overrides"]["Row"]
         }
         Returns: boolean
+      }
+      list_internal_staff: {
+        Args: never
+        Returns: {
+          email: string
+          user_id: string
+        }[]
       }
       member_directory_payload: {
         Args: { _base: Json; _overlay: Json }

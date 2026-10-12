@@ -113,6 +113,13 @@
       "when": 1791581815964,
       "tag": "0015_allow_receipt_doc_type",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791802498618,
+      "tag": "0016_internal_projects_tasks",
+      "breakpoints": true
     }
   ]
 }
