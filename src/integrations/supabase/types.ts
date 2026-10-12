@@ -4354,7 +4354,23 @@ export type Database = {
           totaal_leden: number
         }[]
       }
+      get_member_bank_groups: {
+        Args: never
+        Returns: {
+          aantal: number
+          bank: string
+          totaal_leden: number
+        }[]
+      }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
+      get_member_psp_groups: {
+        Args: never
+        Returns: {
+          aantal: number
+          naam: string
+          pct: number
+        }[]
+      }
       get_member_register_logos: {
         Args: never
         Returns: {
