@@ -2395,6 +2395,8 @@ export type Database = {
           id: string
           priority: string
           project_id: string | null
+          source_ref: string | null
+          source_system: string | null
           status: string
           title: string
           updated_at: string
@@ -2409,6 +2411,8 @@ export type Database = {
           id?: string
           priority?: string
           project_id?: string | null
+          source_ref?: string | null
+          source_system?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -2423,6 +2427,8 @@ export type Database = {
           id?: string
           priority?: string
           project_id?: string | null
+          source_ref?: string | null
+          source_system?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -4076,6 +4082,98 @@ export type Database = {
           description?: string | null
           id?: string
           title?: string
+        }
+        Relationships: []
+      }
+      topical_task_links: {
+        Row: {
+          confirmed_by: string
+          last_attempt_at: string | null
+          last_error: string | null
+          planner_completed_at: string | null
+          planner_match: string | null
+          planner_plan_id: string | null
+          planner_task_id: string | null
+          source_ref: string
+          task_id: string
+          todo_completed_at: string | null
+          todo_list_id: string | null
+          todo_match: string | null
+          todo_task_id: string | null
+          todo_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          planner_completed_at?: string | null
+          planner_match?: string | null
+          planner_plan_id?: string | null
+          planner_task_id?: string | null
+          source_ref: string
+          task_id: string
+          todo_completed_at?: string | null
+          todo_list_id?: string | null
+          todo_match?: string | null
+          todo_task_id?: string | null
+          todo_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          planner_completed_at?: string | null
+          planner_match?: string | null
+          planner_plan_id?: string | null
+          planner_task_id?: string | null
+          source_ref?: string
+          task_id?: string
+          todo_completed_at?: string | null
+          todo_list_id?: string | null
+          todo_match?: string | null
+          todo_task_id?: string | null
+          todo_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topical_task_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topical_todo_source: {
+        Row: {
+          account_display: string | null
+          confirmed_at: string
+          confirmed_by: string
+          entra_user_id: string
+          id: boolean
+          list_id: string
+          list_name: string | null
+        }
+        Insert: {
+          account_display?: string | null
+          confirmed_at?: string
+          confirmed_by?: string
+          entra_user_id: string
+          id?: boolean
+          list_id: string
+          list_name?: string | null
+        }
+        Update: {
+          account_display?: string | null
+          confirmed_at?: string
+          confirmed_by?: string
+          entra_user_id?: string
+          id?: boolean
+          list_id?: string
+          list_name?: string | null
         }
         Relationships: []
       }
