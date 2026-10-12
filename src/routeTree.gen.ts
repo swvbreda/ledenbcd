@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/_dashboard'
+import { Route as AdviespakketControleRouteImport } from './routes/adviespakket-controle'
 import { Route as ExternLoginRouteImport } from './routes/extern-login'
 import { Route as KoppelenRouteImport } from './routes/koppelen'
 import { Route as LoginRouteImport } from './routes/login'
@@ -51,6 +52,7 @@ import { Route as DashboardLedenvoordelenIdRouteImport } from './routes/_dashboa
 import { Route as DashboardLocatiesIndexRouteImport } from './routes/_dashboard/locaties.index'
 import { Route as DashboardLocatiesGemeenteRouteImport } from './routes/_dashboard/locaties.$gemeente'
 import { Route as ApiLedenKennisbankRouteImport } from './routes/api/leden/kennisbank'
+import { Route as ApiPublicAdviespakketRedeemRouteImport } from './routes/api/public/adviespakket-redeem'
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
@@ -68,6 +70,11 @@ import { Route as ApiPublicShopLogoIdRouteImport } from './routes/api/public/sho
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/_dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdviespakketControleRoute = AdviespakketControleRouteImport.update({
+  id: '/adviespakket-controle',
+  path: '/adviespakket-controle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExternLoginRoute = ExternLoginRouteImport.update({
@@ -282,6 +289,12 @@ const ApiLedenKennisbankRoute = ApiLedenKennisbankRouteImport.update({
   path: '/api/leden/kennisbank',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdviespakketRedeemRoute =
+  ApiPublicAdviespakketRedeemRouteImport.update({
+    id: '/api/public/adviespakket-redeem',
+    path: '/api/public/adviespakket-redeem',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAgendaOutlookBackfillRoute =
   ApiPublicAgendaOutlookBackfillRouteImport.update({
     id: '/api/public/agenda-outlook-backfill',
@@ -362,6 +375,7 @@ const ApiPublicShopLogoIdRoute = ApiPublicShopLogoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
+  '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
@@ -395,6 +409,7 @@ export interface FileRoutesByFullPath {
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
+  '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -418,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
@@ -452,6 +468,7 @@ export interface FileRoutesByTo {
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
+  '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -477,6 +494,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_dashboard': typeof DashboardRouteWithChildren
+  '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
@@ -511,6 +529,7 @@ export interface FileRoutesById {
   '/_dashboard/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
   '/_dashboard/locaties/$gemeente': typeof DashboardLocatiesGemeenteRoute
   '/api/leden/kennisbank': typeof ApiLedenKennisbankRoute
+  '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
@@ -537,6 +556,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
     | '/login'
@@ -570,6 +590,7 @@ export interface FileRouteTypes {
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
     | '/api/leden/kennisbank'
+    | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -593,6 +614,7 @@ export interface FileRouteTypes {
     | '/enquetes/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
     | '/login'
@@ -627,6 +649,7 @@ export interface FileRouteTypes {
     | '/ledenvoordelen/$id'
     | '/locaties/$gemeente'
     | '/api/leden/kennisbank'
+    | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -651,6 +674,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_dashboard'
+    | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
     | '/login'
@@ -685,6 +709,7 @@ export interface FileRouteTypes {
     | '/_dashboard/ledenvoordelen/$id'
     | '/_dashboard/locaties/$gemeente'
     | '/api/leden/kennisbank'
+    | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
@@ -710,6 +735,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
+  AdviespakketControleRoute: typeof AdviespakketControleRoute
   ExternLoginRoute: typeof ExternLoginRoute
   KoppelenRoute: typeof KoppelenRoute
   LoginRoute: typeof LoginRoute
@@ -724,6 +750,7 @@ export interface RootRouteChildren {
   ExternProfielRoute: typeof ExternProfielRoute
   ExternIndexRoute: typeof ExternIndexRoute
   ApiLedenKennisbankRoute: typeof ApiLedenKennisbankRoute
+  ApiPublicAdviespakketRedeemRoute: typeof ApiPublicAdviespakketRedeemRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
@@ -744,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/adviespakket-controle': {
+      id: '/adviespakket-controle'
+      path: '/adviespakket-controle'
+      fullPath: '/adviespakket-controle'
+      preLoaderRoute: typeof AdviespakketControleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/extern-login': {
@@ -1033,6 +1067,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLedenKennisbankRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/adviespakket-redeem': {
+      id: '/api/public/adviespakket-redeem'
+      path: '/api/public/adviespakket-redeem'
+      fullPath: '/api/public/adviespakket-redeem'
+      preLoaderRoute: typeof ApiPublicAdviespakketRedeemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agenda-outlook-backfill': {
       id: '/api/public/agenda-outlook-backfill'
       path: '/api/public/agenda-outlook-backfill'
@@ -1207,6 +1248,7 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
+  AdviespakketControleRoute: AdviespakketControleRoute,
   ExternLoginRoute: ExternLoginRoute,
   KoppelenRoute: KoppelenRoute,
   LoginRoute: LoginRoute,
@@ -1221,6 +1263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExternProfielRoute: ExternProfielRoute,
   ExternIndexRoute: ExternIndexRoute,
   ApiLedenKennisbankRoute: ApiLedenKennisbankRoute,
+  ApiPublicAdviespakketRedeemRoute: ApiPublicAdviespakketRedeemRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
