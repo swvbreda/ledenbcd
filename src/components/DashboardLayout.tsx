@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Outlet, useLocation, Navigate } from "@/lib/router-compat";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import TaskNotificationsBell from "@/components/TaskNotificationsBell";
 import { useAuth } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
 import SharedAnnouncementReceiver from "@/components/SharedAnnouncementReceiver";
@@ -39,6 +40,7 @@ const DashboardLayout = () => {
       <div className="flex w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden">
         <header className="sticky top-0 z-40 flex items-center border-b border-border bg-card px-4 pt-[env(safe-area-inset-top)] h-[calc(5rem+env(safe-area-inset-top))]">
           <SidebarTrigger className="mr-3" />
+          <TaskNotificationsBell />
         </header>
         <main ref={mainRef} id="main-scroll-area" className="w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />

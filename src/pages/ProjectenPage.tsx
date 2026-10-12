@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate } from "@/lib/router-compat";
+import { Navigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -20,6 +20,7 @@ import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { useServerFn } from "@tanstack/react-start";
 import { topicalComplete } from "@/lib/topical.functions";
 import { completionSummary } from "@/lib/topicalLink";
+import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
   filterTasks,
   isOverdue,
@@ -101,6 +102,19 @@ function ProjectenInner() {
     qc.invalidateQueries({ queryKey: ["internal-tasks"] });
   };
 
+  const dispatchFn = useServerFn(dispatchTaskPushes);
+  const [searchParams] = useSearchParams();
+  const focusTaskId = searchParams.get("task");
+  useEffect(() => {
+    // Openstaande/mislukte pushes opnieuw proberen wanneer een beheerder de pagina opent.
+    void dispatchFn({ data: {} }).catch(() => undefined);
+  }, [dispatchFn]);
+  useEffect(() => {
+    if (!focusTaskId || !tasksQ.data?.some((t) => t.id === focusTaskId)) return;
+    setFilter((f) => ({ ...f, projectId: "all", status: "all", mine: false, overdue: false }));
+    requestAnimationFrame(() => document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ block: "center" }));
+  }, [focusTaskId, tasksQ.data]);
+
   const saveTask = useMutation({
     mutationFn: async (t: Partial<Task>) => {
       const row = {
@@ -112,8 +126,13 @@ function ProjectenInner() {
       const { data, error } = await q;
       if (error) throw error;
       if (!data?.length) throw new Error("Niet opgeslagen: geen toegang of taak bestaat niet meer");
+      return data[0].id as string;
     },
-    onSuccess: () => { toast.success("Taak opgeslagen"); setEditTask(null); invalidate(); },
+    onSuccess: (id) => {
+      toast.success("Taak opgeslagen"); setEditTask(null); invalidate();
+      // Push mag het opslaan nooit blokkeren; status blijft per melding zichtbaar/herhaalbaar.
+      void dispatchFn({ data: { taskId: id } }).catch((e) => console.warn("Taakpush niet verstuurd:", e));
+    },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
   });
   const topicalFn = useServerFn(topicalComplete);
@@ -241,7 +260,7 @@ function ProjectenInner() {
               {tasks.map((t) => {
                 const late = isOverdue(t, today);
                 return (
-                  <li key={t.id} className="rounded-lg border border-border bg-card p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <li key={t.id} id={`task-${t.id}`} className={`rounded-lg border bg-card p-3 ${focusTaskId === t.id ? "border-primary ring-2 ring-primary/40" : "border-border"} flex flex-col sm:flex-row sm:items-center gap-2`}>
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium break-words ${t.status === "afgerond" ? "line-through text-muted-foreground" : ""}`}>{t.title}</p>
                       <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-muted-foreground items-center">
