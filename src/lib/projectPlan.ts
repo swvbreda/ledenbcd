@@ -85,3 +85,16 @@ export function newestFirst<T extends { date: string }>(items: T[]): T[] {
     .sort((a, b) => (a.k === null || b.k === null ? (a.k === null ? 1 : 0) - (b.k === null ? 1 : 0) || a.i - b.i : b.k - a.k || a.i - b.i))
     .map((x) => x.it);
 }
+
+/**
+ * Eén canonieke 'Huidige status': de plansectie 'Huidige stand' (volledig) als die inhoud heeft, anders de omschrijving.
+ * `rest` bevat de overige plansecties; 'Huidige stand' wordt alleen weggelaten als die bovenaan al is getoond.
+ */
+export function splitCurrentStatus(planText: string | null | undefined, description: string | null | undefined) {
+  const sections = parsePlan(planText);
+  const idx = sections.findIndex((s) => s.heading === "Huidige stand" && s.blocks.length > 0);
+  const rest = sections.filter((s, i) => i !== idx && !(s.heading === "Huidige stand" && !s.blocks.length));
+  if (idx >= 0) return { status: { source: "plan" as const, blocks: sections[idx].blocks }, rest };
+  const d = description?.trim();
+  return { status: d ? { source: "description" as const, blocks: [{ type: "paragraph", text: d } as PlanBlock] } : null, rest };
+}
