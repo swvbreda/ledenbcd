@@ -92,7 +92,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "" });
   useEffect(() => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
-    setPlan({ description: presentText(project.description), project_plan: presentText(project.project_plan), status: project.status, owner_id: project.owner_id ?? "",
+    setPlan({ description: presentText(project.description, { autoImport: project.created_origin === "bronimport" }), project_plan: presentText(project.project_plan), status: project.status, owner_id: project.owner_id ?? "",
       due_date: project.due_date ?? "", est: s(project.budget_estimate), res: s(project.budget_reserved), rec: s(project.budget_received) });
   }, [project]);
   const savePlan = useMutation({
@@ -100,7 +100,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       const est = parseAmount(plan.est), res = parseAmount(plan.res), rec = parseAmount(plan.rec);
       if ([est, res, rec].includes("invalid")) throw new Error("Bedrag ongeldig; laat leeg als het onbekend is");
       const { data, error } = await db.from("internal_projects").update({
-        description: changedText(project.description, plan.description), project_plan: changedText(project.project_plan, plan.project_plan), status: plan.status,
+        description: changedText(project.description, plan.description, { autoImport: project.created_origin === "bronimport" }), project_plan: changedText(project.project_plan, plan.project_plan), status: plan.status,
         owner_id: plan.owner_id || null, due_date: plan.due_date || null, budget_estimate: est, budget_reserved: res, budget_received: rec,
       }).eq("id", pid).select("id");
       if (error) throw error;
@@ -380,11 +380,11 @@ function MessageList({ q, items, staff, empty }: { q: { isLoading: boolean; erro
           </div>
           {m.kind === "bronupdate" && (
             <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-sm">
-              <dt className="text-muted-foreground">Laatste actie</dt><dd className="whitespace-pre-wrap break-words">{presentText(m.last_action)}</dd>
-              <dt className="text-muted-foreground">Volgende stap</dt><dd className="whitespace-pre-wrap break-words font-medium">{presentText(m.next_step)}</dd>
+              <dt className="text-muted-foreground">Laatste actie</dt><dd className="whitespace-pre-wrap break-words">{presentText(m.last_action, { autoImport: true })}</dd>
+              <dt className="text-muted-foreground">Volgende stap</dt><dd className="whitespace-pre-wrap break-words font-medium">{presentText(m.next_step, { autoImport: true })}</dd>
             </dl>
           )}
-          {m.body && m.kind !== "bronupdate" && <p className="text-sm whitespace-pre-wrap break-words">{m.author_kind === "bronimport" ? presentText(m.body) : m.body}</p>}
+          {m.body && m.kind !== "bronupdate" && <p className="text-sm whitespace-pre-wrap break-words">{m.author_kind === "bronimport" ? presentText(m.body, { autoImport: true }) : m.body}</p>}
         </li>
       ))}
     </ul>
