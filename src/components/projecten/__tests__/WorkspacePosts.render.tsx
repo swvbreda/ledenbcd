@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 afterEach(cleanup);
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 import { CheckpointTable, SimplePost } from "../ProjectWorkspace";
@@ -14,7 +14,7 @@ describe("SimplePost", () => {
     expect(onPost).toHaveBeenCalledTimes(1);
     expect(box.value).toBe("Hallo"); // nog niet bevestigd (bijv. fout)
     const done = onPost.mock.calls[0][1] as () => void;
-    done();
+    act(() => done());
     expect(box.value).toBe("");
   });
   it("verstuurt niet tijdens pending", () => {
@@ -43,7 +43,7 @@ describe("CheckpointTable", () => {
     fireEvent.change(inp, { target: { value: "Offerte" } });
     fireEvent.submit(inp.closest("form")!);
     expect(inp.value).toBe("Offerte");
-    onMut.mock.calls[0][0].done();
+    act(() => onMut.mock.calls[0][0].done());
     expect(inp.value).toBe("");
   });
 });
