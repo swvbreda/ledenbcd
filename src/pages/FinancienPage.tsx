@@ -34,7 +34,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Navigate } from "@/lib/router-compat";
+import { Navigate, useSearchParams } from "@/lib/router-compat";
+import { parseFinanceSearch, type FinanceTab } from "@/lib/dossierRegister";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -42,7 +43,24 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
 export default function FinancienPage() {
-  const [year, setYear] = useState(currentYear);
+  // Deeplinks: ?tab=dossiers&year=2026&dossier=<exact financieel label>, gevalideerd.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linked = parseFinanceSearch(searchParams, years, currentYear);
+  const [year, setYearState] = useState(linked.year);
+  const [tab, setTabState] = useState<FinanceTab>(linked.tab);
+  const searchKey = searchParams.toString();
+  useEffect(() => {
+    const p = parseFinanceSearch(new URLSearchParams(searchKey), years, currentYear);
+    if (new URLSearchParams(searchKey).has("year")) setYearState(p.year);
+    if (new URLSearchParams(searchKey).has("tab")) setTabState(p.tab);
+  }, [searchKey]);
+  const updateParams = (patch: Record<string, string | null>) => setSearchParams((prev) => {
+    const n = new URLSearchParams(prev);
+    for (const [k, v] of Object.entries(patch)) { if (v == null) n.delete(k); else n.set(k, v); }
+    return n;
+  }, { replace: true });
+  const setYear = (y: number) => { setYearState(y); if (searchParams.has("year")) updateParams({ year: String(y) }); };
+  const setTab = (t: string) => { setTabState(t as FinanceTab); if (searchParams.has("tab") || searchParams.has("dossier")) updateParams({ tab: t, dossier: t === "dossiers" ? searchParams.get("dossier") : null }); };
   // Het volledige geselecteerde boekjaar wordt automatisch bijgewerkt,
   // ongeacht welk financieel tabblad actief is.
   const autoSync = useAutoYearSync(year);
@@ -157,7 +175,7 @@ export default function FinancienPage() {
       ) : (
         <>
 
-        <Tabs defaultValue="dashboard" className="min-w-0 space-y-1">
+        <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-1">
           <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-7">
             <TabsTrigger value="dashboard" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dashboard
@@ -380,6 +398,8 @@ export default function FinancienPage() {
             <DossierOverzichtTab
               categories={categories || []}
               year={year}
+              focusDossier={linked.dossier}
+              onFocusHandled={(open) => updateParams({ dossier: open })}
               onUpdateExpense={(id, fields) => mutations.updateExpense.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
               onUpdateBankTransaction={(id, fields) => mutations.updateBankTransaction.mutate({ id, ...fields }, { onSuccess: () => toast.success("Dossier bijgewerkt") })}
             />
