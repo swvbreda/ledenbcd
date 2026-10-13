@@ -1,4 +1,5 @@
 -- Projectdocumenten + planning/opmerkingen. Volledig teruggedraaid via eindexceptie; geen echte bestanden.
+-- Laatste run: planning_event=1 no_file=rejected bad_ext=denied bad_project=denied uploader=forced dup=rejected overwrite_rows=0 meta_edit=rejected archive=ok doc_events=2 member_meta=0 member_files=0 member_upload=denied member_planning_rows=0 anon_files=0 anon_upload=denied; (na 0034) delete=denied anon_meta=denied
 DO $$
 DECLARE a1 uuid; mem uuid; p uuid; d record; c int; res text := ''; h text := repeat('a',64); path text; v text;
 BEGIN
