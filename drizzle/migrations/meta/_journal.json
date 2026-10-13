@@ -239,6 +239,13 @@
       "when": 1791921279606,
       "tag": "0033_project_planning_and_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791921385289,
+      "tag": "0034_project_documents_tighten_grants",
+      "breakpoints": true
     }
   ]
 }
