@@ -52,7 +52,7 @@ describe("useIsMobile", () => {
 describe("hero title fit", () => {
   it("measures the longest whole word, splitting only at spaces and hyphens", () => {
     expect(longestWordLength("Projecten & taken")).toBe(9);
-    expect(longestWordLength("Contributie-administratie")).toBe(14);
+    expect(longestWordLength("Contributie-administratie")).toBe(13);
     expect(longestWordLength("voor coffeeshopondernemers")).toBe(21);
   });
 });
