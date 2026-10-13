@@ -4,7 +4,21 @@ interface BcdHeroBannerProps {
   children?: React.ReactNode;
 }
 
+/** Longest unbreakable run (split on spaces and after hyphens/dashes). */
+export function longestWordLength(title: string): number {
+  return title
+    .split(/\s+|(?<=[-‐-―])/u)
+    .reduce((max, w) => Math.max(max, [...w].length), 0);
+}
+
+/**
+ * Average uppercase Archivo Black advance ≈ 0.8em (measured in the browser
+ * harness); 0.92 leaves headroom for wide glyphs like M/W.
+ */
+const GLYPH_EM = 0.92;
+
 const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
+  const fit = `calc(100cqi / ${(Math.max(longestWordLength(title), 1) * GLYPH_EM).toFixed(2)})`;
   return (
     <div
       className="relative w-full max-w-full overflow-hidden rounded-xl -mt-4 sm:-mt-6"
@@ -44,11 +58,13 @@ const BcdHeroBanner = ({ title, subtitle, children }: BcdHeroBannerProps) => {
       </svg>
 
       {/* Content — vaste hoogte zodat alle pagina-banners identiek zijn */}
-      <div className="relative z-10 min-w-0 px-5 sm:px-6 md:px-10 py-8 sm:py-10 md:py-12 flex flex-col justify-center min-h-[220px] sm:min-h-[260px] md:min-h-[300px]">
-        {/* Wrap only between words: no automatic hyphenation (lang="nl" split
-            "TAKEN" into "TA-KEN"). break-words stays as a last resort for a
-            single word wider than the banner. */}
-        <h1 className="font-display tracking-tight text-white uppercase leading-[0.95] break-words hyphens-none [word-break:normal] text-[min(1.875rem,7vw)] sm:text-4xl md:text-5xl lg:text-6xl">
+      <div className="relative z-10 min-w-0 [container-type:inline-size] px-5 sm:px-6 md:px-10 py-8 sm:py-10 md:py-12 flex flex-col justify-center min-h-[220px] sm:min-h-[260px] md:min-h-[300px]">
+        {/* Words stay whole: no hyphenation or mid-word breaks. The font shrinks
+            (container units) only when the longest word would not fit. */}
+        <h1
+          style={{ ["--hero-fit" as string]: fit }}
+          className="font-display tracking-tight text-white uppercase leading-[0.95] hyphens-none [word-break:normal] [overflow-wrap:normal] text-[min(1.875rem,var(--hero-fit))] sm:text-[min(2.25rem,var(--hero-fit))] md:text-[min(3rem,var(--hero-fit))] lg:text-[min(3.75rem,var(--hero-fit))]"
+        >
           {title}
         </h1>
         {subtitle && (
