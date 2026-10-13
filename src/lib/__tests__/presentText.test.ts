@@ -23,11 +23,23 @@ describe("presentText", () => {
     expect(presentText(human)).toBe(human);
   });
   it("ongewijzigde opgeschoonde tekst wordt niet teruggeschreven; bewerking wel", () => {
-    const raw = "Bron: X — a@b.nl.\nInhoud.";
+    const raw = "Broncontrole 13 oktober 2026. Inhoud.";
     expect(changedText(raw, "Inhoud.")).toBeUndefined();
     expect(changedText(raw, "Inhoud aangepast.")).toBe("Inhoud aangepast.");
   });
   it("historie: bronupdate generiek", () => {
     expect(presentEventSummary({ event_type: "bronupdate_geplaatst", summary: "Bronupdate: RE: Overleg" })).toBe("Stand van zaken bijgewerkt");
+  });
+  it("menselijke tekst blijft letterlijk: importzin, aangeduid-als, Bron:, documentnaam, link en mailadres", () => {
+    const human = "De import van leden loopt morgen.\nHet stuk wordt aangeduid als concept.\nBron: gesprek met de gemeente op 2026-10-01.\nZie Notulen_ALV_20261001.pdf en https://example.nl, mail jan@gemeente.nl.";
+    expect(presentText(human)).toBe(human);
+  });
+  it("na handmatige bewerking opgeslagen tekst (zonder importkenmerk) blijft ongewijzigd", () => {
+    const edited = presentText("Broncontrole 13 oktober 2026. Datum nog onbekend.") + "\nBron: telefoontje Bernard. Import KING stoppen.";
+    expect(edited).toBe("Datum nog onbekend.\nBron: telefoontje Bernard. Import KING stoppen.");
+    expect(presentText(edited)).toBe(edited);
+  });
+  it("historie: overige samenvattingen letterlijk", () => {
+    expect(presentEventSummary({ event_type: "taak_gewijzigd", summary: "Import van leden gepland" })).toBe("Import van leden gepland");
   });
 });
