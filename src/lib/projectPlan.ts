@@ -60,3 +60,28 @@ export function parsePlan(raw: string | null | undefined): PlanSection[] {
   flush();
   return sections.filter((s) => s.heading || s.blocks.length);
 }
+
+const MONTH_NUM: Record<string, number> = {
+  januari: 1, jan: 1, februari: 2, feb: 2, maart: 3, mrt: 3, april: 4, apr: 4, mei: 5, juni: 6, jun: 6,
+  juli: 7, jul: 7, augustus: 8, aug: 8, september: 9, sep: 9, sept: 9, oktober: 10, okt: 10, november: 11, nov: 11, december: 12, dec: 12,
+};
+
+/** Datumwaarde (yyyymmdd) voor herkende tijdlijndatums; null als onherkenbaar. */
+export function timelineDateKey(date: string): number | null {
+  const s = date.trim().toLowerCase();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return +m[1] * 10000 + +m[2] * 100 + +m[3];
+  m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) return +m[3] * 10000 + +m[2] * 100 + +m[1];
+  m = s.match(/^(\d{1,2}) ([a-z]+)\.? (\d{4})$/);
+  if (m && MONTH_NUM[m[2]]) return +m[3] * 10000 + MONTH_NUM[m[2]] * 100 + +m[1];
+  return null;
+}
+
+/** Alleen weergave: kopie van tijdlijnitems, nieuwste eerst; stabiel bij gelijke datum, onherkenbaar onderaan in oorspronkelijke volgorde. */
+export function newestFirst<T extends { date: string }>(items: T[]): T[] {
+  return items
+    .map((it, i) => ({ it, i, k: timelineDateKey(it.date) }))
+    .sort((a, b) => (a.k === null || b.k === null ? (a.k === null ? 1 : 0) - (b.k === null ? 1 : 0) || a.i - b.i : b.k - a.k || a.i - b.i))
+    .map((x) => x.it);
+}

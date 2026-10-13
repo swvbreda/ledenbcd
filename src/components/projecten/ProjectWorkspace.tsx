@@ -18,7 +18,7 @@ import {
 import { StaffAvatars } from "./StaffAvatars";
 import { ProjectDocuments } from "./ProjectDocuments";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
-import { parsePlan } from "@/lib/projectPlan";
+import { parsePlan, newestFirst } from "@/lib/projectPlan";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
@@ -387,7 +387,7 @@ function PlanView({ text }: { text: string }) {
               : <ul key={j} className="list-disc pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ul>
           ) : (
             <ol key={j} className="relative border-l-2 border-border ml-1.5 space-y-4">
-              {b.items.map((it, k) => (
+              {newestFirst(b.items).map((it, k) => (
                 <li key={k} className="relative pl-4 min-w-0">
                   <span aria-hidden className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-primary" />
                   <p className="text-xs text-muted-foreground tabular-nums break-words">{it.date}</p>
