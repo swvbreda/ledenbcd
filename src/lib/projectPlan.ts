@@ -17,13 +17,14 @@ const headingOf = (line: string) => {
   return PLAN_HEADINGS.find((h) => h.toLowerCase() === t) ?? null;
 };
 const LIST = /^\s*(?:([-*•])|(\d+)[.)])\s+(.*)$/;
-const DATEISH = /\d/;
+const MONTHS = "januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|jan|feb|mrt|apr|jun|jul|aug|sep|sept|okt|nov|dec";
+const DATE = new RegExp(`^(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}-\\d{1,2}-\\d{4}|\\d{1,2} (?:${MONTHS})\\.? \\d{4})$`, "i");
 
 function timelineItem(line: string) {
   const parts = line.split("|").map((p) => p.trim());
-  if (parts.length < 3 || !parts[0] || !DATEISH.test(parts[0]) || parts[0].length > 40) return null;
-  // Alleen datum, titel en tekst; eventuele extra kolommen (bronlabels) worden niet getoond.
-  return { date: parts[0], title: parts[1], text: parts[2] };
+  if (parts.length < 3 || !DATE.test(parts[0])) return null;
+  // Extra kolommen blijven onderdeel van de tekst (lossless); bronmetadata hoort in presentText.
+  return { date: parts[0], title: parts[1], text: parts.slice(2).join(" | ") };
 }
 
 export function parsePlan(raw: string | null | undefined): PlanSection[] {
