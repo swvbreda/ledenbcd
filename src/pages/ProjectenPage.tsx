@@ -17,6 +17,9 @@ import { toast } from "sonner";
 import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus } from "lucide-react";
 import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
+import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
+import { StaffAvatars } from "@/components/projecten/StaffAvatars";
+import { displayName, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
@@ -39,7 +42,7 @@ type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
   deadline: string | null; priority: TaskPriority; status: TaskStatus; source_system?: string | null; source_ref?: string | null;
 };
-type Staff = { user_id: string; email: string };
+type Staff = { user_id: string; email: string; full_name: string | null };
 
 const db = supabase as any;
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -76,12 +79,20 @@ function ProjectenInner() {
   const staffQ = useQuery({
     queryKey: ["internal-staff", uid],
     queryFn: async () => {
-      const { data, error } = await db.rpc("list_internal_staff");
+      const { data, error } = await db.rpc("list_internal_staff_names");
       if (error) throw error;
       return data as Staff[];
     },
   });
-  const staffName = (id: string | null) => (id ? staffQ.data?.find((s) => s.user_id === id)?.email ?? "Onbekend account" : "—");
+  const participantsQ = useQuery({
+    queryKey: ["project-participants", uid],
+    queryFn: async () => {
+      const { data, error } = await db.from("internal_project_participants").select("*");
+      if (error) throw error;
+      return data as { project_id: string; user_id: string; added_by: string | null; added_at: string }[];
+    },
+  });
+  const staffName = (id: string | null) => (id ? staffQ.data?.find((s) => s.user_id === id)? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—"; void 0; const _unused = (id: string | null) => (id ? ""  : "—");
 
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
@@ -99,18 +110,24 @@ function ProjectenInner() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["internal-projects"] });
     qc.invalidateQueries({ queryKey: ["internal-tasks"] });
+    qc.invalidateQueries({ queryKey: ["project-participants"] });
   };
 
   const dispatchFn = useServerFn(dispatchTaskPushes);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const focusTaskId = searchParams.get("task");
+  const openProjectId = searchParams.get("project");
+  const [tab, setTab] = useState(openProjectId ? "projecten" : "taken");
+  useEffect(() => { if (openProjectId) setTab("projecten"); }, [openProjectId]);
+  const openProject = (id: string | null) => setSearchParams((prev) => { const n = new URLSearchParams(prev); if (id) n.set("project", id); else n.delete("project"); n.delete("task"); return n; });
+  const currentProject = openProjectId ? (projectsQ.data ?? []).find((p) => p.id === openProjectId) : undefined;
   useEffect(() => {
     // Openstaande/mislukte pushes opnieuw proberen wanneer een beheerder de pagina opent.
     void dispatchFn({ data: {} }).catch(() => undefined);
   }, [dispatchFn]);
   useEffect(() => {
     if (!focusTaskId || !tasksQ.data?.some((t) => t.id === focusTaskId)) return;
-    setView(viewForTask(tasksQ.data, focusTaskId) ?? "open");
+    setView(viewForTask(tasksQ.data, focusTaskId) ?? "open"); setTab("taken");
     setFilter((f) => ({ ...f, projectId: "all", openStatus: "open", mine: false, overdue: false }));
     requestAnimationFrame(() => document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ block: "center" }));
   }, [focusTaskId, tasksQ.data]);
@@ -177,7 +194,7 @@ function ProjectenInner() {
     onError: (e) => toast.error("Archiveren mislukt: " + errMsg(e)),
   });
 
-  const loadError = projectsQ.error || tasksQ.error || staffQ.error;
+  const loadError = projectsQ.error || tasksQ.error || staffQ.error || participantsQ.error;
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
@@ -191,7 +208,7 @@ function ProjectenInner() {
         </div>
       )}
 
-      <Tabs defaultValue="taken">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="taken">Taken</TabsTrigger>
           <TabsTrigger value="projecten">Projecten</TabsTrigger>
@@ -278,32 +295,49 @@ function ProjectenInner() {
 
         <TabsContent value="projecten" className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>
-            <Button className="ml-auto" onClick={() => setEditProject({ status: "actief" })}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>
+            {!openProjectId && <label className="flex items-center gap-2 text-sm"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>}
+            {!openProjectId && <Button className="ml-auto" onClick={() => setEditProject({ status: "actief" })}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>}
           </div>
           {projectsQ.isLoading ? (
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Projecten laden...</p>
-          ) : projectsQ.error ? null : visibleProjects.length === 0 ? (
+          ) : projectsQ.error ? null : openProjectId ? (
+            currentProject ? (
+              <ProjectWorkspace project={currentProject as unknown as WsProject} tasks={(tasksQ.data ?? []) as unknown as WsTask[]} staff={staffQ.data ?? []}
+                participants={participantsQ.data ?? []} uid={uid} onBack={() => openProject(null)} onChanged={invalidate}
+                onEditTask={(t) => setEditTask(t as Partial<Task>)} />
+            ) : (
+              <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground space-y-2">
+                <p>Dit project bestaat niet (meer) of je hebt geen toegang.</p>
+                <Button variant="outline" size="sm" onClick={() => openProject(null)}>Alle projecten</Button>
+              </div>
+            )
+          ) : visibleProjects.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {visibleProjects.map((p) => {
-                const open = (tasksQ.data ?? []).filter((t) => t.project_id === p.id && t.status !== "afgerond").length;
+                const prog = projectProgress(tasksQ.data ?? [], p.id);
+                const people = participantIds(p, tasksQ.data ?? [], participantsQ.data ?? []);
                 return (
-                  <li key={p.id} className={`rounded-lg border border-border bg-card p-4 space-y-2 ${p.archived_at ? "opacity-60" : ""}`}>
+                  <li key={p.id} className={`rounded-lg border border-border border-t-4 border-t-primary bg-card p-4 flex flex-col gap-3 ${p.archived_at ? "opacity-60" : ""}`}>
                     <div className="flex items-start gap-2">
-                      <p className="font-medium flex-1 break-words">{p.title}</p>
-                      <Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+                        <p className="font-medium break-words">{p.title}</p>
+                      </div>
+                      <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
                     </div>
-                    {p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{p.description}</p>}
-                    <p className="text-xs text-muted-foreground">{staffName(p.owner_id)}{p.due_date ? ` · einddatum ${p.due_date}` : ""} · {open} open taken</p>
-                    <div className="flex flex-wrap gap-2">
+                    {p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{p.description}</p>}
+                    <p className="text-xs text-muted-foreground">{staffName(p.owner_id)}{p.due_date ? ` · einddatum ${p.due_date}` : ""}</p>
+                    <ProgressBar open={prog.open} done={prog.done} pct={prog.pct} />
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      <Button size="sm" onClick={() => openProject(p.id)}>Project openen</Button>
                       {p.teams_url && isValidTeamsUrl(p.teams_url) && (
                         <Button size="sm" variant="outline" asChild>
-                          <a href={p.teams_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Open in Teams</a>
+                          <a href={p.teams_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Teams</a>
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => setEditProject(p)}><Pencil className="h-4 w-4 mr-1" />Bewerken</Button>
+                      <Button size="sm" variant="ghost" aria-label="Project bewerken" onClick={() => setEditProject(p)}><Pencil className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" disabled={archiveProject.isPending} onClick={() => archiveProject.mutate({ id: p.id, archive: !p.archived_at })}>
                         <Archive className="h-4 w-4 mr-1" />{p.archived_at ? "Terugzetten" : "Archiveren"}
                       </Button>
@@ -345,7 +379,7 @@ function ProjectenInner() {
                 <div><Label>Verantwoordelijke</Label>
                   <Select value={editTask.assignee_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, assignee_id: v === NONE ? null : v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{(staffQ.data ?? []).map((s) => <SelectItem key={s.user_id} value={s.user_id}>{s.email}</SelectItem>)}</SelectContent>
+                    <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{(staffQ.data ?? []).map((s) => <SelectItem key={s.user_id} value={s.user_id}>{displayName(s)}</SelectItem>)}</SelectContent>
                   </Select></div>
                 <div><Label htmlFor="t-dl">Deadline</Label><Input id="t-dl" type="date" value={editTask.deadline ?? ""} onChange={(e) => setEditTask({ ...editTask, deadline: e.target.value || null })} /></div>
                 <div><Label>Prioriteit</Label>
@@ -376,7 +410,7 @@ function ProjectenInner() {
                 <div><Label>Verantwoordelijke</Label>
                   <Select value={editProject.owner_id ?? NONE} onValueChange={(v) => setEditProject({ ...editProject, owner_id: v === NONE ? null : v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{(staffQ.data ?? []).map((s) => <SelectItem key={s.user_id} value={s.user_id}>{s.email}</SelectItem>)}</SelectContent>
+                    <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{(staffQ.data ?? []).map((s) => <SelectItem key={s.user_id} value={s.user_id}>{displayName(s)}</SelectItem>)}</SelectContent>
                   </Select></div>
                 <div><Label htmlFor="p-due">Einddatum</Label><Input id="p-due" type="date" value={editProject.due_date ?? ""} onChange={(e) => setEditProject({ ...editProject, due_date: e.target.value || null })} /></div>
                 <div className="sm:col-span-2"><Label>Status</Label>
