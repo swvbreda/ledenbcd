@@ -20,6 +20,10 @@ import { ProjectDocuments } from "./ProjectDocuments";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
 import { newestFirst, splitCurrentStatus, type PlanBlock, type PlanSection } from "@/lib/projectPlan";
 import { statusDateLabel } from "@/lib/statusDate";
+import { Link } from "@/lib/router-compat";
+import { DossierPicker } from "@/components/dossiers/DossierPicker";
+import { useSetProjectDossiers } from "@/hooks/useDossierRegister";
+import { aliasesFor, financeDossierHref, projectsDossierHref, type FinanceAlias, type RegisterDossier } from "@/lib/dossierRegister";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
@@ -49,9 +53,11 @@ type Event = { id: string; event_type: string; summary: string; actor_id: string
 interface Props {
   project: WsProject; tasks: WsTask[]; staff: StaffMember[]; participants: Participant[]; uid: string | null;
   onBack: () => void; onChanged: () => void; onEditTask: (t: Partial<WsTask>) => void; onTaskSaved?: (id: string) => void;
+  /** Gedeelde dossierindeling (admin-only); geen financiële bedragen. */
+  allDossiers?: RegisterDossier[]; projectDossierIds?: string[]; aliases?: FinanceAlias[];
 }
 
-export default function ProjectWorkspace({ project, tasks, staff, participants, uid, onBack, onChanged, onEditTask }: Props) {
+export default function ProjectWorkspace({ project, tasks, staff, participants, uid, onBack, onChanged, onEditTask, allDossiers = [], projectDossierIds = [], aliases = [] }: Props) {
   const qc = useQueryClient();
   const pid = project.id;
   const prog = projectProgress(tasks, pid);
@@ -96,6 +102,10 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   // ---- Overzicht / projectplan ----
   const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", status_date: "", remarks: "" });
   const [editing, setEditing] = useState(false);
+  const [dossierSel, setDossierSel] = useState<string[]>([]);
+  const setDossiers = useSetProjectDossiers();
+  const linkedDossiers = allDossiers.filter((d) => projectDossierIds.includes(d.id));
+  const financeYear = new Date().getFullYear();
   const [tab, setTab] = useState("overzicht");
   const loadPlan = (p: WsProject) => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
@@ -105,7 +115,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   // Alleen buiten bewerkmodus synchroniseren, zodat een refetch ingevoerde tekst niet overschrijft.
   useEffect(() => { if (!editing) loadPlan(project); }, [project, editing]);
   useEffect(() => { setEditing(false); setTab("overzicht"); }, [pid]);
-  const startEdit = () => { loadPlan(project); setTab("overzicht"); setEditing(true); };
+  const startEdit = () => { loadPlan(project); setDossierSel(projectDossierIds); setTab("overzicht"); setEditing(true); };
   const cancelEdit = () => { setEditing(false); refreshAll(); };
   const savePlan = useMutation({
     mutationFn: async () => {
@@ -118,6 +128,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       }).eq("id", pid).select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang");
+      await setDossiers.mutateAsync({ projectId: pid, current: projectDossierIds, next: dossierSel });
     },
     onSuccess: () => { toast.success("Project opgeslagen"); setEditing(false); refreshAll(); },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
@@ -229,6 +240,24 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                 const budget = ([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null);
                 const filled = [project.owner_id && `Verantwoordelijke: ${byName(project.owner_id)}`, project.due_date && `Einddatum ${project.due_date}`, budget.length && `Budget: ${budget.map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}`].filter(Boolean) as string[];
                 return (
+                  <div className="space-y-2">
+                  {linkedDossiers.length > 0 && (
+                    <nav aria-label="Dossiers" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      <span className="text-muted-foreground">Dossier:</span>
+                      {linkedDossiers.map((d) => {
+                        const parent = d.parent_id ? allDossiers.find((x) => x.id === d.parent_id) : null;
+                        return (
+                          <span key={d.id} className="inline-flex flex-wrap items-center gap-1 break-words">
+                            {parent && <><Link to={projectsDossierHref(parent.id)} className="hover:underline">{parent.name}</Link><span aria-hidden>›</span></>}
+                            <Link to={projectsDossierHref(d.id)} className="font-medium hover:underline">{d.name}</Link>
+                            {aliasesFor(d.id, aliases).map((a) => (
+                              <Link key={a} to={financeDossierHref(a, financeYear)} className="text-brand-red hover:underline">(Financiën)</Link>
+                            ))}
+                          </span>
+                        );
+                      })}
+                    </nav>
+                  )}
                   <details className="text-sm">
                     <summary className="cursor-pointer text-muted-foreground">Projectgegevens{filled.length ? `: ${filled.join(" · ")}` : ""}</summary>
                     <dl className="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
@@ -238,6 +267,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                       <dt className="text-muted-foreground">Taken</dt><dd className="tabular-nums">{prog.open} open · {prog.done} afgerond</dd>
                     </dl>
                   </details>
+                  </div>
                 );
               })()}
               <PlanView sections={current.rest} />
@@ -267,6 +297,9 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                 </Select></div>
               <div><Label htmlFor="ws-due">Einddatum project</Label><Input id="ws-due" type="date" value={plan.due_date} onChange={(e) => setPlan({ ...plan, due_date: e.target.value })} /></div>
             </div>
+            {allDossiers.length > 0 && (
+              <div><Label>Bijbehorende dossiers</Label><DossierPicker dossiers={allDossiers} value={dossierSel} onChange={setDossierSel} idPrefix="ws-dos" /></div>
+            )}
             <details className="rounded-md border border-border p-3" open={!!(plan.est || plan.res || plan.rec)}>
               <summary className="cursor-pointer text-sm font-medium">Budget (optioneel; leeg = onbekend)</summary>
               <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
