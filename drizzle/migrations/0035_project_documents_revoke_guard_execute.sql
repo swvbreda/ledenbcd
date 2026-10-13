@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.internal_project_document_guard() FROM PUBLIC, anon, authenticated;
