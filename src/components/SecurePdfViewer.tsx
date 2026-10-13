@@ -3,6 +3,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, LayoutGrid, List, ChevronDown, ChevronRight as ChevronRightSm } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createEdgeScrollDetector } from "./edgeScrollDetector";
+import { copyPdfBytes } from "@/lib/pdfBytes";
 
 // Use CDN worker matching installed version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -68,15 +69,19 @@ export default function SecurePdfViewer({ url, data }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let loadingTask: ReturnType<typeof pdfjsLib.getDocument> | null = null;
+    let loadedDoc: pdfjsLib.PDFDocumentProxy | null = null;
     setLoading(true);
     setError(null);
     (async () => {
       try {
-        const loadingTask = data
-          ? pdfjsLib.getDocument({ data: data instanceof Uint8Array ? data : new Uint8Array(data) })
+        // Per laadpoging een eigen kopie: de worker detacht de overgedragen buffer.
+        loadingTask = data
+          ? pdfjsLib.getDocument({ data: copyPdfBytes(data) })
           : pdfjsLib.getDocument({ url: url! });
         const doc = await loadingTask.promise;
-        if (cancelled) return;
+        if (cancelled) { void doc.destroy().catch(() => undefined); return; }
+        loadedDoc = doc;
         setPdf(doc);
         setNumPages(doc.numPages);
         setPageNum(1);
@@ -92,13 +97,19 @@ export default function SecurePdfViewer({ url, data }: Props) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (loadedDoc) void loadedDoc.destroy().catch(() => undefined);
+      else if (loadingTask) void loadingTask.destroy().catch(() => undefined);
+    };
   }, [url, data]);
 
   useEffect(() => {
     if (!pdf || !canvasEl) return;
     let cancelled = false;
+    let renderTask: { cancel: () => void; promise: Promise<unknown> } | null = null;
     (async () => {
+     try {
       const page = await pdf.getPage(pageNum);
       if (cancelled) return;
       const renderScale = fitScale * scale;
@@ -111,7 +122,8 @@ export default function SecurePdfViewer({ url, data }: Props) {
       canvas.height = hiResViewport.height;
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
-      await page.render({ canvasContext: ctx, viewport: hiResViewport, canvas } as any).promise;
+      renderTask = page.render({ canvasContext: ctx, viewport: hiResViewport, canvas } as any) as any;
+      await renderTask!.promise;
       if (cancelled) return;
       // Scroll to pending sub-target (or top of page) after render
       applyPendingScroll();
@@ -138,8 +150,13 @@ export default function SecurePdfViewer({ url, data }: Props) {
       } catch {
         setLinks([]);
       }
+     } catch (e: any) {
+      // Geannuleerde render of vernietigd document bij wisselen/unmount: geen fout tonen.
+      if (cancelled || e?.name === "RenderingCancelledException") return;
+      console.warn("PDF-pagina renderen mislukt", e);
+     }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; renderTask?.cancel(); };
   }, [pdf, pageNum, scale, fitScale, canvasEl]);
 
   // Mobiel blijft altijd op passend-op-scherm. Zo kan de PDF niet door zoomen
