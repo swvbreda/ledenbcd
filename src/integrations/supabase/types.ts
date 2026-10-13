@@ -1493,6 +1493,133 @@ export type Database = {
           },
         ]
       }
+      dossier_finance_aliases: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dossier_id: string
+          id: string
+          label: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dossier_id: string
+          id?: string
+          label: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string
+          id?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_finance_aliases_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossier_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossier_project_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_origin: string
+          dossier_id: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_origin?: string
+          dossier_id: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_origin?: string
+          dossier_id?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_project_links_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossier_register"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossier_register: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          jaarplan_kind: string | null
+          jaarplan_pages: string | null
+          jaarplan_section: string | null
+          name: string
+          note: string | null
+          parent_id: string | null
+          seed_key: string | null
+          sort_order: number
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jaarplan_kind?: string | null
+          jaarplan_pages?: string | null
+          jaarplan_section?: string | null
+          name: string
+          note?: string | null
+          parent_id?: string | null
+          seed_key?: string | null
+          sort_order?: number
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jaarplan_kind?: string | null
+          jaarplan_pages?: string | null
+          jaarplan_section?: string | null
+          name?: string
+          note?: string | null
+          parent_id?: string | null
+          seed_key?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_register_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "dossier_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2646,6 +2773,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          import_ref: string | null
           owner_id: string | null
           planning: string | null
           planning_date: string | null
@@ -2668,6 +2796,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          import_ref?: string | null
           owner_id?: string | null
           planning?: string | null
           planning_date?: string | null
@@ -2690,6 +2819,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          import_ref?: string | null
           owner_id?: string | null
           planning?: string | null
           planning_date?: string | null
