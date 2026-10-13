@@ -1,6 +1,7 @@
-import { Badge } from "@/components/ui/badge";
-import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/lib/internalWork";
+import { ChevronRight, FileText, FolderOpen } from "lucide-react";
+import type { ProjectStatus } from "@/lib/internalWork";
 import { buildTree, filterTree, OTHER_PROJECTS, projectsFor, unlinkedProjects, type DossierLink, type DossierNode, type RegisterDossier } from "@/lib/dossierRegister";
+import { CountChip, ProjectStatusBadge, surfaceCls } from "@/components/projecten/ui";
 
 type P = { id: string; title: string; archived_at: string | null; status: ProjectStatus };
 
@@ -10,13 +11,18 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
 }) {
   const tree = filterTree(buildTree(dossiers), selected);
   const list = (ps: P[]) => ps.length === 0
-    ? <p className="text-xs text-muted-foreground px-1">Geen projecten</p>
+    ? <p className="px-3 py-2 text-sm text-muted-foreground">Geen projecten</p>
     : (
-      <ul className="divide-y divide-border/60">
+      <ul className="divide-y divide-border/70">
         {ps.map((p) => (
-          <li key={p.id} className={`flex items-center gap-2 py-1 px-1 ${p.archived_at ? "opacity-60" : ""}`}>
-            <button type="button" className="min-w-0 flex-1 text-left text-sm hover:underline break-words" onClick={() => onOpen(p.id)}>{p.title}</button>
-            <Badge variant="outline" className="shrink-0 text-[10px]">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+          <li key={p.id}>
+            <button type="button" onClick={() => onOpen(p.id)}
+              className={`group flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${p.archived_at ? "opacity-70" : ""}`}>
+              <FileText aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 break-words text-sm font-medium text-foreground">{p.title}</span>
+              <ProjectStatusBadge status={p.status} archived={!!p.archived_at} />
+              <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+            </button>
           </li>
         ))}
       </ul>
@@ -27,27 +33,47 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
     return ids.size;
   };
   const others = unlinkedProjects(projects, links);
+  const head = (name: string, n: number, dashed = false) => (
+    <div className="flex flex-wrap items-center gap-3 px-4 pt-4 pb-2">
+      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${dashed ? "bg-muted text-muted-foreground" : "bg-brand-navy/10 text-brand-navy"}`}>
+        <FolderOpen aria-hidden className="h-[18px] w-[18px]" />
+      </span>
+      <h3 className="!font-sans min-w-0 flex-1 break-words text-lg font-semibold tracking-normal text-foreground">{name}</h3>
+      <CountChip n={n} singular="project" plural="projecten" />
+    </div>
+  );
   return (
-    <div className="space-y-2">
-      {tree.map((d) => (
-        <section key={d.id} className="rounded-lg border border-border bg-card p-3 min-w-0">
-          <h3 className="flex items-baseline gap-2 font-medium break-words">{d.name}
-            <span className="text-xs font-normal text-muted-foreground tabular-nums">{count(d)} project{count(d) === 1 ? "" : "en"}</span></h3>
-          {/* Bij een gekozen subdossier geen (lege) directe lijst onder de ouder tonen. */}
-          {!(selected && selected !== d.id && d.children.some((c) => c.id === selected)) && <div className="mt-1">{list(projectsFor(d.id, links, projects))}</div>}
-          {d.children.map((c) => (
-            <div key={c.id} className="mt-2 ml-3 border-l-2 border-border pl-3 min-w-0">
-              <h4 className="text-sm font-medium break-words">{c.name}
-                <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">{projectsFor(c.id, links, projects).length}</span></h4>
-              {list(projectsFor(c.id, links, projects))}
-            </div>
-          ))}
-        </section>
-      ))}
+    <div className="space-y-4">
+      {tree.map((d) => {
+        const hideDirect = !!(selected && selected !== d.id && d.children.some((c) => c.id === selected));
+        return (
+          <section key={d.id} className={`${surfaceCls} min-w-0 pb-2`}>
+            {head(d.name, count(d))}
+            {/* Bij een gekozen subdossier geen (lege) directe lijst onder de ouder tonen. */}
+            {!hideDirect && <div className="px-1">{list(projectsFor(d.id, links, projects))}</div>}
+            {d.children.length > 0 && (
+              <div className="space-y-2 px-3 pb-2 pt-1">
+                {d.children.map((c) => {
+                  const n = projectsFor(c.id, links, projects).length;
+                  return (
+                    <div key={c.id} className="min-w-0 rounded-lg border-l-2 border-brand-navy/30 bg-muted/40 py-1 pl-1">
+                      <div className="flex flex-wrap items-center gap-2 px-3 pt-2 pb-1">
+                        <h4 className="!font-sans min-w-0 flex-1 break-words text-sm font-semibold tracking-normal text-foreground">{c.name}</h4>
+                        <span className="text-xs text-muted-foreground tabular-nums">{n} {n === 1 ? "project" : "projecten"}</span>
+                      </div>
+                      {list(projectsFor(c.id, links, projects))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })}
       {!selected && others.length > 0 && (
-        <section className="rounded-lg border border-dashed border-border p-3">
-          <h3 className="font-medium">{OTHER_PROJECTS} <span className="text-xs font-normal text-muted-foreground tabular-nums">{others.length}</span></h3>
-          <div className="mt-1">{list(others)}</div>
+        <section className="min-w-0 rounded-xl border border-dashed border-border bg-card pb-2">
+          {head(OTHER_PROJECTS, others.length, true)}
+          <div className="px-1">{list(others)}</div>
         </section>
       )}
     </div>

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import BcdHeroBanner from "@/components/BcdHeroBanner";
+import { ProjectStatusBadge, Segmented, surfaceCls, tabsListCls, tabsTriggerCls } from "@/components/projecten/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -231,10 +231,15 @@ function ProjectenInner() {
   const loadError = projectsQ.error || tasksQ.error || staffQ.error || participantsQ.error;
 
   return (
-    <div className="w-full min-w-0 p-4 sm:p-6 space-y-6">
+    <div className="w-full min-w-0 space-y-6 px-4 py-5 sm:px-6 sm:py-6">
       {currentProject && tab === "projecten"
-        ? <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Projecten & taken</p>
-        : <BcdHeroBanner title="Projecten & taken" subtitle="Intern werkoverzicht — alleen zichtbaar voor beheerders" />}
+        ? <p className="text-[13px] font-medium text-muted-foreground">Projecten & taken</p>
+        : (
+          <header className="min-w-0 space-y-1">
+            <h1 className="!font-sans text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">Projecten & taken</h1>
+            <p className="text-sm text-muted-foreground">Intern werkoverzicht — alleen zichtbaar voor beheerders</p>
+          </header>
+        )}
 
       {loadError && (
         <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
@@ -245,23 +250,23 @@ function ProjectenInner() {
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="taken">Taken</TabsTrigger>
-          <TabsTrigger value="projecten">Projecten</TabsTrigger>
-          <TabsTrigger value="planner">Planner</TabsTrigger>
-          <TabsTrigger value="topical">Topical</TabsTrigger>
+        <TabsList className={`${tabsListCls} mb-5`}>
+          <TabsTrigger className={tabsTriggerCls} value="taken">Taken</TabsTrigger>
+          <TabsTrigger className={tabsTriggerCls} value="projecten">Projecten</TabsTrigger>
+          <TabsTrigger className={tabsTriggerCls} value="planner">Planner</TabsTrigger>
+          <TabsTrigger className={tabsTriggerCls} value="topical">Topical</TabsTrigger>
         </TabsList>
 
         <TabsContent value="taken" className="space-y-4">
-          <div role="tablist" aria-label="Takenlijst" className="inline-flex rounded-md border border-border p-0.5">
+          <div role="tablist" aria-label="Takenlijst" className="inline-flex rounded-lg border border-border bg-muted/60 p-0.5">
             {(["open", "afgerond"] as TaskView[]).map((v) => (
               <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
-                className={`px-3 py-1.5 text-sm rounded ${view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                className={`min-h-9 px-3 text-sm font-medium rounded-md ${view === v ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                 {v === "open" ? "Open taken" : "Afgerond"} <span className="tabular-nums">({v === "open" ? split.open.length : split.done.length})</span>
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-end gap-3">
+          <div className={`${surfaceCls} flex flex-wrap items-end gap-3 p-3`}>
             <div className="w-full sm:w-52">
               <Label className="text-xs">Project</Label>
               <Select value={filter.projectId} onValueChange={(v) => setFilter({ ...filter, projectId: v })}>
@@ -302,11 +307,11 @@ function ProjectenInner() {
               {tasks.map((t) => {
                 const late = isOverdue(t, today);
                 return (
-                  <li key={t.id} id={`task-${t.id}`} className={`rounded-lg border bg-card p-3 ${focusTaskId === t.id ? "border-primary ring-2 ring-primary/40" : "border-border"} flex flex-col sm:flex-row sm:items-center gap-2`}>
+                  <li key={t.id} id={`task-${t.id}`} className={`rounded-xl border bg-card px-4 py-3 shadow-[0_1px_2px_hsl(var(--foreground)/0.05)] ${focusTaskId === t.id ? "border-primary ring-2 ring-primary/40" : "border-border"} flex flex-col sm:flex-row sm:items-center gap-3`}>
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium break-words ${t.status === "afgerond" ? "line-through text-muted-foreground" : ""}`}>{t.title}</p>
-                      <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-muted-foreground items-center">
-                        <Badge variant="outline">{TASK_STATUS_LABEL[t.status]}</Badge>
+                      <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-[13px] text-muted-foreground items-center">
+                        <Badge variant="outline" className="font-medium">{TASK_STATUS_LABEL[t.status]}</Badge>
                         <Badge variant={t.priority === "hoog" ? "destructive" : "secondary"}>{PRIORITY_LABEL[t.priority]}</Badge>
                         <span>{projectTitle(t.project_id)}</span>
                         <span>· {staffName(t.assignee_id)}</span>
@@ -329,35 +334,37 @@ function ProjectenInner() {
         </TabsContent>
 
         <TabsContent value="projecten" className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {!openProjectId && <label className="flex items-center gap-2 text-sm"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>}
-            {!openProjectId && (
-              <div className="hidden md:flex rounded-md border border-border p-0.5" role="group" aria-label="Weergave">
-                <Button size="sm" variant={viewMode === "tabel" ? "secondary" : "ghost"} aria-pressed={viewMode === "tabel"} onClick={() => setViewMode("tabel")}>Tabel</Button>
-                <Button size="sm" variant={viewMode === "kaarten" ? "secondary" : "ghost"} aria-pressed={viewMode === "kaarten"} onClick={() => setViewMode("kaarten")}>Kaarten</Button>
-                <Button size="sm" variant={viewMode === "dossiers" ? "secondary" : "ghost"} aria-pressed={viewMode === "dossiers"} onClick={() => setViewMode("dossiers")}>Dossiers</Button>
+          {!openProjectId && (
+            <div className={`${surfaceCls} flex flex-col gap-3 p-3 lg:flex-row lg:flex-wrap lg:items-center`}>
+              <div className="flex min-w-0 flex-wrap items-center gap-3">
+                {reg.dossiers.length > 0 && (
+                  <div className="w-full min-w-0 sm:w-auto sm:min-w-[16rem] sm:max-w-[24rem]">
+                    <Select value={dossierFilter ?? "all"} onValueChange={(v) => setDossierFilter(v === "all" ? null : v)}>
+                      <SelectTrigger aria-label="Dossierfilter" className="min-h-11 sm:min-h-10 [&>span]:truncate"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle dossiers</SelectItem>
+                        {buildTree(reg.dossiers).flatMap((d) => [d, ...d.children]).map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.parent_id ? `— ${d.name}` : d.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="hidden md:block">
+                  <Segmented label="Weergave" value={viewMode} onChange={setViewMode}
+                    options={[{ value: "dossiers", label: "Dossiers" }, { value: "tabel", label: "Tabel" }, { value: "kaarten", label: "Kaarten" }]} />
+                </div>
+                <div className="md:hidden">
+                  <Segmented label="Weergave" value={viewMode === "dossiers" ? "dossiers" : "tabel"} onChange={(v) => setViewMode(v)}
+                    options={[{ value: "dossiers", label: "Dossiers" }, { value: "tabel", label: "Lijst" }]} />
+                </div>
               </div>
-            )}
-            {!openProjectId && (
-              <div className="md:hidden">
-                <Button size="sm" variant={viewMode === "dossiers" ? "secondary" : "outline"} aria-pressed={viewMode === "dossiers"} onClick={() => setViewMode(viewMode === "dossiers" ? "tabel" : "dossiers")}>Dossiers</Button>
+              <div className="flex items-center gap-3 lg:ml-auto">
+                <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>
+                <Button className="ml-auto min-h-11 sm:min-h-10" onClick={() => { setEditDossiers(dossierFilter ? [dossierFilter] : []); setEditProject({ status: "actief" }); }}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>
               </div>
-            )}
-            {!openProjectId && reg.dossiers.length > 0 && (
-              <div className="w-full sm:w-64">
-                <Select value={dossierFilter ?? "all"} onValueChange={(v) => setDossierFilter(v === "all" ? null : v)}>
-                  <SelectTrigger aria-label="Dossierfilter"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle dossiers</SelectItem>
-                    {buildTree(reg.dossiers).flatMap((d) => [d, ...d.children]).map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.parent_id ? `— ${d.name}` : d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {!openProjectId && <Button className="ml-auto" onClick={() => { setEditDossiers(dossierFilter ? [dossierFilter] : []); setEditProject({ status: "actief" }); }}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>}
-          </div>
+            </div>
+          )}
           {projectsQ.isLoading ? (
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Projecten laden...</p>
           ) : projectsQ.error ? null : openProjectId ? (
@@ -381,27 +388,27 @@ function ProjectenInner() {
             ) : (
             <>
             {viewMode === "tabel" && (
-              <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
+              <div className={`hidden md:block overflow-x-auto ${surfaceCls}`}>
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
-                    <th className="text-left p-2 font-medium w-[18%]">Project</th>
-                    <th className="text-left p-2 font-medium w-[30%]">Status</th>
-                    <th className="text-left p-2 font-medium w-[22%]">Planning</th>
-                    <th className="text-left p-2 font-medium w-[12%]">Wie</th>
-                    <th className="text-left p-2 font-medium">Opmerkingen</th>
+                  <thead className="border-b border-border bg-muted/40 text-xs text-muted-foreground"><tr>
+                    <th className="text-left px-4 py-3 font-medium w-[18%]">Project</th>
+                    <th className="text-left px-4 py-3 font-medium w-[30%]">Status</th>
+                    <th className="text-left px-4 py-3 font-medium w-[22%]">Planning</th>
+                    <th className="text-left px-4 py-3 font-medium w-[12%]">Wie</th>
+                    <th className="text-left px-4 py-3 font-medium">Opmerkingen</th>
                   </tr></thead>
                   <tbody>
                     {visibleProjects.map((p) => (
-                      <tr key={p.id} className={`border-t border-border align-top ${p.archived_at ? "opacity-60" : ""}`}>
-                        <td className="p-2"><button type="button" className="text-left font-medium hover:underline break-words" onClick={() => openProject(p.id)}>{p.title}</button>
+                      <tr key={p.id} className={`border-t border-border align-top transition-colors hover:bg-muted/30 ${p.archived_at ? "opacity-70" : ""}`}>
+                        <td className="px-4 py-3"><button type="button" className="text-left font-medium hover:underline break-words" onClick={() => openProject(p.id)}>{p.title}</button>
                           {p.updated_at && <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(p.updated_at)}</p>}</td>
-                        <td className="p-2 space-y-1"><Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+                        <td className="px-4 py-3 space-y-1.5"><ProjectStatusBadge status={p.status} archived={!!p.archived_at} />
                           <p className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(p.status_date)}</p>
                           {p.description?.trim() && <p className="break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>}</td>
-                        <td className="p-2">{p.planning?.trim() ? <p className="whitespace-pre-wrap break-words line-clamp-3">{p.planning}</p> : <span className="text-muted-foreground">Nog niet vastgelegd</span>}
+                        <td className="px-4 py-3">{p.planning?.trim() ? <p className="whitespace-pre-wrap break-words line-clamp-3">{p.planning}</p> : <span className="text-muted-foreground">Nog niet vastgelegd</span>}
                           {p.planning_date && <p className="text-xs text-muted-foreground tabular-nums">Planningdatum {p.planning_date}</p>}</td>
-                        <td className="p-2 break-words">{p.owner_id ? staffName(p.owner_id) : <span className="text-muted-foreground">Niet vastgesteld</span>}</td>
-                        <td className="p-2"><p className="whitespace-pre-wrap break-words line-clamp-3">{p.remarks?.trim() || ""}</p>
+                        <td className="px-4 py-3 break-words">{p.owner_id ? staffName(p.owner_id) : <span className="text-muted-foreground">Niet vastgesteld</span>}</td>
+                        <td className="px-4 py-3"><p className="whitespace-pre-wrap break-words line-clamp-3">{p.remarks?.trim() || ""}</p>
                           <Button size="sm" variant="link" className="h-auto p-0" onClick={() => openProject(p.id)}>Openen</Button></td>
                       </tr>
                     ))}
@@ -414,11 +421,11 @@ function ProjectenInner() {
                 const prog = projectProgress(tasksQ.data ?? [], p.id);
                 const people = participantIds(p, tasksQ.data ?? [], participantsQ.data ?? []);
                 return (
-                  <li key={p.id} className={`rounded-lg border border-border border-t-4 border-t-primary bg-card p-4 flex flex-col gap-3 ${p.archived_at ? "opacity-60" : ""}`}>
+                  <li key={p.id} className={`${surfaceCls} p-4 flex flex-col gap-3 transition-shadow hover:shadow-md ${p.archived_at ? "opacity-70" : ""}`}>
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1 space-y-1">
-                        <Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
-                        <p className="font-medium break-words">{p.title}</p>
+                        <ProjectStatusBadge status={p.status} archived={!!p.archived_at} />
+                        <p className="text-base font-semibold leading-snug break-words">{p.title}</p>
                         <p className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(p.status_date)}</p>
                       </div>
                       <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
