@@ -75,8 +75,9 @@ export function diffLinks(current: string[], next: string[]) {
 
 export function jaarplanRef(d: Pick<RegisterDossier, "jaarplan_kind" | "jaarplan_section" | "jaarplan_pages">): string | null {
   if (!d.jaarplan_kind || !d.jaarplan_pages) return null;
-  const pages = /[–,-]/.test(d.jaarplan_pages) ? `p. ${d.jaarplan_pages}` : `p. ${d.jaarplan_pages}`;
-  return d.jaarplan_kind === "thema" ? `Jaarplanthema ${d.jaarplan_section ?? ""} · ${pages}`.replace("  ", " ") : `Jaarplan · ${pages}`;
+  return d.jaarplan_kind === "thema"
+    ? `Jaarplanthema ${d.jaarplan_section ?? ""}, p. ${d.jaarplan_pages}`
+    : `Jaarplan p. ${d.jaarplan_pages}`;
 }
 
 // ---- Financiën deeplinks ----
