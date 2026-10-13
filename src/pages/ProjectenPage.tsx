@@ -213,7 +213,7 @@ function ProjectenInner() {
   const loadError = projectsQ.error || tasksQ.error || staffQ.error || participantsQ.error;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="w-full min-w-0 p-4 sm:p-6 space-y-6">
       <BcdHeroBanner title="Projecten & taken" subtitle="Intern werkoverzicht — alleen zichtbaar voor beheerders" />
 
       {loadError && (
