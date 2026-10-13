@@ -18,17 +18,15 @@ import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus
 import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { useServerFn } from "@tanstack/react-start";
-import { completeTaskLocally } from "@/lib/internalWork";
+import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
-  filterTasks,
   isOverdue,
   isValidTeamsUrl,
   PRIORITY_LABEL,
   PROJECT_STATUS_LABEL,
   TASK_STATUS_LABEL,
   type ProjectStatus,
-  type TaskFilter,
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/internalWork";
@@ -85,7 +83,8 @@ function ProjectenInner() {
   });
   const staffName = (id: string | null) => (id ? staffQ.data?.find((s) => s.user_id === id)?.email ?? "Onbekend account" : "—");
 
-  const [filter, setFilter] = useState<TaskFilter>({ projectId: "all", status: "open", mine: false, overdue: false });
+  const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
+  const [view, setView] = useState<TaskView>("open");
   const [showArchived, setShowArchived] = useState(false);
   const [editTask, setEditTask] = useState<Partial<Task> | null>(null);
   const [editProject, setEditProject] = useState<Partial<Project> | null>(null);
@@ -93,7 +92,8 @@ function ProjectenInner() {
 
   const activeProjects = (projectsQ.data ?? []).filter((p) => !p.archived_at);
   const visibleProjects = (projectsQ.data ?? []).filter((p) => showArchived || !p.archived_at);
-  const tasks = useMemo(() => filterTasks(tasksQ.data ?? [], filter, uid, today), [tasksQ.data, filter, uid, today]);
+  const split = useMemo(() => splitTaskViews(tasksQ.data ?? [], filter, uid, today), [tasksQ.data, filter, uid, today]);
+  const tasks = view === "open" ? split.open : split.done;
   const projectTitle = (id: string | null) => (id ? projectsQ.data?.find((p) => p.id === id)?.title ?? "—" : "Geen project");
 
   const invalidate = () => {
@@ -110,7 +110,8 @@ function ProjectenInner() {
   }, [dispatchFn]);
   useEffect(() => {
     if (!focusTaskId || !tasksQ.data?.some((t) => t.id === focusTaskId)) return;
-    setFilter((f) => ({ ...f, projectId: "all", status: "all", mine: false, overdue: false }));
+    setView(viewForTask(tasksQ.data, focusTaskId) ?? "open");
+    setFilter((f) => ({ ...f, projectId: "all", openStatus: "open", mine: false, overdue: false }));
     requestAnimationFrame(() => document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ block: "center" }));
   }, [focusTaskId, tasksQ.data]);
 
@@ -146,7 +147,7 @@ function ProjectenInner() {
   // Afronden in de lijst is altijd één klik lokaal; externe afronding alleen via het Topical-tabblad.
   const completeTask = useMutation({
     mutationFn: (t: Task) => completeTaskLocally(db, t),
-    onSuccess: () => { toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
+    onSuccess: (_d, t) => { qc.setQueryData<Task[]>(["internal-tasks", uid], (old) => markCompletedInList(old, t.id)); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
     onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const saveProject = useMutation({
@@ -199,6 +200,14 @@ function ProjectenInner() {
         </TabsList>
 
         <TabsContent value="taken" className="space-y-4">
+          <div role="tablist" aria-label="Takenlijst" className="inline-flex rounded-md border border-border p-0.5">
+            {(["open", "afgerond"] as TaskView[]).map((v) => (
+              <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}
+                className={`px-3 py-1.5 text-sm rounded ${view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                {v === "open" ? "Open taken" : "Afgerond"} <span className="tabular-nums">({v === "open" ? split.open.length : split.done.length})</span>
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-full sm:w-52">
               <Label className="text-xs">Project</Label>
@@ -211,19 +220,19 @@ function ProjectenInner() {
                 </SelectContent>
               </Select>
             </div>
+            {view === "open" && (
             <div className="w-full sm:w-48">
               <Label className="text-xs">Status</Label>
-              <Select value={filter.status} onValueChange={(v) => setFilter({ ...filter, status: v as TaskFilter["status"] })}>
+              <Select value={filter.openStatus} onValueChange={(v) => setFilter({ ...filter, openStatus: v as OpenStatusFilter })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Alle open</SelectItem>
-                  <SelectItem value="all">Alles</SelectItem>
-                  {(Object.keys(TASK_STATUS_LABEL) as TaskStatus[]).map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABEL[s]}</SelectItem>)}
+                  {(["te_doen", "bezig", "wacht"] as TaskStatus[]).map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABEL[s]}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
+            </div>)}
             <label className="flex items-center gap-2 text-sm"><Switch checked={filter.mine} onCheckedChange={(v) => setFilter({ ...filter, mine: v })} />Mijn taken</label>
-            <label className="flex items-center gap-2 text-sm"><Switch checked={filter.overdue} onCheckedChange={(v) => setFilter({ ...filter, overdue: v })} />Verlopen</label>
+            {view === "open" && <label className="flex items-center gap-2 text-sm"><Switch checked={filter.overdue} onCheckedChange={(v) => setFilter({ ...filter, overdue: v })} />Verlopen</label>}
             <Button className="sm:ml-auto" onClick={() => setEditTask({ status: "te_doen", priority: "normaal", project_id: filter.projectId !== "all" && filter.projectId !== "none" ? filter.projectId : null })}>
               <Plus className="h-4 w-4 mr-1" />Nieuwe taak
             </Button>
@@ -233,7 +242,7 @@ function ProjectenInner() {
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Taken laden...</p>
           ) : tasksQ.error ? null : tasks.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              {(tasksQ.data?.length ?? 0) === 0 ? "Nog geen taken. Maak de eerste taak aan." : "Geen taken voor deze filters."}
+              {(tasksQ.data?.length ?? 0) === 0 ? "Nog geen taken. Maak de eerste taak aan." : view === "afgerond" ? "Geen afgeronde taken voor deze filters." : "Geen open taken voor deze filters."}
             </div>
           ) : (
             <ul className="space-y-2">

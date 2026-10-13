@@ -24,3 +24,36 @@ describe("taken", () => {
   it("mijn taken zonder account is leeg", () =>
     expect(filterTasks(tasks, { projectId: "all", status: "all", mine: true, overdue: false }, null, today)).toEqual([]));
 });
+
+import { splitTaskViews, viewForTask, markCompletedInList } from "@/lib/internalWork";
+describe("Open taken / Afgerond", () => {
+  const today = "2026-10-12";
+  const tasks = [
+    { id: "a", status: "te_doen" as const, deadline: "2026-10-01", assignee_id: "u1", project_id: "p1" },
+    { id: "b", status: "afgerond" as const, deadline: "2026-10-01", assignee_id: "u1", project_id: "p1" },
+    { id: "c", status: "bezig" as const, deadline: null, assignee_id: "u2", project_id: null },
+    { id: "d", status: "afgerond" as const, deadline: null, assignee_id: "u2", project_id: null },
+  ];
+  const f = { projectId: "all", openStatus: "open" as const, mine: false, overdue: false };
+  it("open bevat nooit afgerond; afgerond alleen afgerond", () => {
+    const r = splitTaskViews(tasks, f, "u1", today);
+    expect(r.open.map((t) => t.id)).toEqual(["a", "c"]);
+    expect(r.done.map((t) => t.id)).toEqual(["b", "d"]);
+  });
+  it("verlopen-filter raakt afgerond niet; project/mijn wel", () => {
+    const r = splitTaskViews(tasks, { ...f, overdue: true, mine: true }, "u1", today);
+    expect(r.open.map((t) => t.id)).toEqual(["a"]);
+    expect(r.done.map((t) => t.id)).toEqual(["b"]);
+  });
+  it("deep-link naar afgeronde taak kiest Afgerond", () => {
+    expect(viewForTask(tasks, "b")).toBe("afgerond");
+    expect(viewForTask(tasks, "a")).toBe("open");
+    expect(viewForTask(tasks, "x")).toBeNull();
+  });
+  it("na afronden verdwijnt taak uit open en telt mee in afgerond", () => {
+    const next = markCompletedInList(tasks, "a")!;
+    const r = splitTaskViews(next, f, null, today);
+    expect(r.open.map((t) => t.id)).toEqual(["c"]);
+    expect(r.done.length).toBe(3);
+  });
+});

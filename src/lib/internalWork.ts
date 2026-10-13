@@ -73,3 +73,26 @@ export async function completeTaskLocally(db: LocalCompleteDb, t: { id: string; 
   if (error) throw error;
   if (!data?.length) throw new Error("Geen toegang");
 }
+
+export type TaskView = "open" | "afgerond";
+export type OpenStatusFilter = "open" | "te_doen" | "bezig" | "wacht";
+export interface ViewFilter { projectId: string | "all" | "none"; openStatus: OpenStatusFilter; mine: boolean; overdue: boolean }
+
+/** Splitst taken in 'Open taken' en 'Afgerond'. Open bevat nooit afgerond; Afgerond negeert open-status/verlopen. */
+export function splitTaskViews<T extends TaskLike>(tasks: T[], f: ViewFilter, userId: string | null, today: string) {
+  const base = { projectId: f.projectId, mine: f.mine };
+  const open = filterTasks(tasks, { ...base, status: f.openStatus, overdue: f.overdue }, userId, today).filter((t) => t.status !== "afgerond");
+  const done = filterTasks(tasks, { ...base, status: "afgerond", overdue: false }, userId, today);
+  return { open, done };
+}
+
+/** Deep-link: een afgeronde taak opent altijd in de Afgerond-lijst. */
+export function viewForTask(tasks: { id: string; status: TaskStatus }[], id: string | null): TaskView | null {
+  const t = id ? tasks.find((x) => x.id === id) : undefined;
+  return t ? (t.status === "afgerond" ? "afgerond" : "open") : null;
+}
+
+/** Cache direct bijwerken na succesvolle lokale afronding (vóór refetch). */
+export function markCompletedInList<T extends { id: string; status: TaskStatus }>(tasks: T[] | undefined, id: string): T[] | undefined {
+  return tasks?.map((t) => (t.id === id ? { ...t, status: "afgerond" as const } : t));
+}
