@@ -39,6 +39,7 @@ type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
   budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null; created_origin?: "medewerker" | "bronimport" | null;
+  updated_at?: string | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
@@ -342,12 +343,14 @@ function ProjectenInner() {
                       </div>
                       <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
                     </div>
-                    {sourcesQ.data?.[p.id] ? (
-                      <div className="text-sm space-y-0.5">
-                        <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(sourcesQ.data[p.id].source_date ?? sourcesQ.data[p.id].created_at)}</p>
+                    <div className="text-sm space-y-0.5">
+                      {p.updated_at && <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(p.updated_at)}</p>}
+                      {p.description?.trim() ? (
+                        <p className="whitespace-pre-wrap break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>
+                      ) : sourcesQ.data?.[p.id]?.last_action ? (
                         <p className="break-words line-clamp-2">{presentText(sourcesQ.data[p.id].last_action, { autoImport: true })}</p>
-                      </div>
-                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>}
+                      ) : null}
+                    </div>
                     {[["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]].some(([, v]) => v != null) && (
                       <p className="text-xs text-muted-foreground tabular-nums">{([["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]] as [string, number | null | undefined][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eurFmt(v as number)}`).join(" · ")}</p>
                     )}
