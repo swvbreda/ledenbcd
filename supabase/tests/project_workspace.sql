@@ -1,7 +1,8 @@
--- Volledig teruggedraaid via eindexceptie. Geen echte pushes (pg_net-verzoeken vervallen bij rollback).
--- Verwacht: admin_crud=ok spoof_author=forced spoof_kind=forced spoof_time=forced bron_incomplete=rejected
---           claim1=t claim_steal=f claim_again=f claimer=a1 self_notif=0 completed_by=a1
---           cp_update_by=a1 events>0 bronimport=bronimport member_read=0 member_write=denied anon=denied
+-- Volledig teruggedraaid via eindexceptie. Geen echte pushes.
+-- Laatste run: bronimport=bronimport admin_crud=ok part_added_by=forced part_nonadmin=rejected spoof_*=forced
+--   bron_incomplete=rejected claim1=true self_notif=0 claim_steal=false claimer=a1 cp_update_by=a2 completed_by=a2
+--   claim_done=false events=10 event_insert=denied member_read=0 member_write=denied member_claim=denied
+--   (na 0029) msg_update=denied event_delete=denied anon_msgs/projects/claim=denied
 DO $$
 DECLARE a1 uuid; a2 uuid; mem uuid; p uuid; t uuid; m record; cp uuid; ok boolean; c int; res text := ''; v text;
 BEGIN
