@@ -21,6 +21,10 @@ import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { changedText, presentText } from "@/lib/presentText";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
+import DossierGroupsView from "@/components/projecten/DossierGroupsView";
+import { DossierPicker } from "@/components/dossiers/DossierPicker";
+import { useDossierRegister, useSetProjectDossiers } from "@/hooks/useDossierRegister";
+import { buildTree, dossierScope, projectInScope } from "@/lib/dossierRegister";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
@@ -114,13 +118,23 @@ function ProjectenInner() {
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
   const [showArchived, setShowArchived] = useState(false);
-  const [viewMode, setViewMode] = useState<"tabel" | "kaarten">("tabel");
+  const [viewMode, setViewMode] = useState<"tabel" | "kaarten" | "dossiers">("tabel");
+  const reg = useDossierRegister(true);
+  const setProjectDossiers = useSetProjectDossiers();
+  const [editDossiers, setEditDossiers] = useState<string[]>([]);
+  const dossierIdsOf = (projectId: string) => reg.links.filter((l) => l.project_id === projectId).map((l) => l.dossier_id);
   const [editTask, setEditTask] = useState<Partial<Task> | null>(null);
   const [editProject, setEditProject] = useState<Partial<Project> | null>(null);
   const today = todayStr();
 
   const activeProjects = (projectsQ.data ?? []).filter((p) => !p.archived_at);
-  const visibleProjects = (projectsQ.data ?? []).filter((p) => showArchived || !p.archived_at);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Dossierfilter uit ?dossier=<id>; alleen geldig als het dossier in het register bestaat.
+  const rawDossier = searchParams.get("dossier");
+  const dossierFilter = rawDossier && reg.dossiers.some((d) => d.id === rawDossier) ? rawDossier : null;
+  const setDossierFilter = (id: string | null) => setSearchParams((prev) => { const n = new URLSearchParams(prev); if (id) n.set("dossier", id); else n.delete("dossier"); return n; });
+  const scope = useMemo(() => (dossierFilter ? dossierScope(dossierFilter, reg.dossiers) : null), [dossierFilter, reg.dossiers]);
+  const visibleProjects = (projectsQ.data ?? []).filter((p) => (showArchived || !p.archived_at) && (!scope || projectInScope(p.id, scope, reg.links)));
   const split = useMemo(() => splitTaskViews(tasksQ.data ?? [], filter, uid, today), [tasksQ.data, filter, uid, today]);
   const tasks = view === "open" ? split.open : split.done;
   const projectTitle = (id: string | null) => (id ? projectsQ.data?.find((p) => p.id === id)?.title ?? "—" : "Geen project");
@@ -133,11 +147,10 @@ function ProjectenInner() {
   };
 
   const dispatchFn = useServerFn(dispatchTaskPushes);
-  const [searchParams, setSearchParams] = useSearchParams();
   const focusTaskId = searchParams.get("task");
   const openProjectId = searchParams.get("project");
   const [tab, setTab] = useState(openProjectId ? "projecten" : "taken");
-  useEffect(() => { if (openProjectId) setTab("projecten"); }, [openProjectId]);
+  useEffect(() => { if (openProjectId || rawDossier) setTab("projecten"); }, [openProjectId, rawDossier]);
   const openProject = (id: string | null) => setSearchParams((prev) => { const n = new URLSearchParams(prev); if (id) n.set("project", id); else n.delete("project"); n.delete("task"); return n; });
   const currentProject = openProjectId ? (projectsQ.data ?? []).find((p) => p.id === openProjectId) : undefined;
   useEffect(() => {
@@ -199,6 +212,8 @@ function ProjectenInner() {
       const { data, error } = await q;
       if (error) throw error;
       if (!data?.length) throw new Error("Niet opgeslagen: geen toegang");
+      // Koppelingen gaan op project-ID, dus blijven bij hernoemen behouden.
+      await setProjectDossiers.mutateAsync({ projectId: data[0].id, current: p.id ? dossierIdsOf(p.id) : [], next: editDossiers });
     },
     onSuccess: () => { toast.success("Project opgeslagen"); setEditProject(null); invalidate(); },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
@@ -320,9 +335,28 @@ function ProjectenInner() {
               <div className="hidden md:flex rounded-md border border-border p-0.5" role="group" aria-label="Weergave">
                 <Button size="sm" variant={viewMode === "tabel" ? "secondary" : "ghost"} aria-pressed={viewMode === "tabel"} onClick={() => setViewMode("tabel")}>Tabel</Button>
                 <Button size="sm" variant={viewMode === "kaarten" ? "secondary" : "ghost"} aria-pressed={viewMode === "kaarten"} onClick={() => setViewMode("kaarten")}>Kaarten</Button>
+                <Button size="sm" variant={viewMode === "dossiers" ? "secondary" : "ghost"} aria-pressed={viewMode === "dossiers"} onClick={() => setViewMode("dossiers")}>Dossiers</Button>
               </div>
             )}
-            {!openProjectId && <Button className="ml-auto" onClick={() => setEditProject({ status: "actief" })}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>}
+            {!openProjectId && (
+              <div className="md:hidden">
+                <Button size="sm" variant={viewMode === "dossiers" ? "secondary" : "outline"} aria-pressed={viewMode === "dossiers"} onClick={() => setViewMode(viewMode === "dossiers" ? "tabel" : "dossiers")}>Dossiers</Button>
+              </div>
+            )}
+            {!openProjectId && reg.dossiers.length > 0 && (
+              <div className="w-full sm:w-64">
+                <Select value={dossierFilter ?? "all"} onValueChange={(v) => setDossierFilter(v === "all" ? null : v)}>
+                  <SelectTrigger aria-label="Dossierfilter"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle dossiers</SelectItem>
+                    {buildTree(reg.dossiers).flatMap((d) => [d, ...d.children]).map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.parent_id ? `— ${d.name}` : d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {!openProjectId && <Button className="ml-auto" onClick={() => { setEditDossiers(dossierFilter ? [dossierFilter] : []); setEditProject({ status: "actief" }); }}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>}
           </div>
           {projectsQ.isLoading ? (
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Projecten laden...</p>
@@ -330,6 +364,7 @@ function ProjectenInner() {
             currentProject ? (
               <ProjectWorkspace project={currentProject as unknown as WsProject} tasks={(tasksQ.data ?? []) as unknown as WsTask[]} staff={staffQ.data ?? []}
                 participants={participantsQ.data ?? []} uid={uid} onBack={() => openProject(null)} onChanged={invalidate}
+                allDossiers={reg.dossiers} projectDossierIds={dossierIdsOf(currentProject.id)} aliases={reg.aliases}
                 onEditTask={(t) => setEditTask(t as Partial<Task>)} />
             ) : (
               <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground space-y-2">
@@ -340,6 +375,10 @@ function ProjectenInner() {
           ) : visibleProjects.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
+            viewMode === "dossiers" ? (
+              <DossierGroupsView dossiers={dossierFilter ? reg.dossiers.filter((d) => scope?.has(d.id)) : reg.dossiers} links={reg.links}
+                projects={visibleProjects} onOpen={(id) => openProject(id)} />
+            ) : (
             <>
             {viewMode === "tabel" && (
               <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
@@ -404,7 +443,7 @@ function ProjectenInner() {
                           <a href={p.teams_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Teams</a>
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" aria-label="Project bewerken" onClick={() => setEditProject(p)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" aria-label="Project bewerken" onClick={() => { setEditDossiers(dossierIdsOf(p.id)); setEditProject(p); }}><Pencil className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" disabled={archiveProject.isPending} onClick={() => archiveProject.mutate({ id: p.id, archive: !p.archived_at })}>
                         <Archive className="h-4 w-4 mr-1" />{p.archived_at ? "Terugzetten" : "Archiveren"}
                       </Button>
@@ -414,6 +453,7 @@ function ProjectenInner() {
               })}
             </ul>
             </>
+            )
           )}
         </TabsContent>
 
@@ -498,6 +538,9 @@ function ProjectenInner() {
                     <SelectContent>{(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
                   </Select></div>
               </div>
+              {reg.dossiers.length > 0 && (
+                <div><Label>Bijbehorende dossiers</Label><DossierPicker dossiers={reg.dossiers} value={editDossiers} onChange={setEditDossiers} idPrefix="pd" /></div>
+              )}
               <div><Label htmlFor="p-teams">Teams-kanaallink (optioneel)</Label>
                 <Input id="p-teams" type="url" placeholder="https://teams.microsoft.com/l/channel/..." value={editProject.teams_url ?? ""} onChange={(e) => setEditProject({ ...editProject, teams_url: e.target.value })} />
                 {editProject.teams_url && !isValidTeamsUrl(editProject.teams_url) && <p className="text-xs text-destructive mt-1">Alleen https-links naar Teams/Microsoft zijn toegestaan.</p>}
