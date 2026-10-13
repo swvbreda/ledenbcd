@@ -2583,6 +2583,7 @@ export type Database = {
           budget_reserved: number | null
           created_at: string
           created_by: string
+          created_origin: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -2600,6 +2601,7 @@ export type Database = {
           budget_reserved?: number | null
           created_at?: string
           created_by?: string
+          created_origin?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -2617,6 +2619,7 @@ export type Database = {
           budget_reserved?: number | null
           created_at?: string
           created_by?: string
+          created_origin?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -2636,9 +2639,11 @@ export type Database = {
           completed_by: string | null
           created_at: string
           created_by: string
+          created_origin: string | null
           deadline: string | null
           description: string | null
           id: string
+          import_ref: string | null
           local_only_completed_at: string | null
           local_only_completed_by: string | null
           priority: string
@@ -2655,9 +2660,11 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           created_by?: string
+          created_origin?: string | null
           deadline?: string | null
           description?: string | null
           id?: string
+          import_ref?: string | null
           local_only_completed_at?: string | null
           local_only_completed_by?: string | null
           priority?: string
@@ -2674,9 +2681,11 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           created_by?: string
+          created_origin?: string | null
           deadline?: string | null
           description?: string | null
           id?: string
+          import_ref?: string | null
           local_only_completed_at?: string | null
           local_only_completed_by?: string | null
           priority?: string
