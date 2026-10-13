@@ -16,6 +16,7 @@ import {
   projectProgress, type ActorKind, type CheckpointStatus, type MessageKind, type StaffMember,
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
+import { ProjectDocuments } from "./ProjectDocuments";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
 import { parsePlan } from "@/lib/projectPlan";
 
@@ -29,6 +30,7 @@ export type WsProject = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null; status: ProjectStatus;
   archived_at: string | null; project_plan: string | null; budget_estimate: number | null; budget_reserved: number | null; budget_received: number | null;
   created_by: string | null; created_at: string; created_origin?: "medewerker" | "bronimport" | null;
+  planning?: string | null; planning_date?: string | null; remarks?: string | null;
 };
 export type WsTask = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null; deadline: string | null;
@@ -90,12 +92,12 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   };
 
   // ---- Overzicht / projectplan ----
-  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "" });
+  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", remarks: "" });
   const [editing, setEditing] = useState(false);
   const loadPlan = (p: WsProject) => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
     setPlan({ description: presentText(p.description, { autoImport: p.created_origin === "bronimport" }), project_plan: presentText(p.project_plan), status: p.status, owner_id: p.owner_id ?? "",
-      due_date: p.due_date ?? "", est: s(p.budget_estimate), res: s(p.budget_reserved), rec: s(p.budget_received) });
+      due_date: p.due_date ?? "", est: s(p.budget_estimate), res: s(p.budget_reserved), rec: s(p.budget_received), planning: p.planning ?? "", planning_date: p.planning_date ?? "", remarks: p.remarks ?? "" });
   };
   // Alleen buiten bewerkmodus synchroniseren, zodat een refetch ingevoerde tekst niet overschrijft.
   useEffect(() => { if (!editing) loadPlan(project); }, [project, editing]);
@@ -109,6 +111,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       const { data, error } = await db.from("internal_projects").update({
         description: changedText(project.description, plan.description, { autoImport: project.created_origin === "bronimport" }), project_plan: changedText(project.project_plan, plan.project_plan), status: plan.status,
         owner_id: plan.owner_id || null, due_date: plan.due_date || null, budget_estimate: est, budget_reserved: res, budget_received: rec,
+        planning: plan.planning.trim() || null, planning_date: plan.planning_date || null, remarks: plan.remarks.trim() || null,
       }).eq("id", pid).select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang");
@@ -200,31 +203,50 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
           <TabsTrigger value="taken">Taken ({prog.open})</TabsTrigger>
           <TabsTrigger value="berichten">Berichten</TabsTrigger>
           <TabsTrigger value="notities">Notities</TabsTrigger>
+          <TabsTrigger value="documenten">Documenten</TabsTrigger>
           <TabsTrigger value="geschiedenis">Geschiedenis</TabsTrigger>
         </TabsList></div>
 
         <TabsContent value="overzicht" className="space-y-4">
           {!editing ? (
             <div className="space-y-4 min-w-0">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                  <div className="flex gap-1"><dt className="text-muted-foreground">Verantwoordelijke:</dt><dd>{project.owner_id ? byName(project.owner_id) : "Niet vastgesteld"}</dd></div>
-                  <div className="flex gap-1"><dt className="text-muted-foreground">Einddatum:</dt><dd>{project.due_date ?? "Niet vastgesteld"}</dd></div>
-                  {[project.budget_estimate, project.budget_reserved, project.budget_received].some((v) => v != null) && (
-                    <div className="flex gap-1 tabular-nums"><dt className="text-muted-foreground">Budget:</dt><dd>{([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}</dd></div>
-                  )}
-                </dl>
-                <Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button>
-              </div>
-              <section className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1">
-                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">In het kort</h3>
-                <p className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || "Nog geen stand vastgelegd."}</p>
-              </section>
+              <div className="flex justify-end"><Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button></div>
+              <dl className="grid gap-3 md:grid-cols-2 min-w-0">
+                <div className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1 min-w-0 md:col-span-2">
+                  <dt className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Status <Badge variant="outline" className="normal-case tracking-normal">{project.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[project.status]}</Badge></dt>
+                  <dd className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</dd>
+                </div>
+                <div className="rounded-md border border-border p-3 space-y-1 min-w-0">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Planning (actie / verwachting)</dt>
+                  <dd className="whitespace-pre-wrap break-words">{project.planning?.trim() || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</dd>
+                  <dd className="text-xs text-muted-foreground tabular-nums">Planningdatum: {project.planning_date ?? "niet vastgesteld"}</dd>
+                </div>
+                <div className="rounded-md border border-border p-3 min-w-0">
+                  <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+                    <dt className="text-muted-foreground">Eigenaar</dt><dd className="break-words">{project.owner_id ? byName(project.owner_id) : "Niet vastgesteld"}</dd>
+                    <dt className="text-muted-foreground">Einddatum project</dt><dd className="tabular-nums">{project.due_date ?? "Niet vastgesteld"}</dd>
+                    {[project.budget_estimate, project.budget_reserved, project.budget_received].some((v) => v != null) && (<>
+                      <dt className="text-muted-foreground">Budget</dt><dd className="tabular-nums break-words">{([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}</dd>
+                    </>)}
+                  </div>
+                </div>
+                {project.remarks?.trim() && (
+                  <div className="rounded-md border border-border p-3 space-y-1 min-w-0 md:col-span-2">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Opmerkingen</dt>
+                    <dd className="whitespace-pre-wrap break-words">{project.remarks}</dd>
+                  </div>
+                )}
+              </dl>
               <PlanView text={presentText(project.project_plan)} />
             </div>
           ) : (
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
-            <div><Label htmlFor="ws-desc">In het kort / omschrijving</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div><Label htmlFor="ws-desc">Status (huidige stand, kort)</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr,12rem] gap-3">
+              <div><Label htmlFor="ws-planning">Planning (actie / verwachting)</Label><Textarea id="ws-planning" rows={2} placeholder="Nog niet vastgelegd" value={plan.planning} onChange={(e) => setPlan({ ...plan, planning: e.target.value })} /></div>
+              <div><Label htmlFor="ws-pdate">Planningdatum</Label><Input id="ws-pdate" type="date" value={plan.planning_date} onChange={(e) => setPlan({ ...plan, planning_date: e.target.value })} /></div>
+            </div>
+            <div><Label htmlFor="ws-remarks">Opmerkingen (optioneel)</Label><Textarea id="ws-remarks" rows={2} value={plan.remarks} onChange={(e) => setPlan({ ...plan, remarks: e.target.value })} /></div>
             <div><Label htmlFor="ws-plan">Projectplan</Label><Textarea id="ws-plan" rows={10} placeholder="Nog geen projectplan vastgelegd" value={plan.project_plan} onChange={(e) => setPlan({ ...plan, project_plan: e.target.value })} />
               <p className="mt-1 text-xs text-muted-foreground">Koppen op een eigen regel: Huidige stand, Verloop, Vervolg, Praktische opvolging. Onder Verloop: datum | titel | tekst. Lijsten met "- ".</p></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -238,7 +260,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{staff.map((s) => <SelectItem key={s.user_id} value={s.user_id}>{displayName(s)}</SelectItem>)}</SelectContent>
                 </Select></div>
-              <div><Label htmlFor="ws-due">Einddatum</Label><Input id="ws-due" type="date" value={plan.due_date} onChange={(e) => setPlan({ ...plan, due_date: e.target.value })} /></div>
+              <div><Label htmlFor="ws-due">Einddatum project</Label><Input id="ws-due" type="date" value={plan.due_date} onChange={(e) => setPlan({ ...plan, due_date: e.target.value })} /></div>
             </div>
             <details className="rounded-md border border-border p-3" open={!!(plan.est || plan.res || plan.rec)}>
               <summary className="cursor-pointer text-sm font-medium">Budget (optioneel; leeg = onbekend)</summary>
@@ -322,6 +344,10 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
         <TabsContent value="notities" className="space-y-4">
           <NotePost busy={postMessage.isPending} onPost={(row, done) => postMessage.mutate({ row, done })} />
           <MessageList q={messagesQ} items={notes} staff={staff} empty="Nog geen notities of voortgang." />
+        </TabsContent>
+
+        <TabsContent value="documenten" className="space-y-3">
+          <ProjectDocuments projectId={pid} staff={staff} />
         </TabsContent>
 
         <TabsContent value="geschiedenis" className="space-y-2">
@@ -467,7 +493,7 @@ export function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
         <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
-              <th className="text-left p-2 font-medium">Controlepunt</th><th className="text-left p-2 font-medium w-28">Status</th>
+              <th className="text-left p-2 font-medium">Actie / planning</th><th className="text-left p-2 font-medium w-28">Status</th>
               <th className="text-left p-2 font-medium w-40">Wie</th><th className="text-left p-2 font-medium w-36">Datum</th>
               <th className="text-left p-2 font-medium">Opmerkingen</th>
             </tr></thead>

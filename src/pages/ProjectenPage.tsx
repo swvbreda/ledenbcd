@@ -39,7 +39,7 @@ type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
   budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null; created_origin?: "medewerker" | "bronimport" | null;
-  updated_at?: string | null;
+  updated_at?: string | null; planning?: string | null; planning_date?: string | null; remarks?: string | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
@@ -113,6 +113,7 @@ function ProjectenInner() {
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
   const [showArchived, setShowArchived] = useState(false);
+  const [viewMode, setViewMode] = useState<"tabel" | "kaarten">("tabel");
   const [editTask, setEditTask] = useState<Partial<Task> | null>(null);
   const [editProject, setEditProject] = useState<Partial<Project> | null>(null);
   const today = todayStr();
@@ -312,6 +313,12 @@ function ProjectenInner() {
         <TabsContent value="projecten" className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             {!openProjectId && <label className="flex items-center gap-2 text-sm"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>}
+            {!openProjectId && (
+              <div className="hidden md:flex rounded-md border border-border p-0.5" role="group" aria-label="Weergave">
+                <Button size="sm" variant={viewMode === "tabel" ? "secondary" : "ghost"} aria-pressed={viewMode === "tabel"} onClick={() => setViewMode("tabel")}>Tabel</Button>
+                <Button size="sm" variant={viewMode === "kaarten" ? "secondary" : "ghost"} aria-pressed={viewMode === "kaarten"} onClick={() => setViewMode("kaarten")}>Kaarten</Button>
+              </div>
+            )}
             {!openProjectId && <Button className="ml-auto" onClick={() => setEditProject({ status: "actief" })}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>}
           </div>
           {projectsQ.isLoading ? (
@@ -330,7 +337,36 @@ function ProjectenInner() {
           ) : visibleProjects.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <>
+            {viewMode === "tabel" && (
+              <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
+                    <th className="text-left p-2 font-medium w-[18%]">Project</th>
+                    <th className="text-left p-2 font-medium w-[30%]">Status</th>
+                    <th className="text-left p-2 font-medium w-[22%]">Planning</th>
+                    <th className="text-left p-2 font-medium w-[12%]">Wie</th>
+                    <th className="text-left p-2 font-medium">Opmerkingen</th>
+                  </tr></thead>
+                  <tbody>
+                    {visibleProjects.map((p) => (
+                      <tr key={p.id} className={`border-t border-border align-top ${p.archived_at ? "opacity-60" : ""}`}>
+                        <td className="p-2"><button type="button" className="text-left font-medium hover:underline break-words" onClick={() => openProject(p.id)}>{p.title}</button>
+                          {p.updated_at && <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(p.updated_at)}</p>}</td>
+                        <td className="p-2 space-y-1"><Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+                          {p.description?.trim() && <p className="break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>}</td>
+                        <td className="p-2">{p.planning?.trim() ? <p className="whitespace-pre-wrap break-words line-clamp-3">{p.planning}</p> : <span className="text-muted-foreground">Nog niet vastgelegd</span>}
+                          {p.planning_date && <p className="text-xs text-muted-foreground tabular-nums">Planningdatum {p.planning_date}</p>}</td>
+                        <td className="p-2 break-words">{p.owner_id ? staffName(p.owner_id) : <span className="text-muted-foreground">Niet vastgesteld</span>}</td>
+                        <td className="p-2"><p className="whitespace-pre-wrap break-words line-clamp-3">{p.remarks?.trim() || ""}</p>
+                          <Button size="sm" variant="link" className="h-auto p-0" onClick={() => openProject(p.id)}>Openen</Button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <ul className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-3 ${viewMode === "tabel" ? "md:hidden" : ""}`}>
               {visibleProjects.map((p) => {
                 const prog = projectProgress(tasksQ.data ?? [], p.id);
                 const people = participantIds(p, tasksQ.data ?? [], participantsQ.data ?? []);
@@ -372,6 +408,7 @@ function ProjectenInner() {
                 );
               })}
             </ul>
+            </>
           )}
         </TabsContent>
 

@@ -2449,6 +2449,65 @@ export type Database = {
           },
         ]
       }
+      internal_project_documents: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          doc_type: string
+          document_date: string | null
+          id: string
+          mime_type: string
+          object_path: string
+          original_filename: string
+          project_id: string
+          sha256: string
+          size_bytes: number
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          doc_type: string
+          document_date?: string | null
+          id?: string
+          mime_type: string
+          object_path: string
+          original_filename: string
+          project_id: string
+          sha256: string
+          size_bytes: number
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          doc_type?: string
+          document_date?: string | null
+          id?: string
+          mime_type?: string
+          object_path?: string
+          original_filename?: string
+          project_id?: string
+          sha256?: string
+          size_bytes?: number
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_project_events: {
         Row: {
           actor_id: string | null
@@ -2588,7 +2647,10 @@ export type Database = {
           due_date: string | null
           id: string
           owner_id: string | null
+          planning: string | null
+          planning_date: string | null
           project_plan: string | null
+          remarks: string | null
           status: string
           teams_url: string | null
           title: string
@@ -2606,7 +2668,10 @@ export type Database = {
           due_date?: string | null
           id?: string
           owner_id?: string | null
+          planning?: string | null
+          planning_date?: string | null
           project_plan?: string | null
+          remarks?: string | null
           status?: string
           teams_url?: string | null
           title: string
@@ -2624,7 +2689,10 @@ export type Database = {
           due_date?: string | null
           id?: string
           owner_id?: string | null
+          planning?: string | null
+          planning_date?: string | null
           project_plan?: string | null
+          remarks?: string | null
           status?: string
           teams_url?: string | null
           title?: string
