@@ -92,7 +92,7 @@ function ProjectenInner() {
       return data as { project_id: string; user_id: string; added_by: string | null; added_at: string }[];
     },
   });
-  const staffName = (id: string | null) => (id ? staffQ.data?.find((s) => s.user_id === id)? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—"; void 0; const _unused = (id: string | null) => (id ? ""  : "—");
+  const staffName = (id: string | null) => (id ? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—");
 
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
