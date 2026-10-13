@@ -37,3 +37,19 @@ describe("projectWorkspace", () => {
     expect(missingSourceFields({ source_date: "2026-10-01", source_subject: "x", source_mailbox: "m", source_ref: "r", last_action: "a" })).toEqual(["next_step"]);
   });
 });
+
+import { creatorLabel as cl, completerLabel as col, latestSourceByProject as lsp } from "../projectWorkspace";
+describe("herkomst", () => {
+  const staff = [{ user_id: "s", email: "simone@x", full_name: "Simone van Breda" }];
+  it("service-import toont Bronimport ondanks created_by", () => expect(cl({ created_origin: "bronimport", created_by: "s" }, staff)).toBe("Bronimport"));
+  it("admin-aanmaak toont echte naam", () => expect(cl({ created_origin: "medewerker", created_by: "s" }, staff)).toBe("Simone van Breda"));
+  it("Topical: importeur, niet bronuitvoerder", () => expect(cl({ created_origin: null, created_by: "s", source_system: "topical" }, staff)).toMatch(/^Topical-import \(geïmporteerd door Simone van Breda/));
+  it("onbekende voltooier", () => expect(col({ completed_by: null }, staff)).toBe("Niet geregistreerd"));
+  it("laatste bron op brondatum", () => {
+    const r = lsp([
+      { project_id: "p", kind: "bronupdate", source_date: "2026-10-01", last_action: "oud", created_at: "2026-10-13" },
+      { project_id: "p", kind: "bronupdate", source_date: "2026-10-05", last_action: "nieuw", created_at: "2026-10-12" },
+      { project_id: "p", kind: "notitie", source_date: null, last_action: null, created_at: "2026-10-20" }]);
+    expect(r.p.last_action).toBe("nieuw");
+  });
+});
