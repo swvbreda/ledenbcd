@@ -51,8 +51,9 @@ export default function FinancienPage() {
   const searchKey = searchParams.toString();
   useEffect(() => {
     const p = parseFinanceSearch(new URLSearchParams(searchKey), years, currentYear);
-    if (new URLSearchParams(searchKey).has("year")) setYearState(p.year);
-    if (new URLSearchParams(searchKey).has("tab")) setTabState(p.tab);
+    // Ook bij terugnavigeren/verwijderen van parameters: terug naar gevalideerde standaard.
+    setYearState(p.year);
+    setTabState(p.tab);
   }, [searchKey]);
   const updateParams = (patch: Record<string, string | null>) => setSearchParams((prev) => {
     const n = new URLSearchParams(prev);

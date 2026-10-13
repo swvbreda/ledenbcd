@@ -118,7 +118,7 @@ function ProjectenInner() {
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
   const [showArchived, setShowArchived] = useState(false);
-  const [viewMode, setViewMode] = useState<"tabel" | "kaarten" | "dossiers">("tabel");
+  const [viewMode, setViewMode] = useState<"tabel" | "kaarten" | "dossiers">("dossiers");
   const reg = useDossierRegister(true);
   const setProjectDossiers = useSetProjectDossiers();
   const [editDossiers, setEditDossiers] = useState<string[]>([]);
@@ -376,7 +376,7 @@ function ProjectenInner() {
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
             viewMode === "dossiers" ? (
-              <DossierGroupsView dossiers={dossierFilter ? reg.dossiers.filter((d) => scope?.has(d.id)) : reg.dossiers} links={reg.links}
+              <DossierGroupsView dossiers={reg.dossiers} selected={dossierFilter} links={reg.links}
                 projects={visibleProjects} onOpen={(id) => openProject(id)} />
             ) : (
             <>
