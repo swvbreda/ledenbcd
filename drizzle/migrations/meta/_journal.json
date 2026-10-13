@@ -267,6 +267,13 @@
       "when": 1791924831649,
       "tag": "0037_dossier_register",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791924890741,
+      "tag": "0038_dossier_register_guard_fix",
+      "breakpoints": true
     }
   ]
 }
