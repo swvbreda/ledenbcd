@@ -217,14 +217,14 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                 <Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button>
               </div>
               <section className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1">
-                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Huidige stand</h3>
+                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">In het kort</h3>
                 <p className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || "Nog geen stand vastgelegd."}</p>
               </section>
               <PlanView text={presentText(project.project_plan)} />
             </div>
           ) : (
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
-            <div><Label htmlFor="ws-desc">Huidige stand / omschrijving</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div><Label htmlFor="ws-desc">In het kort / omschrijving</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
             <div><Label htmlFor="ws-plan">Projectplan</Label><Textarea id="ws-plan" rows={10} placeholder="Nog geen projectplan vastgelegd" value={plan.project_plan} onChange={(e) => setPlan({ ...plan, project_plan: e.target.value })} />
               <p className="mt-1 text-xs text-muted-foreground">Koppen op een eigen regel: Huidige stand, Verloop, Vervolg, Praktische opvolging. Onder Verloop: datum | titel | tekst. Lijsten met "- ".</p></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
