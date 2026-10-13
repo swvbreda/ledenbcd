@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus } from "lucide-react";
 import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
+import { changedText, presentText } from "@/lib/presentText";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
@@ -105,6 +106,7 @@ function ProjectenInner() {
       return latestSourceByProject(data ?? []);
     },
   });
+  const origTask = (id: string) => tasksQ.data?.find((x) => x.id === id);
   const staffName = (id: string | null) => (id ? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—");
 
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
@@ -149,7 +151,7 @@ function ProjectenInner() {
   const saveTask = useMutation({
     mutationFn: async (t: Partial<Task>) => {
       const row = {
-        title: (t.title ?? "").trim(), description: t.description?.trim() || null, project_id: t.project_id || null,
+        title: (t.title ?? "").trim(), description: t.id ? changedText(origTask(t.id)?.description, t.description ?? "") : t.description?.trim() || null, project_id: t.project_id || null,
         assignee_id: t.assignee_id || null, deadline: t.deadline || null, priority: t.priority ?? "normaal", status: t.status ?? "te_doen",
       };
       if (!row.title) throw new Error("Titel is verplicht");
@@ -186,7 +188,7 @@ function ProjectenInner() {
       const teams = p.teams_url?.trim() || null;
       if (teams && !isValidTeamsUrl(teams)) throw new Error("Teams-link moet een geldige https-link naar Teams/Microsoft zijn");
       const row = {
-        title: (p.title ?? "").trim(), description: p.description?.trim() || null, owner_id: p.owner_id || null,
+        title: (p.title ?? "").trim(), description: p.id ? changedText(projectsQ.data?.find((x) => x.id === p.id)?.description, p.description ?? "") : p.description?.trim() || null, owner_id: p.owner_id || null,
         due_date: p.due_date || null, status: p.status ?? "actief", teams_url: teams,
       };
       if (!row.title) throw new Error("Titel is verplicht");
@@ -289,8 +291,7 @@ function ProjectenInner() {
                         <span>{projectTitle(t.project_id)}</span>
                         <span>· {staffName(t.assignee_id)}</span>
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
-                        {t.source_system === "topical" && <Badge variant="secondary">Topical {t.source_ref}</Badge>}
-                      </div>
+                                              </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {t.status !== "afgerond" && (
@@ -343,10 +344,10 @@ function ProjectenInner() {
                     </div>
                     {sourcesQ.data?.[p.id] ? (
                       <div className="text-sm space-y-0.5">
-                        <p className="text-xs text-muted-foreground">Laatste bron · {fmtDay(sourcesQ.data[p.id].source_date ?? sourcesQ.data[p.id].created_at)}</p>
-                        <p className="break-words line-clamp-2">{sourcesQ.data[p.id].last_action}</p>
+                        <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(sourcesQ.data[p.id].source_date ?? sourcesQ.data[p.id].created_at)}</p>
+                        <p className="break-words line-clamp-2">{presentText(sourcesQ.data[p.id].last_action)}</p>
                       </div>
-                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{p.description}</p>}
+                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{presentText(p.description)}</p>}
                     {[["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]].some(([, v]) => v != null) && (
                       <p className="text-xs text-muted-foreground tabular-nums">{([["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]] as [string, number | null | undefined][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eurFmt(v as number)}`).join(" · ")}</p>
                     )}
@@ -391,7 +392,7 @@ function ProjectenInner() {
           {editTask && (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); saveTask.mutate(editTask); }}>
               <div><Label htmlFor="t-title">Titel</Label><Input id="t-title" required maxLength={200} value={editTask.title ?? ""} onChange={(e) => setEditTask({ ...editTask, title: e.target.value })} /></div>
-              <div><Label htmlFor="t-desc">Omschrijving</Label><Textarea id="t-desc" value={editTask.description ?? ""} onChange={(e) => setEditTask({ ...editTask, description: e.target.value })} /></div>
+              <div><Label htmlFor="t-desc">Omschrijving</Label><Textarea id="t-desc" value={editTask.id && editTask.description === origTask(editTask.id)?.description ? presentText(editTask.description) : editTask.description ?? ""} onChange={(e) => setEditTask({ ...editTask, description: e.target.value })} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Project</Label>
                   <Select value={editTask.project_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, project_id: v === NONE ? null : v })}>
@@ -417,7 +418,7 @@ function ProjectenInner() {
               </div>
               {editTask.id && (
                 <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-xs text-muted-foreground rounded-md border border-border p-2">
-                  <dt>Toegevoegd door</dt><dd className="break-words">{creatorLabel({ created_origin: editTask.created_origin, created_by: editTask.created_by ?? null, source_system: editTask.source_system }, staffQ.data ?? [])}</dd>
+                  {editTask.created_origin !== "bronimport" && editTask.source_system !== "topical" && (<><dt>Toegevoegd door</dt><dd className="break-words">{creatorLabel({ created_origin: editTask.created_origin, created_by: editTask.created_by ?? null }, staffQ.data ?? [])}</dd></>)}
                   <dt>Toegevoegd op</dt><dd>{editTask.created_at ? fmtDay(editTask.created_at) : NOT_RECORDED}</dd>
                   {editTask.status === "afgerond" && (<>
                     <dt>Voltooid op</dt><dd>{editTask.completed_at ? fmtDay(editTask.completed_at) : NOT_RECORDED}</dd>
@@ -437,7 +438,7 @@ function ProjectenInner() {
           {editProject && (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); saveProject.mutate(editProject); }}>
               <div><Label htmlFor="p-title">Titel</Label><Input id="p-title" required maxLength={200} value={editProject.title ?? ""} onChange={(e) => setEditProject({ ...editProject, title: e.target.value })} /></div>
-              <div><Label htmlFor="p-desc">Omschrijving</Label><Textarea id="p-desc" value={editProject.description ?? ""} onChange={(e) => setEditProject({ ...editProject, description: e.target.value })} /></div>
+              <div><Label htmlFor="p-desc">Omschrijving</Label><Textarea id="p-desc" value={editProject.id && editProject.description === projectsQ.data?.find((x) => x.id === editProject.id)?.description ? presentText(editProject.description) : editProject.description ?? ""} onChange={(e) => setEditProject({ ...editProject, description: e.target.value })} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Verantwoordelijke</Label>
                   <Select value={editProject.owner_id ?? NONE} onValueChange={(v) => setEditProject({ ...editProject, owner_id: v === NONE ? null : v })}>
