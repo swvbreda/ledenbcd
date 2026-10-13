@@ -28,6 +28,19 @@ export function buildTree(dossiers: RegisterDossier[]): DossierNode[] {
 }
 
 /**
+ * Beperkt de boom tot het gekozen filter: hoofddossier → die groep met alle
+ * subdossiers; subdossier → de ouder met uitsluitend dat subdossier.
+ * Zonder (geldig) filter blijft de volledige boom staan.
+ */
+export function filterTree(tree: DossierNode[], selected: string | null): DossierNode[] {
+  if (!selected) return tree;
+  const top = tree.find((d) => d.id === selected);
+  if (top) return [top];
+  const parent = tree.find((d) => d.children.some((c) => c.id === selected));
+  return parent ? [{ ...parent, children: parent.children.filter((c) => c.id === selected) }] : tree;
+}
+
+/**
  * Exacte lookup van een financieel dossierlabel. Alleen witruimte aan de randen
  * wordt genegeerd; hoofdletters/spelling moeten exact overeenkomen. Een label dat
  * alleen qua hoofdletters gelijk is, levert dus géén koppeling op.
