@@ -43,7 +43,7 @@ export function presentText(raw: string | null | undefined): string {
       .replace(/\bDe bron noemt\b/g, "Genoemd wordt")
       .replace(FILE, "bijlage")
       .replace(/\bbijlage bijlage\b/gi, "bijlage")
-      .replace(/;\s*bijlage\.?$/i, ".");
+      .replace(/;\s*bijlage(?=\.|$)/gi, "");
     line = cleanSentences(line);
     if (t && !line.trim()) continue;
     out.push(line.replace(/\s+$/, ""));
