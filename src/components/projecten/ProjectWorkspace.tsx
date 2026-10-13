@@ -12,10 +12,11 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Hand, Loader2, Plus, Trash2, X } from "lucide-react";
 import { PRIORITY_LABEL, PROJECT_STATUS_LABEL, TASK_STATUS_LABEL, isOverdue, completeTaskLocally, type ProjectStatus, type TaskPriority, type TaskStatus } from "@/lib/internalWork";
 import {
-  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, creatorLabel, canClaim, displayName, missingSourceFields, parseAmount, participantIds,
+  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, creatorLabel, canClaim, displayName, parseAmount, participantIds,
   projectProgress, type ActorKind, type CheckpointStatus, type MessageKind, type StaffMember,
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
+import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
@@ -91,7 +92,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "" });
   useEffect(() => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
-    setPlan({ description: project.description ?? "", project_plan: project.project_plan ?? "", status: project.status, owner_id: project.owner_id ?? "",
+    setPlan({ description: presentText(project.description), project_plan: presentText(project.project_plan), status: project.status, owner_id: project.owner_id ?? "",
       due_date: project.due_date ?? "", est: s(project.budget_estimate), res: s(project.budget_reserved), rec: s(project.budget_received) });
   }, [project]);
   const savePlan = useMutation({
@@ -99,7 +100,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       const est = parseAmount(plan.est), res = parseAmount(plan.res), rec = parseAmount(plan.rec);
       if ([est, res, rec].includes("invalid")) throw new Error("Bedrag ongeldig; laat leeg als het onbekend is");
       const { data, error } = await db.from("internal_projects").update({
-        description: plan.description.trim() || null, project_plan: plan.project_plan.trim() || null, status: plan.status,
+        description: changedText(project.description, plan.description), project_plan: changedText(project.project_plan, plan.project_plan), status: plan.status,
         owner_id: plan.owner_id || null, due_date: plan.due_date || null, budget_estimate: est, budget_reserved: res, budget_received: rec,
       }).eq("id", pid).select("id");
       if (error) throw error;
@@ -288,20 +289,20 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
         <TabsContent value="notities" className="space-y-4">
           <NotePost busy={postMessage.isPending} onPost={(row, done) => postMessage.mutate({ row, done })} />
-          <MessageList q={messagesQ} items={notes} staff={staff} empty="Nog geen notities, voortgang of bronupdates." />
+          <MessageList q={messagesQ} items={notes} staff={staff} empty="Nog geen notities of voortgang." />
         </TabsContent>
 
         <TabsContent value="geschiedenis" className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            Project aangemaakt {fmtDate(project.created_at)} door {project.created_origin == null && !project.created_by ? NOT_RECORDED : creatorLabel(project, staff)}.
+            Project aangemaakt {fmtDate(project.created_at)}{project.created_origin === "bronimport" ? "" : ` door ${project.created_origin == null && !project.created_by ? NOT_RECORDED : creatorLabel(project, staff)}`}.
             Wijzigingen van vóór de invoering van deze geschiedenis zijn niet geregistreerd.
           </p>
           {eventsQ.isLoading ? <Loading /> : eventsQ.error ? <ErrorBox e={eventsQ.error} /> : (eventsQ.data ?? []).length === 0 ? <Empty>Nog geen geregistreerde wijzigingen.</Empty> : (
             <ol className="space-y-1.5">
               {eventsQ.data!.map((ev) => (
                 <li key={ev.id} className="text-sm border-l-2 border-primary/40 pl-3">
-                  <span className="break-words">{ev.summary}</span>
-                  <span className="block text-xs text-muted-foreground">{fmtDate(ev.created_at)} · {actorLabel(ev.actor_kind, ev.actor_id, staff)}</span>
+                  <span className="break-words">{presentEventSummary(ev)}</span>
+                  <span className="block text-xs text-muted-foreground">{fmtDate(ev.created_at)}{ev.actor_kind === "bronimport" ? "" : ` · ${actorLabel(ev.actor_kind, ev.actor_id, staff)}`}</span>
                 </li>
               ))}
             </ol>
@@ -341,47 +342,28 @@ export function SimplePost({ label, busy, onPost }: { label: string; busy: boole
   );
 }
 
-const EMPTY_SRC = { source_date: "", source_subject: "", source_mailbox: "", source_ref: "", last_action: "", next_step: "" };
 export function NotePost({ busy, onPost }: { busy: boolean; onPost: (row: Record<string, unknown>, done: () => void) => void }) {
-  const [kind, setKind] = useState<"notitie" | "voortgang" | "bronupdate">("notitie");
+  const [kind, setKind] = useState<"notitie" | "voortgang">("notitie");
   const [body, setBody] = useState("");
-  const [src, setSrc] = useState(EMPTY_SRC);
-  const missing = kind === "bronupdate" ? missingSourceFields(src) : [];
-  const clear = () => { setBody(""); setSrc(EMPTY_SRC); };
   const submit = () => {
-    if (busy) return;
-    if (kind === "bronupdate") {
-      if (missing.length) { toast.error("Vul alle bronvelden, laatste actie en volgende stap in"); return; }
-      onPost({ kind, body: body.trim() || null, ...src, source_date: new Date(src.source_date).toISOString() }, clear);
-    } else {
-      if (!body.trim()) return;
-      onPost({ kind, body: body.trim() }, clear);
-    }
+    if (busy || !body.trim()) return;
+    onPost({ kind, body: body.trim() }, () => setBody(""));
   };
-  const f = (k: keyof typeof EMPTY_SRC, label: string, type = "text") => (
-    <div><Label htmlFor={`src-${k}`}>{label}</Label><Input id={`src-${k}`} type={type} value={src[k]} onChange={(e) => setSrc({ ...src, [k]: e.target.value })} /></div>
-  );
   return (
     <form className="space-y-2 rounded-md border border-border p-3" onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="w-full sm:w-56"><Label>Soort</Label>
         <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
           <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="notitie">Notitie</SelectItem><SelectItem value="voortgang">Voortgang</SelectItem><SelectItem value="bronupdate">Bronupdate (mail/document)</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="notitie">Notitie</SelectItem><SelectItem value="voortgang">Voortgang</SelectItem></SelectContent>
         </Select></div>
-      {kind === "bronupdate" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {f("source_date", "Datum bron", "datetime-local")}{f("source_subject", "Onderwerp")}{f("source_mailbox", "Mailbox")}{f("source_ref", "Bronidentificatie")}
-          <div className="sm:col-span-2"><Label htmlFor="src-la">Laatste feitelijke actie</Label><Textarea id="src-la" value={src.last_action} onChange={(e) => setSrc({ ...src, last_action: e.target.value })} /></div>
-          <div className="sm:col-span-2"><Label htmlFor="src-ns">Aanbevolen volgende stap</Label><Textarea id="src-ns" value={src.next_step} onChange={(e) => setSrc({ ...src, next_step: e.target.value })} /></div>
-        </div>
-      )}
-      <div><Label htmlFor="ws-note">{kind === "bronupdate" ? "Toelichting (optioneel)" : "Tekst"}</Label><Textarea id="ws-note" value={body} onChange={(e) => setBody(e.target.value)} /></div>
-      <Button type="submit" size="sm" disabled={busy || (kind !== "bronupdate" && !body.trim()) || missing.length > 0}>Plaatsen</Button>
+      <div><Label htmlFor="ws-note">Tekst</Label><Textarea id="ws-note" value={body} onChange={(e) => setBody(e.target.value)} /></div>
+      <Button type="submit" size="sm" disabled={busy || !body.trim()}>Plaatsen</Button>
     </form>
   );
 }
 
-const KIND_LABEL: Record<MessageKind, string> = { bericht: "Bericht", notitie: "Notitie", voortgang: "Voortgang", bronupdate: "Bronupdate" };
+const KIND_LABEL: Record<MessageKind, string> = { bericht: "Bericht", notitie: "Notitie", voortgang: "Voortgang", bronupdate: "Stand van zaken" };
+const sourceDay = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : null);
 function MessageList({ q, items, staff, empty }: { q: { isLoading: boolean; error: unknown }; items: Message[]; staff: StaffMember[]; empty: string }) {
   if (q.isLoading) return <Loading />;
   if (q.error) return <ErrorBox e={q.error} />;
@@ -392,20 +374,17 @@ function MessageList({ q, items, staff, empty }: { q: { isLoading: boolean; erro
         <li key={m.id} className="rounded-lg border border-border bg-card p-3 space-y-1.5">
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <Badge variant={m.kind === "bronupdate" ? "default" : "secondary"}>{KIND_LABEL[m.kind]}</Badge>
-            <span className="font-medium text-foreground">{actorLabel(m.author_kind, m.author_id, staff)}</span>
-            <span>· {fmtDate(m.created_at)}</span>
+            {m.kind === "bronupdate" || m.author_kind === "bronimport"
+              ? <span>{sourceDay(m.kind === "bronupdate" ? m.source_date ?? m.created_at : m.created_at)}</span>
+              : <><span className="font-medium text-foreground">{actorLabel(m.author_kind, m.author_id, staff)}</span><span>· {fmtDate(m.created_at)}</span></>}
           </div>
           {m.kind === "bronupdate" && (
             <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-sm">
-              <dt className="text-muted-foreground">Datum</dt><dd>{fmtDate(m.source_date)}</dd>
-              <dt className="text-muted-foreground">Onderwerp</dt><dd className="break-words">{m.source_subject}</dd>
-              <dt className="text-muted-foreground">Mailbox</dt><dd className="break-all">{m.source_mailbox}</dd>
-              <dt className="text-muted-foreground">Bron-ID</dt><dd className="break-all">{m.source_ref}</dd>
-              <dt className="text-muted-foreground">Laatste actie</dt><dd className="whitespace-pre-wrap break-words">{m.last_action}</dd>
-              <dt className="text-muted-foreground">Volgende stap</dt><dd className="whitespace-pre-wrap break-words font-medium">{m.next_step}</dd>
+              <dt className="text-muted-foreground">Laatste actie</dt><dd className="whitespace-pre-wrap break-words">{presentText(m.last_action)}</dd>
+              <dt className="text-muted-foreground">Volgende stap</dt><dd className="whitespace-pre-wrap break-words font-medium">{presentText(m.next_step)}</dd>
             </dl>
           )}
-          {m.body && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
+          {m.body && m.kind !== "bronupdate" && <p className="text-sm whitespace-pre-wrap break-words">{m.author_kind === "bronimport" ? presentText(m.body) : m.body}</p>}
         </li>
       ))}
     </ul>
@@ -446,7 +425,7 @@ export function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
                       <SelectContent><SelectItem value={NONE}>—</SelectItem>{staff.map((s) => <SelectItem key={s.user_id} value={s.user_id}>{displayName(s)}</SelectItem>)}</SelectContent>
                     </Select></td>
                   <td className="p-1"><Input className="h-8" type="date" defaultValue={r.due_date ?? ""} onBlur={(e) => (e.target.value || null) !== r.due_date && onMut({ op: "update", id: r.id, row: { due_date: e.target.value || null } })} /></td>
-                  <td className="p-1"><Textarea rows={1} className="min-h-8 py-1" defaultValue={r.remarks ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.remarks && onMut({ op: "update", id: r.id, row: { remarks: e.target.value.trim() || null } })} /></td>
+                  <td className="p-1"><Textarea rows={1} className="min-h-8 py-1" aria-label="Opmerkingen" defaultValue={presentText(r.remarks)} onBlur={(e) => { const v = changedText(r.remarks, e.target.value); if (v !== undefined) onMut({ op: "update", id: r.id, row: { remarks: v } }); }} /></td>
                 </tr>
               ))}
               {(rows ?? []).length === 0 && <tr><td colSpan={5} className="p-3 text-center text-muted-foreground">Nog geen controlepunten.</td></tr>}
