@@ -240,7 +240,6 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                 );
               })()}
               {current.status?.source === "plan" && project.description?.trim() && (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words"><span className="font-medium">In het kort: </span>{presentText(project.description, { autoImport: project.created_origin === "bronimport" })}</p>
               )}
               <PlanView sections={current.rest} />
             </div>
