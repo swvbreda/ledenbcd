@@ -2768,7 +2768,7 @@ export type Database = {
           budget_received: number | null
           budget_reserved: number | null
           created_at: string
-          created_by: string
+          created_by: string | null
           created_origin: string | null
           description: string | null
           due_date: string | null
@@ -2791,7 +2791,7 @@ export type Database = {
           budget_received?: number | null
           budget_reserved?: number | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           created_origin?: string | null
           description?: string | null
           due_date?: string | null
@@ -2814,7 +2814,7 @@ export type Database = {
           budget_received?: number | null
           budget_reserved?: number | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           created_origin?: string | null
           description?: string | null
           due_date?: string | null
