@@ -1,4 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "@/lib/router-compat";
+import { useDossierRegister } from "@/hooks/useDossierRegister";
+import { projectsFor, resolveFinanceLabel, UNLINKED_FINANCE } from "@/lib/dossierRegister";
 import { Pencil, Check, X, Trash2, Plus, Paperclip, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -54,6 +59,9 @@ interface Props {
   year: number;
   onUpdateExpense?: (id: string, fields: { dossier?: string | null }) => void;
   onUpdateBankTransaction?: (id: string, fields: { dossier?: string | null }) => void;
+  /** Exact financieel dossierlabel uit de URL; opent dat dossier als het bestaat. */
+  focusDossier?: string | null;
+  onFocusHandled?: (openDossier: string | null) => void;
 }
 
 interface DossierRow {
@@ -80,7 +88,7 @@ const formatDate = (value: string | null) => {
   return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-export default function DossierOverzichtTab({ year }: Props) {
+export default function DossierOverzichtTab({ year, focusDossier, onFocusHandled }: Props) {
   const { isAdmin } = useAuth();
   const { data: mutations = [], isLoading } = useDossierMutations(year);
   const { data: documents = [] } = useExpenseDocuments();
@@ -98,6 +106,25 @@ export default function DossierOverzichtTab({ year }: Props) {
   const [openDossier, setOpenDossier] = useState<string | null>(null);
 
   const canEdit = isAdmin;
+  // Gedeelde dossierindeling: alleen exacte labels, alleen weergave (bedragen ongewijzigd).
+  const reg = useDossierRegister(!!isAdmin);
+  const projectsQ = useQuery({
+    queryKey: ["finance-dossier-projects"], enabled: !!isAdmin,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("internal_projects").select("id,title,archived_at");
+      if (error) throw error;
+      return data as { id: string; title: string; archived_at: string | null }[];
+    },
+  });
+  const projectsForLabel = (label: string) => {
+    const id = resolveFinanceLabel(label, reg.aliases);
+    if (!id) return null;
+    const d = reg.dossiers.find((x) => x.id === id);
+    const childIds = reg.dossiers.filter((x) => x.parent_id === id).map((x) => x.id);
+    const seen = new Map<string, { id: string; title: string; archived_at: string | null }>();
+    for (const did of [id, ...childIds]) for (const p of projectsFor(did, reg.links, projectsQ.data ?? [])) seen.set(p.id, p);
+    return { dossier: d, projects: [...seen.values()] };
+  };
 
   const dossiers = useMemo(() => {
     const map = groupByDossier(mutations);
@@ -219,6 +246,17 @@ export default function DossierOverzichtTab({ year }: Props) {
     [mutations, selectedIds],
   );
 
+  // Deeplink: open exact het gevraagde dossier zodra de gegevens geladen zijn.
+  useEffect(() => {
+    if (!focusDossier || isLoading) return;
+    if (dossiers.some((d) => d.dossier === focusDossier)) setOpenDossier(focusDossier);
+  }, [focusDossier, isLoading, dossiers]);
+  const closeDossier = () => { setOpenDossier(null); if (focusDossier) onFocusHandled?.(null); };
+  const registerOptions = useMemo(() => {
+    const existing = new Set(dossiers.map((d) => d.dossier));
+    return reg.aliases.map((a) => a.label).filter((l) => !existing.has(l)).sort((a, b) => a.localeCompare(b, "nl"));
+  }, [reg.aliases, dossiers]);
+
   const activeRow = openDossier ? dossiers.find((d) => d.dossier === openDossier) : null;
 
   return (
@@ -297,6 +335,23 @@ export default function DossierOverzichtTab({ year }: Props) {
                 <CurrencyText value={d.total} />
               </span>
             </div>
+            {isAdmin && !reg.isLoading && (() => {
+              const info = projectsForLabel(d.dossier);
+              return (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 border-b border-border/50 px-3 py-1 text-[11px]">
+                  {!info ? (
+                    <span className="text-muted-foreground">{UNLINKED_FINANCE} aan een projectdossier</span>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">Projectdossier: {info.dossier?.name ?? "—"}</span>
+                      {info.projects.length === 0 ? <span className="text-muted-foreground">· geen projecten</span> : info.projects.map((p) => (
+                        <Link key={p.id} to={`/projecten?project=${p.id}`} className={`text-brand-red hover:underline ${p.archived_at ? "opacity-60" : ""}`}>{p.title}</Link>
+                      ))}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
             <table className="w-full min-w-[72rem] text-xs">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
@@ -390,7 +445,7 @@ export default function DossierOverzichtTab({ year }: Props) {
       {activeRow && (
         <DossierDetailDialog
           open={!!openDossier}
-          onOpenChange={(o) => !o && setOpenDossier(null)}
+          onOpenChange={(o) => !o && closeDossier()}
           dossier={activeRow.dossier}
           year={year}
           entries={activeRow.entries}
@@ -456,6 +511,9 @@ export default function DossierOverzichtTab({ year }: Props) {
                       <SelectItem key={d.dossier} value={d.dossier}>
                         {d.dossier} <span className="text-xs text-muted-foreground">({d.entries.length})</span>
                       </SelectItem>
+                    ))}
+                    {registerOptions.map((l) => (
+                      <SelectItem key={`reg:${l}`} value={l}>{l} <span className="text-xs text-muted-foreground">(dossierindeling)</span></SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

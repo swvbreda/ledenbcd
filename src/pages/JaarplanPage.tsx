@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import JaarplanDossiersWidget from "@/components/jaarplan/JaarplanDossiersWidget";
 
 const SLUG = "jaarplan";
 
@@ -177,6 +178,8 @@ export default function JaarplanPage() {
           </div>
         </div>
       )}
+
+      {isAdmin && <JaarplanDossiersWidget />}
 
       {loading ? (
         <div className="flex items-center justify-center py-16">

@@ -260,6 +260,34 @@
       "when": 1791922613918,
       "tag": "0036_project_status_date",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791924831649,
+      "tag": "0037_dossier_register",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791924890741,
+      "tag": "0038_dossier_register_guard_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791924932015,
+      "tag": "0039_internal_projects_created_by_nullable_for_imports",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791925226343,
+      "tag": "0040_dossier_register_revoke_anon",
+      "breakpoints": true
     }
   ]
 }

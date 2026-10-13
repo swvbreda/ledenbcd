@@ -1,0 +1,2 @@
+ALTER TABLE public.internal_projects ALTER COLUMN created_by DROP NOT NULL;
+COMMENT ON COLUMN public.internal_projects.created_by IS 'Aanmaker (auth.uid, server-forced). NULL alleen bij service-imports (created_origin=bronimport), nooit een verzonnen gebruiker.';
