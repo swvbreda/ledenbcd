@@ -19,7 +19,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
-import { displayName, participantIds, projectProgress } from "@/lib/projectWorkspace";
+import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
