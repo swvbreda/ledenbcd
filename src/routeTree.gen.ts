@@ -19,6 +19,7 @@ import { Route as MfaSetupRouteImport } from './routes/mfa-setup'
 import { Route as MfaVerifyRouteImport } from './routes/mfa-verify'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as ZzHeroHarnessRouteImport } from './routes/zz-hero-harness'
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
 import { Route as DashboardAankondigingenRouteImport } from './routes/_dashboard/aankondigingen'
 import { Route as DashboardAccountsRouteImport } from './routes/_dashboard/accounts'
@@ -115,6 +116,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZzHeroHarnessRoute = ZzHeroHarnessRouteImport.update({
+  id: '/zz-hero-harness',
+  path: '/zz-hero-harness',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -384,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/zz-hero-harness': typeof ZzHeroHarnessRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -442,6 +449,7 @@ export interface FileRoutesByTo {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/zz-hero-harness': typeof ZzHeroHarnessRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -503,6 +511,7 @@ export interface FileRoutesById {
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/zz-hero-harness': typeof ZzHeroHarnessRoute
   '/_dashboard/aankondigingen': typeof DashboardAankondigingenRoute
   '/_dashboard/accounts': typeof DashboardAccountsRoute
   '/_dashboard/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -565,6 +574,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/zz-hero-harness'
     | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
@@ -623,6 +633,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/zz-hero-harness'
     | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
@@ -683,6 +694,7 @@ export interface FileRouteTypes {
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/zz-hero-harness'
     | '/_dashboard/aankondigingen'
     | '/_dashboard/accounts'
     | '/_dashboard/bestuur-beheer'
@@ -744,6 +756,7 @@ export interface RootRouteChildren {
   MfaVerifyRoute: typeof MfaVerifyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  ZzHeroHarnessRoute: typeof ZzHeroHarnessRoute
   AShareCodeRoute: typeof AShareCodeRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
@@ -834,6 +847,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zz-hero-harness': {
+      id: '/zz-hero-harness'
+      path: '/zz-hero-harness'
+      fullPath: '/zz-hero-harness'
+      preLoaderRoute: typeof ZzHeroHarnessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_dashboard/': {
@@ -1257,6 +1277,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaVerifyRoute: MfaVerifyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  ZzHeroHarnessRoute: ZzHeroHarnessRoute,
   AShareCodeRoute: AShareCodeRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EnqueteExternIdRoute: EnqueteExternIdRoute,
