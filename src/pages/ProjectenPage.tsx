@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CountChip, ProjectStatusBadge, Segmented, surfaceCls, tabsListCls, tabsTriggerCls } from "@/components/projecten/ui";
+import { ProjectStatusBadge, Segmented, surfaceCls, tabsListCls, tabsTriggerCls } from "@/components/projecten/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
