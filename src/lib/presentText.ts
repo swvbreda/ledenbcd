@@ -53,6 +53,7 @@ export function presentText(raw: string | null | undefined): string {
       .replace(/^\s*Broncontrole\s+\d{1,2}\s+\w+\s+\d{4}\.\s*/, "")
       .replace(/\s*—\s*bron topical\s+\d+/gi, "")
       .replace(/\s+volgens Topical(?=\s*:)/g, "")
+      .replace(/\bTopical-brondeadline\b/g, "oorspronkelijke deadline")
       .replace(/\s+in deze bron(nen)?\b/g, "")
       .replace(/\bDe bron noemt\b/g, "Genoemd wordt")
       .replace(FILE, "bijlage")
