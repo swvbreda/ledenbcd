@@ -60,3 +60,30 @@ export function missingSourceFields(u: Partial<SourceUpdateInput>): (keyof Sourc
   const keys: (keyof SourceUpdateInput)[] = ["source_date", "source_subject", "source_mailbox", "source_ref", "last_action", "next_step"];
   return keys.filter((k) => !u[k]?.trim());
 }
+
+export type Origin = "medewerker" | "bronimport" | null | undefined;
+/** Wie heeft het record aangemaakt? Bronimport bij service-import; Topical-taken: importeur, niet de bronuitvoerder. */
+export function creatorLabel(r: { created_origin?: Origin; created_by: string | null; source_system?: string | null }, staff: StaffMember[]): string {
+  if (r.created_origin === "bronimport") return "Bronimport";
+  const who = r.created_by ? displayName(staff.find((x) => x.user_id === r.created_by)) : NOT_RECORDED;
+  if (r.source_system === "topical") return `Topical-import (geïmporteerd door ${who}; niet de uitvoerder van de bronactie)`;
+  return who;
+}
+
+/** Wie heeft afgerond? Historisch zonder actor: 'Niet geregistreerd'. */
+export function completerLabel(t: { completed_by?: string | null; local_only_completed_by?: string | null }, staff: StaffMember[]): string {
+  const id = t.completed_by ?? t.local_only_completed_by ?? null;
+  return id ? displayName(staff.find((x) => x.user_id === id)) : NOT_RECORDED;
+}
+
+type SrcMsg = { project_id: string; kind: string; source_date: string | null; last_action: string | null; created_at: string };
+/** Laatst bekende bronupdate per project (op brondatum). */
+export function latestSourceByProject(msgs: SrcMsg[]): Record<string, SrcMsg> {
+  const out: Record<string, SrcMsg> = {};
+  for (const m of msgs) {
+    if (m.kind !== "bronupdate") continue;
+    const k = m.source_date ?? m.created_at, cur = out[m.project_id];
+    if (!cur || k > (cur.source_date ?? cur.created_at)) out[m.project_id] = m;
+  }
+  return out;
+}
