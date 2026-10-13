@@ -93,7 +93,8 @@ export function newestFirst<T extends { date: string }>(items: T[]): T[] {
 export function splitCurrentStatus(planText: string | null | undefined, description: string | null | undefined) {
   const sections = parsePlan(planText);
   const idx = sections.findIndex((s) => s.heading === "Huidige stand" && s.blocks.length > 0);
-  if (idx >= 0) return { status: { source: "plan" as const, blocks: sections[idx].blocks }, rest: sections.filter((_, i) => i !== idx) };
+  const rest = sections.filter((s, i) => i !== idx && !(s.heading === "Huidige stand" && !s.blocks.length));
+  if (idx >= 0) return { status: { source: "plan" as const, blocks: sections[idx].blocks }, rest };
   const d = description?.trim();
-  return { status: d ? { source: "description" as const, blocks: [{ type: "paragraph", text: d } as PlanBlock] } : null, rest: sections };
+  return { status: d ? { source: "description" as const, blocks: [{ type: "paragraph", text: d } as PlanBlock] } : null, rest };
 }

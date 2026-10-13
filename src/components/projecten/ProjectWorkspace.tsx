@@ -183,19 +183,20 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   return (
     <div className="space-y-4">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" />Alle projecten</Button>
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-xl uppercase break-words">{project.title}</h2>
-            <div className="mt-1 flex flex-wrap gap-1.5 items-center text-xs text-muted-foreground">
-              <Badge variant="outline">{project.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[project.status]}</Badge>
-              <span>Verantwoordelijke: {byName(project.owner_id)}</span>
-              {project.due_date && <span>· einddatum {project.due_date}</span>}
-            </div>
-          </div>
+      <div className="space-y-3 min-w-0">
+        <div className="flex flex-wrap items-start gap-2">
+          <h2 className="font-display text-xl sm:text-2xl uppercase break-words min-w-0 flex-1">{project.title}</h2>
           <StaffAvatars ids={people} staff={staff} />
+          {!editing && <Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button>}
         </div>
-        <ProgressBar open={prog.open} done={prog.done} pct={prog.pct} />
+        <section aria-label="Huidige status" className="rounded-lg border-l-4 border-primary bg-card border border-border p-4 space-y-2 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Huidige status</h3>
+            <Badge variant="outline">{project.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[project.status]}</Badge>
+            <span className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(project.status_date)}</span>
+          </div>
+          {current.status ? <PlanBlocks blocks={current.status.blocks} /> : <p className="text-sm text-muted-foreground">Nog niet vastgelegd</p>}
+        </section>
       </div>
 
       <Tabs defaultValue="overzicht">
@@ -210,36 +211,37 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
         <TabsContent value="overzicht" className="space-y-4">
           {!editing ? (
-            <div className="space-y-4 min-w-0">
-              <div className="flex justify-end"><Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button></div>
-              <dl className="grid gap-3 md:grid-cols-2 min-w-0">
-                <div className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1 min-w-0 md:col-span-2">
-                  <dt className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Status <Badge variant="outline" className="normal-case tracking-normal">{project.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[project.status]}</Badge></dt>
-                  <dd className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(project.status_date)}</dd>
-                  <dd className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</dd>
+            <div className="space-y-5 min-w-0">
+              <div className="grid gap-4 md:grid-cols-2 min-w-0">
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Planning</h3>
+                  <p className="whitespace-pre-wrap break-words text-sm">{project.planning?.trim() || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</p>
+                  {project.planning_date && <p className="text-xs text-muted-foreground tabular-nums">Planningdatum: {project.planning_date}</p>}
                 </div>
-                <div className="rounded-md border border-border p-3 space-y-1 min-w-0">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Planning (actie / verwachting)</dt>
-                  <dd className="whitespace-pre-wrap break-words">{project.planning?.trim() || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</dd>
-                  <dd className="text-xs text-muted-foreground tabular-nums">Planningdatum: {project.planning_date ?? "niet vastgesteld"}</dd>
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Opmerkingen</h3>
+                  <p className="whitespace-pre-wrap break-words text-sm">{project.remarks?.trim() || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</p>
                 </div>
-                <div className="rounded-md border border-border p-3 min-w-0">
-                  <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
-                    <dt className="text-muted-foreground">Eigenaar</dt><dd className="break-words">{project.owner_id ? byName(project.owner_id) : "Niet vastgesteld"}</dd>
-                    <dt className="text-muted-foreground">Einddatum project</dt><dd className="tabular-nums">{project.due_date ?? "Niet vastgesteld"}</dd>
-                    {[project.budget_estimate, project.budget_reserved, project.budget_received].some((v) => v != null) && (<>
-                      <dt className="text-muted-foreground">Budget</dt><dd className="tabular-nums break-words">{([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}</dd>
-                    </>)}
-                  </div>
-                </div>
-                {project.remarks?.trim() && (
-                  <div className="rounded-md border border-border p-3 space-y-1 min-w-0 md:col-span-2">
-                    <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Opmerkingen</dt>
-                    <dd className="whitespace-pre-wrap break-words">{project.remarks}</dd>
-                  </div>
-                )}
-              </dl>
-              <PlanView text={presentText(project.project_plan)} />
+              </div>
+              {(() => {
+                const budget = ([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null);
+                const filled = [project.owner_id && `Verantwoordelijke: ${byName(project.owner_id)}`, project.due_date && `Einddatum ${project.due_date}`, budget.length && `Budget: ${budget.map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}`].filter(Boolean) as string[];
+                return (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer text-muted-foreground">Projectgegevens{filled.length ? `: ${filled.join(" · ")}` : ""}</summary>
+                    <dl className="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
+                      <dt className="text-muted-foreground">Verantwoordelijke</dt><dd className="break-words">{project.owner_id ? byName(project.owner_id) : "Niet vastgesteld"}</dd>
+                      <dt className="text-muted-foreground">Einddatum project</dt><dd className="tabular-nums">{project.due_date ?? "Niet vastgesteld"}</dd>
+                      <dt className="text-muted-foreground">Budget</dt><dd className="tabular-nums break-words">{budget.length ? budget.map(([l, v]) => `${l} ${eur(v)}`).join(" · ") : "Niet vastgelegd"}</dd>
+                      <dt className="text-muted-foreground">Taken</dt><dd className="tabular-nums">{prog.open} open · {prog.done} afgerond</dd>
+                    </dl>
+                  </details>
+                );
+              })()}
+              {current.status?.source === "plan" && project.description?.trim() && (
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words"><span className="font-medium">In het kort: </span>{presentText(project.description, { autoImport: project.created_origin === "bronimport" })}</p>
+              )}
+              <PlanView sections={current.rest} />
             </div>
           ) : (
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
@@ -282,8 +284,8 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
           )}
 
 
-          <section className="space-y-2">
-            <h3 className="font-medium">Deelnemers</h3>
+          <details className="rounded-md border border-border p-3 space-y-2">
+            <summary className="cursor-pointer font-medium">Deelnemers ({people.length})</summary>
             <p className="text-xs text-muted-foreground">Verantwoordelijke, uitvoerders van projecttaken en expliciet toegevoegde medewerkers.</p>
             <ul className="flex flex-wrap gap-2">
               {people.map((id) => {
@@ -304,9 +306,12 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
               </Select>
               <Button type="button" variant="outline" disabled={!addPerson || participantMut.isPending} onClick={() => participantMut.mutate({ userId: addPerson })}>Toevoegen</Button>
             </div>
-          </section>
+          </details>
 
-          <CheckpointTable rows={checkpointsQ.data} loading={checkpointsQ.isLoading} error={checkpointsQ.error} staff={staff} onMut={(a) => cpMut.mutate(a)} busy={cpMut.isPending} />
+          <details className="rounded-md border border-border p-3">
+            <summary className="cursor-pointer font-medium">Acties en planning ({(checkpointsQ.data ?? []).filter((c) => c.status === "open" || c.status === "bezig").length} open)</summary>
+            <div className="mt-2"><CheckpointTable rows={checkpointsQ.data} loading={checkpointsQ.isLoading} error={checkpointsQ.error} staff={staff} onMut={(a) => cpMut.mutate(a)} busy={cpMut.isPending} /></div>
+          </details>
         </TabsContent>
 
         <TabsContent value="taken" className="space-y-3">
@@ -374,33 +379,40 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   );
 }
 
-function PlanView({ text }: { text: string }) {
-  const sections = parsePlan(text);
-  if (!sections.length) return <p className="text-sm text-muted-foreground">Nog geen projectplan vastgelegd.</p>;
+function PlanView({ sections }: { sections: PlanSection[] }) {
+  if (!sections.length) return null;
   return (
     <div className="space-y-4 min-w-0">
       {sections.map((s, i) => (
         <section key={i} className="space-y-2 min-w-0">
           {s.heading && <h3 className="font-display uppercase text-base">{s.heading}</h3>}
-          {s.blocks.map((b, j) => b.type === "paragraph" ? (
-            <p key={j} className="whitespace-pre-wrap break-words text-sm">{b.text}</p>
-          ) : b.type === "list" ? (
-            b.ordered
-              ? <ol key={j} className="list-decimal pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ol>
-              : <ul key={j} className="list-disc pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ul>
-          ) : (
-            <ol key={j} className="relative border-l-2 border-border ml-1.5 space-y-4">
-              {newestFirst(b.items).map((it, k) => (
-                <li key={k} className="relative pl-4 min-w-0">
-                  <span aria-hidden className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-primary" />
-                  <p className="text-xs text-muted-foreground tabular-nums break-words">{it.date}</p>
-                  {it.title && <p className="font-medium text-sm break-words">{it.title}</p>}
-                  {it.text && <p className="text-sm whitespace-pre-wrap break-words">{it.text}</p>}
-                </li>
-              ))}
-            </ol>
-          ))}
+          <PlanBlocks blocks={s.blocks} />
         </section>
+      ))}
+    </div>
+  );
+}
+
+function PlanBlocks({ blocks }: { blocks: PlanBlock[] }) {
+  return (
+    <div className="space-y-2 min-w-0">
+      {blocks.map((b, j) => b.type === "paragraph" ? (
+        <p key={j} className="whitespace-pre-wrap break-words text-sm">{b.text}</p>
+      ) : b.type === "list" ? (
+        b.ordered
+          ? <ol key={j} className="list-decimal pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ol>
+          : <ul key={j} className="list-disc pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ul>
+      ) : (
+        <ol key={j} className="relative border-l-2 border-border ml-1.5 space-y-4">
+          {newestFirst(b.items).map((it, k) => (
+            <li key={k} className="relative pl-4 min-w-0">
+              <span aria-hidden className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-primary" />
+              <p className="text-xs text-muted-foreground tabular-nums break-words">{it.date}</p>
+              {it.title && <p className="font-medium text-sm break-words">{it.title}</p>}
+              {it.text && <p className="text-sm whitespace-pre-wrap break-words">{it.text}</p>}
+            </li>
+          ))}
+        </ol>
       ))}
     </div>
   );
@@ -491,7 +503,6 @@ export function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
   const [newTitle, setNewTitle] = useState("");
   return (
     <section className="space-y-2">
-      <h3 className="font-medium">Controlepunten</h3>
       {loading ? <Loading /> : error ? <ErrorBox e={error} /> : (
         <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm min-w-[640px]">
