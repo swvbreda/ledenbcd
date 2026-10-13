@@ -38,7 +38,7 @@ import {
 type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
-  budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null;
+  budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null; created_origin?: "medewerker" | "bronimport" | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
