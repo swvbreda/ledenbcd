@@ -52,3 +52,6 @@ BEGIN
   RESET ROLE;
   RAISE EXCEPTION 'ROLLBACK_RESULT:%', res;
 END $$;
+
+-- Timestamps (0032), teruggedraaid. Laatste run: svc_created_at=forced proj_created_at=forced task_insert=forced
+--   reopen=null complete=forced keep=kept completed_by=auth topical_forged=blocked topical_rpc=afgerond/ok
