@@ -271,12 +271,11 @@ function ProjectenInner() {
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
                         {t.source_system === "topical" && <Badge variant="secondary">Topical {t.source_ref}</Badge>}
                       </div>
-                      {topicalMsg[t.id] && <p role="status" className={`mt-1 text-xs ${topicalMsg[t.id].ok ? "text-muted-foreground" : "text-destructive"}`}>{topicalMsg[t.id].text}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {t.status !== "afgerond" && (
-                        <Button size="sm" variant="outline" disabled={completeTask.isPending || completeTopical.isPending} onClick={() => (t.source_system === "topical" ? setChoiceFor(t) : completeTask.mutate(t.id))}>
-                          {completeTopical.isPending && completeTopical.variables === t.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}{t.source_system === "topical" && topicalMsg[t.id] && !topicalMsg[t.id].ok ? "Opnieuw proberen" : "Afronden"}
+                        <Button size="sm" variant="outline" disabled={completeTask.isPending} onClick={() => completeTask.mutate(t)}>
+                          {completeTask.isPending && completeTask.variables?.id === t.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}Afronden
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" aria-label="Taak bewerken" onClick={() => setEditTask(t)}><Pencil className="h-4 w-4" /></Button>
@@ -341,25 +340,6 @@ function ProjectenInner() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!choiceFor} onOpenChange={(o) => !o && setChoiceFor(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Topical-actie afronden</DialogTitle></DialogHeader>
-          <p className="text-sm break-words">{choiceFor?.title}</p>
-          <div className="space-y-3">
-            <div className="rounded border border-border p-3 space-y-2">
-              <Button className="w-full" disabled={completeTopical.isPending || completeLocalOnly.isPending} onClick={() => { const id = choiceFor!.id; setChoiceFor(null); completeTopical.mutate(id); }}>Overal afronden</Button>
-              <p className="text-xs text-muted-foreground">Zet de To Do-taak op voltooid en de Planner-taak op 100%. Lokaal pas afgerond als beide bevestigd zijn; vereist de Microsoft-koppeling.</p>
-            </div>
-            <div className="rounded border border-border p-3 space-y-2">
-              <Button variant="outline" className="w-full" disabled={completeTopical.isPending || completeLocalOnly.isPending} onClick={() => completeLocalOnly.mutate(choiceFor!.id)}>
-                {completeLocalOnly.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Alleen in het ledenbestand afronden
-              </Button>
-              <p className="text-xs text-muted-foreground">Teams en Topical worden hiermee niet bijgewerkt. Uw account en het tijdstip worden vastgelegd; overal afronden kan later nog.</p>
-            </div>
-          </div>
-          <DialogFooter><Button variant="ghost" onClick={() => setChoiceFor(null)}>Annuleren</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
       <Dialog open={!!editTask} onOpenChange={(o) => !o && setEditTask(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editTask?.id ? "Taak bewerken" : "Nieuwe taak"}</DialogTitle></DialogHeader>
