@@ -56,3 +56,20 @@ export function filterTasks<T extends TaskLike>(tasks: T[], f: TaskFilter, userI
     return true;
   });
 }
+
+export interface LocalCompleteDb {
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }>;
+  from: (table: string) => any;
+}
+
+/** Lokale afronding: Topical via de geauditeerde admin-RPC, overige taken via gewone update. Nooit Microsoft-calls. */
+export async function completeTaskLocally(db: LocalCompleteDb, t: { id: string; source_system?: string | null }): Promise<void> {
+  if (t.source_system === "topical") {
+    const { error } = await db.rpc("topical_complete_local_only", { _task_id: t.id });
+    if (error) throw error;
+    return;
+  }
+  const { data, error } = await db.from("internal_tasks").update({ status: "afgerond" }).eq("id", t.id).select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("Geen toegang");
+}

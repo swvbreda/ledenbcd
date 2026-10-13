@@ -18,8 +18,7 @@ import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus
 import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { useServerFn } from "@tanstack/react-start";
-import { topicalComplete } from "@/lib/topical.functions";
-import { completionSummary } from "@/lib/topicalLink";
+import { completeTaskLocally } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
   filterTasks,
@@ -135,13 +134,6 @@ function ProjectenInner() {
     },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
   });
-  const topicalFn = useServerFn(topicalComplete);
-  const [topicalMsg, setTopicalMsg] = useState<Record<string, { ok: boolean; text: string }>>({});
-  const completeTopical = useMutation({
-    mutationFn: (id: string) => topicalFn({ data: { taskId: id } }),
-    onSuccess: (r, id) => { const s = completionSummary(r); setTopicalMsg((m) => ({ ...m, [id]: s })); s.ok ? toast.success("Topical-actie afgerond") : toast.error("Niet volledig afgerond"); invalidate(); },
-    onError: (e, id) => setTopicalMsg((m) => ({ ...m, [id]: { ok: false, text: "Niet afgerond, taak blijft lokaal open: " + errMsg(e) } })),
-  });
   const linksQ = useQuery({
     queryKey: ["topical-links", uid],
     enabled: !!uid,
@@ -151,22 +143,10 @@ function ProjectenInner() {
       return data as { task_id: string; todo_completed_at: string | null; planner_completed_at: string | null }[];
     },
   });
-  const [choiceFor, setChoiceFor] = useState<Task | null>(null);
-  const completeLocalOnly = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await db.rpc("topical_complete_local_only", { _task_id: id });
-      if (error) throw error;
-    },
-    onSuccess: (_r, id) => { setChoiceFor(null); setTopicalMsg((m) => { const n = { ...m }; delete n[id]; return n; }); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
-    onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
-  });
+  // Afronden in de lijst is altijd één klik lokaal; externe afronding alleen via het Topical-tabblad.
   const completeTask = useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await db.from("internal_tasks").update({ status: "afgerond" }).eq("id", id).select("id");
-      if (error) throw error;
-      if (!data?.length) throw new Error("Geen toegang");
-    },
-    onSuccess: () => { toast.success("Taak afgerond"); invalidate(); },
+    mutationFn: (t: Task) => completeTaskLocally(db, t),
+    onSuccess: () => { toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
     onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const saveProject = useMutation({
