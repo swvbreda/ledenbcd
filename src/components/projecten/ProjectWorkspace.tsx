@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Hand, Loader2, Plus, Trash2, X } from "lucide-react";
 import { PRIORITY_LABEL, PROJECT_STATUS_LABEL, TASK_STATUS_LABEL, isOverdue, completeTaskLocally, type ProjectStatus, type TaskPriority, type TaskStatus } from "@/lib/internalWork";
 import {
-  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, canClaim, displayName, missingSourceFields, parseAmount, participantIds,
+  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, creatorLabel, canClaim, displayName, missingSourceFields, parseAmount, participantIds,
   projectProgress, type ActorKind, type CheckpointStatus, type MessageKind, type StaffMember,
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
@@ -26,7 +26,7 @@ const NONE = "__none";
 export type WsProject = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null; status: ProjectStatus;
   archived_at: string | null; project_plan: string | null; budget_estimate: number | null; budget_reserved: number | null; budget_received: number | null;
-  created_by: string | null; created_at: string;
+  created_by: string | null; created_at: string; created_origin?: "medewerker" | "bronimport" | null;
 };
 export type WsTask = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null; deadline: string | null;
@@ -141,18 +141,18 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
   // ---- Berichten / notities ----
   const postMessage = useMutation({
-    mutationFn: async (row: Record<string, unknown>) => {
+    mutationFn: async ({ row }: { row: Record<string, unknown>; done?: () => void }) => {
       const { data, error } = await db.from("internal_project_messages").insert({ project_id: pid, ...row }).select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang");
     },
-    onSuccess: () => { toast.success("Geplaatst"); refreshAll(); },
+    onSuccess: (_d, v) => { v.done?.(); toast.success("Geplaatst"); refreshAll(); },
     onError: (e) => toast.error("Plaatsen mislukt: " + errMsg(e)),
   });
 
   // ---- Controlepunten ----
   const cpMut = useMutation({
-    mutationFn: async (a: { op: "add" | "update" | "delete"; id?: string; row?: Partial<Checkpoint> }) => {
+    mutationFn: async (a: CpAction) => {
       const t = db.from("internal_project_checkpoints");
       const q = a.op === "add" ? t.insert({ project_id: pid, position: (checkpointsQ.data?.length ?? 0) + 1, ...a.row }).select("id")
         : a.op === "update" ? t.update(a.row).eq("id", a.id).select("id") : t.delete().eq("id", a.id).select("id");
@@ -160,7 +160,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang of controlepunt bestaat niet meer");
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["project-checkpoints"] }); qc.invalidateQueries({ queryKey: ["project-events"] }); },
+    onSuccess: (_d, a) => { a.done?.(); qc.invalidateQueries({ queryKey: ["project-checkpoints"] }); qc.invalidateQueries({ queryKey: ["project-events"] }); },
     onError: (e) => toast.error("Controlepunt opslaan mislukt: " + errMsg(e)),
   });
 
@@ -282,18 +282,18 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
         </TabsContent>
 
         <TabsContent value="berichten" className="space-y-3">
-          <SimplePost label="Nieuw bericht" busy={postMessage.isPending} onPost={(body) => postMessage.mutate({ kind: "bericht", body })} />
+          <SimplePost label="Nieuw bericht" busy={postMessage.isPending} onPost={(body, done) => postMessage.mutate({ row: { kind: "bericht", body }, done })} />
           <MessageList q={messagesQ} items={threads} staff={staff} empty="Nog geen berichten." />
         </TabsContent>
 
         <TabsContent value="notities" className="space-y-4">
-          <NotePost busy={postMessage.isPending} onPost={(row) => postMessage.mutate(row)} />
+          <NotePost busy={postMessage.isPending} onPost={(row, done) => postMessage.mutate({ row, done })} />
           <MessageList q={messagesQ} items={notes} staff={staff} empty="Nog geen notities, voortgang of bronupdates." />
         </TabsContent>
 
         <TabsContent value="geschiedenis" className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            Project aangemaakt {fmtDate(project.created_at)} door {actorLabel("medewerker", project.created_by, staff)}.
+            Project aangemaakt {fmtDate(project.created_at)} door {project.created_origin == null && !project.created_by ? NOT_RECORDED : creatorLabel(project, staff)}.
             Wijzigingen van vóór de invoering van deze geschiedenis zijn niet geregistreerd.
           </p>
           {eventsQ.isLoading ? <Loading /> : eventsQ.error ? <ErrorBox e={eventsQ.error} /> : (eventsQ.data ?? []).length === 0 ? <Empty>Nog geen geregistreerde wijzigingen.</Empty> : (
@@ -327,10 +327,13 @@ const Loading = () => <p className="text-sm text-muted-foreground flex items-cen
 const Empty = ({ children }: { children: React.ReactNode }) => <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">{children}</div>;
 const ErrorBox = ({ e }: { e: unknown }) => <p role="alert" className="text-sm text-destructive">Kon niet laden: {errMsg(e)}</p>;
 
-function SimplePost({ label, busy, onPost }: { label: string; busy: boolean; onPost: (body: string) => void }) {
+type CpAction = { op: "add" | "update" | "delete"; id?: string; row?: Partial<Checkpoint>; done?: () => void };
+
+/** Tekst blijft staan tot opslaan bevestigd is; tijdens verzenden geen tweede verzending. */
+export function SimplePost({ label, busy, onPost }: { label: string; busy: boolean; onPost: (body: string, done: () => void) => void }) {
   const [v, setV] = useState("");
   return (
-    <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); if (v.trim()) { onPost(v.trim()); setV(""); } }}>
+    <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); if (busy || !v.trim()) return; onPost(v.trim(), () => setV("")); }}>
       <Label htmlFor="ws-msg">{label}</Label>
       <Textarea id="ws-msg" value={v} maxLength={20000} onChange={(e) => setV(e.target.value)} />
       <Button type="submit" size="sm" disabled={busy || !v.trim()}>Plaatsen</Button>
@@ -339,20 +342,21 @@ function SimplePost({ label, busy, onPost }: { label: string; busy: boolean; onP
 }
 
 const EMPTY_SRC = { source_date: "", source_subject: "", source_mailbox: "", source_ref: "", last_action: "", next_step: "" };
-function NotePost({ busy, onPost }: { busy: boolean; onPost: (row: Record<string, unknown>) => void }) {
+export function NotePost({ busy, onPost }: { busy: boolean; onPost: (row: Record<string, unknown>, done: () => void) => void }) {
   const [kind, setKind] = useState<"notitie" | "voortgang" | "bronupdate">("notitie");
   const [body, setBody] = useState("");
   const [src, setSrc] = useState(EMPTY_SRC);
   const missing = kind === "bronupdate" ? missingSourceFields(src) : [];
+  const clear = () => { setBody(""); setSrc(EMPTY_SRC); };
   const submit = () => {
+    if (busy) return;
     if (kind === "bronupdate") {
       if (missing.length) { toast.error("Vul alle bronvelden, laatste actie en volgende stap in"); return; }
-      onPost({ kind, body: body.trim() || null, ...src, source_date: new Date(src.source_date).toISOString() });
+      onPost({ kind, body: body.trim() || null, ...src, source_date: new Date(src.source_date).toISOString() }, clear);
     } else {
       if (!body.trim()) return;
-      onPost({ kind, body: body.trim() });
+      onPost({ kind, body: body.trim() }, clear);
     }
-    setBody(""); setSrc(EMPTY_SRC);
   };
   const f = (k: keyof typeof EMPTY_SRC, label: string, type = "text") => (
     <div><Label htmlFor={`src-${k}`}>{label}</Label><Input id={`src-${k}`} type={type} value={src[k]} onChange={(e) => setSrc({ ...src, [k]: e.target.value })} /></div>
@@ -408,9 +412,9 @@ function MessageList({ q, items, staff, empty }: { q: { isLoading: boolean; erro
   );
 }
 
-function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
+export function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
   rows: Checkpoint[] | undefined; loading: boolean; error: unknown; staff: StaffMember[]; busy: boolean;
-  onMut: (a: { op: "add" | "update" | "delete"; id?: string; row?: Partial<Checkpoint> }) => void;
+  onMut: (a: CpAction) => void;
 }) {
   const [newTitle, setNewTitle] = useState("");
   return (
@@ -422,12 +426,15 @@ function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
             <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
               <th className="text-left p-2 font-medium">Controlepunt</th><th className="text-left p-2 font-medium w-28">Status</th>
               <th className="text-left p-2 font-medium w-40">Wie</th><th className="text-left p-2 font-medium w-36">Datum</th>
-              <th className="text-left p-2 font-medium">Opmerkingen</th><th className="w-8" />
+              <th className="text-left p-2 font-medium">Opmerkingen</th>
             </tr></thead>
             <tbody>
               {(rows ?? []).map((r) => (
                 <tr key={`${r.id}-${r.updated_at}`} className="border-t border-border align-top">
-                  <td className="p-1"><Input className="h-8" defaultValue={r.title} onBlur={(e) => e.target.value.trim() && e.target.value !== r.title && onMut({ op: "update", id: r.id, row: { title: e.target.value.trim() } })} /></td>
+                  <td className="p-1"><div className="flex items-center gap-1">
+                    <Input className="h-8" aria-label="Controlepunt" defaultValue={r.title} onBlur={(e) => e.target.value.trim() && e.target.value !== r.title && onMut({ op: "update", id: r.id, row: { title: e.target.value.trim() } })} />
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Controlepunt verwijderen: ${r.title}`} disabled={busy} onClick={() => confirm(`Controlepunt "${r.title}" verwijderen?`) && onMut({ op: "delete", id: r.id })}><Trash2 className="h-4 w-4" /></Button>
+                  </div></td>
                   <td className="p-1">
                     <Select value={r.status} onValueChange={(v) => onMut({ op: "update", id: r.id, row: { status: v as CheckpointStatus } })}>
                       <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
@@ -440,15 +447,14 @@ function CheckpointTable({ rows, loading, error, staff, onMut, busy }: {
                     </Select></td>
                   <td className="p-1"><Input className="h-8" type="date" defaultValue={r.due_date ?? ""} onBlur={(e) => (e.target.value || null) !== r.due_date && onMut({ op: "update", id: r.id, row: { due_date: e.target.value || null } })} /></td>
                   <td className="p-1"><Textarea rows={1} className="min-h-8 py-1" defaultValue={r.remarks ?? ""} onBlur={(e) => (e.target.value.trim() || null) !== r.remarks && onMut({ op: "update", id: r.id, row: { remarks: e.target.value.trim() || null } })} /></td>
-                  <td className="p-1"><Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Controlepunt verwijderen" disabled={busy} onClick={() => confirm("Controlepunt verwijderen?") && onMut({ op: "delete", id: r.id })}><Trash2 className="h-4 w-4" /></Button></td>
                 </tr>
               ))}
-              {(rows ?? []).length === 0 && <tr><td colSpan={6} className="p-3 text-center text-muted-foreground">Nog geen controlepunten.</td></tr>}
+              {(rows ?? []).length === 0 && <tr><td colSpan={5} className="p-3 text-center text-muted-foreground">Nog geen controlepunten.</td></tr>}
             </tbody>
           </table>
         </div>
       )}
-      <form className="flex gap-2 max-w-md" onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) { onMut({ op: "add", row: { title: newTitle.trim() } }); setNewTitle(""); } }}>
+      <form className="flex gap-2 max-w-md" onSubmit={(e) => { e.preventDefault(); if (!busy && newTitle.trim()) onMut({ op: "add", row: { title: newTitle.trim() }, done: () => setNewTitle("") }); }}>
         <Input placeholder="Nieuw controlepunt" value={newTitle} maxLength={300} onChange={(e) => setNewTitle(e.target.value)} />
         <Button type="submit" variant="outline" disabled={busy || !newTitle.trim()}><Plus className="h-4 w-4" /></Button>
       </form>
