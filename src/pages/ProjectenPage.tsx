@@ -21,14 +21,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
-  filterTasks,
   isOverdue,
   isValidTeamsUrl,
   PRIORITY_LABEL,
   PROJECT_STATUS_LABEL,
   TASK_STATUS_LABEL,
   type ProjectStatus,
-  type TaskFilter,
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/internalWork";
