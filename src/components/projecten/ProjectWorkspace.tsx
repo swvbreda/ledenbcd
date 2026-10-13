@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Hand, Loader2, Plus, Trash2, X } from "lucide-react";
 import { PRIORITY_LABEL, PROJECT_STATUS_LABEL, TASK_STATUS_LABEL, isOverdue, completeTaskLocally, type ProjectStatus, type TaskPriority, type TaskStatus } from "@/lib/internalWork";
 import {
-  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, creatorLabel, canClaim, displayName, missingSourceFields, parseAmount, participantIds,
+  CHECKPOINT_STATUS_LABEL, NOT_RECORDED, actorLabel, creatorLabel, canClaim, displayName, parseAmount, participantIds,
   projectProgress, type ActorKind, type CheckpointStatus, type MessageKind, type StaffMember,
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
