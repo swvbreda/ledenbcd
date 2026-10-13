@@ -89,3 +89,35 @@ describe("dossierfilter in groepsweergave", () => {
     expect(filterTree(tree, null).map((x) => x.id)).toEqual(["a", "b", "e"]);
   });
 });
+
+import { defaultStringifySearch } from "@tanstack/react-router";
+import { unquoteSearch } from "@/lib/dossierRegister";
+describe("deeplinks via TanStack-serializer", () => {
+  const years = [2026, 2025];
+  const viaRouter = (o: Record<string, unknown>) => new URLSearchParams(defaultStringifySearch(o).replace(/^\?/, ""));
+  it('year="2025" (JSON-string) wordt 2025', () => {
+    const qs = viaRouter({ tab: "dossiers", year: "2025", dossier: "Worldline" });
+    expect(qs.get("year")).toBe('"2025"');
+    expect(parseFinanceSearch(qs, years, 2026)).toEqual({ tab: "dossiers", year: 2025, dossier: "Worldline" });
+  });
+  it("normale year=2025 en numeriek via router werken ook", () => {
+    expect(parseFinanceSearch(new URLSearchParams("tab=dossiers&year=2025"), years, 2026).year).toBe(2025);
+    expect(parseFinanceSearch(viaRouter({ year: 2025 }), years, 2026).year).toBe(2025);
+  });
+  it("normaliseren voorkomt opstapelende quotes bij herhaald schrijven", () => {
+    let qs = viaRouter({ tab: "dossiers", year: "2025", dossier: "Worldline" });
+    for (let i = 0; i < 3; i++) {
+      const o = Object.fromEntries([...qs].map(([k, v]) => [k, unquoteSearch(v)]));
+      qs = viaRouter(o);
+    }
+    expect(qs.get("year")).toBe('"2025"');
+    expect(parseFinanceSearch(qs, years, 2026).year).toBe(2025);
+  });
+  it("dossier sluiten (weglaten) en ander jaar kiezen", () => {
+    const qs = viaRouter({ tab: "dossiers", year: "2026" });
+    expect(parseFinanceSearch(qs, years, 2025)).toEqual({ tab: "dossiers", year: 2026, dossier: null });
+  });
+  it("ongeldig of gequote onzin valt terug", () => {
+    expect(parseFinanceSearch(new URLSearchParams('year="20x5"&tab="hack"'), years, 2026)).toEqual({ tab: "dashboard", year: 2026, dossier: null });
+  });
+});

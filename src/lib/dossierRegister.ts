@@ -103,12 +103,22 @@ export function financeDossierHref(alias: string, year: number): string {
 }
 
 /** Valideert ?tab=&year=&dossier=; ongeldige waarden vallen terug op standaard. */
+/** TanStack serialiseert numeriek ogende strings als JSON ("2025"); haal die quotes eraf. */
+export function unquoteSearch(raw: string | null): string | null {
+  if (raw == null) return null;
+  if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
+    try { const v = JSON.parse(raw); return typeof v === "string" ? v : raw; } catch { return raw; }
+  }
+  return raw;
+}
+
 export function parseFinanceSearch(params: URLSearchParams, years: number[], fallbackYear: number) {
-  const t = params.get("tab");
+  const t = unquoteSearch(params.get("tab"));
   const tab: FinanceTab = (FINANCE_TABS as readonly string[]).includes(t ?? "") ? (t as FinanceTab) : "dashboard";
-  const y = Number(params.get("year"));
+  const yRaw = unquoteSearch(params.get("year"));
+  const y = yRaw && /^\d{4}$/.test(yRaw) ? Number(yRaw) : NaN;
   const year = Number.isInteger(y) && years.includes(y) ? y : fallbackYear;
-  const raw = params.get("dossier");
+  const raw = unquoteSearch(params.get("dossier"));
   const dossier = raw && raw.trim() && raw.length <= 200 ? raw.trim() : null;
   return { tab, year, dossier };
 }

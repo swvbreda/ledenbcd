@@ -33,7 +33,8 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
         <section key={d.id} className="rounded-lg border border-border bg-card p-3 min-w-0">
           <h3 className="flex items-baseline gap-2 font-medium break-words">{d.name}
             <span className="text-xs font-normal text-muted-foreground tabular-nums">{count(d)} project{count(d) === 1 ? "" : "en"}</span></h3>
-          <div className="mt-1">{list(projectsFor(d.id, links, projects))}</div>
+          {/* Bij een gekozen subdossier geen (lege) directe lijst onder de ouder tonen. */}
+          {!(selected && selected !== d.id && d.children.some((c) => c.id === selected)) && <div className="mt-1">{list(projectsFor(d.id, links, projects))}</div>}
           {d.children.map((c) => (
             <div key={c.id} className="mt-2 ml-3 border-l-2 border-border pl-3 min-w-0">
               <h4 className="text-sm font-medium break-words">{c.name}

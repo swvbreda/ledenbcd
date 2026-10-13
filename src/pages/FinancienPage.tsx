@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigate, useSearchParams } from "@/lib/router-compat";
-import { parseFinanceSearch, type FinanceTab } from "@/lib/dossierRegister";
+import { parseFinanceSearch, unquoteSearch, type FinanceTab } from "@/lib/dossierRegister";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -57,6 +57,8 @@ export default function FinancienPage() {
   }, [searchKey]);
   const updateParams = (patch: Record<string, string | null>) => setSearchParams((prev) => {
     const n = new URLSearchParams(prev);
+    // Bestaande waarden eerst normaliseren, zodat JSON-quotes niet opstapelen.
+    for (const k of ["tab", "year", "dossier"]) { const v = unquoteSearch(n.get(k)); if (v != null) n.set(k, v); }
     for (const [k, v] of Object.entries(patch)) { if (v == null) n.delete(k); else n.set(k, v); }
     return n;
   }, { replace: true });
