@@ -346,7 +346,7 @@ function NotePost({ busy, onPost }: { busy: boolean; onPost: (row: Record<string
   const missing = kind === "bronupdate" ? missingSourceFields(src) : [];
   const submit = () => {
     if (kind === "bronupdate") {
-      if (missing.length) return toast.error("Vul alle bronvelden, laatste actie en volgende stap in");
+      if (missing.length) { toast.error("Vul alle bronvelden, laatste actie en volgende stap in"); return; }
       onPost({ kind, body: body.trim() || null, ...src, source_date: new Date(src.source_date).toISOString() });
     } else {
       if (!body.trim()) return;
