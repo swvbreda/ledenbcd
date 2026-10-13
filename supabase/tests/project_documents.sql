@@ -4,7 +4,7 @@ DECLARE a1 uuid; mem uuid; p uuid; d record; c int; res text := ''; h text := re
 BEGIN
   SELECT user_id INTO a1 FROM user_roles WHERE role='admin' ORDER BY user_id LIMIT 1;
   SELECT user_id INTO mem FROM user_roles r WHERE role='user' AND NOT has_role(r.user_id,'admin') LIMIT 1;
-  INSERT INTO internal_projects(title) VALUES ('rollbacktest docs') RETURNING id INTO p;
+  INSERT INTO internal_projects(title, created_by) VALUES ('rollbacktest docs', a1) RETURNING id INTO p;
   path := p::text || '/' || h || '.pdf';
 
   PERFORM set_config('request.jwt.claims', json_build_object('sub',a1,'role','authenticated')::text, true);
