@@ -2652,6 +2652,7 @@ export type Database = {
           project_plan: string | null
           remarks: string | null
           status: string
+          status_date: string | null
           teams_url: string | null
           title: string
           updated_at: string
@@ -2673,6 +2674,7 @@ export type Database = {
           project_plan?: string | null
           remarks?: string | null
           status?: string
+          status_date?: string | null
           teams_url?: string | null
           title: string
           updated_at?: string
@@ -2694,6 +2696,7 @@ export type Database = {
           project_plan?: string | null
           remarks?: string | null
           status?: string
+          status_date?: string | null
           teams_url?: string | null
           title?: string
           updated_at?: string
