@@ -87,14 +87,15 @@ export function newestFirst<T extends { date: string }>(items: T[]): T[] {
 }
 
 /**
- * Eén canonieke 'Huidige status': de plansectie 'Huidige stand' (volledig) als die inhoud heeft, anders de omschrijving.
- * `rest` bevat de overige plansecties; 'Huidige stand' wordt alleen weggelaten als die bovenaan al is getoond.
+ * Eén 'Huidige status': de omschrijving is leidend zodra die gevuld is; alleen bij lege omschrijving valt het terug
+ * op de plansectie 'Huidige stand' (volledig). 'Huidige stand' wordt nooit als aparte sectie in `rest` gerenderd;
+ * de ruwe plantekst blijft ongewijzigd bewerkbaar.
  */
 export function splitCurrentStatus(planText: string | null | undefined, description: string | null | undefined) {
   const sections = parsePlan(planText);
-  const idx = sections.findIndex((s) => s.heading === "Huidige stand" && s.blocks.length > 0);
-  const rest = sections.filter((s, i) => i !== idx && !(s.heading === "Huidige stand" && !s.blocks.length));
-  if (idx >= 0) return { status: { source: "plan" as const, blocks: sections[idx].blocks }, rest };
+  const rest = sections.filter((s) => s.heading !== "Huidige stand");
   const d = description?.trim();
-  return { status: d ? { source: "description" as const, blocks: [{ type: "paragraph", text: d } as PlanBlock] } : null, rest };
+  if (d) return { status: { source: "description" as const, blocks: [{ type: "paragraph", text: d } as PlanBlock] }, rest };
+  const sec = sections.find((s) => s.heading === "Huidige stand" && s.blocks.length > 0);
+  return { status: sec ? { source: "plan" as const, blocks: sec.blocks } : null, rest };
 }

@@ -96,6 +96,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   // ---- Overzicht / projectplan ----
   const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", status_date: "", remarks: "" });
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState("overzicht");
   const loadPlan = (p: WsProject) => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
     setPlan({ description: presentText(p.description, { autoImport: p.created_origin === "bronimport" }), project_plan: presentText(p.project_plan), status: p.status, owner_id: p.owner_id ?? "",
@@ -103,8 +104,8 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   };
   // Alleen buiten bewerkmodus synchroniseren, zodat een refetch ingevoerde tekst niet overschrijft.
   useEffect(() => { if (!editing) loadPlan(project); }, [project, editing]);
-  useEffect(() => { setEditing(false); }, [pid]);
-  const startEdit = () => { loadPlan(project); setEditing(true); };
+  useEffect(() => { setEditing(false); setTab("overzicht"); }, [pid]);
+  const startEdit = () => { loadPlan(project); setTab("overzicht"); setEditing(true); };
   const cancelEdit = () => { setEditing(false); refreshAll(); };
   const savePlan = useMutation({
     mutationFn: async () => {
@@ -200,7 +201,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
         </section>
       </div>
 
-      <Tabs defaultValue="overzicht">
+      <Tabs value={tab} onValueChange={setTab}>
         <div className="overflow-x-auto -mx-1 px-1"><TabsList>
           <TabsTrigger value="overzicht">Overzicht</TabsTrigger>
           <TabsTrigger value="taken">Taken ({prog.open})</TabsTrigger>
@@ -243,7 +244,8 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
             </div>
           ) : (
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
-            <div><Label htmlFor="ws-desc">Status (huidige stand, kort)</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div><Label htmlFor="ws-desc">Huidige status</Label><Textarea id="ws-desc" rows={5} value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} />
+              <p className="mt-1 text-xs text-muted-foreground">Deze tekst staat bovenaan het project als huidige status.</p></div>
             <div className="sm:max-w-[12rem]"><Label htmlFor="ws-sdate">Statusdatum</Label><Input id="ws-sdate" type="date" value={plan.status_date} onChange={(e) => setPlan({ ...plan, status_date: e.target.value })} /></div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr,12rem] gap-3">
               <div><Label htmlFor="ws-planning">Planning (actie / verwachting)</Label><Textarea id="ws-planning" rows={2} placeholder="Nog niet vastgelegd" value={plan.planning} onChange={(e) => setPlan({ ...plan, planning: e.target.value })} /></div>
@@ -251,7 +253,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
             </div>
             <div><Label htmlFor="ws-remarks">Opmerkingen (optioneel)</Label><Textarea id="ws-remarks" rows={2} value={plan.remarks} onChange={(e) => setPlan({ ...plan, remarks: e.target.value })} /></div>
             <div><Label htmlFor="ws-plan">Projectplan</Label><Textarea id="ws-plan" rows={10} placeholder="Nog geen projectplan vastgelegd" value={plan.project_plan} onChange={(e) => setPlan({ ...plan, project_plan: e.target.value })} />
-              <p className="mt-1 text-xs text-muted-foreground">Koppen op een eigen regel: Huidige stand, Verloop, Vervolg, Praktische opvolging. Onder Verloop: datum | titel | tekst. Lijsten met "- ".</p></div>
+              <p className="mt-1 text-xs text-muted-foreground">Koppen op een eigen regel: Verloop, Vervolg, Praktische opvolging. Onder Verloop: datum | titel | tekst. Lijsten met "- ".</p></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div><Label>Status</Label>
                 <Select value={plan.status} onValueChange={(v) => setPlan({ ...plan, status: v as ProjectStatus })}>
