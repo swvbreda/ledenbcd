@@ -239,8 +239,6 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                   </details>
                 );
               })()}
-              {current.status?.source === "plan" && project.description?.trim() && (
-              )}
               <PlanView sections={current.rest} />
             </div>
           ) : (
