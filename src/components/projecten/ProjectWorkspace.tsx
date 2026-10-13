@@ -17,6 +17,7 @@ import {
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
+import { parsePlan } from "@/lib/projectPlan";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
@@ -90,11 +91,17 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
   // ---- Overzicht / projectplan ----
   const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "" });
-  useEffect(() => {
+  const [editing, setEditing] = useState(false);
+  const loadPlan = (p: WsProject) => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
-    setPlan({ description: presentText(project.description, { autoImport: project.created_origin === "bronimport" }), project_plan: presentText(project.project_plan), status: project.status, owner_id: project.owner_id ?? "",
-      due_date: project.due_date ?? "", est: s(project.budget_estimate), res: s(project.budget_reserved), rec: s(project.budget_received) });
-  }, [project]);
+    setPlan({ description: presentText(p.description, { autoImport: p.created_origin === "bronimport" }), project_plan: presentText(p.project_plan), status: p.status, owner_id: p.owner_id ?? "",
+      due_date: p.due_date ?? "", est: s(p.budget_estimate), res: s(p.budget_reserved), rec: s(p.budget_received) });
+  };
+  // Alleen buiten bewerkmodus synchroniseren, zodat een refetch ingevoerde tekst niet overschrijft.
+  useEffect(() => { if (!editing) loadPlan(project); }, [project, editing]);
+  useEffect(() => { setEditing(false); }, [pid]);
+  const startEdit = () => { loadPlan(project); setEditing(true); };
+  const cancelEdit = () => { setEditing(false); refreshAll(); };
   const savePlan = useMutation({
     mutationFn: async () => {
       const est = parseAmount(plan.est), res = parseAmount(plan.res), rec = parseAmount(plan.rec);
@@ -106,7 +113,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang");
     },
-    onSuccess: () => { toast.success("Project opgeslagen"); refreshAll(); },
+    onSuccess: () => { toast.success("Project opgeslagen"); setEditing(false); refreshAll(); },
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
   });
 
@@ -197,9 +204,29 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
         </TabsList></div>
 
         <TabsContent value="overzicht" className="space-y-4">
-          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); savePlan.mutate(); }}>
-            <div><Label htmlFor="ws-desc">Omschrijving / doel</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
-            <div><Label htmlFor="ws-plan">Projectplan</Label><Textarea id="ws-plan" rows={8} placeholder="Nog geen projectplan vastgelegd" value={plan.project_plan} onChange={(e) => setPlan({ ...plan, project_plan: e.target.value })} /></div>
+          {!editing ? (
+            <div className="space-y-4 min-w-0">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  <div className="flex gap-1"><dt className="text-muted-foreground">Verantwoordelijke:</dt><dd>{project.owner_id ? byName(project.owner_id) : "Niet vastgesteld"}</dd></div>
+                  <div className="flex gap-1"><dt className="text-muted-foreground">Einddatum:</dt><dd>{project.due_date ?? "Niet vastgesteld"}</dd></div>
+                  {[project.budget_estimate, project.budget_reserved, project.budget_received].some((v) => v != null) && (
+                    <div className="flex gap-1 tabular-nums"><dt className="text-muted-foreground">Budget:</dt><dd>{([["Raming", project.budget_estimate], ["Gereserveerd", project.budget_reserved], ["Ontvangen", project.budget_received]] as [string, number | null][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eur(v)}`).join(" · ")}</dd></div>
+                  )}
+                </dl>
+                <Button size="sm" variant="outline" onClick={startEdit}>Project bewerken</Button>
+              </div>
+              <section className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1">
+                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Huidige stand</h3>
+                <p className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || "Nog geen stand vastgelegd."}</p>
+              </section>
+              <PlanView text={presentText(project.project_plan)} />
+            </div>
+          ) : (
+          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
+            <div><Label htmlFor="ws-desc">Huidige stand / omschrijving</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div><Label htmlFor="ws-plan">Projectplan</Label><Textarea id="ws-plan" rows={10} placeholder="Nog geen projectplan vastgelegd" value={plan.project_plan} onChange={(e) => setPlan({ ...plan, project_plan: e.target.value })} />
+              <p className="mt-1 text-xs text-muted-foreground">Koppen op een eigen regel: Huidige stand, Verloop, Vervolg, Praktische opvolging. Onder Verloop: datum | titel | tekst. Lijsten met "- ".</p></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div><Label>Status</Label>
                 <Select value={plan.status} onValueChange={(v) => setPlan({ ...plan, status: v as ProjectStatus })}>
@@ -213,17 +240,22 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
                 </Select></div>
               <div><Label htmlFor="ws-due">Einddatum</Label><Input id="ws-due" type="date" value={plan.due_date} onChange={(e) => setPlan({ ...plan, due_date: e.target.value })} /></div>
             </div>
-            <fieldset className="rounded-md border border-border p-3 space-y-2">
-              <legend className="px-1 text-sm font-medium">Budget (alleen feitelijke bedragen; leeg = onbekend)</legend>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <details className="rounded-md border border-border p-3" open={!!(plan.est || plan.res || plan.rec)}>
+              <summary className="cursor-pointer text-sm font-medium">Budget (optioneel; leeg = onbekend)</summary>
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><Label htmlFor="ws-est">Raming</Label><Input id="ws-est" inputMode="decimal" className="tabular-nums" placeholder="Onbekend" value={plan.est} onChange={(e) => setPlan({ ...plan, est: e.target.value })} /></div>
                 <div><Label htmlFor="ws-res">Gereserveerd</Label><Input id="ws-res" inputMode="decimal" className="tabular-nums" placeholder="Onbekend" value={plan.res} onChange={(e) => setPlan({ ...plan, res: e.target.value })} /></div>
                 <div><Label htmlFor="ws-rec">Ontvangen</Label><Input id="ws-rec" inputMode="decimal" className="tabular-nums" placeholder="Onbekend" value={plan.rec} onChange={(e) => setPlan({ ...plan, rec: e.target.value })} /></div>
               </div>
-              <p className="text-xs text-muted-foreground">Registratie in het project; dit boekt niets in de administratie.</p>
-            </fieldset>
-            <Button type="submit" disabled={savePlan.isPending}>{savePlan.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Opslaan</Button>
+              <p className="mt-2 text-xs text-muted-foreground">Registratie in het project; dit boekt niets in de administratie.</p>
+            </details>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={savePlan.isPending}>{savePlan.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Opslaan</Button>
+              <Button type="button" variant="outline" disabled={savePlan.isPending} onClick={cancelEdit}>Annuleren</Button>
+            </div>
           </form>
+          )}
+
 
           <section className="space-y-2">
             <h3 className="font-medium">Deelnemers</h3>
@@ -313,10 +345,42 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   );
 }
 
+function PlanView({ text }: { text: string }) {
+  const sections = parsePlan(text);
+  if (!sections.length) return <p className="text-sm text-muted-foreground">Nog geen projectplan vastgelegd.</p>;
+  return (
+    <div className="space-y-4 min-w-0">
+      {sections.map((s, i) => (
+        <section key={i} className="space-y-2 min-w-0">
+          {s.heading && <h3 className="font-display uppercase text-base">{s.heading}</h3>}
+          {s.blocks.map((b, j) => b.type === "paragraph" ? (
+            <p key={j} className="whitespace-pre-wrap break-words text-sm">{b.text}</p>
+          ) : b.type === "list" ? (
+            b.ordered
+              ? <ol key={j} className="list-decimal pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ol>
+              : <ul key={j} className="list-disc pl-5 space-y-1 text-sm">{b.items.map((it, k) => <li key={k} className="break-words">{it}</li>)}</ul>
+          ) : (
+            <ol key={j} className="relative border-l-2 border-border ml-1.5 space-y-4">
+              {b.items.map((it, k) => (
+                <li key={k} className="relative pl-4 min-w-0">
+                  <span aria-hidden className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full bg-primary" />
+                  <p className="text-xs text-muted-foreground tabular-nums break-words">{it.date}</p>
+                  {it.title && <p className="font-medium text-sm break-words">{it.title}</p>}
+                  {it.text && <p className="text-sm whitespace-pre-wrap break-words">{it.text}</p>}
+                </li>
+              ))}
+            </ol>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export function ProgressBar({ open, done, pct }: { open: number; done: number; pct: number | null }) {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-muted-foreground tabular-nums"><span>{open} open · {done} afgerond</span><span>{pct == null ? "Geen taken" : `${pct}%`}</span></div>
+      <div className="flex justify-between gap-2 text-xs text-muted-foreground tabular-nums"><span>Taakvoortgang · {open} open · {done} afgerond</span><span>{pct == null ? "Geen taken" : `${pct}% taken afgerond`}</span></div>
       <div className="h-2 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={pct ?? 0} aria-valuemin={0} aria-valuemax={100}>
         <div className="h-full bg-primary" style={{ width: `${pct ?? 0}%` }} />
       </div>
