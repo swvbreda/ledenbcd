@@ -70,3 +70,22 @@ describe("deeplinks Financiën", () => {
     expect(p).toEqual({ tab: "dashboard", year: 2026, dossier: null });
   });
 });
+
+import { filterTree } from "@/lib/dossierRegister";
+describe("dossierfilter in groepsweergave", () => {
+  const tree = buildTree([d("b", "Banken", null, 20), d("w", "Worldline", "b", 21), d("v", "Visa", "b", 22), d("a", "Amsterdam", null, 10), d("e", "Leeg", null, 30)]);
+  it("hoofddossier toont alleen die groep met alle subdossiers", () => {
+    const t = filterTree(tree, "b");
+    expect(t.map((x) => x.id)).toEqual(["b"]);
+    expect(t[0].children.map((c) => c.id)).toEqual(["w", "v"]);
+  });
+  it("subdossier toont ouder met uitsluitend dat subdossier", () => {
+    const t = filterTree(tree, "v");
+    expect(t.map((x) => x.id)).toEqual(["b"]);
+    expect(t[0].children.map((c) => c.id)).toEqual(["v"]);
+  });
+  it("leeg dossier toont alleen die lege groep; zonder filter alle groepen", () => {
+    expect(filterTree(tree, "e").map((x) => x.id)).toEqual(["e"]);
+    expect(filterTree(tree, null).map((x) => x.id)).toEqual(["a", "b", "e"]);
+  });
+});
