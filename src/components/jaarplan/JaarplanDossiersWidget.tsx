@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Link } from "@/lib/router-compat";
 import { useDossierRegister } from "@/hooks/useDossierRegister";
 import { useQuery } from "@tanstack/react-query";
@@ -41,10 +42,10 @@ export default function JaarplanDossiersWidget() {
       <summary className="cursor-pointer text-sm font-medium">Dossiers en projecten <span className="text-xs font-normal text-muted-foreground">(alleen beheerders)</span></summary>
       <ul className="mt-2 divide-y divide-border/60">
         {tree.map((d) => (
-          <div key={d.id}>
+          <Fragment key={d.id}>
             <Item d={d} />
             {d.children.map((c) => <Item key={c.id} d={c} sub />)}
-          </div>
+          </Fragment>
         ))}
       </ul>
     </details>
