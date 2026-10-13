@@ -38,7 +38,7 @@ import {
 type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
-  budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null;
+  budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null; created_origin?: "medewerker" | "bronimport" | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
@@ -188,7 +188,7 @@ function ProjectenInner() {
       const teams = p.teams_url?.trim() || null;
       if (teams && !isValidTeamsUrl(teams)) throw new Error("Teams-link moet een geldige https-link naar Teams/Microsoft zijn");
       const row = {
-        title: (p.title ?? "").trim(), description: p.id ? changedText(projectsQ.data?.find((x) => x.id === p.id)?.description, p.description ?? "") : p.description?.trim() || null, owner_id: p.owner_id || null,
+        title: (p.title ?? "").trim(), description: p.id ? changedText(projectsQ.data?.find((x) => x.id === p.id)?.description, p.description ?? "", { autoImport: projectsQ.data?.find((x) => x.id === p.id)?.created_origin === "bronimport" }) : p.description?.trim() || null, owner_id: p.owner_id || null,
         due_date: p.due_date || null, status: p.status ?? "actief", teams_url: teams,
       };
       if (!row.title) throw new Error("Titel is verplicht");
@@ -345,9 +345,9 @@ function ProjectenInner() {
                     {sourcesQ.data?.[p.id] ? (
                       <div className="text-sm space-y-0.5">
                         <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(sourcesQ.data[p.id].source_date ?? sourcesQ.data[p.id].created_at)}</p>
-                        <p className="break-words line-clamp-2">{presentText(sourcesQ.data[p.id].last_action)}</p>
+                        <p className="break-words line-clamp-2">{presentText(sourcesQ.data[p.id].last_action, { autoImport: true })}</p>
                       </div>
-                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{presentText(p.description)}</p>}
+                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>}
                     {[["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]].some(([, v]) => v != null) && (
                       <p className="text-xs text-muted-foreground tabular-nums">{([["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]] as [string, number | null | undefined][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eurFmt(v as number)}`).join(" · ")}</p>
                     )}
@@ -438,7 +438,7 @@ function ProjectenInner() {
           {editProject && (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); saveProject.mutate(editProject); }}>
               <div><Label htmlFor="p-title">Titel</Label><Input id="p-title" required maxLength={200} value={editProject.title ?? ""} onChange={(e) => setEditProject({ ...editProject, title: e.target.value })} /></div>
-              <div><Label htmlFor="p-desc">Omschrijving</Label><Textarea id="p-desc" value={editProject.id && editProject.description === projectsQ.data?.find((x) => x.id === editProject.id)?.description ? presentText(editProject.description) : editProject.description ?? ""} onChange={(e) => setEditProject({ ...editProject, description: e.target.value })} /></div>
+              <div><Label htmlFor="p-desc">Omschrijving</Label><Textarea id="p-desc" value={editProject.id && editProject.description === projectsQ.data?.find((x) => x.id === editProject.id)?.description ? presentText(editProject.description, { autoImport: editProject.created_origin === "bronimport" }) : editProject.description ?? ""} onChange={(e) => setEditProject({ ...editProject, description: e.target.value })} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Verantwoordelijke</Label>
                   <Select value={editProject.owner_id ?? NONE} onValueChange={(v) => setEditProject({ ...editProject, owner_id: v === NONE ? null : v })}>

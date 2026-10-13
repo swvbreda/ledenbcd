@@ -41,9 +41,10 @@ function cleanSentences(line: string): string {
   return line.split(/(?<=\.)\s+(?=[A-Z])/).filter((s) => !DROP_SENTENCE.some((r) => r.test(s.trim()))).join(" ");
 }
 
-export function presentText(raw: string | null | undefined): string {
+/** autoImport: alleen meegeven voor aantoonbaar geïmporteerde velden (kind=bronupdate, created_origin=bronimport). */
+export function presentText(raw: string | null | undefined, opts: { autoImport?: boolean } = {}): string {
   if (!raw) return "";
-  if (!isAutoImportText(raw)) return raw;
+  if (!opts.autoImport && !isAutoImportText(raw)) return raw;
   const out: string[] = [];
   for (let line of raw.replace(/\r\n/g, "\n").split("\n")) {
     const t = line.trim();
@@ -53,6 +54,8 @@ export function presentText(raw: string | null | undefined): string {
       .replace(/^\s*Broncontrole\s+\d{1,2}\s+\w+\s+\d{4}\.\s*/, "")
       .replace(/\s*—\s*bron topical\s+\d+/gi, "")
       .replace(/\s+volgens Topical(?=\s*:)/g, "")
+      .replace(/^Bronimport actuele (\S)/, (_m, c: string) => "Actuele " + c)
+      .replace(/\bStand gebaseerd op gelezen mail; (\w)/g, (_m, c: string) => c.toUpperCase())
       .replace(/\bTopical-brondeadline\b/g, "oorspronkelijke deadline")
       .replace(/\s+in deze bron(nen)?\b/g, "")
       .replace(/\bDe bron noemt\b/g, "Genoemd wordt")
@@ -67,8 +70,8 @@ export function presentText(raw: string | null | undefined): string {
 }
 
 /** Bij opslaan: ongewijzigde opgeschoonde tekst niet terugschrijven (origineel blijft bewaard). */
-export function changedText(original: string | null | undefined, edited: string): string | null | undefined {
-  return edited.trim() === presentText(original).trim() ? undefined : edited.trim() || null;
+export function changedText(original: string | null | undefined, edited: string, opts: { autoImport?: boolean } = {}): string | null | undefined {
+  return edited.trim() === presentText(original, opts).trim() ? undefined : edited.trim() || null;
 }
 
 /** Historie: alleen bronupdate-events worden algemeen; overige samenvattingen blijven letterlijk. */
