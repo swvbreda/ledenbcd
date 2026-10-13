@@ -113,6 +113,7 @@ function ProjectenInner() {
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
   const [view, setView] = useState<TaskView>("open");
   const [showArchived, setShowArchived] = useState(false);
+  const [viewMode, setViewMode] = useState<"tabel" | "kaarten">("tabel");
   const [editTask, setEditTask] = useState<Partial<Task> | null>(null);
   const [editProject, setEditProject] = useState<Partial<Project> | null>(null);
   const today = todayStr();
