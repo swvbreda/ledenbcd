@@ -217,7 +217,9 @@ function ProjectenInner() {
 
   return (
     <div className="w-full min-w-0 p-4 sm:p-6 space-y-6">
-      <BcdHeroBanner title="Projecten & taken" subtitle="Intern werkoverzicht — alleen zichtbaar voor beheerders" />
+      {currentProject && tab === "projecten"
+        ? <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Projecten & taken</p>
+        : <BcdHeroBanner title="Projecten & taken" subtitle="Intern werkoverzicht — alleen zichtbaar voor beheerders" />}
 
       {loadError && (
         <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">

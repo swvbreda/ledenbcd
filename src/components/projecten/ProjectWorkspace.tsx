@@ -18,7 +18,7 @@ import {
 import { StaffAvatars } from "./StaffAvatars";
 import { ProjectDocuments } from "./ProjectDocuments";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
-import { parsePlan, newestFirst } from "@/lib/projectPlan";
+import { newestFirst, splitCurrentStatus, type PlanBlock, type PlanSection } from "@/lib/projectPlan";
 import { statusDateLabel } from "@/lib/statusDate";
 
 const db = supabase as any;
@@ -55,6 +55,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   const qc = useQueryClient();
   const pid = project.id;
   const prog = projectProgress(tasks, pid);
+  const current = splitCurrentStatus(presentText(project.project_plan), presentText(project.description, { autoImport: project.created_origin === "bronimport" }));
   const people = participantIds(project, tasks, participants);
   const explicit = participants.filter((p) => p.project_id === pid);
   const today = new Date().toISOString().slice(0, 10);
