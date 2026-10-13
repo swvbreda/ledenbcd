@@ -2396,15 +2396,198 @@ export type Database = {
           },
         ]
       }
+      internal_project_checkpoints: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          owner_id: string | null
+          position: number
+          project_id: string
+          remarks: string | null
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          position?: number
+          project_id: string
+          remarks?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          owner_id?: string | null
+          position?: number
+          project_id?: string
+          remarks?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_project_checkpoints_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_project_events: {
+        Row: {
+          actor_id: string | null
+          actor_kind: string
+          created_at: string
+          event_type: string
+          id: string
+          project_id: string | null
+          summary: string
+          task_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_kind: string
+          created_at?: string
+          event_type: string
+          id?: string
+          project_id?: string | null
+          summary: string
+          task_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_kind?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          project_id?: string | null
+          summary?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_project_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_project_messages: {
+        Row: {
+          author_id: string | null
+          author_kind: string
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          last_action: string | null
+          next_step: string | null
+          project_id: string
+          source_date: string | null
+          source_mailbox: string | null
+          source_ref: string | null
+          source_subject: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_kind?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          last_action?: string | null
+          next_step?: string | null
+          project_id: string
+          source_date?: string | null
+          source_mailbox?: string | null
+          source_ref?: string | null
+          source_subject?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_kind?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          last_action?: string | null
+          next_step?: string | null
+          project_id?: string
+          source_date?: string | null
+          source_mailbox?: string | null
+          source_ref?: string | null
+          source_subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_project_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_project_participants: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_project_participants_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_projects: {
         Row: {
           archived_at: string | null
+          budget_estimate: number | null
+          budget_received: number | null
+          budget_reserved: number | null
           created_at: string
           created_by: string
           description: string | null
           due_date: string | null
           id: string
           owner_id: string | null
+          project_plan: string | null
           status: string
           teams_url: string | null
           title: string
@@ -2412,12 +2595,16 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          budget_estimate?: number | null
+          budget_received?: number | null
+          budget_reserved?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
           due_date?: string | null
           id?: string
           owner_id?: string | null
+          project_plan?: string | null
           status?: string
           teams_url?: string | null
           title: string
@@ -2425,12 +2612,16 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          budget_estimate?: number | null
+          budget_received?: number | null
+          budget_reserved?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
           due_date?: string | null
           id?: string
           owner_id?: string | null
+          project_plan?: string | null
           status?: string
           teams_url?: string | null
           title?: string
@@ -2442,6 +2633,7 @@ export type Database = {
         Row: {
           assignee_id: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           created_by: string
           deadline: string | null
@@ -2460,6 +2652,7 @@ export type Database = {
         Insert: {
           assignee_id?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string
           deadline?: string | null
@@ -2478,6 +2671,7 @@ export type Database = {
         Update: {
           assignee_id?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string
           deadline?: string | null
@@ -4709,6 +4903,7 @@ export type Database = {
         Returns: number
       }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
+      claim_internal_task: { Args: { _task_id: string }; Returns: boolean }
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
@@ -4912,6 +5107,14 @@ export type Database = {
         Args: never
         Returns: {
           email: string
+          user_id: string
+        }[]
+      }
+      list_internal_staff_names: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
           user_id: string
         }[]
       }
