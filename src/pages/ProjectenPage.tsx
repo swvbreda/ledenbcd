@@ -19,7 +19,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
-import { displayName, participantIds, projectProgress } from "@/lib/projectWorkspace";
+import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
@@ -37,16 +37,21 @@ import {
 type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
+  budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
   deadline: string | null; priority: TaskPriority; status: TaskStatus; source_system?: string | null; source_ref?: string | null;
+  created_by?: string | null; created_at?: string; created_origin?: "medewerker" | "bronimport" | null;
+  completed_at?: string | null; completed_by?: string | null; local_only_completed_by?: string | null;
 };
 type Staff = { user_id: string; email: string; full_name: string | null };
 
 const db = supabase as any;
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const NONE = "__none";
+const fmtDay = (s: string) => new Date(s).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" });
+const eurFmt = (n: number) => n.toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
 
 export default function ProjectenPage() {
@@ -92,6 +97,14 @@ function ProjectenInner() {
       return data as { project_id: string; user_id: string; added_by: string | null; added_at: string }[];
     },
   });
+  const sourcesQ = useQuery({
+    queryKey: ["project-sources", uid],
+    queryFn: async () => {
+      const { data, error } = await db.from("internal_project_messages").select("project_id,kind,source_date,last_action,created_at").eq("kind", "bronupdate");
+      if (error) throw error;
+      return latestSourceByProject(data ?? []);
+    },
+  });
   const staffName = (id: string | null) => (id ? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—");
 
   const [filter, setFilter] = useState<ViewFilter>({ projectId: "all", openStatus: "open", mine: false, overdue: false });
@@ -111,6 +124,7 @@ function ProjectenInner() {
     qc.invalidateQueries({ queryKey: ["internal-projects"] });
     qc.invalidateQueries({ queryKey: ["internal-tasks"] });
     qc.invalidateQueries({ queryKey: ["project-participants"] });
+    qc.invalidateQueries({ queryKey: ["project-sources"] });
   };
 
   const dispatchFn = useServerFn(dispatchTaskPushes);
@@ -327,7 +341,15 @@ function ProjectenInner() {
                       </div>
                       <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
                     </div>
-                    {p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{p.description}</p>}
+                    {sourcesQ.data?.[p.id] ? (
+                      <div className="text-sm space-y-0.5">
+                        <p className="text-xs text-muted-foreground">Laatste bron · {fmtDay(sourcesQ.data[p.id].source_date ?? sourcesQ.data[p.id].created_at)}</p>
+                        <p className="break-words line-clamp-2">{sourcesQ.data[p.id].last_action}</p>
+                      </div>
+                    ) : p.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words line-clamp-3">{p.description}</p>}
+                    {[["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]].some(([, v]) => v != null) && (
+                      <p className="text-xs text-muted-foreground tabular-nums">{([["Raming", p.budget_estimate], ["Gereserveerd", p.budget_reserved], ["Ontvangen", p.budget_received]] as [string, number | null | undefined][]).filter(([, v]) => v != null).map(([l, v]) => `${l} ${eurFmt(v as number)}`).join(" · ")}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">{staffName(p.owner_id)}{p.due_date ? ` · einddatum ${p.due_date}` : ""}</p>
                     <ProgressBar open={prog.open} done={prog.done} pct={prog.pct} />
                     <div className="mt-auto flex flex-wrap gap-2">
@@ -393,6 +415,16 @@ function ProjectenInner() {
                     <SelectContent>{(Object.keys(TASK_STATUS_LABEL) as TaskStatus[]).map((s) => <SelectItem key={s} value={s} disabled={s === "afgerond" && editTask.source_system === "topical" && (tasksQ.data ?? []).find((x) => x.id === editTask.id)?.status !== "afgerond"}>{TASK_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
                   </Select></div>
               </div>
+              {editTask.id && (
+                <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-xs text-muted-foreground rounded-md border border-border p-2">
+                  <dt>Toegevoegd door</dt><dd className="break-words">{creatorLabel({ created_origin: editTask.created_origin, created_by: editTask.created_by ?? null, source_system: editTask.source_system }, staffQ.data ?? [])}</dd>
+                  <dt>Toegevoegd op</dt><dd>{editTask.created_at ? fmtDay(editTask.created_at) : NOT_RECORDED}</dd>
+                  {editTask.status === "afgerond" && (<>
+                    <dt>Voltooid op</dt><dd>{editTask.completed_at ? fmtDay(editTask.completed_at) : NOT_RECORDED}</dd>
+                    <dt>Voltooid door</dt><dd>{completerLabel(editTask, staffQ.data ?? [])}</dd>
+                  </>)}
+                </dl>
+              )}
               <DialogFooter><Button type="submit" disabled={saveTask.isPending}>{saveTask.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Opslaan</Button></DialogFooter>
             </form>
           )}
