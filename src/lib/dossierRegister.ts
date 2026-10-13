@@ -42,7 +42,7 @@ export function aliasesFor(dossierId: string, aliases: FinanceAlias[]): string[]
   return aliases.filter((a) => a.dossier_id === dossierId).map((a) => a.label);
 }
 
-export function projectsFor(dossierId: string, links: DossierLink[], projects: ProjectLite[]): ProjectLite[] {
+export function projectsFor<P extends ProjectLite>(dossierId: string, links: DossierLink[], projects: P[]): P[] {
   const ids = new Set(links.filter((l) => l.dossier_id === dossierId).map((l) => l.project_id));
   return projects.filter((p) => ids.has(p.id));
 }
