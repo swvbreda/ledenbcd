@@ -1,4 +1,6 @@
 -- Volledig teruggedraaid via eindexceptie. Geen echte pushes (taken unassigned).
+-- Laatste run: svc_project=bronimport svc_task=bronimport/mail:rb-1 dup=rejected svc_event_bronimport=1 admin_spoof=forced update_spoof=kept history=ok
+--   project_origin_update=bronimport staff_names=2 notifs=0 member_read=0 member_staff=0 member_write=denied anon_read=denied anon_staff=denied
 DO $$
 DECLARE a1 uuid; a2 uuid; mem uuid; p uuid; t uuid; t2 uuid; r record; res text := ''; v text; c int;
 BEGIN
