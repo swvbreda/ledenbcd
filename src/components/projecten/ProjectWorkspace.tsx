@@ -19,6 +19,7 @@ import { StaffAvatars } from "./StaffAvatars";
 import { ProjectDocuments } from "./ProjectDocuments";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
 import { parsePlan, newestFirst } from "@/lib/projectPlan";
+import { statusDateLabel } from "@/lib/statusDate";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
@@ -30,7 +31,7 @@ export type WsProject = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null; status: ProjectStatus;
   archived_at: string | null; project_plan: string | null; budget_estimate: number | null; budget_reserved: number | null; budget_received: number | null;
   created_by: string | null; created_at: string; created_origin?: "medewerker" | "bronimport" | null;
-  planning?: string | null; planning_date?: string | null; remarks?: string | null;
+  planning?: string | null; planning_date?: string | null; status_date?: string | null; remarks?: string | null;
 };
 export type WsTask = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null; deadline: string | null;
@@ -92,12 +93,12 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   };
 
   // ---- Overzicht / projectplan ----
-  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", remarks: "" });
+  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", status_date: "", remarks: "" });
   const [editing, setEditing] = useState(false);
   const loadPlan = (p: WsProject) => {
     const s = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
     setPlan({ description: presentText(p.description, { autoImport: p.created_origin === "bronimport" }), project_plan: presentText(p.project_plan), status: p.status, owner_id: p.owner_id ?? "",
-      due_date: p.due_date ?? "", est: s(p.budget_estimate), res: s(p.budget_reserved), rec: s(p.budget_received), planning: p.planning ?? "", planning_date: p.planning_date ?? "", remarks: p.remarks ?? "" });
+      due_date: p.due_date ?? "", est: s(p.budget_estimate), res: s(p.budget_reserved), rec: s(p.budget_received), planning: p.planning ?? "", planning_date: p.planning_date ?? "", status_date: p.status_date ?? "", remarks: p.remarks ?? "" });
   };
   // Alleen buiten bewerkmodus synchroniseren, zodat een refetch ingevoerde tekst niet overschrijft.
   useEffect(() => { if (!editing) loadPlan(project); }, [project, editing]);
@@ -111,7 +112,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
       const { data, error } = await db.from("internal_projects").update({
         description: changedText(project.description, plan.description, { autoImport: project.created_origin === "bronimport" }), project_plan: changedText(project.project_plan, plan.project_plan), status: plan.status,
         owner_id: plan.owner_id || null, due_date: plan.due_date || null, budget_estimate: est, budget_reserved: res, budget_received: rec,
-        planning: plan.planning.trim() || null, planning_date: plan.planning_date || null, remarks: plan.remarks.trim() || null,
+        planning: plan.planning.trim() || null, planning_date: plan.planning_date || null, status_date: plan.status_date || null, remarks: plan.remarks.trim() || null,
       }).eq("id", pid).select("id");
       if (error) throw error;
       if (!data?.length) throw new Error("Geen toegang");
@@ -214,6 +215,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
               <dl className="grid gap-3 md:grid-cols-2 min-w-0">
                 <div className="rounded-md border-l-4 border-primary bg-muted/40 p-3 space-y-1 min-w-0 md:col-span-2">
                   <dt className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Status <Badge variant="outline" className="normal-case tracking-normal">{project.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[project.status]}</Badge></dt>
+                  <dd className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(project.status_date)}</dd>
                   <dd className="whitespace-pre-wrap break-words">{presentText(project.description, { autoImport: project.created_origin === "bronimport" }) || <span className="text-muted-foreground">Nog niet vastgelegd</span>}</dd>
                 </div>
                 <div className="rounded-md border border-border p-3 space-y-1 min-w-0">
@@ -242,6 +244,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
           ) : (
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!savePlan.isPending) savePlan.mutate(); }}>
             <div><Label htmlFor="ws-desc">Status (huidige stand, kort)</Label><Textarea id="ws-desc" value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} /></div>
+            <div className="sm:max-w-[12rem]"><Label htmlFor="ws-sdate">Statusdatum</Label><Input id="ws-sdate" type="date" value={plan.status_date} onChange={(e) => setPlan({ ...plan, status_date: e.target.value })} /></div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr,12rem] gap-3">
               <div><Label htmlFor="ws-planning">Planning (actie / verwachting)</Label><Textarea id="ws-planning" rows={2} placeholder="Nog niet vastgelegd" value={plan.planning} onChange={(e) => setPlan({ ...plan, planning: e.target.value })} /></div>
               <div><Label htmlFor="ws-pdate">Planningdatum</Label><Input id="ws-pdate" type="date" value={plan.planning_date} onChange={(e) => setPlan({ ...plan, planning_date: e.target.value })} /></div>

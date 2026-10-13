@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { statusDateLabel } from "@/lib/statusDate";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ type Project = {
   id: string; title: string; description: string | null; owner_id: string | null; due_date: string | null;
   status: ProjectStatus; teams_url: string | null; archived_at: string | null;
   budget_estimate?: number | null; budget_reserved?: number | null; budget_received?: number | null; created_origin?: "medewerker" | "bronimport" | null;
-  updated_at?: string | null; planning?: string | null; planning_date?: string | null; remarks?: string | null;
+  updated_at?: string | null; planning?: string | null; planning_date?: string | null; status_date?: string | null; remarks?: string | null;
 };
 type Task = {
   id: string; title: string; description: string | null; project_id: string | null; assignee_id: string | null;
@@ -191,7 +192,7 @@ function ProjectenInner() {
       if (teams && !isValidTeamsUrl(teams)) throw new Error("Teams-link moet een geldige https-link naar Teams/Microsoft zijn");
       const row = {
         title: (p.title ?? "").trim(), description: p.id ? changedText(projectsQ.data?.find((x) => x.id === p.id)?.description, p.description ?? "", { autoImport: projectsQ.data?.find((x) => x.id === p.id)?.created_origin === "bronimport" }) : p.description?.trim() || null, owner_id: p.owner_id || null,
-        due_date: p.due_date || null, status: p.status ?? "actief", teams_url: teams,
+        due_date: p.due_date || null, status_date: p.status_date || null, status: p.status ?? "actief", teams_url: teams,
       };
       if (!row.title) throw new Error("Titel is verplicht");
       const q = p.id ? db.from("internal_projects").update(row).eq("id", p.id).select("id") : db.from("internal_projects").insert(row).select("id");
@@ -354,6 +355,7 @@ function ProjectenInner() {
                         <td className="p-2"><button type="button" className="text-left font-medium hover:underline break-words" onClick={() => openProject(p.id)}>{p.title}</button>
                           {p.updated_at && <p className="text-xs text-muted-foreground">Bijgewerkt · {fmtDay(p.updated_at)}</p>}</td>
                         <td className="p-2 space-y-1"><Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
+                          <p className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(p.status_date)}</p>
                           {p.description?.trim() && <p className="break-words line-clamp-3">{presentText(p.description, { autoImport: p.created_origin === "bronimport" })}</p>}</td>
                         <td className="p-2">{p.planning?.trim() ? <p className="whitespace-pre-wrap break-words line-clamp-3">{p.planning}</p> : <span className="text-muted-foreground">Nog niet vastgelegd</span>}
                           {p.planning_date && <p className="text-xs text-muted-foreground tabular-nums">Planningdatum {p.planning_date}</p>}</td>
@@ -376,6 +378,7 @@ function ProjectenInner() {
                       <div className="min-w-0 flex-1 space-y-1">
                         <Badge variant="outline">{p.archived_at ? "Gearchiveerd" : PROJECT_STATUS_LABEL[p.status]}</Badge>
                         <p className="font-medium break-words">{p.title}</p>
+                        <p className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(p.status_date)}</p>
                       </div>
                       <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
                     </div>
@@ -486,7 +489,8 @@ function ProjectenInner() {
                     <SelectContent><SelectItem value={NONE}>Niemand</SelectItem>{(staffQ.data ?? []).map((s) => <SelectItem key={s.user_id} value={s.user_id}>{displayName(s)}</SelectItem>)}</SelectContent>
                   </Select></div>
                 <div><Label htmlFor="p-due">Einddatum</Label><Input id="p-due" type="date" value={editProject.due_date ?? ""} onChange={(e) => setEditProject({ ...editProject, due_date: e.target.value || null })} /></div>
-                <div className="sm:col-span-2"><Label>Status</Label>
+                <div><Label htmlFor="p-sdate">Statusdatum</Label><Input id="p-sdate" type="date" value={editProject.status_date ?? ""} onChange={(e) => setEditProject({ ...editProject, status_date: e.target.value || null })} /></div>
+                <div><Label>Status</Label>
                   <Select value={editProject.status ?? "actief"} onValueChange={(v) => setEditProject({ ...editProject, status: v as ProjectStatus })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
