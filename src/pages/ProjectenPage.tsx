@@ -25,7 +25,7 @@ import MemberProjectsView from "@/components/projecten/MemberProjectsView";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
 import DossierGroupsView from "@/components/projecten/DossierGroupsView";
 import { DossierPicker } from "@/components/dossiers/DossierPicker";
-import { useDossierRegister, useSetProjectDossiers, useSetDossierProjectHidden } from "@/hooks/useDossierRegister";
+import { useDossierRegister, useSetProjectDossiers, useSetDossierProjectHidden, useSetDossierStatus } from "@/hooks/useDossierRegister";
 import { buildTree, dossierScope, projectInScope, projectOverviewView } from "@/lib/dossierRegister";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
@@ -139,6 +139,7 @@ function ProjectenInner() {
   const reg = useDossierRegister(true);
   const setProjectDossiers = useSetProjectDossiers();
   const setDossierHidden = useSetDossierProjectHidden();
+  const setDossierStatus = useSetDossierStatus();
   const [showHiddenDossiers, setShowHiddenDossiers] = useState(false);
   // Alleen Projecten-overzicht: verborgen dossiers (en hun kinderen) weg; Jaarplan/Financiën ongewijzigd.
   const dView = useMemo(() => projectOverviewView(reg.dossiers, reg.links, showHiddenDossiers), [reg.dossiers, reg.links, showHiddenDossiers]);
@@ -415,6 +416,7 @@ function ProjectenInner() {
             viewMode === "dossiers" ? (
               <DossierGroupsView dossiers={dView.dossiers} selected={dossierFilter} links={dView.links}
                 hidden={dView.hidden}
+                onSetStatus={async (id, summary, date) => { await setDossierStatus.mutateAsync({ id, summary, date }); }}
                 onSetHidden={async (id, hide) => {
                   await setDossierHidden.mutateAsync({ id, hide });
                   // Filter wissen als het gekozen dossier (of zijn ouder) verdwijnt.

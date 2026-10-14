@@ -7,6 +7,8 @@ export type RegisterDossier = {
   note: string | null; archived_at: string | null;
   /** Alleen voor het Projecten-dossieroverzicht; Jaarplan/Financiën negeren dit. */
   project_hidden_at?: string | null;
+  /** Handmatig geschreven algemene dossierstatus; nooit afgeleid. */
+  status_summary?: string | null; status_date?: string | null;
 };
 export type FinanceAlias = { dossier_id: string; label: string };
 export type DossierLink = { dossier_id: string; project_id: string };
