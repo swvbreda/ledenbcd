@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronRight, FileText, FolderOpen } from "lucide-react";
 import type { ProjectStatus } from "@/lib/internalWork";
 import { buildTree, filterTree, OTHER_PROJECTS, projectsFor, unlinkedProjects, type DossierLink, type DossierNode, type RegisterDossier } from "@/lib/dossierRegister";
@@ -42,7 +43,7 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
     ? <DossierHideAction name={d.name} hidden={!!d.project_hidden_at} onSetHidden={(h) => onSetHidden(d.id, h)} />
     : null;
   const isHidden = (id: string) => !!hidden?.has(id);
-  const head = (name: string, n: number, dashed = false, extra: React.ReactNode = null) => (
+  const head = (name: string, n: number, dashed = false, extra: ReactNode = null) => (
     <div className="flex flex-wrap items-center gap-3 px-4 pt-4 pb-2">
       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${dashed ? "bg-muted text-muted-foreground" : "bg-brand-navy/10 text-brand-navy"}`}>
         <FolderOpen aria-hidden className="h-[18px] w-[18px]" />

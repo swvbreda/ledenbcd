@@ -121,3 +121,41 @@ describe("deeplinks via TanStack-serializer", () => {
     expect(parseFinanceSearch(new URLSearchParams('year="20x5"&tab="hack"'), years, 2026)).toEqual({ tab: "dashboard", year: 2026, dossier: null });
   });
 });
+
+import { projectOverviewView, projectHiddenIds } from "@/lib/dossierRegister";
+import { setDossierProjectHidden } from "@/hooks/useDossierRegister";
+describe("dossier verwijderen uit Projecten-overzicht", () => {
+  const h = (x: RegisterDossier) => ({ ...x, project_hidden_at: "2026-10-14T20:00:00Z" });
+  const ds = [d("a", "Amsterdam", null, 10), h(d("o", "Overleg burgemeester", "a", 11)), d("b", "Banken", null, 20), d("w", "Worldline", "b", 21)];
+  const links = [{ dossier_id: "o", project_id: "p1" }, { dossier_id: "w", project_id: "p2" }];
+  it("verborgen subdossier verdwijnt, ouder blijft; project valt onder Overige", () => {
+    const v = projectOverviewView(ds, links, false);
+    expect(v.dossiers.map((x) => x.id)).toEqual(["a", "b", "w"]);
+    expect(unlinkedProjects([{ id: "p1", title: "", archived_at: null }, { id: "p2", title: "", archived_at: null }], v.links).map((p) => p.id)).toEqual(["p1"]);
+  });
+  it("verborgen hoofddossier verbergt ook kinderen", () => {
+    const ds2 = [h(d("b", "Banken")), d("w", "Worldline", "b")];
+    expect([...projectHiddenIds(ds2)].sort()).toEqual(["b", "w"]);
+    expect(projectOverviewView(ds2, links, false).dossiers).toEqual([]);
+  });
+  it("Toon verwijderde dossiers toont alles terug; Jaarplan/Financiën-boom (buildTree) negeert het veld", () => {
+    expect(projectOverviewView(ds, links, true).dossiers).toHaveLength(4);
+    expect(buildTree(ds)[0].children.map((c) => c.id)).toEqual(["o"]);
+  });
+  const fakeDb = (rows: unknown[]) => {
+    const calls: any[] = [];
+    const chain: any = { update: (v: any) => (calls.push(["update", v]), chain), eq: (...a: any[]) => (calls.push(["eq", ...a]), chain), select: async () => ({ data: rows, error: null }), delete: () => { throw new Error("delete"); } };
+    return { calls, db: { from: (t: string) => (calls.push(["from", t]), chain) } };
+  };
+  it("verbergen wijzigt alleen project_hidden_at voor exact dat id", async () => {
+    const f = fakeDb([{ id: "x" }]);
+    await setDossierProjectHidden(f.db, "x", true, () => "T");
+    expect(f.calls).toEqual([["from", "dossier_register"], ["update", { project_hidden_at: "T" }], ["eq", "id", "x"]]);
+  });
+  it("terugzetten wist alleen het veld; geen toegang (0 rijen) geeft fout", async () => {
+    const f = fakeDb([{ id: "x" }]);
+    await setDossierProjectHidden(f.db, "x", false);
+    expect(f.calls[1]).toEqual(["update", { project_hidden_at: null }]);
+    await expect(setDossierProjectHidden(fakeDb([]).db, "x", true)).rejects.toThrow("Geen toegang");
+  });
+});
