@@ -62,6 +62,6 @@ describe("setProjectArchived", () => {
 describe("ledenweergave blijft alleen-lezen", () => {
   it("MemberProjectsView bevat geen archiveer-/schrijfacties", () => {
     const src = readFileSync("src/components/projecten/MemberProjectsView.tsx", "utf8");
-    expect(src).not.toMatch(/ArchiveProjectAction|setProjectArchived|\.update\(|\.delete\(|\.insert\(/);
+    expect(src).not.toMatch(/ArchiveProjectAction|setProjectArchived|\.from\(|\.update\(|\.insert\(|\.delete\(\)/);
   });
 });
