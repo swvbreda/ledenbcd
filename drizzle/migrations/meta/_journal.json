@@ -295,6 +295,13 @@
       "when": 1792009197626,
       "tag": "0041_member_project_status_view",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1792011449263,
+      "tag": "0042_dossier_project_hidden_at",
+      "breakpoints": true
     }
   ]
 }
