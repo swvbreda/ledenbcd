@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { diffLinks, type DossierLink, type FinanceAlias, type RegisterDossier } from "@/lib/dossierRegister";
 
 const db = supabase as any;
 
 /** Dossierregister + aliases + projectkoppelingen. Alleen voor beheerders (RLS). */
 export function useDossierRegister(enabled: boolean) {
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
   const dossiers = useQuery({
-    queryKey: ["dossier-register"], enabled,
+    queryKey: ["dossier-register", uid], enabled: enabled && !!uid,
     queryFn: async () => {
-      const { data, error } = await db.from("dossier_register").select("id,parent_id,name,sort_order,jaarplan_kind,jaarplan_section,jaarplan_pages,note,archived_at").order("sort_order");
+      const { data, error } = await db.from("dossier_register").select("id,parent_id,name,sort_order,jaarplan_kind,jaarplan_section,jaarplan_pages,note,archived_at,project_hidden_at").order("sort_order");
       if (error) throw error;
       return data as RegisterDossier[];
     },
@@ -56,5 +59,20 @@ export function useSetProjectDossiers() {
       qc.invalidateQueries({ queryKey: ["dossier-links"] });
       qc.invalidateQueries({ queryKey: ["project-events"] });
     },
+  });
+}
+
+/** Verbergt/terugzet een dossier alleen in het Projecten-overzicht; wijzigt uitsluitend project_hidden_at. */
+export async function setDossierProjectHidden(dbc: any, id: string, hide: boolean, now: () => string = () => new Date().toISOString()) {
+  const { data, error } = await dbc.from("dossier_register").update({ project_hidden_at: hide ? now() : null }).eq("id", id).select("id");
+  if (error) throw error;
+  if (!data?.length) throw new Error("Geen toegang");
+}
+
+export function useSetDossierProjectHidden() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, hide }: { id: string; hide: boolean }) => setDossierProjectHidden(db, id, hide),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dossier-register"] }),
   });
 }

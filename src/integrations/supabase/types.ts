@@ -1579,6 +1579,7 @@ export type Database = {
           name: string
           note: string | null
           parent_id: string | null
+          project_hidden_at: string | null
           seed_key: string | null
           sort_order: number
         }
@@ -1593,6 +1594,7 @@ export type Database = {
           name: string
           note?: string | null
           parent_id?: string | null
+          project_hidden_at?: string | null
           seed_key?: string | null
           sort_order?: number
         }
@@ -1607,6 +1609,7 @@ export type Database = {
           name?: string
           note?: string | null
           parent_id?: string | null
+          project_hidden_at?: string | null
           seed_key?: string | null
           sort_order?: number
         }

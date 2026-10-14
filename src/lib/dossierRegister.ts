@@ -5,6 +5,8 @@ export type RegisterDossier = {
   id: string; parent_id: string | null; name: string; sort_order: number;
   jaarplan_kind: "hoofdstuk" | "thema" | null; jaarplan_section: string | null; jaarplan_pages: string | null;
   note: string | null; archived_at: string | null;
+  /** Alleen voor het Projecten-dossieroverzicht; Jaarplan/Financiën negeren dit. */
+  project_hidden_at?: string | null;
 };
 export type FinanceAlias = { dossier_id: string; label: string };
 export type DossierLink = { dossier_id: string; project_id: string };
@@ -125,4 +127,17 @@ export function parseFinanceSearch(params: URLSearchParams, years: number[], fal
 
 export function projectsDossierHref(dossierId: string): string {
   return `/projecten?${new URLSearchParams({ dossier: dossierId }).toString()}`;
+}
+
+// ---- Verbergen in Projecten-dossieroverzicht (los van archived_at) ----
+/** Dossiers die in Projecten verborgen zijn: zelf verborgen of ouder verborgen. */
+export function projectHiddenIds(dossiers: RegisterDossier[]): Set<string> {
+  const own = new Set(dossiers.filter((d) => d.project_hidden_at).map((d) => d.id));
+  return new Set(dossiers.filter((d) => own.has(d.id) || (d.parent_id && own.has(d.parent_id))).map((d) => d.id));
+}
+/** Register + links zoals Projecten ze toont; links naar verborgen dossiers vallen weg, zodat die projecten onder "Overige projecten" komen. */
+export function projectOverviewView(dossiers: RegisterDossier[], links: DossierLink[], showHidden: boolean) {
+  if (showHidden) return { dossiers, links, hidden: projectHiddenIds(dossiers) };
+  const hidden = projectHiddenIds(dossiers);
+  return { dossiers: dossiers.filter((d) => !hidden.has(d.id)), links: links.filter((l) => !hidden.has(l.dossier_id)), hidden };
 }
