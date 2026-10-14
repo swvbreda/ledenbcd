@@ -20,6 +20,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { changedText, presentText } from "@/lib/presentText";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
+import { setProjectArchived } from "@/components/projecten/ArchiveProjectAction";
 import MemberProjectsView from "@/components/projecten/MemberProjectsView";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
 import DossierGroupsView from "@/components/projecten/DossierGroupsView";
@@ -235,12 +236,13 @@ function ProjectenInner() {
     onError: (e) => toast.error("Opslaan mislukt: " + errMsg(e)),
   });
   const archiveProject = useMutation({
-    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
-      const { data, error } = await db.from("internal_projects").update({ archived_at: archive ? new Date().toISOString() : null }).eq("id", id).select("id");
-      if (error) throw error;
-      if (!data?.length) throw new Error("Geen toegang");
+    mutationFn: ({ id, archive }: { id: string; archive: boolean }) => setProjectArchived(db, id, archive),
+    onSuccess: (_d, v) => {
+      toast.success(v.archive ? "Project verwijderd uit overzicht" : "Project teruggezet");
+      invalidate();
+      // prefix: ververst de per-account ledenweergave (["member-project-status", uid])
+      qc.invalidateQueries({ queryKey: ["member-project-status"] });
     },
-    onSuccess: (_d, v) => { toast.success(v.archive ? "Project gearchiveerd" : "Project teruggezet"); invalidate(); },
     onError: (e) => toast.error("Archiveren mislukt: " + errMsg(e)),
   });
 
@@ -391,6 +393,10 @@ function ProjectenInner() {
               <ProjectWorkspace project={currentProject as unknown as WsProject} tasks={(tasksQ.data ?? []) as unknown as WsTask[]} staff={staffQ.data ?? []}
                 participants={participantsQ.data ?? []} uid={uid} onBack={() => openProject(null)} onChanged={invalidate}
                 allDossiers={reg.dossiers} projectDossierIds={dossierIdsOf(currentProject.id)} aliases={reg.aliases}
+                onSetArchived={async (archive) => {
+                  await archiveProject.mutateAsync({ id: currentProject.id, archive });
+                  if (archive) openProject(null);
+                }}
                 onEditTask={(t) => setEditTask(t as Partial<Task>)} />
             ) : (
               <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground space-y-2">
