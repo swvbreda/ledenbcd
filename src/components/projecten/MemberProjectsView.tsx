@@ -54,7 +54,7 @@ export default function MemberProjectsView({ preview }: { preview?: React.ReactN
         </header>
       )}
 
-      {q.isLoading ? (
+      {q.isPending && !q.error ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Projecten laden...</p>
       ) : q.error ? (
         <div role="alert" className="flex flex-wrap items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
