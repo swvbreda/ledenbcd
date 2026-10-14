@@ -288,6 +288,13 @@
       "when": 1791925226343,
       "tag": "0040_dossier_register_revoke_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1792009197626,
+      "tag": "0041_member_project_status_view",
+      "breakpoints": true
     }
   ]
 }

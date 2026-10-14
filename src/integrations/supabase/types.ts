@@ -5209,6 +5209,17 @@ export type Database = {
         }[]
       }
       get_member_id_for_email: { Args: { _email: string }; Returns: number }
+      get_member_project_status: {
+        Args: never
+        Returns: {
+          description: string
+          id: string
+          status: string
+          status_date: string
+          timeline: Json
+          title: string
+        }[]
+      }
       get_member_psp_groups: {
         Args: never
         Returns: {
@@ -5342,6 +5353,7 @@ export type Database = {
           email: string
         }[]
       }
+      member_verloop_items: { Args: { _plan: string }; Returns: Json }
       merge_member_locations: {
         Args: { _base: Json; _overlay: Json }
         Returns: Json
