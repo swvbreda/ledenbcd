@@ -409,7 +409,7 @@ function ProjectenInner() {
                 <Button variant="outline" size="sm" onClick={() => openProject(null)}>Alle projecten</Button>
               </div>
             )
-          ) : visibleProjects.length === 0 ? (
+          ) : visibleProjects.length === 0 && (viewMode !== "dossiers" || dView.dossiers.length === 0) ? (
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
             viewMode === "dossiers" ? (

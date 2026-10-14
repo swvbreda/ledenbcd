@@ -53,6 +53,9 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
       {extra}
     </div>
   );
+  if (tree.length === 0 && others.length === 0) {
+    return <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Geen dossiers om te tonen.</div>;
+  }
   return (
     <div className="space-y-4">
       {tree.map((d) => {
