@@ -18,6 +18,7 @@ import {
 } from "@/lib/projectWorkspace";
 import { StaffAvatars } from "./StaffAvatars";
 import { ProjectDocuments } from "./ProjectDocuments";
+import { ArchiveProjectAction } from "./ArchiveProjectAction";
 import { changedText, presentEventSummary, presentText } from "@/lib/presentText";
 import { newestFirst, splitCurrentStatus, type PlanBlock, type PlanSection } from "@/lib/projectPlan";
 import { statusDateLabel } from "@/lib/statusDate";
@@ -56,9 +57,11 @@ interface Props {
   onBack: () => void; onChanged: () => void; onEditTask: (t: Partial<WsTask>) => void; onTaskSaved?: (id: string) => void;
   /** Gedeelde dossierindeling (admin-only); geen financiële bedragen. */
   allDossiers?: RegisterDossier[]; projectDossierIds?: string[]; aliases?: FinanceAlias[];
+  /** Archiveren/terugzetten (alleen archived_at). */
+  onSetArchived?: (archive: boolean) => Promise<void>;
 }
 
-export default function ProjectWorkspace({ project, tasks, staff, participants, uid, onBack, onChanged, onEditTask, allDossiers = [], projectDossierIds = [], aliases = [] }: Props) {
+export default function ProjectWorkspace({ project, tasks, staff, participants, uid, onBack, onChanged, onEditTask, allDossiers = [], projectDossierIds = [], aliases = [], onSetArchived }: Props) {
   const qc = useQueryClient();
   const pid = project.id;
   const prog = projectProgress(tasks, pid);
@@ -202,9 +205,10 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
         </button>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <h2 className="!font-sans min-w-0 break-words text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">{project.title}</h2>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 flex-wrap items-start justify-end gap-2 sm:gap-3">
             <div className="hidden sm:block"><StaffAvatars ids={people} staff={staff} /></div>
-            {!editing && <Button variant="outline" className="min-h-10" onClick={startEdit}>Project bewerken</Button>}
+            {!editing && !project.archived_at && <Button variant="outline" className="min-h-10" onClick={startEdit}>Project bewerken</Button>}
+            {onSetArchived && <ArchiveProjectAction title={project.title} archived={!!project.archived_at} disabled={editing} onSetArchived={onSetArchived} />}
           </div>
         </div>
         <section aria-label="Huidige status" className={`${surfaceCls} relative overflow-hidden min-w-0 space-y-3 p-5`}>
