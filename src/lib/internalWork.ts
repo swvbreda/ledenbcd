@@ -1,6 +1,6 @@
 export type TaskStatus = "te_doen" | "bezig" | "wacht" | "afgerond";
 export type TaskPriority = "laag" | "normaal" | "hoog";
-export type ProjectStatus = "actief" | "gepauzeerd" | "afgerond";
+export type ProjectStatus = "te_bevestigen" | "actief" | "gepauzeerd" | "afgerond";
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   te_doen: "Te doen",
@@ -10,6 +10,7 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
 };
 export const PRIORITY_LABEL: Record<TaskPriority, string> = { laag: "Laag", normaal: "Normaal", hoog: "Hoog" };
 export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
+  te_bevestigen: "Te bevestigen",
   actief: "Actief",
   gepauzeerd: "Gepauzeerd",
   afgerond: "Afgerond",
