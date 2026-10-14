@@ -1582,6 +1582,8 @@ export type Database = {
           project_hidden_at: string | null
           seed_key: string | null
           sort_order: number
+          status_date: string | null
+          status_summary: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -1597,6 +1599,8 @@ export type Database = {
           project_hidden_at?: string | null
           seed_key?: string | null
           sort_order?: number
+          status_date?: string | null
+          status_summary?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -1612,6 +1616,8 @@ export type Database = {
           project_hidden_at?: string | null
           seed_key?: string | null
           sort_order?: number
+          status_date?: string | null
+          status_summary?: string | null
         }
         Relationships: [
           {
