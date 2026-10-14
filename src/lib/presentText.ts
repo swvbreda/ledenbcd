@@ -14,6 +14,7 @@ const AUTO_MARKERS = [
   /^Stand van zaken — broncontrole \d/m,
   /^Voorlopig werkoverzicht — interne registratie \d/m,
   /^Bron gelezen in Apple Mail\b/m,
+  /^Bronimport actuele\b/m,
 ];
 export const isAutoImportText = (raw: string | null | undefined) => !!raw && AUTO_MARKERS.some((r) => r.test(raw));
 
