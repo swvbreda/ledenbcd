@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, FolderKanban, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { presentText } from "@/lib/presentText";
@@ -18,11 +19,15 @@ export type MemberProject = {
   timeline: { date: string; title: string; text: string }[];
 };
 
-export const memberProjectsKey = ["member-project-status"] as const;
+/** Cache per ingelogde gebruiker: resultaten van een vorige sessie mogen nooit aan een ander account getoond worden. */
+export const memberProjectsKey = (uid: string | null) => ["member-project-status", uid] as const;
 
 export function useMemberProjects() {
+  const { user, loading } = useAuth();
+  const uid = user?.id ?? null;
   return useQuery({
-    queryKey: memberProjectsKey,
+    queryKey: memberProjectsKey(uid),
+    enabled: !loading && !!uid,
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("get_member_project_status");
       if (error) throw error;
