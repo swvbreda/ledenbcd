@@ -1,13 +1,18 @@
 import { ChevronRight, FileText, FolderOpen } from "lucide-react";
 import type { ProjectStatus } from "@/lib/internalWork";
 import { buildTree, filterTree, OTHER_PROJECTS, projectsFor, unlinkedProjects, type DossierLink, type DossierNode, type RegisterDossier } from "@/lib/dossierRegister";
+import { DossierHideAction } from "@/components/projecten/DossierHideAction";
 import { CountChip, ProjectStatusBadge, surfaceCls } from "@/components/projecten/ui";
 
 type P = { id: string; title: string; archived_at: string | null; status: ProjectStatus };
 
 /** Compacte weergave: hoofddossier → subdossiers → projecten; ongekoppeld onder "Overige projecten". */
-export default function DossierGroupsView({ dossiers, links, projects, onOpen, selected = null }: {
-  selected?: string | null; dossiers: RegisterDossier[]; links: DossierLink[]; projects: P[]; onOpen: (id: string) => void;
+export default function DossierGroupsView({ dossiers, links, projects, onOpen, selected = null, hidden, onSetHidden }: {
+  selected?: string | null;
+  /** Dossiers die in Projecten verborgen zijn (alleen zichtbaar bij "Toon verwijderde dossiers"). */
+  hidden?: Set<string>;
+  /** Alleen voor beheerders: verbergen/terugzetten in dit overzicht. */
+  onSetHidden?: (id: string, hide: boolean) => Promise<void>; dossiers: RegisterDossier[]; links: DossierLink[]; projects: P[]; onOpen: (id: string) => void;
 }) {
   const tree = filterTree(buildTree(dossiers), selected);
   const list = (ps: P[]) => ps.length === 0
@@ -33,13 +38,18 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
     return ids.size;
   };
   const others = unlinkedProjects(projects, links);
-  const head = (name: string, n: number, dashed = false) => (
+  const action = (d: RegisterDossier) => onSetHidden
+    ? <DossierHideAction name={d.name} hidden={!!d.project_hidden_at} onSetHidden={(h) => onSetHidden(d.id, h)} />
+    : null;
+  const isHidden = (id: string) => !!hidden?.has(id);
+  const head = (name: string, n: number, dashed = false, extra: React.ReactNode = null) => (
     <div className="flex flex-wrap items-center gap-3 px-4 pt-4 pb-2">
       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${dashed ? "bg-muted text-muted-foreground" : "bg-brand-navy/10 text-brand-navy"}`}>
         <FolderOpen aria-hidden className="h-[18px] w-[18px]" />
       </span>
       <h3 className="!font-sans min-w-0 flex-1 break-words text-lg font-semibold tracking-normal text-foreground">{name}</h3>
       <CountChip n={n} singular="project" plural="projecten" />
+      {extra}
     </div>
   );
   return (
@@ -47,8 +57,8 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
       {tree.map((d) => {
         const hideDirect = !!(selected && selected !== d.id && d.children.some((c) => c.id === selected));
         return (
-          <section key={d.id} className={`${surfaceCls} min-w-0 pb-2`}>
-            {head(d.name, count(d))}
+          <section key={d.id} className={`${surfaceCls} min-w-0 pb-2 ${isHidden(d.id) ? "border-dashed opacity-70" : ""}`}>
+            {head(isHidden(d.id) ? `${d.name} (verwijderd uit overzicht)` : d.name, count(d), false, action(d))}
             {/* Bij een gekozen subdossier geen (lege) directe lijst onder de ouder tonen. */}
             {!hideDirect && <div className="px-1">{list(projectsFor(d.id, links, projects))}</div>}
             {d.children.length > 0 && (
@@ -56,10 +66,12 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
                 {d.children.map((c) => {
                   const n = projectsFor(c.id, links, projects).length;
                   return (
-                    <div key={c.id} className="min-w-0 rounded-lg border-l-2 border-brand-navy/30 bg-muted/40 py-1 pl-1">
+                    <div key={c.id} className={`min-w-0 rounded-lg border-l-2 ${isHidden(c.id) ? "opacity-70 border-dashed" : ""} border-brand-navy/30 bg-muted/40 py-1 pl-1`}>
                       <div className="flex flex-wrap items-center gap-2 px-3 pt-2 pb-1">
                         <h4 className="!font-sans min-w-0 flex-1 break-words text-sm font-semibold tracking-normal text-foreground">{c.name}</h4>
                         <span className="text-xs text-muted-foreground tabular-nums">{n} {n === 1 ? "project" : "projecten"}</span>
+                        {isHidden(c.id) && <span className="text-xs text-muted-foreground">verwijderd uit overzicht</span>}
+                        {!d.project_hidden_at && action(c)}
                       </div>
                       {list(projectsFor(c.id, links, projects))}
                     </div>

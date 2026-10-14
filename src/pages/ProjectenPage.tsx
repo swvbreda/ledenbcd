@@ -25,8 +25,8 @@ import MemberProjectsView from "@/components/projecten/MemberProjectsView";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
 import DossierGroupsView from "@/components/projecten/DossierGroupsView";
 import { DossierPicker } from "@/components/dossiers/DossierPicker";
-import { useDossierRegister, useSetProjectDossiers } from "@/hooks/useDossierRegister";
-import { buildTree, dossierScope, projectInScope } from "@/lib/dossierRegister";
+import { useDossierRegister, useSetProjectDossiers, useSetDossierProjectHidden } from "@/hooks/useDossierRegister";
+import { buildTree, dossierScope, projectInScope, projectOverviewView } from "@/lib/dossierRegister";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
 import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
@@ -138,6 +138,10 @@ function ProjectenInner() {
   const [viewMode, setViewMode] = useState<"tabel" | "kaarten" | "dossiers">("dossiers");
   const reg = useDossierRegister(true);
   const setProjectDossiers = useSetProjectDossiers();
+  const setDossierHidden = useSetDossierProjectHidden();
+  const [showHiddenDossiers, setShowHiddenDossiers] = useState(false);
+  // Alleen Projecten-overzicht: verborgen dossiers (en hun kinderen) weg; Jaarplan/Financiën ongewijzigd.
+  const view = useMemo(() => projectOverviewView(reg.dossiers, reg.links, showHiddenDossiers), [reg.dossiers, reg.links, showHiddenDossiers]);
   const [editDossiers, setEditDossiers] = useState<string[]>([]);
   const dossierIdsOf = (projectId: string) => reg.links.filter((l) => l.project_id === projectId).map((l) => l.dossier_id);
   const [editTask, setEditTask] = useState<Partial<Task> | null>(null);
@@ -148,9 +152,9 @@ function ProjectenInner() {
   const [searchParams, setSearchParams] = useSearchParams();
   // Dossierfilter uit ?dossier=<id>; alleen geldig als het dossier in het register bestaat.
   const rawDossier = searchParams.get("dossier");
-  const dossierFilter = rawDossier && reg.dossiers.some((d) => d.id === rawDossier) ? rawDossier : null;
+  const dossierFilter = rawDossier && view.dossiers.some((d) => d.id === rawDossier) ? rawDossier : null;
   const setDossierFilter = (id: string | null) => setSearchParams((prev) => { const n = new URLSearchParams(prev); if (id) n.set("dossier", id); else n.delete("dossier"); return n; });
-  const scope = useMemo(() => (dossierFilter ? dossierScope(dossierFilter, reg.dossiers) : null), [dossierFilter, reg.dossiers]);
+  const scope = useMemo(() => (dossierFilter ? dossierScope(dossierFilter, view.dossiers) : null), [dossierFilter, view.dossiers]);
   const visibleProjects = (projectsQ.data ?? []).filter((p) => (showArchived || !p.archived_at) && (!scope || projectInScope(p.id, scope, reg.links)));
   const split = useMemo(() => splitTaskViews(tasksQ.data ?? [], filter, uid, today), [tasksQ.data, filter, uid, today]);
   const tasks = view === "open" ? split.open : split.done;
@@ -364,7 +368,7 @@ function ProjectenInner() {
                       <SelectTrigger aria-label="Dossierfilter" className="min-h-11 sm:min-h-10 [&>span]:truncate"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Alle dossiers</SelectItem>
-                        {buildTree(reg.dossiers).flatMap((d) => [d, ...d.children]).map((d) => (
+                        {buildTree(view.dossiers).flatMap((d) => [d, ...d.children]).map((d) => (
                           <SelectItem key={d.id} value={d.id}>{d.parent_id ? `— ${d.name}` : d.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -408,7 +412,16 @@ function ProjectenInner() {
             <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nog geen projecten.</div>
           ) : (
             viewMode === "dossiers" ? (
-              <DossierGroupsView dossiers={reg.dossiers} selected={dossierFilter} links={reg.links}
+              <DossierGroupsView dossiers={view.dossiers} selected={dossierFilter} links={view.links}
+                hidden={view.hidden}
+                onSetHidden={async (id, hide) => {
+                  await setDossierHidden.mutateAsync({ id, hide });
+                  // Filter wissen als het gekozen dossier (of zijn ouder) verdwijnt.
+                  if (hide && dossierFilter) {
+                    const sel = reg.dossiers.find((d) => d.id === dossierFilter);
+                    if (sel && (sel.id === id || sel.parent_id === id)) setDossierFilter(null);
+                  }
+                }}
                 projects={visibleProjects} onOpen={(id) => openProject(id)} />
             ) : (
             <>
