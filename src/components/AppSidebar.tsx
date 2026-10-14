@@ -69,7 +69,8 @@ export function AppSidebar() {
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const closeMobile = () => setOpenMobile(false);
-  const { user, isAdmin, isBoard, isInhuur, signOut } = useAuth();
+  const { user, isAdmin, isBoard, isInhuur, isExtern, linkedMemberId, signOut } = useAuth();
+  const canSeeMemberProjects = !isAdmin && !isExtern && !isInhuur && !!linkedMemberId;
   const { data: pendingRequests } = useEditRequests("pending");
   const pendingCount = isAdmin ? (pendingRequests?.length ?? 0) : 0;
   const [pwOpen, setPwOpen] = useState(false);
@@ -162,6 +163,21 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       {registerItem}
+                      {item.title === "Jaarplan" && canSeeMemberProjects && (
+                        <SidebarMenuItem key="Projecten-leden">
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to="/projecten"
+                              className="hover:bg-sidebar-accent/50"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                              onClick={closeMobile}
+                            >
+                              <ListChecks className="mr-2 h-4 w-4" />
+                              {!collapsed && <span>Projecten</span>}
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
                     </>
                   );
                 })}

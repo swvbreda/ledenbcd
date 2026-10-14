@@ -14,4 +14,4 @@
 - Het Strategiebureau eligibility check uses one-time PKCE codes (hashed, 60s, service-only tables without policies, exact audience allowlist in `src/lib/adviesEligibility.ts`) and returns only `{eligible}`; the bureau must never receive BCD credentials, tokens or member data.
 
 - Subdirectories may have their own `AGENTS.md` (e.g. `src/components/projecten/`); read it before changing files there or related internal-projects DB/server code.
-- Internal 'Projecten & taken' is admin-only (has_role 'admin' RLS); rules for tasks, Planner, Topical, notifications and project workspace live in `src/components/projecten/AGENTS.md`.
+- Internal 'Projecten & taken' is admin-only (has_role 'admin' RLS) except the narrow member read RPC described there; rules for tasks, Planner, Topical, notifications and project workspace live in `src/components/projecten/AGENTS.md`.

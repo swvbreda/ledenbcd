@@ -20,6 +20,7 @@ import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
 import { changedText, presentText } from "@/lib/presentText";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
+import MemberProjectsView from "@/components/projecten/MemberProjectsView";
 import { StaffAvatars } from "@/components/projecten/StaffAvatars";
 import DossierGroupsView from "@/components/projecten/DossierGroupsView";
 import { DossierPicker } from "@/components/dossiers/DossierPicker";
@@ -62,10 +63,25 @@ const eurFmt = (n: number) => n.toLocaleString("nl-NL", { style: "currency", cur
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as any)?.message ?? "Onbekende fout");
 
 export default function ProjectenPage() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, isExtern, isInhuur, linkedMemberId, loading } = useAuth();
+  const [sp, setSp] = useSearchParams();
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Laden...</p>;
-  if (!isAdmin) return <Navigate to="/" replace />;
-  return <ProjectenInner />;
+  if (isAdmin) {
+    if (sp.get("weergave") === "leden") {
+      return (
+        <MemberProjectsView preview={
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-brand-navy/20 bg-brand-navy/5 px-3 py-2 text-sm text-foreground">
+            <span>Voorbeeld: zo zien leden deze pagina.</span>
+            <Button size="sm" variant="outline" className="ml-auto" onClick={() => setSp((p) => { const n = new URLSearchParams(p); n.delete("weergave"); return n; })}>Terug naar beheer</Button>
+          </div>
+        } />
+      );
+    }
+    return <ProjectenInner />;
+  }
+  // Leden: alleen-lezen weergave; de server controleert de toegang opnieuw.
+  if (!isExtern && !isInhuur && linkedMemberId) return <MemberProjectsView />;
+  return <Navigate to="/" replace />;
 }
 
 function ProjectenInner() {
@@ -235,9 +251,12 @@ function ProjectenInner() {
       {currentProject && tab === "projecten"
         ? <p className="text-[13px] font-medium text-muted-foreground">Projecten & taken</p>
         : (
-          <header className="min-w-0 space-y-1">
-            <h1 className="!font-sans text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">Projecten & taken</h1>
-            <p className="text-sm text-muted-foreground">Intern werkoverzicht — alleen zichtbaar voor beheerders</p>
+          <header className="flex min-w-0 flex-wrap items-start gap-3">
+            <div className="min-w-0 space-y-1">
+              <h1 className="!font-sans text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">Projecten & taken</h1>
+              <p className="text-sm text-muted-foreground">Intern werkoverzicht — alleen zichtbaar voor beheerders</p>
+            </div>
+            <Button variant="outline" size="sm" className="ml-auto min-h-10" onClick={() => setSearchParams(() => { const n = new URLSearchParams(); n.set("weergave", "leden"); return n; })}>Ledenweergave</Button>
           </header>
         )}
 
