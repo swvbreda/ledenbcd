@@ -14,6 +14,7 @@ export const surfaceCls = "rounded-xl border border-border bg-card shadow-[0_1px
 export const sectionHeadCls = "!font-sans text-[13px] font-semibold text-muted-foreground tracking-normal";
 
 const STATUS_CLS: Record<ProjectStatus | "archived", string> = {
+  te_bevestigen: "bg-muted text-foreground/80 border-warning/40 border-dashed",
   actief: "bg-brand-navy/10 text-brand-navy border-brand-navy/15",
   gepauzeerd: "bg-warning/15 text-warning-foreground border-warning/30",
   afgerond: "bg-success/12 text-success-strong border-success/25",

@@ -226,7 +226,7 @@ function ProjectenInner() {
       if (teams && !isValidTeamsUrl(teams)) throw new Error("Teams-link moet een geldige https-link naar Teams/Microsoft zijn");
       const row = {
         title: (p.title ?? "").trim(), description: p.id ? changedText(projectsQ.data?.find((x) => x.id === p.id)?.description, p.description ?? "", { autoImport: projectsQ.data?.find((x) => x.id === p.id)?.created_origin === "bronimport" }) : p.description?.trim() || null, owner_id: p.owner_id || null,
-        due_date: p.due_date || null, status_date: p.status_date || null, status: p.status ?? "actief", teams_url: teams,
+        due_date: p.due_date || null, status_date: p.status_date || null, status: p.status ?? "te_bevestigen", teams_url: teams,
       };
       if (!row.title) throw new Error("Titel is verplicht");
       const q = p.id ? db.from("internal_projects").update(row).eq("id", p.id).select("id") : db.from("internal_projects").insert(row).select("id");
@@ -387,7 +387,7 @@ function ProjectenInner() {
               <div className="flex items-center gap-3 lg:ml-auto">
                 <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"><Switch checked={showArchived} onCheckedChange={setShowArchived} />Toon gearchiveerd</label>
                 {viewMode === "dossiers" && <label className="flex min-h-11 items-center gap-2 text-sm text-muted-foreground"><Switch checked={showHiddenDossiers} onCheckedChange={setShowHiddenDossiers} />Toon verwijderde dossiers</label>}
-                <Button className="ml-auto min-h-11 sm:min-h-10" onClick={() => { setEditDossiers(dossierFilter ? [dossierFilter] : []); setEditProject({ status: "actief" }); }}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>
+                <Button className="ml-auto min-h-11 sm:min-h-10" onClick={() => { setEditDossiers(dossierFilter ? [dossierFilter] : []); setEditProject({ status: "te_bevestigen" }); }}><Plus className="h-4 w-4 mr-1" />Nieuw project</Button>
               </div>
             </div>
           )}
@@ -579,7 +579,7 @@ function ProjectenInner() {
                 <div><Label htmlFor="p-due">Einddatum</Label><Input id="p-due" type="date" value={editProject.due_date ?? ""} onChange={(e) => setEditProject({ ...editProject, due_date: e.target.value || null })} /></div>
                 <div><Label htmlFor="p-sdate">Statusdatum</Label><Input id="p-sdate" type="date" value={editProject.status_date ?? ""} onChange={(e) => setEditProject({ ...editProject, status_date: e.target.value || null })} /></div>
                 <div><Label>Status</Label>
-                  <Select value={editProject.status ?? "actief"} onValueChange={(v) => setEditProject({ ...editProject, status: v as ProjectStatus })}>
+                  <Select value={editProject.status ?? "te_bevestigen"} onValueChange={(v) => setEditProject({ ...editProject, status: v as ProjectStatus })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{(Object.keys(PROJECT_STATUS_LABEL) as ProjectStatus[]).map((s) => <SelectItem key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</SelectItem>)}</SelectContent>
                   </Select></div>

@@ -104,7 +104,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
   };
 
   // ---- Overzicht / projectplan ----
-  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "actief" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", status_date: "", remarks: "" });
+  const [plan, setPlan] = useState({ description: "", project_plan: "", status: "te_bevestigen" as ProjectStatus, owner_id: "", due_date: "", est: "", res: "", rec: "", planning: "", planning_date: "", status_date: "", remarks: "" });
   const [editing, setEditing] = useState(false);
   const [dossierSel, setDossierSel] = useState<string[]>([]);
   const setDossiers = useSetProjectDossiers();
