@@ -207,7 +207,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
           <h2 className="!font-sans min-w-0 break-words text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">{project.title}</h2>
           <div className="flex shrink-0 flex-wrap items-start justify-end gap-2 sm:gap-3">
             <div className="hidden sm:block"><StaffAvatars ids={people} staff={staff} /></div>
-            {!editing && !project.archived_at && <Button variant="outline" className="min-h-10" onClick={startEdit}>Project bewerken</Button>}
+            {!editing && <Button variant="outline" className="min-h-10" onClick={startEdit}>Project bewerken</Button>}
             {onSetArchived && <ArchiveProjectAction title={project.title} archived={!!project.archived_at} disabled={editing} onSetArchived={onSetArchived} />}
           </div>
         </div>
