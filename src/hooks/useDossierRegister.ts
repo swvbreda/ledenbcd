@@ -12,7 +12,7 @@ export function useDossierRegister(enabled: boolean) {
   const dossiers = useQuery({
     queryKey: ["dossier-register", uid], enabled: enabled && !!uid,
     queryFn: async () => {
-      const { data, error } = await db.from("dossier_register").select("id,parent_id,name,sort_order,jaarplan_kind,jaarplan_section,jaarplan_pages,note,archived_at,project_hidden_at").order("sort_order");
+      const { data, error } = await db.from("dossier_register").select("id,parent_id,name,sort_order,jaarplan_kind,jaarplan_section,jaarplan_pages,note,archived_at,project_hidden_at,status_summary,status_date").order("sort_order");
       if (error) throw error;
       return data as RegisterDossier[];
     },
@@ -73,6 +73,24 @@ export function useSetDossierProjectHidden() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, hide }: { id: string; hide: boolean }) => setDossierProjectHidden(db, id, hide),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["dossier-register"] }),
+  });
+}
+
+/** Slaat de handmatige algemene dossierstatus op (alleen status_summary/status_date) en leest terug. */
+export async function setDossierStatus(dbc: any, id: string, summary: string, date: string) {
+  const status_summary = summary.trim() || null;
+  const status_date = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
+  const { data, error } = await dbc.from("dossier_register").update({ status_summary, status_date }).eq("id", id).select("id,status_summary,status_date");
+  if (error) throw error;
+  if (!data?.length) throw new Error("Geen toegang");
+  return data[0] as { id: string; status_summary: string | null; status_date: string | null };
+}
+
+export function useSetDossierStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, summary, date }: { id: string; summary: string; date: string }) => setDossierStatus(db, id, summary, date),
     onSettled: () => qc.invalidateQueries({ queryKey: ["dossier-register"] }),
   });
 }

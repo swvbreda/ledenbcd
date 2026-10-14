@@ -2,13 +2,16 @@ import type { ReactNode } from "react";
 import { ChevronRight, FileText, FolderOpen } from "lucide-react";
 import type { ProjectStatus } from "@/lib/internalWork";
 import { buildTree, filterTree, OTHER_PROJECTS, projectsFor, unlinkedProjects, type DossierLink, type DossierNode, type RegisterDossier } from "@/lib/dossierRegister";
+import { DossierStatusBlock } from "@/components/projecten/DossierStatusBlock";
 import { DossierHideAction } from "@/components/projecten/DossierHideAction";
 import { CountChip, ProjectStatusBadge, surfaceCls } from "@/components/projecten/ui";
 
 type P = { id: string; title: string; archived_at: string | null; status: ProjectStatus };
 
 /** Compacte weergave: hoofddossier → subdossiers → projecten; ongekoppeld onder "Overige projecten". */
-export default function DossierGroupsView({ dossiers, links, projects, onOpen, selected = null, hidden, onSetHidden }: {
+export default function DossierGroupsView({ dossiers, links, projects, onOpen, selected = null, hidden, onSetHidden, onSetStatus }: {
+  /** Alleen voor beheerders: algemene dossierstatus bewerken. */
+  onSetStatus?: (id: string, summary: string, date: string) => Promise<void>;
   selected?: string | null;
   /** Dossiers die in Projecten verborgen zijn (alleen zichtbaar bij "Toon verwijderde dossiers"). */
   hidden?: Set<string>;
@@ -63,6 +66,8 @@ export default function DossierGroupsView({ dossiers, links, projects, onOpen, s
         return (
           <section key={d.id} className={`${surfaceCls} min-w-0 pb-2 ${isHidden(d.id) ? "border-dashed opacity-70" : ""}`}>
             {head(isHidden(d.id) ? `${d.name} (verwijderd uit overzicht)` : d.name, count(d), false, action(d))}
+            <DossierStatusBlock name={d.name} summary={d.status_summary ?? null} date={d.status_date ?? null}
+              onSave={onSetStatus ? (s, dt) => onSetStatus(d.id, s, dt) : undefined} />
             {/* Bij een gekozen subdossier geen (lege) directe lijst onder de ouder tonen. */}
             {!hideDirect && <div className="px-1">{list(projectsFor(d.id, links, projects))}</div>}
             {d.children.length > 0 && (
