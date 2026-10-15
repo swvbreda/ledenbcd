@@ -82,6 +82,11 @@ const LoginPage = () => {
     }
     if (isExtern) return <Navigate to="/extern" replace />;
     const next = consumePostLoginPath();
+    if (next && next.startsWith("/.lovable/oauth/consent")) {
+      // Volledige paginalading zodat authorization_id ongewijzigd behouden blijft.
+      window.location.replace(next);
+      return null;
+    }
     return <Navigate to={next ?? "/"} replace />;
   }
 
