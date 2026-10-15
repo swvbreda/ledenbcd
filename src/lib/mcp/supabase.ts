@@ -18,8 +18,11 @@ function env(names: string[]): string | undefined {
 export function supabaseForUser(ctx: ToolContext) {
   const token = ctx.getToken();
   if (!token) throw new Error("Verified OAuth token required");
-  const url = env(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
-  const key = env(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY"]);
+  // Runtime env first; fall back to the build-time inlined public values (URL + publishable key only).
+  const url = env(["SUPABASE_URL", "VITE_SUPABASE_URL"]) ?? import.meta.env["VITE_SUPABASE_URL"];
+  const key =
+    env(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY"]) ??
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) throw new Error("Backend configuration missing");
   return createClient(url, key, {
     global: { headers: { Authorization: `Bearer ${token}` } },
