@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.generate_agenda_share_code() TO authenticated;

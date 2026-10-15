@@ -316,6 +316,13 @@
       "when": 1792014980724,
       "tag": "0044_dossier_status",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792077614966,
+      "tag": "0045_grant_generate_agenda_share_code_authenticated",
+      "breakpoints": true
     }
   ]
 }
