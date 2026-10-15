@@ -1,11 +1,13 @@
+import { oauthReturnPath } from "./oauth-return-path";
+
 const KEY = "post_login_path";
 
 /** Bewaar het interne pad waar de gebruiker naartoe wilde vóór het inloggen. */
 export function savePostLoginPath(path: string) {
   try {
-    if (!path.startsWith("/") || path.startsWith("//")) return;
-    if (path === "/" || path.startsWith("/login") || path.startsWith("/mfa")) return;
-    sessionStorage.setItem(KEY, path);
+    const safe = oauthReturnPath(path);
+    if (safe === "/" || safe.startsWith("/login") || safe.startsWith("/mfa")) return;
+    sessionStorage.setItem(KEY, safe);
   } catch {
     /* ignore */
   }
@@ -16,7 +18,8 @@ export function consumePostLoginPath(): string | null {
   try {
     const v = sessionStorage.getItem(KEY);
     if (v) sessionStorage.removeItem(KEY);
-    return v && v.startsWith("/") && !v.startsWith("//") ? v : null;
+    const safe = oauthReturnPath(v);
+    return safe === "/" ? null : safe;
   } catch {
     return null;
   }

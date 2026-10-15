@@ -14,11 +14,13 @@ import { Route as AdviespakketControleRouteImport } from './routes/adviespakket-
 import { Route as ExternLoginRouteImport } from './routes/extern-login'
 import { Route as KoppelenRouteImport } from './routes/koppelen'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MemberConfirmRouteImport } from './routes/member-confirm'
 import { Route as MfaSetupRouteImport } from './routes/mfa-setup'
 import { Route as MfaVerifyRouteImport } from './routes/mfa-verify'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
 import { Route as DashboardAankondigingenRouteImport } from './routes/_dashboard/aankondigingen'
 import { Route as DashboardAccountsRouteImport } from './routes/_dashboard/accounts'
@@ -39,6 +41,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
 import { Route as EnqueteExternIdRouteImport } from './routes/enquete-extern.$id'
 import { Route as ExternIndexRouteImport } from './routes/extern/index'
 import { Route as ExternProfielRouteImport } from './routes/extern/profiel'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as DashboardAgendaIndexRouteImport } from './routes/_dashboard/agenda.index'
 import { Route as DashboardAgendaEventIdRouteImport } from './routes/_dashboard/agenda.$eventId'
 import { Route as DashboardCoffeeshopregisterIndexRouteImport } from './routes/_dashboard/coffeeshopregister.index'
@@ -92,6 +95,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MemberConfirmRoute = MemberConfirmRouteImport.update({
   id: '/member-confirm',
   path: '/member-confirm',
@@ -117,6 +125,12 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
   path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -216,6 +230,11 @@ const ExternIndexRoute = ExternIndexRouteImport.update({
 const ExternProfielRoute = ExternProfielRouteImport.update({
   id: '/extern/profiel',
   path: '/extern/profiel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardAgendaIndexRoute = DashboardAgendaIndexRouteImport.update({
@@ -379,11 +398,13 @@ export interface FileRoutesByFullPath {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -403,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
   '/extern/profiel': typeof ExternProfielRoute
   '/extern/': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -437,11 +459,13 @@ export interface FileRoutesByTo {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -462,6 +486,7 @@ export interface FileRoutesByTo {
   '/extern/profiel': typeof ExternProfielRoute
   '/': typeof DashboardIndexRoute
   '/extern': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -498,11 +523,13 @@ export interface FileRoutesById {
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
   '/login': typeof LoginRoute
+  '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
   '/mfa-setup': typeof MfaSetupRoute
   '/mfa-verify': typeof MfaVerifyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_dashboard/aankondigingen': typeof DashboardAankondigingenRoute
   '/_dashboard/accounts': typeof DashboardAccountsRoute
   '/_dashboard/bestuur-beheer': typeof DashboardBestuurBeheerRoute
@@ -523,6 +550,7 @@ export interface FileRoutesById {
   '/extern/profiel': typeof ExternProfielRoute
   '/_dashboard/': typeof DashboardIndexRoute
   '/extern/': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_dashboard/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/_dashboard/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
@@ -560,11 +588,13 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/mcp'
     | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/.well-known/oauth-protected-resource'
     | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
@@ -584,6 +614,7 @@ export interface FileRouteTypes {
     | '/enquete-extern/$id'
     | '/extern/profiel'
     | '/extern/'
+    | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -618,11 +649,13 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/mcp'
     | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/.well-known/oauth-protected-resource'
     | '/aankondigingen'
     | '/accounts'
     | '/bestuur-beheer'
@@ -643,6 +676,7 @@ export interface FileRouteTypes {
     | '/extern/profiel'
     | '/'
     | '/extern'
+    | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -678,11 +712,13 @@ export interface FileRouteTypes {
     | '/extern-login'
     | '/koppelen'
     | '/login'
+    | '/mcp'
     | '/member-confirm'
     | '/mfa-setup'
     | '/mfa-verify'
     | '/reset-password'
     | '/unsubscribe'
+    | '/.well-known/oauth-protected-resource'
     | '/_dashboard/aankondigingen'
     | '/_dashboard/accounts'
     | '/_dashboard/bestuur-beheer'
@@ -703,6 +739,7 @@ export interface FileRouteTypes {
     | '/extern/profiel'
     | '/_dashboard/'
     | '/extern/'
+    | '/.lovable/oauth/consent'
     | '/_dashboard/agenda/$eventId'
     | '/_dashboard/externe-partijen/$id'
     | '/_dashboard/leden/$id'
@@ -739,16 +776,19 @@ export interface RootRouteChildren {
   ExternLoginRoute: typeof ExternLoginRoute
   KoppelenRoute: typeof KoppelenRoute
   LoginRoute: typeof LoginRoute
+  McpRoute: typeof McpRoute
   MemberConfirmRoute: typeof MemberConfirmRoute
   MfaSetupRoute: typeof MfaSetupRoute
   MfaVerifyRoute: typeof MfaVerifyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AShareCodeRoute: typeof AShareCodeRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
   ExternProfielRoute: typeof ExternProfielRoute
   ExternIndexRoute: typeof ExternIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiLedenKennisbankRoute: typeof ApiLedenKennisbankRoute
   ApiPublicAdviespakketRedeemRoute: typeof ApiPublicAdviespakketRedeemRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
@@ -801,6 +841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/member-confirm': {
       id: '/member-confirm'
       path: '/member-confirm'
@@ -834,6 +881,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_dashboard/': {
@@ -974,6 +1028,13 @@ declare module '@tanstack/react-router' {
       path: '/extern/profiel'
       fullPath: '/extern/profiel'
       preLoaderRoute: typeof ExternProfielRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_dashboard/agenda/': {
@@ -1252,16 +1313,20 @@ const rootRouteChildren: RootRouteChildren = {
   ExternLoginRoute: ExternLoginRoute,
   KoppelenRoute: KoppelenRoute,
   LoginRoute: LoginRoute,
+  McpRoute: McpRoute,
   MemberConfirmRoute: MemberConfirmRoute,
   MfaSetupRoute: MfaSetupRoute,
   MfaVerifyRoute: MfaVerifyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AShareCodeRoute: AShareCodeRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   EnqueteExternIdRoute: EnqueteExternIdRoute,
   ExternProfielRoute: ExternProfielRoute,
   ExternIndexRoute: ExternIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiLedenKennisbankRoute: ApiLedenKennisbankRoute,
   ApiPublicAdviespakketRedeemRoute: ApiPublicAdviespakketRedeemRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,

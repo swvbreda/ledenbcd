@@ -15,3 +15,4 @@
 
 - Subdirectories may have their own `AGENTS.md` (e.g. `src/components/projecten/`); read it before changing files there or related internal-projects DB/server code.
 - Internal 'Projecten & taken' is admin-only (has_role 'admin' RLS) except the narrow member read RPC described there; rules for tasks, Planner, Topical, notifications and project workspace live in `src/components/projecten/AGENTS.md`.
+- The app MCP server (`src/lib/mcp/`, mounted at `/mcp`) is OAuth-only and read-only: every tool calls `requireAdmin` (admin row in user_roles under the caller's RLS) through a caller-token client, uses select-only whitelisted columns/projections with bounded pagination, and never uses service_role, generic SQL, finance/bank/UBO/private-contact data or project documents/dossiers/messages — keeps external assistants inside existing admin rights.
