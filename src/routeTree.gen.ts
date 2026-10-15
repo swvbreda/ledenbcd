@@ -41,6 +41,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
 import { Route as EnqueteExternIdRouteImport } from './routes/enquete-extern.$id'
 import { Route as ExternIndexRouteImport } from './routes/extern/index'
 import { Route as ExternProfielRouteImport } from './routes/extern/profiel'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as DashboardAgendaIndexRouteImport } from './routes/_dashboard/agenda.index'
 import { Route as DashboardAgendaEventIdRouteImport } from './routes/_dashboard/agenda.$eventId'
 import { Route as DashboardCoffeeshopregisterIndexRouteImport } from './routes/_dashboard/coffeeshopregister.index'
@@ -231,6 +232,11 @@ const ExternProfielRoute = ExternProfielRouteImport.update({
   path: '/extern/profiel',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardAgendaIndexRoute = DashboardAgendaIndexRouteImport.update({
   id: '/agenda/',
   path: '/agenda/',
@@ -418,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/enquete-extern/$id': typeof EnqueteExternIdRoute
   '/extern/profiel': typeof ExternProfielRoute
   '/extern/': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/extern/profiel': typeof ExternProfielRoute
   '/': typeof DashboardIndexRoute
   '/extern': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
@@ -542,6 +550,7 @@ export interface FileRoutesById {
   '/extern/profiel': typeof ExternProfielRoute
   '/_dashboard/': typeof DashboardIndexRoute
   '/extern/': typeof ExternIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_dashboard/agenda/$eventId': typeof DashboardAgendaEventIdRoute
   '/_dashboard/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
@@ -605,6 +614,7 @@ export interface FileRouteTypes {
     | '/enquete-extern/$id'
     | '/extern/profiel'
     | '/extern/'
+    | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/extern/profiel'
     | '/'
     | '/extern'
+    | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
     | '/externe-partijen/$id'
     | '/leden/$id'
@@ -728,6 +739,7 @@ export interface FileRouteTypes {
     | '/extern/profiel'
     | '/_dashboard/'
     | '/extern/'
+    | '/.lovable/oauth/consent'
     | '/_dashboard/agenda/$eventId'
     | '/_dashboard/externe-partijen/$id'
     | '/_dashboard/leden/$id'
@@ -776,6 +788,7 @@ export interface RootRouteChildren {
   EnqueteExternIdRoute: typeof EnqueteExternIdRoute
   ExternProfielRoute: typeof ExternProfielRoute
   ExternIndexRoute: typeof ExternIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiLedenKennisbankRoute: typeof ApiLedenKennisbankRoute
   ApiPublicAdviespakketRedeemRoute: typeof ApiPublicAdviespakketRedeemRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
@@ -1015,6 +1028,13 @@ declare module '@tanstack/react-router' {
       path: '/extern/profiel'
       fullPath: '/extern/profiel'
       preLoaderRoute: typeof ExternProfielRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_dashboard/agenda/': {
@@ -1306,6 +1326,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnqueteExternIdRoute: EnqueteExternIdRoute,
   ExternProfielRoute: ExternProfielRoute,
   ExternIndexRoute: ExternIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiLedenKennisbankRoute: ApiLedenKennisbankRoute,
   ApiPublicAdviespakketRedeemRoute: ApiPublicAdviespakketRedeemRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
