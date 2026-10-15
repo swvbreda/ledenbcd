@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "sdk_version": "3.1.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://txbfdrriwaynfeurqkea.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "ledenbestand-bcd",
+      "version": "0.1.0",
+      "title": "Ledenbestand BCD"
+    },
+    "tools": [
+      {
+        "name": "zoek_leden",
+        "title": "Leden zoeken",
+        "description": "Zoek leden op naam, bedrijfsnaam of plaats; geeft zakelijke kernprofielen met paginering.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "zoekterm": {
+              "type": "string",
+              "maxLength": 80,
+              "description": "Deel van naam, bedrijfsnaam of plaats."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "member",
+                "lead",
+                "old"
+              ],
+              "description": "Lidmaatschapsstatus."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5000,
+              "default": 0
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "lid_profiel",
+        "title": "Lidprofiel",
+        "description": "Lees het zakelijke kernprofiel van één lid (naam, zakelijk adres en contact, status, vestigingen).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "zoek_vestigingen",
+        "title": "Coffeeshopvestigingen zoeken",
+        "description": "Zoek vestigingen van leden op naam, plaats, gemeente of postcode, met paginering.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "zoekterm": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 80
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2000,
+              "default": 0
+            }
+          },
+          "required": [
+            "zoekterm"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "zoek_projecten",
+        "title": "Interne projecten zoeken",
+        "description": "Zoek interne projecten op titel en status (alleen beheerders), met paginering.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "zoekterm": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "actief",
+                "gepauzeerd",
+                "afgerond",
+                "te_bevestigen"
+              ]
+            },
+            "inclusief_gearchiveerd": {
+              "type": "boolean",
+              "default": false
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2000,
+              "default": 0
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "zoek_taken",
+        "title": "Interne taken zoeken",
+        "description": "Zoek interne taken, optioneel per project of status (alleen beheerders), met paginering.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "status": {
+              "type": "string",
+              "maxLength": 30
+            },
+            "zoekterm": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5000,
+              "default": 0
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
