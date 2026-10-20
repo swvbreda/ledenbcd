@@ -40,10 +40,10 @@ describe("SupportThreadView", () => {
     wrap(<SupportThreadView thread={thread("t1")} mode="admin" />);
     fireEvent.change(screen.getByLabelText("Antwoord"), { target: { value: "antwoord" } });
     fireEvent.click(screen.getByText("Verstuur als WhatsApp-bericht"));
-    expect(await screen.findByRole("alert")).toHaveTextContent(WA_TRANSPORT_UNKNOWN);
+    expect((await screen.findByRole("alert")).textContent).toBe(WA_TRANSPORT_UNKNOWN);
     expect(screen.queryByText(/niets verstuurd/i)).toBeNull();
     expect((screen.getByLabelText("Antwoord") as HTMLTextAreaElement).value).toBe("antwoord");
-    await waitFor(() => expect(screen.getByText("Verstuur als WhatsApp-bericht").closest("button")).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByText("Verstuur als WhatsApp-bericht").closest("button")?.disabled).toBe(false));
     fireEvent.click(screen.getByText("Verstuur als WhatsApp-bericht"));
     await waitFor(() => expect(sendWa).toHaveBeenCalledTimes(2));
     expect(sendWa.mock.calls[0][0].data.clientKey).toBe(sendWa.mock.calls[1][0].data.clientKey);
