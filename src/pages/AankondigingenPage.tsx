@@ -204,6 +204,7 @@ export default function AankondigingenPage() {
                   {renderWhatsAppText(item.body)}
                 </p>
                 <AnnouncementAttachment announcementId={item.id} />
+                {(() => { const u = item.link_url ?? firstUrl(item.body); return u ? <LinkPreviewCard url={u} /> : null; })()}
                 <div className="flex flex-wrap gap-2">
                   {item.link_url && (
                     <Button asChild size="sm" variant="outline">
