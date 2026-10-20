@@ -323,6 +323,13 @@
       "when": 1792077614966,
       "tag": "0045_grant_generate_agenda_share_code_authenticated",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792488519462,
+      "tag": "0046_hide_leads_from_ordinary_members",
+      "breakpoints": true
     }
   ]
 }

@@ -23,23 +23,24 @@ type ViewTab = "leden" | "leads" | "coffeeshops";
 const LedenPage = () => {
   const { isAdmin, isInhuur } = useAuth();
   const canSeeLeads = isAdmin || isInhuur;
-  const { allMembersAndLeads, isLoading: dataLoading } = useMembersData();
+  const { isLoading: dataLoading, isError: dataError, refetch } = useMembersData();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [showArchived, setShowArchived] = useState(false);
   const [activeTab, setActiveTab] = useState<ViewTab>(
     tabParam === "coffeeshops"
       ? "coffeeshops"
-      : tabParam === "leads"
+      : tabParam === "leads" && canSeeLeads
       ? "leads"
       : "leden"
   );
 
   useEffect(() => {
     if (tabParam === "coffeeshops") setActiveTab("coffeeshops");
-    else if (tabParam === "leads") setActiveTab("leads");
+    else if (tabParam === "leads") setActiveTab(canSeeLeads ? "leads" : "leden");
     else if (tabParam === "leden") setActiveTab("leden");
-  }, [tabParam]);
+  }, [tabParam, canSeeLeads]);
+  const visibleTab = activeTab === "leads" && !canSeeLeads ? "leden" : activeTab;
   const {
     searchQuery, setSearchQuery,
     filterCity, setFilterCity,
@@ -62,8 +63,8 @@ const LedenPage = () => {
   const leadIdSet = useMemo(() => activeLeadIds, [activeLeadIds]);
 
   const totalLocations = useMemo(
-    () => mergedSearched.reduce((sum, m) => sum + m.aantalLocaties, 0),
-    [mergedSearched]
+    () => mergedSearched.filter((m) => canSeeLeads || !leadIdSet.has(m.id)).reduce((sum, m) => sum + m.aantalLocaties, 0),
+    [mergedSearched, canSeeLeads, leadIdSet]
   );
 
   const ledenOnly = useMemo(
@@ -77,10 +78,10 @@ const LedenPage = () => {
 
   const subtitle = showArchived
     ? `${archivedMembers.length} oud-leden`
-    : activeTab === "coffeeshops"
+    : visibleTab === "coffeeshops"
     ? `${totalLocations} coffeeshops`
-    : canSeeLeads
-    ? `${mergedSearched.length} leden + leads`
+    : visibleTab === "leads"
+    ? `${leadsOnly.length} leads`
     : `${ledenOnly.length} leden`;
 
   if (dataLoading) {
@@ -91,15 +92,22 @@ const LedenPage = () => {
     );
   }
 
+  if (dataError) return (
+    <div className="p-4 sm:p-6 space-y-3">
+      <p role="alert">Het ledenbestand kon niet volledig worden geladen.</p>
+      <Button variant="outline" onClick={refetch}>Opnieuw proberen</Button>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-full min-w-0 p-4 sm:p-6 space-y-4 overflow-x-hidden">
       <BcdHeroBanner
         title={
           showArchived
             ? "Oud-leden"
-            : activeTab === "leden"
+            : visibleTab === "leden"
             ? "Ledenbestand"
-            : activeTab === "leads"
+            : visibleTab === "leads"
             ? "Leads"
             : "Coffeeshopbestand"
         }
@@ -125,7 +133,7 @@ const LedenPage = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <ExportButton />
             <MailingExportButton members={mergedSearched} />
-            <NewMemberDialog type={activeTab === "leads" ? "lead" : "member"} />
+            <NewMemberDialog type={visibleTab === "leads" ? "lead" : "member"} />
           </div>
         )}
       </div>
@@ -133,7 +141,7 @@ const LedenPage = () => {
       {!showArchived && (
         <>
           <Tabs
-            value={activeTab}
+            value={visibleTab}
             onValueChange={(v) => setActiveTab(v as ViewTab)}
             className="w-full max-w-full min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
@@ -187,12 +195,12 @@ const LedenPage = () => {
             </p>
           </div>
         )
-      ) : activeTab === "leden" ? (
+      ) : visibleTab === "leden" ? (
         <MemberTable members={ledenOnly} />
-      ) : activeTab === "leads" ? (
+      ) : visibleTab === "leads" ? (
         <MemberTable members={leadsOnly} />
       ) : (
-        <CoffeeshopTable members={mergedSearched} leadIds={leadIdSet} />
+        <CoffeeshopTable members={canSeeLeads ? mergedSearched : ledenOnly} leadIds={leadIdSet} />
       )}
     </div>
   );

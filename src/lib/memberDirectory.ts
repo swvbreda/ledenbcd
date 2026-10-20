@@ -41,3 +41,8 @@ export function mergeDirectory<T extends DirectoryRow>(ownRows: T[], directoryRo
   for (const row of ownRows) byId.set(row.id, row);
   return Array.from(byId.values()).sort((a, b) => a.id - b.id);
 }
+
+/** Filter at the shared boundary, including previously cached privileged rows. */
+export function visibleMemberRows<T extends DirectoryRow>(rows: T[], canSeeLeads: boolean): T[] {
+  return rows.filter((row) => row.member_type !== "lead" || canSeeLeads);
+}

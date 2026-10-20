@@ -11,6 +11,7 @@
 - User rights load through the single-flight, generation-guarded controller in `src/lib/accessController.ts`; overlapping auth events must not race refreshes or let stale results/timeouts overwrite verified rights.
 - Dashboard representation figures (totals, share, gemeenten, G4, experiment) for every role come only from public-stats via summarizeRepresentation; local member counts are incomplete and fallbacks must never be shown as fact.
 - Ordinary members get core stats from the member directory plus aggregate-only RPCs (e.g. get_member_bank_aggregate); register/UBO/survey hooks stay admin/board-only.
+- Lead visibility is denied at restrictive SELECT RLS and shared member/query boundaries; lead conversion caches are user-scoped and privileged-only, and member totals count canonical member rows without reconstructing converted leads.
 - Het Strategiebureau eligibility check uses one-time PKCE codes (hashed, 60s, service-only tables without policies, exact audience allowlist in `src/lib/adviesEligibility.ts`) and returns only `{eligible}`; the bureau must never receive BCD credentials, tokens or member data.
 
 - Subdirectories may have their own `AGENTS.md` (e.g. `src/components/projecten/`); read it before changing files there or related internal-projects DB/server code.

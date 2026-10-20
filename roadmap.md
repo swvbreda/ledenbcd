@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Open
+- [x] Leads afgeschermd via leesrechten en gedeelde gegevensfilters; ledentotaal gecontroleerd (119 actieve leden); 32 regressietests geslaagd. Controle met echte ledensessie nog niet uitgevoerd; geen gegevenswijzigingen of publicatie.
 - [ ] Vereenvoudigde ledentoegang met persoonlijke bevestigings-/inloglinks; veilig koppelen en geïsoleerd testen; niet publiceren.
 - [x] Deel-previews: goedgekeurd en verwerkt in preview; nog niet publiceren.
 - [ ] Financiële module: Informer als enige bron (canonieke tabellen, jaarsync, overrides, betaalkoppelingen, controlemodule)
