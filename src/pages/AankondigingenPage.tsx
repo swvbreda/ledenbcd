@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
+import { LinkPreviewCard, firstUrl } from "@/components/LinkPreviewCard";
 import { AnnouncementAttachment } from "@/components/AnnouncementAttachment";
 import { renderWhatsAppText, plainWhatsAppText } from "@/lib/whatsappFormat";
 import { Badge } from "@/components/ui/badge";
