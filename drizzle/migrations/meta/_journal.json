@@ -400,6 +400,13 @@
       "when": 1792518470795,
       "tag": "0056_support_recipient_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1792526596790,
+      "tag": "0057_bcd_documenten_rate_limit",
+      "breakpoints": true
     }
   ]
 }
