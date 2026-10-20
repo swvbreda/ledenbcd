@@ -19,7 +19,7 @@ import {
 } from "@/lib/knowledgeBase";
 import { toast } from "sonner";
 
-const KENNISBANK_URL = "https://coffeeshopbond.nl/kennisbank";
+const KENNISBANK_URL = "https://coffeeshopbond.nl/kennisbank?embed=1";
 
 function DocumentsPanel({ documenten }: { documenten: KnowledgeDocument[] }) {
   const { session } = useAuth();
@@ -141,7 +141,7 @@ export default function KennisbankPage() {
           title="BCD Kennisbank"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          className="block h-[calc(100vh-14rem)] min-h-[520px] w-full max-w-full border-0"
+          className="block h-[calc(100dvh-10rem)] min-h-[520px] w-full max-w-full border-0"
         />
       </div>
 
