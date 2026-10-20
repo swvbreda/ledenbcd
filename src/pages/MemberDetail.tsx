@@ -310,7 +310,7 @@ const MemberDetail = () => {
               </div>
 
               {(isAdmin || isOwnProfile) && !editing && (
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={isLoading}>
                     <Pencil size={14} /> {isLoading ? "Laden..." : "Bewerken"}
                   </Button>

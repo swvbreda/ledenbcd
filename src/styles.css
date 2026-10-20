@@ -158,6 +158,8 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    /* clip cannot be scrolled programmatically (iOS shifts hidden overflow sideways) */
+    overflow-x: clip;
     min-width: 0;
   }
 
