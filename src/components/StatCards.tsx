@@ -3,9 +3,6 @@ import { Users, Building2, MapPin, PieChart, BarChart3 } from "lucide-react";
 import { summarizeRepresentation } from "@/lib/representationSummary";
 import type { Member } from "@/data/types";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
-import { useMembersData } from "@/contexts/MembersDataContext";
-import { useLeadConversions } from "@/hooks/useLeadConversions";
-import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { pctColor } from "@/lib/pctColor";
 
 
@@ -13,27 +10,8 @@ interface StatCardsProps {
   members: Member[];
 }
 
-const StatCards = ({ members }: StatCardsProps) => {
+const StatCards = (_props: StatCardsProps) => {
   const navigate = useNavigate();
-  const { rawLeads } = useMembersData();
-  const { members: mergedMembers } = useMergedMembers(members);
-  const { members: mergedLeads } = useMergedMembers(rawLeads);
-
-  const { conversions } = useLeadConversions();
-  const convertedLeadIds = new Set(conversions.map((c) => c.lead_id));
-  const activeLeads = mergedLeads.filter((l) => !convertedLeadIds.has(l.id));
-  const activeLeadsCount = activeLeads.length;
-
-  // Build converted leads as members with merged edits
-  const convertedAsMembers = conversions.map((conv) => {
-    const originalLead = mergedLeads.find((l) => l.id === conv.lead_id);
-    if (!originalLead) return null;
-    return { ...originalLead, id: conv.lidnummer } as Member;
-  }).filter(Boolean) as Member[];
-
-  const totalMembers = mergedMembers.length + convertedAsMembers.length;
-
-  // Use merged members + converted leads + active leads for all location/market calculations
   const stats = useRegisterStats();
   const { dataUpdatedAt, refetch: refetchStats, isFetching: statsFetching } = stats;
   const rep = summarizeRepresentation(stats);

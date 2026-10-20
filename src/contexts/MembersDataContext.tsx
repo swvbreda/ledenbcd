@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Member } from "@/data/types";
 import { useAuth } from "@/hooks/useAuth";
-import { directoryAccess, mergeDirectory } from "@/lib/memberDirectory";
+import { directoryAccess, mergeDirectory, visibleMemberRows } from "@/lib/memberDirectory";
 
 interface MembersDataContextType {
   rawMembers: Member[];
@@ -12,6 +12,7 @@ interface MembersDataContextType {
   allRepresented: Member[];
   allMembersAndLeads: Member[];
   isLoading: boolean;
+  isError: boolean;
   refetch: () => void;
 }
 
@@ -28,6 +29,7 @@ const MembersDataContext = createContext<MembersDataContextType>({
   allRepresented: [],
   allMembersAndLeads: [],
   isLoading: true,
+  isError: false,
   refetch: () => {},
 });
 
@@ -40,7 +42,7 @@ const toMember = (row: MembersDataRow): Member => {
 };
 
 export function MembersDataProvider({ children }: { children: ReactNode }) {
-  const { user, isAdmin, isBoard, isExtern, isInhuur, linkedMemberIds } = useAuth();
+  const { user, loading: authLoading, isAdmin, isBoard, isExtern, isInhuur, linkedMemberIds } = useAuth();
   const queryClient = useQueryClient();
 
   const { canReadAll, canUseDirectory } = directoryAccess({
@@ -51,22 +53,22 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
     linkedMemberIds,
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["members-data", user?.id ?? null, canReadAll, canUseDirectory],
-    enabled: !!user,
+  const canSeeLeads = isAdmin || isBoard || isInhuur;
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["members-data", user?.id ?? null, canReadAll, canUseDirectory, canSeeLeads],
+    enabled: !!user && !authLoading,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("members_data")
         .select("id, member_type, data");
+      if (!canSeeLeads) query = query.neq("member_type", "lead");
+      const { data, error } = await query;
       if (error) throw error;
       const ownRows = (data ?? []) as MembersDataRow[];
       if (!canUseDirectory) return ownRows;
 
       const { data: directory, error: dirError } = await supabase.rpc("get_members_directory");
-      if (dirError) {
-        console.warn("Ledendirectory niet beschikbaar", dirError);
-        return ownRows;
-      }
+      if (dirError) throw dirError;
       return mergeDirectory(ownRows, (directory ?? []) as MembersDataRow[]);
     },
   });
@@ -76,7 +78,7 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const { rawMembers, rawLeads, rawOldMembers, allRepresented, allMembersAndLeads } = useMemo(() => {
-    const rows = data ?? [];
+    const rows = visibleMemberRows(!user || authLoading ? [] : data ?? [], canSeeLeads);
     const members = rows.filter((r) => r.member_type === "member").map(toMember);
     const leads = rows.filter((r) => r.member_type === "lead").map(toMember);
     const oldMembers = rows.filter((r) => r.member_type === "old").map(toMember);
@@ -88,11 +90,11 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
       allRepresented: [...members, ...leads],
       allMembersAndLeads: [...members, ...leads],
     };
-  }, [data]);
+  }, [data, user, authLoading, canSeeLeads]);
 
   return (
     <MembersDataContext.Provider
-      value={{ rawMembers, rawLeads, rawOldMembers, allRepresented, allMembersAndLeads, isLoading, refetch }}
+      value={{ rawMembers, rawLeads, rawOldMembers, allRepresented, allMembersAndLeads, isLoading: authLoading || isLoading, isError, refetch }}
     >
       {children}
     </MembersDataContext.Provider>
