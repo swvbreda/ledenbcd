@@ -351,6 +351,13 @@
       "when": 1792501927832,
       "tag": "0049_whatsapp_announcement_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792502415736,
+      "tag": "0050_whatsapp_publish_own_messages",
+      "breakpoints": true
     }
   ]
 }
