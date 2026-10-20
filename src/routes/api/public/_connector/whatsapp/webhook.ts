@@ -43,6 +43,12 @@ export const Route = createFileRoute("/api/public/_connector/whatsapp/webhook")(
               complete: async (id, path, sha, size, mime) => {
                 const r = await rpc("whatsapp_attachment_complete", { p_id: id, p_path: path, p_sha256: sha, p_size: size, p_mime: mime });
                 if (r.error) throw new Error("complete_failed");
+                try {
+                  const { copyAttachmentToProjects } = await import("@/lib/announcementProjectDocs.server");
+                  await copyAttachmentToProjects(supabaseAdmin, path);
+                } catch {
+                  console.error("[whatsapp-connector] project document copy skipped");
+                }
               },
               fail: async (id, error, final) => {
                 await rpc("whatsapp_attachment_fail", { p_id: id, p_error: error, p_final: final });
