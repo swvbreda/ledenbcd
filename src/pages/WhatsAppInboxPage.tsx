@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { maskWaId } from "@/lib/whatsappWebhook";
 import WhatsAppPublishers from "@/components/WhatsAppPublishers";
+import SupportAdminInbox from "@/components/support/SupportAdminInbox";
 import { ANNOUNCEMENT_DECISIONS } from "@/lib/whatsappPublishers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,8 @@ const WhatsAppInboxPage = () => {
   const navigate = useNavigate();
   const allowed = isAdmin || isBoard;
   const [selected, setSelected] = useState<string | null>(null);
+  const [tab, setTab] = useState<"vragen" | "whatsapp">("vragen");
+  const shownTab = isAdmin ? tab : "whatsapp";
 
   useWhatsAppRealtime(allowed);
   const {
@@ -99,9 +102,17 @@ const WhatsAppInboxPage = () => {
   return (
     <div className="p-4 sm:p-6 space-y-4 overflow-hidden">
       <BcdHeroBanner
-        title="WhatsApp-inbox"
-        subtitle="Binnengekomen berichten"
+        title="Inbox"
+        subtitle="Ledenvragen en WhatsApp-berichten"
       />
+      {isAdmin && (
+        <div className="flex flex-wrap gap-2" role="tablist">
+          <Button role="tab" aria-selected={tab === "vragen"} size="sm" variant={tab === "vragen" ? "default" : "outline"} onClick={() => setTab("vragen")}>Ledenvragen</Button>
+          <Button role="tab" aria-selected={tab === "whatsapp"} size="sm" variant={tab === "whatsapp" ? "default" : "outline"} onClick={() => setTab("whatsapp")}>Alle WhatsApp-berichten</Button>
+        </div>
+      )}
+      {shownTab === "vragen" && <SupportAdminInbox />}
+      {shownTab === "whatsapp" && (<>
       {isAdmin && <WhatsAppPublishers />}
 
       {error && (
@@ -240,6 +251,7 @@ const WhatsAppInboxPage = () => {
           </CardContent>
         </Card>
       )}
+      </>)}
     </div>
   );
 };

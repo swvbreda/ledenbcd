@@ -4479,6 +4479,163 @@ export type Database = {
           },
         ]
       }
+      support_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          message_id: string
+          mime: string
+          path: string
+          size: number
+          thread_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          message_id: string
+          mime: string
+          path: string
+          size: number
+          thread_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          message_id?: string
+          mime?: string
+          path?: string
+          size?: number
+          thread_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "support_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_attachments_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "support_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          author_kind: string
+          author_user_id: string | null
+          body: string
+          channel: string
+          client_key: string | null
+          created_at: string
+          id: string
+          sent_at: string
+          thread_id: string
+          wa_error: string | null
+          wa_message_id: string | null
+          wa_status: string | null
+        }
+        Insert: {
+          author_kind: string
+          author_user_id?: string | null
+          body: string
+          channel: string
+          client_key?: string | null
+          created_at?: string
+          id?: string
+          sent_at?: string
+          thread_id: string
+          wa_error?: string | null
+          wa_message_id?: string | null
+          wa_status?: string | null
+        }
+        Update: {
+          author_kind?: string
+          author_user_id?: string | null
+          body?: string
+          channel?: string
+          client_key?: string | null
+          created_at?: string
+          id?: string
+          sent_at?: string
+          thread_id?: string
+          wa_error?: string | null
+          wa_message_id?: string | null
+          wa_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "support_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_threads: {
+        Row: {
+          admin_unread: boolean
+          channel: string
+          created_at: string
+          id: string
+          last_activity_at: string
+          member_id: number
+          member_unread: boolean
+          project_id: string | null
+          status: string
+          subject: string
+          user_id: string
+          wa_link_id: string | null
+        }
+        Insert: {
+          admin_unread?: boolean
+          channel?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          member_id: number
+          member_unread?: boolean
+          project_id?: string | null
+          status?: string
+          subject: string
+          user_id: string
+          wa_link_id?: string | null
+        }
+        Update: {
+          admin_unread?: boolean
+          channel?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          member_id?: number
+          member_unread?: boolean
+          project_id?: string | null
+          status?: string
+          subject?: string
+          user_id?: string
+          wa_link_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_threads_wa_link_id_fkey"
+            columns: ["wa_link_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_member_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -4932,6 +5089,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_link_attempts: {
+        Row: {
+          at: string
+          id: number
+          phone: string
+          success: boolean
+        }
+        Insert: {
+          at?: string
+          id?: never
+          phone: string
+          success: boolean
+        }
+        Update: {
+          at?: string
+          id?: never
+          phone?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
+      whatsapp_link_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_member_links: {
+        Row: {
+          id: string
+          member_id: number
+          phone: string
+          revoked_at: string | null
+          revoked_reason: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          id?: string
+          member_id: number
+          phone: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          id?: string
+          member_id?: number
+          phone?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
       }
       whatsapp_messages: {
         Row: {
@@ -5610,6 +5845,70 @@ export type Database = {
         Args: { _name: string; _value: string }
         Returns: undefined
       }
+      support_add_attachment: {
+        Args: {
+          p_file_name: string
+          p_message: string
+          p_path: string
+          p_thread: string
+        }
+        Returns: string
+      }
+      support_admin_reply: {
+        Args: { p_body: string; p_client_key: string; p_thread: string }
+        Returns: string
+      }
+      support_admin_set_status: {
+        Args: { p_status: string; p_thread: string }
+        Returns: undefined
+      }
+      support_admin_threads: {
+        Args: never
+        Returns: {
+          admin_unread: boolean
+          channel: string
+          id: string
+          last_activity_at: string
+          link_active: boolean
+          member_id: number
+          member_name: string
+          project_id: string
+          status: string
+          subject: string
+        }[]
+      }
+      support_admin_wa_revoke: { Args: { p_link: string }; Returns: undefined }
+      support_can_read_thread: { Args: { _thread: string }; Returns: boolean }
+      support_create_thread: {
+        Args: {
+          p_body: string
+          p_client_key: string
+          p_project_id: string
+          p_subject: string
+        }
+        Returns: string
+      }
+      support_mark_read: { Args: { p_thread: string }; Returns: undefined }
+      support_member_id: { Args: { _uid: string }; Returns: number }
+      support_member_reply: {
+        Args: { p_body: string; p_client_key: string; p_thread: string }
+        Returns: string
+      }
+      support_wa_create_code: { Args: never; Returns: string }
+      support_wa_finish_reply: {
+        Args: {
+          p_error: string
+          p_message: string
+          p_outcome: string
+          p_wa_id: string
+        }
+        Returns: undefined
+      }
+      support_wa_reserve_reply: {
+        Args: { p_body: string; p_client_key: string; p_thread: string }
+        Returns: Json
+      }
+      support_wa_unlink: { Args: never; Returns: undefined }
       sync_member_allowed_emails: {
         Args: { _member_id: number }
         Returns: undefined

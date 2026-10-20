@@ -22,6 +22,7 @@ import {
   BookOpen,
   Megaphone,
   MessageCircle,
+  HelpCircle,
 } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -163,6 +164,21 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       {registerItem}
+                      {item.title === "Aankondigingen" && !isExtern && !isInhuur && !!linkedMemberId && (
+                        <SidebarMenuItem key="Mijn-vragen">
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to="/mijn-vragen"
+                              className="hover:bg-sidebar-accent/50"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium"
+                              onClick={closeMobile}
+                            >
+                              <HelpCircle className="mr-2 h-4 w-4" />
+                              {!collapsed && <span>Mijn vragen</span>}
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
                       {item.title === "Jaarplan" && canSeeMemberProjects && (
                         <SidebarMenuItem key="Projecten-leden">
                           <SidebarMenuButton asChild>
@@ -340,7 +356,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild>
                         <NavLink to="/whatsapp-inbox" onClick={closeMobile}>
                           <MessageCircle className="mr-2 h-4 w-4" />
-                          {!collapsed && <span>WhatsApp-inbox</span>}
+                          {!collapsed && <span>{isAdmin ? "Inbox" : "WhatsApp-inbox"}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
