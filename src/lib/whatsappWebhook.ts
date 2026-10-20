@@ -14,6 +14,24 @@ export interface ParsedWhatsAppMessage {
   sentAt: string | null;
 }
 
+/** Only real incoming message arrays; never echoes, history or statuses. */
+export function incomingMessageEnvelopes(payload: unknown): { message: Record<string, unknown>; recipient: string | null }[] {
+  const result: { message: Record<string, unknown>; recipient: string | null }[] = [];
+  const root = payload as { entry?: { changes?: { value?: { metadata?: { phone_number_id?: unknown }; messages?: Record<string, unknown>[] } }[] }[] };
+  if (!Array.isArray(root?.entry)) return result;
+  for (const entry of root.entry) {
+    if (!Array.isArray(entry?.changes)) continue;
+    for (const change of entry.changes) {
+      const value = change?.value;
+      if (!Array.isArray(value?.messages)) continue;
+      for (const message of value.messages) {
+        if (message && typeof message.id === "string" && typeof message.from === "string") result.push({ message, recipient: typeof value.metadata?.phone_number_id === "string" ? value.metadata.phone_number_id : null });
+      }
+    }
+  }
+  return result;
+}
+
 /** Vergelijking zonder vroegtijdige exit, om timinglekken te beperken. */
 export function timingSafeEqualString(a: string, b: string): boolean {
   if (a.length !== b.length) return false;

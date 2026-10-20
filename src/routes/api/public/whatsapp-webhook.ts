@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { Json } from "@/integrations/supabase/types";
 import {
   parseIncomingMessages,
-  previewFor,
+  incomingMessageEnvelopes,
   verifyChallenge,
   verifySignature,
 } from "@/lib/whatsappWebhook";
@@ -80,26 +81,14 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
         const { supabaseAdmin } =
           await import("@/integrations/supabase/client.server");
 
-        for (const message of messages) {
-          // De databasefunctie accepteert NULL voor de optionele velden;
-          // de gegenereerde typen kennen alleen de verplichte variant.
-          const args = {
-            p_phone: message.waId,
-            p_profile_name: message.profileName,
-            p_wa_message_id: message.waMessageId,
-            p_message_type: message.messageType,
-            p_body: message.body,
-            p_media_type: message.mediaMimeType,
-            p_sent_at: message.sentAt,
-            p_preview: previewFor(message),
-          } as unknown as Parameters<
-            typeof supabaseAdmin.rpc<"whatsapp_ingest_message">
-          >[1];
-
-          const { error } = await supabaseAdmin.rpc(
-            "whatsapp_ingest_message",
-            args,
-          );
+        for (const envelope of incomingMessageEnvelopes(payload)) {
+          const message = messages.find(m => m.waMessageId === envelope.message.id && m.waId === envelope.message.from);
+          if (!message) continue;
+          const { error } = await supabaseAdmin.rpc("whatsapp_ingest_verified", {
+            p_message: envelope.message as Json,
+            p_recipient: envelope.recipient ?? "",
+            p_parsed: { ...message },
+          });
 
           if (error) {
             console.error("[whatsapp-webhook] kon bericht niet opslaan", {

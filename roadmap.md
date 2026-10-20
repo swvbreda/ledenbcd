@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Open
+- [x] WhatsApp → Aankondigingen geïmplementeerd: 33 unit- en 3 rendertests, geïsoleerde SQL-rollbackproeven en 12 gelijktijdige ingests → 1 aankondiging; admin-preview standaard deny zichtbaar. Review/release-afbakening: docs/whatsapp-release-review.md. Geen echte aankondiging/notificatie of publicatie.
+- [ ] WhatsApp activeren/verifiëren: echt publishernummer ontbreekt; allowlist blijft leeg. Selectieve release vereist exact laatst gepubliceerde commit + afzonderlijke releaseworkflow zonder persoonlijke toegang/deel-previews/Agenda-mailactie; daarna één echte forwarded ontvangst tot ledenweergave controleren.
 - [x] Minimale WhatsApp connector-ontvanger: officiële handtekeningcontrole, duurzame admin-inbox, bestaande idempotente ontvangst, herstel op vervolgcallbacks; 29 tests en rollback-only opslagregressie geslaagd. Nog niet gepubliceerd; echte callback pas na deploy verifiëren. Geen verzending/import.
 - [x] Leads afgeschermd via leesrechten en gedeelde gegevensfilters; 32 regressietests geslaagd. Preview met echte Bulldog-ledensessie: 119 leden, geen leads op overzicht/ledenlijst of via leadtab-link; admin Simone en Bernard: 119 leden en 9 leads apart. Bernard heeft adminrechten: zuivere bestuursrol blijft ongecontroleerd totdat een bestuursaccount zonder adminrechten is aangewezen; geen rollen/inhoud gewijzigd of publicatie.
 - [ ] Vereenvoudigde ledentoegang met persoonlijke bevestigings-/inloglinks; veilig koppelen en geïsoleerd testen; niet publiceren.

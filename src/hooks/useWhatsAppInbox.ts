@@ -20,6 +20,7 @@ export interface WhatsAppMessage {
   media_type: string | null;
   timestamp: string;
   read_by_us_at: string | null;
+  wa_message_id: string | null;
 }
 
 export function useWhatsAppConversations(enabled: boolean) {
@@ -47,9 +48,9 @@ export function useWhatsAppMessages(phone: string | null) {
       const { data, error } = await supabase
         .from("whatsapp_messages")
         .select(
-          "id, phone, direction, message_type, body, media_type, timestamp, read_by_us_at",
+          "id, phone, direction, message_type, body, media_type, timestamp, read_by_us_at, wa_message_id",
         )
-        .eq("phone", phone!)
+        .eq("phone", phone ?? "")
         .order("timestamp", { ascending: true });
       if (error) throw error;
       return data ?? [];
