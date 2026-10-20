@@ -17,6 +17,7 @@ export function useMyThreads(userId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: ["support-threads", "mine", userId],
     enabled: enabled && !!userId,
+    refetchInterval: SUPPORT_POLL_MS,
     queryFn: async (): Promise<SupportThread[]> => {
       const { data, error } = await supabase.from("support_threads")
         .select("id,subject,status,channel,admin_unread,member_unread,last_activity_at,member_id,project_id")
@@ -31,6 +32,7 @@ export function useAdminThreads(userId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: ["support-threads", "admin", userId],
     enabled: enabled && !!userId,
+    refetchInterval: SUPPORT_POLL_MS,
     queryFn: async (): Promise<SupportThread[]> => {
       const { data, error } = await supabase.rpc("support_admin_threads");
       if (error) throw error;
@@ -43,6 +45,7 @@ export function useThreadDetail(userId: string | undefined, threadId: string | n
   return useQuery({
     queryKey: ["support-thread", userId, threadId],
     enabled: !!userId && !!threadId,
+    refetchInterval: SUPPORT_POLL_MS,
     queryFn: async () => {
       const [m, a] = await Promise.all([
         supabase.from("support_messages")
@@ -52,20 +55,16 @@ export function useThreadDetail(userId: string | undefined, threadId: string | n
       ]);
       if (m.error) throw m.error;
       if (a.error) throw a.error;
-      const urls: Record<string, string> = {};
-      for (const att of a.data ?? []) {
-        const s = await supabase.storage.from("support-attachments").createSignedUrl(att.path, 300);
-        if (s.data?.signedUrl) urls[att.id] = s.data.signedUrl;
-      }
-      return { messages: (m.data ?? []) as SupportMessage[], attachments: (a.data ?? []) as SupportAttachment[], urls };
+      // No signed URLs here: they are minted on explicit click (openSupportAttachment) under current RLS.
+      return { messages: (m.data ?? []) as SupportMessage[], attachments: (a.data ?? []) as SupportAttachment[] };
     },
   });
 }
 
-export function useMemberProjects(enabled: boolean) {
+export function useMemberProjects(userId: string | undefined, enabled: boolean) {
   return useQuery({
-    queryKey: ["member-project-options"],
-    enabled,
+    queryKey: ["member-project-options", userId],
+    enabled: enabled && !!userId,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_member_project_status");
       if (error) throw error;
@@ -74,10 +73,11 @@ export function useMemberProjects(enabled: boolean) {
   });
 }
 
-export function useMyWhatsAppLink(userId: string | undefined, enabled: boolean) {
+export function useMyWhatsAppLink(userId: string | undefined, enabled: boolean, poll = false) {
   return useQuery({
     queryKey: ["support-wa-link", userId],
     enabled: enabled && !!userId,
+    refetchInterval: poll ? 5_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.from("whatsapp_member_links")
         .select("id,phone,verified_at").eq("user_id", userId!).is("revoked_at", null).maybeSingle();
@@ -85,6 +85,15 @@ export function useMyWhatsAppLink(userId: string | undefined, enabled: boolean) 
       return data;
     },
   });
+}
+
+/** Polls only the caller's own RLS-scoped rows while the tab is visible (react-query skips background tabs). */
+export const SUPPORT_POLL_MS = 20_000;
+
+/** Mint a short-lived signed URL only on explicit click; RLS on storage decides. Never a public URL. */
+export async function openSupportAttachment(path: string): Promise<string | null> {
+  const s = await supabase.storage.from("support-attachments").createSignedUrl(path, 60);
+  return s.error || !s.data?.signedUrl ? null : s.data.signedUrl;
 }
 
 export async function uploadAttachments(threadId: string, messageId: string, userId: string, files: File[]) {
