@@ -4730,6 +4730,48 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_announcement_decisions: {
+        Row: {
+          announcement_id: string | null
+          decided_at: string
+          decision: string
+          wa_message_id: string
+        }
+        Insert: {
+          announcement_id?: string | null
+          decided_at?: string
+          decision: string
+          wa_message_id: string
+        }
+        Update: {
+          announcement_id?: string | null
+          decided_at?: string
+          decision?: string
+          wa_message_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_announcement_publishers: {
+        Row: {
+          authorized_by: string
+          enabled: boolean
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          authorized_by: string
+          enabled?: boolean
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          authorized_by?: string
+          enabled?: boolean
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_conversations: {
         Row: {
           archived: boolean
@@ -5511,9 +5553,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      whatsapp_ingest_verified: {
+        Args: { p_message: Json; p_parsed: Json; p_recipient: string }
+        Returns: undefined
+      }
       whatsapp_mark_conversation_read: {
         Args: { p_conversation_id: string }
         Returns: number
+      }
+      whatsapp_publish_forwarded: {
+        Args: { p_message: Json; p_recipient: string }
+        Returns: undefined
+      }
+      whatsapp_set_publisher: {
+        Args: { p_enabled: boolean; p_phone: string }
+        Returns: undefined
       }
     }
     Enums: {
