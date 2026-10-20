@@ -19,7 +19,7 @@ describe("processAttachment", () => {
     await processAttachment({ wa_message_id: "wamid.1", media_id: "123", media_mime: "application/pdf" }, d);
     expect(d.upload).toHaveBeenCalledTimes(1);
     expect(d.complete).toHaveBeenCalledTimes(1);
-    expect(d.complete.mock.calls[0][3]).toBe(4);
+    expect((d.complete.mock.calls[0] as unknown[])[3]).toBe(4);
     expect(d.fail).not.toHaveBeenCalled();
   });
 
