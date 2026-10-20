@@ -26,3 +26,9 @@
 - [ ] Auth-mailtemplate/redirects veilig configureren, RLS-migratie toetsen en toepassen, geïsoleerde positieve Auth + mailopvang + sessie + eigen-dossier-ketentest uitvoeren. Blokkade: geen afgeschermde Auth-/mailomgeving of goedkeuring om productieconfiguratie te wijzigen.
 - [ ] Welkomstmail met één persoonlijke knop veilig aansluiten zonder tweede mail; blokkade: Auth-mailafhandeling moet eerst positief bevestigd zijn.
 - [x] Afzonderlijk: "Mail alle deelnemers" in Agenda > Deelnemers (beheer, preview; niet gepubliceerd, geen mail verstuurd).
+
+## WhatsApp-uitbreidingen
+- [x] Fase 1: foto's/PDF's bij doorgestuurde aankondigingen
+- [ ] Fase 2: ledenservice-inbox met antwoorden (wacht op akkoord om echte berichten te versturen)
+- [ ] Fase 3: WhatsApp-meldingen opt-in (wacht op sjabloontekst + kostenakkoord)
+- [ ] Fase 4: agenda-herinneringen (wacht op sjabloontekst)
