@@ -141,7 +141,7 @@ export default function KennisbankPage() {
           title="BCD Kennisbank"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          className="block h-[calc(100vh-10rem)] h-[calc(100dvh-10rem)] min-h-[520px] w-full max-w-full border-0"
+          className="block h-[calc(100dvh-10rem)] min-h-[520px] w-full max-w-full border-0"
         />
       </div>
 
