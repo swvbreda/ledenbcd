@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { renderWhatsAppText, plainWhatsAppText } from "../whatsappFormat";
+import { renderWhatsAppText, plainWhatsAppText } from "@/lib/whatsappFormat";
 
 const html = (t: string) => renderToStaticMarkup(<>{renderWhatsAppText(t)}</>);
 
