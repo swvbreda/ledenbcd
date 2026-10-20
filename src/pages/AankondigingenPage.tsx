@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
+import { AnnouncementAttachment } from "@/components/AnnouncementAttachment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -201,6 +202,7 @@ export default function AankondigingenPage() {
                 <p className="whitespace-pre-wrap break-words text-sm leading-6">
                   {item.body}
                 </p>
+                <AnnouncementAttachment announcementId={item.id} />
                 <div className="flex flex-wrap gap-2">
                   {item.link_url && (
                     <Button asChild size="sm" variant="outline">

@@ -23,6 +23,35 @@ export const Route = createFileRoute("/api/public/_connector/whatsapp/webhook")(
         // Bounded fair recovery of earlier unfinished work; no sends or imports.
         const recovered = await rpc("whatsapp_connector_recover");
         if (recovered.error) throw new Error("Recovery failed");
+        // Attachments: bounded, best-effort; failures stay in the inbox and never block receipt.
+        const lovableKey = process.env["LOVABLE_API_KEY"];
+        const waKey = process.env["WHATSAPP_API_KEY"];
+        if (!lovableKey || !waKey) return;
+        try {
+          const claimed = await rpc("whatsapp_attachment_claim", { p_limit: 1 });
+          if (claimed.error || !Array.isArray(claimed.data)) return;
+          const { processAttachment } = await import("@/lib/whatsappMedia");
+          for (const claim of claimed.data as import("@/lib/whatsappMedia").MediaClaim[]) {
+            await processAttachment(claim, {
+              fetch,
+              headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": waKey },
+              upload: async (path, bytes, mime) => {
+                const { error } = await supabaseAdmin.storage.from("announcement-media")
+                  .upload(path, bytes, { contentType: mime, upsert: false });
+                if (error && !/exists|duplicate/i.test(error.message)) throw new Error("upload_failed");
+              },
+              complete: async (id, path, sha, size, mime) => {
+                const r = await rpc("whatsapp_attachment_complete", { p_id: id, p_path: path, p_sha256: sha, p_size: size, p_mime: mime });
+                if (r.error) throw new Error("complete_failed");
+              },
+              fail: async (id, error, final) => {
+                await rpc("whatsapp_attachment_fail", { p_id: id, p_error: error, p_final: final });
+              },
+            });
+          }
+        } catch {
+          console.error("[whatsapp-connector] attachment processing deferred");
+        }
       },
     ),
   } },

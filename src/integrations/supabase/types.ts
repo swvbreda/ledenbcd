@@ -3121,6 +3121,47 @@ export type Database = {
         }
         Relationships: []
       }
+      member_announcement_attachments: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          file_name: string | null
+          id: string
+          mime_type: string
+          sha256: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          mime_type: string
+          sha256: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          mime_type?: string
+          sha256?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_announcement_attachments_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: true
+            referencedRelation: "member_announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_announcements: {
         Row: {
           body: string
@@ -4733,20 +4774,41 @@ export type Database = {
       whatsapp_announcement_decisions: {
         Row: {
           announcement_id: string | null
+          attempts: number
+          author: string | null
+          caption: string | null
           decided_at: string
           decision: string
+          file_name: string | null
+          last_error: string | null
+          media_id: string | null
+          media_mime: string | null
           wa_message_id: string
         }
         Insert: {
           announcement_id?: string | null
+          attempts?: number
+          author?: string | null
+          caption?: string | null
           decided_at?: string
           decision: string
+          file_name?: string | null
+          last_error?: string | null
+          media_id?: string | null
+          media_mime?: string | null
           wa_message_id: string
         }
         Update: {
           announcement_id?: string | null
+          attempts?: number
+          author?: string | null
+          caption?: string | null
           decided_at?: string
           decision?: string
+          file_name?: string | null
+          last_error?: string | null
+          media_id?: string | null
+          media_mime?: string | null
           wa_message_id?: string
         }
         Relationships: []
@@ -5526,6 +5588,28 @@ export type Database = {
         Returns: number
       }
       trigger_topical_sync: { Args: never; Returns: number }
+      whatsapp_attachment_claim: {
+        Args: { p_limit?: number }
+        Returns: {
+          media_id: string
+          media_mime: string
+          wa_message_id: string
+        }[]
+      }
+      whatsapp_attachment_complete: {
+        Args: {
+          p_id: string
+          p_mime: string
+          p_path: string
+          p_sha256: string
+          p_size: number
+        }
+        Returns: string
+      }
+      whatsapp_attachment_fail: {
+        Args: { p_error: string; p_final?: boolean; p_id: string }
+        Returns: undefined
+      }
       whatsapp_connector_process: {
         Args: { p_delivery_id: string }
         Returns: boolean
