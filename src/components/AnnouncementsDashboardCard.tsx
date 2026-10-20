@@ -1,3 +1,4 @@
+import { plainWhatsAppText } from "@/lib/whatsappFormat";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Megaphone } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,7 @@ export default function AnnouncementsDashboardCard() {
                 to="/aankondigingen"
                 className="block min-w-0 py-3 first:pt-0 last:pb-0"
               >
-                <p className="truncate font-semibold">{item.title}</p>
+                <p className="truncate font-semibold">{plainWhatsAppText(item.title)}</p>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                   {item.body}
                 </p>
