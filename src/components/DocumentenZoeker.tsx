@@ -6,7 +6,6 @@ import {
   Search, FileText, Loader2, ExternalLink,
   AlertCircle, Notebook,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 
 interface MunicipalDocument {

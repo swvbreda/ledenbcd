@@ -5,7 +5,7 @@ import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import CityMap from "@/components/CityMap";
-import DocumentenZoeker from "@/components/DocumentenZoeker";
+import BeleidDocumentenKiezer from "@/components/beleid/BeleidDocumentenKiezer";
 import { getLocationGemeente } from "@/data/gemeenteMapping";
 import { useRegisterStats } from "@/hooks/useRegisterStats";
 import { useAuth } from "@/hooks/useAuth";
@@ -227,7 +227,7 @@ const LocatiesPage = () => {
         ))}
       </div>
 
-      <DocumentenZoeker />
+      <BeleidDocumentenKiezer />
 
 
       <MapErrorBoundary>

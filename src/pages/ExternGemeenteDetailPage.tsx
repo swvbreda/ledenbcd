@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { ArrowLeft, MapPin } from "lucide-react";
-import GemeentePublicaties from "@/components/GemeentePublicaties";
+import GemeentePublicaties from "@/components/extern/ExternGemeentePublicaties";
 
 const ExternGemeenteDetailPage = () => {
   const { gemeente } = useParams<{ gemeente: string }>();

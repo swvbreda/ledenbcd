@@ -588,6 +588,24 @@ export type Database = {
           },
         ]
       }
+      bcd_documenten_rate: {
+        Row: {
+          hits: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          hits?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          hits?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       beleidsmonitor_dossiers: {
         Row: {
           created_at: string
@@ -5553,6 +5571,7 @@ export type Database = {
         Args: { _member_id: number }
         Returns: number
       }
+      bcd_documenten_rate_hit: { Args: never; Returns: boolean }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
       claim_internal_task: { Args: { _task_id: string }; Returns: boolean }
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
