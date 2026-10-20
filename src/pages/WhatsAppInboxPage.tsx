@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { maskWaId } from "@/lib/whatsappWebhook";
+import WhatsAppPublishers from "@/components/WhatsAppPublishers";
+import { ANNOUNCEMENT_DECISIONS } from "@/lib/whatsappPublishers";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useMarkConversationRead,
   useWhatsAppConversations,
@@ -41,7 +45,7 @@ function messageLabel(message: WhatsAppMessage) {
 }
 
 const WhatsAppInboxPage = () => {
-  const { isAdmin, isBoard } = useAuth();
+  const { user, isAdmin, isBoard } = useAuth();
   const navigate = useNavigate();
   const allowed = isAdmin || isBoard;
   const [selected, setSelected] = useState<string | null>(null);
@@ -60,6 +64,13 @@ const WhatsAppInboxPage = () => {
   );
 
   const { data: messages } = useWhatsAppMessages(current?.phone ?? null);
+  const decisions = useQuery({ queryKey: ["whatsapp-publication-decisions", user?.id, current?.phone, messages?.map(m => m.wa_message_id)], enabled: isAdmin && !!user?.id && !!messages?.length, queryFn: async () => {
+    const ids = messages?.flatMap(m => m.wa_message_id ? [m.wa_message_id] : []) ?? [];
+    if (!ids.length) return [];
+    const result = await supabase.from("whatsapp_announcement_decisions").select("wa_message_id,decision").in("wa_message_id", ids);
+    if (result.error) throw result.error;
+    return result.data;
+  } });
 
   useEffect(() => {
     if (
@@ -77,8 +88,8 @@ const WhatsAppInboxPage = () => {
 
   const webhookUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/api/public/whatsapp-webhook`
-      : "/api/public/whatsapp-webhook";
+      ? `${window.location.origin}/api/public/whatsapp/webhook`
+      : "/api/public/whatsapp/webhook";
 
   const takeOverAsAnnouncement = (message: WhatsAppMessage) => {
     const text = message.body ?? "";
@@ -91,6 +102,7 @@ const WhatsAppInboxPage = () => {
         title="WhatsApp-inbox"
         subtitle="Binnengekomen berichten"
       />
+      {isAdmin && <WhatsAppPublishers />}
 
       {error && (
         <Card className="border-destructive/40">
@@ -164,14 +176,6 @@ const WhatsAppInboxPage = () => {
                   <p className="text-xs text-muted-foreground">Webhook-URL</p>
                   <p className="break-all font-mono text-xs">{webhookUrl}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Benodigde instellingen
-                  </p>
-                  <p className="text-xs">
-                    WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET
-                  </p>
-                </div>
               </CardContent>
             </Card>
           )}
@@ -220,6 +224,7 @@ const WhatsAppInboxPage = () => {
                 <p className="text-sm whitespace-pre-wrap break-words">
                   {message.body ?? `(${messageLabel(message)} zonder tekst)`}
                 </p>
+                {isAdmin && <p className="text-xs text-muted-foreground">{decisions.isError ? "Publicatiestatus kon niet worden geladen" : ANNOUNCEMENT_DECISIONS[decisions.data?.find(d => d.wa_message_id === message.wa_message_id)?.decision ?? ""] ?? "Alleen inbox: geen automatische publicatie geregistreerd"}</p>}
                 {message.body && (
                   <Button
                     variant="outline"
