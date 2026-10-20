@@ -453,6 +453,52 @@ export type Database = {
           },
         ]
       }
+      announcement_project_links: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          dossier_id: string | null
+          id: string
+          project_id: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          dossier_id?: string | null
+          id?: string
+          project_id: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          dossier_id?: string | null
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_project_links_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "member_announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_project_links_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossier_register"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcement_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_statement_uploads: {
         Row: {
           closing_balance: number | null
@@ -5259,6 +5305,11 @@ export type Database = {
         Args: { _action: string; _event_id: string }
         Returns: undefined
       }
+      announcement_name_matches: {
+        Args: { _name: string; _text: string }
+        Returns: boolean
+      }
+      announcement_sync_projects: { Args: { p_id: string }; Returns: number }
       apply_member_register_opgave: {
         Args: { _member_id: number }
         Returns: number

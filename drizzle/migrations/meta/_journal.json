@@ -358,6 +358,20 @@
       "when": 1792502415736,
       "tag": "0050_whatsapp_publish_own_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1792503328937,
+      "tag": "0051_announcement_project_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792503357803,
+      "tag": "0052_announcement_name_match_fix",
+      "breakpoints": true
     }
   ]
 }
