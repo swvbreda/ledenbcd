@@ -29,6 +29,7 @@
 
 ## WhatsApp-uitbreidingen
 - [x] Fase 1: foto's/PDF's bij doorgestuurde aankondigingen
-- [ ] Fase 2: ledenservice-inbox met antwoorden (wacht op akkoord om echte berichten te versturen)
+- [x] Fase 2: Mijn vragen + centrale inbox + geverifieerde WhatsApp-koppeling en antwoorden (preview, niet gepubliceerd)
+- [ ] Mijn vragen: rolgebaseerde SQL-proef (supabase/tests/support_questions.sql) in geïsoleerde fixture-DB en ingelogde 390px/desktop-controle; blokkade: geen fixture-DB/testaccount in deze omgeving
 - [ ] Fase 3: WhatsApp-meldingen opt-in (wacht op sjabloontekst + kostenakkoord)
 - [ ] Fase 4: agenda-herinneringen (wacht op sjabloontekst)
