@@ -26,3 +26,8 @@ export function renderWhatsAppText(text: string): ReactNode[] {
   if (last < text.length) out.push(text.slice(last));
   return out.map((n, idx) => (typeof n === "string" ? <Fragment key={`t${idx}`}>{n}</Fragment> : n));
 }
+
+/** Plain title without WhatsApp markers (display only; stored text unchanged). */
+export function plainWhatsAppText(text: string): string {
+  return text.replace(/([*_~])([^*_~\n]+)\1/g, "$2");
+}

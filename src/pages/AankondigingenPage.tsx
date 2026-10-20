@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { AnnouncementAttachment } from "@/components/AnnouncementAttachment";
-import { renderWhatsAppText } from "@/lib/whatsappFormat";
+import { renderWhatsAppText, plainWhatsAppText } from "@/lib/whatsappFormat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,7 +190,7 @@ export default function AankondigingenPage() {
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0">
                     <CardTitle className="break-words text-xl">
-                      {item.title}
+                      {plainWhatsAppText(item.title)}
                     </CardTitle>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {formatDate(item.published_at ?? item.created_at)}
