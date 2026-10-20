@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  uploadAttachments, useMarkSupportRead, useSupportInvalidate, useThreadDetail, type SupportThread,
+  openSupportAttachment, uploadAttachments, useMarkSupportRead, useSupportInvalidate, useThreadDetail, type SupportThread,
 } from "@/hooks/useSupport";
 import {
   MAX_ATTACHMENTS, SUPPORT_STATUS_LABELS, WA_STATUS_LABELS, validateAttachment,
@@ -46,6 +46,44 @@ export function FilePicker({ files, setFiles, id }: { files: File[]; setFiles: (
   );
 }
 
+/** Mints a 60s signed URL only after an explicit click, then shows a normal link (no window.open). */
+export function AttachmentItem({ path, name, open = openSupportAttachment }: { path: string; name: string; open?: (p: string) => Promise<string | null> }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  useEffect(() => {
+    if (!url) return;
+    const t = setTimeout(() => setUrl(null), 55_000);
+    return () => clearTimeout(t);
+  }, [url]);
+  if (url) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-brand-red underline break-all">
+        <Paperclip size={12} /> Open {name}
+      </a>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <button
+        type="button"
+        disabled={state === "loading"}
+        onClick={async () => {
+          setState("loading");
+          const u = await open(path).catch(() => null);
+          if (u) { setUrl(u); setState("idle"); } else setState("error");
+        }}
+        className="inline-flex items-center gap-1 text-brand-red underline break-all text-left"
+      >
+        <Paperclip size={12} /> {state === "loading" ? "Ophalen..." : `Bijlage ophalen: ${name}`}
+      </button>
+      {state === "error" && <span role="alert" className="text-destructive">Bijlage niet beschikbaar.</span>}
+    </div>
+  );
+}
+
+export const WA_TRANSPORT_UNKNOWN =
+  "Onbekend of het WhatsApp-bericht is verstuurd. Controleer de status in het gesprek; opnieuw proberen gebruikt dezelfde verzending en verstuurt niet dubbel.";
+
 export default function SupportThreadView({ thread, mode }: { thread: SupportThread; mode: "member" | "admin" }) {
   const { user } = useAuth();
   const { data, isLoading, error } = useThreadDetail(user?.id, thread.id);
@@ -55,6 +93,7 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [waNotice, setWaNotice] = useState<string | null>(null);
   const keyRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
@@ -63,7 +102,7 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread.id]);
 
-  const reset = () => { setBody(""); setFiles([]); keyRef.current = crypto.randomUUID(); };
+  const reset = () => { setBody(""); setFiles([]); setWaNotice(null); keyRef.current = crypto.randomUUID(); };
 
   const sendApp = async () => {
     if (!user || !body.trim() || busy) return;
@@ -99,7 +138,11 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
       }
       invalidate();
     } catch {
-      toast.error("WhatsApp-verzending kon niet worden gestart. Er is niets verstuurd.");
+      // Transport failure: the server may already have reserved/sent. Keep body + clientKey so a retry
+      // returns the existing reservation (no second POST), and never claim nothing was sent.
+      setWaNotice(WA_TRANSPORT_UNKNOWN);
+      toast.error(WA_TRANSPORT_UNKNOWN);
+      invalidate();
     } finally { setBusy(false); }
   };
 
@@ -147,11 +190,7 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
               </div>
               <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>
               {mode === "admin" && m.wa_error && <p className="text-xs text-destructive break-words">{m.wa_error}</p>}
-              {atts.map((a) => data.urls[a.id] ? (
-                <a key={a.id} href={data.urls[a.id]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-brand-red underline break-all">
-                  <Paperclip size={12} /> {a.file_name}
-                </a>
-              ) : <span key={a.id} className="text-xs text-muted-foreground">{a.file_name} (niet beschikbaar)</span>)}
+              {atts.map((a) => <AttachmentItem key={a.id} path={a.path} name={a.file_name} />)}
             </li>
           );
         })}
@@ -170,6 +209,7 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
               </Button>
             )}
           </div>
+          {waNotice && <p role="alert" className="text-xs text-destructive">{waNotice}</p>}
           {mode === "admin" && thread.channel === "whatsapp" && (
             <p className="text-xs text-muted-foreground">
               Een WhatsApp-bericht gaat echt naar het lid en kan alleen binnen 24 uur na het laatste bericht van het lid. Bijlagen gaan alleen via de app.
