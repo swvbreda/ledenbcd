@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface LeadConversion {
@@ -37,30 +38,21 @@ export async function fetchConversions(): Promise<LeadConversion[]> {
 }
 
 export function useLeadConversions() {
-  const [conversions, setConversions] = useState<LeadConversion[]>(cachedConversions ?? []);
-  const [loading, setLoading] = useState(cachedConversions === null);
-
-  useEffect(() => {
-    listeners.push(setConversions);
-
-    if (cachedConversions === null) {
-      fetchConversions().then((data) => {
-        setConversions(data);
-        setLoading(false);
-      });
-    }
-
-    return () => {
-      listeners = listeners.filter((fn) => fn !== setConversions);
-    };
-  }, []);
-
+  const { user, loading: authLoading, isAdmin, isBoard, isInhuur } = useAuth();
+  const allowed = !authLoading && !!user && (isAdmin || isBoard || isInhuur);
+  const query = useQuery({
+    queryKey: ["lead-conversions", user?.id ?? null, allowed],
+    enabled: allowed,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lead_conversions").select("*");
+      if (error) throw error;
+      return (data ?? []) as LeadConversion[];
+    },
+  });
   const refresh = async () => {
-    const data = await fetchConversions();
-    notifyListeners(data);
+    if (allowed) await query.refetch();
   };
-
-  return { conversions, loading, refresh };
+  return { conversions: allowed ? query.data ?? [] : [], loading: allowed && query.isLoading, refresh };
 }
 
 export async function convertLead(params: {

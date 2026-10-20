@@ -6,8 +6,11 @@ import { useLeadConversions, type LeadConversion } from "@/hooks/useLeadConversi
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
 import { getGemeente, getLocationGemeente, EXPERIMENT_GEMEENTEN } from "@/data/gemeenteMapping";
+import { useAuth } from "@/hooks/useAuth";
 
 export function useMembers() {
+  const { isAdmin, isBoard, isInhuur } = useAuth();
+  const canSeeLeads = isAdmin || isBoard || isInhuur;
   const { rawMembers, rawLeads, isLoading: dataLoading } = useMembersData();
   const { members: mergedMembers } = useMergedMembers(rawMembers);
   const { members: mergedLeads } = useMergedMembers(rawLeads);
@@ -19,15 +22,15 @@ export function useMembers() {
   const { conversions } = useLeadConversions();
 
   const effectiveAll = useMemo(
-    () => [...mergedMembers, ...mergedLeads],
-    [mergedMembers, mergedLeads]
+    () => canSeeLeads ? [...mergedMembers, ...mergedLeads] : mergedMembers,
+    [mergedMembers, mergedLeads, canSeeLeads]
   );
   const allIncludingLeads = effectiveAll;
 
   /** Set of lead IDs (leads are those in rawLeads) */
   const activeLeadIds = useMemo(
-    () => new Set(mergedLeads.map((l) => l.id)),
-    [mergedLeads]
+    () => new Set(canSeeLeads ? mergedLeads.map((l) => l.id) : []),
+    [mergedLeads, canSeeLeads]
   );
 
   const cities = useMemo(
@@ -117,7 +120,7 @@ export function useMembers() {
     allMembers: mergedMembers,
     activeLeadIds,
     effectiveMembers: mergedMembers,
-    effectiveLeads: mergedLeads,
+    effectiveLeads: canSeeLeads ? mergedLeads : [],
     conversions,
     dataLoading,
   };
