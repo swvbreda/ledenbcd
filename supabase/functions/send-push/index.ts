@@ -80,6 +80,22 @@ async function createApnsJwt(
   return `${signingInput}.${sigB64}`;
 }
 
+/** Short kind label shown as notification title, derived from the target page. */
+function pushLabel(route?: string): string | null {
+  if (!route) return null;
+  const map: [string, string][] = [
+    ["/aankondigingen", "Aankondiging"],
+    ["/agenda", "Agenda"],
+    ["/ledenvoordelen", "Ledenvoordeel"],
+    ["/enquete", "Enquête"],
+    ["/surveys", "Enquête"],
+    ["/projecten", "Taak"],
+    ["/aanmeldingen", "Aanmelding"],
+    ["/wijzigingen", "Wijzigingsverzoek"],
+  ];
+  return map.find(([p]) => route === p || route.startsWith(p + "/") || route.startsWith(p + "?"))?.[1] ?? null;
+}
+
 async function sendApnsPush(
   deviceToken: string,
   title: string,
@@ -101,7 +117,7 @@ async function sendApnsPush(
     },
     body: JSON.stringify({
       aps: {
-        alert: { title, body },
+        alert: { title: pushLabel(route) ?? title, body },
         sound: "default",
         badge: 1,
       },
