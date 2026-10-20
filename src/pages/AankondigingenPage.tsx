@@ -3,7 +3,6 @@ import {
   ExternalLink,
   Megaphone,
   Pencil,
-  Plus,
   Send,
   Share2,
   Trash2,
@@ -159,20 +158,7 @@ export default function AankondigingenPage() {
       <BcdHeroBanner
         title="Aankondigingen"
         subtitle="Updates uit de BCD-community voor leden"
-      >
-        {canManage && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              resetForm();
-              setOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Nieuwe aankondiging
-          </Button>
-        )}
-      </BcdHeroBanner>
+      />
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Aankondigingen laden…</p>
