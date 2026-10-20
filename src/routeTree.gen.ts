@@ -34,6 +34,7 @@ import { Route as DashboardKennisbankRouteImport } from './routes/_dashboard/ken
 import { Route as DashboardKerngegevensRouteImport } from './routes/_dashboard/kerngegevens'
 import { Route as DashboardLedenBetalingenRouteImport } from './routes/_dashboard/leden-betalingen'
 import { Route as DashboardMijnAccountRouteImport } from './routes/_dashboard/mijn-account'
+import { Route as DashboardMijnVragenRouteImport } from './routes/_dashboard/mijn-vragen'
 import { Route as DashboardProjectenRouteImport } from './routes/_dashboard/projecten'
 import { Route as DashboardWhatsappInboxRouteImport } from './routes/_dashboard/whatsapp-inbox'
 import { Route as AShareCodeRouteImport } from './routes/a.$shareCode'
@@ -196,6 +197,11 @@ const DashboardLedenBetalingenRoute =
 const DashboardMijnAccountRoute = DashboardMijnAccountRouteImport.update({
   id: '/mijn-account',
   path: '/mijn-account',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMijnVragenRoute = DashboardMijnVragenRouteImport.update({
+  id: '/mijn-vragen',
+  path: '/mijn-vragen',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProjectenRoute = DashboardProjectenRouteImport.update({
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/mijn-vragen': typeof DashboardMijnVragenRoute
   '/projecten': typeof DashboardProjectenRoute
   '/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
@@ -486,6 +493,7 @@ export interface FileRoutesByTo {
   '/kerngegevens': typeof DashboardKerngegevensRoute
   '/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/mijn-account': typeof DashboardMijnAccountRoute
+  '/mijn-vragen': typeof DashboardMijnVragenRoute
   '/projecten': typeof DashboardProjectenRoute
   '/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
@@ -551,6 +559,7 @@ export interface FileRoutesById {
   '/_dashboard/kerngegevens': typeof DashboardKerngegevensRoute
   '/_dashboard/leden-betalingen': typeof DashboardLedenBetalingenRoute
   '/_dashboard/mijn-account': typeof DashboardMijnAccountRoute
+  '/_dashboard/mijn-vragen': typeof DashboardMijnVragenRoute
   '/_dashboard/projecten': typeof DashboardProjectenRoute
   '/_dashboard/whatsapp-inbox': typeof DashboardWhatsappInboxRoute
   '/a/$shareCode': typeof AShareCodeRoute
@@ -617,6 +626,7 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/mijn-vragen'
     | '/projecten'
     | '/whatsapp-inbox'
     | '/a/$shareCode'
@@ -679,6 +689,7 @@ export interface FileRouteTypes {
     | '/kerngegevens'
     | '/leden-betalingen'
     | '/mijn-account'
+    | '/mijn-vragen'
     | '/projecten'
     | '/whatsapp-inbox'
     | '/a/$shareCode'
@@ -743,6 +754,7 @@ export interface FileRouteTypes {
     | '/_dashboard/kerngegevens'
     | '/_dashboard/leden-betalingen'
     | '/_dashboard/mijn-account'
+    | '/_dashboard/mijn-vragen'
     | '/_dashboard/projecten'
     | '/_dashboard/whatsapp-inbox'
     | '/a/$shareCode'
@@ -993,6 +1005,13 @@ declare module '@tanstack/react-router' {
       path: '/mijn-account'
       fullPath: '/mijn-account'
       preLoaderRoute: typeof DashboardMijnAccountRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/mijn-vragen': {
+      id: '/_dashboard/mijn-vragen'
+      path: '/mijn-vragen'
+      fullPath: '/mijn-vragen'
+      preLoaderRoute: typeof DashboardMijnVragenRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/_dashboard/projecten': {
@@ -1270,6 +1289,7 @@ interface DashboardRouteChildren {
   DashboardKerngegevensRoute: typeof DashboardKerngegevensRoute
   DashboardLedenBetalingenRoute: typeof DashboardLedenBetalingenRoute
   DashboardMijnAccountRoute: typeof DashboardMijnAccountRoute
+  DashboardMijnVragenRoute: typeof DashboardMijnVragenRoute
   DashboardProjectenRoute: typeof DashboardProjectenRoute
   DashboardWhatsappInboxRoute: typeof DashboardWhatsappInboxRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -1303,6 +1323,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardKerngegevensRoute: DashboardKerngegevensRoute,
   DashboardLedenBetalingenRoute: DashboardLedenBetalingenRoute,
   DashboardMijnAccountRoute: DashboardMijnAccountRoute,
+  DashboardMijnVragenRoute: DashboardMijnVragenRoute,
   DashboardProjectenRoute: DashboardProjectenRoute,
   DashboardWhatsappInboxRoute: DashboardWhatsappInboxRoute,
   DashboardIndexRoute: DashboardIndexRoute,

@@ -1,0 +1,2 @@
+REVOKE ALL ON public.support_threads, public.support_messages, public.support_attachments, public.whatsapp_member_links, public.whatsapp_link_codes, public.whatsapp_link_attempts FROM anon;
+REVOKE ALL ON public.whatsapp_link_codes, public.whatsapp_link_attempts FROM authenticated;
