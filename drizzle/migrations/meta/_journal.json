@@ -330,6 +330,13 @@
       "when": 1792488519462,
       "tag": "0046_hide_leads_from_ordinary_members",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792497374244,
+      "tag": "0047_whatsapp_connector_receiver",
+      "breakpoints": true
     }
   ]
 }
