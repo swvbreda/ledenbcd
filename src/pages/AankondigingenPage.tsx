@@ -3,7 +3,6 @@ import {
   ExternalLink,
   Megaphone,
   Pencil,
-  Plus,
   Send,
   Share2,
   Trash2,
