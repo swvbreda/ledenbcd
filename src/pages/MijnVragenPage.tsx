@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 function NewQuestion({ onDone }: { onDone: (id: string) => void }) {
   const { user } = useAuth();
-  const { data: projects } = useMemberProjects(true);
+  const { data: projects } = useMemberProjects(user?.id, true);
   const invalidate = useSupportInvalidate();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -145,7 +145,7 @@ const MijnVragenPage = () => {
             <Button variant="ghost" size="sm" className="px-2" aria-label="Terug" onClick={() => setSelected(null)}><ArrowLeft size={16} /></Button>
             <CardTitle className="text-base break-words min-w-0">{current.subject}</CardTitle>
           </CardHeader>
-          <CardContent><SupportThreadView thread={current} mode="member" /></CardContent>
+          <CardContent><SupportThreadView key={current.id} thread={current} mode="member" /></CardContent>
         </Card>
       ) : creating ? (
         <Card>

@@ -24,7 +24,7 @@ export default function SupportAdminInbox() {
             <p className="text-xs text-muted-foreground">Geverifieerd lid: {current.member_name ?? "onbekend"} (lidnr. {current.member_id})</p>
           </div>
         </CardHeader>
-        <CardContent><SupportThreadView thread={current} mode="admin" /></CardContent>
+        <CardContent><SupportThreadView key={current.id} thread={current} mode="admin" /></CardContent>
       </Card>
     );
   }
