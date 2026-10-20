@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getLinkPreview } from "@/lib/linkPreview.functions";
 
-const FIRST_URL = /https?:\/\/[^\s<>"]+[^\s<>".,;:!?)\]']/;
+const FIRST_URL = /(?:https?:\/\/|www\.)[^\s<>"]+[^\s<>".,;:!?)\]']/;
 
 export function firstUrl(text: string): string | null {
-  return FIRST_URL.exec(text)?.[0] ?? null;
+  const m = FIRST_URL.exec(text)?.[0];
+  return m ? (m.startsWith("www.") ? `https://${m}` : m) : null;
 }
 
 /** WhatsApp-like preview (image + title) for the first link in a text. */
