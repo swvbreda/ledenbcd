@@ -4790,11 +4790,13 @@ export type Database = {
           direction: string
           error: string | null
           id: string
+          media_id: string | null
           media_type: string | null
           media_url: string | null
           member_id: number | null
           message_type: string
           phone: string
+          provider_status_times: Json
           read_by_us_at: string | null
           sent_by: string | null
           status: string
@@ -4810,11 +4812,13 @@ export type Database = {
           direction: string
           error?: string | null
           id?: string
+          media_id?: string | null
           media_type?: string | null
           media_url?: string | null
           member_id?: number | null
           message_type?: string
           phone: string
+          provider_status_times?: Json
           read_by_us_at?: string | null
           sent_by?: string | null
           status?: string
@@ -4830,11 +4834,13 @@ export type Database = {
           direction?: string
           error?: string | null
           id?: string
+          media_id?: string | null
           media_type?: string | null
           media_url?: string | null
           member_id?: number | null
           message_type?: string
           phone?: string
+          provider_status_times?: Json
           read_by_us_at?: string | null
           sent_by?: string | null
           status?: string
@@ -4978,6 +4984,42 @@ export type Database = {
           status?: string
           updated_at?: string
           variables?: Json | null
+        }
+        Relationships: []
+      }
+      whatsapp_webhook_events: {
+        Row: {
+          attempts: number
+          delivery_id: string
+          event: string
+          next_attempt_at: string
+          parsed_messages: Json
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string
+        }
+        Insert: {
+          attempts?: number
+          delivery_id: string
+          event: string
+          next_attempt_at?: string
+          parsed_messages?: Json
+          payload: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
+        }
+        Update: {
+          attempts?: number
+          delivery_id?: string
+          event?: string
+          next_attempt_at?: string
+          parsed_messages?: Json
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string
         }
         Relationships: []
       }
@@ -5442,6 +5484,20 @@ export type Database = {
         Returns: number
       }
       trigger_topical_sync: { Args: never; Returns: number }
+      whatsapp_connector_process: {
+        Args: { p_delivery_id: string }
+        Returns: boolean
+      }
+      whatsapp_connector_receive: {
+        Args: {
+          p_delivery_id: string
+          p_event: string
+          p_messages: Json
+          p_payload: Json
+        }
+        Returns: undefined
+      }
+      whatsapp_connector_recover: { Args: never; Returns: undefined }
       whatsapp_ingest_message: {
         Args: {
           p_body: string

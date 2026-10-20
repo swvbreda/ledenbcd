@@ -70,6 +70,7 @@ import { Route as DashboardEnquetesIdBeheerRouteImport } from './routes/_dashboa
 import { Route as ApiPublicAgendaImageCodeRouteImport } from './routes/api/public/agenda-image.$code'
 import { Route as ApiPublicMemberLogoIdRouteImport } from './routes/api/public/member-logo.$id'
 import { Route as ApiPublicShopLogoIdRouteImport } from './routes/api/public/shop-logo.$id'
+import { Route as ApiPublicConnectorWhatsappWebhookRouteImport } from './routes/api/public/_connector/whatsapp/webhook'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/_dashboard',
@@ -391,6 +392,12 @@ const ApiPublicShopLogoIdRoute = ApiPublicShopLogoIdRouteImport.update({
   path: '/api/public/shop-logo/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicConnectorWhatsappWebhookRoute =
+  ApiPublicConnectorWhatsappWebhookRouteImport.update({
+    id: '/api/public/_connector/whatsapp/webhook',
+    path: '/api/public/whatsapp/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof DashboardIndexRoute
@@ -453,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
   '/adviespakket-controle': typeof AdviespakketControleRoute
@@ -515,6 +523,7 @@ export interface FileRoutesByTo {
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/enquetes/$id': typeof DashboardEnquetesIdIndexRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -579,6 +588,7 @@ export interface FileRoutesById {
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
   '/_dashboard/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
+  '/api/public/_connector/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -643,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/enquetes/$id/'
+    | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/adviespakket-controle'
@@ -705,6 +716,7 @@ export interface FileRouteTypes {
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/enquetes/$id'
+    | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
     | '/_dashboard'
@@ -768,6 +780,7 @@ export interface FileRouteTypes {
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
     | '/_dashboard/enquetes/$id/'
+    | '/api/public/_connector/whatsapp/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -802,6 +815,7 @@ export interface RootRouteChildren {
   ApiPublicAgendaImageCodeRoute: typeof ApiPublicAgendaImageCodeRoute
   ApiPublicMemberLogoIdRoute: typeof ApiPublicMemberLogoIdRoute
   ApiPublicShopLogoIdRoute: typeof ApiPublicShopLogoIdRoute
+  ApiPublicConnectorWhatsappWebhookRoute: typeof ApiPublicConnectorWhatsappWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1233,6 +1247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShopLogoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/_connector/whatsapp/webhook': {
+      id: '/api/public/_connector/whatsapp/webhook'
+      path: '/api/public/whatsapp/webhook'
+      fullPath: '/api/public/whatsapp/webhook'
+      preLoaderRoute: typeof ApiPublicConnectorWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1340,6 +1361,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgendaImageCodeRoute: ApiPublicAgendaImageCodeRoute,
   ApiPublicMemberLogoIdRoute: ApiPublicMemberLogoIdRoute,
   ApiPublicShopLogoIdRoute: ApiPublicShopLogoIdRoute,
+  ApiPublicConnectorWhatsappWebhookRoute:
+    ApiPublicConnectorWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
