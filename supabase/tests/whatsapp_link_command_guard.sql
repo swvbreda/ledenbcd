@@ -1,7 +1,6 @@
 -- Regression: link commands from an announcement publisher are never published or stored in plaintext.
 -- Runs inside a transaction that is always rolled back (no real data, no sends).
 BEGIN;
-SET LOCAL ROLE service_role;
 DO $$
 DECLARE pub text; digits text; codes text[] := ARRAY['BCD-K7M2P9QX','bcd-abc','BCD-ZZZZZZZZ']; c text; n int; i int := 0; mid text;
 BEGIN
