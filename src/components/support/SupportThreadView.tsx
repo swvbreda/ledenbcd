@@ -94,7 +94,8 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [waNotice, setWaNotice] = useState<string | null>(null);
-  const keyRef = useRef<string>(crypto.randomUUID());
+  const keyRef = useRef<string>(crypto.randomUUID()); // WhatsApp send key
+  const appKeyRef = useRef<string>(crypto.randomUUID()); // app reply key (kept separate)
 
   useEffect(() => {
     const unread = mode === "admin" ? thread.admin_unread : thread.member_unread;
@@ -102,14 +103,14 @@ export default function SupportThreadView({ thread, mode }: { thread: SupportThr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thread.id]);
 
-  const reset = () => { setBody(""); setFiles([]); setWaNotice(null); keyRef.current = crypto.randomUUID(); };
+  const reset = () => { setBody(""); setFiles([]); setWaNotice(null); keyRef.current = crypto.randomUUID(); appKeyRef.current = crypto.randomUUID(); };
 
   const sendApp = async () => {
     if (!user || !body.trim() || busy) return;
     setBusy(true);
     try {
       const fn = mode === "admin" ? "support_admin_reply" : "support_member_reply";
-      const { data: msgId, error: e } = await supabase.rpc(fn, { p_thread: thread.id, p_body: body, p_client_key: keyRef.current });
+      const { data: msgId, error: e } = await supabase.rpc(fn, { p_thread: thread.id, p_body: body, p_client_key: appKeyRef.current });
       if (e || !msgId) throw e ?? new Error("x");
       const failed = files.length ? await uploadAttachments(thread.id, msgId as string, user.id, files) : [];
       if (failed.length) toast.error(`Niet geüpload: ${failed.join(", ")}`);
