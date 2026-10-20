@@ -13,6 +13,10 @@ const envelope = z.object({
     changes: z.array(z.object({
       value: z.object({
         messages: z.array(messageSchema).max(100).optional(),
+        contacts: z.array(z.object({
+          wa_id: z.string().optional(),
+          profile: z.object({ name: z.string().optional() }).optional(),
+        }).passthrough()).max(100).optional(),
         statuses: z.array(z.object({
           id: z.string().min(1).max(512),
           status: z.enum(["sent", "delivered", "read", "failed"]),
