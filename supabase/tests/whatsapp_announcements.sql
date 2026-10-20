@@ -1,5 +1,11 @@
 -- All writes roll back; notifier disabled transactionally BEFORE any publication.
 \set ON_ERROR_STOP on
+SELECT CASE WHEN current_user='lovable' AND inet_server_port() IS NULL THEN true ELSE false END AS isolated \gset
+\if :isolated
+\else
+\echo 'Use only the isolated local fixture database.'
+\quit
+\endif
 BEGIN;
 ALTER TABLE public.member_announcements DISABLE TRIGGER notify_members_on_published_announcement;
 DO $$
@@ -29,6 +35,8 @@ BEGIN
  parsed:=jsonb_set(jsonb_set(parsed,'{waMessageId}','"rollback-wa-image"'),'{waId}','"31999999999"') || '{"messageType":"image"}';
  PERFORM public.whatsapp_ingest_verified(msg,'1312061225331302',parsed);
  IF NOT EXISTS(SELECT 1 FROM public.whatsapp_announcement_decisions WHERE wa_message_id='rollback-wa-image' AND decision='attachment' AND announcement_id IS NULL) THEN RAISE EXCEPTION 'Attachment published'; END IF;
+ PERFORM public.whatsapp_connector_receive('rollback-echo','whatsapp.smb_message_echoes','{"entry":[{"changes":[{"value":{"message_echoes":[{"id":"rollback-echo-id","from":"31999999999","type":"text","text":{"body":"Never publish"}}]}}]}]}','[]');
+ IF NOT public.whatsapp_connector_process('rollback-echo') OR EXISTS(SELECT 1 FROM public.whatsapp_announcement_decisions WHERE wa_message_id='rollback-echo-id') THEN RAISE EXCEPTION 'Echo published'; END IF;
  IF has_function_privilege('authenticated','public.whatsapp_publish_forwarded(jsonb,text)','EXECUTE') OR has_function_privilege('anon','public.whatsapp_ingest_verified(jsonb,text,jsonb)','EXECUTE') THEN RAISE EXCEPTION 'Publication exposed'; END IF;
  IF (SELECT count(*) FROM pg_policies WHERE tablename IN('whatsapp_announcement_publishers','whatsapp_announcement_decisions') AND cmd='SELECT' AND qual LIKE '%has_role%admin%')<>2 THEN RAISE EXCEPTION 'Admin RLS missing'; END IF;
  -- Direct management denies anonymous without any session/role mutation.
@@ -37,12 +45,13 @@ END; $$;
 -- Force failure after the private ledger reservation. Entire ingestion/publication must undo.
 CREATE FUNCTION pg_temp.fail_announcement() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'isolated failure'; END; $$;
 CREATE TRIGGER isolated_announcement_failure BEFORE INSERT ON public.member_announcements FOR EACH ROW EXECUTE FUNCTION pg_temp.fail_announcement();
-DO $$ BEGIN
+DO $$ DECLARE failed boolean:=false; BEGIN
  BEGIN
   PERFORM public.whatsapp_ingest_verified('{"id":"rollback-failure","from":"31999999999","type":"text","context":{"forwarded":true},"text":{"body":"Fail"}}','1312061225331302','{"waMessageId":"rollback-failure","waId":"31999999999","messageType":"text","body":"Fail"}');
-  RAISE EXCEPTION 'Expected transaction error';
  EXCEPTION WHEN raise_exception THEN
+  failed:=true;
   IF EXISTS(SELECT 1 FROM public.whatsapp_messages WHERE wa_message_id='rollback-failure') OR EXISTS(SELECT 1 FROM public.whatsapp_announcement_decisions WHERE wa_message_id='rollback-failure') THEN RAISE EXCEPTION 'Partial transaction persisted'; END IF;
  END;
+ IF NOT failed THEN RAISE EXCEPTION 'Expected transaction error did not occur'; END IF;
 END; $$;
 ROLLBACK;
