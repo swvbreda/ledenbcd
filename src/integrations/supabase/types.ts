@@ -5894,6 +5894,7 @@ export type Database = {
         Args: { p_body: string; p_client_key: string; p_thread: string }
         Returns: string
       }
+      support_my_member_id: { Args: never; Returns: number }
       support_wa_create_code: { Args: never; Returns: string }
       support_wa_finish_reply: {
         Args: {
@@ -5991,6 +5992,7 @@ export type Database = {
         Args: { p_message: Json; p_parsed: Json; p_recipient: string }
         Returns: undefined
       }
+      whatsapp_is_link_command: { Args: { p_text: string }; Returns: boolean }
       whatsapp_mark_conversation_read: {
         Args: { p_conversation_id: string }
         Returns: number
