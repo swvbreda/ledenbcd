@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { Json } from "@/integrations/supabase/types";
 import {
   parseIncomingMessages,
   incomingMessageEnvelopes,
@@ -84,8 +85,8 @@ export const Route = createFileRoute("/api/public/whatsapp-webhook")({
           const message = messages.find(m => m.waMessageId === envelope.message.id && m.waId === envelope.message.from);
           if (!message) continue;
           const { error } = await supabaseAdmin.rpc("whatsapp_ingest_verified", {
-            p_message: envelope.message,
-            p_recipient: envelope.recipient,
+            p_message: envelope.message as Json,
+            p_recipient: envelope.recipient ?? "",
             p_parsed: { ...message },
           });
 
