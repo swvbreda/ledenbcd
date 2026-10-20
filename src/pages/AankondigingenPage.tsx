@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
+import { LinkPreviewCard, firstUrl } from "@/components/LinkPreviewCard";
 import { AnnouncementAttachment } from "@/components/AnnouncementAttachment";
 import { renderWhatsAppText, plainWhatsAppText } from "@/lib/whatsappFormat";
 import { Badge } from "@/components/ui/badge";
@@ -204,6 +205,7 @@ export default function AankondigingenPage() {
                   {renderWhatsAppText(item.body)}
                 </p>
                 <AnnouncementAttachment announcementId={item.id} />
+                {(() => { const u = item.link_url ?? firstUrl(item.body); return u ? <LinkPreviewCard url={u} /> : null; })()}
                 <div className="flex flex-wrap gap-2">
                   {item.link_url && (
                     <Button asChild size="sm" variant="outline">

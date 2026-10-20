@@ -4,7 +4,7 @@ import { Fragment, type ReactNode } from "react";
  * Renders WhatsApp-style formatting safely as React nodes (no HTML injection):
  * *bold*, _italic_, ~strike~ and clickable https/http links. Text is never altered.
  */
-const TOKEN = /(https?:\/\/[^\s<>"]+[^\s<>".,;:!?)\]'])|\*([^*\n]+)\*|_([^_\n]+)_|~([^~\n]+)~/g;
+const TOKEN = /((?:https?:\/\/|www\.)[^\s<>"]+[^\s<>".,;:!?)\]'])|\*([^*\n]+)\*|_([^_\n]+)_|~([^~\n]+)~/g;
 
 export function renderWhatsAppText(text: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -15,7 +15,7 @@ export function renderWhatsAppText(text: string): ReactNode[] {
     if (i > last) out.push(text.slice(last, i));
     if (m[1]) {
       out.push(
-        <a key={key++} href={m[1]} target="_blank" rel="noopener noreferrer"
+        <a key={key++} href={m[1].startsWith("www.") ? `https://${m[1]}` : m[1]} target="_blank" rel="noopener noreferrer"
           className="text-primary underline underline-offset-2 break-all">{m[1]}</a>,
       );
     } else if (m[2]) out.push(<strong key={key++}>{renderWhatsAppText(m[2])}</strong>);
