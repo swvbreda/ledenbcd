@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import { AnnouncementAttachment } from "@/components/AnnouncementAttachment";
+import { renderWhatsAppText } from "@/lib/whatsappFormat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -200,7 +201,7 @@ export default function AankondigingenPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="whitespace-pre-wrap break-words text-sm leading-6">
-                  {item.body}
+                  {renderWhatsAppText(item.body)}
                 </p>
                 <AnnouncementAttachment announcementId={item.id} />
                 <div className="flex flex-wrap gap-2">
