@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, HelpCircle, Plus, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
@@ -12,7 +12,10 @@ import {
   uploadAttachments, useMemberProjects, useMyThreads, useMyWhatsAppLink, useSupportInvalidate,
 } from "@/hooks/useSupport";
 import SupportThreadView, { FilePicker, SupportStatusBadge } from "@/components/support/SupportThreadView";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getBcdWhatsAppNumber } from "@/lib/bcdWhatsAppNumber.functions";
+import { waDeepLink } from "@/lib/bcdWhatsAppNumber";
 
 function NewQuestion({ onDone }: { onDone: (id: string) => void }) {
   const { user } = useAuth();
@@ -75,9 +78,28 @@ function NewQuestion({ onDone }: { onDone: (id: string) => void }) {
 function WhatsAppLinkCard() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: link, isLoading } = useMyWhatsAppLink(user?.id, true);
+  // Code lives only in component state; never persisted client-side.
   const [code, setCode] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { data: link, isLoading } = useMyWhatsAppLink(user?.id, true, waiting);
+  const fetchNumber = useServerFn(getBcdWhatsAppNumber);
+  const { data: number } = useQuery({
+    queryKey: ["bcd-wa-number", user?.id],
+    enabled: !!user?.id && !link,
+    staleTime: 10 * 60_000,
+    queryFn: () => fetchNumber(),
+  });
+  const bcd = number && "digits" in number ? number : null;
+
+  useEffect(() => {
+    if (waiting && link) { setWaiting(false); setCode(null); }
+  }, [waiting, link]);
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setTimeout(() => setWaiting(false), 10 * 60_000);
+    return () => clearTimeout(t);
+  }, [waiting]);
 
   const createCode = async () => {
     setBusy(true);
@@ -85,6 +107,7 @@ function WhatsAppLinkCard() {
     setBusy(false);
     if (error) { toast.error(error.message.includes("rate_limited") ? "Te veel codes aangevraagd; probeer het over een uur opnieuw" : "Code aanmaken mislukt"); return; }
     setCode(data as string);
+    setWaiting(false);
   };
   const unlink = async () => {
     const { error } = await supabase.rpc("support_wa_unlink");
@@ -106,10 +129,23 @@ function WhatsAppLinkCard() {
           <>
             <p className="text-muted-foreground">Wil je ook via WhatsApp vragen stellen? Vraag een eenmalige code aan en stuur die zelf vanaf je eigen telefoon naar het BCD WhatsApp-nummer. De code is 10 minuten geldig.</p>
             {code ? (
-              <div className="rounded-md border border-border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground">Stuur precies deze code naar het BCD-nummer:</p>
+              <div className="rounded-md border border-border p-3 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Stuur precies deze code naar het BCD WhatsApp-nummer{bcd ? <> <strong className="text-foreground tabular-nums">{bcd.display}</strong></> : null}:
+                </p>
                 <p className="font-mono text-lg tracking-wider select-all break-all">{code}</p>
-                <Button variant="ghost" size="sm" onClick={() => { setCode(null); qc.invalidateQueries({ queryKey: ["support-wa-link"] }); }}>Ik heb de code verstuurd</Button>
+                {bcd ? (
+                  <a href={waDeepLink(bcd.digits, code)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-brand-red underline">
+                    <Smartphone size={14} /> Open WhatsApp met deze code
+                  </a>
+                ) : number && "blocker" in number ? (
+                  <p role="alert" className="text-xs text-destructive">Het BCD-nummer kan nu niet worden opgehaald ({number.blocker}). Probeer het later opnieuw.</p>
+                ) : <p className="text-xs text-muted-foreground">BCD-nummer ophalen...</p>}
+                {waiting ? (
+                  <p role="status" className="text-xs text-muted-foreground">Wachten op ontvangst van je code... Nog niet gekoppeld. Dit kan even duren; deze melding werkt zichzelf bij.</p>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => { setWaiting(true); qc.invalidateQueries({ queryKey: ["support-wa-link"] }); }}>Ik heb de code verstuurd</Button>
+                )}
               </div>
             ) : <Button variant="outline" size="sm" onClick={createCode} disabled={busy}>Koppelcode aanvragen</Button>}
           </>
