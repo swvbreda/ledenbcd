@@ -189,9 +189,6 @@ export default function FinancienPage() {
             <TabsTrigger value="contributie" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Contributie
             </TabsTrigger>
-            <TabsTrigger value="boekingen" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
-              Inkomsten / Uitgaven
-            </TabsTrigger>
             <TabsTrigger value="dossiers" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dossiers
             </TabsTrigger>
