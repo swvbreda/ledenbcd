@@ -131,7 +131,7 @@ export default function MsImportPanel({ buckets }: { buckets: { id: string; name
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium flex items-center gap-2"><ListChecks className="h-4 w-4 text-brand-red" />Planner "To do"</h3>
-            <p className="text-sm">Modus: <Badge variant={s.planner_mode === "import" ? "default" : "outline"}>{s.planner_mode === "import" ? "Leesmodus (Microsoft leidend)" : "Tweerichting"}</Badge></p>
+            <div className="text-sm">Modus: <Badge variant={s.planner_mode === "import" ? "default" : "outline"}>{s.planner_mode === "import" ? "Leesmodus (Microsoft leidend)" : "Tweerichting"}</Badge></div>
             <p className="text-xs text-muted-foreground">Alleen buckets die hierboven aan een project zijn gekoppeld worden geïmporteerd. Taken in de algemene bucket komen in een aparte lijst, niet in een project.</p>
             <p className="text-sm break-words">Algemene bucket: {s.planner_general_bucket_name ? <span className="font-medium">"{s.planner_general_bucket_name}"</span> : <span className="text-muted-foreground">niet gekozen</span>}</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
