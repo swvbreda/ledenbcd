@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AGENDA_ITEMS, NOT_SET, buildAgenda, discussionPoints, recordedStand, type AgendaProject, type AgendaTask } from "../meetingAgenda";
+import { AGENDA_ITEMS, NOT_SET, buildAgenda, nextFilterParams, discussionPoints, recordedStand, type AgendaProject, type AgendaTask } from "../meetingAgenda";
 
 const P = (id: string, o: Partial<AgendaProject> = {}): AgendaProject => ({ id, title: id, status: "actief", archived_at: null, owner_id: null, description: null, ...o });
 const T = (id: string, project_id: string | null, o: Partial<AgendaTask> = {}): AgendaTask => ({ id, title: id, project_id, status: "te_doen", deadline: null, assignee_id: null, ...o });
@@ -32,4 +32,14 @@ describe("vergaderagenda", () => {
   it("projectfilter toont alleen dat project", () => expect(buildAgenda(projects, tasks, links, dossiers, { projectId: "b", dossierId: null }).active.map((r) => r.project.id)).toEqual(["b"]));
   it("geen verzonnen stand of bespreekpunten", () => { expect(recordedStand(P("x"))).toBeNull(); expect(discussionPoints(P("x"))).toEqual([]); expect(NOT_SET).toBe("Nog niet vastgelegd"); });
   it("bespreekpunten uit opmerkingen en Vervolg", () => expect(discussionPoints(P("x", { remarks: "Besluit nodig", project_plan: "Vervolg\n- Brief sturen" }))).toEqual(["Besluit nodig", "• Brief sturen"]));
+  it("verouderd/gearchiveerd project of dossier: ongeldig en leeg, nooit verbreed", () => {
+    for (const f of [{ projectId: "weg", dossierId: null }, { projectId: "arch", dossierId: null }, { projectId: null, dossierId: "weg" }]) {
+      const a = buildAgenda(projects, tasks, links, dossiers, f);
+      expect(a.invalid).toBe(true); expect(a.active).toEqual([]); expect(a.completed).toEqual([]); expect(a.unscoped).toEqual([]); expect(a.openActionCount).toBe(0);
+    }
+  });
+  it("filterkeuze wist het andere filter in één update", () => {
+    expect(nextFilterParams(new URLSearchParams("project=a&dossier=d1&x=1"), "dossier", "d2").toString()).toBe("x=1&dossier=d2");
+    expect(nextFilterParams(new URLSearchParams("project=a&dossier=d1"), "project", "").toString()).toBe("");
+  });
 });
