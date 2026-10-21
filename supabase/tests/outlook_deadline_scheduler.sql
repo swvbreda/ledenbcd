@@ -7,8 +7,7 @@ SELECT pg_temp.assert_ok(NOT has_function_privilege('authenticated','outlook_dea
 SELECT pg_temp.assert_ok(NOT has_function_privilege('authenticated','outlook_deadline_scheduler_actor()','EXECUTE'),'actor private');
 INSERT INTO user_roles VALUES('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','admin');
 SELECT outlook_deadline_configure(true,'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-SELECT pg_temp.assert_ok(outlook_deadline_scheduler_actor() IS NULL,'unarmed');
-UPDATE outlook_deadline_settings SET scheduler_armed=true;
+SELECT pg_temp.assert_ok((SELECT scheduler_armed FROM outlook_deadline_settings),'explicit configure arms');
 SELECT pg_temp.assert_ok(outlook_deadline_scheduler_actor()='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','trusted actor');
 SELECT pg_temp.assert_ok(outlook_deadline_scheduler_claim() IS NULL,'no backfill');
 SELECT outlook_deadline_scheduler_tick();
