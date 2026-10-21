@@ -167,6 +167,7 @@ export default function AgendaEventDialog({ open, onOpenChange, event }: Props) 
               <SelectContent>
                 <SelectItem value="evenement">Evenement (leden kunnen zich aanmelden)</SelectItem>
                 <SelectItem value="bestuursvergadering">Bestuursvergadering</SelectItem>
+                {form.event_type === "vergadering" && <SelectItem value="vergadering">Vergadering (uit BCD-agenda)</SelectItem>}
               </SelectContent>
             </Select>
           </div>

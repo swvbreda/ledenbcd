@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { handleRpcAuthError } from "@/lib/invokeFunction";
 
-export type AgendaEventType = "bestuursvergadering" | "evenement";
+/** "vergadering" = geïmporteerd uit de BCD-agenda (Outlook/Teams); geen aanmeldingen of uitgaande Outlook-sync. */
+export type AgendaEventType = "bestuursvergadering" | "evenement" | "vergadering";
 
 export interface AgendaEvent {
   id: string;

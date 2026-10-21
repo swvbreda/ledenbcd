@@ -3752,6 +3752,268 @@ export type Database = {
         }
         Relationships: []
       }
+      ms_agenda_import_links: {
+        Row: {
+          agenda_event_id: string
+          calendar_id: string
+          created_at: string
+          event_id: string
+          event_kind: string | null
+          ical_uid: string | null
+          last_modified: string | null
+          last_seen_at: string | null
+          mailbox: string
+          original_start: string | null
+          remote_state: string
+          series_master_id: string | null
+          teams_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          agenda_event_id: string
+          calendar_id: string
+          created_at?: string
+          event_id: string
+          event_kind?: string | null
+          ical_uid?: string | null
+          last_modified?: string | null
+          last_seen_at?: string | null
+          mailbox: string
+          original_start?: string | null
+          remote_state?: string
+          series_master_id?: string | null
+          teams_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agenda_event_id?: string
+          calendar_id?: string
+          created_at?: string
+          event_id?: string
+          event_kind?: string | null
+          ical_uid?: string | null
+          last_modified?: string | null
+          last_seen_at?: string | null
+          mailbox?: string
+          original_start?: string | null
+          remote_state?: string
+          series_master_id?: string | null
+          teams_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ms_agenda_import_links_agenda_event_id_fkey"
+            columns: ["agenda_event_id"]
+            isOneToOne: true
+            referencedRelation: "agenda_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ms_import_conflicts: {
+        Row: {
+          created_at: string
+          external_key: string
+          id: string
+          local_id: string | null
+          reason: string
+          resolved_at: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          external_key: string
+          id?: string
+          local_id?: string | null
+          reason: string
+          resolved_at?: string | null
+          source: string
+        }
+        Update: {
+          created_at?: string
+          external_key?: string
+          id?: string
+          local_id?: string | null
+          reason?: string
+          resolved_at?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      ms_import_runs: {
+        Row: {
+          actor: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          ok: boolean | null
+          started_at: string
+          summary: Json | null
+          trigger: string
+        }
+        Insert: {
+          actor?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          started_at?: string
+          summary?: Json | null
+          trigger: string
+        }
+        Update: {
+          actor?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          started_at?: string
+          summary?: Json | null
+          trigger?: string
+        }
+        Relationships: []
+      }
+      ms_import_settings: {
+        Row: {
+          agenda_calendar_id: string | null
+          agenda_calendar_name: string | null
+          agenda_confirmed_at: string | null
+          agenda_confirmed_by: string | null
+          agenda_mailbox: string
+          agenda_user_id: string | null
+          enabled: boolean
+          id: boolean
+          planner_general_bucket_id: string | null
+          planner_general_bucket_name: string | null
+          planner_mode: string
+          release_gate: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agenda_calendar_id?: string | null
+          agenda_calendar_name?: string | null
+          agenda_confirmed_at?: string | null
+          agenda_confirmed_by?: string | null
+          agenda_mailbox?: string
+          agenda_user_id?: string | null
+          enabled?: boolean
+          id?: boolean
+          planner_general_bucket_id?: string | null
+          planner_general_bucket_name?: string | null
+          planner_mode?: string
+          release_gate?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agenda_calendar_id?: string | null
+          agenda_calendar_name?: string | null
+          agenda_confirmed_at?: string | null
+          agenda_confirmed_by?: string | null
+          agenda_mailbox?: string
+          agenda_user_id?: string | null
+          enabled?: boolean
+          id?: boolean
+          planner_general_bucket_id?: string | null
+          planner_general_bucket_name?: string | null
+          planner_mode?: string
+          release_gate?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      ms_planner_import_links: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          last_seen_at: string | null
+          plan_id: string
+          planner_task_id: string
+          project_id: string
+          remote_hash: string | null
+          source_state: string
+          task_id: string
+          updated_at: string
+          warning: string | null
+        }
+        Insert: {
+          bucket_id: string
+          created_at?: string
+          last_seen_at?: string | null
+          plan_id: string
+          planner_task_id: string
+          project_id: string
+          remote_hash?: string | null
+          source_state?: string
+          task_id: string
+          updated_at?: string
+          warning?: string | null
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          last_seen_at?: string | null
+          plan_id?: string
+          planner_task_id?: string
+          project_id?: string
+          remote_hash?: string | null
+          source_state?: string
+          task_id?: string
+          updated_at?: string
+          warning?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ms_planner_import_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ms_planner_unprocessed: {
+        Row: {
+          assignee_count: number
+          bucket_id: string
+          created_at: string
+          due: string | null
+          last_seen_at: string | null
+          percent: number
+          plan_id: string
+          planner_task_id: string
+          source_state: string
+          title: string
+        }
+        Insert: {
+          assignee_count?: number
+          bucket_id: string
+          created_at?: string
+          due?: string | null
+          last_seen_at?: string | null
+          percent?: number
+          plan_id: string
+          planner_task_id: string
+          source_state?: string
+          title: string
+        }
+        Update: {
+          assignee_count?: number
+          bucket_id?: string
+          created_at?: string
+          due?: string | null
+          last_seen_at?: string | null
+          percent?: number
+          plan_id?: string
+          planner_task_id?: string
+          source_state?: string
+          title?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           cover_image_url: string | null
@@ -5909,6 +6171,30 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      ms_import_apply_agenda: {
+        Args: {
+          _actor: string
+          _calendar: string
+          _complete: boolean
+          _from: string
+          _items: Json
+          _to: string
+        }
+        Returns: Json
+      }
+      ms_import_apply_planner: {
+        Args: {
+          _actor: string
+          _bucket: string
+          _complete: boolean
+          _items: Json
+        }
+        Returns: Json
+      }
+      ms_import_configure: {
+        Args: { _actor: string; _patch: Json }
+        Returns: undefined
       }
       next_member_number: { Args: never; Returns: number }
       normalize_gemeente: { Args: { _naam: string }; Returns: string }

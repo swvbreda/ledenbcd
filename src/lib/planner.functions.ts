@@ -28,6 +28,15 @@ async function assertAdmin(ctx: Ctx) {
   if (error || data !== true) throw new Error("Geen toegang: alleen beheerders.");
 }
 
+/** Leesmodus (Microsoft leidend): elke bestaande schrijfroute naar Planner weigert, ook bij ontbrekende of onleesbare instelling. */
+export async function plannerMode(ctx: Ctx): Promise<"import" | "two_way"> {
+  const { data } = await ctx.supabase.from("ms_import_settings").select("planner_mode").maybeSingle();
+  return data?.planner_mode === "two_way" ? "two_way" : "import";
+}
+async function assertTwoWayAllowed(ctx: Ctx) {
+  if ((await plannerMode(ctx)) !== "two_way") throw new Error("Planner staat in leesmodus: Microsoft is leidend, schrijven naar Planner is uitgeschakeld.");
+}
+
 async function graphSetup(deadlineAt?: number) {
   const g = await import("@/lib/plannerGraph.server");
   const cfg = g.readGraphConfig(process.env);
@@ -41,20 +50,22 @@ export const plannerStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context as Ctx);
+    const readOnly = (await plannerMode(context as Ctx)) === "import";
     const g = await import("@/lib/plannerGraph.server");
     const cfg = g.readGraphConfig(process.env);
-    if (!cfg) return { configured: false, roles: [] as string[], canRead: false, canWrite: false, canListGroups: false, error: null as string | null };
+    if (!cfg) return { configured: false, readOnly, roles: [] as string[], canRead: false, canWrite: false, canListGroups: false, error: null as string | null };
     try {
       const { roles } = await g.getAppToken(cfg);
       return {
-        configured: true, roles,
+        configured: true, readOnly, roles,
         canRead: roles.includes("Tasks.Read.All") || roles.includes("Tasks.ReadWrite.All"),
-        canWrite: roles.includes("Tasks.ReadWrite.All"),
+        // In leesmodus nooit schrijven, ook niet via de automatische sync bij openen van het paneel.
+        canWrite: !readOnly && roles.includes("Tasks.ReadWrite.All"),
         canListGroups: roles.includes("Group.Read.All") || roles.includes("Group.ReadWrite.All") || roles.includes("GroupMember.Read.All"),
         error: null,
       };
     } catch (e) {
-      return { configured: true, roles: [], canRead: false, canWrite: false, canListGroups: false, error: safeMsg(e) };
+      return { configured: true, readOnly, roles: [], canRead: false, canWrite: false, canListGroups: false, error: safeMsg(e) };
     }
   });
 
@@ -102,6 +113,7 @@ export const plannerCreateBucket = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ name: z.string().trim().min(1).max(200), confirm: z.literal(true) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
+    await assertTwoWayAllowed(context as Ctx);
     const { g, client } = await graphSetup();
     const port = g.plannerPort(client);
     const existing = await port.listBuckets(PLANNER_TARGET_PLAN_ID);
@@ -207,6 +219,7 @@ export const plannerSyncProject = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
     await assertAdmin(ctx);
+    await assertTwoWayAllowed(ctx);
     const sb = ctx.supabase;
     const { data: proj, error: pErr } = await sb.from("internal_projects").select("archived_at").eq("id", data.projectId).maybeSingle();
     if (pErr) throw new Error(pErr.message);

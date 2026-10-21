@@ -6,6 +6,9 @@ const BASE = `${GRAPH_ORIGIN}/v1.0`;
 const ALLOWED = [
   // Deadline items: explicit Entra account + known calendar/event ids only.
   /^\/users\/[0-9a-fA-F-]{36}\/calendar(\?.*)?$/,
+  // Eenrichtingsimport: kalenderlijst en calendarView van één expliciet bevestigde agenda (alleen GET).
+  /^\/users\/[0-9a-fA-F-]{36}\/calendars(\?.*)?$/,
+  /^\/users\/[0-9a-fA-F-]{36}\/calendars\/[A-Za-z0-9_%=+-]+\/calendarView\?.*$/,
   /^\/users\/[0-9a-fA-F-]{36}\/calendars\/[A-Za-z0-9_%=+-]+\/events(\/[A-Za-z0-9_%=+-]+)?(\?.*)?$/,
   /^\/planner\/plans\/[A-Za-z0-9_-]+(\/buckets)?(\?.*)?$/,
   /^\/planner\/buckets(\/[A-Za-z0-9_-]+(\/tasks)?)?(\?.*)?$/,
