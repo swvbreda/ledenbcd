@@ -188,6 +188,7 @@ export const plannerResolveConflict = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
     await assertAdmin(ctx);
+    await assertTwoWayAllowed(ctx);
     const { data: link, error } = await ctx.supabase.from("planner_task_links").select("*").eq("task_id", data.taskId).maybeSingle();
     if (error || !link) throw new Error("Koppeling niet gevonden");
     if (link.state !== "conflict" || !link.planner_task_id) throw new Error("Er is geen op te lossen conflict.");
@@ -203,6 +204,7 @@ export const plannerResolveUncertain = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
     await assertAdmin(ctx);
+    await assertTwoWayAllowed(ctx);
     const { data: link, error } = await ctx.supabase.from("planner_task_links").select("state,planner_task_id").eq("task_id", data.taskId).maybeSingle();
     if (error || !link) throw new Error("Koppeling niet gevonden");
     if (link.planner_task_id || (link.state !== "uncertain" && link.state !== "creating")) throw new Error("Taak is niet onzeker aangemaakt.");
