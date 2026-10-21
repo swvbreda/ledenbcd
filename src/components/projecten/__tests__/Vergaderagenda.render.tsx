@@ -59,7 +59,7 @@ describe("Vergaderagenda toegang en status", () => {
 
   it("admin: zes punten, links naar Microsoft-bronnen en project", async () => {
     wrap();
-    expect(await screen.findByText("Wietexperiment")).toBeTruthy();
+    expect(await screen.findByRole("link", { name: "Wietexperiment" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(6);
     expect(screen.getByText(/BCD Besluitenregister/).closest("a")!.getAttribute("href")).toContain("BCD%20Besluitenregister");
     expect(screen.getByText(/Algemeen > Gedeeld > Vergaderingen > Topical-archief/)).toBeTruthy();
@@ -71,14 +71,14 @@ describe("Vergaderagenda toegang en status", () => {
     wrap();
     await waitFor(() => expect(h.from).toHaveBeenCalledWith("internal_projects"));
     expect(screen.getByText("Laden...")).toBeTruthy();
-    expect(screen.queryByText("Wietexperiment")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Wietexperiment" })).toBeNull();
   });
 
   it("fout in dossierkoppelingen: foutmelding en geen schijnbaar complete agenda", async () => {
     h.fail.add("dossier_project_links");
     wrap();
     expect((await screen.findByRole("alert")).textContent).toMatch(/onvolledig/);
-    expect(screen.queryByText("Wietexperiment")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Wietexperiment" })).toBeNull();
   });
 
   it("fout in namen: zichtbaar in plaats van stil ontbrekende naam", async () => {
@@ -92,7 +92,7 @@ describe("Vergaderagenda toegang en status", () => {
     h.params = new URLSearchParams("project=weg");
     wrap();
     expect((await screen.findByRole("alert")).textContent).toMatch(/Ongeldige selectie/);
-    expect(screen.queryByText("Wietexperiment")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Wietexperiment" })).toBeNull();
     expect(screen.queryByText(/Projectvoortgang/)).toBeNull();
   });
 
