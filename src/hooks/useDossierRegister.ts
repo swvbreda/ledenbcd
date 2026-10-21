@@ -6,11 +6,12 @@ import { diffLinks, type DossierLink, type FinanceAlias, type RegisterDossier } 
 const db = supabase as any;
 
 /** Dossierregister + aliases + projectkoppelingen. Alleen voor beheerders (RLS). */
-export function useDossierRegister(enabled: boolean) {
+export function useDossierRegister(enabled: boolean, live?: { refetchInterval: number }) {
+  const liveOpts = live ? { refetchOnWindowFocus: true, staleTime: 0, refetchInterval: live.refetchInterval, refetchIntervalInBackground: false } : {};
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const dossiers = useQuery({
-    queryKey: ["dossier-register", uid], enabled: enabled && !!uid,
+    ...liveOpts, queryKey: ["dossier-register", uid], enabled: enabled && !!uid,
     queryFn: async () => {
       const { data, error } = await db.from("dossier_register").select("id,parent_id,name,sort_order,jaarplan_kind,jaarplan_section,jaarplan_pages,note,archived_at,project_hidden_at,status_summary,status_date").order("sort_order");
       if (error) throw error;
@@ -18,7 +19,7 @@ export function useDossierRegister(enabled: boolean) {
     },
   });
   const aliases = useQuery({
-    queryKey: ["dossier-aliases"], enabled,
+    ...liveOpts, queryKey: ["dossier-aliases"], enabled,
     queryFn: async () => {
       const { data, error } = await db.from("dossier_finance_aliases").select("dossier_id,label");
       if (error) throw error;
@@ -26,7 +27,7 @@ export function useDossierRegister(enabled: boolean) {
     },
   });
   const links = useQuery({
-    queryKey: ["dossier-links"], enabled,
+    ...liveOpts, queryKey: ["dossier-links"], enabled,
     queryFn: async () => {
       const { data, error } = await db.from("dossier_project_links").select("dossier_id,project_id");
       if (error) throw error;
@@ -37,6 +38,8 @@ export function useDossierRegister(enabled: boolean) {
     dossiers: dossiers.data ?? [], aliases: aliases.data ?? [], links: links.data ?? [],
     isLoading: dossiers.isLoading || aliases.isLoading || links.isLoading,
     error: dossiers.error || aliases.error || links.error,
+    updatedAt: Math.min(dossiers.dataUpdatedAt || Infinity, links.dataUpdatedAt || Infinity),
+    refetch: () => { dossiers.refetch(); aliases.refetch(); links.refetch(); },
   };
 }
 
