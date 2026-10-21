@@ -164,3 +164,25 @@ export async function runImport(graph: ImportGraph, db: ImportDb, now = new Date
   }
   return out;
 }
+
+/** Er is (nog) geen bestaande uurtrigger aangesloten op de importroute; automatisch draaien is dus niet mogelijk. */
+export const HOURLY_TRIGGER_CONNECTED = false;
+
+export type ImportReadiness = "uit" | "wacht_op_release" | "geen_trigger" | "aan";
+export function importReadiness(s: { enabled: boolean; release_gate: boolean }, triggerConnected = HOURLY_TRIGGER_CONNECTED): ImportReadiness {
+  if (!s.enabled) return "uit";
+  if (!s.release_gate) return "wacht_op_release";
+  if (!triggerConnected) return "geen_trigger";
+  return "aan";
+}
+
+/** Alleen 'geslaagd' als alles wat gelezen werd volledig en foutloos was. */
+export function importOutcome(r: ImportResult): { ok: boolean; message: string } {
+  const parts: string[] = [];
+  const a = r.agenda;
+  if (a.status !== "skipped") parts.push(`Agenda: ${a.status === "ok" ? "volledig" : a.status === "partial" ? "onvolledig" : "mislukt"}${a.detail ? ` (${a.detail})` : ""}`);
+  for (const p of r.planner) parts.push(`Planner: ${p.status === "ok" ? "volledig" : p.status === "partial" ? "onvolledig" : "mislukt"}${p.detail ? ` (${p.detail})` : ""}`);
+  const bad = a.status === "partial" || a.status === "error" || r.planner.some((p) => p.status !== "ok");
+  const nothing = a.status === "skipped" && r.planner.length === 0;
+  return { ok: !bad && !nothing, message: nothing ? `Niets gelezen: ${a.detail ?? ""}${r.plannerSkipped ? `; ${r.plannerSkipped}` : ""}` : parts.join("; ") };
+}
