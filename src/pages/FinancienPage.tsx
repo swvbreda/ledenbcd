@@ -179,7 +179,7 @@ export default function FinancienPage() {
         <>
 
         <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-1">
-          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-7">
+          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-6">
             <TabsTrigger value="dashboard" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dashboard
             </TabsTrigger>
@@ -195,7 +195,7 @@ export default function FinancienPage() {
             <TabsTrigger value="todo" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               To Do
             </TabsTrigger>
-            <TabsTrigger value="controle" className="col-span-2 h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs sm:col-span-1">
+            <TabsTrigger value="controle" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Controle &amp; sync
             </TabsTrigger>
           </TabsList>
