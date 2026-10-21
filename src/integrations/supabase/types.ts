@@ -3756,6 +3756,7 @@ export type Database = {
         Row: {
           agenda_event_id: string
           calendar_id: string
+          cancelled_by_import: boolean
           created_at: string
           event_id: string
           event_kind: string | null
@@ -3772,6 +3773,7 @@ export type Database = {
         Insert: {
           agenda_event_id: string
           calendar_id: string
+          cancelled_by_import?: boolean
           created_at?: string
           event_id: string
           event_kind?: string | null
@@ -3788,6 +3790,7 @@ export type Database = {
         Update: {
           agenda_event_id?: string
           calendar_id?: string
+          cancelled_by_import?: boolean
           created_at?: string
           event_id?: string
           event_kind?: string | null
