@@ -1,6 +1,6 @@
 /** Gedeelde import-worker voor handmatige (admin) en geplande aanroep. Alleen lezen bij Microsoft. */
 import { timingSafeEqual } from "node:crypto";
-import { IMPORT_PLAN_ID, runImport, type ImportDb, type ImportGraph, type ImportResult } from "@/lib/msImport";
+import { IMPORT_PLAN_ID, importOutcome, runImport, type ImportDb, type ImportGraph, type ImportResult } from "@/lib/msImport";
 
 type Sb = any;
 
@@ -31,7 +31,7 @@ export async function runLogged(sb: Sb, actor: string, trigger: "manual" | "sche
   const { data: run } = await sb.from("ms_import_runs").insert({ trigger, actor }).select("id").single();
   try {
     const r = await runImport(graph, supabaseImportDb(sb, actor));
-    const ok = r.agenda.status !== "error" && r.planner.every((p) => p.status !== "error");
+    const ok = importOutcome(r).ok; // onvolledig telt niet als geslaagd
     if (run) await sb.from("ms_import_runs").update({ finished_at: new Date().toISOString(), ok, summary: r }).eq("id", run.id);
     return r;
   } catch (e) {

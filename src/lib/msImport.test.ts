@@ -123,3 +123,18 @@ describe("bevestigde bron", () => {
     expect(IMPORT_MAILBOX_ENTRA_ID).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
+
+import { importOutcome, importReadiness } from "@/lib/msImport";
+describe("uitkomst en gereedheid", () => {
+  it("onvolledig of fout is geen succes", () => {
+    expect(importOutcome({ agenda: { status: "partial", detail: null, counts: null }, planner: [], plannerSkipped: null }).ok).toBe(false);
+    expect(importOutcome({ agenda: { status: "ok", detail: null, counts: {} }, planner: [{ bucket: "b", status: "error", detail: "x", counts: null }], plannerSkipped: null }).ok).toBe(false);
+    expect(importOutcome({ agenda: { status: "skipped", detail: "geen agenda", counts: null }, planner: [], plannerSkipped: "geen" }).ok).toBe(false);
+    expect(importOutcome({ agenda: { status: "ok", detail: null, counts: {} }, planner: [], plannerSkipped: null }).ok).toBe(true);
+  });
+  it("zonder uurtrigger nooit 'aan'", () => {
+    expect(importReadiness({ enabled: true, release_gate: true })).toBe("geen_trigger");
+    expect(importReadiness({ enabled: true, release_gate: false })).toBe("wacht_op_release");
+    expect(importReadiness({ enabled: true, release_gate: true }, true)).toBe("aan");
+  });
+});
