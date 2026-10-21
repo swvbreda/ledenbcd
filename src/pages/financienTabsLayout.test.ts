@@ -14,14 +14,14 @@ describe("FinancienPage tab layout", () => {
     expect(source).toContain('value="controle"');
   });
 
-  it("heeft exact 7 tabbladen", () => {
+  it("heeft exact 6 tabbladen", () => {
     const triggers = source.match(/<TabsTrigger value="/g) || [];
-    expect(triggers).toHaveLength(7);
+    expect(triggers).toHaveLength(6);
   });
 
   it("gebruikt een responsieve grid zonder overflow-klassen", () => {
     expect(source).toContain('className="grid h-auto w-full max-w-full grid-cols-2');
-    expect(source).toContain("lg:grid-cols-7");
+    expect(source).toContain("lg:grid-cols-6");
     expect(source).not.toContain("sm:inline-flex");
     expect(source).not.toContain("sm:w-auto");
     expect(source).not.toContain("flex-nowrap");
@@ -29,7 +29,7 @@ describe("FinancienPage tab layout", () => {
 
   it("laat alle triggers afbreken en meeschalen", () => {
     const triggerClasses = [...source.matchAll(/<TabsTrigger value="[^"]+" className="([^"]+)"/g)].map((m) => m[1]);
-    expect(triggerClasses).toHaveLength(7);
+    expect(triggerClasses).toHaveLength(6);
     for (const cls of triggerClasses) {
       expect(cls).toContain("min-w-0");
       expect(cls).toContain("h-auto");
