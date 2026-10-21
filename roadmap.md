@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Outlook-taakdeadlines (geen publicatie)
+- [ ] Gerichte enable/armed-bug: transactionele configure in installatiescript, server/UI-installatiecontrole, isolated DB/componenttests en typecheck; geen live installatie.
 - [x] Automatische servercode/installatiescript: gedeelde engine/claim, veilig uit; 98 regressietests, echte geïsoleerde route+SQL/mock Graph/concurrency, SQL-rollback, 2 schermtests en tsgo --noEmit geslaagd.
 - [ ] Veilige schedulerinstallatie: database-tool blokkeert secret-DDL (Agent access to secrets is not allowed); bestaande Vault-naam beschikbaar, script geïsoleerd getest, geen live installatie of activatie.
 - [x] Deadline-engine, beveiligde outbox en beheerstatus gebouwd; 89 engine/regressietests, 2 componenttests, echte geïsoleerde SQL/gelijktijdige claim en DB→mock Graph→finish-ketentest geslaagd; 390px/desktop gecontroleerd. Review: docs/outlook-deadlines-review.md. Standaard uit, geen backfill of Microsoft-schrijfacties.
