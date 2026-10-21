@@ -1,5 +1,9 @@
 # Roadmap
 
+## Outlook-taakdeadlines (geen publicatie)
+- [ ] Deadline-engine, beveiligde outbox en beheerstatus bouwen en geïsoleerd toetsen; standaard uit, geen backfill of Microsoft-schrijfacties.
+- [ ] Live Calendar-leestoegang en releasevoorwaarden verifiëren; activatie geblokkeerd tot koppeling en volledige release zijn gereviewd.
+
 ## Open
 - [x] WhatsApp → Aankondigingen geïmplementeerd: 33 unit- en 3 rendertests, geïsoleerde SQL-rollbackproeven en 12 gelijktijdige ingests → 1 aankondiging; admin-preview standaard deny zichtbaar. Review/release-afbakening: docs/whatsapp-release-review.md. Geen echte aankondiging/notificatie of publicatie.
 - [ ] WhatsApp activeren/verifiëren: echt publishernummer ontbreekt; allowlist blijft leeg. Selectieve release vereist exact laatst gepubliceerde commit + afzonderlijke releaseworkflow zonder persoonlijke toegang/deel-previews/Agenda-mailactie; daarna één echte forwarded ontvangst tot ledenweergave controleren.
