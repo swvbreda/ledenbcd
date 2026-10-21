@@ -16,6 +16,13 @@ DO $$ BEGIN PERFORM public.outlook_deadline_claim(); RAISE EXCEPTION 'nonadmin a
 RESET ROLE;
 SELECT outlook_deadline_configure(true,'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 SELECT pg_temp.assert_ok((SELECT count(*)=0 FROM outlook_deadline_outbox),'enabling no backfill');
+INSERT INTO internal_tasks VALUES('ffffffff-ffff-ffff-ffff-ffffffffffff','Existing unmapped',NULL,NULL,'te_doen',NULL);
+-- Ignore this deliberately new row; confirming a mapping must not enqueue an older untracked task.
+DELETE FROM outlook_deadline_outbox WHERE task_id='ffffffff-ffff-ffff-ffff-ffffffffffff';
+UPDATE internal_tasks SET assignee_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' WHERE id='ffffffff-ffff-ffff-ffff-ffffffffffff';
+DELETE FROM outlook_deadline_outbox WHERE task_id='ffffffff-ffff-ffff-ffff-ffffffffffff';
+INSERT INTO planner_user_map VALUES('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',now());
+SELECT pg_temp.assert_ok(NOT EXISTS(SELECT 1 FROM outlook_deadline_outbox WHERE task_id='ffffffff-ffff-ffff-ffff-ffffffffffff'),'mapping confirmation no backfill');
 UPDATE internal_tasks SET title='Changed' WHERE id='dddddddd-dddd-dddd-dddd-dddddddddddd';
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',true);

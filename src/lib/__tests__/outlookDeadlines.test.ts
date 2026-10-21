@@ -8,7 +8,7 @@ const linked=()=>job({event_id:'event',account_id:account,calendar_id:'cal',etag
 describe('Outlook deadline lifecycle',()=>{
  it.each([['2026-03-29','2026-03-30'],['2026-10-25','2026-10-26'],['2026-12-31','2027-01-01']])('all-day/free exclusive next day %s',async(day,next)=>{
  const j=job();j.task.deadline=day;const g=graph();expect((await processDeadline(j,g,async()=>true)).state).toBe('synced');
- const b=g.create.mock.calls[0]?.[2] as unknown as ReturnType<typeof deadlineBody>;
+ const b=(g.create.mock.calls as unknown[][])[0]?.[2] as ReturnType<typeof deadlineBody>;
  expect(b.start).toEqual({dateTime:day+'T00:00:00',timeZone:'Europe/Amsterdam'});expect(b.end).toEqual({dateTime:next+'T00:00:00',timeZone:'Europe/Amsterdam'});
  expect(b.isAllDay).toBe(true);expect(b.showAs).toBe('free');expect(b.isReminderOn).toBe(false);expect(b.subject).toBe('Taakdeadline — Besluit');expect(b).not.toHaveProperty('attendees');expect(b.body.content).toBe(`https://leden.coffeeshopbond.nl/projecten?project=${id}&task=${id}`);expect(b.transactionId).toBe(txn);
  });
