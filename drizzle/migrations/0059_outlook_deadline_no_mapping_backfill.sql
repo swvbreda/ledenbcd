@@ -1,0 +1,2 @@
+CREATE OR REPLACE FUNCTION public.outlook_deadline_mapping_changed() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE t record; BEGIN FOR t IN SELECT it.id FROM public.internal_tasks it JOIN public.outlook_deadline_outbox q ON q.task_id=it.id WHERE it.assignee_id=coalesce(NEW.user_id,OLD.user_id) LOOP PERFORM public.outlook_deadline_enqueue(t.id); END LOOP; RETURN coalesce(NEW,OLD); END $$;
+REVOKE ALL ON FUNCTION public.outlook_deadline_mapping_changed() FROM PUBLIC,anon,authenticated;

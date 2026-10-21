@@ -4,6 +4,9 @@ import { GraphError, safeMsg, type GraphPort, type RemoteTask } from "@/lib/plan
 export const GRAPH_ORIGIN = "https://graph.microsoft.com";
 const BASE = `${GRAPH_ORIGIN}/v1.0`;
 const ALLOWED = [
+  // Deadline items: explicit Entra account + known calendar/event ids only.
+  /^\/users\/[0-9a-fA-F-]{36}\/calendar(\?.*)?$/,
+  /^\/users\/[0-9a-fA-F-]{36}\/calendars\/[A-Za-z0-9_%=+-]+\/events(\/[A-Za-z0-9_%=+-]+)?(\?.*)?$/,
   /^\/planner\/plans\/[A-Za-z0-9_-]+(\/buckets)?(\?.*)?$/,
   /^\/planner\/buckets(\/[A-Za-z0-9_-]+(\/tasks)?)?(\?.*)?$/,
   /^\/planner\/tasks(\/[A-Za-z0-9_-]+(\/details)?)?(\?.*)?$/,

@@ -15,6 +15,7 @@ import {
   plannerResolveConflict, plannerResolveUncertain, plannerStatus, plannerSyncProject, plannerTargetPlan,
 } from "@/lib/planner.functions";
 import { plannerReadiness } from "@/lib/plannerStatus";
+import OutlookDeadlinesPanel from "./OutlookDeadlinesPanel";
 
 const db = supabase as any;
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Onbekende fout");
@@ -142,6 +143,7 @@ export default function PlannerPanel({ projects, staff, tasks, onSynced }: Props
 
   return (
     <div className="space-y-4">
+      <OutlookDeadlinesPanel tasks={tasks} />
       <section className="rounded-lg border border-border bg-card p-4 space-y-2">
         <h2 className="font-display uppercase tracking-tight">Microsoft Planner-status</h2>
         {statusQ.isLoading ? (
