@@ -6,6 +6,10 @@
 import { skipForGenericPlanner } from "@/lib/topicalLink";
 
 export const IMPORT_MAILBOX = "simone@coffeeshopbond.nl";
+/** Bevestigd via onafhankelijke Outlook-profielread (2026-10-21). */
+export const IMPORT_MAILBOX_ENTRA_ID = "07a25b88-ef99-4c2a-bba7-44aac8679db1";
+/** Aparte, niet-standaard agenda "BCD" (standaard REST-id, geen ImmutableId — de import vraagt ook geen ImmutableId aan). */
+export const IMPORT_CALENDAR_ID = "AAMkADk4Y2RiODc2LWE0MmItNGYwNS1iY2ExLTRhMzk2NzI4YmJhZQBGAAAAAAD9HfbZJGsFTZ4QRq02J-rOBwBBtJIYhrAZQJ4MRFt3l07ZAAAAAAEGAABBtJIYhrAZQJ4MRFt3l07ZAAFd2lnmAAA=";
 export const IMPORT_PLAN_ID = "ihOF3XJjZU-XVqZD1yqJ4JgAEVQ6";
 export const AGENDA_WINDOW_PAST_DAYS = 1;
 export const AGENDA_WINDOW_FUTURE_DAYS = 180;

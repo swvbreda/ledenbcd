@@ -115,3 +115,11 @@ describe("geplande route", () => {
     expect(m.graphFn).not.toHaveBeenCalled();
   });
 });
+
+import { IMPORT_CALENDAR_ID, IMPORT_MAILBOX_ENTRA_ID } from "@/lib/msImport";
+describe("bevestigde bron", () => {
+  it("agenda-id en account passen in de opslagcontroles", () => {
+    expect(IMPORT_CALENDAR_ID).toMatch(/^[A-Za-z0-9_=+/-]{1,512}$/);
+    expect(IMPORT_MAILBOX_ENTRA_ID).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});

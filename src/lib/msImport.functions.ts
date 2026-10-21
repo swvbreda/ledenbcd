@@ -2,7 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { IMPORT_MAILBOX } from "@/lib/msImport";
+import { IMPORT_CALENDAR_ID, IMPORT_MAILBOX, IMPORT_MAILBOX_ENTRA_ID } from "@/lib/msImport";
 
 type Ctx = { supabase: any; userId: string };
 async function assertAdmin(ctx: Ctx) {
@@ -50,6 +50,8 @@ export const msImportConfirmCalendar = createServerFn({ method: "POST" })
     }
     const { p } = await port();
     const userId = await p.resolveUser(IMPORT_MAILBOX);
+    if (userId !== IMPORT_MAILBOX_ENTRA_ID) throw new Error("Microsoft-account wijkt af van het bevestigde BCD-account.");
+    if (data.calendarId !== IMPORT_CALENDAR_ID) throw new Error("Alleen de bevestigde aparte BCD-agenda kan worden gekozen.");
     const cal = (await p.listCalendars(userId)).find((c) => c.id === data.calendarId);
     if (!cal) throw new Error("Deze agenda hoort niet bij de BCD-postbus.");
     if (cal.isDefault) throw new Error("De standaard (persoonlijke) agenda mag nooit worden gekozen.");
