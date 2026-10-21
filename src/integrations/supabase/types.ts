@@ -3797,6 +3797,89 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_deadline_outbox: {
+        Row: {
+          account_id: string | null
+          applied: Json | null
+          calendar_id: string | null
+          claimed_revision: number | null
+          etag: string | null
+          event_id: string | null
+          history: Json
+          last_error: string | null
+          lock_token: string | null
+          lock_until: string | null
+          revision: number
+          state: string
+          task_id: string
+          transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          applied?: Json | null
+          calendar_id?: string | null
+          claimed_revision?: number | null
+          etag?: string | null
+          event_id?: string | null
+          history?: Json
+          last_error?: string | null
+          lock_token?: string | null
+          lock_until?: string | null
+          revision?: number
+          state?: string
+          task_id: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          applied?: Json | null
+          calendar_id?: string | null
+          claimed_revision?: number | null
+          etag?: string | null
+          event_id?: string | null
+          history?: Json
+          last_error?: string | null
+          lock_token?: string | null
+          lock_until?: string | null
+          revision?: number
+          state?: string
+          task_id?: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlook_deadline_outbox_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outlook_deadline_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       outlook_sync_log: {
         Row: {
           details: Json | null
@@ -5830,6 +5913,21 @@ export type Database = {
       next_member_number: { Args: never; Returns: number }
       normalize_gemeente: { Args: { _naam: string }; Returns: string }
       normalize_shop_naam: { Args: { _naam: string }; Returns: string }
+      outlook_deadline_admin: { Args: never; Returns: undefined }
+      outlook_deadline_claim: { Args: never; Returns: Json }
+      outlook_deadline_configure: {
+        Args: { _actor: string; _enabled: boolean }
+        Returns: undefined
+      }
+      outlook_deadline_enqueue: { Args: { _id: string }; Returns: undefined }
+      outlook_deadline_finish: {
+        Args: { _actor: string; _lock: string; _result: Json; _task: string }
+        Returns: undefined
+      }
+      outlook_deadline_valid: {
+        Args: { _lock: string; _revision: number; _task: string }
+        Returns: boolean
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
