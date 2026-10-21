@@ -60,6 +60,7 @@ import { Route as ApiPublicAdviespakketRedeemRouteImport } from './routes/api/pu
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
+import { Route as ApiPublicOutlookDeadlineDispatchRouteImport } from './routes/api/public/outlook-deadline-dispatch'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
@@ -338,6 +339,12 @@ const ApiPublicLedenLogosRoute = ApiPublicLedenLogosRouteImport.update({
   path: '/api/public/leden-logos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOutlookDeadlineDispatchRoute =
+  ApiPublicOutlookDeadlineDispatchRouteImport.update({
+    id: '/api/public/outlook-deadline-dispatch',
+    path: '/api/public/outlook-deadline-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   id: '/api/public/register-enrich',
   path: '/api/public/register-enrich',
@@ -449,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
+  '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -513,6 +521,7 @@ export interface FileRoutesByTo {
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
+  '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -579,6 +588,7 @@ export interface FileRoutesById {
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
+  '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
+    | '/api/public/outlook-deadline-dispatch'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
+    | '/api/public/outlook-deadline-dispatch'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -774,6 +786,7 @@ export interface FileRouteTypes {
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
     | '/api/public/leden-logos'
+    | '/api/public/outlook-deadline-dispatch'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -819,6 +832,7 @@ export interface RootRouteChildren {
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
+  ApiPublicOutlookDeadlineDispatchRoute: typeof ApiPublicOutlookDeadlineDispatchRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
@@ -1189,6 +1203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLedenLogosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/outlook-deadline-dispatch': {
+      id: '/api/public/outlook-deadline-dispatch'
+      path: '/api/public/outlook-deadline-dispatch'
+      fullPath: '/api/public/outlook-deadline-dispatch'
+      preLoaderRoute: typeof ApiPublicOutlookDeadlineDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/register-enrich': {
       id: '/api/public/register-enrich'
       path: '/api/public/register-enrich'
@@ -1374,6 +1395,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
+  ApiPublicOutlookDeadlineDispatchRoute: ApiPublicOutlookDeadlineDispatchRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
