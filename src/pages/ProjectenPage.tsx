@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { statusDateLabel } from "@/lib/statusDate";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useSearchParams } from "@/lib/router-compat";
+import { Link, Navigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ProjectStatusBadge, Segmented, surfaceCls, tabsListCls, tabsTriggerCls } from "@/components/projecten/ui";
@@ -263,7 +263,8 @@ function ProjectenInner() {
               <h1 className="!font-sans text-2xl font-semibold tracking-tight text-foreground sm:text-[28px] sm:leading-9">Projecten & taken</h1>
               <p className="text-sm text-muted-foreground">Intern werkoverzicht — alleen zichtbaar voor beheerders</p>
             </div>
-            <Button variant="outline" size="sm" className="ml-auto min-h-10" onClick={() => setSearchParams(() => { const n = new URLSearchParams(); n.set("weergave", "leden"); return n; })}>Ledenweergave</Button>
+            <Button variant="outline" size="sm" className="ml-auto min-h-10" asChild><Link to="/vergaderagenda">Vergaderagenda</Link></Button>
+            <Button variant="outline" size="sm" className="min-h-10" onClick={() => setSearchParams(() => { const n = new URLSearchParams(); n.set("weergave", "leden"); return n; })}>Ledenweergave</Button>
           </header>
         )}
 
