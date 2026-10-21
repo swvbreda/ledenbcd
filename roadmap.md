@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Outlook-taakdeadlines (geen publicatie)
+- [ ] Automatische begrensde serververwerking met bestaande interne authenticatie; gedeelde engine/claims, veilig uit, route/concurrencytests en gerichte typecheck.
 - [x] Deadline-engine, beveiligde outbox en beheerstatus gebouwd; 89 engine/regressietests, 2 componenttests, echte geïsoleerde SQL/gelijktijdige claim en DB→mock Graph→finish-ketentest geslaagd; 390px/desktop gecontroleerd. Review: docs/outlook-deadlines-review.md. Standaard uit, geen backfill of Microsoft-schrijfacties.
 - [ ] Live Calendar-leestoegang en releasevoorwaarden: Calendars.ReadWrite en Tasks.ReadWrite.All tokenrechten bevestigd; mailboxread geblokkeerd door 0 bevestigde mappings. Activatie/releasegate blijft uit tot juiste mapping, pilot en volledige release review; unknown/conflict handmatig herstel en geplande dispatcher nog niet ingebouwd.
 
