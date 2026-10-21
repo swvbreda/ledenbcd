@@ -6,7 +6,8 @@ import { diffLinks, type DossierLink, type FinanceAlias, type RegisterDossier } 
 const db = supabase as any;
 
 /** Dossierregister + aliases + projectkoppelingen. Alleen voor beheerders (RLS). */
-export function useDossierRegister(enabled: boolean) {
+export function useDossierRegister(enabled: boolean, live?: { refetchInterval: number }) {
+  const liveOpts = live ? { refetchOnWindowFocus: true, staleTime: 0, refetchInterval: live.refetchInterval, refetchIntervalInBackground: false } : {};
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const dossiers = useQuery({

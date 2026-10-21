@@ -44,10 +44,29 @@ const isOpen = (t: AgendaTask) => t.status !== "afgerond";
 const byDeadline = (a: AgendaTask, b: AgendaTask) => (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999") || a.title.localeCompare(b.title);
 const STATUS_ORDER: Record<ProjectStatus, number> = { actief: 0, te_bevestigen: 1, gepauzeerd: 2, afgerond: 3 };
 
+/** Een URL-filter dat niet (meer) naar een open project/dossier wijst is ongeldig; nooit verbreden naar alles. */
+export function validateFilter(f: AgendaFilter, projects: AgendaProject[], dossiers: RegisterDossier[]) {
+  const invalidProject = !!f.projectId && !projects.some((p) => p.id === f.projectId && !p.archived_at);
+  const invalidDossier = !!f.dossierId && !dossiers.some((d) => d.id === f.dossierId && !d.archived_at);
+  return { invalidProject, invalidDossier, invalid: invalidProject || invalidDossier };
+}
+
+/** Filterkeuze als één atomaire URL-update: kies project óf dossier, het andere wordt gewist. */
+export function nextFilterParams(prev: URLSearchParams, key: "project" | "dossier", value: string): URLSearchParams {
+  const n = new URLSearchParams(prev);
+  n.delete("project"); n.delete("dossier");
+  if (value) n.set(key, value);
+  return n;
+}
+
+export const BESLUITENREGISTER_URL = "https://coffeeshopbond.sharepoint.com/sites/BondvanCannabisDetailisten/Lists/BCD%20Besluitenregister/AllItems.aspx?npsAction=createList";
+export const TEAMS_ARCHIEF_PAD = "Algemeen > Gedeeld > Vergaderingen > Topical-archief";
+
 export function buildAgenda(projects: AgendaProject[], tasks: AgendaTask[], links: DossierLink[], dossiers: RegisterDossier[], f: AgendaFilter) {
+  const v = validateFilter(f, projects, dossiers);
   const scope = f.dossierId ? dossierScope(f.dossierId, dossiers) : null;
-  const filtered = !!(f.projectId || scope);
-  const visible = projects
+  const filtered = !!(f.projectId || f.dossierId);
+  const visible = v.invalid ? [] : projects
     .filter((p) => !p.archived_at)
     .filter((p) => (!f.projectId || p.id === f.projectId) && (!scope || projectInScope(p.id, scope, links)))
     .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.title.localeCompare(b.title));
@@ -65,7 +84,7 @@ export function buildAgenda(projects: AgendaProject[], tasks: AgendaTask[], link
     active: rows.filter((r) => r.project.status !== "afgerond"),
     completed: rows.filter((r) => r.project.status === "afgerond"),
     unscoped,
-    filtered,
+    filtered, ...v,
     openActionCount: rows.reduce((n, r) => n + r.openTasks.length, 0) + unscoped.length,
     projectIds: ids,
   };
