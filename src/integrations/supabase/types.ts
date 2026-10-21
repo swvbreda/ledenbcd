@@ -4128,18 +4128,21 @@ export type Database = {
         Row: {
           enabled: boolean
           id: boolean
+          scheduler_armed: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           enabled?: boolean
           id?: boolean
+          scheduler_armed?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           enabled?: boolean
           id?: boolean
+          scheduler_armed?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -6212,6 +6215,14 @@ export type Database = {
       outlook_deadline_finish: {
         Args: { _actor: string; _lock: string; _result: Json; _task: string }
         Returns: undefined
+      }
+      outlook_deadline_scheduler_actor: { Args: never; Returns: string }
+      outlook_deadline_scheduler_claim: { Args: never; Returns: Json }
+      outlook_deadline_scheduler_status: { Args: never; Returns: Json }
+      outlook_deadline_scheduler_tick: { Args: never; Returns: undefined }
+      outlook_deadline_scheduler_valid: {
+        Args: { _lock: string; _revision: number; _task: string }
+        Returns: boolean
       }
       outlook_deadline_valid: {
         Args: { _lock: string; _revision: number; _task: string }
