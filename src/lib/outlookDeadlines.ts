@@ -1,7 +1,7 @@
 /** Pure deadline lifecycle. Internal tasks remain the only source of truth. */
 export type DeadlineTask = { id: string; title: string; deadline: string | null; assignee_id: string | null; project_id: string | null; status: string; archived: boolean };
 export type DeadlineJob = { task_id: string; revision: number; state: string; event_id: string | null; account_id: string | null; calendar_id: string | null; etag: string | null; transaction_id: string; lock_token: string; mapped_account: string | null; task: DeadlineTask };
-export type DeadlineResult = { state: string; error?: string; event_id?: string | null; account_id?: string | null; calendar_id?: string | null; etag?: string | null; applied?: unknown };
+export type DeadlineResult = { state: string; followup?: boolean; error?: string; event_id?: string | null; account_id?: string | null; calendar_id?: string | null; etag?: string | null; applied?: unknown };
 export type DeadlineEvent = { id: string; etag: string; transactionId?: string; attendees?: unknown[]; isOnlineMeeting?: boolean; type?: string };
 export interface DeadlineGraph {
  calendar(account: string): Promise<{ id: string; canEdit: boolean }>;
@@ -52,7 +52,7 @@ export async function processDeadline(job: DeadlineJob, graph: DeadlineGraph, va
  if (!eligible || account !== job.account_id) {
  await graph.remove(job.account_id, job.calendar_id, job.event_id, job.etag);
  // New owner is created on a separate claim, after confirmed removal of the old event.
- return { state: 'removed', event_id: null, account_id: null, calendar_id: null, etag: null, applied: null };
+ return { state: 'removed', followup: eligible, event_id: null, account_id: null, calendar_id: null, etag: null, applied: null };
  }
  const body = deadlineBody(t, job.transaction_id);
  const updated = await graph.patch(job.account_id, job.calendar_id, job.event_id, job.etag, body);
