@@ -61,5 +61,37 @@ SELECT pg_temp.ok( (SELECT count(*) FROM task_notifications) = 0);
 SELECT pg_temp.ok( NOT has_function_privilege('authenticated','ms_import_apply_planner(uuid,text,jsonb,boolean)','EXECUTE')
   AND NOT has_function_privilege('anon','ms_import_configure(uuid,jsonb)','EXECUTE')
   AND NOT has_table_privilege('authenticated','ms_import_settings','UPDATE'));
+-- 12. Eigen importannulering wordt hersteld als Outlook het item weer actief toont.
+SELECT ms_import_apply_agenda('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','CAL1','[{"event_id":"E1","title":"Overleg (terug)","date":"2026-11-12"}]',false,'2026-01-01','2027-01-01');
+SELECT pg_temp.ok( (SELECT cancelled_at FROM agenda_events WHERE event_type='vergadering') IS NULL
+  AND (SELECT NOT cancelled_by_import FROM ms_agenda_import_links WHERE event_id='E1'));
+-- 13. Lokale beheerdersannulering blijft staan, ook als Outlook actief is.
+UPDATE agenda_events SET cancelled_at = now(), cancel_reason = 'Bestuur besloot' WHERE event_type='vergadering';
+SELECT ms_import_apply_agenda('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','CAL1','[{"event_id":"E1","title":"Overleg (terug)","date":"2026-11-12"}]',false,'2026-01-01','2027-01-01');
+SELECT pg_temp.ok( (SELECT cancelled_at FROM agenda_events WHERE event_type='vergadering') IS NOT NULL);
+-- 14. Gelijke hash, nieuw bevestigde accountkoppeling → eigenaar alsnog bijgewerkt; lokale wijziging teruggezet naar Microsoft.
+INSERT INTO user_roles VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc','admin');
+INSERT INTO planner_user_map VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc','onbekend');
+UPDATE internal_tasks SET title = 'Lokaal hernoemd' WHERE title='Taak 2';
+SELECT ms_import_apply_planner('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','bucketA','[{"id":"P2","title":"Taak 2","percent":50,"assignees":["onbekend"],"hash":"h2"}]', false);
+SELECT pg_temp.ok( (SELECT assignee_id FROM internal_tasks t JOIN ms_planner_import_links l ON l.task_id=t.id WHERE l.planner_task_id='P2') = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+  AND (SELECT title FROM internal_tasks t JOIN ms_planner_import_links l ON l.task_id=t.id WHERE l.planner_task_id='P2') = 'Taak 2'
+  AND (SELECT warning FROM ms_planner_import_links WHERE planner_task_id='P2') IS NULL);
+-- 15. Topical-taak buiten importkoppeling blijft onaangeroerd.
+INSERT INTO internal_tasks (title, source_system, created_by) VALUES ('Topical blijft', 'topical', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+SELECT pg_temp.ok( (SELECT count(*) FROM internal_tasks WHERE title='Topical blijft') = 1);
+-- 16. Rollen op alle zes importtabellen.
+SELECT pg_temp.ok(bool_and(NOT has_table_privilege('anon', 'public.'||t, 'SELECT') AND NOT has_table_privilege('anon', 'public.'||t, 'INSERT')
+  AND has_table_privilege('authenticated', 'public.'||t, 'SELECT') AND NOT has_table_privilege('authenticated', 'public.'||t, 'INSERT')
+  AND NOT has_table_privilege('authenticated', 'public.'||t, 'UPDATE') AND NOT has_table_privilege('authenticated', 'public.'||t, 'DELETE')
+  AND has_table_privilege('service_role', 'public.'||t, 'INSERT') AND has_table_privilege('service_role', 'public.'||t, 'UPDATE')))
+FROM unnest(ARRAY['ms_import_settings','ms_agenda_import_links','ms_planner_import_links','ms_planner_unprocessed','ms_import_conflicts','ms_import_runs']) t;
+-- 17. Admin-RLS: niet-admin ziet niets, admin wel.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',true);
+SELECT pg_temp.ok( (SELECT count(*) FROM ms_import_settings) = 0 AND (SELECT count(*) FROM ms_planner_import_links) = 0);
+SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',true);
+SELECT pg_temp.ok( (SELECT count(*) FROM ms_import_settings) = 1 AND (SELECT count(*) FROM ms_planner_import_links) > 0);
+RESET ROLE;
 ROLLBACK;
 \echo PASS ms_import
