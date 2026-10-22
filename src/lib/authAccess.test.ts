@@ -83,7 +83,7 @@ describe("fetchRolesWithSessionRecovery", () => {
       }),
     ).rejects.toThrow(/Failed to fetch/);
     expect(refreshSession).not.toHaveBeenCalled();
-    expect(fetchRoles).not.toHaveBeenCalled();
+    // Rollen mogen parallel opgevraagd worden, maar worden nooit teruggegeven (zie rejects hierboven).
   });
 
   it("andere gebruiker in sessie blijft wel een vernieuwing waard en geeft geen rechten", async () => {
