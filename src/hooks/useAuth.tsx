@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError } from "@/lib/invokeFunction";
+import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
+import { fetchRolesWithSessionRecovery, withAuthTimeout, isTransientAuthError } from "@/lib/authAccess";
 import {
   createAccessController,
   deriveAccess,
@@ -83,7 +83,7 @@ function promotePendingPasskeyMfaFlag(userId: string): boolean {
 
 // Gedeeld over de hele app: twee gelijktijdige refreshSession-aanroepen met hetzelfde
 // refresh token leveren "refresh_token_already_used" op en kunnen de sessie intrekken.
-const refreshSessionOnce = singleFlight(() => supabase.auth.refreshSession());
+const refreshSessionOnce = refreshSessionShared;
 
 const ACCESS_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 15_000;
@@ -286,6 +286,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Global handler: when invokeWithAuth detects an unrecoverable auth failure,
     // sign the user out and send them to the login page with a single toast.
     const handleSessionExpired = async () => {
+      // Eerst proberen de sessie te vernieuwen: een verlopen toegangstoken of een
+      // haperende verbinding is geen reden om iemand uit te loggen. Alleen als de
+      // inlogdienst de sessie echt weigert, volgt uitloggen.
+      try {
+        const { data, error } = await refreshSessionOnce();
+        if (!error && data.session?.user) return;
+        if (error && isTransientAuthError(error)) return;
+        if (!navigator.onLine) return;
+      } catch (e) {
+        if (isTransientAuthError(e)) return;
+      }
       try {
         const currentUserId = userIdRef.current;
         if (currentUserId) {

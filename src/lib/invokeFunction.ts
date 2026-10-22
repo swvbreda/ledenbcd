@@ -1,4 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { singleFlight } from "@/lib/accessController";
+
+/**
+ * Eén gedeelde sessievernieuwing voor de hele app. Twee gelijktijdige
+ * vernieuwingen met hetzelfde token trekken de sessie in (= uitgelogd).
+ */
+export const refreshSessionShared = singleFlight(() => supabase.auth.refreshSession());
 
 /**
  * Roept een Supabase edge function aan met expliciet meegegeven sessietoken.
@@ -72,7 +79,7 @@ export function handleRpcAuthError(
 
 async function getAccessToken(forceRefresh = false): Promise<string | null> {
   if (forceRefresh) {
-    const { data, error } = await supabase.auth.refreshSession();
+    const { data, error } = await refreshSessionShared();
     if (error) return null;
     return data?.session?.access_token ?? null;
   }
