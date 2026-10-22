@@ -89,7 +89,7 @@ const ACCESS_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 15_000;
 
 async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
-  const roles = await fetchRolesWithSessionRecovery({
+  const rolesPromise = fetchRolesWithSessionRecovery({
     expectedUserId: userId,
     getAuthenticatedUserId: async () => {
       const { data, error } = await supabase.auth.getUser();
@@ -134,7 +134,9 @@ async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
   })();
   const boardRowsPromise = supabase.from("board_members").select("lid_id, lid_ids").then((r) => r.data ?? []);
 
-  const [memberIds, boardRows] = await Promise.all([memberIdsPromise, boardRowsPromise]);
+  memberIdsPromise.catch(() => {});
+  // Alles tegelijk: rollen, ledenkoppeling en bestuur. Rechten pas na geslaagde rolcontrole.
+  const [roles, memberIds, boardRows] = await Promise.all([rolesPromise, memberIdsPromise, boardRowsPromise]);
   const isBoard =
     memberIds.length > 0 &&
     (boardRows as any[]).some((row) => {
@@ -251,7 +253,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               return;
             }
 
-            if (backgroundedAt && Date.now() - backgroundedAt > 5 * 60_000) {
+            if (backgroundedAt && Date.now() - backgroundedAt > 4 * 60 * 60_000) {
               // Alleen volledig herladen als er geen onopgeslagen invoer is,
               // zodat een half ingevuld formulier of bericht niet verloren gaat.
               const hasUnsavedInput = Array.from(

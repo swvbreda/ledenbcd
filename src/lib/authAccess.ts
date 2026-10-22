@@ -41,11 +41,15 @@ export async function fetchRolesWithSessionRecovery({
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
+      // Parallel: sessiecontrole en rollen tegelijk ophalen (scheelt een rondgang op mobiel).
+      // Rollen worden alleen teruggegeven als de sessie bij de verwachte gebruiker hoort.
+      const rolesPromise = fetchRoles();
+      rolesPromise.catch(() => {});
       const authenticatedUserId = await getAuthenticatedUserId();
       if (authenticatedUserId !== expectedUserId) {
         throw new Error("De herstelde sessie hoort niet bij de ingelogde gebruiker");
       }
-      return await fetchRoles();
+      return await rolesPromise;
     } catch (error) {
       lastError = error;
       if (attempt >= attempts - 1) break;
