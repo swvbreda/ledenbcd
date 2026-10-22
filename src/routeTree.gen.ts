@@ -60,6 +60,7 @@ import { Route as ApiLedenKennisbankRouteImport } from './routes/api/leden/kenni
 import { Route as ApiPublicAdviespakketRedeemRouteImport } from './routes/api/public/adviespakket-redeem'
 import { Route as ApiPublicAgendaOutlookBackfillRouteImport } from './routes/api/public/agenda-outlook-backfill'
 import { Route as ApiPublicAgendaOutlookSyncRouteImport } from './routes/api/public/agenda-outlook-sync'
+import { Route as ApiPublicDeclarationPushDispatchRouteImport } from './routes/api/public/declaration-push-dispatch'
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicMsImportPullRouteImport } from './routes/api/public/ms-import-pull'
 import { Route as ApiPublicOutlookDeadlineDispatchRouteImport } from './routes/api/public/outlook-deadline-dispatch'
@@ -341,6 +342,12 @@ const ApiPublicAgendaOutlookSyncRoute =
     path: '/api/public/agenda-outlook-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDeclarationPushDispatchRoute =
+  ApiPublicDeclarationPushDispatchRouteImport.update({
+    id: '/api/public/declaration-push-dispatch',
+    path: '/api/public/declaration-push-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLedenLogosRoute = ApiPublicLedenLogosRouteImport.update({
   id: '/api/public/leden-logos',
   path: '/api/public/leden-logos',
@@ -468,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/declaration-push-dispatch': typeof ApiPublicDeclarationPushDispatchRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
@@ -535,6 +543,7 @@ export interface FileRoutesByTo {
   '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/declaration-push-dispatch': typeof ApiPublicDeclarationPushDispatchRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
@@ -604,6 +613,7 @@ export interface FileRoutesById {
   '/api/public/adviespakket-redeem': typeof ApiPublicAdviespakketRedeemRoute
   '/api/public/agenda-outlook-backfill': typeof ApiPublicAgendaOutlookBackfillRoute
   '/api/public/agenda-outlook-sync': typeof ApiPublicAgendaOutlookSyncRoute
+  '/api/public/declaration-push-dispatch': typeof ApiPublicDeclarationPushDispatchRoute
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
@@ -673,6 +683,7 @@ export interface FileRouteTypes {
     | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/declaration-push-dispatch'
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
@@ -740,6 +751,7 @@ export interface FileRouteTypes {
     | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/declaration-push-dispatch'
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
@@ -808,6 +820,7 @@ export interface FileRouteTypes {
     | '/api/public/adviespakket-redeem'
     | '/api/public/agenda-outlook-backfill'
     | '/api/public/agenda-outlook-sync'
+    | '/api/public/declaration-push-dispatch'
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
@@ -855,6 +868,7 @@ export interface RootRouteChildren {
   ApiPublicAdviespakketRedeemRoute: typeof ApiPublicAdviespakketRedeemRoute
   ApiPublicAgendaOutlookBackfillRoute: typeof ApiPublicAgendaOutlookBackfillRoute
   ApiPublicAgendaOutlookSyncRoute: typeof ApiPublicAgendaOutlookSyncRoute
+  ApiPublicDeclarationPushDispatchRoute: typeof ApiPublicDeclarationPushDispatchRoute
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicMsImportPullRoute: typeof ApiPublicMsImportPullRoute
   ApiPublicOutlookDeadlineDispatchRoute: typeof ApiPublicOutlookDeadlineDispatchRoute
@@ -1228,6 +1242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgendaOutlookSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/declaration-push-dispatch': {
+      id: '/api/public/declaration-push-dispatch'
+      path: '/api/public/declaration-push-dispatch'
+      fullPath: '/api/public/declaration-push-dispatch'
+      preLoaderRoute: typeof ApiPublicDeclarationPushDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/leden-logos': {
       id: '/api/public/leden-logos'
       path: '/api/public/leden-logos'
@@ -1435,6 +1456,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAdviespakketRedeemRoute: ApiPublicAdviespakketRedeemRoute,
   ApiPublicAgendaOutlookBackfillRoute: ApiPublicAgendaOutlookBackfillRoute,
   ApiPublicAgendaOutlookSyncRoute: ApiPublicAgendaOutlookSyncRoute,
+  ApiPublicDeclarationPushDispatchRoute: ApiPublicDeclarationPushDispatchRoute,
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicMsImportPullRoute: ApiPublicMsImportPullRoute,
   ApiPublicOutlookDeadlineDispatchRoute: ApiPublicOutlookDeadlineDispatchRoute,
