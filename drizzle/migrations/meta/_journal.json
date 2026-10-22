@@ -442,6 +442,13 @@
       "when": 1792688963794,
       "tag": "0062_declaration_push_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1792689584373,
+      "tag": "0063_declaration_push_queue",
+      "breakpoints": true
     }
   ]
 }

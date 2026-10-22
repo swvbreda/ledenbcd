@@ -1528,6 +1528,8 @@ export type Database = {
           declaration_id: string
           event_key: string
           id: string
+          lease_until: string | null
+          lock_token: string | null
           push_attempts: number
           push_error: string | null
           push_last_attempt_at: string | null
@@ -1542,6 +1544,8 @@ export type Database = {
           declaration_id: string
           event_key: string
           id?: string
+          lease_until?: string | null
+          lock_token?: string | null
           push_attempts?: number
           push_error?: string | null
           push_last_attempt_at?: string | null
@@ -1556,6 +1560,8 @@ export type Database = {
           declaration_id?: string
           event_key?: string
           id?: string
+          lease_until?: string | null
+          lock_token?: string | null
           push_attempts?: number
           push_error?: string | null
           push_last_attempt_at?: string | null
@@ -1614,16 +1620,19 @@ export type Database = {
         Row: {
           enabled: boolean
           id: boolean
+          scheduler_armed: boolean
           updated_at: string
         }
         Insert: {
           enabled?: boolean
           id?: boolean
+          scheduler_armed?: boolean
           updated_at?: string
         }
         Update: {
           enabled?: boolean
           id?: boolean
+          scheduler_armed?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -6002,6 +6011,27 @@ export type Database = {
       declaration_default_line_item: {
         Args: { _expense_date: string; _type: string; _year: number }
         Returns: string
+      }
+      declaration_push_claim: {
+        Args: { _declaration?: string; _limit?: number }
+        Returns: {
+          declaration_id: string
+          id: string
+          lock_token: string
+          push_attempts: number
+          recipient_id: string
+        }[]
+      }
+      declaration_push_finish: {
+        Args: {
+          _error: string
+          _id: string
+          _lock: string
+          _sent: number
+          _status: string
+          _total: number
+        }
+        Returns: boolean
       }
       declaration_push_recipients: { Args: never; Returns: string[] }
       delete_email: {
