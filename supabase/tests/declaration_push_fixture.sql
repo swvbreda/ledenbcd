@@ -13,3 +13,10 @@ CREATE TABLE public.internal_declarations (
   reviewed_by uuid, reviewed_at timestamptz, year int NOT NULL DEFAULT 2026, amount numeric NOT NULL DEFAULT 10,
   informer_status text NOT NULL DEFAULT 'not_sent', receipt_paths text[] NOT NULL DEFAULT '{}');
 GRANT SELECT, INSERT, UPDATE ON public.internal_declarations TO authenticated;
+-- Lokale mocks voor cron/net/vault (registreren alleen aanroepen).
+CREATE SCHEMA cron; CREATE TABLE cron.job (jobid serial PRIMARY KEY, jobname text, active boolean);
+CREATE FUNCTION cron.alter_job(job_id int, active boolean) RETURNS void LANGUAGE sql AS $$ UPDATE cron.job SET active = $2 WHERE jobid = $1 $$;
+CREATE SCHEMA net; CREATE TABLE net.calls (url text, headers jsonb, body jsonb);
+CREATE FUNCTION net.http_post(url text, headers jsonb, body jsonb, timeout_milliseconds int) RETURNS bigint LANGUAGE sql AS $$ INSERT INTO net.calls VALUES ($1,$2,$3); SELECT 1::bigint $$;
+CREATE SCHEMA vault; CREATE TABLE vault.secrets (name text); CREATE VIEW vault.decrypted_secrets AS SELECT name, 'fixture'::text AS decrypted_secret FROM vault.secrets;
+CREATE TABLE public.push_device_tokens (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid, device_token text, platform text);
