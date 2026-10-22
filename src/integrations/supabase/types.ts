@@ -1522,6 +1522,59 @@ export type Database = {
         }
         Relationships: []
       }
+      declaration_notifications: {
+        Row: {
+          created_at: string
+          declaration_id: string
+          event_key: string
+          id: string
+          push_attempts: number
+          push_error: string | null
+          push_last_attempt_at: string | null
+          push_sent: number
+          push_status: string
+          push_total: number
+          recipient_id: string
+          submission_no: number
+        }
+        Insert: {
+          created_at?: string
+          declaration_id: string
+          event_key: string
+          id?: string
+          push_attempts?: number
+          push_error?: string | null
+          push_last_attempt_at?: string | null
+          push_sent?: number
+          push_status?: string
+          push_total?: number
+          recipient_id: string
+          submission_no: number
+        }
+        Update: {
+          created_at?: string
+          declaration_id?: string
+          event_key?: string
+          id?: string
+          push_attempts?: number
+          push_error?: string | null
+          push_last_attempt_at?: string | null
+          push_sent?: number
+          push_status?: string
+          push_total?: number
+          recipient_id?: string
+          submission_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "declaration_notifications_declaration_id_fkey"
+            columns: ["declaration_id"]
+            isOneToOne: false
+            referencedRelation: "internal_declarations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       declaration_payment_confirmations: {
         Row: {
           batch: string | null
@@ -1556,6 +1609,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      declaration_push_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       dossier_finance_aliases: {
         Row: {
@@ -5932,6 +6003,7 @@ export type Database = {
         Args: { _expense_date: string; _type: string; _year: number }
         Returns: string
       }
+      declaration_push_recipients: { Args: never; Returns: string[] }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
