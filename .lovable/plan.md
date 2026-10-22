@@ -1,39 +1,48 @@
-# Onderzoek: wachtwoordresetmails komen niet aan (alleen-lezen)
+# Pushmelding bij nieuwe declaratie voor Bernard en Simone
 
-Er is niets gewijzigd, verstuurd of gepubliceerd.
+## Wat het onderzoek liet zien (alleen gelezen, niets gewijzigd)
 
-## Bewezen (gecontroleerd vandaag)
+**Declaratieflow vandaag**
+- Indienen zet de status op "ingediend" en de Informer-status op "niet verzonden". Dat gebeurt in `src/hooks/useInternalDeclarations.ts` (`create`, `submitConcept`, `edit` met `submit`). Er gaat nog niets naar Informer.
+- Goedkeuren (`approve`) mag alleen vanuit "ingediend" en is voorwaardelijk. Daarna roept de app `sendToInformer` aan. Afwijzen (`reject`) werkt hetzelfde, maar zonder Informer.
+- Op dit moment gaat er bij indienen **geen melding of push** uit. Er is geen trigger en de code roept nergens `send-push` aan.
 
-1. **Resetroute in de code:** `src/pages/LoginPage.tsx` r. 209-210 roept de standaard reset van de inlogdienst aan, met terugkeer naar `/reset-password` (`src/pages/ResetPasswordPage.tsx`). De app verstuurt de resetmail niet zelf.
-2. **Reset liep nooit via Resend.** Resend wordt alleen gebruikt in `supabase/functions/send-transactional-email/index.ts` (r. 13, 526-600) voor appmails. Er is geen eigen SMTP en geen route voor eigen inlogmails (`/lovable/email/auth/webhook` bestaat niet). `src/lib/memberAuthEmailTemplate.ts` is alleen voorbereid en niet actief.
-3. **Inlogmails gingen nooit via de eigen mailwachtrij.** Het verzendlog bevat nul inlogmails (recovery/signup/magiclink/invite). Wel appmails van 2026-05-13 tot de laatste op 2026-10-16 08:47 UTC.
-4. **E-maildomein `notify.leden.coffeeshopbond.nl` heeft status Failed:** "provisioning timed out — niet geverifieerd binnen 14 dagen". Het TXT-record staat er. De NS-records naar ns5/ns6.lovable.cloud ontbreken. Dat klopt met wat je in de openbare DNS ziet.
-5. **Inlogregistratie:** de afgelopen periode staat er geen resetaanvraag (`/recover`) in. Er is dus geen concrete foutmelding met datum over een geweigerde of mislukte resetmail.
+**Beveiliging goedkeuring (database)**
+- Trigger `zy_guard_declaration_approval` → `guard_declaration_approval`: een nieuwe declaratie kan niet direct goedgekeurd zijn. Goedkeuren kan alleen vanuit "ingediend". De beoordelaar moet `is_declaration_approver` zijn en moet zelf de ingelogde gebruiker zijn.
+- `is_declaration_approver` = admin **en** (Simones vaste account-id **of** `is_treasurer`). `is_treasurer` kijkt in `board_members` of de functie "penningmeester" bevat en of het e-mailadres exact overeenkomt.
+- Op dit moment volstaat **één** goedkeuring. Er is geen tweede handtekening.
 
-## Hypotheses (niet bewezen)
+**Accounts**
+- Simone van Breda: admin, haar account is de vaste goedkeurder, er zijn 2 telefoons geregistreerd voor push.
+- Bernard van Nierop staat **twee keer** in het bestuur ("Bestuurder / Penningmeester"), en elke rij is aan een ander inlogaccount gekoppeld:
+  - account A: admin, 1 telefoon geregistreerd → kan goedkeuren
+  - account B: geen admin, 0 telefoons → kan niet goedkeuren
+  - Met welk account Bernard echt werkt, is niet bewezen. Dat moet Simone bevestigen.
 
-- **A.** Door de mislukte domeinverificatie zit de verzending van inlogmails in een tussenstand. Ze gaan dan niet via de eigen afzender en mogelijk ook niet meer goed via de standaardafzender. Dit is het meest waarschijnlijk, maar de verzendinstellingen van de inlogdienst kan ik niet zien.
-- **B.** De mails worden wel verstuurd vanaf de standaardafzender, maar komen in spam of worden door de ontvanger tegengehouden.
-- **C.** Een limiet op het aantal inlogmails per uur. Daar zijn geen meldingen van gevonden.
-- Los hiervan: sinds 16 oktober zijn er ook geen appmails meer gelogd. Dat kan normaal zijn (er gebeurde niets) of een tweede probleem. Niet onderzocht.
+**Push**
+- Er is alleen native iPhone-push: APNs via `supabase/functions/send-push` en `src/hooks/usePushNotifications.ts`, met de tabel `push_device_tokens`.
+- `send-push` kan alleen naar groepen sturen (`admin`/`members`/iedereen), niet naar één bepaalde persoon. Een declaratiemelding zou dus bij alle admins aankomen.
+- Er is **geen** webpush in de browser. Wie de app niet op de telefoon heeft, krijgt geen melding.
+- Er bestaat al een veilig patroon voor push naar één persoon: de taakmeldingen. Een databasetrigger maakt de melding aan en een server-only dispatcher verstuurt die precies één keer, met een claim en een maximum aantal pogingen (`task_notifications`, `src/lib/taskPush.ts`, `taskNotifications.functions.ts`).
 
-## Wat ik niet kan zien
+**Informer en idempotentie**
+- `supabase/functions/informer-sync/declarationSync.ts` weigert alles wat niet "goedgekeurd" is. Verzonden rijen met een extern id slaat hij over, en hij claimt atomair (`sending`). Betaalde en verzonden rijen kun je niet meer bewerken.
+- Huidige stand: 20 goedgekeurd/verzonden, 20 goedgekeurd/niet verzonden, 2 goedgekeurd/fout. Daar komt niets aan.
+- Bonnen staan in de privé-opslag `declaration-receipts` (maximaal 10 MB, JPG/PNG/WebP/PDF) en worden nooit overschreven.
 
-- De actuele verzendinstellingen van de inlogdienst (afzender, of de eigen mailkoppeling aan staat).
-- Leveringslogs van de mailprovider (bezorgd, bounce, spam).
-- Het Resend-dashboard en of `leden.coffeeshopbond.nl` daar geverifieerd is. De records `resend._domainkey.leden` en `send.leden` wijzen daar wel op.
-- Inlogregistraties ouder dan de bewaartermijn.
+## Open vraag (wordt niet gekozen tot je antwoordt)
+Is **één** goedkeuring van Bernard of Simone genoeg, zoals nu? Of moeten ze **allebei** goedkeuren voordat de declaratie naar Informer gaat?
 
-## Herstelopties zonder NS-delegatie (pas na jouw akkoord)
+## Wat ik ga bouwen (na je antwoord)
+1. **Push naar precies Bernard en Simone** bij elke nieuwe ingediende declaratie, ook bij een concept dat later wordt ingediend. De melding toont alleen "Declaratie ter goedkeuring" en verwijst naar Financiën. Er staan geen bedragen of namen in.
+   - Ik hergebruik het taakmeldingspatroon. Een trigger bij de overgang naar "ingediend" maakt één melding per goedkeurder, gekozen via `is_declaration_approver`. De server-only dispatcher verstuurt elke melding één keer. Als push mislukt, blijft het indienen gewoon werken.
+2. **Alleen als beide vereist zijn:** een tweede-goedkeuringsstap. Er komt een aparte vastlegging per goedkeurder. De status wordt pas "goedgekeurd" als beide verschillende goedkeurders getekend hebben. De Informer-verzending start pas daarna. Bestaande goedgekeurde of verzonden declaraties blijven ongemoeid.
+3. **Bernards dubbele account:** ik pas niets aan voordat jij bevestigt welk account hij gebruikt.
 
-1. **Eigen e-mailinstellingen uitzetten:** onder Meer → E-mails de mislukte eigen e-maildomeininstelling uitschakelen. Inlogmails gaan dan zeker via de standaardafzender van Lovable Cloud, zonder DNS-wijziging. Gevolg: geen BCD-huisstijl en een niet-BCD-afzender. Appmails via Resend blijven werken, want die gebruiken die instelling niet.
-2. **Overstappen naar een DNS-beheerder die wel NS-records ondersteunt,** of het domein naar Lovable verhuizen. Dat is wel een DNS-wijziging, maar zonder dat 3WT iets hoeft te doen.
-3. **Tijdelijke noodoplossing:** een beheerder stelt het wachtwoord in via Accountbeheer of Meer → Users.
+## Verificatie
+- Tests: één melding per goedkeurder, geen dubbele melding bij nog eens opslaan, geen melding voor niet-goedkeurders, en bij mislukte push blijft de declaratie ingediend.
+- Bij keuze "beide": één goedkeuring stuurt niets naar Informer, twee verschillende goedkeurders wel. Dezelfde persoon twee keer telt niet.
+- Geïsoleerde databasetest van de trigger. Er gaat geen echte push uit totdat jij een testmoment afspreekt.
 
-Resetmails via Resend laten lopen wordt voor Lovable Cloud-inlogmails niet ondersteund en stel ik daarom niet voor.
-
-## Voorgestelde vervolgstap (na akkoord)
-
-1. Optie 1 uitvoeren.
-2. Daarna één reset aanvragen voor een eigen testadres.
-3. In de inlogregistratie bevestigen dat de aanvraag is gelukt.
+## Grenzen
+Geen echte push of mails, geen goedkeuringen, exports of betalingen, geen wijziging aan de mailstoring en geen publicatie zonder jouw akkoord.
