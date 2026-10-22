@@ -170,6 +170,18 @@
    */
   html {
     padding: 0;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /*
+   * iOS zooms into any focused field below 16px and keeps that zoom after
+   * navigation (e.g. login → dashboard), cutting off the right side.
+   */
+  @media (pointer: coarse) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 
   body {
