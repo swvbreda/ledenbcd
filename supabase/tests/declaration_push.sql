@@ -45,9 +45,14 @@ BEGIN
   UPDATE internal_declarations SET informer_status='error' WHERE id=d;
   SELECT count(*) INTO c FROM declaration_notifications WHERE declaration_id=d; res := res||' no_backfill='||c;
   -- 8. Bernard verliest admin: geen ontvanger meer, indienen blijft werken
-  DELETE FROM user_roles WHERE user_id=b; PERFORM set_config('request.jwt.claims', '', true);
+  DELETE FROM user_roles WHERE user_id=b; PERFORM set_config('request.jwt.claims', '{}', true);
   INSERT INTO internal_declarations(submitted_by) VALUES (sub) RETURNING id INTO d2;
-  SELECT count(*) INTO c FROM declaration_notifications WHERE declaration_id=d2; res := res||' revoked='||c;
+  SELECT count(*) INTO c FROM declaration_notifications WHERE declaration_id=d2 AND recipient_id=b; res := res||' revoked_bernard='||c;
+  SELECT count(*) INTO c FROM declaration_notifications WHERE declaration_id=d2 AND recipient_id=s; res := res||' simone_still='||c;
+  -- 9. fout in meldingslogica blokkeert indienen niet (kapotte claims laten auth.uid() falen)
+  PERFORM set_config('request.jwt.claims', 'kapot', true);
+  INSERT INTO internal_declarations(submitted_by) VALUES (sub) RETURNING id INTO d2;
+  SELECT count(*) INTO c FROM internal_declarations WHERE id=d2; res := res||' saved_despite_error='||c;
   RAISE NOTICE 'RESULT%', res;
 END $$;
 -- 9. clients: lezen alleen eigen, geen schrijfrecht, geen recipients-RPC
