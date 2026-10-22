@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthUnavailable from "@/components/AuthUnavailable";
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { usePasskeys, isPlatformAuthenticatorAvailable } from "@/hooks/usePasskeys";
-import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace, HelpCircle } from "lucide-react";
+import { Mail, Lock, LogIn, UserPlus, Fingerprint, ScanFace, HelpCircle, Eye, EyeOff } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { captureRedirectFromQuery, hasPendingRedirect, maybeRedirectAfterLogin } from "@/lib/ssoRedirect";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
@@ -22,6 +22,7 @@ const LoginPage = () => {
     try { return localStorage.getItem("remember_me") !== "false"; } catch { return true; }
   });
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -100,16 +101,17 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
     try { localStorage.setItem("remember_me", String(biometric.isNative || rememberMe)); } catch {}
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const cleanEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) {
       setError(error.message === "Invalid login credentials"
-        ? "Ongeldig e-mailadres of wachtwoord"
+        ? "Ongeldig e-mailadres of wachtwoord. Tik op het oogje om te controleren wat je hebt ingetypt."
         : error.message);
       setLoading(false);
     } else {
       // Login succeeded — offer biometric save if available and not yet stored
       if (biometric.isAvailable && !biometric.hasCredentials) {
-        setPendingCredentials({ email, password });
+        setPendingCredentials({ email: cleanEmail, password });
         setShowBiometricPrompt(true);
       }
       setLoading(false);
@@ -425,6 +427,11 @@ const LoginPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="naam@voorbeeld.nl"
                     required
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
                     className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                   />
                 </div>
@@ -436,14 +443,26 @@ const LoginPage = () => {
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={registerMode ? "Kies minimaal 8 tekens" : "••••••••"}
                       required
                       minLength={8}
-                      className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
+                      autoComplete={registerMode ? "new-password" : "current-password"}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className="w-full pl-9 pr-10 py-2 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Verberg wachtwoord" : "Toon wachtwoord"}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
               )}
