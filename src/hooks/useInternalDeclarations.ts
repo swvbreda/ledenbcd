@@ -118,6 +118,13 @@ export function useDeclarationSyncErrors(enabled: boolean) {
   });
 }
 
+/** Pushmelding naar goedkeurders; nooit blokkerend, fouten blijven in de meldingsregistratie. */
+function notifyApprovers(declarationId: string) {
+  void import("@/lib/declarationPush.functions")
+    .then(({ dispatchDeclarationPushes }) => dispatchDeclarationPushes({ data: { declarationId } }))
+    .catch(() => {});
+}
+
 export function useInternalDeclarationMutations(year: number) {
   const qc = useQueryClient();
   const invalidate = () => {
@@ -175,6 +182,7 @@ export function useInternalDeclarationMutations(year: number) {
       if (error) throw error;
       if (asConcept) return { id: data.id, informerSynced: false, concept: true };
       // Indienen is lokaal; Informer volgt pas na goedkeuring.
+      notifyApprovers(data.id);
       return { id: data.id, informerSynced: false, concept: false };
     },
     onSuccess: invalidate,
@@ -184,6 +192,7 @@ export function useInternalDeclarationMutations(year: number) {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("internal_declarations").update({ status: "pending" } as any).eq("id", id);
       if (error) throw error;
+      notifyApprovers(id);
       return { informerSynced: false };
     },
     onSuccess: invalidate,
@@ -242,7 +251,7 @@ export function useInternalDeclarationMutations(year: number) {
       if (!data || data.length !== 1) {
         throw new Error("Wijzigen is niet gelukt: de declaratie is intussen betaald, verstuurd naar Informer of gewijzigd. Ververs de pagina.");
       }
-      if (submit && expectedStatus === "concept") return { id, informerSynced: false, submitted: true };
+      if (submit && expectedStatus === "concept") { notifyApprovers(id); return { id, informerSynced: false, submitted: true }; }
       return { id, informerSynced: false, submitted: false };
     },
     onSuccess: invalidate,
