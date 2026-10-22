@@ -41,4 +41,4 @@
 - [ ] Fase 3: WhatsApp-meldingen opt-in (wacht op sjabloontekst + kostenakkoord)
 - [ ] Fase 4: agenda-herinneringen (wacht op sjabloontekst)
 
-- [ ] Wachtwoordresetmails terug naar Resend (onderzoek historie + ondersteunde route; geen DNS/standaardafzender)
+- [ ] Wachtwoordresetmails terug naar Resend — geblokkeerd: Lovable Cloud ondersteunt geen Resend/SMTP voor inlogmails; keuze gebruiker nodig
