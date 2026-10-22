@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { invokeWithAuth } from "@/lib/invokeFunction";
 import { findAccountContact, renameMatchedContact, type AccountContactMatch } from "@/lib/accountContact";
+import { PasswordResetForm } from "@/components/accounts/PasswordResetForm";
 
 async function invokeManageUsers(body: Record<string, unknown>) {
   return await invokeWithAuth("manage-users", { body });
@@ -80,8 +81,6 @@ const AccountBeheerPage = () => {
   const [editRole, setEditRole] = useState("user");
   const [editName, setEditName] = useState("");
   const [resetPwUser, setResetPwUser] = useState<UserAccount | null>(null);
-  const [resetPw, setResetPw] = useState("");
-  const [resetPwConfirm, setResetPwConfirm] = useState("");
   const [externalOrgLinksByUser, setExternalOrgLinksByUser] = useState<Record<string, ExternalOrgLink[]>>({});
 
   const { allMembersAndLeads, isLoading: membersLoading } = useMembersData();
@@ -857,7 +856,7 @@ const AccountBeheerPage = () => {
               variant="outline"
               size="sm"
               className="gap-1.5 w-full"
-              onClick={() => { setResetPwUser(editUser); setResetPw(""); setResetPwConfirm(""); }}
+              onClick={() => setResetPwUser(editUser)}
             >
               <KeyRound size={12} /> Wachtwoord resetten
             </Button>
@@ -877,36 +876,14 @@ const AccountBeheerPage = () => {
               Stel een nieuw wachtwoord in voor {resetPwUser?.email}.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <Input
-              type="password"
-              placeholder="Nieuw wachtwoord (min. 8 tekens)"
-              value={resetPw}
-              onChange={(e) => setResetPw(e.target.value)}
-            />
-            <Input
-              type="password"
-              placeholder="Bevestig wachtwoord"
-              value={resetPwConfirm}
-              onChange={(e) => setResetPwConfirm(e.target.value)}
-            />
-            <Button
-              className="w-full"
-              disabled={saving || resetPw.length < 8 || resetPw !== resetPwConfirm}
-              onClick={async () => {
-                if (resetPw.length < 8) { toast.error("Wachtwoord moet minimaal 8 tekens zijn"); return; }
-                if (resetPw !== resetPwConfirm) { toast.error("Wachtwoorden komen niet overeen"); return; }
-                setSaving(true);
-                const { error } = await invokeManageUsers({ action: "reset_password", user_id: resetPwUser!.id, password: resetPw });
-                setSaving(false);
-                if (error) { toast.error("Fout bij resetten: " + error.message); return; }
+          {resetPwUser && <PasswordResetForm
+            key={resetPwUser.id}
+            onSave={(password) => invokeManageUsers({ action: "reset_password", user_id: resetPwUser.id, password })}
+            onSuccess={() => {
                 toast.success("Wachtwoord succesvol gewijzigd");
                 setResetPwUser(null);
-              }}
-            >
-              {saving ? "Opslaan..." : "Wachtwoord opslaan"}
-            </Button>
-          </div>
+            }}
+          />}
         </DialogContent>
       </Dialog>
     </div>
