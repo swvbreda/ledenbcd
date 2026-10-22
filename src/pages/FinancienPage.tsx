@@ -78,6 +78,18 @@ export default function FinancienPage() {
   const { data: budgetNotes } = useBudgetNotes(year);
   const mutations = useBudgetMutations(year);
   const { data: internalDeclarations } = useInternalDeclarations(year);
+  // Deeplink vanuit pushmelding: ?tab=intern&declaratie=<id> → naar die declaratie scrollen.
+  const focusDecl = searchParams.get("declaratie");
+  useEffect(() => {
+    if (!focusDecl || tab !== "intern" || !internalDeclarations?.length) return;
+    const t = window.setTimeout(() => {
+      const el = [...document.querySelectorAll<HTMLElement>("[data-declaration-id]")]
+        .find((e) => e.dataset["declarationId"] === focusDecl && e.offsetParent !== null);
+      el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      el?.classList.add("ring-2", "ring-primary");
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [focusDecl, tab, internalDeclarations]);
   const { data: declarationBoardMembers } = useDeclarationBoardMembers();
   const internalMutations = useInternalDeclarationMutations(year);
   const { data: isDeclarationApprover } = useIsDeclarationApprover(user?.id);
