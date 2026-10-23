@@ -4,6 +4,11 @@ import { PROJECTMAIL_MAILBOX, runProjectMail, type Extractor, type MailDb, type 
 
 type Sb = any;
 const REQUIRED_ROLE = "Mail.Read";
+/** Alleen deze rollen geven toegang tot berichtinhoud; Mail.ReadBasic(.All) geeft géén body en volstaat dus niet. */
+export const BODY_ROLES = ["Mail.Read", "Mail.ReadWrite"] as const;
+export const LEASE_SECONDS = 600;
+export const RUN_BUDGET_MS = 480_000; // < lease, zodat een andere run nooit een levende run overlapt
+export const AI_TIMEOUT_MS = 180_000;
 
 export function supabaseMailDb(sb: Sb, actor: string): MailDb {
   const must = <T>(r: { data: T; error: any }) => { if (r.error) throw new Error(r.error.message); return r.data; };
@@ -71,7 +76,9 @@ const SCHEMA = {
 
 /** Lovable AI Gateway (Responses, gestreamd, strikt JSON-schema). Mailinhoud gaat als data mee, nooit als instructie. */
 export function lovableExtractor(apiKey: string, f: typeof fetch = fetch): Extractor {
-  return async ({ subject, body }) => {
+  return async ({ subject, body, deadlineAt }) => {
+    // Begrensd: per mail hoogstens AI_TIMEOUT_MS en nooit voorbij de runlimiet (lease blijft altijd langer).
+    const ms = Math.max(1_000, Math.min(AI_TIMEOUT_MS, (deadlineAt ?? Infinity) - Date.now()));
     const res = await f("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
       headers: { "Lovable-API-Key": apiKey, Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
@@ -81,6 +88,7 @@ export function lovableExtractor(apiKey: string, f: typeof fetch = fetch): Extra
         input: [{ role: "user", content: `Onderwerp: ${subject.slice(0, 300)}\n<<<MAIL\n${body.replace(/MAIL>>>/g, "MAIL>>")}\nMAIL>>>` }],
         text: { format: { type: "json_schema", name: "extractie", strict: true, schema: SCHEMA } },
       }),
+      signal: AbortSignal.timeout(ms),
     });
     if (!res.ok || !res.body) throw new Error(`AI-extractie mislukt (${res.status})`);
     const reader = res.body.getReader(); const dec = new TextDecoder();
@@ -105,7 +113,25 @@ export function lovableExtractor(apiKey: string, f: typeof fetch = fetch): Extra
 
 export interface ConnectionResult { state: "verbonden" | "verbinding_nodig" | "fout"; detail: string; userId?: string }
 
-/** Diagnostiek: servergegevens, applicatierecht Mail.Read en daadwerkelijke leestoegang tot alleen deze postbus. */
+type GetFn = (path: string, prefer?: string) => Promise<{ json: any }>;
+
+/** Bewijs van inhoudstoegang: rol + lijst van 1 inbox-bericht + echte GET van dat ene bericht (inhoud wordt niet bewaard of gelogd). */
+export async function verifyMailAccess(roles: string[], get: GetFn, userId: string): Promise<ConnectionResult> {
+  if (!BODY_ROLES.some((r) => roles.includes(r))) {
+    return { state: "verbinding_nodig", detail: `Applicatierecht '${REQUIRED_ROLE}' (met beheerderstoestemming) ontbreekt; Mail.ReadBasic geeft geen berichtinhoud. Aanwezig: ${roles.join(", ") || "geen"}. Beperk het met een Exchange-toegangsbeleid tot ${PROJECTMAIL_MAILBOX}.` };
+  }
+  let ids: string[];
+  try { ids = (((await get(`/users/${userId}/mailFolders/inbox/messages?$top=1&$select=id`)).json?.value ?? []) as any[]).map((v) => String(v.id ?? "")); }
+  catch (e) { return { state: "verbinding_nodig", detail: `Postbus ${PROJECTMAIL_MAILBOX} niet leesbaar (${(e as Error).message}). Controleer '${REQUIRED_ROLE}' en het Exchange-toegangsbeleid.`.slice(0, 500) }; }
+  if (!ids[0]) return { state: "verbonden", detail: `Leesrecht bevestigd; inbox van ${PROJECTMAIL_MAILBOX} is leeg, berichtinhoud nog niet gelezen.`, userId };
+  try {
+    const { json } = await get(`/users/${userId}/messages/${encodeURIComponent(ids[0])}?$select=body`, 'outlook.body-content-type="text"');
+    if (typeof json?.body?.content !== "string") return { state: "verbinding_nodig", detail: "Microsoft gaf geen berichtinhoud terug; inhoudsrecht ontbreekt." , userId };
+  } catch (e) { return { state: "verbinding_nodig", detail: `Berichtinhoud niet leesbaar (${(e as Error).message}).`.slice(0, 500) }; }
+  return { state: "verbonden", detail: `Leestoegang tot berichtinhoud van ${PROJECTMAIL_MAILBOX} bevestigd.`, userId };
+}
+
+/** Diagnostiek: servergegevens, inhoudsrecht en daadwerkelijke leestoegang tot alleen deze postbus. */
 export async function checkConnection(env: Record<string, string | undefined>): Promise<{ result: ConnectionResult; graph?: () => MailGraph }> {
   const g = await import("@/lib/plannerGraph.server");
   const cfg = g.readGraphConfig(env);
@@ -114,31 +140,34 @@ export async function checkConnection(env: Record<string, string | undefined>): 
   try {
     const { token, roles } = await g.getAppToken(cfg);
     const { readOnlyGraph, importGraphPort } = await import("@/lib/msImportGraph.server");
-    const ro = readOnlyGraph(g.makeGraphClient(token, fetch, { deadlineAt: Date.now() + 8 * 60_000 }));
-    if (!roles.includes(REQUIRED_ROLE) && !roles.includes("Mail.ReadBasic.All") && !roles.includes("Mail.ReadWrite")) {
-      return { result: { state: "verbinding_nodig", detail: `Applicatierecht '${REQUIRED_ROLE}' (met beheerderstoestemming) ontbreekt in de Microsoft-app-registratie; aanwezig: ${roles.join(", ") || "geen"}. Beperk het met een Exchange-toegangsbeleid tot ${PROJECTMAIL_MAILBOX}.` } };
-    }
+    const ro = readOnlyGraph(g.makeGraphClient(token, fetch, { deadlineAt: Date.now() + RUN_BUDGET_MS }));
+    if (!BODY_ROLES.some((r) => roles.includes(r))) return { result: await verifyMailAccess(roles, ro.get, "") };
     const userId = await importGraphPort(ro).resolveUser(PROJECTMAIL_MAILBOX);
+    const result = await verifyMailAccess(roles, ro.get, userId);
+    if (result.state !== "verbonden") return { result };
     const { projectMailGraph } = await import("@/lib/projectMailGraph.server");
     const mg = projectMailGraph(ro, userId);
-    try { await ro.get(`/users/${userId}/mailFolders/inbox/messages/delta?$select=id&$filter=${encodeURIComponent(`receivedDateTime ge ${new Date().toISOString()}`)}`, "odata.maxpagesize=1"); }
-    catch (e) { return { result: { state: "verbinding_nodig", detail: `Postbus ${PROJECTMAIL_MAILBOX} niet leesbaar (${(e as Error).message}). Controleer '${REQUIRED_ROLE}' en het Exchange-toegangsbeleid.` } }; }
-    return { result: { state: "verbonden", detail: `Leestoegang tot ${PROJECTMAIL_MAILBOX} bevestigd.`, userId }, graph: () => mg };
+    return { result, graph: () => mg };
   } catch (e) {
     return { result: { state: "fout", detail: `Microsoft-aanmelding mislukt: ${(e as Error).message}`.slice(0, 300) } };
   }
 }
 
+/** Slaat diagnose op; gooit bij DB-fout. Niet-verbonden zet ook de automatische planning uit (in de DB, met eigen job). */
 export async function saveConnection(sb: Sb, r: ConnectionResult) {
-  await sb.from("projectmail_settings").update({ connection_state: r.state, connection_detail: r.detail.slice(0, 500), connection_checked_at: new Date().toISOString(),
-    ...(r.userId ? { mailbox_user_id: r.userId } : {}), ...(r.state !== "verbonden" ? { enabled: false } : {}) }).eq("id", true);
+  const { error } = await sb.from("projectmail_settings").update({ connection_state: r.state, connection_detail: r.detail.slice(0, 500), connection_checked_at: new Date().toISOString(),
+    ...(r.userId ? { mailbox_user_id: r.userId } : {}), ...(r.state !== "verbonden" ? { enabled: false, scheduler_armed: false } : {}) }).eq("id", true);
+  if (error) throw new Error(`Verbindingsstatus niet opgeslagen: ${error.message}`);
 }
 
 /** Gelogde run onder lease. Geeft 'busy' terug als een andere run bezig is. */
 export async function runProjectMailLogged(sb: Sb, actor: string, trigger: "manual" | "scheduled", env: Record<string, string | undefined>,
-  deps?: { graph: MailGraph; extract: Extractor }): Promise<{ status: "busy" | "verbinding_nodig" | "ok" | "fout"; counts?: RunCounts; error?: string }> {
+  deps?: { graph: MailGraph; extract: Extractor }, clock: () => number = Date.now): Promise<{ status: "busy" | "verbinding_nodig" | "ok" | "fout"; counts?: RunCounts; error?: string }> {
   const token = crypto.randomUUID();
-  const { data: got } = await sb.rpc("projectmail_acquire", { _token: token, _seconds: 600 });
+  const startedAt = clock();
+  const deadlineAt = startedAt + RUN_BUDGET_MS;
+  const { data: got, error: lockErr } = await sb.rpc("projectmail_acquire", { _token: token, _seconds: LEASE_SECONDS });
+  if (lockErr) return { status: "fout", error: `Lease niet verkregen: ${lockErr.message}` };
   if (got !== true) return { status: "busy" };
   const { data: run } = await sb.from("projectmail_runs").insert({ trigger }).select("id").single();
   const now = new Date().toISOString();
@@ -153,7 +182,7 @@ export async function runProjectMailLogged(sb: Sb, actor: string, trigger: "manu
       }
       graph = c.graph(); extract = lovableExtractor(env["LOVABLE_API_KEY"]!);
     }
-    const counts = await runProjectMail(graph, supabaseMailDb(sb, actor), extract);
+    const counts = await runProjectMail(graph, supabaseMailDb(sb, actor), extract, new Date(startedAt), deadlineAt, clock);
     await sb.from("projectmail_settings").update({ last_run_at: now, last_success_at: new Date().toISOString(), consecutive_failures: 0 }).eq("id", true);
     if (run) await sb.from("projectmail_runs").update({ finished_at: new Date().toISOString(), ok: true, counts }).eq("id", run.id);
     return { status: "ok", counts };
@@ -164,17 +193,26 @@ export async function runProjectMailLogged(sb: Sb, actor: string, trigger: "manu
     if (run) await sb.from("projectmail_runs").update({ finished_at: new Date().toISOString(), ok: false, error: msg }).eq("id", run.id);
     return { status: "fout", error: msg };
   } finally {
-    await sb.rpc("projectmail_release", { _token: token });
+    // Release faalt? Lease verloopt vanzelf na LEASE_SECONDS; run was al binnen RUN_BUDGET_MS gestopt.
+    const { error } = await sb.rpc("projectmail_release", { _token: token });
+    if (error) console.error("projectmail lease release mislukt", error.message);
   }
 }
 
 /** Geplande aanroep: interne sleutel + schakelaar + verbonden; actor = laatst wijzigende, nog steeds admin. */
 export async function handleScheduledProjectMail(request: Request, env: Record<string, string | undefined>, sbf: () => Promise<Sb>): Promise<Response> {
   const secret = env["INTERNAL_WEBHOOK_SECRET"]; const provided = request.headers.get("x-internal-secret");
-  if (!secret || !provided || Buffer.byteLength(secret) !== Buffer.byteLength(provided) || !timingSafeEqual(Buffer.from(secret), Buffer.from(provided))) return new Response(null, { status: 401 });
+  const wake = request.headers.get("x-projectmail-wake");
+  const secretOk = !!secret && !!provided && Buffer.byteLength(secret) === Buffer.byteLength(provided) && timingSafeEqual(Buffer.from(secret), Buffer.from(provided));
+  if (!secretOk && !(wake && /^[0-9a-f]{64}$/.test(wake))) return new Response(null, { status: 401 });
   const sb = await sbf();
-  const { data: s } = await sb.from("projectmail_settings").select("enabled,connection_state,updated_by").maybeSingle();
-  if (!s?.enabled) return Response.json({ ok: true, skipped: "disabled" });
+  if (!secretOk) {
+    // Eenmalige, door de database zelf gemaakte wektoken (alleen hash opgeslagen, 5 min, één keer bruikbaar).
+    const { data: ok, error } = await sb.rpc("projectmail_consume_wake", { _token: wake });
+    if (error || ok !== true) return new Response(null, { status: 401 });
+  }
+  const { data: s } = await sb.from("projectmail_settings").select("enabled,scheduler_armed,connection_state,updated_by").maybeSingle();
+  if (!s?.enabled || !s.scheduler_armed) return Response.json({ ok: true, skipped: "disabled" });
   if (!s.updated_by) return Response.json({ ok: false, skipped: "no_actor" }, { status: 409 });
   const { data: isAdmin } = await sb.rpc("has_role", { _user_id: s.updated_by, _role: "admin" });
   if (isAdmin !== true) return Response.json({ ok: false, skipped: "actor_not_admin" }, { status: 409 });

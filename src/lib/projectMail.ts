@@ -112,7 +112,7 @@ export interface MailDb {
   createTask(projectId: string, title: string, importRef: string): Promise<string | null>;
   candidate(messageId: string, c: TaskCandidate, decision: "aangemaakt" | "review", taskId: string | null): Promise<void>;
 }
-export type Extractor = (input: { subject: string; body: string }) => Promise<RawExtraction>;
+export type Extractor = (input: { subject: string; body: string; deadlineAt?: number }) => Promise<RawExtraction>;
 
 export interface RunCounts { scanned: number; coded: number; processed: number; reviews: number; tasks: number; skipped: number; failed: number; pages: number; complete: boolean }
 
