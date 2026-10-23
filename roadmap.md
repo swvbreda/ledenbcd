@@ -8,7 +8,7 @@
 - [ ] Live Calendar-leestoegang en releasevoorwaarden: Calendars.ReadWrite en Tasks.ReadWrite.All tokenrechten bevestigd; mailboxread geblokkeerd door 0 bevestigde mappings. Activatie/releasegate blijft uit tot juiste mapping, pilot en volledige release review; unknown/conflict handmatig herstel nog niet ingebouwd; geplande dispatcher-code gereed maar installatie apart geblokkeerd.
 
 ## Open
-- [ ] Projectmail (RCF) via info@: gebouwd, 17 tests + DB-beveiligingsproef geslaagd, codes toegekend; staat UIT — wacht op Microsoft-applicatierecht Mail.Read (beheerderstoestemming, beperkt tot info@) en daarna planner-installatie + één echte testmail.
+- [ ] Projectmail (RCF) via info@: gebouwd, 17 tests + DB-beveiligingsproef geslaagd, codes toegekend; staat UIT — wacht op Microsoft-applicatierecht Mail.Read (beheerderstoestemming, beperkt tot info@) (automatische planning geïnstalleerd, uit) en daarna één echte testmail + publicatie.
 - [ ] Declaratiepush naar Simone + Bernard (bernard@coffeeshopbond.nl): gebouwd en getest, staat UIT; wacht op review + activatie en publicatie.
 - [x] WhatsApp → Aankondigingen geïmplementeerd: 33 unit- en 3 rendertests, geïsoleerde SQL-rollbackproeven en 12 gelijktijdige ingests → 1 aankondiging; admin-preview standaard deny zichtbaar. Review/release-afbakening: docs/whatsapp-release-review.md. Geen echte aankondiging/notificatie of publicatie.
 - [ ] WhatsApp activeren/verifiëren: echt publishernummer ontbreekt; allowlist blijft leeg. Selectieve release vereist exact laatst gepubliceerde commit + afzonderlijke releaseworkflow zonder persoonlijke toegang/deel-previews/Agenda-mailactie; daarna één echte forwarded ontvangst tot ledenweergave controleren.
