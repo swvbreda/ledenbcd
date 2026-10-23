@@ -21,6 +21,7 @@ const ALLOWED = [
   // Projectmail: alleen inbox-delta en één bericht van één vast account (Entra-GUID), alleen GET via readOnlyGraph.
   /^\/users\/[0-9a-fA-F-]{36}\/mailFolders\/inbox\/messages\/delta\?.*$/,
   /^\/users\/[0-9a-fA-F-]{36}\/messages\/[A-Za-z0-9_%=+-]+\?\$select=[a-zA-Z,]+$/,
+  /^\/users\/[0-9a-fA-F-]{36}\/mailFolders\/inbox\/messages\?\$top=1&\$select=id$/,
 ];
 
 /** Alleen vaste Microsoft-origin en toegestane paden; nextLink ook gecontroleerd. */

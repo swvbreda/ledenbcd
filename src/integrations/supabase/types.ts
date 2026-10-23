@@ -4911,6 +4911,7 @@ export type Database = {
           lease_until: string | null
           mailbox: string
           mailbox_user_id: string | null
+          scheduler_armed: boolean
           updated_at: string
           updated_by: string | null
         }
@@ -4929,6 +4930,7 @@ export type Database = {
           lease_until?: string | null
           mailbox?: string
           mailbox_user_id?: string | null
+          scheduler_armed?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -4947,6 +4949,7 @@ export type Database = {
           lease_until?: string | null
           mailbox?: string
           mailbox_user_id?: string | null
+          scheduler_armed?: boolean
           updated_at?: string
           updated_by?: string | null
         }
@@ -4999,6 +5002,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      projectmail_wake_tokens: {
+        Row: {
+          created_at: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: []
       }
       publications: {
         Row: {
@@ -6643,8 +6664,15 @@ export type Database = {
         Args: { _seconds: number; _token: string }
         Returns: boolean
       }
+      projectmail_configure: {
+        Args: { _actor: string; _enabled: boolean }
+        Returns: Json
+      }
+      projectmail_consume_wake: { Args: { _token: string }; Returns: boolean }
       projectmail_release: { Args: { _token: string }; Returns: undefined }
       projectmail_resolve_review: { Args: { _id: string }; Returns: undefined }
+      projectmail_scheduler_status: { Args: never; Returns: Json }
+      projectmail_scheduler_tick: { Args: never; Returns: undefined }
       projectmail_set_active: {
         Args: { _active: boolean; _project: string }
         Returns: undefined

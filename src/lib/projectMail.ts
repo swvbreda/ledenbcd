@@ -112,7 +112,7 @@ export interface MailDb {
   createTask(projectId: string, title: string, importRef: string): Promise<string | null>;
   candidate(messageId: string, c: TaskCandidate, decision: "aangemaakt" | "review", taskId: string | null): Promise<void>;
 }
-export type Extractor = (input: { subject: string; body: string }) => Promise<RawExtraction>;
+export type Extractor = (input: { subject: string; body: string; deadlineAt?: number }) => Promise<RawExtraction>;
 
 export interface RunCounts { scanned: number; coded: number; processed: number; reviews: number; tasks: number; skipped: number; failed: number; pages: number; complete: boolean }
 
@@ -125,13 +125,18 @@ async function sha(s: string) {
 }
 
 /** Eén begrensde run. Checkpoint pas na volledige verwerking van een pagina. Gooit bij tijdelijke fout (checkpoint blijft staan). */
-export async function runProjectMail(g: MailGraph, db: MailDb, extract: Extractor, now = new Date()): Promise<RunCounts> {
+export class RunDeadlineError extends Error { constructor() { super("Maximale runduur bereikt; volgende run gaat verder"); } }
+
+export async function runProjectMail(g: MailGraph, db: MailDb, extract: Extractor, now = new Date(), deadlineAt = Number.POSITIVE_INFINITY, clock: () => number = Date.now): Promise<RunCounts> {
+  const guard = () => { if (clock() >= deadlineAt) throw new RunDeadlineError(); };
   const r: RunCounts = { scanned: 0, coded: 0, processed: 0, reviews: 0, tasks: 0, skipped: 0, failed: 0, pages: 0, complete: false };
+  guard();
   const codes = await db.codes();
   const byCode = new Map(codes.map((c) => [c.reference_code.toUpperCase(), c]));
   const since = new Date(now.getTime() - INITIAL_LOOKBACK_DAYS * 86_400_000).toISOString();
   let cp = await db.checkpoint();
   for (let i = 0; i < MAX_PAGES; i++) {
+    guard();
     const page = await g.delta(cp, since);
     r.pages++;
     for (const m of page.items) {
@@ -147,11 +152,12 @@ export async function runProjectMail(g: MailGraph, db: MailDb, extract: Extracto
       if (!c) { await db.review(rk("onbekende_code"), "onbekende_code", m, null, { code: match.code }); r.reviews++; continue; }
       if (c.archived) { await db.review(rk("project_gearchiveerd"), "project_gearchiveerd", m, c.project_id, {}); r.reviews++; continue; }
       if (!c.active) { await db.review(rk("project_gepauzeerd"), "project_gepauzeerd", m, c.project_id, {}); r.reviews++; continue; }
+      guard(); // vóór beginMessage: een afgebroken run telt niet als poging, checkpoint blijft staan
       const row = await db.beginMessage(m, c);
       if (row.status === "verwerkt" || row.status === "fout") { r.skipped++; continue; }
       try {
         const body = await g.body(m.id);
-        const ex = validateExtraction(await extract({ subject: m.subject, body }), body, await db.openTaskNorms(c.project_id));
+        const ex = validateExtraction(await extract({ subject: m.subject, body, deadlineAt }), body, await db.openTaskNorms(c.project_id));
         for (const t of ex.autoTasks) {
           const id = await db.createTask(c.project_id, t.title, `projectmail:${await sha(`${PROJECTMAIL_MAILBOX}|${m.id}|${c.project_id}|${t.norm}`)}`);
           await db.candidate(row.id, t, "aangemaakt", id);

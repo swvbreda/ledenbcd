@@ -1,0 +1,1 @@
+REVOKE ALL ON public.projectmail_wake_tokens FROM anon, authenticated;

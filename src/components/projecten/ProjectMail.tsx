@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { surfaceCls, sectionHeadCls } from "@/components/projecten/ui";
 import { PROJECTMAIL_MAILBOX } from "@/lib/projectMail";
-import { projectMailCheck, projectMailRunNow, projectMailSetEnabled } from "@/lib/projectMail.functions";
+import { projectMailCheck, projectMailRunNow, projectMailSchedulerStatus, projectMailSetEnabled } from "@/lib/projectMail.functions";
 
 const sb = supabase as any;
 const fmt = (s: string | null | undefined) => (s ? new Date(s).toLocaleString("nl-NL", { dateStyle: "medium", timeStyle: "short" }) : "—");
@@ -88,7 +88,8 @@ const REASON: Record<string, string> = {
 
 export default function ProjectMailPanel({ projects }: { projects: { id: string; title: string }[] }) {
   const qc = useQueryClient();
-  const check = useServerFn(projectMailCheck), setEnabled = useServerFn(projectMailSetEnabled), runNow = useServerFn(projectMailRunNow);
+  const check = useServerFn(projectMailCheck), setEnabled = useServerFn(projectMailSetEnabled), runNow = useServerFn(projectMailRunNow), schedStatus = useServerFn(projectMailSchedulerStatus);
+  const sched = useQuery({ queryKey: ["projectmail-scheduler"], queryFn: () => schedStatus() });
   const [busy, setBusy] = useState<string | null>(null);
   const codes = useProjectMailCodes();
   const s = useQuery({ queryKey: ["projectmail-settings"], queryFn: async () => {
@@ -99,10 +100,14 @@ export default function ProjectMailPanel({ projects }: { projects: { id: string;
     const { data, error } = await sb.from("projectmail_reviews").select("id,reason,subject,received_at,web_link,detail,project_id").is("resolved_at", null).order("created_at", { ascending: false }).limit(50);
     if (error) throw error; return data as any[];
   } });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["projectmail-settings"] }); qc.invalidateQueries({ queryKey: ["projectmail-reviews"] }); qc.invalidateQueries({ queryKey: ["projectmail-codes"] }); qc.invalidateQueries({ queryKey: ["projectmail-messages"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["projectmail-settings"] }); qc.invalidateQueries({ queryKey: ["projectmail-reviews"] }); qc.invalidateQueries({ queryKey: ["projectmail-codes"] }); qc.invalidateQueries({ queryKey: ["projectmail-messages"] }); qc.invalidateQueries({ queryKey: ["projectmail-scheduler"] }); };
   const act = async (k: string, fn: () => Promise<void>) => { setBusy(k); try { await fn(); } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); refresh(); } };
   const st = s.data;
   const connected = st?.connection_state === "verbonden";
+  const sc = sched.data;
+  const autoOn = !!(sc?.installed && sc.active && sc.armed && sc.enabled && connected);
+  const autoLabel = !sc?.installed ? "Handmatig verwerken beschikbaar · automatische planning niet geïnstalleerd"
+    : autoOn ? "Automatisch aan · elke 10 minuten" : connected ? "Automatische planning geïnstalleerd · uit" : "Automatische planning geïnstalleerd · uit tot verbinding geverifieerd";
   const title = (id: string | null) => projects.find((p) => p.id === id)?.title ?? "";
 
   return (
@@ -114,14 +119,15 @@ export default function ProjectMailPanel({ projects }: { projects: { id: string;
             <p className="text-sm text-muted-foreground">Mail naar <span className="font-medium text-foreground">{st?.mailbox ?? PROJECTMAIL_MAILBOX}</span> met de projectcode tussen blokhaken in het onderwerp, bijvoorbeeld <code className="font-mono">[BCD-WORLDLINE]</code>. Alleen gecodeerde mails worden gelezen; mails blijven ongewijzigd in Outlook.</p>
           </div>
           <label className="flex min-h-11 items-center gap-2 text-sm">
-            <Switch checked={!!st?.enabled} disabled={!!busy || (!connected && !st?.enabled)} onCheckedChange={(v) => act("enable", async () => { const r = await setEnabled({ data: { enabled: v } }); if (!r.ok) toast.error(r.error); })} />
+            <Switch aria-label="Automatisch verwerken" checked={autoOn} disabled={!!busy || !sc?.installed || (!connected && !autoOn)} onCheckedChange={(v) => act("enable", async () => { const r = await setEnabled({ data: { enabled: v } }); if (!r.ok) toast.error(r.error); })} />
             Automatisch verwerken
           </label>
         </div>
         <div role="status" className={`flex items-start gap-2 rounded-md border p-3 text-sm ${connected ? "border-success/30 bg-success/5" : "border-warning/40 bg-warning/10"}`}>
           {connected ? <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-success-strong" /> : <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />}
           <div className="min-w-0 space-y-0.5">
-            <p className="font-medium">{STATE[st?.connection_state ?? "onbekend"]}{st?.enabled ? " · automatisch aan" : " · automatisch uit"}</p>
+            <p className="font-medium">{STATE[st?.connection_state ?? "onbekend"]}</p>
+            <p className="text-muted-foreground">{autoLabel}</p>
             {st?.connection_detail && <p className="break-words text-muted-foreground">{st.connection_detail}</p>}
             <p className="text-xs text-muted-foreground tabular-nums">Gecontroleerd {fmt(st?.connection_checked_at)} · laatste geslaagde verwerking {fmt(st?.last_success_at)}</p>
             {st?.last_error && <p className="text-xs text-destructive break-words">Laatste fout ({fmt(st.last_error_at)}): {st.last_error}</p>}

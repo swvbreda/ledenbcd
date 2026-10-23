@@ -35,8 +35,11 @@ export const projectMailSetEnabled = createServerFn({ method: "POST" })
       await saveConnection(supabaseAdmin, result);
       if (result.state !== "verbonden") return { ok: false as const, error: result.detail };
     }
-    const { error } = await supabaseAdmin.from("projectmail_settings").update({ enabled: data.enabled, updated_by: ctx.userId, updated_at: new Date().toISOString() }).eq("id", true);
+    // Eén pad: DB-functie controleert opnieuw actuele beheerder, geïnstalleerde eigen job en recente verificatie, en zet instelling + job atomair.
+    const { data: st, error } = await supabaseAdmin.rpc("projectmail_configure", { _enabled: data.enabled, _actor: ctx.userId });
     if (error) return { ok: false as const, error: error.message };
+    const s = st as { installed: boolean; active: boolean; armed: boolean; enabled: boolean };
+    if (data.enabled && !(s.installed && s.active && s.armed && s.enabled)) return { ok: false as const, error: "Automatische planning niet actief geworden." };
     return { ok: true as const };
   });
 
@@ -50,4 +53,15 @@ export const projectMailRunNow = createServerFn({ method: "POST" })
     const { runProjectMailLogged } = await import("@/lib/projectMailWorker.server");
     const r = await runProjectMailLogged(supabaseAdmin, ctx.userId, "manual", process.env);
     return { status: r.status, counts: r.counts ?? null, error: r.error ?? null };
+  });
+
+/** Status automatische planning (alleen metadata). */
+export const projectMailSchedulerStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.rpc("projectmail_scheduler_status");
+    if (error) return { installed: false, active: false, armed: false, enabled: false, error: error.message };
+    return { ...(data as { installed: boolean; active: boolean; armed: boolean; enabled: boolean }), error: null as string | null };
   });
