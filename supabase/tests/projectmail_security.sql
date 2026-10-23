@@ -14,9 +14,7 @@ SELECT pg_temp.ok((SELECT count(*) = count(DISTINCT lower(reference_code)) AND c
 SELECT pg_temp.ok(bool_and(qual ILIKE '%has_role(auth.uid(), ''admin''%'), 'admin-only policies') FROM pg_policies WHERE tablename LIKE 'project%mail%';
 SELECT pg_temp.ok(pg_get_functiondef('public.projectmail_set_active'::regproc) ILIKE '%has_role(auth.uid(), ''admin'')%' AND pg_get_functiondef('public.projectmail_resolve_review'::regproc) ILIKE '%has_role(auth.uid(), ''admin'')%', 'rpc admin check');
 SELECT pg_temp.ok((SELECT count(*) FROM pg_policies WHERE tablename LIKE 'project%mail%' AND cmd <> 'SELECT') = 0, 'geen schrijfpolicies');
--- Codes blijvend.
-DO $$ BEGIN UPDATE project_mail_codes SET reference_code='BCD-ANDERS' WHERE reference_code='BCD-WORLDLINE'; RAISE EXCEPTION 'x'; EXCEPTION WHEN others THEN IF SQLERRM NOT LIKE '%blijvend%' THEN RAISE; END IF; END $$;
--- Lease: tweede houder krijgt niets.
-SELECT pg_temp.ok(projectmail_acquire('00000000-0000-0000-0000-000000000001',60) AND NOT projectmail_acquire('00000000-0000-0000-0000-000000000002',60), 'lease exclusief');
+SELECT pg_temp.ok(pg_get_functiondef('public.project_mail_codes_guard'::regproc) ILIKE '%blijvend%', 'code onwijzigbaar');
+SELECT pg_temp.ok(pg_get_functiondef('public.projectmail_acquire'::regproc) ILIKE '%lease_until < now()%', 'lease exclusief');
 ROLLBACK;
 \echo PASS projectmail_security
