@@ -401,6 +401,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
         <TabsContent value="documenten" className="space-y-3">
           <ProjectDocuments projectId={pid} staff={staff} />
+          <ProjectMailCorrespondence projectId={pid} />
         </TabsContent>
 
         <TabsContent value="geschiedenis" className="space-y-2">
