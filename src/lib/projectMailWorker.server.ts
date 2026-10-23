@@ -59,31 +59,47 @@ Vat alleen samen wat letterlijk in de mail staat. Verzin niets: geen eigenaren, 
 - taken: alleen concrete nieuwe acties die expliciet in de mail worden gevraagd of afgesproken. bronzin = exacte letterlijke zin uit de mail. eigenaar_genoemd/deadline_genoemd = true als de mail een persoon of datum bij die actie noemt.
 - taakstatus: uitspraken dat een bestaande taak klaar/gewijzigd is, met letterlijke bronzin.`;
 
+const SCHEMA = {
+  type: "object", additionalProperties: false, required: ["stand_van_zaken", "vervolg", "taken", "taakstatus"],
+  properties: {
+    stand_van_zaken: { type: "string" }, vervolg: { type: "string" },
+    taken: { type: "array", items: { type: "object", additionalProperties: false, required: ["titel", "bronzin", "expliciet", "eigenaar_genoemd", "deadline_genoemd"], properties: {
+      titel: { type: "string" }, bronzin: { type: "string" }, expliciet: { type: "boolean" }, eigenaar_genoemd: { type: "boolean" }, deadline_genoemd: { type: "boolean" } } } },
+    taakstatus: { type: "array", items: { type: "object", additionalProperties: false, required: ["beschrijving", "bronzin"], properties: { beschrijving: { type: "string" }, bronzin: { type: "string" } } } },
+  },
+};
+
+/** Lovable AI Gateway (Responses, gestreamd, strikt JSON-schema). Mailinhoud gaat als data mee, nooit als instructie. */
 export function lovableExtractor(apiKey: string, f: typeof fetch = fetch): Extractor {
   return async ({ subject, body }) => {
-    const res = await f("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await f("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(45_000),
+      headers: { "Lovable-API-Key": apiKey, Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "system", content: SYSTEM }, { role: "user", content: `Onderwerp: ${subject.slice(0, 300)}\n<<<MAIL\n${body.replace(/MAIL>>>/g, "MAIL>>")}\nMAIL>>>` }],
-        tools: [{ type: "function", function: { name: "extractie", parameters: {
-          type: "object", additionalProperties: false, required: ["stand_van_zaken", "vervolg", "taken", "taakstatus"],
-          properties: {
-            stand_van_zaken: { type: "string" }, vervolg: { type: "string" },
-            taken: { type: "array", items: { type: "object", required: ["titel", "bronzin", "expliciet", "eigenaar_genoemd", "deadline_genoemd"], properties: {
-              titel: { type: "string" }, bronzin: { type: "string" }, expliciet: { type: "boolean" }, eigenaar_genoemd: { type: "boolean" }, deadline_genoemd: { type: "boolean" } } } },
-            taakstatus: { type: "array", items: { type: "object", required: ["beschrijving", "bronzin"], properties: { beschrijving: { type: "string" }, bronzin: { type: "string" } } } },
-          } } } }],
-        tool_choice: { type: "function", function: { name: "extractie" } },
+        model: "openai/gpt-6-astra", stream: true, store: false, reasoning: { effort: "low" },
+        instructions: SYSTEM,
+        input: [{ role: "user", content: `Onderwerp: ${subject.slice(0, 300)}\n<<<MAIL\n${body.replace(/MAIL>>>/g, "MAIL>>")}\nMAIL>>>` }],
+        text: { format: { type: "json_schema", name: "extractie", strict: true, schema: SCHEMA } },
       }),
     });
-    if (!res.ok) throw new Error(`AI-extractie mislukt (${res.status})`);
-    const j = await res.json() as any;
-    const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    if (typeof args !== "string") throw new Error("AI-extractie gaf geen resultaat");
-    return JSON.parse(args) as RawExtraction;
+    if (!res.ok || !res.body) throw new Error(`AI-extractie mislukt (${res.status})`);
+    const reader = res.body.getReader(); const dec = new TextDecoder();
+    let buf = "", out = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line.startsWith("data:")) continue;
+        const d = line.slice(5).trim(); if (!d || d === "[DONE]") continue;
+        try { const ev = JSON.parse(d); if (ev.type === "response.output_text.delta") out += ev.delta ?? ""; if (ev.type === "response.failed" || ev.type === "error") throw new Error("AI-extractie mislukt"); }
+        catch (e) { if (e instanceof Error && e.message === "AI-extractie mislukt") throw e; }
+      }
+    }
+    if (!out) throw new Error("AI-extractie gaf geen resultaat");
+    return JSON.parse(out) as RawExtraction;
   };
 }
 
