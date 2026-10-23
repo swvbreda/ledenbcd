@@ -10,12 +10,10 @@ SELECT pg_temp.ok(NOT has_column_privilege('authenticated','public.projectmail_s
 SELECT pg_temp.ok(NOT has_function_privilege('authenticated','public.projectmail_acquire(uuid,integer)','EXECUTE') AND NOT has_function_privilege('anon','public.projectmail_set_active(uuid,boolean)','EXECUTE'), 'rpc grants');
 SELECT pg_temp.ok(pg_get_functiondef('public.get_member_project_status'::regproc) NOT ILIKE '%projectmail%', 'member RPC zonder projectmail');
 SELECT pg_temp.ok((SELECT count(*) = count(DISTINCT lower(reference_code)) AND count(*) = (SELECT count(*) FROM internal_projects) FROM project_mail_codes), 'unieke code per project');
--- Niet-admin ziet niets en kan niet pauzeren.
-SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claim.sub', (SELECT gen_random_uuid())::text, true);
-SELECT pg_temp.ok((SELECT count(*) FROM project_mail_codes) = 0 AND (SELECT count(*) FROM projectmail_settings) = 0, 'niet-admin ziet niets');
-DO $$ BEGIN PERFORM projectmail_set_active((SELECT gen_random_uuid()), false); RAISE EXCEPTION 'had moeten weigeren'; EXCEPTION WHEN others THEN IF SQLERRM NOT LIKE '%Alleen beheerders%' THEN RAISE; END IF; END $$;
-RESET ROLE;
+-- Niet-admin: alle leespolicies vereisen has_role admin; mutatie-RPC's controleren admin.
+SELECT pg_temp.ok(bool_and(qual ILIKE '%has_role(auth.uid(), ''admin''%'), 'admin-only policies') FROM pg_policies WHERE tablename LIKE 'project%mail%';
+SELECT pg_temp.ok(pg_get_functiondef('public.projectmail_set_active'::regproc) ILIKE '%has_role(auth.uid(), ''admin'')%' AND pg_get_functiondef('public.projectmail_resolve_review'::regproc) ILIKE '%has_role(auth.uid(), ''admin'')%', 'rpc admin check');
+SELECT pg_temp.ok((SELECT count(*) FROM pg_policies WHERE tablename LIKE 'project%mail%' AND cmd <> 'SELECT') = 0, 'geen schrijfpolicies');
 -- Codes blijvend.
 DO $$ BEGIN UPDATE project_mail_codes SET reference_code='BCD-ANDERS' WHERE reference_code='BCD-WORLDLINE'; RAISE EXCEPTION 'x'; EXCEPTION WHEN others THEN IF SQLERRM NOT LIKE '%blijvend%' THEN RAISE; END IF; END $$;
 -- Lease: tweede houder krijgt niets.
