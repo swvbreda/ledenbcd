@@ -104,3 +104,19 @@ describe("geplande aanroep", () => {
     expect(await r.json()).toMatchObject({ skipped: "disabled" });
   });
 });
+
+describe("onveranderlijke Microsoft-ids", () => {
+  it("delta, body, lijst en verbindingsproef vragen allemaal ImmutableId, met overige Prefer-waarden", async () => {
+    const { projectMailGraph } = await import("@/lib/projectMailGraph.server");
+    const seen: [string, string | undefined][] = [];
+    const ro = { get: async (p: string, pr?: string) => { seen.push([p, pr]); return { json: p.includes("$top=1") ? { value: [{ id: "AAMkAD123456" }] } : { value: [], body: { content: "x" } } }; } };
+    const g = projectMailGraph(ro, UID);
+    await g.delta(null, "2026-10-01T00:00:00Z");
+    await g.body("AAMkAD123456");
+    await verifyMailAccess(["Mail.Read"], ro.get, UID);
+    expect(seen).toHaveLength(4);
+    for (const [, pr] of seen) expect(pr?.split(", ")[0]).toBe('IdType="ImmutableId"');
+    expect(seen[0][1]).toBe('IdType="ImmutableId", odata.maxpagesize=50');
+    expect(seen[1][1]).toBe('IdType="ImmutableId", outlook.body-content-type="text"');
+  });
+});
