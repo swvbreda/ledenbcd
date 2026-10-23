@@ -1,0 +1,4 @@
+REVOKE ALL ON public.project_mail_codes, public.projectmail_settings, public.projectmail_checkpoint, public.projectmail_messages, public.projectmail_reviews, public.projectmail_task_candidates, public.projectmail_runs FROM anon, authenticated;
+GRANT SELECT ON public.project_mail_codes, public.projectmail_messages, public.projectmail_reviews, public.projectmail_task_candidates, public.projectmail_runs TO authenticated;
+GRANT SELECT (id, mailbox, enabled, connection_state, connection_detail, connection_checked_at, last_run_at, last_success_at, last_error, last_error_at, consecutive_failures, updated_at) ON public.projectmail_settings TO authenticated;
+REVOKE ALL ON FUNCTION public.project_mail_code_on_insert(), public.project_mail_codes_guard(), public.project_mail_codes_nodelete() FROM PUBLIC, anon, authenticated;
