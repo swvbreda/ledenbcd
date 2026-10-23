@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { AlertCircle, Archive, CheckCircle2, ExternalLink, Loader2, Pencil, Plus } from "lucide-react";
 import PlannerPanel from "@/components/projecten/PlannerPanel";
 import TopicalPanel from "@/components/projecten/TopicalPanel";
+import ProjectMailPanel, { ProjectMailCode } from "@/components/projecten/ProjectMail";
 import { changedText, presentText } from "@/lib/presentText";
 import ProjectWorkspace, { ProgressBar, type WsProject, type WsTask } from "@/components/projecten/ProjectWorkspace";
 import { setProjectArchived } from "@/components/projecten/ArchiveProjectAction";
@@ -282,6 +283,7 @@ function ProjectenInner() {
           <TabsTrigger className={tabsTriggerCls} value="projecten">Projecten</TabsTrigger>
           <TabsTrigger className={tabsTriggerCls} value="planner">Planner</TabsTrigger>
           <TabsTrigger className={tabsTriggerCls} value="topical">Topical</TabsTrigger>
+          <TabsTrigger className={tabsTriggerCls} value="projectmail">Projectmail</TabsTrigger>
         </TabsList>
 
         <TabsContent value="taken" className="space-y-4">
@@ -469,6 +471,7 @@ function ProjectenInner() {
                         <ProjectStatusBadge status={p.status} archived={!!p.archived_at} />
                         <p className="text-base font-semibold leading-snug break-words">{p.title}</p>
                         <p className="text-xs text-muted-foreground tabular-nums">{statusDateLabel(p.status_date)}</p>
+                        <ProjectMailCode projectId={p.id} compact />
                       </div>
                       <StaffAvatars ids={people} staff={staffQ.data ?? []} max={3} />
                     </div>
@@ -517,6 +520,10 @@ function ProjectenInner() {
 
         <TabsContent value="topical" className="space-y-4">
           <TopicalPanel tasks={(tasksQ.data ?? []).filter((t) => t.source_system === "topical").map((t) => ({ id: t.id, title: t.title, status: t.status }))} onChanged={invalidate} />
+        </TabsContent>
+
+        <TabsContent value="projectmail" className="space-y-4">
+          <ProjectMailPanel projects={activeProjects.map((p) => ({ id: p.id, title: p.title }))} />
         </TabsContent>
       </Tabs>
 
