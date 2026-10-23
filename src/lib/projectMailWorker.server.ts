@@ -1,5 +1,6 @@
 /** Projectmail-worker (server-only): DB-adapter, AI-extractie, verbindingscontrole, lease en gelogde run. */
 import { timingSafeEqual } from "node:crypto";
+import { prefer } from "@/lib/projectMailGraph.server";
 import { PROJECTMAIL_MAILBOX, runProjectMail, type Extractor, type MailDb, type MailGraph, type RawExtraction, type RunCounts } from "@/lib/projectMail";
 
 type Sb = any;
@@ -121,11 +122,11 @@ export async function verifyMailAccess(roles: string[], get: GetFn, userId: stri
     return { state: "verbinding_nodig", detail: `Applicatierecht '${REQUIRED_ROLE}' (met beheerderstoestemming) ontbreekt; Mail.ReadBasic geeft geen berichtinhoud. Aanwezig: ${roles.join(", ") || "geen"}. Beperk het met een Exchange-toegangsbeleid tot ${PROJECTMAIL_MAILBOX}.` };
   }
   let ids: string[];
-  try { ids = (((await get(`/users/${userId}/mailFolders/inbox/messages?$top=1&$select=id`)).json?.value ?? []) as any[]).map((v) => String(v.id ?? "")); }
+  try { ids = (((await get(`/users/${userId}/mailFolders/inbox/messages?$top=1&$select=id`, prefer())).json?.value ?? []) as any[]).map((v) => String(v.id ?? "")); }
   catch (e) { return { state: "verbinding_nodig", detail: `Postbus ${PROJECTMAIL_MAILBOX} niet leesbaar (${(e as Error).message}). Controleer '${REQUIRED_ROLE}' en het Exchange-toegangsbeleid.`.slice(0, 500) }; }
   if (!ids[0]) return { state: "verbonden", detail: `Leesrecht bevestigd; inbox van ${PROJECTMAIL_MAILBOX} is leeg, berichtinhoud nog niet gelezen.`, userId };
   try {
-    const { json } = await get(`/users/${userId}/messages/${encodeURIComponent(ids[0])}?$select=body`, 'outlook.body-content-type="text"');
+    const { json } = await get(`/users/${userId}/messages/${encodeURIComponent(ids[0])}?$select=body`, prefer('outlook.body-content-type="text"'));
     if (typeof json?.body?.content !== "string") return { state: "verbinding_nodig", detail: "Microsoft gaf geen berichtinhoud terug; inhoudsrecht ontbreekt." , userId };
   } catch (e) { return { state: "verbinding_nodig", detail: `Berichtinhoud niet leesbaar (${(e as Error).message}).`.slice(0, 500) }; }
   return { state: "verbonden", detail: `Leestoegang tot berichtinhoud van ${PROJECTMAIL_MAILBOX} bevestigd.`, userId };

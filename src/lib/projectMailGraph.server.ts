@@ -4,6 +4,10 @@ import { nextPageParams, type ReadOnlyGraph } from "@/lib/msImportGraph.server";
 import { safeWebLink, toPlainText, type MailGraph, type MailMeta } from "@/lib/projectMail";
 
 const GUID = /^[0-9a-fA-F-]{36}$/;
+/** Altijd onveranderlijke ids: verplaatsen binnen de postbus geeft anders een nieuw id en dubbele verwerking. */
+export const IMMUTABLE_ID = 'IdType="ImmutableId"';
+export const prefer = (...extra: string[]) => [IMMUTABLE_ID, ...extra].join(", ");
+
 const MSG_ID = /^[A-Za-z0-9_=+-]{10,400}$/;
 
 /** Checkpoint = alleen tokenparameters ($skiptoken/$deltatoken), nooit een volledige URL. */
@@ -24,7 +28,7 @@ export function projectMailGraph(g: ReadOnlyGraph, userId: string): MailGraph {
       } else {
         q = new URLSearchParams({ $select: "id,subject,receivedDateTime,internetMessageId,webLink", $filter: `receivedDateTime ge ${sinceIso}` });
       }
-      const { json } = await g.get(`${base}?${q.toString()}`, "odata.maxpagesize=50");
+      const { json } = await g.get(`${base}?${q.toString()}`, prefer("odata.maxpagesize=50"));
       const items: MailMeta[] = ((json.value ?? []) as Record<string, any>[]).map((v) => ({
         id: String(v.id ?? ""), subject: String(v.subject ?? ""), receivedDateTime: String(v.receivedDateTime ?? ""),
         internetMessageId: typeof v.internetMessageId === "string" ? v.internetMessageId.slice(0, 500) : null,
@@ -34,7 +38,7 @@ export function projectMailGraph(g: ReadOnlyGraph, userId: string): MailGraph {
     },
     async body(id) {
       if (!MSG_ID.test(id)) throw new GraphError(0, "Ongeldig bericht-id");
-      const { json } = await g.get(`/users/${userId}/messages/${encodeURIComponent(id)}?$select=uniqueBody,body`, 'outlook.body-content-type="text"');
+      const { json } = await g.get(`/users/${userId}/messages/${encodeURIComponent(id)}?$select=uniqueBody,body`, prefer('outlook.body-content-type="text"'));
       const b = json.uniqueBody?.content ? json.uniqueBody : json.body;
       return toPlainText(String(b?.content ?? ""), b?.contentType);
     },
