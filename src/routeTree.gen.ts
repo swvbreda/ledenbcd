@@ -64,6 +64,7 @@ import { Route as ApiPublicDeclarationPushDispatchRouteImport } from './routes/a
 import { Route as ApiPublicLedenLogosRouteImport } from './routes/api/public/leden-logos'
 import { Route as ApiPublicMsImportPullRouteImport } from './routes/api/public/ms-import-pull'
 import { Route as ApiPublicOutlookDeadlineDispatchRouteImport } from './routes/api/public/outlook-deadline-dispatch'
+import { Route as ApiPublicProjectmailPullRouteImport } from './routes/api/public/projectmail-pull'
 import { Route as ApiPublicRegisterEnrichRouteImport } from './routes/api/public/register-enrich'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
@@ -364,6 +365,12 @@ const ApiPublicOutlookDeadlineDispatchRoute =
     path: '/api/public/outlook-deadline-dispatch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicProjectmailPullRoute =
+  ApiPublicProjectmailPullRouteImport.update({
+    id: '/api/public/projectmail-pull',
+    path: '/api/public/projectmail-pull',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRegisterEnrichRoute = ApiPublicRegisterEnrichRouteImport.update({
   id: '/api/public/register-enrich',
   path: '/api/public/register-enrich',
@@ -479,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
+  '/api/public/projectmail-pull': typeof ApiPublicProjectmailPullRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -547,6 +555,7 @@ export interface FileRoutesByTo {
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
+  '/api/public/projectmail-pull': typeof ApiPublicProjectmailPullRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -617,6 +626,7 @@ export interface FileRoutesById {
   '/api/public/leden-logos': typeof ApiPublicLedenLogosRoute
   '/api/public/ms-import-pull': typeof ApiPublicMsImportPullRoute
   '/api/public/outlook-deadline-dispatch': typeof ApiPublicOutlookDeadlineDispatchRoute
+  '/api/public/projectmail-pull': typeof ApiPublicProjectmailPullRoute
   '/api/public/register-enrich': typeof ApiPublicRegisterEnrichRoute
   '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/enquetes/$id/review': typeof EnquetesIdReviewRoute
@@ -687,6 +697,7 @@ export interface FileRouteTypes {
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
+    | '/api/public/projectmail-pull'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
+    | '/api/public/projectmail-pull'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -824,6 +836,7 @@ export interface FileRouteTypes {
     | '/api/public/leden-logos'
     | '/api/public/ms-import-pull'
     | '/api/public/outlook-deadline-dispatch'
+    | '/api/public/projectmail-pull'
     | '/api/public/register-enrich'
     | '/api/public/whatsapp-webhook'
     | '/enquetes/$id/review'
@@ -872,6 +885,7 @@ export interface RootRouteChildren {
   ApiPublicLedenLogosRoute: typeof ApiPublicLedenLogosRoute
   ApiPublicMsImportPullRoute: typeof ApiPublicMsImportPullRoute
   ApiPublicOutlookDeadlineDispatchRoute: typeof ApiPublicOutlookDeadlineDispatchRoute
+  ApiPublicProjectmailPullRoute: typeof ApiPublicProjectmailPullRoute
   ApiPublicRegisterEnrichRoute: typeof ApiPublicRegisterEnrichRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   EnquetesIdReviewRoute: typeof EnquetesIdReviewRoute
@@ -1270,6 +1284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOutlookDeadlineDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/projectmail-pull': {
+      id: '/api/public/projectmail-pull'
+      path: '/api/public/projectmail-pull'
+      fullPath: '/api/public/projectmail-pull'
+      preLoaderRoute: typeof ApiPublicProjectmailPullRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/register-enrich': {
       id: '/api/public/register-enrich'
       path: '/api/public/register-enrich'
@@ -1460,6 +1481,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLedenLogosRoute: ApiPublicLedenLogosRoute,
   ApiPublicMsImportPullRoute: ApiPublicMsImportPullRoute,
   ApiPublicOutlookDeadlineDispatchRoute: ApiPublicOutlookDeadlineDispatchRoute,
+  ApiPublicProjectmailPullRoute: ApiPublicProjectmailPullRoute,
   ApiPublicRegisterEnrichRoute: ApiPublicRegisterEnrichRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   EnquetesIdReviewRoute: EnquetesIdReviewRoute,
