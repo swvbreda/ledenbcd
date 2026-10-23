@@ -18,6 +18,9 @@ const ALLOWED = [
   /^\/users\/[^/?#]+(\?.*)?$/,
   // Microsoft To Do van één expliciet bevestigd account (Entra-GUID), alleen lijsten/taken.
   /^\/users\/[0-9a-fA-F-]{36}\/todo\/lists(\/[A-Za-z0-9_=-]+(\/tasks(\/[A-Za-z0-9_=-]+)?)?)?(\?.*)?$/,
+  // Projectmail: alleen inbox-delta en één bericht van één vast account (Entra-GUID), alleen GET via readOnlyGraph.
+  /^\/users\/[0-9a-fA-F-]{36}\/mailFolders\/inbox\/messages\/delta\?.*$/,
+  /^\/users\/[0-9a-fA-F-]{36}\/messages\/[A-Za-z0-9_%=+-]+\?\$select=[a-zA-Z,]+$/,
 ];
 
 /** Alleen vaste Microsoft-origin en toegestane paden; nextLink ook gecontroleerd. */

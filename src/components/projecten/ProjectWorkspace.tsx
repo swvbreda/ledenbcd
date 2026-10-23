@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ProjectMailCode, ProjectMailCorrespondence } from "@/components/projecten/ProjectMail";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -211,6 +212,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
             {onSetArchived && <ArchiveProjectAction title={project.title} archived={!!project.archived_at} disabled={editing} onSetArchived={onSetArchived} />}
           </div>
         </div>
+        <ProjectMailCode projectId={project.id} />
         <section aria-label="Huidige status" className={`${surfaceCls} relative overflow-hidden min-w-0 space-y-3 p-5`}>
           <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-brand-navy" />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -399,6 +401,7 @@ export default function ProjectWorkspace({ project, tasks, staff, participants, 
 
         <TabsContent value="documenten" className="space-y-3">
           <ProjectDocuments projectId={pid} staff={staff} />
+          <ProjectMailCorrespondence projectId={pid} />
         </TabsContent>
 
         <TabsContent value="geschiedenis" className="space-y-2">

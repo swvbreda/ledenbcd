@@ -449,6 +449,27 @@
       "when": 1792689584373,
       "tag": "0063_declaration_push_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792745131704,
+      "tag": "0064_projectmail_rcf",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1792745176188,
+      "tag": "0065_projectmail_rcf_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1792745482830,
+      "tag": "0066_projectmail_revoke_defaults",
+      "breakpoints": true
     }
   ]
 }
