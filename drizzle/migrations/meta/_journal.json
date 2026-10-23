@@ -470,6 +470,13 @@
       "when": 1792745482830,
       "tag": "0066_projectmail_revoke_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792745840336,
+      "tag": "0067_projectmail_scheduler",
+      "breakpoints": true
     }
   ]
 }
