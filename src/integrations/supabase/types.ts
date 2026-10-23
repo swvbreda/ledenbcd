@@ -4691,6 +4691,315 @@ export type Database = {
           },
         ]
       }
+      project_mail_codes: {
+        Row: {
+          active: boolean
+          created_at: string
+          project_id: string
+          reference_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          project_id: string
+          reference_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          project_id?: string
+          reference_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_mail_codes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projectmail_checkpoint: {
+        Row: {
+          delta_link: string | null
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          delta_link?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          delta_link?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projectmail_messages: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          id: string
+          internet_message_id: string | null
+          mailbox: string
+          next_steps: string | null
+          processed_at: string | null
+          project_id: string
+          received_at: string
+          reference_code: string
+          source_message_id: string
+          status: string
+          subject: string
+          summary: string | null
+          web_link: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          internet_message_id?: string | null
+          mailbox: string
+          next_steps?: string | null
+          processed_at?: string | null
+          project_id: string
+          received_at: string
+          reference_code: string
+          source_message_id: string
+          status?: string
+          subject: string
+          summary?: string | null
+          web_link?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          internet_message_id?: string | null
+          mailbox?: string
+          next_steps?: string | null
+          processed_at?: string | null
+          project_id?: string
+          received_at?: string
+          reference_code?: string
+          source_message_id?: string
+          status?: string
+          subject?: string
+          summary?: string | null
+          web_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projectmail_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projectmail_reviews: {
+        Row: {
+          created_at: string
+          detail: Json
+          id: string
+          mailbox: string
+          project_id: string | null
+          reason: string
+          received_at: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          review_key: string
+          source_message_id: string
+          subject: string | null
+          web_link: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          mailbox: string
+          project_id?: string | null
+          reason: string
+          received_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_key: string
+          source_message_id: string
+          subject?: string | null
+          web_link?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          mailbox?: string
+          project_id?: string | null
+          reason?: string
+          received_at?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_key?: string
+          source_message_id?: string
+          subject?: string | null
+          web_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projectmail_reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "internal_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projectmail_runs: {
+        Row: {
+          counts: Json
+          error: string | null
+          finished_at: string | null
+          id: string
+          ok: boolean | null
+          started_at: string
+          trigger: string
+        }
+        Insert: {
+          counts?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          started_at?: string
+          trigger: string
+        }
+        Update: {
+          counts?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          ok?: boolean | null
+          started_at?: string
+          trigger?: string
+        }
+        Relationships: []
+      }
+      projectmail_settings: {
+        Row: {
+          connection_checked_at: string | null
+          connection_detail: string | null
+          connection_state: string
+          consecutive_failures: number
+          enabled: boolean
+          id: boolean
+          last_error: string | null
+          last_error_at: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          lease_token: string | null
+          lease_until: string | null
+          mailbox: string
+          mailbox_user_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          connection_checked_at?: string | null
+          connection_detail?: string | null
+          connection_state?: string
+          consecutive_failures?: number
+          enabled?: boolean
+          id?: boolean
+          last_error?: string | null
+          last_error_at?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          mailbox?: string
+          mailbox_user_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          connection_checked_at?: string | null
+          connection_detail?: string | null
+          connection_state?: string
+          consecutive_failures?: number
+          enabled?: boolean
+          id?: boolean
+          last_error?: string | null
+          last_error_at?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          mailbox?: string
+          mailbox_user_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      projectmail_task_candidates: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          message_id: string
+          norm_title: string
+          source_quote: string
+          task_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: string
+          message_id: string
+          norm_title: string
+          source_quote: string
+          task_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          message_id?: string
+          norm_title?: string
+          source_quote?: string
+          task_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projectmail_task_candidates_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "projectmail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projectmail_task_candidates_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       publications: {
         Row: {
           attachment_url: string | null
@@ -6329,6 +6638,16 @@ export type Database = {
       outlook_deadline_valid: {
         Args: { _lock: string; _revision: number; _task: string }
         Returns: boolean
+      }
+      projectmail_acquire: {
+        Args: { _seconds: number; _token: string }
+        Returns: boolean
+      }
+      projectmail_release: { Args: { _token: string }; Returns: undefined }
+      projectmail_resolve_review: { Args: { _id: string }; Returns: undefined }
+      projectmail_set_active: {
+        Args: { _active: boolean; _project: string }
+        Returns: undefined
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
