@@ -66,9 +66,9 @@ describe("lease en deadline", () => {
   });
   it("runProjectMail stopt bij deadline zonder poging te tellen of checkpoint op te schuiven", async () => {
     let t = 0; const begin = vi.fn(); const save = vi.fn();
-    const g: MailGraph = { delta: async () => ({ items: [{ id: "m1", subject: "[BCD-X]", receivedDateTime: "" }], next: null, delta: "$deltatoken=a" }), body: async () => "" };
-    const db = { codes: async () => [{ project_id: "P", reference_code: "BCD-X", active: true, archived: false }], checkpoint: async () => null, saveCheckpoint: save, beginMessage: begin } as unknown as MailDb;
-    const clock = () => (t += 1000);
+    const g: MailGraph = { delta: async () => ({ items: [{ id: "m1", subject: "[BCD-WORLDLINE]", receivedDateTime: "" }], next: null, delta: "$deltatoken=a" }), body: async () => "" };
+    const db = { codes: async () => [{ project_id: "P", reference_code: "BCD-WORLDLINE", active: true, archived: false }], checkpoint: async () => null, saveCheckpoint: save, beginMessage: begin } as unknown as MailDb;
+    const clock = () => (t += 600);
     await expect(runProjectMail(g, db, async () => ({}), new Date(), 1500, clock)).rejects.toBeInstanceOf(RunDeadlineError);
     expect(begin).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
@@ -77,7 +77,7 @@ describe("lease en deadline", () => {
     const { sb, calls } = fakeSb();
     let t = 0;
     const g: MailGraph = { delta: async () => ({ items: [], next: "$skiptoken=b", delta: null }), body: async () => "" };
-    const r = await runProjectMailLogged(sb, "a", "manual", {}, { graph: g, extract: async () => ({}) }, () => (t += RUN_BUDGET_MS / 2));
+    const r = await runProjectMailLogged(sb, "a", "manual", {}, { graph: g, extract: async () => ({}) }, () => (t++ === 0 ? 0 : RUN_BUDGET_MS + 1));
     expect(r.status).toBe("fout");
     expect(r.error).toMatch(/runduur/);
     expect(calls.rpc).toContain("projectmail_release");

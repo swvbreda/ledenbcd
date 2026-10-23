@@ -130,6 +130,7 @@ export class RunDeadlineError extends Error { constructor() { super("Maximale ru
 export async function runProjectMail(g: MailGraph, db: MailDb, extract: Extractor, now = new Date(), deadlineAt = Number.POSITIVE_INFINITY, clock: () => number = Date.now): Promise<RunCounts> {
   const guard = () => { if (clock() >= deadlineAt) throw new RunDeadlineError(); };
   const r: RunCounts = { scanned: 0, coded: 0, processed: 0, reviews: 0, tasks: 0, skipped: 0, failed: 0, pages: 0, complete: false };
+  guard();
   const codes = await db.codes();
   const byCode = new Map(codes.map((c) => [c.reference_code.toUpperCase(), c]));
   const since = new Date(now.getTime() - INITIAL_LOOKBACK_DAYS * 86_400_000).toISOString();
