@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Contactpersoon verwijderen (geen frontendpublicatie)
-- [ ] Review: multisetidentiteit/gedeelde login beveiligen, uitnodigen na verwijdering herstellen, echte hook/form- en ledenprofielregressies testen; geen publicatie of echte deletes.
+- [x] Review: migratie 0070 vergelijkt één-op-één met multipliciteit en blokkeert gedeelde login; uitnodigingen na geslaagde verwijdering hersteld. 6 echte form/hook/profieltests + 21 regressies en geïsoleerde SQL-proef geslaagd; geen publicatie of echte deletes.
 - [x] Ledencontactverwijdering server-side saga + DB-writeguards; gekoppelde UUID, gedeelde/beschermde accounts blokkeren, waarschuwingen, oude JWT REST/RPC/Storage deny en Auth soft-delete voor historiebehoud.
 - [x] 25 gerichte tests + geïsoleerde SQL-asserties geslaagd; migratie 0069 toegepast, live 0 operaties/intrekkingen/verwijderingen. Frontend niet gepubliceerd; echte destructieve ketentest bewust niet uitgevoerd.
 
