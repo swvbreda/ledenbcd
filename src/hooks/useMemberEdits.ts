@@ -261,6 +261,7 @@ export function useSaveMemberEdit() {
       if (removal.removed) {
         if (!window.confirm(`Contactpersoon verwijderen? Het gekoppelde loginaccount (${removal.accounts}) en de toegang worden ook verwijderd. Bedrijfs- en financiële historie blijft behouden.`)) throw new Error("Verwijdering geannuleerd.");
         await removeContacts({ data: { memberId: member_id, patch: finalData as Record<string, unknown>, confirmed: true } });
+        await inviteNewContacts(member_id, { ...baseMember, ...existingData }, finalData);
         return;
       }
 
@@ -414,7 +415,7 @@ export function useApproveEditRequest() {
         .eq("id", request.member_id)
         .maybeSingle();
       const baseMember = (memberRow?.data as Partial<Member> | null) ?? {};
-      if (!removal.removed) await inviteNewContacts(request.member_id, { ...baseMember, ...existingData }, mergedData);
+      await inviteNewContacts(request.member_id, { ...baseMember, ...existingData }, mergedData);
     },
 
     onSuccess: () => {
