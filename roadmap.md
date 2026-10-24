@@ -1,5 +1,9 @@
 # Roadmap
 
+## Contactpersoon verwijderen (geen frontendpublicatie)
+- [ ] Alle ledencontact-verwijderroutes server-side beveiligen, eenduidige accountkoppeling en effectieve sessie-intrekking, waarschuwing en foutafhandeling.
+- [ ] Geïsoleerde tests en backend-readback; geen echte contacten/accounts verwijderen.
+
 ## Outlook-taakdeadlines (geen publicatie)
 - [x] Gerichte enable/armed-bug: transactionele bestaande configure in installatiescript, server/UI-installatiecontrole; echte isolated SQL-rollback, 8 adapter + 8 componenttests en tsgo --noEmit geslaagd; geen live installatie.
 - [x] Automatische servercode/installatiescript: gedeelde engine/claim, veilig uit; 98 regressietests, echte geïsoleerde route+SQL/mock Graph/concurrency, SQL-rollback, 2 schermtests en tsgo --noEmit geslaagd.
