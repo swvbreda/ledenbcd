@@ -34,6 +34,8 @@ import type { Member } from "@/data/types";
 import { Capacitor } from "@capacitor/core";
 import MediaUpload from "@/components/members/MediaUpload";
 import { useContactPhotos, contactSlug } from "@/hooks/useMemberMedia";
+import { useServerFn } from "@tanstack/react-start";
+import { removeMemberContacts } from "@/lib/contactRemoval.functions";
 
 // ── Password Section ──
 function PasswordSection() {
@@ -667,6 +669,7 @@ async function sendContactChangeConfirmation(
 // ── Profile Card ──
 function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const { user, isAdmin } = useAuth();
+  const removeContacts = useServerFn(removeMemberContacts);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName] = useState("");
   const [editTelefoon, setEditTelefoon] = useState("");
@@ -728,6 +731,17 @@ function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
         .maybeSingle();
       const existingData = (existing?.data as Record<string, unknown>) || {};
       const mergedData = { ...existingData, ...editData };
+
+      try {
+        const removal = await removeContacts({ data: { memberId: linkedMember.id, patch: mergedData, confirmed: false } });
+        if (removal.removed) {
+          if (!window.confirm(`Contactpersoon verwijderen? Ook ${removal.accounts} gekoppelde loginaccount(s) en de toegang worden verwijderd. Bedrijfs- en financiële historie blijft behouden.`)) { setSaving(false); return; }
+          await removeContacts({ data: { memberId: linkedMember.id, patch: mergedData, confirmed: true } });
+          setSaving(false); setEditingProfile(false); toast.success("Contactpersoon en gekoppelde toegang verwijderd"); return;
+        }
+      } catch (error) {
+        setSaving(false); toast.error(error instanceof Error ? error.message : "Verwijdering mislukt."); return;
+      }
 
       const { error } = await supabase
         .from("member_edits")

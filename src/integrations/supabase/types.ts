@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_access_revocations: {
+        Row: {
+          operation_id: string
+          revoked_at: string
+          user_id: string
+        }
+        Insert: {
+          operation_id: string
+          revoked_at?: string
+          user_id: string
+        }
+        Update: {
+          operation_id?: string
+          revoked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_access_revocations_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "contact_removal_operations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advies_eligibility_attempts: {
         Row: {
           created_at: string
@@ -1360,6 +1386,45 @@ export type Database = {
           status?: string
           updated_at?: string
           whatsapp_name?: string | null
+        }
+        Relationships: []
+      }
+      contact_removal_operations: {
+        Row: {
+          account_ids: string[]
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          completed_at: string | null
+          created_at: string
+          emails: string[]
+          id: string
+          member_id: number
+          status: string
+        }
+        Insert: {
+          account_ids?: string[]
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          completed_at?: string | null
+          created_at?: string
+          emails?: string[]
+          id?: string
+          member_id: number
+          status?: string
+        }
+        Update: {
+          account_ids?: string[]
+          actor_id?: string
+          after_data?: Json
+          before_data?: Json
+          completed_at?: string | null
+          created_at?: string
+          emails?: string[]
+          id?: string
+          member_id?: number
+          status?: string
         }
         Relationships: []
       }
@@ -5155,6 +5220,32 @@ export type Database = {
           },
         ]
       }
+      removed_contact_emails: {
+        Row: {
+          email: string
+          member_id: number
+          operation_id: string
+        }
+        Insert: {
+          email: string
+          member_id: number
+          operation_id: string
+        }
+        Update: {
+          email?: string
+          member_id?: number
+          operation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "removed_contact_emails_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "contact_removal_operations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secure_document_views: {
         Row: {
           document_id: string
@@ -6338,6 +6429,23 @@ export type Database = {
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
       cleanup_expired_mfa_codes: { Args: never; Returns: undefined }
       compact_key: { Args: { _v: string }; Returns: string }
+      contact_access_check: { Args: never; Returns: undefined }
+      contact_account_active: { Args: never; Returns: boolean }
+      contact_email_parts: { Args: { v: string }; Returns: string[] }
+      contact_removal_finish: {
+        Args: { _actor: string; _id: string }
+        Returns: undefined
+      }
+      contact_removal_prepare: {
+        Args: {
+          _actor: string
+          _confirm?: boolean
+          _member: number
+          _patch: Json
+        }
+        Returns: Json
+      }
+      contact_removed_items: { Args: { b: Json; n: Json }; Returns: Json[] }
       declaration_default_line_item: {
         Args: { _expense_date: string; _type: string; _year: number }
         Returns: string

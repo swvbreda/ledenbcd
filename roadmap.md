@@ -1,5 +1,9 @@
 # Roadmap
 
+## Contactpersoon verwijderen (geen frontendpublicatie)
+- [x] Ledencontactverwijdering server-side saga + DB-writeguards; gekoppelde UUID, gedeelde/beschermde accounts blokkeren, waarschuwingen, oude JWT REST/RPC/Storage deny en Auth soft-delete voor historiebehoud.
+- [x] 25 gerichte tests + geïsoleerde SQL-asserties geslaagd; migratie 0069 toegepast, live 0 operaties/intrekkingen/verwijderingen. Frontend niet gepubliceerd; echte destructieve ketentest bewust niet uitgevoerd.
+
 ## Outlook-taakdeadlines (geen publicatie)
 - [x] Gerichte enable/armed-bug: transactionele bestaande configure in installatiescript, server/UI-installatiecontrole; echte isolated SQL-rollback, 8 adapter + 8 componenttests en tsgo --noEmit geslaagd; geen live installatie.
 - [x] Automatische servercode/installatiescript: gedeelde engine/claim, veilig uit; 98 regressietests, echte geïsoleerde route+SQL/mock Graph/concurrency, SQL-rollback, 2 schermtests en tsgo --noEmit geslaagd.

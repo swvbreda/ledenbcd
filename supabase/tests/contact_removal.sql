@@ -1,0 +1,43 @@
+INSERT INTO user_roles VALUES('00000000-0000-0000-0000-000000000001','admin');
+INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000002','contact@example.test',null);
+INSERT INTO members_data VALUES(1,'{"contacten":[{"naam":"Contact","email":"contact@example.test"}],"contactpersoon":"Contact","email":"contact@example.test"}');
+INSERT INTO member_profiles VALUES(1,'00000000-0000-0000-0000-000000000002');
+INSERT INTO member_allowed_emails VALUES(1,'contact@example.test');
+DO $$ DECLARE p jsonb; op uuid; BEGIN
+ BEGIN PERFORM contact_removal_prepare(1,'{"contacten":[],"contactpersoon":"","email":""}','00000000-0000-0000-0000-000000000002',false); RAISE EXCEPTION 'FAIL unauthorized'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ p:=contact_removal_prepare(1,'{"contacten":[],"contactpersoon":"","email":""}','00000000-0000-0000-0000-000000000001',false);
+ IF (p->>'accounts')::int<>1 THEN RAISE EXCEPTION 'FAIL account count'; END IF;
+ INSERT INTO member_profiles VALUES(2,'00000000-0000-0000-0000-000000000002');
+ BEGIN PERFORM contact_removal_prepare(1,'{"contacten":[],"contactpersoon":"","email":""}','00000000-0000-0000-0000-000000000001',false); RAISE EXCEPTION 'FAIL shared'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL shared' THEN RAISE; END IF; END;
+ DELETE FROM member_profiles WHERE member_id=2;
+ BEGIN INSERT INTO member_edits VALUES(1,'{"contacten":[],"contactpersoon":"","email":""}',null,now()); RAISE EXCEPTION 'FAIL bypass'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ p:=contact_removal_prepare(1,'{"contacten":[],"contactpersoon":"","email":""}','00000000-0000-0000-0000-000000000001',true); op:=(p->>'id')::uuid;
+ PERFORM set_config('request.uid','00000000-0000-0000-0000-000000000002',true);
+ BEGIN PERFORM contact_access_check(); RAISE EXCEPTION 'FAIL old jwt'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ PERFORM set_config('request.uid','',true);
+ BEGIN PERFORM contact_removal_finish(op,'00000000-0000-0000-0000-000000000001'); RAISE EXCEPTION 'FAIL finish before delete'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL finish before delete' THEN RAISE; END IF; END;
+ IF EXISTS(SELECT 1 FROM member_edits WHERE member_id=1) THEN RAISE EXCEPTION 'FAIL contact lost on failure'; END IF;
+ UPDATE auth.users SET deleted_at=now() WHERE id='00000000-0000-0000-0000-000000000002';
+ PERFORM contact_removal_finish(op,'00000000-0000-0000-0000-000000000001');
+ PERFORM contact_removal_finish(op,'00000000-0000-0000-0000-000000000001');
+ IF EXISTS(SELECT 1 FROM member_allowed_emails WHERE member_id=1) THEN RAISE EXCEPTION 'FAIL allow email'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM members_data WHERE id=1) THEN RAISE EXCEPTION 'FAIL lost history'; END IF;
+ RAISE NOTICE 'CONTACT_REMOVAL_ASSERTS_OK';
+END $$;
+-- Missing account, protected identity, ambiguous mapping, read-only previews.
+INSERT INTO members_data VALUES(3,'{"contacten":[{"naam":"No login","email":"none@example.test"}]}');
+INSERT INTO members_data VALUES(4,'{"contacten":[{"naam":"Protected","email":"protected@example.test"}]}');
+INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000004','protected@example.test',null);
+INSERT INTO user_roles VALUES('00000000-0000-0000-0000-000000000004','admin');
+INSERT INTO member_profiles VALUES(4,'00000000-0000-0000-0000-000000000004');
+INSERT INTO members_data VALUES(5,'{"contacten":[{"naam":"Unknown","email":""}]}');
+INSERT INTO member_profiles VALUES(5,'00000000-0000-0000-0000-000000000005');
+DO $$ DECLARE p jsonb; BEGIN
+ p:=contact_removal_prepare(3,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false);
+ IF (p->>'accounts')::int<>0 OR (p->>'removed')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAIL missing account'; END IF;
+ BEGIN PERFORM contact_removal_prepare(4,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false); RAISE EXCEPTION 'FAIL protected'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL protected' THEN RAISE; END IF; END;
+ BEGIN PERFORM contact_removal_prepare(5,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false); RAISE EXCEPTION 'FAIL missing identity'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL missing identity' THEN RAISE; END IF; END;
+ IF has_function_privilege('anon','public.contact_removal_prepare(integer,jsonb,uuid,boolean)','execute') OR has_function_privilege('authenticated','public.contact_removal_prepare(integer,jsonb,uuid,boolean)','execute') THEN RAISE EXCEPTION 'FAIL RPC permission'; END IF;
+ IF (SELECT count(*) FROM contact_removal_operations)<>1 THEN RAISE EXCEPTION 'FAIL preview mutated'; END IF;
+ RAISE NOTICE 'CONTACT_REMOVAL_SECURITY_OK';
+END $$;

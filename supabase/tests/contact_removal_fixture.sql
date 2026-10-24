@@ -1,0 +1,18 @@
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE ROLE authenticator;
+CREATE SCHEMA auth;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.uid',true),'')::uuid $$;
+CREATE TABLE auth.users(id uuid primary key,email text,deleted_at timestamptz);
+CREATE TYPE public.app_role AS ENUM('admin','user','extern','inhuur');
+CREATE TABLE public.user_roles(user_id uuid,role app_role);
+CREATE FUNCTION public.has_role(u uuid,r app_role) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=u AND role=r) $$;
+CREATE FUNCTION public.is_board_member(u uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
+CREATE TABLE public.members_data(id integer primary key,data jsonb);
+CREATE TABLE public.member_edits(member_id integer unique,data jsonb,updated_by uuid,updated_at timestamptz);
+CREATE TABLE public.member_profiles(member_id integer,user_id uuid);
+CREATE TABLE public.member_allowed_emails(member_id integer,email text,unique(member_id,email));
+CREATE TABLE public.board_members(email text,bond_email text);
+CREATE TABLE public.external_org_users(user_id uuid);
+CREATE FUNCTION public.member_registered_emails(i integer) RETURNS TABLE(email text) LANGUAGE sql AS $$ SELECT email FROM public.member_allowed_emails WHERE member_id=i $$;
+CREATE SCHEMA storage;
+CREATE TABLE storage.objects(id uuid);
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
