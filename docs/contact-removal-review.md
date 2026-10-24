@@ -33,6 +33,15 @@
 - Geen echte destructieve Auth/device-ketentest: uitdrukkelijk uitgesloten door de opdracht. Sessies/soft-delete conform documentatie en geïsoleerde simulatie, niet bewezen met een echt verwijderd productieaccount.
 
 ## Actuele documentatie
+## Gerichte review 24 oktober 2026
+- Migratie `0070_contact_removal_multiset_identity.sql`: één-op-één vergelijken met multipliciteit; niet-unieke naam is geen identificatie. Exacte naam+email eerst, daarna uniek email bij naamwijziging, uniek naam bij emailwijziging. Gedeeld loginadres met overblijvende persoon blokkeert, ook identieke dubbele contacten.
+- `MijnAccountPage.tsx`: de verwijderaanroep staat uitsluitend binnen `if (isAdmin)`; `else` dient gewone profielwijzigingen in zonder die aanroep. Bewezen door de echte ProfileCard-test met niet-admin.
+- `useMemberEdits.ts`: uitnodigingen na geslaagde verwijdering werken weer bij direct opslaan én goedkeuren, alleen voor nieuwe adressen; nooit bij mislukte verwijdering.
+- `ContactRemovalFlows.render.tsx`: echte MemberEditForm-verwijderknop → hook → servermock bevat uitsluitend de overgebleven array; vervangende/lege arrays worden niet terug samengevoegd. Tests voeren geen echte mail- of verwijderaanroep uit.
+- 6 scherm/gedragstests + 21 bestaande gerichte regressies geslaagd. SQL-proef: oorspronkelijke beveiligingsasserties + `CONTACT_MULTISET_ASSERTS_OK` (zelfde namen, gedeelde email, multipliciteit, herschikken, wijzigen, tegelijk toevoegen/verwijderen).
+- Automatische typecontrole/compilatie: build OK 21:07 UTC. Geen publicatie of echte deletes.
+
+## Documentatielinks
 - https://supabase.com/docs/reference/javascript/auth-admin-deleteuser — soft-delete optie.
 - https://supabase.com/docs/guides/auth/signout — refresh intrekken maakt bestaande JWT niet ongeldig vóór exp.
 - https://supabase.com/docs/reference/javascript/auth-signout

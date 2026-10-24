@@ -667,7 +667,7 @@ async function sendContactChangeConfirmation(
 }
 
 // ── Profile Card ──
-function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
+export function ProfileCard({ linkedMember }: { linkedMember?: Member }) {
   const { user, isAdmin } = useAuth();
   const removeContacts = useServerFn(removeMemberContacts);
   const [editingProfile, setEditingProfile] = useState(false);

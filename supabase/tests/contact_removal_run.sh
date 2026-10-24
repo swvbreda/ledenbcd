@@ -10,4 +10,5 @@ trap '$U pg_ctl -D "$D/data" stop -m fast >/dev/null' EXIT
 P=(psql -h "$D" -p 55460 -U postgres -X -q -v ON_ERROR_STOP=1)
 "${P[@]}" -f "$R/supabase/tests/contact_removal_fixture.sql"
 "${P[@]}" -f "$R/drizzle/migrations/0069_contact_removal_access_guard.sql"
+"${P[@]}" -f "$R/drizzle/migrations/0070_contact_removal_multiset_identity.sql"
 "${P[@]}" -f "$R/supabase/tests/contact_removal.sql"
