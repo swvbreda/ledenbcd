@@ -102,6 +102,9 @@ export default function MemberEditForm({ member, editing, setEditing }: Props) {
   };
 
   const removeContact = (idx: number) => {
+    if (!window.confirm(isAdmin
+      ? "Contactpersoon verwijderen? Bij Opslaan worden ook het gekoppelde loginaccount en de toegang verwijderd. Gedeelde, eigen en beschermde accounts worden geblokkeerd; bedrijfs- en financiële historie blijft behouden."
+      : "Contactpersoon verwijderen? Na goedkeuring worden ook het gekoppelde loginaccount en de toegang verwijderd.")) return;
     setContacten((prev) => prev.filter((_, i) => i !== idx));
   };
 

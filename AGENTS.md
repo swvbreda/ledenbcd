@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Member contact removal is a server-authorized durable saga (`contact_removal_prepare` → Auth ban/soft-delete → `contact_removal_finish`); DB guards block direct destructive contact saves, pinned UUID revocations deny REST/RPC immediately via PostgREST pre-request, and soft deletion retains historical actor foreign keys. Never replace it with browser-only deletion or hard Auth deletion.
+
 - Use route-level `head()` and `src/lib/socialHead.ts` for social previews, keeping private route images mapped to the public login capture; this prevents disclosure while enabling unique initial-HTML metadata.
 - Member passwordless access uses Supabase Auth OTP and an independent server activation switch; this prevents the preview UI alone from enabling live mail before RLS and Auth templates are ready.
 - Component render tests live in src/components/**/__tests__/*.render.tsx and run via `bunx vitest run -c vitest.components.config.ts`; the app Vite config loads React twice under vitest.

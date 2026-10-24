@@ -8,6 +8,8 @@ import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { isLocationDeleted, locationDeletionIdentity, mergeMemberLocations } from "@/lib/memberLocations";
 import { newContactEmails, sendContactInvites } from "@/lib/contactInvites";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { removeMemberContacts } from "@/lib/contactRemoval.functions";
 
 type MemberEditData = Partial<Member> & { _verwijderdeLocaties?: string[] };
 
@@ -198,6 +200,7 @@ export function useMergedMembers(members: Member[]): { members: Member[]; isLoad
 /** Admin: save directly to member_edits (approved immediately) */
 export function useSaveMemberEdit() {
   const queryClient = useQueryClient();
+  const removeContacts = useServerFn(removeMemberContacts);
 
   return useMutation({
     mutationFn: async ({ member_id, data, skipMerge }: MemberEdit & { skipMerge?: boolean }) => {
@@ -252,6 +255,13 @@ export function useSaveMemberEdit() {
           locaties: data.locaties,
           _verwijderdeLocaties: Array.from(new Set([...retainedRemoved, ...removedNow])),
         };
+      }
+
+      const removal = await removeContacts({ data: { memberId: member_id, patch: finalData as Record<string, unknown>, confirmed: false } });
+      if (removal.removed) {
+        if (!window.confirm(`Contactpersoon verwijderen? Het gekoppelde loginaccount (${removal.accounts}) en de toegang worden ook verwijderd. Bedrijfs- en financiële historie blijft behouden.`)) throw new Error("Verwijdering geannuleerd.");
+        await removeContacts({ data: { memberId: member_id, patch: finalData as Record<string, unknown>, confirmed: true } });
+        return;
       }
 
       const { error } = await supabase
@@ -343,6 +353,7 @@ export function useEditRequests(statusFilter: "pending" | "all" = "pending") {
 /** Admin: approve an edit request (merge into member_edits) */
 export function useApproveEditRequest() {
   const queryClient = useQueryClient();
+  const removeContacts = useServerFn(removeMemberContacts);
 
   return useMutation({
     mutationFn: async ({ request }: { request: EditRequest }) => {
@@ -366,7 +377,12 @@ export function useApproveEditRequest() {
         contacten: request.data.contacten || existingData.contacten,
       };
 
-      // Save merged edits directly (skip the extra merge in useSaveMemberEdit since we already merged)
+      const removal = await removeContacts({ data: { memberId: request.member_id, patch: mergedData as Record<string, unknown>, confirmed: false } });
+      if (removal.removed) {
+        if (!window.confirm(`Deze wijziging verwijdert een contactpersoon. Ook ${removal.accounts} gekoppelde loginaccount(s) en de toegang worden verwijderd. Doorgaan?`)) throw new Error("Verwijdering geannuleerd.");
+        await removeContacts({ data: { memberId: request.member_id, patch: mergedData as Record<string, unknown>, confirmed: true } });
+      } else {
+      // Save merged edits directly when there is no contact removal.
       const { error: upsertError } = await supabase
         .from("member_edits")
         .upsert(
@@ -379,6 +395,7 @@ export function useApproveEditRequest() {
           { onConflict: "member_id" }
         );
       if (upsertError) throw upsertError;
+      }
 
       // Mark request as approved
       const { error } = await supabase
@@ -397,7 +414,7 @@ export function useApproveEditRequest() {
         .eq("id", request.member_id)
         .maybeSingle();
       const baseMember = (memberRow?.data as Partial<Member> | null) ?? {};
-      await inviteNewContacts(request.member_id, { ...baseMember, ...existingData }, mergedData);
+      if (!removal.removed) await inviteNewContacts(request.member_id, { ...baseMember, ...existingData }, mergedData);
     },
 
     onSuccess: () => {
