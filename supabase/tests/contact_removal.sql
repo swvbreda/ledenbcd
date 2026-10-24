@@ -24,3 +24,20 @@ DO $$ DECLARE p jsonb; op uuid; BEGIN
  IF NOT EXISTS(SELECT 1 FROM members_data WHERE id=1) THEN RAISE EXCEPTION 'FAIL lost history'; END IF;
  RAISE NOTICE 'CONTACT_REMOVAL_ASSERTS_OK';
 END $$;
+-- Missing account, protected identity, ambiguous mapping, read-only previews.
+INSERT INTO members_data VALUES(3,'{"contacten":[{"naam":"No login","email":"none@example.test"}]}');
+INSERT INTO members_data VALUES(4,'{"contacten":[{"naam":"Protected","email":"protected@example.test"}]}');
+INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000004','protected@example.test',null);
+INSERT INTO user_roles VALUES('00000000-0000-0000-0000-000000000004','admin');
+INSERT INTO member_profiles VALUES(4,'00000000-0000-0000-0000-000000000004');
+INSERT INTO members_data VALUES(5,'{"contacten":[{"naam":"Unknown","email":""}]}');
+INSERT INTO member_profiles VALUES(5,'00000000-0000-0000-0000-000000000005');
+DO $$ DECLARE p jsonb; BEGIN
+ p:=contact_removal_prepare(3,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false);
+ IF (p->>'accounts')::int<>0 OR (p->>'removed')::boolean IS NOT TRUE THEN RAISE EXCEPTION 'FAIL missing account'; END IF;
+ BEGIN PERFORM contact_removal_prepare(4,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false); RAISE EXCEPTION 'FAIL protected'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL protected' THEN RAISE; END IF; END;
+ BEGIN PERFORM contact_removal_prepare(5,'{"contacten":[]}','00000000-0000-0000-0000-000000000001',false); RAISE EXCEPTION 'FAIL missing identity'; EXCEPTION WHEN OTHERS THEN IF SQLERRM='FAIL missing identity' THEN RAISE; END IF; END;
+ IF has_function_privilege('anon','public.contact_removal_prepare(integer,jsonb,uuid,boolean)','execute') OR has_function_privilege('authenticated','public.contact_removal_prepare(integer,jsonb,uuid,boolean)','execute') THEN RAISE EXCEPTION 'FAIL RPC permission'; END IF;
+ IF (SELECT count(*) FROM contact_removal_operations)<>1 THEN RAISE EXCEPTION 'FAIL preview mutated'; END IF;
+ RAISE NOTICE 'CONTACT_REMOVAL_SECURITY_OK';
+END $$;
