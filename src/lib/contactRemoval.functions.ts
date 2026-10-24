@@ -12,10 +12,8 @@ export const removeMemberContacts = createServerFn({ method: "POST" })
     const { data: admin, error: roleError } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (roleError || admin !== true) throw new Error("Alleen een bevoegde beheerder kan contactpersonen verwijderen.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Generated types refresh on migration; RPC wrapper intentionally stays narrow.
-    const db = supabaseAdmin as any;
     const prepare = async () => {
-      const { data: plan, error } = await db.rpc("contact_removal_prepare", { _member: data.memberId, _patch: data.patch, _actor: context.userId, _confirm: data.confirmed });
+      const { data: plan, error } = await supabaseAdmin.rpc("contact_removal_prepare", { _member: data.memberId, _patch: data.patch as import("@/integrations/supabase/types").Json, _actor: context.userId, _confirm: data.confirmed });
       if (error) throw new Error(error.message);
       return plan as RemovalPlan;
     };
@@ -37,7 +35,7 @@ export const removeMemberContacts = createServerFn({ method: "POST" })
         if (deleteError) throw new Error("Loginaccount verwijderen mislukt; contactpersoon behouden en toegang geblokkeerd. Probeer opnieuw.");
       },
       finish: async (id) => {
-        const { error } = await db.rpc("contact_removal_finish", { _id: id, _actor: context.userId });
+        const { error } = await supabaseAdmin.rpc("contact_removal_finish", { _id: id, _actor: context.userId });
         if (error) throw new Error(error.message);
       },
     });
