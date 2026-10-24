@@ -24,6 +24,30 @@ DO $$ DECLARE p jsonb; op uuid; BEGIN
  IF NOT EXISTS(SELECT 1 FROM members_data WHERE id=1) THEN RAISE EXCEPTION 'FAIL lost history'; END IF;
  RAISE NOTICE 'CONTACT_REMOVAL_ASSERTS_OK';
 END $$;
+
+-- Multiset identity: equal names are not account identity; shared email is unsafe.
+DO $$ DECLARE items jsonb; BEGIN
+ SELECT jsonb_agg(x) INTO items FROM contact_removed_items(
+  '{"contacten":[{"naam":"Alex","email":"a@example.test"},{"naam":"Alex","email":"b@example.test"}]}',
+  '{"contacten":[{"naam":"Alex","email":"b@example.test"}]}') x;
+ IF jsonb_array_length(items)<>1 OR items->0->>'email'<>'a@example.test' THEN RAISE EXCEPTION 'FAIL same name different accounts'; END IF;
+ IF EXISTS(SELECT 1 FROM contact_removed_items(
+  '{"contacten":[{"naam":"Alex","email":"a@example.test"},{"naam":"Bob","email":"b@example.test"}]}',
+  '{"contacten":[{"naam":"Bob","email":"b@example.test"},{"naam":"Renamed","email":"a@example.test"}]}')) THEN RAISE EXCEPTION 'FAIL reorder rename'; END IF;
+ IF EXISTS(SELECT 1 FROM contact_removed_items('{"contacten":[{"naam":"Alex","email":"a@example.test"}]}',
+  '{"contacten":[{"naam":"Alex","email":"new@example.test"}]}')) THEN RAISE EXCEPTION 'FAIL unique email edit'; END IF;
+ SELECT jsonb_agg(x) INTO items FROM contact_removed_items(
+  '{"contacten":[{"naam":"Alex","email":"a@example.test"},{"naam":"Bob","email":"b@example.test"}]}',
+  '{"contacten":[{"naam":"Bob","email":"b@example.test"},{"naam":"New","email":"new@example.test"}]}') x;
+ IF jsonb_array_length(items)<>1 OR items->0->>'email'<>'a@example.test' THEN RAISE EXCEPTION 'FAIL remove plus add'; END IF;
+ BEGIN PERFORM contact_removed_items(
+  '{"contacten":[{"naam":"Alex","email":"shared@example.test"},{"naam":"Bob","email":"shared@example.test"}]}',
+  '{"contacten":[{"naam":"Bob","email":"shared@example.test"}]}'); RAISE EXCEPTION 'FAIL shared email'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM contact_removed_items(
+  '{"contacten":[{"naam":"Alex","email":"same@example.test"},{"naam":"Alex","email":"same@example.test"}]}',
+  '{"contacten":[{"naam":"Alex","email":"same@example.test"}]}'); RAISE EXCEPTION 'FAIL duplicate multiplicity'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ RAISE NOTICE 'CONTACT_MULTISET_ASSERTS_OK';
+END $$;
 -- Missing account, protected identity, ambiguous mapping, read-only previews.
 INSERT INTO members_data VALUES(3,'{"contacten":[{"naam":"No login","email":"none@example.test"}]}');
 INSERT INTO members_data VALUES(4,'{"contacten":[{"naam":"Protected","email":"protected@example.test"}]}');
