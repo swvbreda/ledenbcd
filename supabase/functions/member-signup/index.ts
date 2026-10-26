@@ -42,7 +42,8 @@ Deno.serve(async (req) => {
           .from("members_data")
           .select("id")
           .eq("id", memberId)
-          .eq("member_type", "member")
+          // Leads mogen ook een account aanmaken (besluit Simone, 26-10-2026).
+          .in("member_type", ["member", "lead"])
           .maybeSingle();
         if (memberError) throw memberError;
         return member ? { memberId } : null;
