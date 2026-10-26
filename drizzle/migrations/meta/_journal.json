@@ -498,6 +498,13 @@
       "when": 1792875967231,
       "tag": "0070_contact_removal_multiset_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793033426842,
+      "tag": "0071_contact_rename_in_place",
+      "breakpoints": true
     }
   ]
 }
