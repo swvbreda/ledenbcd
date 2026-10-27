@@ -24,6 +24,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as DashboardIndexRouteImport } from './routes/_dashboard/index'
 import { Route as DashboardAankondigingenRouteImport } from './routes/_dashboard/aankondigingen'
 import { Route as DashboardAccountsRouteImport } from './routes/_dashboard/accounts'
+import { Route as DashboardBelangrijkeDocumentenRouteImport } from './routes/_dashboard/belangrijke-documenten'
 import { Route as DashboardBestuurBeheerRouteImport } from './routes/_dashboard/bestuur-beheer'
 import { Route as DashboardCommunityRouteImport } from './routes/_dashboard/community'
 import { Route as DashboardEmailTemplatesRouteImport } from './routes/_dashboard/email-templates'
@@ -153,6 +154,12 @@ const DashboardAccountsRoute = DashboardAccountsRouteImport.update({
   path: '/accounts',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardBelangrijkeDocumentenRoute =
+  DashboardBelangrijkeDocumentenRouteImport.update({
+    id: '/belangrijke-documenten',
+    path: '/belangrijke-documenten',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardBestuurBeheerRoute = DashboardBestuurBeheerRouteImport.update({
   id: '/bestuur-beheer',
   path: '/bestuur-beheer',
@@ -453,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
+  '/belangrijke-documenten': typeof DashboardBelangrijkeDocumentenRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/community': typeof DashboardCommunityRoute
   '/email-templates': typeof DashboardEmailTemplatesRoute
@@ -521,6 +529,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/aankondigingen': typeof DashboardAankondigingenRoute
   '/accounts': typeof DashboardAccountsRoute
+  '/belangrijke-documenten': typeof DashboardBelangrijkeDocumentenRoute
   '/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/community': typeof DashboardCommunityRoute
   '/email-templates': typeof DashboardEmailTemplatesRoute
@@ -592,6 +601,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_dashboard/aankondigingen': typeof DashboardAankondigingenRoute
   '/_dashboard/accounts': typeof DashboardAccountsRoute
+  '/_dashboard/belangrijke-documenten': typeof DashboardBelangrijkeDocumentenRoute
   '/_dashboard/bestuur-beheer': typeof DashboardBestuurBeheerRoute
   '/_dashboard/community': typeof DashboardCommunityRoute
   '/_dashboard/email-templates': typeof DashboardEmailTemplatesRoute
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/aankondigingen'
     | '/accounts'
+    | '/belangrijke-documenten'
     | '/bestuur-beheer'
     | '/community'
     | '/email-templates'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/aankondigingen'
     | '/accounts'
+    | '/belangrijke-documenten'
     | '/bestuur-beheer'
     | '/community'
     | '/email-templates'
@@ -802,6 +814,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/_dashboard/aankondigingen'
     | '/_dashboard/accounts'
+    | '/_dashboard/belangrijke-documenten'
     | '/_dashboard/bestuur-beheer'
     | '/_dashboard/community'
     | '/_dashboard/email-templates'
@@ -1002,6 +1015,13 @@ declare module '@tanstack/react-router' {
       path: '/accounts'
       fullPath: '/accounts'
       preLoaderRoute: typeof DashboardAccountsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/belangrijke-documenten': {
+      id: '/_dashboard/belangrijke-documenten'
+      path: '/belangrijke-documenten'
+      fullPath: '/belangrijke-documenten'
+      preLoaderRoute: typeof DashboardBelangrijkeDocumentenRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/_dashboard/bestuur-beheer': {
@@ -1381,6 +1401,7 @@ declare module '@tanstack/react-router' {
 interface DashboardRouteChildren {
   DashboardAankondigingenRoute: typeof DashboardAankondigingenRoute
   DashboardAccountsRoute: typeof DashboardAccountsRoute
+  DashboardBelangrijkeDocumentenRoute: typeof DashboardBelangrijkeDocumentenRoute
   DashboardBestuurBeheerRoute: typeof DashboardBestuurBeheerRoute
   DashboardCommunityRoute: typeof DashboardCommunityRoute
   DashboardEmailTemplatesRoute: typeof DashboardEmailTemplatesRoute
@@ -1416,6 +1437,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAankondigingenRoute: DashboardAankondigingenRoute,
   DashboardAccountsRoute: DashboardAccountsRoute,
+  DashboardBelangrijkeDocumentenRoute: DashboardBelangrijkeDocumentenRoute,
   DashboardBestuurBeheerRoute: DashboardBestuurBeheerRoute,
   DashboardCommunityRoute: DashboardCommunityRoute,
   DashboardEmailTemplatesRoute: DashboardEmailTemplatesRoute,

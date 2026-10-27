@@ -1,5 +1,9 @@
 # Roadmap
 
+## Belangrijke documenten (geen publicatie)
+- [x] Canonieke catalogus verplaatst naar eigen beveiligde pagina onder Kennisbank; 15 documenten, 3 feitelijke onderwerpen/filter, oude sectielinks behouden; geen bronmutaties.
+- [x] 13 tests en echte admin/anon desktop/mobiele preview gecontroleerd; automatische bouwcontrole akkoord. Extern bronbeheer onveranderd; geen onderwerp-editorcontract beschikbaar. Review: docs/important-documents-review.md. Niet gepubliceerd.
+
 ## Contactpersoon verwijderen (geen frontendpublicatie)
 - [x] Review: migratie 0070 vergelijkt één-op-één met multipliciteit en blokkeert gedeelde login; uitnodigingen na geslaagde verwijdering hersteld. 6 echte form/hook/profieltests + 21 regressies en geïsoleerde SQL-proef geslaagd; geen publicatie of echte deletes.
 - [x] Ledencontactverwijdering server-side saga + DB-writeguards; gekoppelde UUID, gedeelde/beschermde accounts blokkeren, waarschuwingen, oude JWT REST/RPC/Storage deny en Auth soft-delete voor historiebehoud.

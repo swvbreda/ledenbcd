@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Important documents use the existing authenticated knowledge catalog and canonical IDs; subject grouping is presentation-only and source metadata/explicit known IDs drive it, because this app does not own the upstream document editor or files. The separate dashboard route shares knowledge-bank access and sidebar (desktop/mobile), with legacy section-hash redirects.
+
 - Member contact removal is a server-authorized durable saga (`contact_removal_prepare` → Auth ban/soft-delete → `contact_removal_finish`); DB guards block direct destructive contact saves, pinned UUID revocations deny REST/RPC immediately via PostgREST pre-request, and soft deletion retains historical actor foreign keys. Never replace it with browser-only deletion or hard Auth deletion.
 
 - Use route-level `head()` and `src/lib/socialHead.ts` for social previews, keeping private route images mapped to the public login capture; this prevents disclosure while enabling unique initial-HTML metadata.
