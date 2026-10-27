@@ -20,6 +20,7 @@ import {
   ListChecks,
   CalendarDays,
   BookOpen,
+  Files,
   Megaphone,
   MessageCircle,
   HelpCircle,
@@ -60,6 +61,7 @@ const navItems = [
   { title: "Agenda", url: "/agenda", icon: CalendarDays },
   { title: "Aankondigingen", url: "/aankondigingen", icon: Megaphone },
   { title: "Kennisbank", url: "/kennisbank", icon: BookOpen },
+  { title: "Belangrijke documenten", url: "/belangrijke-documenten", icon: Files },
   { title: "Enquêtes", url: "/enquetes", icon: ClipboardList },
   { title: "Ledenvoordelen", url: "/ledenvoordelen", icon: Gift },
   { title: "Jaarplan", url: "/jaarplan", icon: FileLock2 },
@@ -128,7 +130,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
-                  if (item.title === "Kennisbank" && isInhuur) return null;
+                  if ((item.title === "Kennisbank" || item.title === "Belangrijke documenten") && isInhuur) return null;
                   const registerItem = canSeeRegister &&
                     item.title === "Ledenbestand" && (
                       <>
