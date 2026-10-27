@@ -107,3 +107,12 @@ describe("adviespakket eligibility", () => {
     expect((await redeem(m2, "x".repeat(43), VERIFIER, AUD, "ipX")).status).toBe(429);
   });
 });
+
+describe("adviespakket audiences", () => {
+  it("allows exact published bureau origin and preview, nothing else", () => {
+    expect(isAllowedAudience("https://www.hetstrategiebureau.com")).toBe(true);
+    expect(isAllowedAudience("https://id-preview--04ac87a1-0bf3-400e-8a36-4edd55cd358c.lovable.app")).toBe(true);
+    for (const o of ["https://hetstrategiebureau.com", "https://www.hetstrategiebureau.com/", "https://www.hetstrategiebureau.com/portaal", "http://www.hetstrategiebureau.com", "https://evil.www.hetstrategiebureau.com", "https://www.hetstrategiebureau.com.evil.app"])
+      expect(isAllowedAudience(o)).toBe(false);
+  });
+});
