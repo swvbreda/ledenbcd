@@ -55,6 +55,7 @@ const DOCUMENT_KIND_BY_ID: Record<string, DocumentKind> = {
   "mkb-debat": "Verstuurd door BCD",
   "minister-ez-20260707": "Verstuurd door BCD",
   "meester-20250904": "Ontvangen brieven",
+  "jenv-20251216": "Ontvangen brieven",
 };
 
 export function documentKind(document: KnowledgeDocument): DocumentKind {

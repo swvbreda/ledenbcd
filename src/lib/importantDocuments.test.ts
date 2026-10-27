@@ -43,6 +43,8 @@ describe("document kinds within a subject", () => {
   it("classifies verified BCD letters, received letters and unknowns", () => {
     expect(documentKind(doc("gemeenteraden-20260408", "Alle gemeenteraden"))).toBe("Verstuurd door BCD");
     expect(documentKind(doc("meester-20250904"))).toBe("Ontvangen brieven");
+    expect(documentKind(doc("jenv-20251216"))).toBe("Ontvangen brieven");
+    expect(documentKind(doc("minister-ez-20260707"))).toBe("Verstuurd door BCD");
     expect(documentKind(doc("notitie-20251127"))).toBe("Overige documenten");
   });
   it("never treats a municipal recipient as a municipal document", () => {
