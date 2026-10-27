@@ -6,7 +6,10 @@
  */
 
 /** Exacte origins van het bureau (zonder pad/slash). Leeg = alles geweigerd (fail-closed). */
-export const ADVIES_AUDIENCES: readonly string[] = ["https://id-preview--04ac87a1-0bf3-400e-8a36-4edd55cd358c.lovable.app"];
+export const ADVIES_AUDIENCES: readonly string[] = [
+  "https://id-preview--04ac87a1-0bf3-400e-8a36-4edd55cd358c.lovable.app",
+  "https://www.hetstrategiebureau.com",
+];
 
 export const CODE_TTL_SECONDS = 60;
 export const ISSUE_LIMIT = { max: 10, windowSeconds: 600 } as const;
