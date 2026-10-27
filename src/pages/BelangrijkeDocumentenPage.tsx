@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { getKnowledgeDocumentUrl, loadKnowledgeDocuments, type KnowledgeDocument } from "@/lib/knowledgeBase";
-import { groupDocuments, splitByKind } from "@/lib/importantDocuments";
+import { documentKind, groupDocuments, splitByKind } from "@/lib/importantDocuments";
 import { assertSafeDocumentUrl, openInNativeShell } from "@/lib/openProtectedDocument";
 import { toast } from "sonner";
 
@@ -55,7 +55,7 @@ export default function BelangrijkeDocumentenPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><FileText className="h-4 w-4 text-brand-red" />{document.datumLabel || "Datum onbekend"}{document.soort === "notitie" && <Badge variant="secondary">Interne notitie</Badge>}</div>
               <h3 className="mt-2 break-words font-semibold">{document.titel}</h3>
-              {(document.aan || document.van) && <p className="mt-1 break-words text-xs text-muted-foreground">{document.aan ? `Aan: ${document.aan}` : `Van: ${document.van}`}</p>}
+              {(document.aan || document.van) && <p className="mt-1 break-words text-xs text-muted-foreground">{document.aan ? `Aan: ${document.aan}` : documentKind(document) === "Verstuurd door BCD" ? `Aan: ${document.van}` : `Van: ${document.van}`}</p>}
               <p className="mt-2 break-words text-sm leading-relaxed text-muted-foreground">{document.kern}</p>
             </div>
             {ready?.id === document.id
