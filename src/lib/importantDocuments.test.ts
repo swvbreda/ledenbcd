@@ -35,3 +35,37 @@ describe("important document grouping", () => {
     expect(legacyDocumentTarget("#dossiers")).toBeNull();
   });
 });
+import { documentKind, splitByKind } from "./importantDocuments";
+import { assertSafeDocumentUrl, openInNativeShell } from "./openProtectedDocument";
+
+describe("document kinds within a subject", () => {
+  const doc = (id: string, aan?: string) => ({ ...documents[0], id, aan });
+  it("classifies verified BCD letters, received letters and unknowns", () => {
+    expect(documentKind(doc("gemeenteraden-20260408", "Alle gemeenteraden"))).toBe("Verstuurd door BCD");
+    expect(documentKind(doc("meester-20250904"))).toBe("Ontvangen brieven");
+    expect(documentKind(doc("notitie-20251127"))).toBe("Overige documenten");
+  });
+  it("never treats a municipal recipient as a municipal document", () => {
+    expect(documentKind(doc("onbekend", "Gemeente Utrecht"))).toBe("Overige documenten");
+  });
+  it("keeps order and every record exactly once in fixed kind order", () => {
+    const items = [doc("notitie-20251127"), doc("jenv-20250916"), doc("meester-20250904"), doc("mkb-debat")];
+    expect(splitByKind(items).map(g => [g.name, g.documents.map(d => d.id)])).toEqual([
+      ["Verstuurd door BCD", ["jenv-20250916", "mkb-debat"]],
+      ["Ontvangen brieven", ["meester-20250904"]],
+      ["Overige documenten", ["notitie-20251127"]],
+    ]);
+  });
+});
+
+describe("protected document opening", () => {
+  it("rejects non-https links", () => {
+    expect(() => assertSafeDocumentUrl("http://x.test/a.pdf")).toThrow();
+    expect(() => assertSafeDocumentUrl("javascript:alert(1)")).toThrow();
+  });
+  it("native shell navigates to the signed https link", () => {
+    let target = "";
+    openInNativeShell("https://storage.test/a.pdf?token=t", u => { target = u; });
+    expect(target).toBe("https://storage.test/a.pdf?token=t");
+  });
+});
