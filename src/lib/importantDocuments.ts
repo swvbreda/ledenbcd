@@ -41,3 +41,27 @@ export function legacyDocumentTarget(hash: string): string | null {
   if (["documenten", "brieven", "brieven-voor-leden", "brieven-en-bestanden-voor-leden"].includes(value)) return "/belangrijke-documenten";
   return null;
 }
+export const DOCUMENT_KINDS = ["Verstuurd door BCD", "Ontvangen brieven", "Gemeentelijke documenten", "Overige documenten"] as const;
+export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
+
+// Verified sender/recipient per canonical ID (PDF letterhead/addressee or explicit catalog text).
+// A municipal recipient never makes a document municipal; unknown IDs are "Overige documenten".
+const DOCUMENT_KIND_BY_ID: Record<string, DocumentKind> = {
+  "vng-2024": "Verstuurd door BCD",
+  "ez-rondetafel-20241017": "Verstuurd door BCD",
+  "vng-20250227": "Verstuurd door BCD",
+  "jenv-20250916": "Verstuurd door BCD",
+  "gemeenteraden-20260408": "Verstuurd door BCD",
+  "mkb-debat": "Verstuurd door BCD",
+  "minister-ez-20260707": "Verstuurd door BCD",
+  "meester-20250904": "Ontvangen brieven",
+};
+
+export function documentKind(document: KnowledgeDocument): DocumentKind {
+  return DOCUMENT_KIND_BY_ID[document.id] ?? "Overige documenten";
+}
+
+export function splitByKind(documents: KnowledgeDocument[]) {
+  return DOCUMENT_KINDS.map(name => ({ name, documents: documents.filter(doc => documentKind(doc) === name) }))
+    .filter(group => group.documents.length > 0);
+}
