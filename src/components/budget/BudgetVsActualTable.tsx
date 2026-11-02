@@ -66,33 +66,8 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
         />
       </div>
 
-      <div className="space-y-2 md:hidden">
-        {perCat.map((c) => {
-          const catPct = c.budgeted > 0 ? Math.round((c.spent / c.budgeted) * 100) : 0;
-          const catOver = c.spent > c.budgeted && c.budgeted > 0;
-          return (
-            <div key={c.id} className="rounded-md border border-border/70 p-3">
-              <div className="mb-2 font-medium">{c.name}</div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                <dt className="text-muted-foreground">Begroot</dt>
-                <dd className="text-right tabular-nums"><CurrencyCell value={c.budgeted} /></dd>
-                <dt className="text-muted-foreground">Uitgegeven</dt>
-                <dd className="text-right tabular-nums"><CurrencyCell value={c.spent} /></dd>
-                <dt className="text-muted-foreground">Verbruikt</dt>
-                <dd className={`text-right tabular-nums ${catOver ? "font-medium text-destructive" : ""}`}>
-                  {c.budgeted > 0 ? `${catPct}%` : "—"}
-                </dd>
-                <dt className="text-muted-foreground">Beschikbaar</dt>
-                <dd className="text-right tabular-nums">
-                  <CurrencyCell value={c.available + c.overrun} className={c.overrun < 0 ? "text-destructive" : ""} />
-                </dd>
-              </dl>
-            </div>
-          );
-        })}
-      </div>
-
-      <table className="hidden w-full text-xs md:table">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[520px] text-xs">
         <thead>
           <tr className="text-muted-foreground border-b border-border/40">
             <th className="text-left font-medium py-1">Categorie</th>
@@ -108,7 +83,7 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
             const catOver = c.spent > c.budgeted && c.budgeted > 0;
             return (
               <tr key={c.id} className="border-b border-border/20">
-                <td className="py-1">{c.name}</td>
+                <td className="py-2 pr-3">{c.name}</td>
                 <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.budgeted} /></td>
                 <td className="py-1 text-right tabular-nums">
                   <CurrencyCell value={c.spent} />
@@ -131,6 +106,7 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
