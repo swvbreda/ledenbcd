@@ -3744,6 +3744,59 @@ export type Database = {
         }
         Relationships: []
       }
+      member_reconfirmation_requests: {
+        Row: {
+          activated_at: string | null
+          campaign: string
+          confirmed_at: string | null
+          created_at: string
+          created_by: string
+          deadline: string
+          id: string
+          invoice_number: string
+          member_id: number
+          revoked_at: string | null
+          sent_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          activated_at?: string | null
+          campaign: string
+          confirmed_at?: string | null
+          created_at?: string
+          created_by: string
+          deadline: string
+          id?: string
+          invoice_number: string
+          member_id: number
+          revoked_at?: string | null
+          sent_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          activated_at?: string | null
+          campaign?: string
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string
+          deadline?: string
+          id?: string
+          invoice_number?: string
+          member_id?: number
+          revoked_at?: string | null
+          sent_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_reconfirmation_requests_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_shop_aliases: {
         Row: {
           alias: string
@@ -6696,6 +6749,10 @@ export type Database = {
       }
       member_directory_payload: {
         Args: { _base: Json; _overlay: Json }
+        Returns: Json
+      }
+      member_reconfirmation_answer: {
+        Args: { _confirm?: boolean; _hash: string }
         Returns: Json
       }
       member_registered_emails: {
