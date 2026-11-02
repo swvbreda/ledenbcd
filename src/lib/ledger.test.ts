@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { budgetReimbursements } from "./budgetReimbursements";
 import {
   countsInTotals,
   needsAttention,
@@ -48,6 +49,24 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
 }
 
 describe("ledger totalen", () => {
+  it("offsets assigned PCN invoices including unpaid amounts only in management costs", () => {
+    const rows = [
+      entry({ informer_id: "cost", amount_incl: 383973.30 }),
+      entry({ informer_id: "pcn1", doc_type: "sales_invoice", line_item_id: "legal", amount_incl: 31147.23, paid_amount: 31147.23, open_amount: 0, status: "paid" }),
+      entry({ informer_id: "pcn2", doc_type: "sales_invoice", line_item_id: "legal", amount_incl: 28814.42, paid_amount: 28814.42, open_amount: 0, status: "paid" }),
+      entry({ informer_id: "pcn3", doc_type: "sales_invoice", line_item_id: "legal", amount_incl: 16274.05, open_amount: 16274.05 }),
+      entry({ informer_id: "other", doc_type: "sales_invoice", line_item_id: "income", amount_incl: 3000 }),
+      entry({ informer_id: "draft", doc_type: "sales_invoice", line_item_id: "legal", amount_incl: 999, status: "draft" }),
+    ];
+    const offsets = budgetReimbursements(rows, new Set(["legal"]));
+    expect(offsets.map((e) => e.informer_id)).toEqual(["pcn1", "pcn2", "pcn3"]);
+    const offset = offsets.reduce((sum, e) => sum + Number(e.amount_incl), 0);
+    expect(offset).toBeCloseTo(76235.70, 2);
+    expect(totalExpenses(rows) - offset).toBeCloseTo(307737.60, 2);
+    expect(totalExpenses(rows)).toBeCloseTo(383973.30, 2);
+    expect(offsets[2].open_amount).toBe(16274.05);
+    expect((totalRevenue(rows) - offset) - (totalExpenses(rows) - offset)).toBeCloseTo(netResult(rows), 2);
+  });
   it("telt alleen open en betaalde posten mee", () => {
     const entries = [
       entry({ informer_id: "1", amount_incl: 100, status: "open" }),

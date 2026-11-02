@@ -221,6 +221,9 @@ export default function FinancienPage() {
                 year={year}
                 canonicalSpent={totalSpent}
               />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Werkelijke kosten zijn na aftrek van toegewezen kostenvergoedingen, inclusief nog te ontvangen facturen. De betaalstatus staat bij de mutaties.
+              </p>
             </div>
             <div className="mt-4 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-4">
 
@@ -249,7 +252,7 @@ export default function FinancienPage() {
                       // Alleen de Inkomsten-post "Contributies" krijgt de
                       // klikbare breakdown, met bedragen uit de boekhouding.
                       const name = li.name.trim().toLowerCase();
-                      if (name === "contributies") {
+                      if (/inkomst|opbreng/i.test(cat.name) && name === "contributies") {
                         return {
                           budgeted: () => setContributieBreakdown("invoices"),
                           spent: () => setContributieBreakdown("paid"),

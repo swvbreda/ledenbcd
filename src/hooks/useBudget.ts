@@ -5,6 +5,7 @@ import { isSamePayment, invoiceKeysOf, sharesInvoiceNumber } from "@/lib/ledgerD
 import { matchLegacyRecords, buildLegacyAssignments } from "@/lib/ledgerLegacy";
 import { fetchLegacyRecords, fetchDocumentHints } from "@/lib/legacyRecordsSource";
 import { assertOverrideSaved } from "@/lib/ledgerRowId";
+import { budgetReimbursements } from "@/lib/budgetReimbursements";
 import {
   expenseEntries,
   bucketExpenseEntries,
@@ -262,6 +263,17 @@ export function useBudgetCategories(year: number) {
       }
       const unassigned = buckets.unassigned.map((e) => toRow(e, UNASSIGNED_LINE_ITEM_ID));
 
+      const costCategoryIds = new Set(categories.filter((c: any) => !/inkomst|contribut|subsid|opbreng/i.test(c.name)).map((c: any) => c.id));
+      const costPostIds = new Set<string>((lineItems || []).filter((li: any) => costCategoryIds.has(li.category_id)).map((li: any) => li.id));
+      for (const entry of budgetReimbursements(entriesAll, costPostIds)) {
+        const postId = entry.line_item_id!;
+        (expensesByLineItem[postId] ||= []).push({
+          ...toRow(entry, postId),
+          description: `Kostenvergoeding: ${entry.description || entry.relation_name || entry.invoice_number}`,
+          amount: -Number(entry.amount_incl),
+        });
+      }
+
 
 
 
@@ -280,7 +292,7 @@ export function useBudgetCategories(year: number) {
         line_items: lineItemsByCategory[c.id] || [],
       })) as BudgetCategory[];
 
-      if (unassigned.length > 0) {
+      if (unassigned.some((entry) => Number(entry.amount) !== 0)) {
         result.push({
           id: UNASSIGNED_CATEGORY_ID,
           year,
@@ -383,15 +395,22 @@ export function useFinancialResult(year: number) {
 
       const rows = (data ?? []) as LedgerEntry[];
       const contributionRows = buildContributionInvoiceRows(rows);
-      const otherRows = buildOtherRevenueRows(rows);
+      const { data: costCategories, error: catError } = await client.from("budget_categories").select("id, name").eq("year", year);
+      if (catError) throw catError;
+      const costCategoryIds = (costCategories || []).filter((c: any) => !/inkomst|contribut|subsid|opbreng/i.test(c.name)).map((c: any) => c.id);
+      const { data: costPosts, error: postError } = await client.from("budget_line_items").select("id").in("category_id", costCategoryIds);
+      if (postError) throw postError;
+      const reimbursements = budgetReimbursements(rows, new Set<string>((costPosts || []).map((p: any) => p.id)));
+      const reimbursementIds = new Set(reimbursements.map((e) => e.id));
+      const otherRows = buildOtherRevenueRows(rows.filter((e) => !reimbursementIds.has(e.id)));
       const contribution = summarizeInvoiceRows(contributionRows);
       const other = summarizeInvoiceRows(otherRows);
 
       const totals: FinancialResultData = {
         contributionIncome: contribution.invoiced,
         otherIncome: other.invoiced,
-        totalExpenses: 0,
-        openSales: contribution.open + other.open,
+        totalExpenses: -reimbursements.reduce((sum, e) => sum + Number(e.amount_incl), 0),
+        openSales: contribution.open + other.open + reimbursements.reduce((sum, e) => sum + Number(e.open_amount || 0), 0),
         openPurchase: 0,
         contribution,
         other,
