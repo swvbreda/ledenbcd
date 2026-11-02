@@ -21,8 +21,10 @@ import { template as agendaParticipantMessage } from './agenda-participant-messa
 import { template as loginReminder } from './login-reminder.tsx'
 import { template as externInvite } from './extern-invite.tsx'
 import { template as contactDetailsChanged } from './contact-details-changed.tsx'
+import { template as membershipReconfirmation } from './membership-reconfirmation.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'membership-reconfirmation': membershipReconfirmation,
   'member-welcome': memberWelcome,
   'member-welcome-steps': memberWelcomeSteps,
   'membership-request': membershipRequest,

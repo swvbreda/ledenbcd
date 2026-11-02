@@ -1,5 +1,10 @@
 # Roadmap
 
+## Lidmaatschapsbevestiging contributie-2026-11
+- [x] Bestaande private requests en bevestiging behouden; individuele adminbediening, vaste mailtekst, serverontvangers en atomaire claim/acceptatie toegevoegd.
+- [x] 16 policy + 7 component + 2 edge-tests, geïsoleerde DB/concurrentieasserties, readback en bouwcontrole akkoord; bestaande mailfunctie gedeployed, alle 11 onverzonden, frontend alleen preview. Review: docs/member-reconfirmation-review.md.
+- [ ] Echte ingelogde admin-previewcontrole: beschikbare sessie ontbreekt; gebruiker inspecteert en verstuurt zelf individueel, geen verzending tijdens voorbereiding.
+
 ## Belangrijke documenten (geen publicatie)
 - [x] Canonieke catalogus verplaatst naar eigen beveiligde pagina onder Kennisbank; 15 documenten, 3 feitelijke onderwerpen/filter, oude sectielinks behouden; geen bronmutaties.
 - [x] 13 tests en echte admin/anon desktop/mobiele preview gecontroleerd; automatische bouwcontrole akkoord. Extern bronbeheer onveranderd; geen onderwerp-editorcontract beschikbaar. Review: docs/important-documents-review.md. Niet gepubliceerd.

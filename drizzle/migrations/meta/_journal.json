@@ -526,6 +526,13 @@
       "when": 1793129046922,
       "tag": "0074_advies_exclude_revoked_banned",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1793653532359,
+      "tag": "0075_member_reconfirmation_individual_send",
+      "breakpoints": true
     }
   ]
 }

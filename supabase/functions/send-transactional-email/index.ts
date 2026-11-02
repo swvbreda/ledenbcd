@@ -3,6 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { sendMemberReconfirmation } from './memberReconfirmation.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -121,6 +122,14 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
+    if (templateName === 'membership-reconfirmation') {
+      try {
+        const result = await sendMemberReconfirmation(req, body, supabaseUrl, supabaseServiceKey)
+        return new Response(JSON.stringify(result), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      } catch {
+        return new Response(JSON.stringify({ success: false, error: 'Verzending niet afgerond of niet toegestaan. Controleer de status; verstuur niet opnieuw bij een onzekere uitkomst.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+    }
     recipientEmail = body.recipientEmail || body.recipient_email
     messageId = crypto.randomUUID()
     idempotencyKey = body.idempotencyKey || body.idempotency_key || messageId

@@ -3755,7 +3755,15 @@ export type Database = {
           id: string
           invoice_number: string
           member_id: number
+          provider_id: string | null
+          provider_status: number | null
+          recipient_email: string | null
+          recipient_name: string | null
           revoked_at: string | null
+          send_claim: string | null
+          send_error: string | null
+          send_started_at: string | null
+          send_status: string
           sent_at: string | null
           token_hash: string
         }
@@ -3769,7 +3777,15 @@ export type Database = {
           id?: string
           invoice_number: string
           member_id: number
+          provider_id?: string | null
+          provider_status?: number | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           revoked_at?: string | null
+          send_claim?: string | null
+          send_error?: string | null
+          send_started_at?: string | null
+          send_status?: string
           sent_at?: string | null
           token_hash: string
         }
@@ -3783,7 +3799,15 @@ export type Database = {
           id?: string
           invoice_number?: string
           member_id?: number
+          provider_id?: string | null
+          provider_status?: number | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           revoked_at?: string | null
+          send_claim?: string | null
+          send_error?: string | null
+          send_started_at?: string | null
+          send_status?: string
           sent_at?: string | null
           token_hash?: string
         }
@@ -6753,6 +6777,24 @@ export type Database = {
       }
       member_reconfirmation_answer: {
         Args: { _confirm?: boolean; _hash: string }
+        Returns: Json
+      }
+      member_reconfirmation_claim: {
+        Args: { _actor: string; _claim: string; _hash: string; _id: string }
+        Returns: Json
+      }
+      member_reconfirmation_finish: {
+        Args: {
+          _claim: string
+          _http?: number
+          _id: string
+          _provider_id?: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      member_reconfirmation_recipient: {
+        Args: { _member: number }
         Returns: Json
       }
       member_registered_emails: {

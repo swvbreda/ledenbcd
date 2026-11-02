@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { memberReconfirmation } from '@/lib/memberReconfirmation.functions';
 
 export const Route = createFileRoute('/lidmaatschap-bevestigen')({
-  head: () => ({ meta: [{ title: 'Aangesloten blijven — BCD' }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }] }),
+  head: () => ({ meta: [{ title: 'Aangesloten blijven — BCD' }, { name: 'description', content: 'Bevestig jullie lidmaatschapskeuze bij de Bond van Cannabis Detaillisten.' }, { property: 'og:title', content: 'Aangesloten blijven — BCD' }, { property: 'og:description', content: 'Persoonlijke lidmaatschapsbevestiging bij de Bond van Cannabis Detaillisten.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }] }),
   component: ConfirmMembership,
 });
 

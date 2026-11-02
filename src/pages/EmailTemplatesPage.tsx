@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BulkEmailSend } from "@/components/BulkEmailSend";
 import { EmailSendLog } from "@/components/EmailSendLog";
+import { MemberReconfirmationCampaign } from "@/components/MemberReconfirmationCampaign";
 
 type Tpl = { key: string; subject: string; body: string };
 
@@ -325,6 +326,7 @@ export default function EmailTemplatesPage() {
         </Tabs>
       )}
       <div className="pt-6 border-t">
+        <MemberReconfirmationCampaign />
         <EmailSendLog />
       </div>
     </div>
