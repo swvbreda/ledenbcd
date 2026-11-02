@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/_dashboard'
 import { Route as AdviespakketControleRouteImport } from './routes/adviespakket-controle'
 import { Route as ExternLoginRouteImport } from './routes/extern-login'
 import { Route as KoppelenRouteImport } from './routes/koppelen'
+import { Route as LidmaatschapBevestigenRouteImport } from './routes/lidmaatschap-bevestigen'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MemberConfirmRouteImport } from './routes/member-confirm'
@@ -96,6 +97,11 @@ const ExternLoginRoute = ExternLoginRouteImport.update({
 const KoppelenRoute = KoppelenRouteImport.update({
   id: '/koppelen',
   path: '/koppelen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LidmaatschapBevestigenRoute = LidmaatschapBevestigenRouteImport.update({
+  id: '/lidmaatschap-bevestigen',
+  path: '/lidmaatschap-bevestigen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -450,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
+  '/lidmaatschap-bevestigen': typeof LidmaatschapBevestigenRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
@@ -519,6 +526,7 @@ export interface FileRoutesByTo {
   '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
+  '/lidmaatschap-bevestigen': typeof LidmaatschapBevestigenRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
@@ -591,6 +599,7 @@ export interface FileRoutesById {
   '/adviespakket-controle': typeof AdviespakketControleRoute
   '/extern-login': typeof ExternLoginRoute
   '/koppelen': typeof KoppelenRoute
+  '/lidmaatschap-bevestigen': typeof LidmaatschapBevestigenRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/member-confirm': typeof MemberConfirmRoute
@@ -664,6 +673,7 @@ export interface FileRouteTypes {
     | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
+    | '/lidmaatschap-bevestigen'
     | '/login'
     | '/mcp'
     | '/member-confirm'
@@ -733,6 +743,7 @@ export interface FileRouteTypes {
     | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
+    | '/lidmaatschap-bevestigen'
     | '/login'
     | '/mcp'
     | '/member-confirm'
@@ -804,6 +815,7 @@ export interface FileRouteTypes {
     | '/adviespakket-controle'
     | '/extern-login'
     | '/koppelen'
+    | '/lidmaatschap-bevestigen'
     | '/login'
     | '/mcp'
     | '/member-confirm'
@@ -876,6 +888,7 @@ export interface RootRouteChildren {
   AdviespakketControleRoute: typeof AdviespakketControleRoute
   ExternLoginRoute: typeof ExternLoginRoute
   KoppelenRoute: typeof KoppelenRoute
+  LidmaatschapBevestigenRoute: typeof LidmaatschapBevestigenRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   MemberConfirmRoute: typeof MemberConfirmRoute
@@ -938,6 +951,13 @@ declare module '@tanstack/react-router' {
       path: '/koppelen'
       fullPath: '/koppelen'
       preLoaderRoute: typeof KoppelenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lidmaatschap-bevestigen': {
+      id: '/lidmaatschap-bevestigen'
+      path: '/lidmaatschap-bevestigen'
+      fullPath: '/lidmaatschap-bevestigen'
+      preLoaderRoute: typeof LidmaatschapBevestigenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1480,6 +1500,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdviespakketControleRoute: AdviespakketControleRoute,
   ExternLoginRoute: ExternLoginRoute,
   KoppelenRoute: KoppelenRoute,
+  LidmaatschapBevestigenRoute: LidmaatschapBevestigenRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   MemberConfirmRoute: MemberConfirmRoute,
