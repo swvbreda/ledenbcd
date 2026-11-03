@@ -49,7 +49,7 @@ import {
   type DossierMutation,
   type DossierEntry,
 } from "@/hooks/useDossiers";
-import { isContributionDossier } from "@/lib/budgetExclusions";
+import { isContributionDossier, isExcludedDossier } from "@/lib/budgetExclusions";
 import { useAuth } from "@/hooks/useAuth";
 import DossierDetailDialog from "@/components/budget/DossierDetailDialog";
 import MergedSourcesHint from "@/components/budget/MergedSourcesHint";
@@ -130,7 +130,9 @@ export default function DossierOverzichtTab({ year, focusDossier, onFocusHandled
     const map = groupByDossier(mutations);
     const rows: DossierRow[] = [];
     for (const [dossier, groupEntries] of map) {
-      if (isContributionDossier(dossier)) continue;
+      // Administratieve labels zijn geen inhoudelijke dossiers. Bewaar ze
+      // op de bronregels: buiten-begrotinglabels sturen ook de uitsluiting.
+      if (isContributionDossier(dossier) || isExcludedDossier(dossier) || /^nabetaling\s+2025$/i.test(dossier.trim())) continue;
       const entries = dedupeEntries(groupEntries);
       // Uitsluitend facturen uit de boekhouding tellen mee; regels zonder
       // koppeling blijven zichtbaar maar tellen niet.
