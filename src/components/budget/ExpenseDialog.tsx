@@ -265,14 +265,21 @@ export default function ExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Transacties – {lineItemName}</DialogTitle>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100%-2rem)] min-w-0 flex-col overflow-hidden p-4 sm:max-w-4xl sm:p-6">
+        <DialogHeader className="min-w-0 shrink-0 pr-8 text-left">
+          <DialogTitle className="min-w-0 whitespace-normal break-words text-left text-lg leading-snug">Transacties – {lineItemName}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex min-h-0 min-w-0 flex-col gap-4">
           {visibleExpenses.length > 0 ? (
-            <div className="overflow-auto max-h-[500px]">
-              <table className="w-full text-sm">
+            <div className="min-h-0 min-w-0 max-w-full overflow-auto overscroll-contain">
+              <table className="w-full min-w-[42rem] table-fixed text-sm">
+                <colgroup>
+                  <col className="w-28" />
+                  <col className="w-32" />
+                  <col className="w-[22%]" />
+                  <col />
+                  <col className="w-20" />
+                </colgroup>
                 <thead className="sticky top-0 bg-background">
                   <tr className="border-b border-border">
                     <th className="text-left px-2 py-1 text-muted-foreground font-medium whitespace-nowrap">Datum</th>
@@ -525,7 +532,7 @@ export default function ExpenseDialog({
             <p className="text-sm text-muted-foreground">Nog geen transacties geregistreerd.</p>
           )}
 
-          <p className="text-xs text-muted-foreground border-t border-border pt-3">
+          <p className="shrink-0 text-xs text-muted-foreground border-t border-border pt-3">
             Klik op een regel om de post te wijzigen{isIncomeCategory && isContributionLine ? " of een contributiebetaling aan een lid te koppelen." : "."}
           </p>
         </div>
