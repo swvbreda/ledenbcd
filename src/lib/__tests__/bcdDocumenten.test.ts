@@ -80,6 +80,17 @@ describe("bcdDocumenten", () => {
     expect(await reden(fetchGemeenten("https://coffeeshopbeleid.com", "k", f as typeof fetch))).toBe("bron_onbereikbaar");
   });
 
+  it("reports an actual aborted request as a timeout", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+    try {
+      const f = async () => { throw new Error("aborted"); };
+      expect(await reden(fetchGemeenten("https://coffeeshopbeleid.com", "k", f as typeof fetch))).toBe("bron_timeout");
+      expect(timeout).toHaveBeenCalledWith(6000);
+    } finally { timeout.mockRestore(); }
+  });
+
   it("resolves gemeente names exactly via the official mapping; ambiguous/unknown -> null", () => {
     const lijst = [
       { gm_code: "GM0479", naam: "Zaanstad" }, { gm_code: "GM0363", naam: "Amsterdam" },
