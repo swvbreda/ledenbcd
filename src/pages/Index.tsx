@@ -1,7 +1,6 @@
+import { lazy, Suspense } from "react";
 import BcdHeroBanner from "@/components/BcdHeroBanner";
 import StatCards from "@/components/StatCards";
-import { KerngegevensDashboard } from "@/pages/KerngegevensPage";
-import VerloopChart from "@/components/VerloopChart";
 import LidmaatschapsduurChart from "@/components/LidmaatschapsduurChart";
 import GemeentenOverzicht from "@/components/GemeentenOverzicht";
 import JubileumOverzicht from "@/components/JubileumOverzicht";
@@ -13,6 +12,9 @@ import AnnouncementsDashboardCard from "@/components/AnnouncementsDashboardCard"
 
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useMergedMembers } from "@/hooks/useMemberEdits";
+
+const KerngegevensDashboard = lazy(() => import("@/pages/KerngegevensPage"));
+const VerloopChart = lazy(() => import("@/components/VerloopChart"));
 
 const Index = () => {
   const { rawMembers, isLoading } = useMembersData();
@@ -44,7 +46,9 @@ const Index = () => {
       <StatCards members={members} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
-        <VerloopChart members={members} />
+        <Suspense fallback={<div className="min-h-96"><LoadingSpinner message="Ledenverloop laden..." /></div>}>
+          <VerloopChart members={members} />
+        </Suspense>
         <LidmaatschapsduurChart members={members} />
       </div>
 
@@ -52,7 +56,9 @@ const Index = () => {
 
       <JubileumOverzicht members={members} />
 
-      <KerngegevensDashboard />
+      <Suspense fallback={<div className="min-h-96"><LoadingSpinner message="Kerngegevens laden..." /></div>}>
+        <KerngegevensDashboard />
+      </Suspense>
     </div>
   );
 };

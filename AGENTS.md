@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Dashboard layout and chart engines load only when their protected content renders; member row and sanitized-directory reads run concurrently but publish one complete user-scoped result, so startup avoids unnecessary code and serial waits without weakening authorization.
+
 - Native push receipt must not clear delivered notifications: iOS emits receipt before foreground presentation, and delivery is not acknowledgement. Keep existing open/resume/tap badge cleanup and never log notification payloads.
 
 - Current member rows own their canonical IDs; historical lead conversions only redirect absent IDs to a unique existing target, never reconstruct dossiers or grant access. Signup admin navigation uses the recorded match plus shop/city validation, because IDs are reused and names/emails alone can collide.

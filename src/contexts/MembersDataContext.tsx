@@ -62,12 +62,19 @@ export function MembersDataProvider({ children }: { children: ReactNode }) {
         .from("members_data")
         .select("id, member_type, data");
       if (!canSeeLeads) query = query.neq("member_type", "lead");
-      const { data, error } = await query;
+      // Both reads use the current user's RLS and do not depend on each other.
+      // Keep the merged result atomic: neither partial data nor a failed directory
+      // read may be exposed as a successful complete member list.
+      const [ownResult, directoryResult] = await Promise.all([
+        query,
+        canUseDirectory ? supabase.rpc("get_members_directory") : Promise.resolve(null),
+      ]);
+      const { data, error } = ownResult;
       if (error) throw error;
       const ownRows = (data ?? []) as MembersDataRow[];
       if (!canUseDirectory) return ownRows;
 
-      const { data: directory, error: dirError } = await supabase.rpc("get_members_directory");
+      const { data: directory, error: dirError } = directoryResult ?? { data: null, error: null };
       if (dirError) throw dirError;
       return mergeDirectory(ownRows, (directory ?? []) as MembersDataRow[]);
     },
