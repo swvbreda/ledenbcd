@@ -1,5 +1,8 @@
 # Roadmap
 
+## Publicatiecontrole + Simone meldingen (geen nieuwe publicatie/verzending)
+- [ ] Gepubliceerde GOA/woordvoerders/beleidsversie teruglezen; notificatiegeneratie, eigen ontvanger, toestelregistratie, instellingen en bezorging alleen-lezen onderzoeken. Alleen bewezen codefout gericht repareren en geïsoleerd testen; nieuwe wijzigingen eerst review.
+
 ## GOA / Scolo dossierkoppeling (geen publicatie)
 - [x] Live readback: GOA Leiden 150, Scolo IJmuiden 32; Pascal account/allowed-email uitsluitend 150, rol user. Aanmelding cadbda42-08c2-4524-864a-13d32df0e0fc matched 150. Oude conversie 150→32 veroorzaakte onvoorwaardelijke redirect. Canonieke rij gaat nu voor; geen reconstructie uit historie, aanvraag-ID+shop/plaatscontrole, pagina per ID opnieuw gemount. 11 dossierregressies + 22 eerdere contact/beleid/woordvoerderstests geslaagd, build OK. Geen data-/rechten-/financiële mutatie, verzending of publicatie. Review: docs/goa-scolo-dossier-review.md.
 - [ ] Echte admin- en Pascal-login doorklikcontrole: eigen beheersessie niet beschikbaar; geen sessie nagebootst en geen account van derden gebruikt. Gebruikercontrole in preview nodig.
