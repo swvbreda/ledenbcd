@@ -1,6 +1,6 @@
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
 
-export const SPOKESPEOPLE_SOURCE = 'https://www.coffeeshopbond.nl/over-ons';
+export const SPOKESPEOPLE_SOURCE = 'https://coffeeshopbond.nl/over-ons';
 export type LocalSpokesperson = { name: string; department: string; email: string | null };
 type Node = DefaultTreeAdapterMap['node'];
 type Element = DefaultTreeAdapterMap['element'];
