@@ -38,7 +38,10 @@ async function gemeenten(origin: string, key: string) {
 }
 
 const fout = (e: unknown): { status: "fout"; reden: FoutReden } => {
-  if (e instanceof BronFout) return { status: "fout", reden: e.reden };
+  if (e instanceof BronFout) {
+    console.warn("bcd-documenten: bronverzoek mislukt", e.reden);
+    return { status: "fout", reden: e.reden };
+  }
   console.error("bcd-documenten: onverwachte fout");
   return { status: "fout", reden: "bron_onbereikbaar" };
 };
@@ -67,7 +70,7 @@ export const getBcdDocumenten = createServerFn({ method: "POST" })
       const lijst = await gemeenten(origin, key);
       const gemeente = data.gm_code
         ? lijst.find((g) => g.gm_code === data.gm_code) ?? null
-        : resolveGmCode(data.gemeentenaam!, lijst);
+        : resolveGmCode(data.gemeentenaam ?? "", lijst);
       if (!gemeente) return { status: "niet_gekoppeld" };
       const page = await fetchDocumenten(origin, key, gemeente.gm_code, data.cursor, data.limit);
       return { status: "ok", gemeente, ...page };

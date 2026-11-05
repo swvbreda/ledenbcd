@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { fetchDocs } = vi.hoisted(() => ({ fetchDocs: vi.fn() }));
-vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "lid-u" } }) }));
+const { fetchDocs, auth } = vi.hoisted(() => ({ fetchDocs: vi.fn(), auth: { user: { id: "lid-u" } as { id: string } | null } }));
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => auth }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: () => fetchDocs, createServerFn: () => ({}) }));
 vi.mock("@/lib/bcdDocumenten.functions", () => ({ getBcdDocumenten: {}, getBcdGemeenten: {} }));
 
@@ -14,7 +14,7 @@ const d = (id: string, datum: string | null) => ({ id, titel: `Stuk ${id}`, docu
 const wrap = (ui: React.ReactElement) =>
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>);
 
-beforeEach(() => fetchDocs.mockReset());
+beforeEach(() => { fetchDocs.mockReset(); auth.user = { id: "lid-u" }; });
 afterEach(cleanup);
 
 describe("BeleidDocumentenLijst", () => {
@@ -46,5 +46,23 @@ describe("BeleidDocumentenLijst", () => {
     wrap(<BeleidDocumentenLijst gemeentenaam="Amsterdam" />);
     await waitFor(() => expect(screen.getByText(/geen openbare publicaties bekend voor Amsterdam/)).toBeTruthy());
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("allows a real retry after a source error without showing empty success", async () => {
+    fetchDocs.mockResolvedValueOnce({ status: "fout", reden: "bron_timeout" })
+      .mockResolvedValueOnce({ status: "ok", gemeente: g, documenten: [d("retry", null)], volgende_cursor: null });
+    wrap(<BeleidDocumentenLijst gemeentenaam="Amsterdam" />);
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Opnieuw proberen" }));
+    await screen.findByText("Stuk retry");
+    expect(fetchDocs).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not leave a disabled signed-out query in an endless loading state", async () => {
+    auth.user = null;
+    wrap(<BeleidDocumentenLijst gemeentenaam="Amsterdam" />);
+    await screen.findByRole("alert");
+    expect(fetchDocs).not.toHaveBeenCalled();
+    expect(screen.queryByText("Documenten ophalen…")).toBeNull();
   });
 });

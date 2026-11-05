@@ -66,12 +66,29 @@ describe("bcdDocumenten", () => {
     expect(await reden(fetchGemeenten(o, "k", (async () => json({ gemeenten: [{ gm_code: "X", naam: "A" }] })) as any))).toBe("incompatibel");
   });
 
-  it("maps 404/5xx/network to unreachable and 401/403 to not configured", async () => {
+  it("distinguishes a missing source route from network and authentication failures", async () => {
     const o = "https://coffeeshopbeleid.com";
-    expect(await reden(fetchGemeenten(o, "k", (async () => json({}, 404)) as any))).toBe("bron_onbereikbaar");
+    expect(await reden(fetchGemeenten(o, "k", (async () => json({}, 404)) as any))).toBe("bronroute_ontbreekt");
     expect(await reden(fetchGemeenten(o, "k", (async () => json({}, 502)) as any))).toBe("bron_onbereikbaar");
     expect(await reden(fetchGemeenten(o, "k", (async () => { throw new Error("x"); }) as any))).toBe("bron_onbereikbaar");
     expect(await reden(fetchGemeenten(o, "k", (async () => json({}, 401)) as any))).toBe("niet_geconfigureerd");
+  });
+
+  it("catches failures while reading the response body, not just the initial fetch", async () => {
+    const body = new ReadableStream({ start(controller) { controller.error(new Error("connection closed")); } });
+    const f = async () => new Response(body, { headers: { "content-type": "application/json" } });
+    expect(await reden(fetchGemeenten("https://coffeeshopbeleid.com", "k", f as typeof fetch))).toBe("bron_onbereikbaar");
+  });
+
+  it("reports an actual aborted request as a timeout", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+    try {
+      const f = async () => { throw new Error("aborted"); };
+      expect(await reden(fetchGemeenten("https://coffeeshopbeleid.com", "k", f as typeof fetch))).toBe("bron_timeout");
+      expect(timeout).toHaveBeenCalledWith(6000);
+    } finally { timeout.mockRestore(); }
   });
 
   it("resolves gemeente names exactly via the official mapping; ambiguous/unknown -> null", () => {

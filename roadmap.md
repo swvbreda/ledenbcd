@@ -1,5 +1,9 @@
 # Roadmap
 
+## Beleid laden (geen publicatie)
+- [x] Bron geeft HTTP 200, 342 gemeenten en echte documenten voor zeven gemeenten; geen actuele 404. Bron/bodyfouten, timeout/404-diagnose, eindeloos laden zonder sessie en handmatige herpoging gericht aangepakt; tests/bouw gecontroleerd. Geen publicatie of bronkopie. Review: docs/policy-loading-review.md.
+- [ ] Ingelogde beleidsweergave controleren: eigen beheersessie ontbreekt; preview opent login, gebruikercontrole vereist.
+
 ## Dashboardwoordvoerders (geen publicatie)
 - [x] Actuele website/bron vergeleken; vier afdelingen uit gepubliceerde bron teruggelezen, zes tests en desktop/mobiele componentfixture gecontroleerd; geen rollen/bronmutaties of publicatie. Review: docs/dashboard-spokespeople-review.md.
 - [ ] Volledig ingelogde dashboardketen: geen beschikbare eigen beheersessie (`auth-session --self` vindt geen account); gebruikerreview in preview nodig. Componentfixture is geen volledige sessiecontrole.
