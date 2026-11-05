@@ -4,11 +4,12 @@ export function memberDossierRedirect(
   currentIds: number[],
   conversions: Array<{ lead_id: number; lidnummer: number }>,
 ): number | undefined {
-  if (!Number.isSafeInteger(id) || id <= 0 || currentIds.includes(id)) return;
+  if (!Number.isSafeInteger(id) || id <= 0 || currentIds.includes(id)) return undefined;
   const targets = [...new Set(conversions.filter(c => c.lead_id === id).map(c => c.lidnummer))];
-  if (targets.length !== 1) return;
+  if (targets.length !== 1) return undefined;
   const target = targets[0];
   if (target !== id && currentIds.includes(target)) return target;
+  return undefined;
 }
 
 type Shop = { id: number; naam: string; plaats: string };
