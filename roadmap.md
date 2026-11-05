@@ -1,7 +1,8 @@
 # Roadmap
 
 ## Dashboardwoordvoerders (geen publicatie)
-- [ ] Actuele website/bron vergelijken; gerichte read-only weergave herstellen, bronreadback, tests en desktop/mobiele controle; geen rollen of bronrecords wijzigen.
+- [x] Actuele website/bron vergeleken; vier afdelingen uit gepubliceerde bron teruggelezen, zes tests en desktop/mobiele componentfixture gecontroleerd; geen rollen/bronmutaties of publicatie. Review: docs/dashboard-spokespeople-review.md.
+- [ ] Volledig ingelogde dashboardketen: geen beschikbare eigen beheersessie (`auth-session --self` vindt geen account); gebruikerreview in preview nodig. Componentfixture is geen volledige sessiecontrole.
 
 ## Lidmaatschapsbevestiging contributie-2026-11
 - [x] Bestaande private requests en bevestiging behouden; individuele adminbediening, vaste mailtekst, serverontvangers en atomaire claim/acceptatie toegevoegd.
