@@ -1,5 +1,9 @@
 # Roadmap
 
+## Telefoon: ingelogd blijven + sneller openen (geen publicatie)
+- [x] Oorzaak: tijdelijke vernieuwingsfout bij koude start/terugkeer gaf INITIAL_SESSION null → loginscherm terwijl sessie bewaard bleef (server: Simones app-sessie sinds 22 okt actief, 0 ingetrokken sessies). Herstel: 'verbinding herstellen' i.p.v. login, automatisch opnieuw, geen geforceerde rotatie bij terugkeer, verlopen-melding logt alleen uit bij definitieve weigering; ledenkoppeling één rondgang korter. 10 nieuwe + 21 bestaande tests. Review: docs/session-persistence-review.md.
+- [ ] Echte iPhone-controle na publicatie: geen fysieke telefoon/eigen sessie beschikbaar.
+
 ## Gericht sneller openen (geen publicatie)
 - [x] Signed-out cold/warm live+preview en bezoekers-p75 gemeten; dashboardlayout/grafieken lazy, eigen RLS-rijen+geschoonde directory parallel/atomair. 18 regressies, desktop/mobiel en build OK. Minder code bewezen, geen betrouwbare totale tijdwinst; docs/startup-performance-review.md. Niet gepubliceerd.
 - [ ] Ingelogde opstart en fysieke iPhone meten: eigen sessie niet beschikbaar; geen nep-login of andere account gebruiken.

@@ -5,7 +5,8 @@ import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } 
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery, withAuthTimeout, isTransientAuthError } from "@/lib/authAccess";
+import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
+import { decideSessionExpiry, interpretInitialSession, shouldIgnoreAuthEvent } from "@/lib/sessionRestore";
 import {
   createAccessController,
   deriveAccess,
@@ -87,6 +88,9 @@ const refreshSessionOnce = refreshSessionShared;
 
 const ACCESS_TIMEOUT_MS = 20_000;
 const SESSION_TIMEOUT_MS = 15_000;
+// supabase-js houdt een mislukte vernieuwing 60 s vast; opnieuw proberen binnen die
+// periode levert hetzelfde resultaat. De eigen 30s-ticker herstelt vaak eerder.
+const SESSION_RETRY_MS = 20_000;
 
 async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
   const rolesPromise = fetchRolesWithSessionRecovery({
@@ -115,12 +119,23 @@ async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
 
   // Ledenkoppeling (eerst herstellen, dan lezen) en bestuursregels parallel ophalen;
   // alles wordt pas als één geheel toegepast, nooit half.
+  const readProfileIds = async () => {
+    const { data } = await supabase.from("member_profiles").select("member_id").eq("user_id", userId);
+    return data?.map((p) => p.member_id) ?? [];
+  };
   const memberIdsPromise = (async () => {
+    // ensure_member_link voegt alleen ontbrekende koppelingen toe en geeft het aantal
+    // nieuwe terug. Daarom tegelijk lezen en alleen opnieuw lezen als er iets bijkwam:
+    // scheelt een rondgang op het kritieke pad zonder een nieuwe koppeling te missen.
+    const profilesPromise = memberPasswordlessEnabled ? null : readProfileIds();
+    profilesPromise?.catch(() => {});
+    let linked = 0;
     try {
-      const { error: linkError } = await (supabase as any).rpc("ensure_member_link");
+      const { data: linkCount, error: linkError } = await (supabase as any).rpc("ensure_member_link");
       if (linkError && handleRpcAuthError(linkError)) {
         throw new Error("Sessie verlopen tijdens het laden van de ledenkoppeling");
       }
+      linked = typeof linkCount === "number" ? linkCount : 0;
     } catch (e) {
       if (e instanceof Error && e.message.startsWith("Sessie verlopen")) throw e;
       console.warn("ensure_member_link mislukt", e);
@@ -129,8 +144,7 @@ async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
       const { data } = await (supabase as any).rpc("current_member_id");
       return typeof data === "number" ? [data] : [];
     }
-    const { data } = await supabase.from("member_profiles").select("member_id").eq("user_id", userId);
-    return data?.map((p) => p.member_id) ?? [];
+    return linked > 0 ? readProfileIds() : profilesPromise!;
   })();
   const boardRowsPromise = supabase.from("board_members").select("lid_id, lid_ids").then((r) => r.data ?? []);
 
@@ -205,25 +219,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    let restoreTimer: number | undefined;
+    const clearRestoreTimer = () => {
+      if (restoreTimer !== undefined) window.clearTimeout(restoreTimer);
+      restoreTimer = undefined;
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
+      // INITIAL_SESSION zonder sessie kan ook een tijdelijke vernieuwingsfout zijn terwijl
+      // de sessie bewaard blijft; dat beslist de bootstrap hieronder, niet deze melding.
+      if (shouldIgnoreAuthEvent(event, !!nextSession)) return;
+      clearRestoreTimer();
       applySession(nextSession);
     });
 
-    void withAuthTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, "De inlogservice")
-      .then(({ data, error }) => {
-        if (!mounted || sessionResolved) return; // de listener was eerder en is leidend
-        if (error) throw error;
-        applySession(data.session);
-      })
-      .catch((error) => {
-        if (!mounted || sessionResolved) return;
-        console.error("Auth bootstrap mislukt", error);
-        // Geen rechten toekennen zolang niet geverifieerd.
-        controller.reset();
-        setSessionPending(false);
-        setSessionError(error instanceof Error ? error.message : "Onbekende fout bij inloggen");
-      });
+    // Sessieherstel bij opstarten. Bij een tijdelijke fout (netwerk, time-out) blijft de
+    // sessie bewaard: geen loginscherm en geen rechten, maar automatisch opnieuw proberen.
+    const restoreSession = () => {
+      clearRestoreTimer();
+      void withAuthTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, "De inlogservice")
+        .then(
+          ({ data, error }) => interpretInitialSession({ session: data.session, error }),
+          (thrown) => interpretInitialSession<Session>({ thrown }),
+        )
+        .then((result) => {
+          if (!mounted || sessionResolved) return; // een echte auth-gebeurtenis was eerder en is leidend
+          if (result.kind === "session") return applySession(result.session);
+          if (result.kind === "signed_out") return applySession(null);
+          console.warn("Sessieherstel tijdelijk mislukt; nieuwe poging volgt");
+          controller.reset();
+          setSessionPending(false);
+          setSessionError(result.message);
+          restoreTimer = window.setTimeout(restoreSession, SESSION_RETRY_MS);
+        });
+    };
+    restoreSession();
+
+    const handleOnline = () => {
+      if (mounted && !sessionResolved) restoreSession();
+    };
+    window.addEventListener("online", handleOnline);
 
     // "Onthoud mij" — clear session when browser closes if disabled
     const handleBeforeUnload = () => {
@@ -271,11 +307,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             backgroundedAt = null;
 
-            void refreshSessionOnce().then(({ data, error }) => {
+            // getSession vernieuwt alleen als het toegangstoken (bijna) verlopen is, onder
+            // hetzelfde slot als het eigen zichtbaarheidsherstel van supabase-js. Een
+            // geforceerde rotatie bij elke terugkeer is onnodig en vergroot de kans dat iOS
+            // de app midden in een vernieuwing pauzeert.
+            void supabase.auth.getSession().then(({ data, error }) => {
               if (error || !data.session?.user || !mounted) return;
               // Herbeoordeling op de achtergrond: geverifieerde rechten blijven staan tot er nieuwe zijn.
               void controller.ensure(data.session.user.id, { force: true });
-            });
+            }, () => {});
           }),
         )
         .then((handle) => {
@@ -289,21 +329,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Eerst proberen de sessie te vernieuwen: een verlopen toegangstoken of een
       // haperende verbinding is geen reden om iemand uit te loggen. Alleen als de
       // inlogdienst de sessie echt weigert, volgt uitloggen.
-      try {
-        const { data, error } = await refreshSessionOnce();
-        if (!error && data.session?.user) return;
-        if (error && isTransientAuthError(error)) return;
-        if (!navigator.onLine) return;
-      } catch (e) {
-        if (isTransientAuthError(e)) return;
-      }
+      const decision = await decideSessionExpiry({
+        refresh: async () => {
+          const { data, error } = await refreshSessionOnce();
+          return { hasSession: !!data.session?.user, error };
+        },
+        getStoredSession: async () => !!(await supabase.auth.getSession()).data.session,
+        isOnline: () => navigator.onLine,
+      });
+      if (decision === "keep") return;
       try {
         const currentUserId = userIdRef.current;
         if (currentUserId) {
           try { localStorage.removeItem(`${EMAIL_MFA_KEY_PREFIX}${currentUserId}`); } catch {}
         }
         try { localStorage.removeItem(PASSKEY_MFA_PENDING_KEY); } catch {}
-        await supabase.auth.signOut();
+        // De auth-server weigerde de sessie definitief: alleen lokaal opruimen.
+        await supabase.auth.signOut({ scope: "local" });
       } catch {}
 
       const path = window.location.pathname;
@@ -322,6 +364,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       mounted = false;
+      clearRestoreTimer();
+      window.removeEventListener("online", handleOnline);
       controller.dispose();
       subscription.unsubscribe();
       window.removeEventListener("beforeunload", handleBeforeUnload);
