@@ -119,12 +119,23 @@ async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
 
   // Ledenkoppeling (eerst herstellen, dan lezen) en bestuursregels parallel ophalen;
   // alles wordt pas als één geheel toegepast, nooit half.
+  const readProfileIds = async () => {
+    const { data } = await supabase.from("member_profiles").select("member_id").eq("user_id", userId);
+    return data?.map((p) => p.member_id) ?? [];
+  };
   const memberIdsPromise = (async () => {
+    // ensure_member_link voegt alleen ontbrekende koppelingen toe en geeft het aantal
+    // nieuwe terug. Daarom tegelijk lezen en alleen opnieuw lezen als er iets bijkwam:
+    // scheelt een rondgang op het kritieke pad zonder een nieuwe koppeling te missen.
+    const profilesPromise = memberPasswordlessEnabled ? null : readProfileIds();
+    profilesPromise?.catch(() => {});
+    let linked = 0;
     try {
-      const { error: linkError } = await (supabase as any).rpc("ensure_member_link");
+      const { data: linkCount, error: linkError } = await (supabase as any).rpc("ensure_member_link");
       if (linkError && handleRpcAuthError(linkError)) {
         throw new Error("Sessie verlopen tijdens het laden van de ledenkoppeling");
       }
+      linked = typeof linkCount === "number" ? linkCount : 0;
     } catch (e) {
       if (e instanceof Error && e.message.startsWith("Sessie verlopen")) throw e;
       console.warn("ensure_member_link mislukt", e);
@@ -133,8 +144,7 @@ async function loadAccessSnapshot(userId: string): Promise<AccessSnapshot> {
       const { data } = await (supabase as any).rpc("current_member_id");
       return typeof data === "number" ? [data] : [];
     }
-    const { data } = await supabase.from("member_profiles").select("member_id").eq("user_id", userId);
-    return data?.map((p) => p.member_id) ?? [];
+    return linked > 0 ? readProfileIds() : profilesPromise!;
   })();
   const boardRowsPromise = supabase.from("board_members").select("lid_id, lid_ids").then((r) => r.data ?? []);
 
