@@ -14,6 +14,8 @@ export const FOUT_TEKST: Record<FoutReden, string> = {
   incompatibel: "De Beleidsmonitor gaf een onverwacht antwoord. De documenten kunnen nu niet worden getoond.",
   te_veel_verzoeken: "Te veel verzoeken in korte tijd. Wacht even en probeer opnieuw.",
   ongeldige_invoer: "Deze gemeente kan niet worden opgevraagd.",
+  bronroute_ontbreekt: "De documentverbinding ontbreekt op de Beleidsmonitor. De bron moet worden hersteld.",
+  bron_timeout: "Het ophalen bij de Beleidsmonitor duurde te lang. Probeer opnieuw.",
 };
 
 type Props = { gemeentenaam?: string; gmCode?: string };
@@ -27,13 +29,15 @@ export default function BeleidDocumentenLijst({ gemeentenaam, gmCode }: Props) {
     // user-scoped en per gemeente: een oud antwoord kan nooit bij een andere gemeente landen
     queryKey: ["bcd-documenten", user?.id ?? "anon", gmCode ? "gm" : "naam", target],
     enabled: !!user && !!target,
+    retry: false,
     staleTime: 2 * 60_000,
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) =>
-      fetchDocs({ data: gmCode ? { gm_code: gmCode, cursor: pageParam } : { gemeentenaam: gemeentenaam!, cursor: pageParam } }) as Promise<DocumentenResultaat>,
+      fetchDocs({ data: gmCode ? { gm_code: gmCode, cursor: pageParam } : { gemeentenaam: gemeentenaam ?? "", cursor: pageParam } }) as Promise<DocumentenResultaat>,
     getNextPageParam: (last) => (last.status === "ok" ? last.volgende_cursor ?? undefined : undefined),
   });
 
+  if (!user) return <Melding tone="error" text="Log opnieuw in om deze bronstukken te bekijken." />;
   if (q.isPending) {
     return (
       <div role="status" className="flex items-center gap-2 py-4 justify-center text-sm text-muted-foreground">
@@ -46,13 +50,13 @@ export default function BeleidDocumentenLijst({ gemeentenaam, gmCode }: Props) {
   const errorPage = q.data?.pages.find((p) => p.status === "fout") as Extract<DocumentenResultaat, { status: "fout" }> | undefined;
   if (q.isError || !first || (first.status === "fout")) {
     const reden = errorPage?.reden ?? "bron_onbereikbaar";
-    return <Melding tone="error" text={FOUT_TEKST[reden]} />;
+    return <div className="space-y-2"><Melding tone="error" text={FOUT_TEKST[reden]} /><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => q.refetch()}>Opnieuw proberen</Button></div>;
   }
   if (first.status === "niet_gekoppeld") {
     return <Melding text="Deze gemeente is niet gekoppeld aan de Beleidsmonitor, dus er kunnen geen bronstukken worden getoond." />;
   }
 
-  const docs = q.data!.pages.flatMap((p) => (p.status === "ok" ? p.documenten : []));
+  const docs = q.data?.pages.flatMap((p) => (p.status === "ok" ? p.documenten : [])) ?? [];
   if (docs.length === 0) return <Melding text={`Er zijn geen openbare publicaties bekend voor ${first.gemeente.naam}.`} />;
 
   return (

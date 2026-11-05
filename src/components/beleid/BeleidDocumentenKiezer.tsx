@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Notebook } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getBcdGemeenten } from "@/lib/bcdDocumenten.functions";
+import { Button } from "@/components/ui/button";
 import BeleidDocumentenLijst, { FOUT_TEKST } from "./BeleidDocumentenLijst";
 
 /** Alfabetische keuze uit alle gemeenten van de Beleidsmonitor (ook zonder aangesloten shop). */
@@ -15,6 +16,7 @@ export default function BeleidDocumentenKiezer() {
   const q = useQuery({
     queryKey: ["bcd-gemeenten", user?.id ?? "anon"],
     enabled: !!user,
+    retry: false,
     staleTime: 10 * 60_000,
     queryFn: () => fetchGemeenten(),
   });
@@ -25,7 +27,7 @@ export default function BeleidDocumentenKiezer() {
         <Notebook size={16} className="text-brand-red" aria-hidden /> Beleid en documenten
       </h3>
       <p className="text-xs text-muted-foreground">Openbare bronstukken uit de Beleidsmonitor per gemeente.</p>
-      {q.isPending ? (
+      {!user ? <div role="alert" className="text-sm text-destructive">Log opnieuw in om de gemeenten te bekijken.</div> : q.isPending ? (
         <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Gemeenten laden…</div>
       ) : q.data?.status === "ok" ? (
         <>
@@ -42,9 +44,9 @@ export default function BeleidDocumentenKiezer() {
           {gm && <BeleidDocumentenLijst key={gm} gmCode={gm} />}
         </>
       ) : (
-        <div role="alert" className="p-3 rounded-lg text-sm bg-destructive/10 text-destructive">
+        <div className="space-y-2"><div role="alert" className="p-3 rounded-lg text-sm bg-destructive/10 text-destructive">
           {FOUT_TEKST[q.data?.status === "fout" ? q.data.reden : "bron_onbereikbaar"]}
-        </div>
+        </div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => q.refetch()}>Opnieuw proberen</Button></div>
       )}
     </section>
   );

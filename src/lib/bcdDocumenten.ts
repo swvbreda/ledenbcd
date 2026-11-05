@@ -1,7 +1,7 @@
 /**
  * Koppeling "Beleid en documenten" met de Beleidsmonitor (Coffeeshopbeleid).
  * Pure helpers: geen process.env, zodat alles met een nep-fetch testbaar is.
- * Contract v1 (voorlopig, aanpassen zodra de bron het bewezen contract levert):
+ * Contract v1 (gecontroleerd tegen de gepubliceerde bron):
  *   GET /api/public/bcd-documenten/v1/gemeenten          -> { gemeenten: [{gm_code, naam}] }
  *   GET /api/public/bcd-documenten/v1/documenten?gm_code=&cursor=&limit= -> { documenten: [...], volgende_cursor: string|null }
  */
@@ -28,7 +28,7 @@ export type BcdDocument = {
 };
 export type FoutReden =
   | "geen_toegang" | "niet_geconfigureerd" | "bron_onbereikbaar"
-  | "incompatibel" | "te_veel_verzoeken" | "ongeldige_invoer";
+  | "incompatibel" | "te_veel_verzoeken" | "ongeldige_invoer" | "bronroute_ontbreekt" | "bron_timeout";
 export type DocumentenResultaat =
   | { status: "ok"; gemeente: BcdGemeente; documenten: BcdDocument[]; volgende_cursor: string | null }
   | { status: "niet_gekoppeld" }
@@ -153,18 +153,23 @@ async function readJson(res: Response): Promise<unknown> {
 type Fetch = typeof fetch;
 
 async function sourceGet(origin: string, path: string, key: string, fetchImpl: Fetch): Promise<unknown> {
-  let res: Response;
+  const signal = AbortSignal.timeout(6000);
   try {
-    res = await fetchImpl(`${origin}${path}`, {
+    const res = await fetchImpl(`${origin}${path}`, {
       method: "GET",
       redirect: "error",
-      signal: AbortSignal.timeout(6000),
+      signal,
       headers: { Accept: "application/json", [DOC_HEADER]: key },
     });
-  } catch { throw new BronFout("bron_onbereikbaar"); }
-  if (res.status === 401 || res.status === 403) { await res.body?.cancel(); throw new BronFout("niet_geconfigureerd"); }
-  if (!res.ok) { await res.body?.cancel(); throw new BronFout("bron_onbereikbaar"); }
-  return readJson(res);
+    if (res.status === 401 || res.status === 403) { await res.body?.cancel(); throw new BronFout("niet_geconfigureerd"); }
+    if (res.status === 404) { await res.body?.cancel(); throw new BronFout("bronroute_ontbreekt"); }
+    if (!res.ok) { await res.body?.cancel(); throw new BronFout("bron_onbereikbaar"); }
+    // Await inside the catch boundary: an aborted response body is also a source failure.
+    return await readJson(res);
+  } catch (e) {
+    if (e instanceof BronFout) throw e;
+    throw new BronFout(signal.aborted ? "bron_timeout" : "bron_onbereikbaar");
+  }
 }
 
 export async function fetchGemeenten(origin: string, key: string, fetchImpl: Fetch = fetch) {
