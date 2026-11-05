@@ -1,7 +1,8 @@
 # Roadmap
 
 ## GOA / Scolo dossierkoppeling (geen publicatie)
-- [ ] Live aanmelding, beide dossiers, accountrelatie en navigatie controleren; gerichte codefix en ID/cache/fail-closed tests, zonder gegevens- of communicatiemutaties.
+- [x] Live readback: GOA Leiden 150, Scolo IJmuiden 32; Pascal account/allowed-email uitsluitend 150, rol user. Aanmelding cadbda42-08c2-4524-864a-13d32df0e0fc matched 150. Oude conversie 150→32 veroorzaakte onvoorwaardelijke redirect. Canonieke rij gaat nu voor; geen reconstructie uit historie, aanvraag-ID+shop/plaatscontrole, pagina per ID opnieuw gemount. 11 dossierregressies + 22 eerdere contact/beleid/woordvoerderstests geslaagd, build OK. Geen data-/rechten-/financiële mutatie, verzending of publicatie. Review: docs/goa-scolo-dossier-review.md.
+- [ ] Echte admin- en Pascal-login doorklikcontrole: eigen beheersessie niet beschikbaar; geen sessie nagebootst en geen account van derden gebruikt. Gebruikercontrole in preview nodig.
 
 ## Beleid laden (geen publicatie)
 - [x] Bron geeft HTTP 200, 342 gemeenten en echte documenten voor zeven gemeenten; geen actuele 404. Bron/bodyfouten, timeout/404-diagnose, eindeloos laden zonder sessie en handmatige herpoging gericht aangepakt; tests/bouw gecontroleerd. Geen publicatie of bronkopie. Review: docs/policy-loading-review.md.

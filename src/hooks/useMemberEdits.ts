@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
-import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { isLocationDeleted, locationDeletionIdentity, mergeMemberLocations } from "@/lib/memberLocations";
 import { newContactEmails, sendContactInvites } from "@/lib/contactInvites";
 import { toast } from "sonner";
