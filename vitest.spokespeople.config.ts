@@ -1,6 +1,12 @@
-import { defineConfig, mergeConfig } from 'vitest/config';
-import componentConfig from './vitest.components.config';
+import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
 
-export default mergeConfig(componentConfig, defineConfig({
-  test: { include: ['src/lib/localSpokespeople.test.ts', 'src/components/__tests__/BestuurOverzicht.render.tsx'] },
-}));
+export default defineConfig({
+  esbuild: { jsx: 'automatic' },
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) }, dedupe: ['react', 'react-dom'] },
+  test: {
+    include: ['src/lib/localSpokespeople.test.ts', 'src/components/__tests__/BestuurOverzicht.render.tsx'],
+    environment: 'node',
+    environmentMatchGlobs: [['**/*.render.tsx', 'jsdom']],
+  },
+});
