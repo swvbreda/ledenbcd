@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Native push receipt must not clear delivered notifications: iOS emits receipt before foreground presentation, and delivery is not acknowledgement. Keep existing open/resume/tap badge cleanup and never log notification payloads.
+
 - Current member rows own their canonical IDs; historical lead conversions only redirect absent IDs to a unique existing target, never reconstruct dossiers or grant access. Signup admin navigation uses the recorded match plus shop/city validation, because IDs are reused and names/emails alone can collide.
 
 - Dashboard local spokespeople read the published Coffeeshopbond department section through a bounded, authenticated, read-only server adapter; board records and authorization stay untouched because the source website contains representatives absent from the board feed, and source errors must remain visible.

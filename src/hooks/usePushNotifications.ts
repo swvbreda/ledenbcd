@@ -66,11 +66,10 @@ export function usePushNotifications() {
       rememberListener(
         await PushNotifications.addListener(
           "pushNotificationReceived",
-          (notification) => {
-            console.log("Push received:", notification);
-            if (document.visibilityState === "visible") {
-              void clearDeliveredNotifications();
-            }
+          () => {
+            // iOS emits this before presenting the foreground banner/list.
+            // Receipt is not acknowledgement: never erase a newly arriving alert.
+            console.info("Push notification received");
           },
         ),
       );
