@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Gericht sneller openen (geen publicatie)
-- [ ] Koud/warm openen, bezoekersmetingen, bestanden en native configuratie meten; beperkte optimalisatie met voor/na en geïsoleerde regressies opleveren.
+- [x] Signed-out cold/warm live+preview en bezoekers-p75 gemeten; dashboardlayout/grafieken lazy, eigen RLS-rijen+geschoonde directory parallel/atomair. 18 regressies, desktop/mobiel en build OK. Minder code bewezen, geen betrouwbare totale tijdwinst; docs/startup-performance-review.md. Niet gepubliceerd.
 - [ ] Ingelogde opstart en fysieke iPhone meten: eigen sessie niet beschikbaar; geen nep-login of andere account gebruiken.
 
 ## Publicatiecontrole + Simone meldingen (geen nieuwe publicatie/verzending)
