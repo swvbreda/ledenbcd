@@ -2,7 +2,6 @@ import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, Megaphon
 import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { getLocalSpokespeople } from '@/lib/localSpokespeople.functions';
-import { isLocalSpokespersonRole } from '@/lib/localSpokespeople';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from "@/lib/router-compat";
 import { useState, useEffect, useRef } from "react";
@@ -34,6 +33,7 @@ interface BoardMemberRow {
 
 const slugify = (name: string) =>
   name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+const isLocalSpokespersonRole = (role: string) => /^woordvoerder\s+\S/i.test(role.trim());
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
@@ -258,15 +258,10 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-border bg-card p-4 sm:p-5">
-      <Button
-        variant="ghost"
-        aria-expanded={isMobile ? expanded : true}
-        aria-label="Bestuur en lokale afdelingen"
+      <div
         className={`flex min-w-0 items-center justify-between gap-2 ${isMobile ? "cursor-pointer active:bg-muted/30 -m-4 p-4 rounded-lg transition-colors" : "mb-3"}`}
         onClick={() => isMobile && setExpanded(!expanded)}
-        asChild={!isMobile}
       >
-        <div className="flex w-full min-w-0 items-center justify-between gap-2">
         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap">
           <h3 className="text-sm font-semibold font-display flex items-center gap-2">
             <Shield size={16} className="text-brand-red" />
@@ -289,16 +284,15 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
           {isMobile && (
-            <span className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
+            <Button variant="ghost" size="icon" aria-label="Bestuur en lokale afdelingen" aria-expanded={expanded} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }} className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
               <ChevronDown size={16} />
-            </span>
+            </Button>
           )}
           {isMobile && !expanded && (
             <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} · {localPeople.length} afdelingen</span>
           )}
         </div>
-        </div>
-      </Button>
+      </div>
 
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
