@@ -1,4 +1,8 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, Megaphone, RefreshCw } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
+import { getLocalSpokespeople } from '@/lib/localSpokespeople.functions';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from "@/lib/router-compat";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
@@ -29,6 +33,7 @@ interface BoardMemberRow {
 
 const slugify = (name: string) =>
   name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+const isLocalSpokespersonRole = (role: string) => /^woordvoerder\s+\S/i.test(role.trim());
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
@@ -40,6 +45,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [boardMembers, setBoardMembers] = useState<BoardMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadSpokespeople = useServerFn(getLocalSpokespeople);
+  const local = useQuery({ queryKey: ['local-spokespeople'], queryFn: () => loadSpokespeople(), staleTime: 60_000, retry: 1 });
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -51,7 +58,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   }, []);
 
   const bestuursleden = boardMembers.filter((b) => b.type === "bestuurslid");
-  const aspiranten = boardMembers.filter((b) => b.type === "aspirant");
+  const aspiranten = boardMembers.filter((b) => b.type === "aspirant" && !isLocalSpokespersonRole(b.functie));
+  const localPeople = local.data?.people ?? boardMembers.filter(b => isLocalSpokespersonRole(b.functie)).map(b => ({ name: b.naam, department: b.functie.replace(/^woordvoerder\s+/i, ''), email: b.bond_email }));
 
   const currentUserBoardMember = user?.email
     ? boardMembers.find(
@@ -276,12 +284,12 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
           {isMobile && (
-            <span className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
+            <Button variant="ghost" size="icon" aria-label="Bestuur en lokale afdelingen" aria-expanded={expanded} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }} className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
               <ChevronDown size={16} />
-            </span>
+            </Button>
           )}
           {isMobile && !expanded && (
-            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} leden</span>
+            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} · {localPeople.length} afdelingen</span>
           )}
         </div>
       </div>
@@ -290,7 +298,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           isMobile
             ? expanded
-              ? "max-h-[2000px] opacity-100 mt-3"
+              ? "max-h-none opacity-100 mt-3"
               : "max-h-0 opacity-0"
             : "max-h-none opacity-100"
         }`}
@@ -311,6 +319,27 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </div>
           </>
         )}
+        <section aria-label="Lokale afdelingen" className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Megaphone size={14} className="text-brand-red shrink-0" />
+            <h4 className="text-xs font-medium">Lokale afdelingen · Woordvoerders</h4>
+          </div>
+          {local.isPending && <p className="text-xs text-muted-foreground">Woordvoerders laden...</p>}
+          {local.isError && <div className="flex items-center gap-2 mb-2 text-xs text-destructive">
+            <p>Actuele woordvoerders konden niet worden opgehaald. Alleen bekende afdelingen worden getoond.</p>
+            <Button variant="ghost" size="icon" aria-label="Woordvoerders opnieuw laden" onClick={() => local.refetch()}><RefreshCw /></Button>
+          </div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {localPeople.map(person => <div key={person.department} className="border border-border rounded-md p-2.5 min-w-0">
+              <p className="font-medium text-sm leading-tight break-words">{person.name}</p>
+              <p className="text-[11px] text-primary font-medium mt-0.5">Woordvoerder {person.department}</p>
+              {person.email && <a href={`mailto:${person.email}`} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline mt-1 min-w-0">
+                <Mail size={10} className="shrink-0" /><span className="break-all">{person.email}</span>
+              </a>}
+            </div>)}
+          </div>
+          {local.data && <a className="inline-block mt-2 text-[11px] text-muted-foreground hover:underline" href={local.data.source} target="_blank" rel="noopener noreferrer">Coffeeshopbond.nl · Over ons</a>}
+        </section>
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Dashboardwoordvoerders (geen publicatie)
+- [x] Actuele website/bron vergeleken; vier afdelingen uit gepubliceerde bron teruggelezen, zes tests en desktop/mobiele componentfixture gecontroleerd; geen rollen/bronmutaties of publicatie. Review: docs/dashboard-spokespeople-review.md.
+- [ ] Volledig ingelogde dashboardketen: geen beschikbare eigen beheersessie (`auth-session --self` vindt geen account); gebruikerreview in preview nodig. Componentfixture is geen volledige sessiecontrole.
+
 ## Lidmaatschapsbevestiging contributie-2026-11
 - [x] Bestaande private requests en bevestiging behouden; individuele adminbediening, vaste mailtekst, serverontvangers en atomaire claim/acceptatie toegevoegd.
 - [x] 16 policy + 7 component + 2 edge-tests, geïsoleerde DB/concurrentieasserties, readback en bouwcontrole akkoord; bestaande mailfunctie gedeployed, alle 11 onverzonden, frontend alleen preview. Review: docs/member-reconfirmation-review.md.

@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Dashboard local spokespeople read the published Coffeeshopbond department section through a bounded, authenticated, read-only server adapter; board records and authorization stay untouched because the source website contains representatives absent from the board feed, and source errors must remain visible.
+
 - Membership reconfirmation uses the existing sender's isolated admin-only branch and private request claim/finish RPCs; recipient and template fields are server-derived, one permanent claim per request prevents uncertain retries, and provider acceptance atomically records the deadline, note and existing mail log without changing membership or finance.
 
 - Important documents use the existing authenticated knowledge catalog and canonical IDs; subject grouping is presentation-only and source metadata/explicit known IDs drive it, because this app does not own the upstream document editor or files. The separate dashboard route shares knowledge-bank access and sidebar (desktop/mobile), with legacy section-hash redirects.
