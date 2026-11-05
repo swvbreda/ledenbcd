@@ -1,5 +1,8 @@
 # Roadmap
 
+## GOA / Scolo dossierkoppeling (geen publicatie)
+- [ ] Live aanmelding, beide dossiers, accountrelatie en navigatie controleren; gerichte codefix en ID/cache/fail-closed tests, zonder gegevens- of communicatiemutaties.
+
 ## Beleid laden (geen publicatie)
 - [x] Bron geeft HTTP 200, 342 gemeenten en echte documenten voor zeven gemeenten; geen actuele 404. Bron/bodyfouten, timeout/404-diagnose, eindeloos laden zonder sessie en handmatige herpoging gericht aangepakt; tests/bouw gecontroleerd. Geen publicatie of bronkopie. Review: docs/policy-loading-review.md.
 - [ ] Ingelogde beleidsweergave controleren: eigen beheersessie ontbreekt; preview opent login, gebruikercontrole vereist.
