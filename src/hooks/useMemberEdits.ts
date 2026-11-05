@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMembersData } from "@/contexts/MembersDataContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { Member } from "@/data/types";
-import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { isLocationDeleted, locationDeletionIdentity, mergeMemberLocations } from "@/lib/memberLocations";
 import { newContactEmails, sendContactInvites } from "@/lib/contactInvites";
 import { toast } from "sonner";
@@ -105,33 +104,12 @@ function useOwnPendingEdit(memberId: number) {
 export function useMergedMember(memberId: number): { member: Member | undefined; isLoading: boolean; hasPendingEdit: boolean } {
   const { data: editsMap, isLoading: editsLoading } = useMemberEdits();
   const { data: pendingEdit, isLoading: pendingLoading } = useOwnPendingEdit(memberId);
-  const { allMembersAndLeads, rawLeads, rawOldMembers } = useMembersData();
-  const { conversions, loading: conversionsLoading } = useLeadConversions();
+  const { allMembersAndLeads, rawOldMembers, isLoading: membersLoading } = useMembersData();
 
-  // First try direct lookup (including old members), then check if this memberId is a converted lead's new lidnummer
-  let baseMember = allMembersAndLeads.find((m) => m.id === memberId)
+  // Never reconstruct a missing dossier from conversion history (IDs can be reused).
+  const baseMember = allMembersAndLeads.find((m) => m.id === memberId)
     ?? rawOldMembers.find((m) => m.id === memberId);
-  if (!baseMember) {
-    const conv = conversions.find((c) => c.lidnummer === memberId);
-    if (conv) {
-      const originalLead = rawLeads.find((l) => l.id === conv.lead_id);
-      if (originalLead) {
-        baseMember = {
-          ...originalLead,
-          id: conv.lidnummer,
-          lidSinds: conv.lid_sinds,
-          factuurBedrijfsnaam: conv.factuur_bedrijfsnaam || originalLead.factuurBedrijfsnaam,
-          factuurKvk: conv.factuur_kvk || undefined,
-          factuurEmail: conv.factuur_email || originalLead.factuurEmail,
-          factuurAdres: conv.factuur_adres || originalLead.factuurAdres,
-          factuurPostcode: conv.factuur_postcode || originalLead.factuurPostcode,
-          factuurPlaats: conv.factuur_plaats || originalLead.factuurPlaats,
-        } as Member;
-      }
-    }
-  }
-
-  const isLoading = editsLoading || pendingLoading || conversionsLoading;
+  const isLoading = editsLoading || pendingLoading || !!membersLoading;
   const hasPendingEdit = !!pendingEdit;
 
   if (!baseMember) return { member: undefined, isLoading, hasPendingEdit };
@@ -152,6 +130,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
     merged = {
       ...merged,
       ...edits,
+      id: memberId,
       locaties: mergedLocaties,
       contacten: edits.contacten || merged.contacten,
       aantalLocaties: mergedLocaties.length,
@@ -165,6 +144,7 @@ export function useMergedMember(memberId: number): { member: Member | undefined;
     merged = {
       ...merged,
       ...pendingEdit,
+      id: memberId,
       locaties: mergedLocaties,
       contacten: pendingEdit.contacten || merged.contacten,
       aantalLocaties: mergedLocaties.length,

@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import LogoGoedkeuringPanel from "@/components/register/LogoGoedkeuringPanel";
 import type { Member } from "@/data/types";
+import { resolveSignupDossier } from "@/lib/memberDossierIdentity";
 
 const fieldLabels: Record<string, string> = {
   naam: "Naam",
@@ -296,7 +297,7 @@ interface GoedkeurTarget {
 export default function GoedkeuringenPage() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { rawMembers, rawLeads, rawOldMembers, refetch } = useMembersData();
+  const { rawMembers, rawLeads, rawOldMembers, isLoading: membersLoading, isError: membersError, refetch } = useMembersData();
   const [showAll, setShowAll] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [goedkeurTarget, setGoedkeurTarget] = useState<GoedkeurTarget | null>(
@@ -540,13 +541,9 @@ export default function GoedkeuringenPage() {
                   ...rawMembers.map((m) => ({ m, type: "member" as const })),
                   ...rawLeads.map((m) => ({ m, type: "lead" as const })),
                 ];
-                const existing = tagged.find(
-                  ({ m }) =>
-                    (m.email || "").toLowerCase().trim() ===
-                      s.email.toLowerCase().trim() ||
-                    (m.naam || "").toLowerCase().trim() ===
-                      s.coffeeshop_name.toLowerCase().trim(),
-                );
+                const resolution = resolveSignupDossier(s, tagged.map(({ m }) => m));
+                const existing = resolution.member ? tagged.find(({ m }) => m.id === resolution.member?.id) : undefined;
+                const dossierBlocked = membersLoading || membersError || resolution.blocked;
                 return (
                   <Card key={s.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
@@ -624,13 +621,14 @@ export default function GoedkeuringenPage() {
                         {s.message}
                       </p>
                     )}
+                    {resolution.blocked && <p role="alert" className="text-sm text-destructive">Dossierkoppeling ontbreekt of is niet eenduidig. Controleer het dossier vóór goedkeuring.</p>}
                     {s.status === "new" && (
                       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
                         <Button
                           size="sm"
                           className="gap-1.5"
                           disabled={
-                            approvingId === s.id || updateSignup.isPending
+                            approvingId === s.id || updateSignup.isPending || dossierBlocked
                           }
                           onClick={() => openGoedkeur(s, existing)}
                         >
@@ -644,6 +642,7 @@ export default function GoedkeuringenPage() {
                             size="sm"
                             variant="outline"
                             className="gap-1.5"
+                            disabled={dossierBlocked}
                             onClick={() => navigate(`/leden/${existing.m.id}`)}
                           >
                             <User size={14} /> Bekijk{" "}

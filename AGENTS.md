@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Current member rows own their canonical IDs; historical lead conversions only redirect absent IDs to a unique existing target, never reconstruct dossiers or grant access. Signup admin navigation uses the recorded match plus shop/city validation, because IDs are reused and names/emails alone can collide.
+
 - Dashboard local spokespeople read the published Coffeeshopbond department section through a bounded, authenticated, read-only server adapter; board records and authorization stay untouched because the source website contains representatives absent from the board feed, and source errors must remain visible.
 
 - Membership reconfirmation uses the existing sender's isolated admin-only branch and private request claim/finish RPCs; recipient and template fields are server-derived, one permanent claim per request prevents uncertain retries, and provider acceptance atomically records the deadline, note and existing mail log without changing membership or finance.

@@ -11,6 +11,8 @@ export interface MembershipRequest {
   message: string | null;
   status: string;
   created_at: string;
+  matched_member_id?: number | null;
+  match_status?: string | null;
 }
 
 export function useMembershipRequests(filter: "pending" | "all" = "pending") {
