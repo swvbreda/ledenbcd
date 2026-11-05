@@ -56,3 +56,13 @@ Een belletje zonder teller is met die echte gegevens verklaarbaar. Dit bewijst g
 Open: is Simone's melding **het belletje, iPhone-banners of beide**, en om **aanmelding, aankondiging, taak of declaratie**? Telefoontoestemming/locale voorkeur en echte live API/provideracceptatie blijven onbewezen. Een echte test naar Simone mag alleen na specifieke toestemming; geen tests naar anderen.
 
 Geen publicatie, mails, pushberichten, declaratie-/taakstatuswijzigingen, scheduleractivatie of gegevensmutaties uitgevoerd.
+
+## Vervolg 19:24–19:26 UTC: alleen telefoonpush bevestigd
+
+Gerichte concrete codefout: `usePushNotifications.ts` riep bij `pushNotificationReceived` en zichtbare app onmiddellijk `removeAllDeliveredNotifications()` aan. Het geïnstalleerde iOS-pluginbestand `PushNotificationsHandler.swift` emit dit event in `willPresent` **vóór** het retourneren van banner/list-presentatieopties. De cleanup wist het Notification Center en de badge: ontvangen werd ten onrechte als gezien behandeld. Dit is een bewezen fout in de ontvangstafhandeling, maar geen bewijs dat dit ook het ontbreken van pushes bij een volledig gesloten app verklaart.
+
+Reparatie, uitsluitend preview: ontvangst wist niet meer; bestaande opruiming bij openen/resume/tap, registratie, toestemmingen en opt-out blijven onveranderd. Ontvangstlog bevat alleen een generieke regel, geen payload. Geen nieuw notificatiesysteem, scheduler-/provider-/rollenwijziging of publicatie.
+
+Drie geïsoleerde hook/plugin-tests geslaagd: ontvangst wist niets en logt geen inhoud; resume/teardown behouden; bestaande opt-out/registratie behouden. Automatische build OK. Geen echte provider-/telefoontest.
+
+Aanvullende read-only function-HTTP-logquery voor 3–5 november en `send-push` APNs-logs: geen resultaten. Daarom blijven laatste bewezen provideracceptatie **12 oktober 2/3** en registratie-update **5 november 16:40 UTC**; actuele aflevering op Simone's telefoon niet vastgesteld. 401/timeout rond 17:05 blijven ongecorreleerd. Geen mislukte verzending stilletjes herhaald.
