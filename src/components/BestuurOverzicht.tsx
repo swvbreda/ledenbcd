@@ -1,4 +1,9 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, Megaphone, RefreshCw } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
+import { getLocalSpokespeople } from '@/lib/localSpokespeople.functions';
+import { isLocalSpokespersonRole } from '@/lib/localSpokespeople';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from "@/lib/router-compat";
 import { useState, useEffect, useRef } from "react";
 import type { Member } from "@/data/types";
@@ -40,6 +45,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [boardMembers, setBoardMembers] = useState<BoardMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadSpokespeople = useServerFn(getLocalSpokespeople);
+  const local = useQuery({ queryKey: ['local-spokespeople'], queryFn: () => loadSpokespeople(), staleTime: 60_000, retry: 1 });
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -51,7 +58,8 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   }, []);
 
   const bestuursleden = boardMembers.filter((b) => b.type === "bestuurslid");
-  const aspiranten = boardMembers.filter((b) => b.type === "aspirant");
+  const aspiranten = boardMembers.filter((b) => b.type === "aspirant" && !isLocalSpokespersonRole(b.functie));
+  const localPeople = local.data?.people ?? boardMembers.filter(b => isLocalSpokespersonRole(b.functie)).map(b => ({ name: b.naam, department: b.functie.replace(/^woordvoerder\s+/i, ''), email: b.bond_email }));
 
   const currentUserBoardMember = user?.email
     ? boardMembers.find(
@@ -250,10 +258,15 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-border bg-card p-4 sm:p-5">
-      <div
+      <Button
+        variant="ghost"
+        aria-expanded={isMobile ? expanded : true}
+        aria-label="Bestuur en lokale afdelingen"
         className={`flex min-w-0 items-center justify-between gap-2 ${isMobile ? "cursor-pointer active:bg-muted/30 -m-4 p-4 rounded-lg transition-colors" : "mb-3"}`}
         onClick={() => isMobile && setExpanded(!expanded)}
+        asChild={!isMobile}
       >
+        <div className="flex w-full min-w-0 items-center justify-between gap-2">
         <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap">
           <h3 className="text-sm font-semibold font-display flex items-center gap-2">
             <Shield size={16} className="text-brand-red" />
@@ -281,16 +294,17 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </span>
           )}
           {isMobile && !expanded && (
-            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} leden</span>
+            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} · {localPeople.length} afdelingen</span>
           )}
         </div>
-      </div>
+        </div>
+      </Button>
 
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           isMobile
             ? expanded
-              ? "max-h-[2000px] opacity-100 mt-3"
+              ? "max-h-none opacity-100 mt-3"
               : "max-h-0 opacity-0"
             : "max-h-none opacity-100"
         }`}
@@ -311,6 +325,27 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
             </div>
           </>
         )}
+        <section aria-label="Lokale afdelingen" className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Megaphone size={14} className="text-brand-red shrink-0" />
+            <h4 className="text-xs font-medium">Lokale afdelingen · Woordvoerders</h4>
+          </div>
+          {local.isPending && <p className="text-xs text-muted-foreground">Woordvoerders laden...</p>}
+          {local.isError && <div className="flex items-center gap-2 mb-2 text-xs text-destructive">
+            <p>Actuele woordvoerders konden niet worden opgehaald. Alleen bekende afdelingen worden getoond.</p>
+            <Button variant="ghost" size="icon" aria-label="Woordvoerders opnieuw laden" onClick={() => local.refetch()}><RefreshCw /></Button>
+          </div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {localPeople.map(person => <div key={person.department} className="border border-border rounded-md p-2.5 min-w-0">
+              <p className="font-medium text-sm leading-tight break-words">{person.name}</p>
+              <p className="text-[11px] text-primary font-medium mt-0.5">Woordvoerder {person.department}</p>
+              {person.email && <a href={`mailto:${person.email}`} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:underline mt-1 min-w-0">
+                <Mail size={10} className="shrink-0" /><span className="break-all">{person.email}</span>
+              </a>}
+            </div>)}
+          </div>
+          {local.data && <a className="inline-block mt-2 text-[11px] text-muted-foreground hover:underline" href={local.data.source} target="_blank" rel="noopener noreferrer">Coffeeshopbond.nl · Over ons</a>}
+        </section>
       </div>
     </div>
   );

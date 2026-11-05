@@ -1,5 +1,8 @@
 # Roadmap
 
+## Dashboardwoordvoerders (geen publicatie)
+- [ ] Actuele website/bron vergelijken; gerichte read-only weergave herstellen, bronreadback, tests en desktop/mobiele controle; geen rollen of bronrecords wijzigen.
+
 ## Lidmaatschapsbevestiging contributie-2026-11
 - [x] Bestaande private requests en bevestiging behouden; individuele adminbediening, vaste mailtekst, serverontvangers en atomaire claim/acceptatie toegevoegd.
 - [x] 16 policy + 7 component + 2 edge-tests, geïsoleerde DB/concurrentieasserties, readback en bouwcontrole akkoord; bestaande mailfunctie gedeployed, alle 11 onverzonden, frontend alleen preview. Review: docs/member-reconfirmation-review.md.
