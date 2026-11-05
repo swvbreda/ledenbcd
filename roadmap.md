@@ -1,5 +1,9 @@
 # Roadmap
 
+## Gericht sneller openen (geen publicatie)
+- [x] Signed-out cold/warm live+preview en bezoekers-p75 gemeten; dashboardlayout/grafieken lazy, eigen RLS-rijen+geschoonde directory parallel/atomair. 18 regressies, desktop/mobiel en build OK. Minder code bewezen, geen betrouwbare totale tijdwinst; docs/startup-performance-review.md. Niet gepubliceerd.
+- [ ] Ingelogde opstart en fysieke iPhone meten: eigen sessie niet beschikbaar; geen nep-login of andere account gebruiken.
+
 ## Publicatiecontrole + Simone meldingen (geen nieuwe publicatie/verzending)
 - [x] Echte live frontendbundels bevatten GOA/canonical-ID+keyfix, woordvoerders en beleidsherpoging/sessieboodschap. Simone uit bestaande account/rolrecord geverifieerd; 2 iOS-registraties, 0 ongelezen taakmeldingen, laatste taakpush 12 oktober 2/3 geaccepteerd + 410; 0 declaratiemeldingen, enabled=true maar scheduler_armed=false en geen pushcron. Aanmeldtijd 17:05 bevat 401/timeout zonder bewezen endpointcorrelatie; providerlogs ontbreken. 21 geïsoleerde tests + lokale signing OK, geen berichten of functionele wijzigingen/publicatie. Review: docs/simone-notifications-review.md.
 - [x] Telefoonpushfocus: concrete foregroundfout hersteld in preview — ontvangen push werd direct via removeAllDeliveredNotifications gewist vóór iOS-banner/listpresentatie. Receipt wist/logt payload niet meer; open/resume/tap en voorkeuren behouden. 3 geïsoleerde hooktests en build OK; niet gepubliceerd, geen send. Aanvullende HTTP-/APNs-logs leeg, dus geen actuele telefoonaflevering bewezen.
