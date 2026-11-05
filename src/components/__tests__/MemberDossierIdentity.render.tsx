@@ -11,6 +11,7 @@ vi.mock('@/contexts/MembersDataContext', () => ({ useMembersData: () => ({ allMe
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'admin-fixture' }, isAdmin: true }) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ select: async () => ({ data: state.edits, error: null }) }) } }));
 vi.mock('@/lib/contactRemoval.functions', () => ({ removeMemberContacts: vi.fn() }));
+vi.mock('@/lib/contactInvites', () => ({ newContactEmails: vi.fn(), sendContactInvites: vi.fn() }));
 vi.mock('@tanstack/react-start', () => ({ useServerFn: (fn: unknown) => fn }));
 
 const goa = { id: 150, naam: 'GOA', plaats: 'Leiden', locaties: [], contacten: [] } as unknown as Member;
