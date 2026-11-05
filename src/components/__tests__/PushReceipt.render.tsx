@@ -17,7 +17,7 @@ vi.mock('@capacitor/push-notifications',()=>({PushNotifications:{
   removeAllDeliveredNotifications:mocks.clear,register:mocks.register,requestPermissions:mocks.permission,
   addListener:async(name:string,fn:(v:any)=>void)=>{mocks.events.set(name,fn);const remove=vi.fn().mockResolvedValue(undefined);mocks.removals.push(remove);return {remove};},
 }}));
-beforeEach(()=>{vi.clearAllMocks();mocks.events.clear();mocks.removals=[];localStorage.clear();});
+beforeEach(()=>{vi.clearAllMocks();mocks.permission.mockResolvedValue({receive:'granted'});mocks.upsert.mockResolvedValue({error:null});mocks.clear.mockResolvedValue(undefined);mocks.register.mockResolvedValue(undefined);mocks.events.clear();mocks.removals=[];localStorage.clear();});
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
 describe('native push receipt lifecycle (isolated plugin, no provider)',()=>{
   it('does not erase a newly received foreground alert or expose its payload',async()=>{
