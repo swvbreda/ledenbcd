@@ -1,5 +1,9 @@
 # Roadmap
 
+## Publicatiecontrole + Simone meldingen (geen nieuwe publicatie/verzending)
+- [x] Echte live frontendbundels bevatten GOA/canonical-ID+keyfix, woordvoerders en beleidsherpoging/sessieboodschap. Simone uit bestaande account/rolrecord geverifieerd; 2 iOS-registraties, 0 ongelezen taakmeldingen, laatste taakpush 12 oktober 2/3 geaccepteerd + 410; 0 declaratiemeldingen, enabled=true maar scheduler_armed=false en geen pushcron. Aanmeldtijd 17:05 bevat 401/timeout zonder bewezen endpointcorrelatie; providerlogs ontbreken. 21 geïsoleerde tests + lokale signing OK, geen berichten of functionele wijzigingen/publicatie. Review: docs/simone-notifications-review.md.
+- [ ] Meldingtype/verwacht event en actuele iPhone-toestemming/voorkeur vaststellen; 401 aan exact endpoint correleren. Echte Simone-test vereist specifieke toestemming, ingelogde keten vereist beschikbare eigen sessie.
+
 ## GOA / Scolo dossierkoppeling (geen publicatie)
 - [x] Live readback: GOA Leiden 150, Scolo IJmuiden 32; Pascal account/allowed-email uitsluitend 150, rol user. Aanmelding cadbda42-08c2-4524-864a-13d32df0e0fc matched 150. Oude conversie 150→32 veroorzaakte onvoorwaardelijke redirect. Canonieke rij gaat nu voor; geen reconstructie uit historie, aanvraag-ID+shop/plaatscontrole, pagina per ID opnieuw gemount. 11 dossierregressies + 22 eerdere contact/beleid/woordvoerderstests geslaagd, build OK. Geen data-/rechten-/financiële mutatie, verzending of publicatie. Review: docs/goa-scolo-dossier-review.md.
 - [ ] Echte admin- en Pascal-login doorklikcontrole: eigen beheersessie niet beschikbaar; geen sessie nagebootst en geen account van derden gebruikt. Gebruikercontrole in preview nodig.
