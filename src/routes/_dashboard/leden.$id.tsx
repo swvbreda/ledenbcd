@@ -5,5 +5,10 @@ import MemberDetail from "@/pages/MemberDetail";
 export const Route = createFileRoute("/_dashboard/leden/$id")({
   head: ({ params }) => socialHead({ title: 'Leden — BCD', description: "Beveiligde pagina van het BCD Ledenportaal.", path: `/leden/${encodeURIComponent(params.id)}` }),
 
-  component: MemberDetail,
+  component: MemberDossier,
 });
+
+function MemberDossier() {
+  const { id } = Route.useParams();
+  return <MemberDetail key={id} />;
+}

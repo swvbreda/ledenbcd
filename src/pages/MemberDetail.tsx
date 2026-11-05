@@ -28,6 +28,7 @@ import { useMemberAffiliations } from "@/hooks/useMemberAffiliations";
 import { contactLocations, contactsForLocation, locationLabel } from "@/lib/contactLocations";
 
 import { locationKeyOf } from "@/lib/registerLocationMatch";
+import { memberDossierRedirect } from "@/lib/memberDossierIdentity";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -56,7 +57,7 @@ const MemberDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, isBoard, isInhuur, linkedMemberIds } = useAuth();
-  const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, refetch: refetchMembers } = useMembersData();
+  const { rawMembers: allMembers, allMembersAndLeads, rawLeads, rawOldMembers, isLoading: membersLoading, isError: membersError, refetch: refetchMembers } = useMembersData();
   const isOwnProfile = linkedMemberIds.includes(Number(id));
   // Bestuur en beheer zien alles; een gewoon lid alleen de eigen gekoppelde rij.
   const canSeeContacts = isAdmin || isBoard || isInhuur || isOwnProfile;
@@ -67,7 +68,7 @@ const MemberDetail = () => {
   const { member, isLoading, hasPendingEdit } = useMergedMember(memberId);
   const saveContactpersoonMutation = useSaveMemberEdit();
   const { conversions, refresh: refreshConversions, loading: conversionsLoading } = useLeadConversions();
-  const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId]);
+  const isLead = useMemo(() => rawLeads.some((l) => l.id === memberId), [memberId, rawLeads]);
   const { data: affiliations } = useMemberAffiliations();
   /** Leden met een apart lidmaatschap maar dezelfde eigenaren of hetzelfde pand. */
   const gelieerdeLeden = useMemo(() => {
@@ -92,11 +93,13 @@ const MemberDetail = () => {
 
 
 
-  // Redirect converted leads to their new lidnummer
-  const convertedTo = useMemo(() => conversions.find((c) => c.lead_id === memberId), [conversions, memberId]);
+  // IDs can be reused after conversion; a current dossier always wins over history.
+  const convertedTo = useMemo(() => membersLoading || membersError ? undefined : memberDossierRedirect(
+    memberId, [...allMembersAndLeads, ...rawOldMembers].map(m => m.id), conversions,
+  ), [memberId, allMembersAndLeads, rawOldMembers, conversions, membersLoading, membersError]);
   useEffect(() => {
-    if (convertedTo) {
-      navigate(`/leden/${convertedTo.lidnummer}`, { replace: true });
+    if (convertedTo !== undefined) {
+      navigate(`/leden/${convertedTo}`, { replace: true });
     }
   }, [convertedTo, navigate]);
   const { data: memberContributions } = useMemberContributions(memberId);
