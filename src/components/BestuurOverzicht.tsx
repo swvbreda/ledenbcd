@@ -1,4 +1,4 @@
-import { Shield, Mail, Phone, User, Camera, Users, MapPin, ChevronDown, Megaphone, RefreshCw } from "lucide-react";
+import { Shield, Mail, Phone, User, Camera, MapPin, ChevronDown, Megaphone, RefreshCw } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { getLocalSpokespeople } from '@/lib/localSpokespeople.functions';
@@ -33,7 +33,6 @@ interface BoardMemberRow {
 
 const slugify = (name: string) =>
   name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-const isLocalSpokespersonRole = (role: string) => /^woordvoerder\s+\S/i.test(role.trim());
 
 const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const navigate = useNavigate();
@@ -46,7 +45,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   const [boardMembers, setBoardMembers] = useState<BoardMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const loadSpokespeople = useServerFn(getLocalSpokespeople);
-  const local = useQuery({ queryKey: ['local-spokespeople'], queryFn: () => loadSpokespeople(), staleTime: 60_000, retry: 1 });
+  const local = useQuery({ queryKey: ['local-spokespeople', user?.id], queryFn: () => loadSpokespeople(), enabled: Boolean(user), staleTime: 60_000, retry: 1 });
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -58,8 +57,9 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
   }, []);
 
   const bestuursleden = boardMembers.filter((b) => b.type === "bestuurslid");
-  const aspiranten = boardMembers.filter((b) => b.type === "aspirant" && !isLocalSpokespersonRole(b.functie));
-  const localPeople = local.data?.people ?? boardMembers.filter(b => isLocalSpokespersonRole(b.functie)).map(b => ({ name: b.naam, department: b.functie.replace(/^woordvoerder\s+/i, ''), email: b.bond_email }));
+  // Board rows do not define the department roster: Amsterdam and Rotterdam
+  // exist only in the published source. Never restore an incomplete old roster.
+  const localPeople = local.data?.people ?? [];
 
   const currentUserBoardMember = user?.email
     ? boardMembers.find(
@@ -132,7 +132,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return false;
   };
 
-  const renderCard = (bl: BoardMemberRow, isAspirant = false) => {
+  const renderCard = (bl: BoardMemberRow) => {
     const lidIds = bl.lid_ids?.length ? bl.lid_ids : (bl.lid_id ? [bl.lid_id] : []);
     const linkedMembers = lidIds.map(id => members.find((m) => m.id === id)).filter(Boolean);
     const firstMember = linkedMembers[0];
@@ -142,9 +142,7 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
     return (
       <div
         key={bl.id}
-        className={`border rounded-md p-2.5 transition-colors flex gap-2.5 ${
-          isAspirant ? "border-dashed border-border" : "border-border"
-        } ${firstMember ? "hover:bg-muted/40 cursor-pointer" : ""}`}
+        className={`border border-border rounded-md p-2.5 transition-colors flex gap-2.5 ${firstMember ? "hover:bg-muted/40 cursor-pointer" : ""}`}
         onClick={() => firstMember && navigate(`/leden/${firstMember.id}`)}
       >
         <div className="min-w-0 flex-1 flex flex-col justify-between">
@@ -284,12 +282,12 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">Opgericht 12 januari 1994</span>
           {isMobile && (
-            <Button variant="ghost" size="icon" aria-label="Bestuur en lokale afdelingen" aria-expanded={expanded} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }} className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
+            <Button variant="ghost" size="icon" aria-label="Bestuur en lokale woordvoerders" aria-expanded={expanded} onClick={event => { event.stopPropagation(); setExpanded(!expanded); }} className={`text-muted-foreground transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}>
               <ChevronDown size={16} />
             </Button>
           )}
           {isMobile && !expanded && (
-            <span className="text-[11px] text-muted-foreground">{bestuursleden.length + aspiranten.length} · {localPeople.length} afdelingen</span>
+            <span className="text-[11px] text-muted-foreground">{bestuursleden.length} · {local.data ? `${localPeople.length} afdelingen` : "afdelingen laden"}</span>
           )}
         </div>
       </div>
@@ -307,26 +305,14 @@ const BestuurOverzicht = ({ members }: BestuurOverzichtProps) => {
           {bestuursleden.map((bl) => renderCard(bl))}
         </div>
 
-        {aspiranten.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 mt-4 mb-2">
-              <Users size={12} className="text-muted-foreground" />
-              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aspirant</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {aspiranten.map((bl) => renderCard(bl, true))}
-            </div>
-          </>
-        )}
-        <section aria-label="Lokale afdelingen" className="mt-4">
+        <section aria-label="Lokale woordvoerders" className="mt-4">
           <div className="flex items-center gap-2 mb-2">
             <Megaphone size={14} className="text-brand-red shrink-0" />
-            <h4 className="text-xs font-medium">Lokale afdelingen · Woordvoerders</h4>
+            <h4 className="text-xs font-medium">Lokale woordvoerders</h4>
           </div>
           {local.isPending && <p className="text-xs text-muted-foreground">Woordvoerders laden...</p>}
-          {local.isError && <div className="flex items-center gap-2 mb-2 text-xs text-destructive">
-            <p>Actuele woordvoerders konden niet worden opgehaald. Alleen bekende afdelingen worden getoond.</p>
+          {local.isError && <div role="alert" className="flex items-center gap-2 mb-2 text-xs text-destructive">
+            <p>{local.data ? "Vernieuwen van de woordvoerders is mislukt. De laatst opgehaalde brongegevens worden getoond." : "Actuele woordvoerders konden niet worden opgehaald."}</p>
             <Button variant="ghost" size="icon" aria-label="Woordvoerders opnieuw laden" onClick={() => local.refetch()}><RefreshCw /></Button>
           </div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
