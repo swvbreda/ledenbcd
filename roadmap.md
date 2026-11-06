@@ -1,5 +1,8 @@
 # Roadmap
 
+## Lokale woordvoerders — gerichte dashboardreview 6 november (niet publiceren)
+- [ ] Actuele productiecomponent/bron en resterende Aspirant-fallback vaststellen; alleen dashboardpresentatie herstellen, vier actuele publieke woordvoerders en foutzichtbaarheid testen op desktop/mobiel. Geen rechten/data/verzending wijzigen.
+
 ## Telefoon: ingelogd blijven + sneller openen (geen publicatie)
 - [x] Oorzaak: tijdelijke vernieuwingsfout bij koude start/terugkeer gaf INITIAL_SESSION null → loginscherm terwijl sessie bewaard bleef (server: Simones app-sessie sinds 22 okt actief, 0 ingetrokken sessies). Herstel: 'verbinding herstellen' i.p.v. login, automatisch opnieuw, geen geforceerde rotatie bij terugkeer, verlopen-melding logt alleen uit bij definitieve weigering; ledenkoppeling één rondgang korter. 10 nieuwe + 21 bestaande tests. Review: docs/session-persistence-review.md.
 - [ ] Echte iPhone-controle na publicatie: geen fysieke telefoon/eigen sessie beschikbaar.
