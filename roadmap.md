@@ -1,7 +1,8 @@
 # Roadmap
 
 ## Lokale woordvoerders — gerichte dashboardreview 6 november (niet publiceren)
-- [ ] Actuele productiecomponent/bron en resterende Aspirant-fallback vaststellen; alleen dashboardpresentatie herstellen, vier actuele publieke woordvoerders en foutzichtbaarheid testen op desktop/mobiel. Geen rechten/data/verzending wijzigen.
+- [x] Productie bevat eerdere fix én resterende Aspirant-tak/incomplete fallback; actuele website levert vier woordvoerders. Echte dashboardcomponent gebruikt alleen bronroster onder Lokale woordvoerders; geen oude fallback, expliciete fout/herpoging, Joachim blijft bestuurder. Acht tests en desktop/mobiele presentatiecontrole geslaagd, build OK; docs/dashboard-spokespeople-review.md. Geen publicatie/rechten/data/verzending.
+- [ ] Echte ingelogde dashboard/toestelcontrole: sessie signed_out, geen authmint; screenshot met Aspirant niet volledig verklaard door huidige live predicate, oudere geladen client mogelijk maar onbewezen. Review door Simone nodig.
 
 ## Telefoon: ingelogd blijven + sneller openen (geen publicatie)
 - [x] Oorzaak: tijdelijke vernieuwingsfout bij koude start/terugkeer gaf INITIAL_SESSION null → loginscherm terwijl sessie bewaard bleef (server: Simones app-sessie sinds 22 okt actief, 0 ingetrokken sessies). Herstel: 'verbinding herstellen' i.p.v. login, automatisch opnieuw, geen geforceerde rotatie bij terugkeer, verlopen-melding logt alleen uit bij definitieve weigering; ledenkoppeling één rondgang korter. 10 nieuwe + 21 bestaande tests. Review: docs/session-persistence-review.md.

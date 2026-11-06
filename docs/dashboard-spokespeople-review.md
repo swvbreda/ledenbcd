@@ -1,5 +1,31 @@
 # Dashboardwoordvoerders — previewreview 5 november 2026
 
+## Aanvullende gerichte review — 6 november 2026, 07:21–07:26 UTC
+
+### Productiebewijs en precieze grens van de oorzaak
+
+- `https://leden.coffeeshopbond.nl/` gaf HTTP 200. De actieve dashboardbundel is `/assets/_dashboard-BOpDmPPJ.js`; van 253 bereikbare JS-bestanden zijn de imports gecontroleerd. Deze bundel bevat de eerdere woordvoerdersquery en bronfoutmelding. De actuele client/indexbundels bevatten tevens `INITIAL_SESSION`/`reconnecting`: de uitspraak dat de gisteren gepubliceerde sessie-/opstartfix alleen preview was, is onjuist.
+- De echte route `src/routes/_dashboard/index.tsx` importeert `src/pages/Index.tsx`, die `BestuurOverzicht` rendert. Geen ongebruikte alternatieve component gerepareerd.
+- Productie bevat nog letterlijk de oude `Aspirant`-tak en `local.data?.people ?? boardMembers.filter(...)`-fallback. Die fallback kan slechts Arnhem/Enschede leveren: de actuele read-only bestuursrecords zijn zeven bestuurders plus die twee aspirantrecords. De actuele RPC-definitie retourneert deze rijen zonder omzetting.
+- Belangrijk: hun actuele functies zijn wel exact `Woordvoerder Arnhem` en `Woordvoerder Enschede`; de huidige live predicate sluit die juist uit van de Aspirant-tak. Daarom verklaart alleen een mislukte bronread in **deze** bundel niet het volledige aangeleverde screenshot. Een nog geladen oudere client/weergave is mogelijk, maar niet bewezen zonder toegang tot het betrokken ingelogde toestel. Geen fictieve bewezen oorzaak of claim dat niet gepubliceerd was.
+- De openbare bron `/over-ons` gaf HTTP 200 zonder redirect; de bestaande parser las vandaag opnieuw alle vier onderstaande woordvoerders met hun gemeente-mailadressen. Geen broncontractbreuk aangetoond.
+- Productielogs van het afgelopen uur bevatten twee POST-serverfunctieverzoeken met 200 (07:17:44 en 07:18:56); geen woordvoerderfout en geen identificeerbare GET-call naar deze bronfunctie. Dit bewijst geen geslaagde ingelogde woordvoerdersread.
+
+### Beperkte reparatie, niet gepubliceerd
+
+- `src/components/BestuurOverzicht.tsx`: oude Aspirant-presentatietak geheel verwijderd, titel exact **Lokale woordvoerders**, uitsluitend publieke bronrijen voor de lokale lijst; bij bronfout expliciete fout/herprobeerknop in plaats van twee oude aspiranten als fallback. Eerder succesvol opgehaalde bronrijen mogen bij verversingsfout blijven staan met expliciete waarschuwing. Query wacht op bestaande gebruiker en is gebruiker-gescopeerd; serverauth blijft identiek. Joachim blijft daarnaast in de zeven bestuurskaarten. Geen hardcoded vervangende vierpersoonslijst in de app.
+- `src/components/__tests__/BestuurOverzicht.render.tsx`: vier integratietests voor vier concrete namen/adressen plus aparte Joachim-bestuurder, bronfout zonder oude roster, herstel via bestaande knop en mobiele uitklapping.
+- `AGENTS.md`, deze review en de gerichte roadmapregel: geen bestuursbeheer, account-/rolregels, native config, serveradapter of eerdere sessie/lazy/beleid/dossierfix gewijzigd. Geen datawrites, mails, push of publicatie.
+
+### Checks en beperking
+
+- Vier parsertests geslaagd. Vier componenttests geslaagd via bestaande componentconfig. De eerste gecombineerde run blokkeerde door ontbrekende optionele `canvas.node` in de sandbox; een tijdelijke preload onder `/tmp` vervangt alleen dat ongebruikte testhulpmiddel. Geen projectdependency of productiecode hiervoor gewijzigd.
+- Automatische bouwcontrole: `build OK`, 07:23:14 UTC.
+- Playwright: werkelijke `BestuurOverzicht` met vandaag teruggelezen publieke brondata en de negen bestaande bestuursrijen als geïsoleerde presentatiefixture: desktop 1280×1800, mobiel 390×844, zeven bestuurders en vier lokale woordvoerders, Joachim in beide rollen, gemeente-mail links correct; mobiel geen horizontale overflow en uitklappen werkt. Bronfout toont expliciete fout, geen Aspirant of oude lokale rijen; geen browser-runtimefouten. Screenshots: `/tmp/browser/spokespeople/desktop.png`, `mobile-departments.png`, `offline.png`.
+- Dit is **geen ingelogde end-to-end test**: beschikbare sessie `signed_out`, geen authmint uitgevoerd en geen protected route omzeild. De fixture vervangt alleen de externe dependencies van dezelfde echte component en gebruikt geen echte login. Simone moet de echte dashboardketen nog controleren; haar oude screenshot/toestelcache is niet gereproduceerd.
+
+Actuele publieke namen/adressen: Joachim Helms — Amsterdam@coffeeshopbond.nl; Hannes Poppinghaus — Arnhem@coffeeshopbond.nl; Tugrulhan Akca — Enschede@coffeeshopbond.nl; Michel Wouters — Rotterdam@coffeeshopbond.nl (volledige bronweergaven hieronder behouden).
+
 ## Actuele bron en oorzaak
 
 Gelezen: https://coffeeshopbond.nl/over-ons, bronproject Coffeeshopbond `ad4fe468-a3c4-4d88-8f3f-4515abd526e9`, snapshot `ced03942`, `src/routes/over-ons.tsx:275–369`, en huidige `board_members`/`get_board_members_public` in dit portaal. De www-host verwijst met HTTP 302 naar deze apex-host; de adapter leest rechtstreeks de HTTP 200-bron zonder redirects.
