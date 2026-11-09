@@ -62,3 +62,13 @@ export function searchAddressBook(data: AddressBook, query: string, category: st
 export function cleanFields<T extends Record<string, string>>(input: T): T {
   return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, value.trim()])) as T;
 }
+// Automatic source/provenance paragraphs stay stored for review but are hidden on cards.
+const sourceStart = /^\s*(bron|bronnen|mailbron|aanvullende bron|brongegevens)\s*:/i;
+const sourceLine = /outlook\.(cloud\.)?(microsoft|office|live)\.com?|outlook\.cloud\.microsoft|\b(gecontroleerd|vastgelegd|geraadpleegd|overgenomen) op \d/i;
+export function visibleNote(note: string): string {
+  return (note ?? '').split(/\n\s*\n/).map(p => p.split('\n').filter(l => !sourceStart.test(l) && !sourceLine.test(l)).join('\n').trim())
+    .filter(p => p && !sourceStart.test(p)).join('\n\n');
+}
+export function groupByCategory<T extends { category: string; name: string }>(organizations: T[]) {
+  return addressCategories.map(category => ({ category, items: organizations.filter(o => o.category === category).sort((a, b) => a.name.localeCompare(b.name, 'nl')) })).filter(g => g.items.length);
+}
