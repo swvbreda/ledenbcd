@@ -1,0 +1,26 @@
+.minutes-document {
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  font-size: 12pt;
+  line-height: 1.4;
+  width: 100%;
+  max-width: 210mm;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+.minutes-document h1 { font-family: inherit; font-size: 24pt; color: hsl(var(--muted-foreground)); margin: 0 0 18pt; }
+.minutes-document h2 { font-family: inherit; font-size: 12pt; font-weight: bold; margin: 18pt 0 8pt; }
+.minutes-document p { margin: 0 0 10pt; }
+.minutes-document dl { display: grid; grid-template-columns: 5rem minmax(0, 1fr); margin: 0 0 18pt; gap: 3pt 12pt; }
+.minutes-document dt { font-weight: bold; }
+.minutes-document dd { overflow-wrap: anywhere; }
+.minutes-document ol { list-style: decimal; padding-left: 20pt; }
+.minutes-document li { margin: 0 0 8pt; overflow-wrap: anywhere; }
+@page { size: A4; margin: 20mm; }
+@media print {
+  body * { visibility: hidden; }
+  .minutes-document, .minutes-document * { visibility: visible; }
+  .minutes-document { position: absolute; top: 0; left: 0; max-width: 100%; }
+  .minutes-document h1, .minutes-document h2 { break-after: avoid; }
+  .minutes-document p, .minutes-document li { orphans: 3; widows: 3; }
+  .minutes-no-print { display: none; }
+}

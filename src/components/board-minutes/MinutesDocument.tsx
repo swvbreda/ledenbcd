@@ -1,5 +1,6 @@
 import type { MinuteVersion } from '@/lib/boardMinutes';
 import type { ImportDetails } from '@/lib/boardMinutesImport';
+import './minutes-document.css';
 
 export function MinutesDocument({version,details,status}:{version:MinuteVersion;details?:ImportDetails;status:string}){
   const paragraphs=version.report.split(/\n\s*\n/);
