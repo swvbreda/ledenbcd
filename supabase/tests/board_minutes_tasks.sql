@@ -42,6 +42,7 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  BEGIN PERFORM public.board_minutes_tasks(v); RAISE EXCEPTION 'Member RPC leak'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  BEGIN PERFORM public.board_minutes_task_assignment(aid,'{}',true); RAISE EXCEPTION 'Member mutation'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  RESET ROLE;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
  RAISE NOTICE 'PASS: multiple explicit names, collective review, date, idempotency, rename, completion/reopen crossview, admin choice, member denial, no external effects';
 END $$;
 SET CONSTRAINTS ALL IMMEDIATE;
