@@ -3,7 +3,8 @@ import type { ImportDetails } from './boardMinutesImport';
 
 export const minutesReadTables=['meetings','versions','files','adoptions','imports'] as const;
 export type MinutesReadTable=typeof minutesReadTables[number];
-export type MinutesReadPage={rows:unknown[];canManage:boolean};
+export type MinutesReadRow=MinutesArchive['meetings'][number]|MinutesArchive['versions'][number]|MinutesArchive['files'][number]|MinutesArchive['adoptions'][number]|{version_id:string;details:ImportDetails;source_text:string};
+export type MinutesReadPage={rows:MinutesReadRow[];canManage:boolean};
 export const minutesPageSize=(table:MinutesReadTable)=>table==='imports'||table==='versions'?10:100;
 export async function boundedMinutesRead<T>(read:()=>Promise<T>,timeoutMs=20000):Promise<T>{
   let timer:ReturnType<typeof setTimeout>|undefined;
