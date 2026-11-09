@@ -33,6 +33,7 @@ const LoginPage = () => {
   const [resetSent, setResetSent] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [passwordLoginPending, setPasswordLoginPending] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null);
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [statusInfo, setStatusInfo] = useState<
@@ -61,7 +62,7 @@ const LoginPage = () => {
 
   if (authError) return <AuthUnavailable message={authError} onRetry={retryAuth} />;
 
-  if (authLoading) {
+  if (authLoading && !passwordLoginPending && !showBiometricPrompt) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground text-sm">Laden...</p>
@@ -69,7 +70,7 @@ const LoginPage = () => {
     );
   }
 
-  if (user) {
+  if (user && !passwordLoginPending && !showBiometricPrompt) {
     if (memberPasswordlessEnabled && !isExtern && !isAdmin && !linkedMemberId) {
       return <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">Dit e-mailadres heeft geen actief liddossier. <Button variant="ghost" onClick={() => void supabase.auth.signOut()}>Afmelden</Button></div>;
     }
@@ -98,6 +99,7 @@ const LoginPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordLoginPending(true);
     setLoading(true);
     setError("");
     try { localStorage.setItem("remember_me", String(biometric.isNative || rememberMe)); } catch {}
@@ -116,6 +118,7 @@ const LoginPage = () => {
       }
       setLoading(false);
     }
+    setPasswordLoginPending(false);
   };
 
   const handleLinkRequest = async (e: React.FormEvent) => {
