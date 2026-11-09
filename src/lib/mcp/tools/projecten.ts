@@ -51,7 +51,7 @@ export const zoekTaken = defineTool({
   handler: async (input, ctx) => {
     const client = supabaseForUser(ctx);
     await requireAdmin(ctx, client);
-    let q = client.from("internal_tasks").select(TASK_COLS, { count: "exact" }).order("updated_at", { ascending: false });
+    let q = client.from("internal_tasks").select(TASK_COLS, { count: "exact" }).eq("board_minutes_private",false).order("updated_at", { ascending: false });
     if (input.project_id) q = q.eq("project_id", input.project_id);
     if (input.status) q = q.eq("status", input.status);
     const term = input.zoekterm ? sanitizeSearch(input.zoekterm) : "";

@@ -36,6 +36,13 @@ export const importBoardMinutes = createServerFn({method:'POST'}).middleware([re
 
 export const saveBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(d => minutesSaveSchema.parse(d)).handler(async ({ data, context }) => {
   await requireMinutesAccess(context, true);
+  if(data.action_rows){
+    const {data:id,error}=await context.supabase.rpc('board_minutes_save_action_revision',{p_input:data});
+    if(error||!id)throw new Error(error?.message??'Opslaan mislukt.');
+    const {data:version,error:readError}=await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id',id).single();
+    if(readError||!version)throw new Error('Versie kon niet worden teruggelezen.');
+    return version;
+  }
   const revisionRpc = context.supabase.rpc.bind(context.supabase) as unknown as (name:'board_minutes_save_revision', args:RevisionArgs)=>PromiseLike<{data:string|null;error:{message:string}|null}>;
   const { data: id, error } = await revisionRpc('board_minutes_save_revision', {
     p_meeting: data.meetingId, p_expected: data.expectedVersion, p_source: data.source, p_source_id: data.sourceId,

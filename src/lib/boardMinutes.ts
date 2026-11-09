@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { minuteActionRowsSchema } from './boardMinutesTasks';
 
 export const MINUTES_BUCKET = 'board-minutes';
 export const MAX_MINUTES_BYTES = 20 * 1024 * 1024;
@@ -9,6 +10,7 @@ export const minutesSaveSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), title: z.string().trim().min(1).max(300),
   report: z.string().max(200000), decisions: z.array(z.string().max(3000)).max(200),
   actions: z.array(z.string().max(3000)).max(200),
+  action_rows: minuteActionRowsSchema.optional(),
   sourceUrl: z.string().max(2000).refine(v => !v || safeMinutesUrl(v) !== null, 'Gebruik een veilige https-bronverwijzing.'),
   fileHash: z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
   confirm: z.literal(true),

@@ -54,6 +54,7 @@ type Task = {
   deadline: string | null; priority: TaskPriority; status: TaskStatus; source_system?: string | null; source_ref?: string | null;
   created_by?: string | null; created_at?: string; created_origin?: "medewerker" | "bronimport" | null;
   completed_at?: string | null; completed_by?: string | null; local_only_completed_by?: string | null;
+  board_minutes_private?: boolean;
 };
 type Staff = { user_id: string; email: string; full_name: string | null };
 
@@ -100,6 +101,8 @@ function ProjectenInner() {
   });
   const tasksQ = useQuery({
     queryKey: ["internal-tasks", uid],
+    refetchInterval:5000,
+    refetchOnWindowFocus:true,
     queryFn: async () => {
       const { data, error } = await db.from("internal_tasks").select("*").order("deadline", { ascending: true, nullsFirst: false });
       if (error) throw error;
@@ -202,6 +205,8 @@ function ProjectenInner() {
     },
     onSuccess: (id) => {
       toast.success("Taak opgeslagen"); setEditTask(null); invalidate();
+      qc.invalidateQueries({queryKey:['minutes-tasks']});
+      if(origTask(id)?.board_minutes_private)return;
       // Push mag het opslaan nooit blokkeren; status blijft per melding zichtbaar/herhaalbaar.
       void dispatchFn({ data: { taskId: id } }).catch((e) => console.warn("Taakpush niet verstuurd:", e));
     },

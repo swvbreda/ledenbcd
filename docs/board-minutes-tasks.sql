@@ -183,3 +183,19 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.board_minutes_tasks(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.board_minutes_tasks(uuid) TO authenticated;
+
+CREATE FUNCTION public.board_minutes_save_action_revision(p_input jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE vid uuid; prior public.board_minutes_import_details; fingerprint text; payload jsonb;
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.board_minutes_can_read() OR NOT public.has_role(auth.uid(),'admin') THEN RAISE EXCEPTION 'Alleen beheerders.' USING ERRCODE='42501'; END IF;
+ IF jsonb_typeof(p_input->'action_rows') IS DISTINCT FROM 'array' OR jsonb_array_length(p_input->'action_rows')>200 THEN RAISE EXCEPTION 'Ongeldige actierijen.'; END IF;
+ fingerprint:=encode(extensions.digest(convert_to(p_input::text,'UTF8'),'sha256'),'hex');
+ vid:=public.board_minutes_save_revision(nullif(p_input->>'meetingId','')::uuid,nullif(p_input->>'expectedVersion','')::uuid,p_input->>'source',p_input->>'sourceId',(p_input->>'date')::date,p_input->>'title',p_input->>'report',p_input->'decisions',p_input->'actions',nullif(p_input->>'sourceUrl',''),(p_input->>'confirm')::boolean,fingerprint);
+ SELECT * INTO prior FROM public.board_minutes_import_details WHERE version_id=nullif(p_input->>'expectedVersion','')::uuid;
+ payload:=coalesce(prior.details,jsonb_build_object('reviewRequired',true,'reportMissing',false,'meetingType','bestuursvergadering','originalName','Portaalversie','sourcePaths','[]'::jsonb,'dateBasis','Vergaderdatum','versionLabel','Concept'));
+ payload:= (payload-'sections'-'formatted'-'formattedFingerprint') || jsonb_build_object('status','concept','action_rows',p_input->'action_rows');
+ INSERT INTO public.board_minutes_import_details(version_id,details,source_text,created_by) VALUES(vid,payload,coalesce(prior.source_text,p_input->>'report'),auth.uid()) ON CONFLICT(version_id) DO NOTHING;
+ RETURN vid;
+END $$;
+REVOKE ALL ON FUNCTION public.board_minutes_save_action_revision(jsonb) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.board_minutes_save_action_revision(jsonb) TO authenticated;
