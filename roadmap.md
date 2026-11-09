@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Bestuur → Vergaderingen en notulen — niet publiceren
+- [ ] Rechten-timeout na afgeronde import smal onderzoeken/herstellen; geen authmint/herimport/MFA/rechtenwijziging. Read-only bevestiging: 182 vergaderingen, 320 privéobjecten, 13 nieuwste opmaakversies ieder DOCX+PDF+origineel, 0 vaststellingen.
 - [x] Schema-2 topical-formatted ZIP in bestaande Archiefpakket-bediening: exact 13 bestaande bronIDs/26 gehashte DOCX/PDF, gedeelde append-only versie per paar, originele PDF-hash en alle bestaande vergaderingen vóór writes gecontroleerd, latest-lock/full-content-idempotentie, geen vaststelling/taakactivatie. Metadata te controleren, AI/brief/agenda onderscheiden. 35 regeltests + 4 componenttests en geïsoleerde SQL-versie/rechtenproef geslaagd; migratie 0083 toegepast/read-only teruggelezen, bouw OK. Geen werkelijke import door assistent; eigen browserketen wacht op aangeleverd schema-2-pakket en gebruikersupload.
 - [x] Broncorrectie Topical in import/print: 2 april AI-verslag met bronwaarschuwing, 7 mei beknopte notities met één historische actie alleen in brontekst, alleen 4 juni verslag ontbreekt; tien samenvattingen behouden. Alle 13 echte manifestbronnen gecontroleerd, 27 regeltests + 4 componenttests geslaagd, automatische bouw OK. Geen inhoud herschreven of private records gewijzigd; eigen sessie nog signed_out.
 - [ ] Gestandaardiseerde Topical DOCX/PDF aanvullingen privé toevoegen aan dezelfde vergaderingen; wacht op aanlevering en bruikbare eigen adminsessie, geen nieuwe lege/duplicaatrecords.
