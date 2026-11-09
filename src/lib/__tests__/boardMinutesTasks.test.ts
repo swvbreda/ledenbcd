@@ -1,6 +1,7 @@
 import { describe,it,expect } from 'vitest';
-import { explicitOwnerParts,exactDeadline,minuteActionRowsSchema } from '../boardMinutesTasks';
+import { explicitOwnerParts,exactDeadline,minuteActionRowsSchema,taskResponsibles } from '../boardMinutesTasks';
 describe('minutes task rules',()=>{
+ it('uses register names for the shared board task including a missing account',()=>{const t={action_id:'a',row_index:0,action:'Task',owner:'Bestuur',deadline:'',task_id:'t',status:'te_doen',assignees:[{user_id:'u',name:'Account alias'}],collective_board:true,board_responsibles:[{user_id:'u',name:'Real Board Name'},{user_id:null,name:'Missing Account Name'}],needs_assignment:true,completed_by:null,completed_name:null,completed_at:null};expect(taskResponsibles(t)).toBe('Aan alle bestuursleden samen · Real Board Name, Missing Account Name');});
  it('keeps Simone separate from the unassigned collective',()=>expect(explicitOwnerParts('Simone + betrokken bestuursleden')).toEqual(['Simone','betrokken bestuursleden']));
  it('supports multiple explicit people without choosing from Bestuur',()=>{expect(explicitOwnerParts('Huub en Joachim')).toEqual(['Huub','Joachim']);expect(explicitOwnerParts('Bestuur')).toEqual(['Bestuur']);});
  it('accepts only literal real dates, never inferred deadlines',()=>{expect(exactDeadline('2026-12-01')).toBe('2026-12-01');expect(exactDeadline('2026-02-30')).toBeNull();expect(exactDeadline('Volgende vergadering')).toBeNull();});

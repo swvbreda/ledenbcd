@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { completeTaskLocally,type LocalCompleteDb } from '@/lib/internalWork';
 import { activateMinutesTasks,assignMinutesTask,loadMinutesTasks } from '@/lib/boardMinutesTasks.functions';
 import type { MinutesTaskRow } from '@/lib/boardMinutesTasks';
+import { taskResponsibles } from '@/lib/boardMinutesTasks';
 
 export function useMinutesTaskStatus(versionId:string,userId:string){
   return useQuery({queryKey:['minutes-tasks',userId,versionId],enabled:!!userId&&versionId!=='00000000-0000-0000-0000-000000000000',queryFn:()=>loadMinutesTasks({data:{versionId}}),refetchInterval:5000,refetchOnWindowFocus:true,retry:false});
@@ -23,7 +24,7 @@ export function MinutesTaskControls({versionId,userId,canActivate}:{versionId:st
   return <section className="minutes-no-print space-y-3 border-t border-border pt-5" aria-label="Actuele bestuurstaken"><h2 className="font-display text-xl">Actuele bestuurstaken</h2>
     {q.isPending&&<p role="status">Taken laden…</p>}{(error||q.error)&&<p role="alert" className="text-destructive">{error||'Actuele taken konden niet worden geladen.'}</p>}
     {canActivate&&q.data&&!q.data.enabled&&<Button onClick={()=>setConfirm(true)}>15 conceptacties aan taken koppelen</Button>}
-    {q.data?.rows.map(t=><div key={t.action_id} className="space-y-2 border-b border-border py-3"><p className="break-words font-medium">{t.action}</p><p className="text-sm">{t.status==='afgerond'?'Afgerond':'Open'} · {t.assignees.map(s=>s.name).join(', ')||'Toewijzing nodig'}{t.needs_assignment&&t.assignees.length>0?' · Overige toewijzing nodig':''}</p>{t.completed_at&&<p className="text-xs text-muted-foreground">Afgerond door {t.completed_name||'Niet geregistreerd'} op {new Date(t.completed_at).toLocaleString('nl-NL')}</p>}
+    {q.data?.rows.map(t=><div key={t.action_id} className="space-y-2 border-b border-border py-3"><p className="break-words font-medium">{t.action}</p><p className="text-sm">{t.status==='afgerond'?'Afgerond':'Open'} · {taskResponsibles(t)}{t.needs_assignment?(t.collective_board?' · Accountkoppeling nodig':t.assignees.length>0?' · Overige toewijzing nodig':''):''}</p>{t.completed_at&&<p className="text-xs text-muted-foreground">Afgerond door {t.completed_name||'Niet geregistreerd'} op {new Date(t.completed_at).toLocaleString('nl-NL')}</p>}
       {q.data.can_manage&&<div className="flex flex-wrap gap-2"><Button asChild size="sm" variant="outline"><Link to={`/projecten?task=${t.task_id}`}>Taak openen</Link></Button><Button size="sm" variant="outline" disabled={busy} onClick={()=>void run(()=>status(t))}>{t.status==='afgerond'?'Heropenen':'Afronden'}</Button><Button size="sm" variant="outline" onClick={()=>{setEditing(t);setPeople(t.assignees.map(s=>s.user_id));}}>Toewijzing</Button></div>}
     </div>)}
     {confirm&&<Dialog open onOpenChange={setConfirm}><DialogContent><DialogHeader><DialogTitle>Conceptacties koppelen?</DialogTitle><DialogDescription>Alleen de nieuwste 15 acties van 6 november. Geen oude notulen of berichten.</DialogDescription></DialogHeader><Button disabled={busy} onClick={()=>void run(()=>activate({data:{versionId,confirm:true}}))}>Bevestig taakregistratie</Button></DialogContent></Dialog>}

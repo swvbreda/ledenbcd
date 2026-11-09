@@ -13,10 +13,24 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  SELECT task_id INTO tid FROM public.board_minutes_action_links WHERE id=aid;
  IF (SELECT count(*) FROM public.board_minutes_action_assignees WHERE action_id=aid)<>2 THEN RAISE EXCEPTION 'Multiple explicit names not matched'; END IF;
  IF (SELECT deadline FROM public.internal_tasks WHERE id=tid)<>'2026-12-01' THEN RAISE EXCEPTION 'Explicit date lost'; END IF;
- IF NOT EXISTS(SELECT 1 FROM public.board_minutes_action_links l JOIN public.board_minutes_action_versions a ON a.action_id=l.id WHERE a.version_id=v AND a.row_index=1 AND l.needs_assignment) THEN RAISE EXCEPTION 'Collective guessed'; END IF;
+ IF (SELECT count(*) FROM public.board_minutes_action_board_members b JOIN public.board_minutes_action_versions a ON a.action_id=b.action_id WHERE a.version_id=v AND a.row_index=1)<>5 THEN RAISE EXCEPTION 'Not all five real register members bound'; END IF;
+ IF (SELECT count(*) FROM public.board_minutes_action_assignees b JOIN public.board_minutes_action_versions a ON a.action_id=b.action_id WHERE a.version_id=v AND a.row_index=1)<>3 THEN RAISE EXCEPTION 'Active account matching failed'; END IF;
+ IF EXISTS(SELECT 1 FROM public.board_minutes_action_board_members WHERE name='Aspirant Local') THEN RAISE EXCEPTION 'Aspirant included'; END IF;
+ IF EXISTS(SELECT 1 FROM public.board_minutes_action_assignees WHERE user_id IN ('00000000-0000-0000-0000-000000000008','00000000-0000-0000-0000-000000000009','00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000011')) THEN RAISE EXCEPTION 'Excluded account assigned'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.board_minutes_action_board_members WHERE name='Missing Board' AND user_id IS NULL) THEN RAISE EXCEPTION 'Missing account invented'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.board_minutes_action_links l JOIN public.board_minutes_action_versions a ON a.action_id=l.id WHERE a.version_id=v AND a.row_index=1 AND l.collective_board AND l.needs_assignment) THEN RAISE EXCEPTION 'Missing account warning lost'; END IF;
  IF (SELECT count(*) FROM public.board_minutes_action_assignees s JOIN public.board_minutes_action_versions a ON a.action_id=s.action_id WHERE a.version_id=v AND a.row_index=2)<>1 THEN RAISE EXCEPTION 'Explicit person plus collective lost'; END IF;
  PERFORM public.board_minutes_sync_tasks(v,false);
  IF (SELECT count(*) FROM public.internal_tasks)<>3 THEN RAISE EXCEPTION 'Duplicate sync'; END IF;
+ DECLARE shared_id uuid; shared_action uuid; BEGIN
+ SELECT l.task_id,l.id INTO shared_id,shared_action FROM public.board_minutes_action_links l JOIN public.board_minutes_action_versions a ON a.action_id=l.id WHERE a.version_id=v AND a.row_index=1;
+ UPDATE public.internal_tasks SET status='afgerond' WHERE id=shared_id;
+ PERFORM public.board_minutes_sync_tasks(v,false);
+ IF public.board_minutes_tasks(v)->'rows'->1->>'status'<>'afgerond' THEN RAISE EXCEPTION 'Shared completion reset'; END IF;
+ IF jsonb_array_length(public.board_minutes_tasks(v)->'rows'->1->'board_responsibles')<>5 THEN RAISE EXCEPTION 'Shared names projection missing'; END IF;
+ UPDATE public.internal_tasks SET status='te_doen' WHERE id=shared_id;
+ IF public.board_minutes_tasks(v)->'rows'->1->>'status'<>'te_doen' OR NOT EXISTS(SELECT 1 FROM public.board_minutes_action_links WHERE id=shared_action AND task_id=shared_id) THEN RAISE EXCEPTION 'Shared reopen changed binding'; END IF;
+ END;
  UPDATE public.internal_tasks SET status='afgerond' WHERE id=tid;
  IF NOT EXISTS(SELECT 1 FROM public.internal_tasks WHERE id=tid AND completed_by=auth.uid() AND completed_at IS NOT NULL) THEN RAISE EXCEPTION 'Actual completion actor/time missing'; END IF;
  result:=public.board_minutes_tasks(v);
