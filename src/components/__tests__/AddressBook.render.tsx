@@ -47,3 +47,17 @@ describe('address book roles and filters', () => {
   it('search uses organisation category for Kamer roles', () => { const kamer = { ...org, id: 'tk', name: 'SYNTHETISCH Fractie', category: 'Tweede Kamer' }; const d: AddressBook = { organizations: [org, kamer], contacts: [...data.contacts, { ...data.contacts[0], id: 'c-k', organization_id: 'tk', name: 'SYNTHETISCH Kim', position: 'Beleidsmedewerker' }, { ...data.contacts[0], id: 'c-l', organization_id: 'tk', name: 'SYNTHETISCH Lid', position: 'Tweede Kamerlid' }] }; expect(searchAddressBook(d, '', '', 'Kamermedewerkers').contacts.map(c => c.id)).toEqual(['c-k']); expect(searchAddressBook(d, '', '', 'Kamerleden').organizations.map(o => o.id)).toEqual(['tk']); expect(searchAddressBook(d, 'kim', 'Tweede Kamer', 'Beleidsmedewerkers en adviseurs').contacts).toHaveLength(0); });
   it('labels stored categories', () => { expect(categoryLabel('Brancheorganisatie')).toBe('Branche- en koepelorganisaties'); expect(categoryLabel('Ministerie')).toBe('Ministeries'); });
 });
+import { visibleNote as vn, groupByCategory as gb } from '@/lib/addressBook';
+describe('card notes and category groups', () => {
+  it('hides source paragraphs but keeps practical notes', () => {
+    const note = 'Mailbron: ‘Uitnodiging’, 01-02-2026. Bron: https://outlook.cloud.microsoft/mail/id/X. Gecontroleerd op 9 november 2026.\n\nAanvullende bron: e-mail.\n\nBereikbaar op dinsdag; liever bellen.';
+    expect(vn(note)).toBe('Bereikbaar op dinsdag; liever bellen.');
+    expect(vn('Bron: Outlook-uitnodiging. Vastgelegd op 9 november 2026.')).toBe('');
+    expect(vn('Aanwezig bij Foundation Dinner.')).toBe('Aanwezig bij Foundation Dinner.');
+  });
+  it('groups only non-empty categories alphabetically', () => {
+    const g = gb([{ category: 'Gemeente', name: 'Utrecht' }, { category: 'Gemeente', name: 'Amsterdam' }, { category: 'Tweede Kamer', name: 'TK' }]);
+    expect(g.map(x => [x.category, x.items.length])).toEqual([['Tweede Kamer', 1], ['Gemeente', 2]]);
+    expect(g[1].items[0].name).toBe('Amsterdam');
+  });
+});
