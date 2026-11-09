@@ -16,13 +16,12 @@ DO $$ DECLARE v uuid; v2 uuid; v3 uuid; mid uuid; f uuid; h text:=repeat('a',64)
  IF NOT EXISTS(SELECT 1 FROM public.board_minutes_adoptions WHERE version_id=v AND adopted_by=auth.uid()) THEN RAISE EXCEPTION 'Adoption actor'; END IF;
  BEGIN PERFORM public.board_minutes_attach(v,path,'Other name.pdf',h,12); RAISE EXCEPTION 'Adopted attachment mutation allowed'; EXCEPTION WHEN raise_exception THEN IF SQLERRM='Adopted attachment mutation allowed' THEN RAISE; END IF; END;
  v2:=public.board_minutes_save_revision(mid,v,'topical','synthetic-original','2026-11-06','Synthetic board minutes','Private report revised','["Decision"]','["Action"]','https://example.invalid/source',true,NULL);
- IF NOT EXISTS(SELECT 1 FROM public.board_minutes_files WHERE version_id=v2 AND path=board_minutes_privacy.path) THEN NULL; END IF;
  SELECT count(*) INTO n FROM public.board_minutes_files WHERE version_id=v2; IF n<>1 THEN RAISE EXCEPTION 'Original not inherited'; END IF;
  v3:=public.board_minutes_save_revision(NULL,NULL,'topical','synthetic-original','2026-11-06','Synthetic board minutes','Private report revised','["Decision"]','["Action"]','https://example.invalid/source',true,repeat('b',64));
  IF v3=v2 THEN RAISE EXCEPTION 'Changed original hash lost'; END IF;
  SELECT count(*) INTO n FROM public.board_minutes_versions WHERE meeting_id=mid; IF n<>3 THEN RAISE EXCEPTION 'Version history lost'; END IF;
  BEGIN PERFORM public.board_minutes_save_revision(mid,v,'topical','synthetic-original','2026-11-06','Stale edit','Different','[]','[]',NULL,true,NULL); RAISE EXCEPTION 'Stale overwrite'; EXCEPTION WHEN serialization_failure THEN NULL; END;
- BEGIN UPDATE storage.objects SET name='changed' WHERE name=path; RAISE EXCEPTION 'Storage overwrite allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN UPDATE storage.objects SET name='changed' WHERE bucket_id='board-minutes'; RAISE EXCEPTION 'Storage overwrite allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  RESET ROLE;
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true); SET LOCAL ROLE authenticated;
  SELECT count(*) INTO n FROM public.board_minutes_versions; IF n<>3 THEN RAISE EXCEPTION 'Board cannot read'; END IF;
