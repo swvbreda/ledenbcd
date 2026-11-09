@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- The internal address book uses only address_book_organizations/contact rows and existing has_role/is_board_member RLS for every operation; its user-scoped query cache and forms never invoke member-account or external-party workflows.
+
 - Dashboard layout and chart engines load only when their protected content renders; member row and sanitized-directory reads run concurrently but publish one complete user-scoped result, so startup avoids unnecessary code and serial waits without weakening authorization.
 
 - Native push receipt must not clear delivered notifications: iOS emits receipt before foreground presentation, and delivery is not acknowledgement. Keep existing open/resume/tap badge cleanup and never log notification payloads.

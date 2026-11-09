@@ -49,6 +49,8 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as DashboardAgendaIndexRouteImport } from './routes/_dashboard/agenda.index'
 import { Route as DashboardAgendaEventIdRouteImport } from './routes/_dashboard/agenda.$eventId'
 import { Route as DashboardCoffeeshopregisterIndexRouteImport } from './routes/_dashboard/coffeeshopregister.index'
+import { Route as DashboardContactenIndexRouteImport } from './routes/_dashboard/contacten.index'
+import { Route as DashboardContactenIdRouteImport } from './routes/_dashboard/contacten.$id'
 import { Route as DashboardEnquetesIndexRouteImport } from './routes/_dashboard/enquetes.index'
 import { Route as DashboardExternePartijenIndexRouteImport } from './routes/_dashboard/externe-partijen.index'
 import { Route as DashboardExternePartijenIdRouteImport } from './routes/_dashboard/externe-partijen.$id'
@@ -283,6 +285,16 @@ const DashboardCoffeeshopregisterIndexRoute =
     path: '/coffeeshopregister/',
     getParentRoute: () => DashboardRoute,
   } as any)
+const DashboardContactenIndexRoute = DashboardContactenIndexRouteImport.update({
+  id: '/contacten/',
+  path: '/contacten/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardContactenIdRoute = DashboardContactenIdRouteImport.update({
+  id: '/contacten/$id',
+  path: '/contacten/$id',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardEnquetesIndexRoute = DashboardEnquetesIndexRouteImport.update({
   id: '/enquetes/',
   path: '/enquetes/',
@@ -489,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/extern/': typeof ExternIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
+  '/contacten/$id': typeof DashboardContactenIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
@@ -509,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/extern/product/$id': typeof ExternProductIdRoute
   '/agenda/': typeof DashboardAgendaIndexRoute
   '/coffeeshopregister/': typeof DashboardCoffeeshopregisterIndexRoute
+  '/contacten/': typeof DashboardContactenIndexRoute
   '/enquetes/': typeof DashboardEnquetesIndexRoute
   '/externe-partijen/': typeof DashboardExternePartijenIndexRoute
   '/leden/': typeof DashboardLedenIndexRoute
@@ -560,6 +574,7 @@ export interface FileRoutesByTo {
   '/extern': typeof ExternIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/agenda/$eventId': typeof DashboardAgendaEventIdRoute
+  '/contacten/$id': typeof DashboardContactenIdRoute
   '/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/leden/$id': typeof DashboardLedenIdRoute
   '/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
@@ -580,6 +595,7 @@ export interface FileRoutesByTo {
   '/extern/product/$id': typeof ExternProductIdRoute
   '/agenda': typeof DashboardAgendaIndexRoute
   '/coffeeshopregister': typeof DashboardCoffeeshopregisterIndexRoute
+  '/contacten': typeof DashboardContactenIndexRoute
   '/enquetes': typeof DashboardEnquetesIndexRoute
   '/externe-partijen': typeof DashboardExternePartijenIndexRoute
   '/leden': typeof DashboardLedenIndexRoute
@@ -633,6 +649,7 @@ export interface FileRoutesById {
   '/extern/': typeof ExternIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_dashboard/agenda/$eventId': typeof DashboardAgendaEventIdRoute
+  '/_dashboard/contacten/$id': typeof DashboardContactenIdRoute
   '/_dashboard/externe-partijen/$id': typeof DashboardExternePartijenIdRoute
   '/_dashboard/leden/$id': typeof DashboardLedenIdRoute
   '/_dashboard/ledenvoordelen/$id': typeof DashboardLedenvoordelenIdRoute
@@ -653,6 +670,7 @@ export interface FileRoutesById {
   '/extern/product/$id': typeof ExternProductIdRoute
   '/_dashboard/agenda/': typeof DashboardAgendaIndexRoute
   '/_dashboard/coffeeshopregister/': typeof DashboardCoffeeshopregisterIndexRoute
+  '/_dashboard/contacten/': typeof DashboardContactenIndexRoute
   '/_dashboard/enquetes/': typeof DashboardEnquetesIndexRoute
   '/_dashboard/externe-partijen/': typeof DashboardExternePartijenIndexRoute
   '/_dashboard/leden/': typeof DashboardLedenIndexRoute
@@ -706,6 +724,7 @@ export interface FileRouteTypes {
     | '/extern/'
     | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
+    | '/contacten/$id'
     | '/externe-partijen/$id'
     | '/leden/$id'
     | '/ledenvoordelen/$id'
@@ -726,6 +745,7 @@ export interface FileRouteTypes {
     | '/extern/product/$id'
     | '/agenda/'
     | '/coffeeshopregister/'
+    | '/contacten/'
     | '/enquetes/'
     | '/externe-partijen/'
     | '/leden/'
@@ -777,6 +797,7 @@ export interface FileRouteTypes {
     | '/extern'
     | '/.lovable/oauth/consent'
     | '/agenda/$eventId'
+    | '/contacten/$id'
     | '/externe-partijen/$id'
     | '/leden/$id'
     | '/ledenvoordelen/$id'
@@ -797,6 +818,7 @@ export interface FileRouteTypes {
     | '/extern/product/$id'
     | '/agenda'
     | '/coffeeshopregister'
+    | '/contacten'
     | '/enquetes'
     | '/externe-partijen'
     | '/leden'
@@ -849,6 +871,7 @@ export interface FileRouteTypes {
     | '/extern/'
     | '/.lovable/oauth/consent'
     | '/_dashboard/agenda/$eventId'
+    | '/_dashboard/contacten/$id'
     | '/_dashboard/externe-partijen/$id'
     | '/_dashboard/leden/$id'
     | '/_dashboard/ledenvoordelen/$id'
@@ -869,6 +892,7 @@ export interface FileRouteTypes {
     | '/extern/product/$id'
     | '/_dashboard/agenda/'
     | '/_dashboard/coffeeshopregister/'
+    | '/_dashboard/contacten/'
     | '/_dashboard/enquetes/'
     | '/_dashboard/externe-partijen/'
     | '/_dashboard/leden/'
@@ -1205,6 +1229,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCoffeeshopregisterIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/_dashboard/contacten/': {
+      id: '/_dashboard/contacten/'
+      path: '/contacten'
+      fullPath: '/contacten/'
+      preLoaderRoute: typeof DashboardContactenIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/contacten/$id': {
+      id: '/_dashboard/contacten/$id'
+      path: '/contacten/$id'
+      fullPath: '/contacten/$id'
+      preLoaderRoute: typeof DashboardContactenIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/_dashboard/enquetes/': {
       id: '/_dashboard/enquetes/'
       path: '/enquetes'
@@ -1438,12 +1476,14 @@ interface DashboardRouteChildren {
   DashboardWhatsappInboxRoute: typeof DashboardWhatsappInboxRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardAgendaEventIdRoute: typeof DashboardAgendaEventIdRoute
+  DashboardContactenIdRoute: typeof DashboardContactenIdRoute
   DashboardExternePartijenIdRoute: typeof DashboardExternePartijenIdRoute
   DashboardLedenIdRoute: typeof DashboardLedenIdRoute
   DashboardLedenvoordelenIdRoute: typeof DashboardLedenvoordelenIdRoute
   DashboardLocatiesGemeenteRoute: typeof DashboardLocatiesGemeenteRoute
   DashboardAgendaIndexRoute: typeof DashboardAgendaIndexRoute
   DashboardCoffeeshopregisterIndexRoute: typeof DashboardCoffeeshopregisterIndexRoute
+  DashboardContactenIndexRoute: typeof DashboardContactenIndexRoute
   DashboardEnquetesIndexRoute: typeof DashboardEnquetesIndexRoute
   DashboardExternePartijenIndexRoute: typeof DashboardExternePartijenIndexRoute
   DashboardLedenIndexRoute: typeof DashboardLedenIndexRoute
@@ -1474,12 +1514,14 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardWhatsappInboxRoute: DashboardWhatsappInboxRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardAgendaEventIdRoute: DashboardAgendaEventIdRoute,
+  DashboardContactenIdRoute: DashboardContactenIdRoute,
   DashboardExternePartijenIdRoute: DashboardExternePartijenIdRoute,
   DashboardLedenIdRoute: DashboardLedenIdRoute,
   DashboardLedenvoordelenIdRoute: DashboardLedenvoordelenIdRoute,
   DashboardLocatiesGemeenteRoute: DashboardLocatiesGemeenteRoute,
   DashboardAgendaIndexRoute: DashboardAgendaIndexRoute,
   DashboardCoffeeshopregisterIndexRoute: DashboardCoffeeshopregisterIndexRoute,
+  DashboardContactenIndexRoute: DashboardContactenIndexRoute,
   DashboardEnquetesIndexRoute: DashboardEnquetesIndexRoute,
   DashboardExternePartijenIndexRoute: DashboardExternePartijenIndexRoute,
   DashboardLedenIndexRoute: DashboardLedenIndexRoute,

@@ -1,5 +1,11 @@
 # Roadmap
 
+## Intern adresboek Contacten — niet publiceren
+- [x] Eigen adresboekopslag; migraties 0076/0077 toegepast, bestaande has_role/is_board_member geverifieerd, RLS en minimale grants teruggelezen.
+- [x] /contacten en /contacten/$id, organisatie-/persoonszoekresultaten, formulieren, gedeeld desktop/mobielmenu en rij-gecontroleerde opslag/verwijdering.
+- [x] Geïsoleerde PostgreSQL met actuele helperdefinities: twee contacten, CRUD/readback/cascade, admin/bestuur toegestaan en lid/extern/ongelinkte inhuur/anon geweigerd; rollback 0/0. Componenttests en formulier desktop/mobiel; bouw OK. docs/address-book-review.md.
+- [ ] Volledige ingelogde browserketen (toevoegen/herladen/zoeken/menu): preview signed_out; geen sessie beschikbaar, geen authmint uitgevoerd. Gebruikerreview nodig; niet gepubliceerd.
+
 ## Lokale woordvoerders — gerichte dashboardreview 6 november (niet publiceren)
 - [x] Productie bevat eerdere fix én resterende Aspirant-tak/incomplete fallback; actuele website levert vier woordvoerders. Echte dashboardcomponent gebruikt alleen bronroster onder Lokale woordvoerders; geen oude fallback, expliciete fout/herpoging, Joachim blijft bestuurder. Acht tests en desktop/mobiele presentatiecontrole geslaagd, build OK; docs/dashboard-spokespeople-review.md. Geen publicatie/rechten/data/verzending.
 - [ ] Echte ingelogde dashboard/toestelcontrole: sessie signed_out, geen authmint; screenshot met Aspirant niet volledig verklaard door huidige live predicate, oudere geladen client mogelijk maar onbewezen. Review door Simone nodig.

@@ -533,6 +533,20 @@
       "when": 1793653532359,
       "tag": "0075_member_reconfirmation_individual_send",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1794214810709,
+      "tag": "0076_internal_address_book",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1794215025189,
+      "tag": "0077_address_book_minimal_grants",
+      "breakpoints": true
     }
   ]
 }

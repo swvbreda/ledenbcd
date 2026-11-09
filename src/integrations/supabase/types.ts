@@ -40,6 +40,95 @@ export type Database = {
           },
         ]
       }
+      address_book_contacts: {
+        Row: {
+          created_at: string
+          department: string
+          email: string
+          id: string
+          name: string
+          note: string
+          organization_id: string
+          phone: string
+          position: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          email?: string
+          id?: string
+          name: string
+          note?: string
+          organization_id: string
+          phone?: string
+          position?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          email?: string
+          id?: string
+          name?: string
+          note?: string
+          organization_id?: string
+          phone?: string
+          position?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "address_book_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "address_book_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      address_book_organizations: {
+        Row: {
+          abbreviation: string
+          address: string
+          category: string
+          city: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          note: string
+          phone: string
+          postal_code: string
+          website: string
+        }
+        Insert: {
+          abbreviation?: string
+          address?: string
+          category?: string
+          city?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name: string
+          note?: string
+          phone?: string
+          postal_code?: string
+          website?: string
+        }
+        Update: {
+          abbreviation?: string
+          address?: string
+          category?: string
+          city?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          note?: string
+          phone?: string
+          postal_code?: string
+          website?: string
+        }
+        Relationships: []
+      }
       advies_eligibility_attempts: {
         Row: {
           created_at: string
