@@ -22,7 +22,7 @@ export type MinuteMeeting = { id: string; source: string; source_id: string; cre
 export type MinuteVersion = { id: string; meeting_id: string; version: number; meeting_date: string; title: string; report: string; decisions: string[]; actions: string[]; source_url: string | null; content_hash: string; created_at: string; created_by: string };
 export type MinuteFile = { id: string; version_id: string; path: string; original_name: string; sha256: string; size_bytes: number; created_at: string; created_by: string };
 export type MinuteAdoption = { id: string; version_id: string; adopted_at: string; adopted_by: string };
-export type MinutesArchive = { meetings: MinuteMeeting[]; versions: MinuteVersion[]; files: MinuteFile[]; adoptions: MinuteAdoption[]; canManage: boolean };
+export type MinutesArchive = { meetings: MinuteMeeting[]; versions: MinuteVersion[]; files: MinuteFile[]; adoptions: MinuteAdoption[]; canManage: boolean; imports?: {version_id:string;details:import('./boardMinutesImport').ImportDetails;source_text:string}[] };
 
 export function safeMinutesUrl(value: string): string | null {
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : null; } catch { return null; }
@@ -35,7 +35,7 @@ export function filterMinutes(archive: MinutesArchive, query: string, year: stri
     const latest = versions[0];
     if (!latest || (year && latest.meeting_date.slice(0,4) !== year)) return [];
     const matching = versions.find(v => {
-      const haystack = [v.title,v.report,...v.decisions,...v.actions].join(' ').toLocaleLowerCase('nl');
+      const haystack = [v.title,v.report,...v.decisions,...v.actions,archive.imports?.find(d=>d.version_id===v.id)?.source_text??''].join(' ').toLocaleLowerCase('nl');
       return words.every(w => haystack.includes(w));
     });
     return matching ? [{ meeting, latest, matchingVersion: matching.id }] : [];

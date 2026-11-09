@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { minutesSaveSchema, requireMinutesAccess, validateMinutesBytes, MINUTES_BUCKET, type MinuteVersion, type MinutesArchive } from './boardMinutes';
+import { importRevisionSchema, importDetailsSchema } from './boardMinutesImport';
 
 // Generated RPC types do not model PostgreSQL nullable input parameters.
 type RevisionArgs = { p_meeting:string|null; p_expected:string|null; p_source:string; p_source_id:string; p_date:string; p_title:string; p_report:string; p_decisions:string[]; p_actions:string[]; p_url:string|null; p_confirm:boolean; p_file_hash:string|null };
@@ -9,13 +10,24 @@ type RevisionArgs = { p_meeting:string|null; p_expected:string|null; p_source:st
 export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }): Promise<MinutesArchive> => {
   const canManage = await requireMinutesAccess(context);
   const sb = context.supabase;
-  const [meetings, versions, files, adoptions] = await Promise.all([
+  const [meetings, versions, files, adoptions, imports] = await Promise.all([
     sb.from('board_minutes_meetings').select('*').order('created_at', { ascending: false }),
     sb.from('board_minutes_versions').select('*').order('version', { ascending: false }),
     sb.from('board_minutes_files').select('*'), sb.from('board_minutes_adoptions').select('*'),
+    sb.from('board_minutes_import_details').select('version_id,details,source_text'),
   ]);
-  if ([meetings, versions, files, adoptions].some(r => r.error)) throw new Error('Bestuursnotulen konden niet worden geladen.');
-  return { meetings: meetings.data ?? [], versions: (versions.data ?? []) as MinuteVersion[], files: files.data ?? [], adoptions: adoptions.data ?? [], canManage };
+  if ([meetings, versions, files, adoptions, imports].some(r => r.error)) throw new Error('Bestuursnotulen konden niet worden geladen.');
+  return { meetings: meetings.data ?? [], versions: (versions.data ?? []) as MinuteVersion[], files: files.data ?? [], adoptions: adoptions.data ?? [], imports:(imports.data??[]).map(d=>({...d,details:importDetailsSchema.parse(d.details)})), canManage };
+});
+
+export const importBoardMinutes = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>importRevisionSchema.parse(d)).handler(async({data,context})=>{
+  await requireMinutesAccess(context,true);
+  const i=data.input;
+  const {data:id,error}=await context.supabase.rpc('board_minutes_import_revision',{p_source:i.source,p_source_id:i.sourceId,p_date:i.date,p_title:i.title,p_report:i.report,p_decisions:i.decisions,p_actions:i.actions,p_url:i.sourceUrl||'',p_hash:i.fileHash??'',p_details:data.details,p_source_text:data.sourceText});
+  if(error||!id)throw new Error(error?.message??'Import mislukt.');
+  const {data:version,error:readError}=await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id',id).single();
+  if(readError||!version)throw new Error('Import kon niet worden teruggelezen.');
+  return version;
 });
 
 export const saveBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(d => minutesSaveSchema.parse(d)).handler(async ({ data, context }) => {
