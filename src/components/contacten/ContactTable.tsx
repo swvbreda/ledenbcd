@@ -2,16 +2,22 @@ import { Link } from '@tanstack/react-router';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { visibleNote, isParliament, type Contact, type Organization } from '@/lib/addressBook';
+import { committeeName } from '@/lib/addressBookParliament';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmailLink } from './ContactLinks';
 
 const dash = <span className="text-muted-foreground" aria-label="leeg">–</span>;
 
-function ParliamentaryAssignments({ contact }: { contact: Contact }) {
+function ParliamentaryAssignments({ contact, committee }: { contact: Contact; committee?: string }) {
+  if (committee) {
+    const name = committee.toLocaleLowerCase('nl');
+    const assignments = (contact.committees ?? '').split(/\r\n|\r|\n/).map(line => line.trim()).filter(line => committeeName(line).toLocaleLowerCase('nl') === name);
+    return assignments.length ? <ul className="space-y-0.5">{[...new Set(assignments)].map(line => <li key={line}>{line}</li>)}</ul> : <span className="text-muted-foreground">Niet vastgelegd</span>;
+  }
   const groups = [
     { label: 'Commissies', one: 'commissie', more: 'commissies', value: contact.committees },
     { label: 'Beleidsterreinen', one: 'beleidsterrein', more: 'beleidsterreinen', value: contact.policy_areas },
-  ].map(group => ({ ...group, lines: (group.value ?? '').split('\n').map(line => line.trim()).filter(Boolean) })).filter(group => group.lines.length);
+  ].map(group => ({ ...group, lines: (group.value ?? '').split(/\r\n|\r|\n/).map(line => line.trim()).filter(Boolean) })).filter(group => group.lines.length);
   if (!groups.length) return <span className="text-muted-foreground">Niet vastgelegd</span>;
   return <div className="space-y-2">{groups.map(group => <div key={group.label}>
     {group.label === 'Beleidsterreinen' && <p className="mb-0.5 text-xs font-medium text-muted-foreground">Beleidsterreinen</p>}
@@ -21,9 +27,9 @@ function ParliamentaryAssignments({ contact }: { contact: Contact }) {
 }
 
 /** One continuous category table; detail uses the same rows and adds authorized actions. */
-export function ContactTable({ contacts, organizations, category = '', onEdit, onDelete, label, selected, onSelection }: {
+export function ContactTable({ contacts, organizations, category = '', onEdit, onDelete, label, selected, onSelection, committee }: {
   contacts: Contact[]; organizations?: Organization[]; onEdit?: (c: Contact) => void; onDelete?: (c: Contact) => void;
-  label: string; category?: string; selected?: ReadonlySet<string>; onSelection?: (ids: string[], checked: boolean) => void;
+  label: string; category?: string; selected?: ReadonlySet<string>; onSelection?: (ids: string[], checked: boolean) => void; committee?: string;
 }) {
   const parliamentary = isParliament(category) || !!organizations?.length && organizations.every(o => isParliament(o.category));
   const singleParliament = parliamentary && organizations?.length === 1 ? organizations[0] : null;
@@ -45,7 +51,7 @@ export function ContactTable({ contacts, organizations, category = '', onEdit, o
     <table className={`w-full border-collapse text-sm ${showOrganizations || parliamentary ? 'min-w-[68rem]' : 'min-w-[52rem]'}`} aria-label={label}>
       <thead className="bg-muted text-left text-xs text-muted-foreground"><tr>
         {selection && <th scope="col" className={cell}><Checkbox className="h-5 w-5" aria-label={`Alles selecteren: ${label}`} disabled={!ids.length} checked={checked === ids.length && ids.length > 0 ? true : checked > 0 ? 'indeterminate' : false} onCheckedChange={v => onSelection?.(ids, v === true)} /></th>}
-        {[...(showOrganizations ? ['Organisatie'] : []), 'Naam', ...(parliamentary ? ['Partij / fractie', 'Functie', 'Commissies / beleidsterreinen'] : ['Functie', 'Afdeling']), 'E-mail', 'Telefoon', ...(actions ? ['Acties'] : [])].map(h => <th key={h} scope="col" className={`${cell} font-semibold`}>{h}</th>)}
+        {[...(showOrganizations ? ['Organisatie'] : []), 'Naam', ...(parliamentary ? ['Partij / fractie', 'Functie', committee ? 'Commissie / rol' : 'Commissies / beleidsterreinen'] : ['Functie', 'Afdeling']), 'E-mail', 'Telefoon', ...(actions ? ['Acties'] : [])].map(h => <th key={h} scope="col" className={`${cell} font-semibold`}>{h}</th>)}
       </tr></thead>
       <tbody>{!rows.length && <tr><td colSpan={cols} className={cell}>Geen contactpersonen.</td></tr>}{rows.map(({ c, o }) => {
         const note = c ? visibleNote(c.note) : o ? visibleNote(o.note) : '';
@@ -56,7 +62,7 @@ export function ContactTable({ contacts, organizations, category = '', onEdit, o
             <td className={`${cell} min-w-36 max-w-56 font-semibold`}>{actions ? <span className="break-words">{c.name}</span> : <Link to="/contacten/$id" params={{ id: c.organization_id }} hash={`persoon-${c.id}`} className="break-words text-primary underline underline-offset-2">{c.name}</Link>}{note && <details className="mt-1 text-xs font-normal text-muted-foreground"><summary className="cursor-pointer py-1">Notitie</summary><p className="whitespace-pre-wrap break-words">{note}</p></details>}</td>
             {parliamentary && <td className={`${cell} min-w-28 max-w-40 break-words`}>{c.party || dash}</td>}
             <td className={`${cell} min-w-48 max-w-72 break-words ${c.position ? '' : 'italic text-muted-foreground'}`}>{c.position || 'Functie nog aan te vullen'}{parliamentary && c.department && c.department !== c.party && <p className="mt-0.5 text-xs font-normal not-italic text-muted-foreground">{c.department}</p>}</td>
-            {parliamentary ? <td className={`${cell} min-w-64 max-w-96 break-words`}><ParliamentaryAssignments contact={c} /></td> : <td className={`${cell} min-w-28 max-w-48 break-words`}>{c.department || dash}</td>}
+            {parliamentary ? <td className={`${cell} min-w-64 max-w-96 break-words`}><ParliamentaryAssignments contact={c} committee={committee} /></td> : <td className={`${cell} min-w-28 max-w-48 break-words`}>{c.department || dash}</td>}
             <td className={`${cell} min-w-48 max-w-64`}>{c.email ? <EmailLink email={c.email} /> : dash}</td>
             <td className={`${cell} whitespace-nowrap`}>{c.phone ? <a className="text-primary underline" href={`tel:${c.phone.replace(/[^+\d]/g, '')}`}>{c.phone}</a> : dash}</td>
             {actions && <td className={`${cell} whitespace-nowrap`}>
