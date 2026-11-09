@@ -24,7 +24,19 @@ export async function sha256(bytes: Uint8Array) {
 export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) {
   const originals:ImportOriginal[]=[];
   const manifestBytes=entries['manifest.json'];
-  if(!manifestBytes) throw new Error('manifest.json ontbreekt.');
+  if(!manifestBytes){
+    const json=entries['verslag.json'],txt=entries['verslag.txt'];
+    if(!json||!txt)throw new Error('manifest.json ontbreekt.');
+    const concept=z.object({title:z.string(),metadata:z.array(z.string()),decisions:z.array(z.string()),actions:z.array(z.string())}).parse(JSON.parse(new TextDecoder().decode(json)));
+    const text=new TextDecoder('utf-8',{fatal:true}).decode(txt);
+    const attachments=Object.entries(entries).filter(([name])=>/\.(pdf|docx)$/i.test(name));
+    if(attachments.length!==2||!attachments.some(([n])=>n.endsWith('.pdf'))||!attachments.some(([n])=>n.endsWith('.docx')))throw new Error('Concept vereist originele PDF en DOCX.');
+    const hash=await sha256(json);
+    const decisions=concept.decisions.filter(d=>!/^te bevestigen:/i.test(d));
+    const report=`Concept; deelnemerslijst onbekend. Dinerbijdrage € 7.500: TE BEVESTIGEN, geen vastgesteld besluit of betaalopdracht.\n\n${text}`;
+    for(const [name,bytes]of attachments){validateMinutesBytes(name,bytes);const fileHash=await sha256(bytes);originals.push({path:name,name,hash:fileHash,revision:importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'upload',sourceId:'handmatig:2026-11-06:bestuur',date:'2026-11-06',title:concept.title,report,decisions,actions:concept.actions,sourceUrl:'',fileHash:hash,confirm:true},sourceText:text,details:{status:'concept',reviewRequired:true,reportMissing:false,meetingType:'bestuursvergadering',originalName:'Conceptpakket DOCX/PDF',sourcePaths:[],dateBasis:'Aangeleverd concept 6 november 2026',versionLabel:'Concept',attendance:'Onbekend; nog te bevestigen',recorder:'Secretariaat'}})});}
+    return {originals,meetings:1,excluded:0};
+  }
   if(manifestBytes.length>10*1024*1024)throw new Error('Manifest is te groot.');
   const manifest=manifestSchema.parse(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes)));
   const seen=new Set<string>();
