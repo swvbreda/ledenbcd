@@ -62,7 +62,7 @@ describe('native biometric login', () => {
     if (!email || !password) throw new Error('Login inputs missing');
     fireEvent.change(email, { target: { value: 'synthetic@example.invalid' } });
     fireEvent.change(password, { target: { value: 'fixture-password' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Inloggen', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Inloggen$/ }));
     await screen.findByText('Wil je voortaan inloggen met Face ID?');
     rerender(<LoginPage />);
     expect(screen.queryByText('Navigation completed')).toBeNull();

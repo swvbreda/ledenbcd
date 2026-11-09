@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Monitoring 9 november — geen publicatie of productiemutaties
-- [ ] Face ID: Capacitor 8/SPM-plugin registreren, toestemming en opslaanprompt controleren; fysieke iPhone-release apart nodig.
-- [ ] Goedkeuringen: naamnormalisatie voor geregistreerde dossiermatch herstellen, conflicten en ambigue reviewmatches geblokkeerd houden; gerichte regressies.
+- [x] Face ID: Capacitor 8/SPM-plugin geregistreerd via cap sync, Face ID-toestemming toegevoegd, opslaanprompt vóór navigatie gehouden; geïsoleerde hook/loginchecks.
+- [x] Goedkeuringen: naamnormalisatie voor geregistreerde dossiermatch hersteld, conflicten en ambigue reviewmatches blijven geblokkeerd; echte pagina met synthetische fixtures gecontroleerd zonder writes.
+- [ ] Native iPhone-archief en echte Face ID-controle: geen Xcode/macOS of fysieke telefoon in sandbox; nieuwe native app-release vereist, niet gepubliceerd.
 
 ## Contacten categorieën + Functie-filter — niet publiceren
 - [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.

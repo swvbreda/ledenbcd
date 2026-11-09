@@ -16,7 +16,7 @@ afterEach(() => { cleanup(); fixture.review = false; vi.clearAllMocks(); });
 
 it('enables the normalized recorded match, opens its dossier, and shows the existing-member confirmation', async () => {
   render(<GoedkeuringenPage />);
-  const approve = screen.getByRole('button', { name: 'Goedkeuren', exact: true });
+  const approve = screen.getByRole('button', { name: /^Goedkeuren$/ });
   expect(approve.hasAttribute('disabled')).toBe(false);
   fireEvent.click(screen.getByRole('button', { name: 'Bekijk lid' }));
   expect(fixture.navigate).toHaveBeenCalledWith('/leden/150');
@@ -29,6 +29,6 @@ it('enables the normalized recorded match, opens its dossier, and shows the exis
 it('retains the fail-closed block for ambiguous manual review and never performs an approval', () => {
   fixture.review = true;
   render(<GoedkeuringenPage />);
-  expect(screen.getByRole('button', { name: 'Goedkeuren', exact: true }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: /^Goedkeuren$/ }).hasAttribute('disabled')).toBe(true);
   expect(fixture.update).not.toHaveBeenCalled();
 });
