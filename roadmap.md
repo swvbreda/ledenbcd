@@ -1,14 +1,5 @@
 # Roadmap
 
-## Contacten compacte tabellen en bulkexport — niet publiceren
-- [x] Doorlopende categorietabellen, compacte detailgegevens en gesloten praktische notities.
-- [x] Gebruikersgebonden selectie, TXT/CSV-export en clipboardfallback; gerichte componenttests, echte tabellen desktop/390px met uitsluitend lokale synthetische fixture, CSV-download gecontroleerd. Geen openbare fixture/authbypass/DB- of nativewijzigingen; niet publiceren.
-
-## Monitoring 9 november — geen publicatie of productiemutaties
-- [x] Face ID: Capacitor 8/SPM-plugin geregistreerd via cap sync, Face ID-toestemming toegevoegd, opslaanprompt vóór navigatie gehouden; geïsoleerde hook/loginchecks.
-- [x] Goedkeuringen: naamnormalisatie voor geregistreerde dossiermatch hersteld, conflicten en ambigue reviewmatches blijven geblokkeerd; echte pagina met synthetische fixtures gecontroleerd zonder writes.
-- [ ] Native iPhone-archief en echte Face ID-controle: geen Xcode/macOS of fysieke telefoon in sandbox; nieuwe native app-release vereist, niet gepubliceerd.
-
 ## Contacten categorieën + Functie-filter — niet publiceren
 - [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.
 - [ ] Herindeling 51 organisaties (17 gecontroleerde categorie-updates): assistent voert uit na review, daarna publicatie. Geen actie voor Simone.

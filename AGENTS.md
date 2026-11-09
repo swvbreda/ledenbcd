@@ -1,15 +1,12 @@
 # Project architecture decisions
 
 - The internal address book uses only address_book_organizations/contact rows and existing has_role/is_board_member RLS for every operation; its user-scoped query cache and forms never invoke member-account or external-party workflows.
-- Address-book export uses only current user-scoped query results, intersects selection with current filters, and serializes whitelisted business fields locally; collapsed groups never alter export scope.
 
 - Dashboard layout and chart engines load only when their protected content renders; member row and sanitized-directory reads run concurrently but publish one complete user-scoped result, so startup avoids unnecessary code and serial waits without weakening authorization.
 
 - Native push receipt must not clear delivered notifications: iOS emits receipt before foreground presentation, and delivery is not acknowledgement. Keep existing open/resume/tap badge cleanup and never log notification payloads.
 
 - Current member rows own their canonical IDs; historical lead conversions only redirect absent IDs to a unique existing target, never reconstruct dossiers or grant access. Signup admin navigation uses the recorded match plus shop/city validation, because IDs are reused and names/emails alone can collide.
-- Signup navigation normalizes shop tokens/accents like the database matcher but still requires the recorded ID and matching city; ambiguous review requests remain blocked to avoid unintended dossier changes.
-- Native biometric login uses a Capacitor-major-compatible SPM plugin, registered through cap sync; credential unlock still signs in through the existing password auth flow, and the save choice must finish before login-page navigation.
 
 - Dashboard local spokespeople read the published Coffeeshopbond department section through a bounded, authenticated, read-only server adapter; never substitute board/aspirant rows for this roster, because they omit departments. Keep board records and authorization untouched, scope the query to the viewer, and show source/refresh errors explicitly.
 

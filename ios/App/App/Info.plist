@@ -58,8 +58,6 @@
 	<string>De app heeft toegang tot je foto's nodig om profielfoto's of logo's te uploaden.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>De app heeft toegang tot je camera nodig om direct een profielfoto of logo te maken.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Gebruik Face ID om je opgeslagen inloggegevens veilig te ontgrendelen.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

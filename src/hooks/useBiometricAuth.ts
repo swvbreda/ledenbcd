@@ -12,10 +12,10 @@ const BiometryType = {
 } as const;
 
 type BiometryTypeValue = (typeof BiometryType)[keyof typeof BiometryType];
-type NativeBiometricModule = typeof import("@capgo/capacitor-native-biometric");
+type NativeBiometricModule = typeof import("capacitor-native-biometric");
 
 const loadNativeBiometric = async (): Promise<NativeBiometricModule["NativeBiometric"]> => {
-  const module = await import("@capgo/capacitor-native-biometric");
+  const module = await import("capacitor-native-biometric");
   return module.NativeBiometric;
 };
 
