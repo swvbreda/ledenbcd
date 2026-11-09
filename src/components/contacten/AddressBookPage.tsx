@@ -39,6 +39,8 @@ function Content({ id, userId, query, category, role, onSearch }: { id?: string;
   const scope = org ? { organizations: [org], contacts } : results;
   const selectionContext = JSON.stringify([userId, id, query, category, role]);
   const [selection, setSelection] = useState<{ context: string; ids: Set<string> }>({ context: selectionContext, ids: new Set() });
+  // Permanently discard previous-context choices; the synchronous guard below protects the render before this effect.
+  useEffect(() => { setSelection({ context: selectionContext, ids: new Set() }); }, [selectionContext]);
   const selected = new Set(scope.contacts.filter(c => selection.context === selectionContext && selection.ids.has(c.id)).map(c => c.id));
   const select = (ids: string[], checked: boolean) => setSelection(() => { const next = new Set(selected); for (const cid of ids) { if (checked) next.add(cid); else next.delete(cid); } return { context: selectionContext, ids: next }; });
   const clearSelection = () => setSelection({ context: selectionContext, ids: new Set() });
