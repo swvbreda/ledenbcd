@@ -518,7 +518,7 @@ function ProjectenInner() {
           <PlannerPanel
             projects={activeProjects.map((p) => ({ id: p.id, title: p.title }))}
             staff={staffQ.data ?? []}
-            tasks={(tasksQ.data ?? []).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
+            tasks={(tasksQ.data ?? []).filter(t=>!t.board_minutes_private).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
             onSynced={invalidate}
           />
         </TabsContent>
@@ -541,7 +541,7 @@ function ProjectenInner() {
               <div><Label htmlFor="t-desc">Omschrijving</Label><Textarea id="t-desc" value={editTask.id && editTask.description === origTask(editTask.id)?.description ? presentText(editTask.description) : editTask.description ?? ""} onChange={(e) => setEditTask({ ...editTask, description: e.target.value })} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Project</Label>
-                  <Select value={editTask.project_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, project_id: v === NONE ? null : v })}>
+                  <Select disabled={editTask.board_minutes_private} value={editTask.project_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, project_id: v === NONE ? null : v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value={NONE}>Geen project</SelectItem>{activeProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
                   </Select></div>
