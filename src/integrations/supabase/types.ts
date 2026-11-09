@@ -42,6 +42,7 @@ export type Database = {
       }
       address_book_contacts: {
         Row: {
+          committees: string
           created_at: string
           department: string
           email: string
@@ -49,10 +50,13 @@ export type Database = {
           name: string
           note: string
           organization_id: string
+          party: string
           phone: string
+          policy_areas: string
           position: string
         }
         Insert: {
+          committees?: string
           created_at?: string
           department?: string
           email?: string
@@ -60,10 +64,13 @@ export type Database = {
           name: string
           note?: string
           organization_id: string
+          party?: string
           phone?: string
+          policy_areas?: string
           position?: string
         }
         Update: {
+          committees?: string
           created_at?: string
           department?: string
           email?: string
@@ -71,7 +78,9 @@ export type Database = {
           name?: string
           note?: string
           organization_id?: string
+          party?: string
           phone?: string
+          policy_areas?: string
           position?: string
         }
         Relationships: [

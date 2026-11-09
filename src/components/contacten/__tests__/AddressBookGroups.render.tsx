@@ -7,9 +7,9 @@ import { emptyOrganization, type AddressBook } from '@/lib/addressBook';
 const o = (id: string, name: string, category: string) => ({ ...emptyOrganization, id, created_at: '', name, category });
 const data: AddressBook = {
   organizations: [o('1', 'SYNTH Gemeente B', 'Gemeente'), o('2', 'SYNTH Gemeente A', 'Gemeente'), o('3', 'SYNTH Ministerie', 'Ministerie')],
-  contacts: [{ id: 'c', created_at: '', organization_id: '3', name: 'SYNTH Ada', position: '', department: 'DGX', email: '', phone: '', note: 'Mailbron: x\nhttps://outlook.cloud.microsoft/mail/id/Q\n\nBel liever.' },
-    { id: 'd', created_at: '', organization_id: '3', name: 'SYNTH Bea', position: 'Beleidsadviseur', department: '', email: 'bea@example.invalid', phone: '0101', note: '' },
-    { id: 'e', created_at: '', organization_id: '2', name: 'SYNTH Cor', position: 'Burgemeester', department: '', email: '', phone: '', note: '' }],
+  contacts: [{ id: 'c', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '3', name: 'SYNTH Ada', position: '', department: 'DGX', email: '', phone: '', note: 'Mailbron: x\nhttps://outlook.cloud.microsoft/mail/id/Q\n\nBel liever.' },
+    { id: 'd', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '3', name: 'SYNTH Bea', position: 'Beleidsadviseur', department: '', email: 'bea@example.invalid', phone: '0101', note: '' },
+    { id: 'e', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '2', name: 'SYNTH Cor', position: 'Burgemeester', department: '', email: '', phone: '', note: '' }],
 };
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u' }, loading: false, authError: null, isAdmin: true, isBoard: false, isExtern: false }) }));
 vi.mock('@/lib/addressBookClient', () => ({ addressBookQuery: (u: string) => ({ queryKey: ['ab', u], queryFn: async () => data }), saveAddressRecord: vi.fn(), deleteAddressRecord: vi.fn() }));
