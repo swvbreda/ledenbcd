@@ -35,3 +35,8 @@
 Geen eigen ingelogde sessie beschikbaar (`signed_out`); geen authmint of account van een ander gebruikt. Daardoor volledige browserketen organisatie + twee personen → herladen → zoeken/kopiëren en ingelogd desktop/mobielmenu nog niet end-to-end geverifieerd. CRUD/readback en echte RLS afzonderlijk geïsoleerd getest; presentatie afzonderlijk getest, niet als echte login gepresenteerd.
 
 Geen publicatie, berichten, wijzigingen aan bestaande leden/rollen/lidmaatschap/Externe partijen of financiële gegevens.
+
+## Categorieën en Functie-filter (9 nov 2026)
+- Migratie 0078 breidt alleen de category CHECK uit met Banken, Betalingsverkeer, Toezichthouders, Advocatuur, Maatschappelijke organisaties, Bedrijven; toegepast. Geen records gewijzigd.
+- Labels: Brancheorganisatie → Branche- en koepelorganisaties, Ministerie → Ministeries, Gemeente → Gemeenten.
+- Functie afgeleid via `contactRole` in `src/lib/addressBook.ts` uit position (lege position: alleen expliciete team/secretariaat-namen); URL-param `role` met vaste waarden.

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Contacten categorieën + Functie-filter — niet publiceren
+- [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.
+- [ ] Herindeling 51 organisaties: Simone doet zelf na review.
+
 ## Intern adresboek Contacten — niet publiceren
 - [x] Eigen adresboekopslag; migraties 0076/0077 toegepast, bestaande has_role/is_board_member geverifieerd, RLS en minimale grants teruggelezen.
 - [x] /contacten en /contacten/$id, organisatie-/persoonszoekresultaten, formulieren, gedeeld desktop/mobielmenu en rij-gecontroleerde opslag/verwijdering.
