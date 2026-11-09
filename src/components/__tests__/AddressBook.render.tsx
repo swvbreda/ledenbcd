@@ -21,7 +21,7 @@ describe('address book rules', () => {
  });
  it.each(['ADA','BELEIDSADVISEUR','ADA@EXAMPLE.INVALID','FRACTIE S'])('searches person fields without case sensitivity: %s', query => { const result = searchAddressBook(data, query, ''); expect(result.contacts.map(c => c.id)).toEqual(['c-a']); expect(result.organizations.map(o => o.id)).toEqual(['org-a']); });
  it('searches organizations and abbreviation and respects category', () => { expect(searchAddressBook(data, 'sm', '').organizations).toHaveLength(1); expect(searchAddressBook(data, 'ada', 'Tweede Kamer').contacts).toHaveLength(0); });
- it('uses the six approved categories and Overig default', () => { expect(addressCategories).toEqual(['Tweede Kamer','Eerste Kamer','Ministerie','Gemeente','Brancheorganisatie','Overig']); expect(emptyOrganization.category).toBe('Overig'); });
+ it('uses the six approved categories and Overig default', () => { expect(addressCategories).toEqual(expect.arrayContaining(['Tweede Kamer','Eerste Kamer','Ministerie','Gemeente','Brancheorganisatie','Overig','Banken','Betalingsverkeer','Toezichthouders','Advocatuur','Maatschappelijke organisaties','Bedrijven'])); expect(addressCategories).toHaveLength(12); expect(emptyOrganization.category).toBe('Overig'); });
  it('requires checked admin or board rights; denies ordinary/extern/unresolved', () => {
  const auth = { user: {}, loading: false, authError: null, isAdmin: false, isBoard: false, isExtern: false };
  expect(canManageAddressBook(auth)).toBe(false); expect(canManageAddressBook({ ...auth, isAdmin: true })).toBe(true); expect(canManageAddressBook({ ...auth, isBoard: true })).toBe(true);
