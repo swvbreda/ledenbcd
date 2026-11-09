@@ -6793,6 +6793,22 @@ export type Database = {
         Returns: string
       }
       board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_import_formatted: {
+        Args: {
+          p_actions: Json
+          p_date: string
+          p_decisions: Json
+          p_details: Json
+          p_expected: string
+          p_hash: string
+          p_report: string
+          p_source_id: string
+          p_source_text: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
       board_minutes_import_revision: {
         Args: {
           p_actions: Json
