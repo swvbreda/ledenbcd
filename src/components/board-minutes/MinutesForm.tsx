@@ -6,10 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MINUTES_ACCEPT, minutesSaveSchema, type MinutesInput, type MinuteVersion, type MinuteMeeting } from '@/lib/boardMinutes';
 import { extractMinutesText } from '@/lib/boardMinutesExtract';
 import type { MinuteActionRow } from '@/lib/boardMinutesTasks';
+import type { ImportDetails } from '@/lib/boardMinutesImport';
 import { useMinutesTaskStatus } from './MinutesTaskStatus';
 import { useAuth } from '@/hooks/useAuth';
 
-export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: MinuteMeeting; version?: MinuteVersion; onSave: (input: MinutesInput, file: File | null) => Promise<void>; onClose: () => void }) {
+export function MinutesForm({ meeting, version, details, onSave, onClose }: { meeting?: MinuteMeeting; version?: MinuteVersion; details?:ImportDetails; onSave: (input: MinutesInput, file: File | null) => Promise<void>; onClose: () => void }) {
   const [date,setDate]=useState(version?.meeting_date ?? '');
   const [title,setTitle]=useState(version?.title ?? '');
   const [report,setReport]=useState(version?.report ?? '');
@@ -18,7 +19,7 @@ export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: M
   const auth=useAuth();
   const taskInfo=useMinutesTaskStatus(version?.id??'00000000-0000-0000-0000-000000000000',auth.user?.id??'');
   const [structured,setStructured]=useState<MinuteActionRow[]|null>(null);
-  const currentRows=structured??taskInfo.data?.rows.map(r=>({action_id:r.action_id??undefined,action:r.action,owner:r.owner,deadline:r.deadline}));
+  const currentRows=structured??(taskInfo.data?.rows.length?taskInfo.data.rows.map(r=>({action_id:r.action_id??undefined,action:r.action,owner:r.owner,deadline:r.deadline})):details?.action_rows);
   const [source,setSource]=useState<MinutesInput['source']>((meeting?.source as MinutesInput['source']) ?? 'upload');
   const [sourceId,setSourceId]=useState(meeting?.source_id ?? '');
   const [sourceUrl,setSourceUrl]=useState(version?.source_url ?? '');
@@ -30,6 +31,7 @@ export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: M
   async function readFile() {if(!file||extracting)return;setExtracting(true);setError('');try{const text=await extractMinutesText(file);if(!text.trim())throw new Error('Geen leesbare tekst gevonden; voeg de verslagtekst handmatig toe.');setReport(text);}catch(e){setError(e instanceof Error?e.message:'Verslagtekst lezen mislukt.');}finally{setExtracting(false);}}
   async function submit(e: FormEvent) {
     e.preventDefault(); if(saving) return; setError('');
+    if(version&&taskInfo.isPending){setError('Wacht tot de gekoppelde acties geladen zijn.');return;}
     const rows=currentRows?.length?currentRows:undefined;
     const parsed=minutesSaveSchema.safeParse({ meetingId: meeting?.id ?? null, expectedVersion: version?.id ?? null, source, sourceId, date,title,report,decisions: decisions.split('\n').map(s=>s.trim()).filter(Boolean), actions:rows?rows.map(r=>r.action):actions.split('\n').map(s=>s.trim()).filter(Boolean), action_rows:rows,sourceUrl,confirm });
     if(!parsed.success) {setError(parsed.error.issues[0]?.message ?? 'Controleer de velden.');return;}

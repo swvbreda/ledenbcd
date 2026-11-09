@@ -224,7 +224,7 @@ function ProjectenInner() {
   // Afronden in de lijst is altijd één klik lokaal; externe afronding alleen via het Topical-tabblad.
   const completeTask = useMutation({
     mutationFn: (t: Task) => completeTaskLocally(db, t),
-    onSuccess: (_d, t) => { qc.setQueryData<Task[]>(["internal-tasks", uid], (old) => markCompletedInList(old, t.id)); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
+    onSuccess: (_d, t) => { qc.setQueryData<Task[]>(["internal-tasks", uid], (old) => markCompletedInList(old, t.id)); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); qc.invalidateQueries({queryKey:['minutes-tasks']}); },
     onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const saveProject = useMutation({
