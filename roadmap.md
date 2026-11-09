@@ -1,5 +1,9 @@
 # Roadmap
 
+## Monitoring 9 november — geen publicatie of productiemutaties
+- [ ] Face ID: Capacitor 8/SPM-plugin registreren, toestemming en opslaanprompt controleren; fysieke iPhone-release apart nodig.
+- [ ] Goedkeuringen: naamnormalisatie voor geregistreerde dossiermatch herstellen, conflicten en ambigue reviewmatches geblokkeerd houden; gerichte regressies.
+
 ## Contacten categorieën + Functie-filter — niet publiceren
 - [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.
 - [ ] Herindeling 51 organisaties (17 gecontroleerde categorie-updates): assistent voert uit na review, daarna publicatie. Geen actie voor Simone.

@@ -40,6 +40,17 @@ describe('current canonical ID versus conversion history', () => {
   });
 });
 describe('approval dossier navigation', () => {
+  it('accepts a recorded match with coffeeshop tokens, accents and punctuation', () => {
+    const member = { ...goa, naam: 'Vriendschap' };
+    expect(resolveSignupDossier({ ...signup, coffeeshop_name: 'Coffeeshop De Vriéndschap!' }, [member]).member?.id).toBe(150);
+  });
+  it('keeps ambiguous manual-review requests blocked rather than selecting a candidate', () => {
+    expect(resolveSignupDossier({ ...signup, matched_member_id: null, match_status: 'review' }, [goa, { ...goa, id: 151 }])).toEqual({ blocked: true });
+  });
+  it('never matches an empty normalized shop or a different city', () => {
+    expect(resolveSignupDossier({ ...signup, coffeeshop_name: 'Coffeeshop De' }, [goa])).toEqual({ blocked: true });
+    expect(resolveSignupDossier({ ...signup, city: 'Amsterdam' }, [goa])).toEqual({ blocked: true });
+  });
   it('uses recorded ID 150 regardless of order, instead of the first GOA by name', () => {
     for (const rows of [[otherGoa, scolo, goa], [goa, scolo, otherGoa]]) {
       expect(resolveSignupDossier(signup, rows).member?.id).toBe(150);
