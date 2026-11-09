@@ -10,6 +10,9 @@ export const importDetailsSchema = z.object({
   recorder: z.string().max(1000).optional(), readAt: z.string().max(100).optional(),
   reportKind: z.enum(['summary', 'ai-report', 'brief-notes', 'agenda-only', 'source-review']).optional(),
   sourceWarning: z.string().max(1000).optional(),
+  metadata: z.array(z.string().max(3000)).max(30).optional(),
+  originalSourceSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  formatted: z.literal(true).optional(), formattedFingerprint: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 }).strict();
 export const importRevisionSchema = z.object({
   input: minutesSaveSchema, details: importDetailsSchema, sourceText: z.string().max(200000),
@@ -19,6 +22,41 @@ export type ImportRevision = z.infer<typeof importRevisionSchema>;
 export type ImportOriginal = { revision: ImportRevision; path: string; name: string; hash: string };
 const docSchema = z.object({file_name:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/),archive_path:z.string(),text:z.string(),source_path:z.string(),other_source_paths:z.array(z.string()).optional(),date_basis:z.string(),source_version_label:z.string()});
 const manifestSchema = z.object({schema_version:z.literal(1),read_at:z.string(),excluded:z.array(z.unknown()),onedrive_meetings:z.array(z.object({source_id:z.string(),meeting_date:z.string(),meeting_type:z.enum(['bestuursvergadering','dagelijks-bestuur']),title:z.string(),status:z.literal('historisch-onbevestigd'),review_required:z.literal(true),documents:z.array(docSchema).min(1),display_text_source_sha256:z.string()})),topical_meetings:z.array(z.object({source_id:z.string(),source_url:z.string(),meeting_date:z.string(),title:z.string(),status:z.literal('historisch-onbevestigd'),review_required:z.literal(true),file_name:z.string(),sha256:z.string(),archive_path:z.string(),full_export_text:z.string(),summary_text:z.string(),has_summary:z.boolean()}))});
+export const formattedManifestSchema=z.object({schema_version:z.literal(2),kind:z.literal('topical-formatted'),read_at:z.string().max(100),topical_formatted:z.array(z.object({
+  source_id:z.string().regex(/^topical:[a-zA-Z0-9_-]{1,100}$/),meeting_date:z.string(),title:z.string(),metadata:z.array(z.string().max(3000)).max(30),report:z.string().max(200000),
+  decisions:z.array(z.string().max(3000)).max(200),actions:z.array(z.string().max(3000)).max(200),source_url:z.string().max(2000),original_source_sha256:z.string().regex(/^[a-f0-9]{64}$/),
+  report_kind:z.enum(['summary','ai-report','brief-notes','agenda-only']),documents:z.array(z.object({archive_path:z.string().max(150).regex(/^formatted\/[a-zA-Z0-9_-]{1,100}\.(docx|pdf)$/),file_name:z.string().max(255),sha256:z.string().regex(/^[a-f0-9]{64}$/)}).strict()).length(2),
+}).strict()).length(13)}).strict();
+export function validatePackageEntries(entries:Record<string,Uint8Array>){
+  if(Object.keys(entries).length>1000)throw new Error('Te veel pakketbestanden.');
+  let total=0;
+  for(const [path,bytes] of Object.entries(entries)){
+    if(path.length>255||path.startsWith('/')||path.split('/').some(p=>p==='..'||p==='.')||/[\\\u0000-\u001f\u007f]/.test(path))throw new Error('Onveilig bestandspad.');
+    total+=bytes.length;if(bytes.length>20*1024*1024||total>250*1024*1024)throw new Error('Uitgepakt pakket is te groot.');
+  }
+}
+async function prepareFormattedPackage(entries:Record<string,Uint8Array>,raw:unknown){
+  const manifest=formattedManifestSchema.parse(raw),originals:ImportOriginal[]=[],seen=new Set<string>(),paths=new Set<string>();
+  for(const r of manifest.topical_formatted){
+    if(seen.has(r.source_id))throw new Error('Dubbele bron-id in manifest.');seen.add(r.source_id);
+    const id=r.source_id.slice('topical:'.length);
+    if(!r.documents.some(d=>d.archive_path===`formatted/${id}.docx`)||!r.documents.some(d=>d.archive_path===`formatted/${id}.pdf`))throw new Error('Elke vergadering vereist één bijpassende DOCX en PDF.');
+    const reportMissing=r.report_kind==='agenda-only';
+    // For agenda-only the supplied report is agenda source text, never minutes.
+    const sourceText=[...r.metadata,r.report].join('\n\n');
+    const fileHash=await sha256(new TextEncoder().encode(JSON.stringify(r)));
+    const revision=importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'topical',sourceId:r.source_id,date:r.meeting_date,title:r.title,report:reportMissing?'':r.report,decisions:r.decisions,actions:r.actions,sourceUrl:r.source_url,fileHash,confirm:true},sourceText,details:{status:'historisch-onbevestigd',reviewRequired:true,reportMissing,reportKind:r.report_kind,formatted:true,originalSourceSha256:r.original_source_sha256,metadata:r.metadata,attendance:'Te controleren; genodigden zijn geen bevestigde aanwezigen.',meetingType:'bestuursvergadering',originalName:'Gestandaardiseerde DOCX/PDF',sourcePaths:[r.source_url],dateBasis:'Aangeleverd opmaakmanifest; datum te controleren',versionLabel:'Gestandaardiseerde Topical-weergave',readAt:manifest.read_at,...(r.report_kind==='ai-report'?{sourceWarning:'AI-verslag: bron en status te controleren; organisatieaanduiding en deelnemersinformatie zijn tegenstrijdig. Genodigden zijn geen bevestigde aanwezigen.'}:r.report_kind==='brief-notes'?{sourceWarning:'Beknopte notities; geen volledig verslag. Historische acties worden niet opnieuw geactiveerd.'}:{})}});
+    for(const d of r.documents){
+      if(paths.has(d.archive_path))throw new Error('Dubbel bestandspad.');paths.add(d.archive_path);
+      const bytes=entries[d.archive_path];if(!bytes)throw new Error('Oorspronkelijk bestand ontbreekt.');
+      const type=validateMinutesBytes(d.file_name,bytes);if(!d.archive_path.endsWith(`.${type.ext}`))throw new Error('Bestandstype wijkt af van pad.');
+      if(await sha256(bytes)!==d.sha256)throw new Error('Bestandhash wijkt af van manifest.');
+      originals.push({path:d.archive_path,name:d.file_name,hash:d.sha256,revision});
+    }
+  }
+  if(Object.keys(entries).some(p=>!p.endsWith('/')&&p!=='manifest.json'&&!paths.has(p)))throw new Error('Onverwacht bestand in opmaakpakket.');
+  return {originals,meetings:seen.size,excluded:0,formatted:true};
+}
 export async function sha256(bytes: Uint8Array) {
   const copy = new Uint8Array(bytes);
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',copy)), b=>b.toString(16).padStart(2,'0')).join('');
@@ -44,6 +82,7 @@ export function topicalReport(record: {meeting_date:string;has_summary:boolean;s
   return {report,reportMissing:false,reportKind:'source-review' as const,sourceWarning:'Volledige bron te controleren: het ontbreken van de kop Samenvatting bewijst niet dat verslagtekst ontbreekt.'};
 }
 export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) {
+  validatePackageEntries(entries);
   const originals:ImportOriginal[]=[];
   const manifestBytes=entries['manifest.json'];
   if(!manifestBytes){
@@ -60,7 +99,9 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
     return {originals,meetings:1,excluded:0};
   }
   if(manifestBytes.length>10*1024*1024)throw new Error('Manifest is te groot.');
-  const manifest=manifestSchema.parse(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes)));
+  const raw=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes));
+  if(raw.schema_version===2)return prepareFormattedPackage(entries,raw);
+  const manifest=manifestSchema.parse(raw);
   const seen=new Set<string>();
   const base=(source:'onedrive'|'topical',sourceId:string,date:string,title:string,report:string,hash:string,url='')=>({meetingId:null,expectedVersion:null,source,sourceId,date,title,report,decisions:[],actions:[],sourceUrl:url,fileHash:hash,confirm:true as const});
   for(const record of manifest.onedrive_meetings){
