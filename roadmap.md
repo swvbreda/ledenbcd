@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Bestuur → Vergaderingen en notulen — niet publiceren
+- [x] Historisch pakket volledig gevalideerd: 168 OneDrive + 13 Topical / 292 originele SHA256-bestanden, 3 verslagen ontbreken, 5 uitsluitingen; private ZIP-import met bron-id/versies/dedup en terugleescontrole, historische/onvolledige status en A4/Palatino-weergave gebouwd. Migratie 0082 bevat alleen schema/RPC, geen broninhoud. Desktop/390px synthetisch gecontroleerd; 25 tests en beide geïsoleerde rechtenproeven.
+- [ ] Werkelijke import van 181 historisch + nieuw concept en 294 originele DOCX/DOC/PDF-bestanden, routes/IDs en alle privé downloads verifiëren: geen eigen bevoegde sessie beschikbaar; archief blijft leeg. Geen auth-bypass, publicatie of taakactivatie.
 - [ ] Aangeleverd conceptpakket 6 november privé importeren met bron-id `handmatig:2026-11-06:bestuur`, DOCX/PDF origineel bewaren en TXT doorzoekbaar; uitsluitend concept, dinerbijdrage onbevestigd en deelnemers onbekend. Geen gevoelige inhoud in repository/SQL-migraties/assets. Wacht op bruikbare eigen adminsessie voor bestaande gecontroleerde import.
 - [x] /bestuur/notulen en /bestuur/notulen/$id, afzonderlijk besloten archief met bestaande bestuurs/adminrechten, append-only versies en private board-minutes bucket; alleen admin beheren/vaststellen. Migraties 0079–0081 toegepast.
 - [x] Overzicht/inhoudzoeken/jaarfilter, detail/besluiten/acties, originele upload/download, bron-id/hash-dedup en tekstovername PDF/DOCX/TXT. Topical: takenkoppeling, 12 bestuursagenda-items zonder meeting_url, geen beschikbare verslagimport; geen externe writes.
