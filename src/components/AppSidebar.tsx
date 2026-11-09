@@ -24,6 +24,7 @@ import {
   Megaphone,
   MessageCircle,
   HelpCircle,
+  ContactRound,
 } from "lucide-react";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,6 +58,7 @@ import {
 const navItems = [
   { title: "Overzicht", url: "/", icon: LayoutDashboard },
   { title: "Ledenbestand", url: "/leden", icon: Users },
+  { title: "Contacten", url: "/contacten", icon: ContactRound },
   { title: "Gemeenten", url: "/locaties", icon: MapPin },
   { title: "Agenda", url: "/agenda", icon: CalendarDays },
   { title: "Aankondigingen", url: "/aankondigingen", icon: Megaphone },
@@ -130,6 +132,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
+                  if (item.title === "Contacten" && !(user && (isAdmin || isBoard) && !isExtern)) return null;
                   if ((item.title === "Kennisbank" || item.title === "Belangrijke documenten") && isInhuur) return null;
                   const registerItem = canSeeRegister &&
                     item.title === "Ledenbestand" && (
