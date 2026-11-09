@@ -6768,6 +6768,23 @@ export type Database = {
         }
         Returns: string
       }
+      board_minutes_save_revision: {
+        Args: {
+          p_actions: Json
+          p_confirm: boolean
+          p_date: string
+          p_decisions: Json
+          p_expected: string
+          p_file_hash: string
+          p_meeting: string
+          p_report: string
+          p_source: string
+          p_source_id: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
       claim_internal_task: { Args: { _task_id: string }; Returns: boolean }
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
