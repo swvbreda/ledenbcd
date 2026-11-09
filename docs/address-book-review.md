@@ -39,4 +39,4 @@ Geen publicatie, berichten, wijzigingen aan bestaande leden/rollen/lidmaatschap/
 ## Categorieën en Functie-filter (9 nov 2026)
 - Migratie 0078 breidt alleen de category CHECK uit met Banken, Betalingsverkeer, Toezichthouders, Advocatuur, Maatschappelijke organisaties, Bedrijven; toegepast. Geen records gewijzigd.
 - Labels: Brancheorganisatie → Branche- en koepelorganisaties, Ministerie → Ministeries, Gemeente → Gemeenten.
-- Functie afgeleid via `contactRole` in `src/lib/addressBook.ts` uit position (lege position: alleen expliciete team/secretariaat-namen); URL-param `role` met vaste waarden.
+- Functie afgeleid via `contactRole(contact, organisatiecategorie)`: Kamerleden/Kamermedewerkers alleen binnen Tweede/Eerste Kamer; expliciete (teamadres)/(functieadres) en functioneel contactadres → Team, na burgemeester/secretariaat. Actuele data: 23/8/5/5/4/1/4/8/2/72 = 132.
