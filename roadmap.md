@@ -1,5 +1,9 @@
 # Roadmap
 
+## Contacten compacte tabellen en bulkexport — niet publiceren
+- [ ] Doorlopende categorietabellen, compacte detailgegevens en gesloten praktische notities.
+- [ ] Gebruikersgebonden selectie, TXT/CSV-export, clipboardfallback en gerichte tests/visuele controle.
+
 ## Monitoring 9 november — geen publicatie of productiemutaties
 - [x] Face ID: Capacitor 8/SPM-plugin geregistreerd via cap sync, Face ID-toestemming toegevoegd, opslaanprompt vóór navigatie gehouden; geïsoleerde hook/loginchecks.
 - [x] Goedkeuringen: naamnormalisatie voor geregistreerde dossiermatch hersteld, conflicten en ambigue reviewmatches blijven geblokkeerd; echte pagina met synthetische fixtures gecontroleerd zonder writes.

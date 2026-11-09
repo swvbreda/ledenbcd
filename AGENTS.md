@@ -1,6 +1,7 @@
 # Project architecture decisions
 
 - The internal address book uses only address_book_organizations/contact rows and existing has_role/is_board_member RLS for every operation; its user-scoped query cache and forms never invoke member-account or external-party workflows.
+- Address-book export uses only current user-scoped query results, intersects selection with current filters, and serializes whitelisted business fields locally; collapsed groups never alter export scope.
 
 - Dashboard layout and chart engines load only when their protected content renders; member row and sanitized-directory reads run concurrently but publish one complete user-scoped result, so startup avoids unnecessary code and serial waits without weakening authorization.
 
