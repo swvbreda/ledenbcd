@@ -3,14 +3,15 @@ import { useServerFn } from '@tanstack/react-start';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription } from '@/components/ui/dialog';
-import { importBoardMinutes,uploadBoardMinutesFile,loadBoardMinutes } from '@/lib/boardMinutes.functions';
+import { importBoardMinutes,uploadBoardMinutesFile,loadBoardMinutesPage } from '@/lib/boardMinutes.functions';
+import {readMinutesArchive,boundedMinutesRead} from '@/lib/boardMinutesLoad';
 import { prepareMinutesPackage,sha256,bindFormattedRevisions } from '@/lib/boardMinutesImport';
 import { MINUTES_BUCKET } from '@/lib/boardMinutes';
 import { supabase } from '@/integrations/supabase/client';
 
 export function MinutesImport({onClose,onComplete}:{onClose:()=>void;onComplete:()=>Promise<void>}){
   const [file,setFile]=useState<File|null>(null),[confirm,setConfirm]=useState(false),[busy,setBusy]=useState(false),[status,setStatus]=useState(''),[error,setError]=useState('');
-  const importRevision=useServerFn(importBoardMinutes),upload=useServerFn(uploadBoardMinutesFile),loadArchive=useServerFn(loadBoardMinutes);
+  const importRevision=useServerFn(importBoardMinutes),upload=useServerFn(uploadBoardMinutesFile),loadPage=useServerFn(loadBoardMinutesPage);
   async function run(){
     if(!file||!confirm||busy)return;
     setBusy(true);setError('');setStatus('Bestanden en manifest controleren…');
@@ -21,7 +22,7 @@ export function MinutesImport({onClose,onComplete}:{onClose:()=>void;onComplete:
       const entries=unzipSync(new Uint8Array(await file.arrayBuffer()),{filter:entry=>{count++;if(count>1000||zipPaths.has(entry.name))throw new Error('Te veel of dubbele pakketbestanden.');zipPaths.add(entry.name);expanded+=entry.originalSize;if(entry.originalSize>20*1024*1024||expanded>250*1024*1024)throw new Error('Uitgepakt pakket is te groot.');return true;}});
       const prepared=await prepareMinutesPackage(entries);
       // Validate every existing meeting and source before the first append.
-      const originals=prepared.originals.some(o=>o.revision.details.formatted)?bindFormattedRevisions(prepared.originals,await loadArchive()):prepared.originals;
+      const originals=prepared.originals.some(o=>o.revision.details.formatted)?bindFormattedRevisions(prepared.originals,await readMinutesArchive((table,offset)=>loadPage({data:{table,offset}}))):prepared.originals;
       const savedRevisions=new Map<string,{meeting_id:string;id:string}>();
       let done=0;
       for(const original of originals){
@@ -37,8 +38,11 @@ export function MinutesImport({onClose,onComplete}:{onClose:()=>void;onComplete:
         done++;
       }
       setStatus(`${prepared.meetings} vergaderingen · ${done} bestanden privé teruggelezen · ${prepared.excluded} uitgesloten items niet geïmporteerd`);
-      await onComplete();
-    }catch(e){setError(e instanceof Error?e.message:'Import mislukt.');await onComplete();}finally{setBusy(false);}
+    }catch(e){setError(e instanceof Error?e.message:'Import mislukt.');}finally{
+      // Import completion must never remain disabled while refreshing the archive.
+      setBusy(false);
+      try{await boundedMinutesRead(onComplete,95000);}catch{setError('Import gestopt of afgerond; overzicht verversen mislukt. Sluit dit venster en probeer opnieuw.');}
+    }
   }
   return <Dialog open onOpenChange={o=>{if(!o&&!busy)onClose();}}><DialogContent><DialogHeader><DialogTitle>Bestuursarchief importeren</DialogTitle><DialogDescription>OneDrive / Topical · historische status te controleren</DialogDescription></DialogHeader>
     <Input type="file" accept=".zip" aria-label="Archiefpakket" disabled={busy} onChange={e=>setFile(e.target.files?.[0]??null)}/>
