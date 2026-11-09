@@ -14,7 +14,17 @@ const m = vi.hoisted(() => ({
   profiles: [] as Array<{ member_id: number }>,
   appEvents: new Map<string, (v: any) => void>(),
   calls: [] as string[],
+  callerOptions: [] as any[],
 }));
+
+vi.mock('@supabase/supabase-js',()=>({createClient:(_url:string,_key:string,options:any)=>{
+  m.callerOptions.push(options);
+  return {rpc:m.rpc,from:(t:string)=>({select:()=>{
+    m.calls.push(`select:${t}`);
+    const result=Promise.resolve({data:t==='user_roles'?m.roles:t==='member_profiles'?m.profiles:[],error:null});
+    return {eq:()=>result,then:(f:any,r:any)=>result.then(f,r)};
+  }})};
+}}));
 
 vi.mock("@/integrations/supabase/client", () => {
   const rows = (t: string) => (t === "user_roles" ? m.roles : t === "member_profiles" ? m.profiles : []);
@@ -69,7 +79,7 @@ const definitive = () =>
 let assign: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.clearAllMocks();
-  m.authCb = null; m.appEvents.clear(); m.calls = [];
+  m.authCb = null; m.appEvents.clear(); m.calls = []; m.callerOptions=[];
   m.roles = [{ role: "admin" }]; m.profiles = [{ member_id: 7 }];
   m.getUser.mockResolvedValue({ data: { user: USER }, error: null });
   m.rpc.mockResolvedValue({ data: 0, error: null });
@@ -81,6 +91,25 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("sessie blijft bewaard op de telefoon", () => {
+  it('rights use the delivered real session token without re-reading blocked broker storage',async()=>{
+    m.getSession.mockImplementation(()=>new Promise(()=>{}));
+    m.getUser.mockImplementation(async(token?:string)=>token==='synthetic'?{data:{user:USER},error:null}:new Promise(()=>{}));
+    const {result}=renderHook(()=>useAuth(),{wrapper});
+    act(()=>m.authCb?.('INITIAL_SESSION',SESSION));
+    await waitFor(()=>expect(result.current.isAdmin).toBe(true));
+    expect(m.getUser).toHaveBeenCalledWith('synthetic');
+    expect(m.callerOptions[0]?.global.headers.Authorization).toBe('Bearer synthetic');
+    expect(m.callerOptions[0]?.auth.persistSession).toBe(false);
+    expect(m.refreshSession).not.toHaveBeenCalled();
+  });
+  it('explicit token still requires auth-server verification before rights',async()=>{
+    m.getSession.mockResolvedValue({data:{session:SESSION},error:null});
+    m.getUser.mockResolvedValue({data:{user:null},error:new Error('Rejected token')});
+    m.refreshSession.mockRejectedValue(new Error('Rejected token'));
+    const {result}=renderHook(()=>useAuth(),{wrapper});
+    await waitFor(()=>expect(result.current.authError).not.toBeNull(),{timeout:2000});
+    expect(result.current.isAdmin).toBe(false);
+  });
   it("koude start met bewaarde sessie: ingelogd met server-geverifieerde rechten, geen geforceerde vernieuwing", async () => {
     m.getSession.mockResolvedValue({ data: { session: SESSION }, error: null });
     const { result } = renderHook(() => useAuth(), { wrapper });

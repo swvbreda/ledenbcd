@@ -62,14 +62,14 @@ function Harness({ organizations = [ministryA, ministryB], contacts = [ada, bea,
   </>;
 }
 
-const organizationHeading = (organization: Organization) => screen.getByRole('heading', { name: organization.name, level: 3, exact: true });
+const organizationHeading = (organization: Organization) => screen.getByRole('heading', { name: organization.name, level: 3 });
 const generalRow = (organization: Organization) => organizationHeading(organization).closest('tr')!;
 const organizationCheckbox = (organization: Organization) => screen.getByRole('checkbox', { name: `Selecteer alle contactpersonen van ${organization.name}` });
 const allCheckbox = () => screen.getByRole('checkbox', { name: 'Alle contactpersonen selecteren: Ministeries' });
 const toggle = (organization: Organization, count: number, expanded = false) => screen.getByRole('button', {
   name: `${expanded ? 'Verberg' : 'Toon'} ${count} ${count === 1 ? 'contactpersoon' : 'contactpersonen'} van ${organization.name}`,
 });
-const peopleTable = (organization: Organization) => screen.getByRole('table', { name: `Contactpersonen van ${organization.name}`, exact: true });
+const peopleTable = (organization: Organization) => screen.getByRole('table', { name: `Contactpersonen van ${organization.name}` });
 const selectedIds = (): string[] => JSON.parse(screen.getByLabelText("Geselecteerde contact-ID's").textContent ?? '[]');
 
 describe('organization overview table', () => {
@@ -134,7 +134,7 @@ describe('organization overview table', () => {
     expect(peopleTable(ministryA)).toBeTruthy();
     expect(within(peopleTable(ministryB)).getByText(cor.name)).toBeTruthy();
     fireEvent.click(toggle(ministryA, 2, true));
-    expect(screen.queryByRole('table', { name: `Contactpersonen van ${ministryA.name}`, exact: true })).toBeNull();
+    expect(screen.queryByRole('table', { name: `Contactpersonen van ${ministryA.name}` })).toBeNull();
     expect(peopleTable(ministryB)).toBeTruthy();
     expect(toggle(ministryB, 1, true).getAttribute('aria-expanded')).toBe('true');
     expect(within(generalRow(ministryA)).getByRole('link', { name: ministryA.email })).toBeTruthy();
