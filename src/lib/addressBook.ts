@@ -6,22 +6,26 @@ export const categoryLabel = (value: string) => categoryLabels[value] ?? value;
 export const contactRoles = ['Kamerleden', 'Kamermedewerkers', 'Burgemeesters', 'Beleidsmedewerkers en adviseurs', 'Bestuur, directie en management', 'Advocaten en juristen', 'Secretariaten en griffies', 'Team- en algemene adressen', 'Overige functies', 'Functie onbekend'] as const;
 export type ContactRole = typeof contactRoles[number];
 /** Conservative role grouping from the stored position text only; the original text stays visible. */
-export function contactRole(contact: { name: string; position: string }): ContactRole {
+export function contactRole(contact: { name: string; position: string }, category = ''): ContactRole {
   const p = contact.position.trim().toLocaleLowerCase('nl');
+  const n = contact.name.trim().toLocaleLowerCase('nl');
+  const kamer = category === 'Tweede Kamer' || category === 'Eerste Kamer';
+  const teamName = /\((teamadres|functieadres)\)/.test(n);
   if (!p) {
-    const n = contact.name.trim().toLocaleLowerCase('nl');
     if (/secretariaat|griffie/.test(n)) return 'Secretariaten en griffies';
-    if (/(^|[\s-])(team|office|kabinet)([\s-]|$)|algemeen/.test(n)) return 'Team- en algemene adressen';
+    if (teamName || /(^|[\s-])(team|office|kabinet)([\s-]|$)/.test(n)) return 'Team- en algemene adressen';
     return 'Functie onbekend';
   }
-  if (/kamerlid|kamerleden|fractie/.test(p) && /medewerker|assistent|ondersteun|adviseur|advisor|staf/.test(p)) return 'Kamermedewerkers';
-  if (/^(tweede |eerste |tweede-|eerste-)?kamerlid\b/.test(p) || /\b(tweede|eerste)[ -]kamerlid\b/.test(p) || /^lid (van de )?(tweede|eerste) kamer\b/.test(p)) return 'Kamerleden';
+  if (kamer && /^(beleidsmedewerker|persoonlijk medewerker|fractiemedewerker|medewerker|assistent|ondersteun)/.test(p)) return 'Kamermedewerkers';
+  if (/kamerlid/.test(p) && /medewerker|assistent|ondersteun/.test(p)) return 'Kamermedewerkers';
+  if (category === 'Tweede Kamer' && /^tweede[ -]kamerlid\b/.test(p)) return 'Kamerleden';
+  if (category === 'Eerste Kamer' && /^(eerste[ -]kamerlid|lid (van de )?eerste kamer)\b/.test(p)) return 'Kamerleden';
   if (/secretariaat|secretaresse|griffie|griffier|management ?assistent/.test(p)) return 'Secretariaten en griffies';
-  if (/beleidsmedewerker|beleidsadviseur|beleidsambtenaar|adviseur|advisor|policy officer|public affairs/.test(p)) return 'Beleidsmedewerkers en adviseurs';
   if (/^(loco-)?burgemeester\b/.test(p)) return 'Burgemeesters';
+  if (/beleidsmedewerker|beleidsadviseur|beleidsambtenaar|adviseur|advisor|policy officer|public affairs/.test(p)) return 'Beleidsmedewerkers en adviseurs';
   if (/advocaat|advocate|jurist|juridisch|lawyer|counsel|legal/.test(p)) return 'Advocaten en juristen';
   if (/\b(head|hoofd|directeur|director|directie|voorzitter|chair|chairman|ceo|cfo|coo|chief|manager|management|bestuurder|bestuurslid|president|secretaris-generaal|directeur-generaal)\b/.test(p)) return 'Bestuur, directie en management';
-  if (/(^|[\s-])(team|office|kabinet)([\s-]|$)|algemeen/.test(p)) return 'Team- en algemene adressen';
+  if (/functioneel contactadres|functieadres|teamadres/.test(p) || teamName) return 'Team- en algemene adressen';
   return 'Overige functies';
 }
 export type Organization = Database['public']['Tables']['address_book_organizations']['Row'];
@@ -47,7 +51,7 @@ export function searchAddressBook(data: AddressBook, query: string, category: st
   const allowed = data.organizations.filter(o => !category || o.category === category);
   const ids = new Set(allowed.map(o => o.id));
   const orgNames = new Map(data.organizations.map(o => [o.id, o]));
-  const people = data.contacts.filter(c => ids.has(c.organization_id) && (!role || contactRole(c) === role)
+  const people = data.contacts.filter(c => ids.has(c.organization_id) && (!role || contactRole(c, orgNames.get(c.organization_id)?.category) === role)
     && (matches(c.name, c.position, c.department, c.email) || (!!role && !!needle && matches(orgNames.get(c.organization_id)?.name ?? '', orgNames.get(c.organization_id)?.abbreviation ?? ''))));
   const peopleIds = new Set(people.map(c => c.organization_id));
   return {
