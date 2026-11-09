@@ -32,4 +32,6 @@ npm install --prefix /tmp/bcd-storage-test --no-save --ignore-scripts @electric-
 NODE_PATH=/tmp/bcd-storage-test/node_modules node scripts/verify-shared-storage.cjs supabase/migrations/20261109225157_shared_image_reader_scope.sql
 ```
 
-Live verification checks the final policy expressions, private bucket flags, helper/table grants and preservation of other Storage policies. The Lovable scanner is a separate check; no finding is ignored or marked resolved merely to make the dashboard green.
+Live verification completed on 9 November 2026. The two expected SELECT predicates were read back after one successful transaction. Both buckets remained private, all 49 other Storage policies were unchanged, and the eight existing objects were preserved. Required helper EXECUTE and agenda SELECT grants remained present, and Storage RLS remained enabled.
+
+A new Lovable security scan has been requested. At this verification step it was still queued behind other project work, so a completed clean scanner result is not yet claimed. No finding was ignored or manually marked resolved.
