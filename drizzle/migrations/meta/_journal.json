@@ -554,6 +554,13 @@
       "when": 1794220137002,
       "tag": "0078_address_book_more_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794259171288,
+      "tag": "0079_board_minutes_private_archive",
+      "breakpoints": true
     }
   ]
 }

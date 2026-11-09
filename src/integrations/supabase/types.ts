@@ -888,6 +888,153 @@ export type Database = {
         }
         Relationships: []
       }
+      board_minutes_adoptions: {
+        Row: {
+          adopted_at: string
+          adopted_by: string
+          id: string
+          version_id: string
+        }
+        Insert: {
+          adopted_at?: string
+          adopted_by: string
+          id?: string
+          version_id: string
+        }
+        Update: {
+          adopted_at?: string
+          adopted_by?: string
+          id?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_adoptions_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: true
+            referencedRelation: "board_minutes_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_minutes_files: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          original_name: string
+          path: string
+          sha256: string
+          size_bytes: number
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          original_name: string
+          path: string
+          sha256: string
+          size_bytes: number
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          original_name?: string
+          path?: string
+          sha256?: string
+          size_bytes?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_files_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_minutes_meetings: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          source: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          source: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          source?: string
+          source_id?: string
+        }
+        Relationships: []
+      }
+      board_minutes_versions: {
+        Row: {
+          actions: Json
+          content_hash: string
+          created_at: string
+          created_by: string
+          decisions: Json
+          id: string
+          meeting_date: string
+          meeting_id: string
+          report: string
+          source_url: string | null
+          title: string
+          version: number
+        }
+        Insert: {
+          actions?: Json
+          content_hash: string
+          created_at?: string
+          created_by: string
+          decisions?: Json
+          id?: string
+          meeting_date: string
+          meeting_id: string
+          report?: string
+          source_url?: string | null
+          title: string
+          version: number
+        }
+        Update: {
+          actions?: Json
+          content_hash?: string
+          created_at?: string
+          created_by?: string
+          decisions?: Json
+          id?: string
+          meeting_date?: string
+          meeting_id?: string
+          report?: string
+          source_url?: string | null
+          title?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_versions_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_balance_items: {
         Row: {
           amount: number
@@ -6590,6 +6737,37 @@ export type Database = {
         Returns: number
       }
       bcd_documenten_rate_hit: { Args: never; Returns: boolean }
+      board_minutes_adopt: {
+        Args: { p_confirm: boolean; p_version: string }
+        Returns: undefined
+      }
+      board_minutes_attach: {
+        Args: {
+          p_hash: string
+          p_name: string
+          p_path: string
+          p_size: number
+          p_version: string
+        }
+        Returns: string
+      }
+      board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_save: {
+        Args: {
+          p_actions: Json
+          p_confirm: boolean
+          p_date: string
+          p_decisions: Json
+          p_expected: string
+          p_meeting: string
+          p_report: string
+          p_source: string
+          p_source_id: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
       claim_internal_task: { Args: { _task_id: string }; Returns: boolean }
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }
