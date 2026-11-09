@@ -18,6 +18,7 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  PERFORM public.board_minutes_sync_tasks(v,false);
  IF (SELECT count(*) FROM public.internal_tasks)<>3 THEN RAISE EXCEPTION 'Duplicate sync'; END IF;
  UPDATE public.internal_tasks SET status='afgerond' WHERE id=tid;
+ IF NOT EXISTS(SELECT 1 FROM public.internal_tasks WHERE id=tid AND completed_by=auth.uid() AND completed_at IS NOT NULL) THEN RAISE EXCEPTION 'Actual completion actor/time missing'; END IF;
  result:=public.board_minutes_tasks(v);
  IF result->'rows'->0->>'status'<>'afgerond' THEN RAISE EXCEPTION 'Crossview completion missing'; END IF;
  v2:=public.board_minutes_save_action_revision(jsonb_build_object('meetingId',mid,'expectedVersion',v,'source','upload','sourceId','synthetic-new','date','2026-11-10','title','Renamed minutes','report','Report','decisions','[]'::jsonb,'actions','["Renamed action"]'::jsonb,'sourceUrl','','confirm',true,'action_rows',jsonb_build_array(jsonb_build_object('action_id',aid,'action','Renamed action','owner','Tester + Other','deadline','Later'))));
@@ -25,6 +26,7 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  IF (SELECT count(*) FROM public.internal_tasks)<>3 THEN RAISE EXCEPTION 'Rename duplicated tasks'; END IF;
  IF (public.board_minutes_tasks(v2)->'rows'->0->>'status')<>'afgerond' THEN RAISE EXCEPTION 'Completion reset'; END IF;
  UPDATE public.internal_tasks SET status='te_doen' WHERE id=tid;
+ IF EXISTS(SELECT 1 FROM public.internal_tasks WHERE id=tid AND (completed_by IS NOT NULL OR completed_at IS NOT NULL)) THEN RAISE EXCEPTION 'Reopen audit not cleared'; END IF;
  IF public.board_minutes_tasks(v)->'rows'->0->>'status'<>'te_doen' OR public.board_minutes_tasks(v2)->'rows'->0->>'status'<>'te_doen' THEN RAISE EXCEPTION 'Reopen crossview missing'; END IF;
  PERFORM public.board_minutes_task_assignment(aid,ARRAY['00000000-0000-0000-0000-000000000006'::uuid],true);
  IF (SELECT assignee_id FROM public.internal_tasks WHERE id=tid)<>'00000000-0000-0000-0000-000000000006' THEN RAISE EXCEPTION 'Admin choice missing'; END IF;
@@ -42,7 +44,15 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  BEGIN PERFORM public.board_minutes_tasks(v); RAISE EXCEPTION 'Member RPC leak'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  BEGIN PERFORM public.board_minutes_task_assignment(aid,'{}',true); RAISE EXCEPTION 'Member mutation'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  RESET ROLE;
+ PERFORM set_config('request.jwt.claim.sub','',true); SET LOCAL ROLE anon;
+ BEGIN PERFORM public.board_minutes_tasks(v); RAISE EXCEPTION 'Anonymous RPC leak'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ RESET ROLE;
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+ SET LOCAL ROLE authenticated;
+ v2:=public.board_minutes_save_revision(NULL,NULL,'topical','synthetic-history','2026-06-04','Old agenda','','[]','["Do not activate"]',NULL,true,NULL);
+ IF public.board_minutes_sync_tasks(v2,true)<>0 THEN RAISE EXCEPTION 'Historical import activated'; END IF;
+ IF (SELECT count(*) FROM public.internal_tasks)<>3 THEN RAISE EXCEPTION 'Historical task created'; END IF;
+ RESET ROLE;
  RAISE NOTICE 'PASS: multiple explicit names, collective review, date, idempotency, rename, completion/reopen crossview, admin choice, member denial, no external effects';
 END $$;
 SET CONSTRAINTS ALL IMMEDIATE;

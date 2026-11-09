@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Bestuursnotulen → bestaande taken — niet publiceren
-- [ ] Privérechten en bestaande toewijzing/meldingskoppelingen inspecteren; nieuwe acties idempotent verbinden zonder historische backfill.
-- [ ] Adminactivatie voor nieuwste concept 6 november, automatische vervolgversies, actuele status en veilige handmatige toewijzing bouwen.
-- [ ] Geïsoleerde rechten-, idempotentie-, afrond/heropen- en presentatieproeven uitvoeren; live alleen aantallen/matches lezen.
+- [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
+- [x] Adminactivatie nieuwste concept 6 november, automatische nieuwe uploadnotulen/vervolgversies, actuele status en admin-toewijzing gebouwd; migratie 0084 toegepast. Live: 182 vergaderingen, 0 privétaken/koppelingen/geactiveerde vergaderingen; geen herimport of taakmutatie.
+- [x] Geïsoleerde SQL-proef met echte validatie/afrond/melding/Outlook-triggers en 40 regeltests + 8 componenttests; automatische bouw OK.
+- [ ] Simone activeert de 15 acties via nieuwste concept → '15 conceptacties aan taken koppelen' → 'Bevestig taakregistratie'; eigen sessie ontbreekt, geen mint/alternatieve identiteit. Ingelogde eindcontrole/publicatie door gebruiker.
 
 ## Bestuur → Vergaderingen en notulen — niet publiceren
 - [x] Rechten-timeout onderzocht: Cloud gezond/geen hangende DB-query; bootstrap las dezelfde sessie herhaald via preview-broker (getUser zonder token + iedere REST/RPC). Nu Auth-aangeleverd token expliciet server-geverifieerd en RLS caller-client zonder sessieopslag; 20s ongewijzigd, geen rechten/MFA/bypass/herimport. Read-only: 182 vergaderingen, 320 privéobjecten, 13 complete nieuwste opmaakversies, 0 vaststellingen. 12 AuthProvider-tests incl. blokkerende opslag en geweigerde token; eigen sessie blijft onbeschikbaar voor agent, laatste UIcontrole door gebruiker. Bestaande bouwblokkade in drie Contacten-testselectors alleen ongeldig exact verwijderd (string matching blijft exact).
