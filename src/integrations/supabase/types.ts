@@ -920,8 +920,45 @@ export type Database = {
           },
         ]
       }
+      board_minutes_action_board_members: {
+        Row: {
+          action_id: string
+          board_member_id: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          action_id: string
+          board_member_id: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          action_id?: string
+          board_member_id?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_action_board_members_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_action_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_minutes_action_board_members_board_member_id_fkey"
+            columns: ["board_member_id"]
+            isOneToOne: false
+            referencedRelation: "board_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_minutes_action_links: {
         Row: {
+          collective_board: boolean
           created_at: string
           id: string
           manual_assignment: boolean
@@ -930,6 +967,7 @@ export type Database = {
           task_id: string | null
         }
         Insert: {
+          collective_board?: boolean
           created_at?: string
           id?: string
           manual_assignment?: boolean
@@ -938,6 +976,7 @@ export type Database = {
           task_id?: string | null
         }
         Update: {
+          collective_board?: boolean
           created_at?: string
           id?: string
           manual_assignment?: boolean
@@ -6902,6 +6941,10 @@ export type Database = {
         Args: { p_confirm: boolean; p_versions: string[] }
         Returns: number
       }
+      board_minutes_assign_board: {
+        Args: { p_action: string }
+        Returns: undefined
+      }
       board_minutes_attach: {
         Args: {
           p_hash: string
@@ -6913,6 +6956,14 @@ export type Database = {
         Returns: string
       }
       board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_current_board: {
+        Args: never
+        Returns: {
+          board_member_id: string
+          name: string
+          user_id: string
+        }[]
+      }
       board_minutes_import_formatted: {
         Args: {
           p_actions: Json

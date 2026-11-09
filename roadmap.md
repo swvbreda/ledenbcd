@@ -1,7 +1,9 @@
 # Roadmap
 
-## Notulen laden — gerichte correctie, niet publiceren
-- [x] In bestaande ingelogde preview vastlopen vóór serveraanvraag gereproduceerd; bearer-middleware las opnieuw brokeropslag. Auth-eventtoken nu alleen in geheugen voor transport, sign-out wist het, servercontrole ongewijzigd. 14 auth/regressietests geslaagd; na reload 182 notulen zichtbaar.
+## Gedeelde bestuurstaak — niet publiceren
+- [x] Migratie 0085: één gedeelde privétaak, echte registerleden en actieve accountmatching, geen aspiranten/admin-zonder-bestuursfunctie. Zeven bestuursnamen, zes actieve beheeraccountmatches; één ontbrekend account blijft zichtbaar, geen account/rechten aangemaakt.
+- [x] 41 regeltests, 9 bedieningstests (defecte optionele canvas tijdelijk gestubd) en geïsoleerde SQL-proef met afronden/heropenen/idempotentie/privacy geslaagd; bouw OK. Geen berichten, live 0 privétaken.
+- [ ] Simone activeert via nieuwste concept → '15 conceptacties aan taken koppelen' → 'Bevestig taakregistratie'; ingelogde eindcontrole ontbreekt, agent signed_out, geen mint/alternatieve identiteit of publicatie.
 
 ## Bestuursnotulen → bestaande taken — niet publiceren
 - [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
