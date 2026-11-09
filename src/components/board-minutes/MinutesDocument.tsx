@@ -11,8 +11,9 @@ export function MinutesDocument({version,details,status}:{version:MinuteVersion;
       <dt>Aanwezig</dt><dd>{details?.attendance||'Niet bekend'}</dd>
       {details?.recorder&&<><dt>Verslag</dt><dd>{details.recorder}</dd></>}
     </dl>
-    {details?.reviewRequired&&<p>Datum, broninhoud en status nog te controleren.</p>}
+    {details?.reviewRequired&&<p>Datum en broninhoud nog te controleren{status==='Concept'?'; vaststellingsstatus onbevestigd':''}.</p>}
     {details?.reportKind==='ai-report'&&<p><strong>AI-verslag</strong></p>}
+    {details?.reportKind==='brief-notes'&&<p><strong>Beknopte notities</strong></p>}
     {details?.sourceWarning&&<p>{details.sourceWarning}</p>}
     {details?.metadata?.length? <section aria-label="Aangeleverde vergadergegevens"><h2>Vergadergegevens — te controleren</h2>{details.metadata.map((text,i)=><p key={i} className="whitespace-pre-wrap break-words">{text}</p>)}</section>:null}
     {details?.sourcePaths.length? <details className="minutes-no-print"><summary>Bronverwijzingen</summary>{details.sourcePaths.map((path,i)=><p key={i} className="break-all">{path}</p>)}<p>{details.dateBasis}</p><p>{details.versionLabel}</p></details>:null}

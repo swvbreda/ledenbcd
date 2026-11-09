@@ -21,7 +21,7 @@ export type MinutesInput = z.infer<typeof minutesSaveSchema>;
 export type MinuteMeeting = { id: string; source: string; source_id: string; created_at: string; created_by: string };
 export type MinuteVersion = { id: string; meeting_id: string; version: number; meeting_date: string; title: string; report: string; decisions: string[]; actions: string[]; source_url: string | null; content_hash: string; created_at: string; created_by: string };
 export type MinuteFile = { id: string; version_id: string; path: string; original_name: string; sha256: string; size_bytes: number; created_at: string; created_by: string };
-export type MinuteAdoption = { id: string; version_id: string; adopted_at: string; adopted_by: string };
+export type MinuteAdoption = { id: string; version_id: string; adopted_at: string; adopted_by: string; confirmation_origin?: string | null };
 export type MinutesArchive = { meetings: MinuteMeeting[]; versions: MinuteVersion[]; files: MinuteFile[]; adoptions: MinuteAdoption[]; canManage: boolean; imports?: {version_id:string;details:import('./boardMinutesImport').ImportDetails;source_text:string}[] };
 
 export function safeMinutesUrl(value: string): string | null {
