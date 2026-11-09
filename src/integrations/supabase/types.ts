@@ -901,18 +901,21 @@ export type Database = {
         Row: {
           adopted_at: string
           adopted_by: string
+          confirmation_origin: string | null
           id: string
           version_id: string
         }
         Insert: {
           adopted_at?: string
           adopted_by: string
+          confirmation_origin?: string | null
           id?: string
           version_id: string
         }
         Update: {
           adopted_at?: string
           adopted_by?: string
+          confirmation_origin?: string | null
           id?: string
           version_id?: string
         }
@@ -6781,6 +6784,10 @@ export type Database = {
       board_minutes_adopt: {
         Args: { p_confirm: boolean; p_version: string }
         Returns: undefined
+      }
+      board_minutes_adopt_historical: {
+        Args: { p_confirm: boolean; p_versions: string[] }
+        Returns: number
       }
       board_minutes_attach: {
         Args: {
