@@ -5,8 +5,8 @@ import { OrganizationTable } from '../OrganizationTable';
 import { emptyContact, emptyOrganization, type Contact, type Organization } from '@/lib/addressBook';
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children, params, hash }: { children: ReactNode; params?: { id: string }; hash?: string }) =>
-    <a href={`/contacten/${params?.id ?? ''}${hash ? `#${hash}` : ''}`}>{children}</a>,
+  Link: ({ children, params, hash, 'aria-label': ariaLabel }: { children: ReactNode; params?: { id: string }; hash?: string; 'aria-label'?: string }) =>
+    <a href={`/contacten/${params?.id ?? ''}${hash ? `#${hash}` : ''}`} aria-label={ariaLabel}>{children}</a>,
 }));
 afterEach(cleanup);
 
@@ -62,7 +62,8 @@ function Harness({ organizations = [ministryA, ministryB], contacts = [ada, bea,
   </>;
 }
 
-const generalRow = (organization: Organization) => screen.getByRole('link', { name: organization.name, exact: true }).closest('tr')!;
+const organizationHeading = (organization: Organization) => screen.getByRole('heading', { name: organization.name, level: 3, exact: true });
+const generalRow = (organization: Organization) => organizationHeading(organization).closest('tr')!;
 const organizationCheckbox = (organization: Organization) => screen.getByRole('checkbox', { name: `Selecteer alle contactpersonen van ${organization.name}` });
 const allCheckbox = () => screen.getByRole('checkbox', { name: 'Alle contactpersonen selecteren: Ministeries' });
 const toggle = (organization: Organization, count: number, expanded = false) => screen.getByRole('button', {
@@ -80,7 +81,19 @@ describe('organization overview table', () => {
     expect(within(table).getAllByRole('columnheader').map(cell => cell.textContent).slice(1)).toEqual([
       'Organisatie', 'Algemeen e-mailadres', 'Telefoon', 'Website', 'Adres', 'Contactpersonen',
     ]);
-    expect(within(table).getAllByRole('rowheader').map(cell => within(cell).getByRole('link').textContent)).toEqual([ministryA.name, ministryB.name]);
+    expect(within(table).getAllByRole('rowheader').map(cell => within(cell).getByRole('heading', { level: 3 }).textContent)).toEqual([ministryA.name, ministryB.name]);
+    for (const [organization, count] of [[ministryA, 2], [ministryB, 1]] as const) {
+      const heading = organizationHeading(organization);
+      expect(heading.tagName).toBe('H3');
+      expect(within(heading).getByRole('button')).toBe(toggle(organization, count));
+      const detailLink = within(generalRow(organization)).getByRole('link', { name: `Gegevens bekijken van ${organization.name}` });
+      expect(detailLink.textContent).toBe('Gegevens bekijken');
+      expect(detailLink.getAttribute('href')).toBe(`/contacten/${organization.id}`);
+      expect(heading.contains(detailLink)).toBe(false);
+      const countText = within(generalRow(organization)).getByText(`${count} ${count === 1 ? 'contactpersoon' : 'contactpersonen'}`);
+      expect(countText.closest('td')).toBeTruthy();
+      expect(countText.closest('button')).toBeNull();
+    }
     const rowA = generalRow(ministryA);
     expect(within(rowA).getByRole('link', { name: ministryA.email }).getAttribute('href')).toBe(`mailto:${ministryA.email}`);
     expect(within(rowA).getByRole('link', { name: ministryA.phone }).getAttribute('href')).toBe('tel:0000000101');
@@ -174,6 +187,10 @@ describe('organization overview table', () => {
     const noPeople: Organization = { ...ministryA, id: 'empty-ministry', name: 'SYNTH Ministerie Zonder Personen', email: 'algemeen-leeg@example.invalid' };
     const onSelection = vi.fn();
     render(<Harness organizations={[noPeople]} contacts={[]} expandContacts onSelection={onSelection} />);
+    expect(organizationHeading(noPeople).tagName).toBe('H3');
+    expect(organizationHeading(noPeople).textContent).toBe(noPeople.name);
+    expect(within(organizationHeading(noPeople)).queryByRole('button')).toBeNull();
+    expect(within(generalRow(noPeople)).getByRole('link', { name: `Gegevens bekijken van ${noPeople.name}` }).getAttribute('href')).toBe(`/contacten/${noPeople.id}`);
     expect(within(generalRow(noPeople)).getByRole('link', { name: noPeople.email }).getAttribute('href')).toBe(`mailto:${noPeople.email}`);
     expect(within(generalRow(noPeople)).getByText(noPeople.address)).toBeTruthy();
     expect(within(generalRow(noPeople)).getByText('Geen contactpersonen')).toBeTruthy();

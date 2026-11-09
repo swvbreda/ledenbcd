@@ -49,21 +49,21 @@ export function OrganizationTable({ organizations, contacts, label, selected, on
         const website = safeWebsite(organization.website);
         const note = visibleNote(organization.note);
         return <Fragment key={organization.id}>
-          <tr className="align-top bg-background">
+          <tr className="align-top bg-muted/30">
             <td className={cell}><Checkbox className="h-5 w-5" aria-label={`Selecteer alle contactpersonen van ${organization.name}`} disabled={!personIds.length} checked={chosen === personIds.length && personIds.length > 0 ? true : chosen > 0 ? 'indeterminate' : false} onCheckedChange={value => onSelection(personIds, value === true)} /></td>
             <th scope="row" className={`${cell} min-w-56 max-w-72 text-left font-normal`}>
-              <Link to="/contacten/$id" params={{ id: organization.id }} className="break-words font-semibold text-primary underline underline-offset-2">{organization.name}</Link>
-              {organization.abbreviation && <p className="mt-0.5 text-xs text-muted-foreground">{organization.abbreviation}</p>}
+              <h3 className="font-display text-base" aria-label={organization.name}>{people.length ? <button type="button" aria-label={`${expanded ? 'Verberg' : 'Toon'} ${plural(people.length, 'contactpersoon', 'contactpersonen')} van ${organization.name}`} aria-expanded={expanded} aria-controls={panel} onClick={() => toggle(organization.id)} className="flex min-h-9 w-full items-start gap-2 rounded-sm text-left hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <ChevronDown size={18} aria-hidden className={`mt-0.5 shrink-0 text-primary transition-transform ${expanded ? '' : '-rotate-90'}`} />
+                <span className="break-words">{organization.name}</span>
+              </button> : organization.name}</h3>
+              <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">{organization.abbreviation && <span>{organization.abbreviation}</span>}<Link to="/contacten/$id" params={{ id: organization.id }} className="text-primary underline underline-offset-2" aria-label={`Gegevens bekijken van ${organization.name}`}>Gegevens bekijken</Link></div>
               {note && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1">Organisatienotitie</summary><p className="whitespace-pre-wrap break-words">{note}</p></details>}
             </th>
             <td className={`${cell} min-w-48 max-w-64`}>{organization.email ? <EmailLink email={organization.email} /> : dash}</td>
             <td className={`${cell} whitespace-nowrap`}>{organization.phone ? <a className="text-primary underline" href={`tel:${organization.phone.replace(/[^+\d]/g, '')}`}>{organization.phone}</a> : dash}</td>
             <td className={cell}>{website ? <a className="text-primary underline underline-offset-2" href={website} target="_blank" rel="noopener noreferrer" aria-label={`Website van ${organization.name}`}>Website</a> : dash}</td>
             <td className={`${cell} min-w-40 max-w-56 break-words`}>{organization.address || organization.postal_code || organization.city ? <>{organization.address && <p>{organization.address}</p>}{(organization.postal_code || organization.city) && <p>{[organization.postal_code, organization.city].filter(Boolean).join(' ')}</p>}</> : dash}</td>
-            <td className={`${cell} min-w-40`}>{people.length ? <button type="button" aria-label={`${expanded ? 'Verberg' : 'Toon'} ${plural(people.length, 'contactpersoon', 'contactpersonen')} van ${organization.name}`} aria-expanded={expanded} aria-controls={panel} onClick={() => toggle(organization.id)} className="flex min-h-9 w-full items-center justify-between gap-2 rounded-sm text-left text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <span>{expanded ? 'Verberg' : 'Toon'} {plural(people.length, 'contactpersoon', 'contactpersonen')}</span>
-              <ChevronDown size={18} aria-hidden className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-            </button> : <span className="text-muted-foreground">Geen contactpersonen</span>}</td>
+            <td className={`${cell} min-w-32 text-muted-foreground`}>{people.length ? plural(people.length, 'contactpersoon', 'contactpersonen') : 'Geen contactpersonen'}</td>
           </tr>
           {expanded && people.length > 0 && <tr><td colSpan={7} className="border border-border bg-muted/20 p-2 sm:p-3"><div id={panel}>
             <ContactTable label={`Contactpersonen van ${organization.name}`} category={organization.category} contacts={people} selected={selected} onSelection={onSelection} />
