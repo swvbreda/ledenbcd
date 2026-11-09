@@ -12,7 +12,10 @@ export function AddressForm({ title, initial, organization, onSave, onClose }: {
   title: string; initial: Record<string, string>; organization: boolean;
   onSave: (values: Record<string, string>) => Promise<void>; onClose: () => void;
 }) {
-  const [values, setValues] = useState(initial);
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const keys = [...(organization ? organizationFields : contactFields).map(([key]) => key), 'note', ...(organization ? ['category'] : [])];
+    return Object.fromEntries(keys.map(key => [key, initial[key] ?? '']));
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const set = (key: string, value: string) => setValues(prev => ({ ...prev, [key]: value }));
