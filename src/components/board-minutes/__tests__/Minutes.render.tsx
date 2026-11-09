@@ -7,6 +7,7 @@ import type { MinutesArchive } from '@/lib/boardMinutes';
 vi.mock('@tanstack/react-router',()=>({Link:({children,...props}:any)=><a href={props.to}>{children}</a>,useNavigate:()=>vi.fn()}));
 vi.mock('@tanstack/react-start',()=>({useServerFn:(fn:any)=>fn,createServerFn:()=>({middleware(){return this;},inputValidator(){return this;},handler(){return vi.fn();}})}));
 vi.mock('@/hooks/useAuth',()=>({useAuth:()=>({})}));
+vi.mock('../MinutesTaskStatus',()=>({useMinutesTaskStatus:()=>({}),MinutesTaskControls:()=>null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
 vi.mock('@/integrations/supabase/auth-middleware',()=>({requireSupabaseAuth:{}}));
 afterEach(cleanup);
