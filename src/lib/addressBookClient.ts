@@ -24,7 +24,12 @@ export const addressBookQuery = (userId: string) => queryOptions({
   staleTime: 0, retry: false,
 });
 export async function saveAddressRecord(table: Table, values: OrganizationInput | ContactInput, id?: string) {
-  const request = id ? supabase.from(table).update(values).eq('id', id) : supabase.from(table).insert(values);
+  const request = table === 'address_book_contacts' && 'organization_id' in values
+    ? (id ? supabase.from('address_book_contacts').update(values).eq('id', id) : supabase.from('address_book_contacts').insert(values))
+    : table === 'address_book_organizations' && 'category' in values
+      ? (id ? supabase.from('address_book_organizations').update(values).eq('id', id) : supabase.from('address_book_organizations').insert(values))
+      : null;
+  if (!request) throw new Error('Niet opgeslagen: ongeldige contactgegevens.');
   const { data, error } = await request.select('id').single();
   if (error || !data?.id) throw new Error('Niet opgeslagen. Controleer je toegang en probeer opnieuw.');
   return data.id;
