@@ -1,5 +1,7 @@
 # Project architecture decisions
 
+- Board minutes use separate board_minutes_* tables and the private board-minutes bucket; existing has_role/is_board_member govern reads, admin-checked RPCs own append-only versions/adoption and attachment metadata, and authenticated Blob downloads never mint shareable URLs, so other workspaces and member workflows remain isolated.
+
 - The internal address book uses only address_book_organizations/contact rows and existing has_role/is_board_member RLS for every operation; its user-scoped query cache and forms never invoke member-account or external-party workflows.
 
 - Dashboard layout and chart engines load only when their protected content renders; member row and sanitized-directory reads run concurrently but publish one complete user-scoped result, so startup avoids unnecessary code and serial waits without weakening authorization.
