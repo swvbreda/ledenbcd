@@ -1,10 +1,13 @@
-Publicatiecontrole Contacten (alleen-lezen, 9 nov 2026) — geen verdere actie nodig
+# Bestuur → Vergaderingen en notulen
 
-Resultaat: de nieuwe versie is live.
+## Uitvoering
+- Bouw direct in het bestaande portaal op `/bestuur/notulen` en `/bestuur/notulen/<id>`; geen publicatie.
+- Bestuur en beheerders lezen; alleen beheerders voegen toe, maken nieuwe versies, uploaden bijlagen en stellen expliciet vast. Bestaande rechtenbron blijft intact.
+- Overzicht met datum, titel, concept/vastgesteld, bron, inhoud-/onderwerpzoekfunctie en jaarfilter. Detail toont verslag, besluiten, acties, originele bestanden en versiegeschiedenis.
+- Upload/import bewaart het originele bestand en de naam, bron-id en bronverwijzing. Alleen expliciet bevestigde bestuursnotulen, geen automatische indeling van ALV of externe overleggen.
+- Topical biedt hier alleen een taken-/agendakoppeling, geen aangetroffen verslagtoegang; geen verslagen verzinnen of taken als notulen importeren. OneDrive-bestanden en nieuw concept volgen via beveiligde upload, zonder nieuwe credentials.
 
-- https://ledenbcd.lovable.app stuurt door (302) naar https://leden.coffeeshopbond.nl/
-- /contacten geeft HTTP 200, paginatitel "Contacten — BCD", en laadt de nieuwe bestanden contacten.index, AddressBookPage en _dashboard
-- Het detailbestand contacten._id staat ook online; /contacten/<id> geeft HTTP 200
-- AddressBookPage bevat "Organisatie toevoegen" en leest de nieuwe adresboektabellen
-
-Beperkingen: deploymentstatus en broncommit zijn niet via het platform uitgelezen. Er is niet ingelogd getest, dus menu, rechten en opslaan zijn niet live in de browser gecontroleerd. Niets gewijzigd of opnieuw gepubliceerd.
+## Techniek
+- Afzonderlijke tabellen en private bucket, bestaande `has_role`/`is_board_member`, admin-only gecontroleerde RPC-mutaties, append-only versies/bijlagen en vaststelling met serveractor/tijd.
+- Download via geauthenticeerde opslagfetch naar Blob, geen publieke of overdraagbare signed URL. Deduplicatie op bron-id en inhouds-/bestandhash; gewijzigde inhoud levert een nieuwe versie.
+- Geïsoleerde PostgreSQL-rechten/versietests en echte componenttests; desktop/mobiel en downloadcontrole waar mogelijk. Geen productie-testrecords, accountwijzigingen, externe writes of wijzigingen aan andere lopende functies.

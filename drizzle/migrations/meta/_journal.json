@@ -554,6 +554,27 @@
       "when": 1794220137002,
       "tag": "0078_address_book_more_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794259171288,
+      "tag": "0079_board_minutes_private_archive",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1794259447082,
+      "tag": "0080_board_minutes_revision_originals",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1794259858742,
+      "tag": "0081_board_minutes_latest_version_guards",
+      "breakpoints": true
     }
   ]
 }
