@@ -68,9 +68,9 @@ describe('category groups in the real overview', () => {
   it('detail page keeps person anchors and edit/delete actions in the table', () => {
     setup({ id: '3' });
     expect(document.getElementById('persoon-d')?.tagName).toBe('TR');
+    expect(screen.getByRole('button', { name: 'Verwijder SYNTH Ada' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Bewerk SYNTH Bea' }));
     expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Verwijder SYNTH Ada' })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Mailbron/);
   });
 });
