@@ -1,13 +1,21 @@
-# Bestuur → Vergaderingen en notulen
+# Beveiligingscontrole (alleen lezen) — resultaat, geen wijzigingen
 
-## Uitvoering
-- Bouw direct in het bestaande portaal op `/bestuur/notulen` en `/bestuur/notulen/<id>`; geen publicatie.
-- Bestuur en beheerders lezen; alleen beheerders voegen toe, maken nieuwe versies, uploaden bijlagen en stellen expliciet vast. Bestaande rechtenbron blijft intact.
-- Overzicht met datum, titel, concept/vastgesteld, bron, inhoud-/onderwerpzoekfunctie en jaarfilter. Detail toont verslag, besluiten, acties, originele bestanden en versiegeschiedenis.
-- Upload/import bewaart het originele bestand en de naam, bron-id en bronverwijzing. Alleen expliciet bevestigde bestuursnotulen, geen automatische indeling van ALV of externe overleggen.
-- Topical biedt hier alleen een taken-/agendakoppeling, geen aangetroffen verslagtoegang; geen verslagen verzinnen of taken als notulen importeren. OneDrive-bestanden en nieuw concept volgen via beveiligde upload, zonder nieuwe credentials.
+## Scanstatus (23:38 UTC, 9 nov 2026)
+- Databasescan: opnieuw gedraaid en afgerond, 6 meldingen (3 Warning, 3 Info, **0 Critical**).
+- Diepe scan (agent_security): status "unknown", geen opgeslagen meldingen. Dit is waarschijnlijk de melding "We couldn't finish the security scan". De 1 Critical + 1 Warning op jouw screenshot zijn met deze tools **niet terug te lezen**.
+- MCP-scan: afgerond, 0 meldingen. Afhankelijkhedenscan: afgerond (21:41), 0 meldingen. Wiz: overgeslagen (niet gekoppeld).
+- De eerdere meldingen over agenda-images en member-logos staan **niet meer** in de actieve lijst.
 
-## Techniek
-- Afzonderlijke tabellen en private bucket, bestaande `has_role`/`is_board_member`, admin-only gecontroleerde RPC-mutaties, append-only versies/bijlagen en vaststelling met serveractor/tijd.
-- Download via geauthenticeerde opslagfetch naar Blob, geen publieke of overdraagbare signed URL. Deduplicatie op bron-id en inhouds-/bestandhash; gewijzigde inhoud levert een nieuwe versie.
-- Geïsoleerde PostgreSQL-rechten/versietests en echte componenttests; desktop/mobiel en downloadcontrole waar mogelijk. Geen productie-testrecords, accountwijzigingen, externe writes of wijzigingen aan andere lopende functies.
+## Actieve meldingen
+1. Warning `lov_db_rls_tautology_permissive_v1_11240cd4d82eae50` — tabel `membership_requests`, policy "Anyone can submit a request": INSERT `WITH CHECK (true)`.
+2. Warning `lov_db_rls_tautology_permissive_v1_5ed9d476b56d3551` — tabel `benefit_images`, policy "Authenticated can read benefit images": SELECT `USING (true)`.
+3. Warning `lov_db_rls_tautology_permissive_v1_18e65ee9b5c46858` — tabel `survey_questions`: SELECT voor elke ingelogde gebruiker zonder beperking (nieuw in deze scan).
+4. Info `lov_db_storage_objects_owner_unbound_v1_4a1c70ea5e6b1807` — bucket `benefit-images`, policy "Benefit images are publicly accessible": iedereen kan bestanden opsommen.
+5. Info `lov_db_storage_objects_owner_unbound_v1_c5a81138160d0e9e` — bucket `org-logos`, policy "Anyone can read org logos".
+6. Info `lov_db_storage_objects_owner_unbound_v1_e89cffc93d066508` — bucket `bestuur-photos`, policy "Public can view bestuur photos".
+
+## Notulentaak
+Ongewijzigd: niets aan policies, code, data of meldingen veranderd; niets gepubliceerd.
+
+## Volgende stap (alleen na jouw akkoord)
+Geen bouwwerk voorgesteld. De diepe scan opnieuw starten vanuit het Security-scherm om de Critical-melding zichtbaar te maken.
