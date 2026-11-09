@@ -46,19 +46,25 @@ export function safeWebsite(value: string): string | null {
   } catch { return null; }
 }
 export function searchAddressBook(data: AddressBook, query: string, category: string, role = '') {
+  // Category and role are hard filters. A query matching an organisation shows its (role-matching) contacts;
+  // a query matching a person shows only the matching people of that organisation.
   const needle = query.trim().toLocaleLowerCase('nl');
-  const matches = (...values: string[]) => values.some(v => v.toLocaleLowerCase('nl').includes(needle));
+  const matches = (...values: string[]) => values.some(v => (v ?? '').toLocaleLowerCase('nl').includes(needle));
   const allowed = data.organizations.filter(o => !category || o.category === category);
-  const ids = new Set(allowed.map(o => o.id));
-  const orgNames = new Map(data.organizations.map(o => [o.id, o]));
-  const people = data.contacts.filter(c => ids.has(c.organization_id) && (!role || contactRole(c, orgNames.get(c.organization_id)?.category) === role)
-    && (matches(c.name, c.position, c.department, c.email) || (!!role && !!needle && matches(orgNames.get(c.organization_id)?.name ?? '', orgNames.get(c.organization_id)?.abbreviation ?? ''))));
+  const byId = new Map(allowed.map(o => [o.id, o]));
+  const orgMatch = new Set(allowed.filter(o => !needle || matches(o.name, o.abbreviation, o.email)).map(o => o.id));
+  const people = data.contacts.filter(c => {
+    const o = byId.get(c.organization_id);
+    if (!o || (role && contactRole(c, o.category) !== role)) return false;
+    return orgMatch.has(o.id) || matches(c.name, c.position, c.department, c.email);
+  });
   const peopleIds = new Set(people.map(c => c.organization_id));
   return {
-    organizations: allowed.filter(o => role ? peopleIds.has(o.id) : (matches(o.name, o.abbreviation, o.email) || peopleIds.has(o.id))).sort((a, b) => a.name.localeCompare(b.name, 'nl')),
+    organizations: allowed.filter(o => peopleIds.has(o.id) || (!role && orgMatch.has(o.id))).sort((a, b) => a.name.localeCompare(b.name, 'nl')),
     contacts: people.sort((a, b) => a.name.localeCompare(b.name, 'nl')),
   };
 }
+export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 export function cleanFields<T extends Record<string, string>>(input: T): T {
   return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, value.trim()])) as T;
 }
