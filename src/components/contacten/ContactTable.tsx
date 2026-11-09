@@ -16,7 +16,7 @@ export function ContactTable({ contacts, organizations, onEdit, onDelete, label,
   const ids = contacts.map(c => c.id);
   const checked = contacts.filter(c => selected?.has(c.id)).length;
   const selection = !!onSelection;
-  const rows = organizations ? organizations.flatMap(o => {
+  const rows = organizations ? organizations.flatMap<{ c: Contact | null; o: Organization | null }>(o => {
     const people = contacts.filter(c => c.organization_id === o.id);
     return people.length ? people.map(c => ({ c, o })) : [{ c: null, o }];
   }) : contacts.map(c => ({ c, o: null }));

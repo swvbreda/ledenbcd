@@ -47,7 +47,7 @@ describe('category groups in the real overview', () => {
     const rows = screen.getAllByRole('row').map(r => r.textContent);
     expect(rows.some(t => /SYNTH Bea.*Beleidsadviseur.*bea@example.invalid.*0101/.test(t ?? ''))).toBe(true);
     expect(screen.getByText('SYNTH Ada').closest('a')?.getAttribute('href')).toBe('/contacten/3#persoon-c');
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent).slice(0, 5)).toEqual(['Naam', 'Functie', 'Afdeling', 'E-mail', 'Telefoon']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent).slice(1, 7)).toEqual(['Organisatie', 'Naam', 'Functie', 'Afdeling', 'E-mail', 'Telefoon']);
     expect(screen.getByText('Bel liever.')).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Mailbron|outlook/);
   });
@@ -72,5 +72,26 @@ describe('category groups in the real overview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Bewerk SYNTH Bea' }));
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Mailbron/);
+  });
+  it('table selection controls export independently of collapsed categories and resets on filters', () => {
+    const { qc, rerender } = setup();
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
+    fireEvent.click(head(/Ministerie/));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
+    fireEvent.click(head(/Ministerie/));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
+    rerender(<QueryClientProvider client={qc}><AddressBookPage query="cor" /></QueryClientProvider>);
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 1 contactpersoon');
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('0 bruikbare unieke');
+  });
+  it('select all applies only to its table; detail scope contains only this organization', () => {
+    setup(); fireEvent.click(head(/Ministerie/));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Alles selecteren: Contactpersonen: Ministeries' }));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 2 contactpersonen');
+    fireEvent.click(screen.getByRole('button', { name: 'Selectie wissen' }));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
+    cleanup(); setup({ id: '3' });
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 2 contactpersonen');
   });
 });
