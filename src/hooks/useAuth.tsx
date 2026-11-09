@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
 import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
 import { decideSessionExpiry, interpretInitialSession, shouldIgnoreAuthEvent } from "@/lib/sessionRestore";
+import { setAuthBearer } from '@/lib/authBearer';
 import {
   createAccessController,
   deriveAccess,
@@ -215,6 +216,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const applySession = (nextSession: Session | null) => {
+      setAuthBearer(nextSession?.access_token??null);
       sessionRef.current = nextSession;
       sessionResolved = true;
       setSession(nextSession);
