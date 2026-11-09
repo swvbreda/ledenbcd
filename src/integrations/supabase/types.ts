@@ -958,6 +958,38 @@ export type Database = {
           },
         ]
       }
+      board_minutes_import_details: {
+        Row: {
+          created_at: string
+          created_by: string
+          details: Json
+          source_text: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          details: Json
+          source_text?: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          details?: Json
+          source_text?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_import_details_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: true
+            referencedRelation: "board_minutes_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_minutes_meetings: {
         Row: {
           created_at: string
@@ -6752,6 +6784,22 @@ export type Database = {
         Returns: string
       }
       board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_import_revision: {
+        Args: {
+          p_actions: Json
+          p_date: string
+          p_decisions: Json
+          p_details: Json
+          p_hash: string
+          p_report: string
+          p_source: string
+          p_source_id: string
+          p_source_text: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
       board_minutes_save: {
         Args: {
           p_actions: Json
