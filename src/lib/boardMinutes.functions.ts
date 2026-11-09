@@ -65,6 +65,14 @@ export const adoptBoardMinutes = createServerFn({ method: 'POST' }).middleware([
   return { ok: true };
 });
 
+export const adoptHistoricalBoardMinutes=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>z.object({versionIds:z.array(z.string().uuid()).min(1).max(1000),confirm:z.literal(true)}).parse(d)).handler(async({data,context})=>{
+  await requireMinutesAccess(context,true);
+  const {data:count,error}=await context.supabase.rpc('board_minutes_adopt_historical',{p_versions:data.versionIds,p_confirm:data.confirm});
+  if(error)throw new Error(error.message);
+  if(typeof count!=='number')throw new Error('Bevestiging kon niet worden gecontroleerd.');
+  return {count};
+});
+
 export const uploadBoardMinutesFile = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(d => {
   if (!(d instanceof FormData)) throw new Error('Ongeldige upload.');
   const versionId = z.string().uuid().parse(d.get('versionId'));

@@ -137,5 +137,5 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
 }
 
 export function minutesStatus(adopted:boolean,details?:ImportDetails|null){
-  return adopted?'Vastgesteld':details?.reportMissing?'Verslag ontbreekt':details?.reportKind==='brief-notes'?'Beknopte notities – status te controleren':details?.status==='historisch-onbevestigd'?'Historisch – status te controleren':'Concept';
+  return adopted?'Vastgesteld':'Concept';
 }
