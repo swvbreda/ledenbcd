@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { minutesSaveSchema, requireMinutesAccess, validateMinutesBytes, MINUTES_BUCKET, type MinuteVersion, type MinutesArchive } from './boardMinutes';
 
+// Generated RPC types do not model PostgreSQL nullable input parameters.
+type RevisionArgs = { p_meeting:string|null; p_expected:string|null; p_source:string; p_source_id:string; p_date:string; p_title:string; p_report:string; p_decisions:string[]; p_actions:string[]; p_url:string|null; p_confirm:boolean; p_file_hash:string|null };
+
 export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }): Promise<MinutesArchive> => {
   const canManage = await requireMinutesAccess(context);
   const sb = context.supabase;
@@ -17,12 +20,13 @@ export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([r
 
 export const saveBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(d => minutesSaveSchema.parse(d)).handler(async ({ data, context }) => {
   await requireMinutesAccess(context, true);
-  const { data: id, error } = await context.supabase.rpc('board_minutes_save_revision', {
+  const revisionRpc = context.supabase.rpc.bind(context.supabase) as unknown as (name:'board_minutes_save_revision', args:RevisionArgs)=>PromiseLike<{data:string|null;error:{message:string}|null}>;
+  const { data: id, error } = await revisionRpc('board_minutes_save_revision', {
     p_meeting: data.meetingId, p_expected: data.expectedVersion, p_source: data.source, p_source_id: data.sourceId,
     p_date: data.date, p_title: data.title, p_report: data.report, p_decisions: data.decisions, p_actions: data.actions,
     p_url: data.sourceUrl || null, p_confirm: data.confirm, p_file_hash: data.fileHash ?? null,
   });
-  if (error) throw new Error(error.message);
+  if (error || !id) throw new Error(error?.message ?? 'Opslaan mislukt.');
   const { data: version, error: readError } = await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id', id).single();
   if (readError || !version) throw new Error('Versie opgeslagen, maar kon niet worden teruggelezen.');
   return version;
@@ -53,6 +57,9 @@ export const uploadBoardMinutesFile = createServerFn({ method: 'POST' }).middlew
   const type = validateMinutesBytes(data.file.name, new Uint8Array(buffer));
   const digest = await crypto.subtle.digest('SHA-256', buffer);
   const hash = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2,'0')).join('');
+  const { data: existing, error: existingError } = await sb.from('board_minutes_files').select('id').eq('version_id',data.versionId).eq('sha256',hash).maybeSingle();
+  if (existingError) throw new Error('Bijlagen konden niet worden gecontroleerd.');
+  if (existing) return {id:existing.id,originalName:data.file.name};
   const path = `${version.meeting_id}/${hash}.${type.ext}`;
   const { error: uploadError } = await sb.storage.from(MINUTES_BUCKET).upload(path, buffer, { upsert: false, contentType: type.mime });
   if (uploadError && !('statusCode' in uploadError && String(uploadError.statusCode)==='409')) throw new Error('Origineel bestand kon niet worden opgeslagen.');
