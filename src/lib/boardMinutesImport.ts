@@ -73,6 +73,23 @@ export async function sha256(bytes: Uint8Array) {
   const copy = new Uint8Array(bytes);
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',copy)), b=>b.toString(16).padStart(2,'0')).join('');
 }
+
+export function conceptAttendance(metadata:string[]):string|undefined{
+  const values:string[]=[];
+  for(let i=0;i<metadata.length;i++){
+    const match=/^\s*(?:aanwezig(?:en)?|aanwezige deelnemers)\s*:\s*([\s\S]*)$/i.exec(metadata[i]??'');
+    if(!match)continue;
+    const value=match[1]?.trim()||(metadata[i+1]??'').trim();
+    if(value&&!/^(?:afwezig|genodigden|datum|locatie|verslag|status)\s*:/i.test(value))values.push(value);
+  }
+  return values.length?values.join('; '):undefined;
+}
+
+// Hide only the exact legacy application-inserted preamble, never source paragraphs.
+export function minutesDisplayReport(report:string,details?:ImportDetails){
+  if(details?.status!=='concept')return report;
+  return report.replace(/^Concept; deelnemerslijst onbekend\. Dinerbijdrage € 7\.500: TE BEVESTIGEN, geen vastgesteld besluit of betaalopdracht\.\r?\n\r?\n/,'');
+}
 // Absence of the technical summary heading does not establish absence of minutes.
 export function topicalReport(record: {meeting_date:string;has_summary:boolean;summary_text:string;full_export_text:string}) {
   const text=record.full_export_text;
@@ -100,14 +117,15 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
   if(!manifestBytes){
     const json=entries['verslag.json'],txt=entries['verslag.txt'];
     if(!json||!txt)throw new Error('manifest.json ontbreekt.');
-    const concept=z.object({title:z.string(),metadata:z.array(z.string()),decisions:z.array(z.string()),actions:z.array(z.string())}).parse(JSON.parse(new TextDecoder().decode(json)));
+    const concept=z.object({title:z.string().max(300),metadata:z.array(z.string().max(3000)).max(30),decisions:z.array(z.string()),actions:z.array(z.string())}).parse(JSON.parse(new TextDecoder().decode(json)));
     const text=new TextDecoder('utf-8',{fatal:true}).decode(txt);
     const attachments=Object.entries(entries).filter(([name])=>/\.(pdf|docx)$/i.test(name));
     if(attachments.length!==2||!attachments.some(([n])=>n.endsWith('.pdf'))||!attachments.some(([n])=>n.endsWith('.docx')))throw new Error('Concept vereist originele PDF en DOCX.');
-    const hash=await sha256(json);
+    const attachmentHashes=await Promise.all(attachments.map(async([name,bytes])=>({name,hash:await sha256(bytes)})));
+    const hash=await sha256(new TextEncoder().encode(JSON.stringify({concept,text,attachments:attachmentHashes.sort((a,b)=>a.name.localeCompare(b.name))})));
     const decisions=concept.decisions.filter(d=>!/^te bevestigen:/i.test(d));
-    const report=`Concept; deelnemerslijst onbekend. Dinerbijdrage € 7.500: TE BEVESTIGEN, geen vastgesteld besluit of betaalopdracht.\n\n${text}`;
-    for(const [name,bytes]of attachments){validateMinutesBytes(name,bytes);const fileHash=await sha256(bytes);originals.push({path:name,name,hash:fileHash,revision:importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'upload',sourceId:'handmatig:2026-11-06:bestuur',date:'2026-11-06',title:concept.title,report,decisions,actions:concept.actions,sourceUrl:'',fileHash:hash,confirm:true},sourceText:text,details:{status:'concept',reviewRequired:true,reportMissing:false,meetingType:'bestuursvergadering',originalName:'Conceptpakket DOCX/PDF',sourcePaths:[],dateBasis:'Aangeleverd concept 6 november 2026',versionLabel:'Concept',attendance:'Onbekend; nog te bevestigen',recorder:'Secretariaat'}})});}
+    const attendance=conceptAttendance(concept.metadata);
+    for(const [name,bytes]of attachments){validateMinutesBytes(name,bytes);const fileHash=await sha256(bytes);originals.push({path:name,name,hash:fileHash,revision:importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'upload',sourceId:'handmatig:2026-11-06:bestuur',date:'2026-11-06',title:concept.title,report:text,decisions,actions:concept.actions,sourceUrl:'',fileHash:hash,confirm:true},sourceText:text,details:{status:'concept',reviewRequired:true,reportMissing:false,meetingType:'bestuursvergadering',originalName:'Conceptpakket DOCX/PDF',sourcePaths:[],dateBasis:'Aangeleverd concept 6 november 2026',versionLabel:'Concept',metadata:concept.metadata,...(attendance?{attendance}:{})}})});}
     return {originals,meetings:1,excluded:0};
   }
   if(manifestBytes.length>10*1024*1024)throw new Error('Manifest is te groot.');
