@@ -9,7 +9,7 @@ vi.mock('sonner', () => ({ toast: { success: m.toastSuccess, error: m.toastError
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => { const chain = { insert: () => chain, update: () => chain, delete: () => chain, eq: () => chain, select: () => chain, single: m.single }; return chain; } } }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 const org = { ...emptyOrganization, id: 'org-a', created_at: '', name: 'SYNTHETISCH Ministerie', abbreviation: 'SM', category: 'Ministerie' };
-const data: AddressBook = { organizations: [org], contacts: [{ id: 'c-a', created_at: '', organization_id: org.id, name: 'SYNTHETISCH Ada', position: 'Beleidsadviseur', department: 'Fractie S', email: 'ada@example.invalid', phone: '', note: '' }, { id: 'c-b', created_at: '', organization_id: org.id, name: 'SYNTHETISCH Bob', position: 'Secretaris', department: '', email: 'bob@example.invalid', phone: '', note: '' }] };
+const data: AddressBook = { organizations: [org], contacts: [{ id: 'c-a', created_at: '', party: '', committees: '', policy_areas: '', organization_id: org.id, name: 'SYNTHETISCH Ada', position: 'Beleidsadviseur', department: 'Fractie S', email: 'ada@example.invalid', phone: '', note: '' }, { id: 'c-b', created_at: '', party: '', committees: '', policy_areas: '', organization_id: org.id, name: 'SYNTHETISCH Bob', position: 'Secretaris', department: '', email: 'bob@example.invalid', phone: '', note: '' }] };
 describe('address book rules', () => {
  it('editing never submits id or created_at as editable fields', async () => {
   const save = vi.fn().mockResolvedValue(undefined);
