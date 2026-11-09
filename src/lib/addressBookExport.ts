@@ -17,9 +17,9 @@ export function csvCell(value: string) {
 }
 export function contactsCsv(scope: AddressBook): string {
   const orgs = new Map(scope.organizations.map(o => [o.id, o]));
-  const rows = [['Categorie', 'Organisatie', 'Naam', 'Functie', 'Afdeling', 'E-mailadres', 'Telefoon'], ...scope.contacts.map(c => {
+  const rows = [['Categorie', 'Organisatie', 'Naam', 'Functie', 'Afdeling', 'E-mailadres', 'Telefoon', 'Partij / fractie', 'Commissies', 'Beleidsterreinen'], ...scope.contacts.map(c => {
     const o = orgs.get(c.organization_id);
-    return [categoryLabel(o?.category ?? ''), o?.name ?? '', c.name, c.position, c.department, cleanEmailList([c.email]).join('; '), c.phone];
+    return [categoryLabel(o?.category ?? ''), o?.name ?? '', c.name, c.position, c.department, cleanEmailList([c.email]).join('; '), c.phone, c.party ?? '', c.committees ?? '', c.policy_areas ?? ''];
   })];
   return '\uFEFF' + rows.map(row => row.map(csvCell).join(';')).join('\r\n') + '\r\n';
 }

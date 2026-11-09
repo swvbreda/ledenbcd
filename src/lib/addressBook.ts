@@ -29,12 +29,15 @@ export function contactRole(contact: { name: string; position: string }, categor
   return 'Overige functies';
 }
 export type Organization = Database['public']['Tables']['address_book_organizations']['Row'];
-export type Contact = Database['public']['Tables']['address_book_contacts']['Row'];
+type ContactRow = Database['public']['Tables']['address_book_contacts']['Row'];
+// Optional in the client so cached rows from before the additive migration remain readable.
+export type Contact = Omit<ContactRow, 'party' | 'committees' | 'policy_areas'> & { party?: string; committees?: string; policy_areas?: string };
 export type OrganizationInput = Omit<Organization, 'id' | 'created_at'>;
 export type ContactInput = Omit<Contact, 'id' | 'created_at'>;
 export type AddressBook = { organizations: Organization[]; contacts: Contact[] };
 export const emptyOrganization: OrganizationInput = { name: '', abbreviation: '', category: 'Overig', email: '', phone: '', website: '', address: '', postal_code: '', city: '', note: '' };
-export const emptyContact = { name: '', position: '', department: '', email: '', phone: '', note: '' };
+export const emptyContact = { name: '', position: '', department: '', email: '', phone: '', note: '', party: '', committees: '', policy_areas: '' };
+export const isParliament = (category: string) => category === 'Tweede Kamer' || category === 'Eerste Kamer';
 export function canManageAddressBook(auth: { user: unknown; loading: boolean; authError: string | null; isAdmin: boolean; isBoard: boolean; isExtern: boolean }) {
   return !!auth.user && !auth.loading && !auth.authError && !auth.isExtern && (auth.isAdmin || auth.isBoard);
 }
@@ -56,7 +59,7 @@ export function searchAddressBook(data: AddressBook, query: string, category: st
   const people = data.contacts.filter(c => {
     const o = byId.get(c.organization_id);
     if (!o || (role && contactRole(c, o.category) !== role)) return false;
-    return orgMatch.has(o.id) || matches(c.name, c.position, c.department, c.email);
+    return orgMatch.has(o.id) || matches(c.name, c.position, c.department, c.email, c.party ?? '', c.committees ?? '', c.policy_areas ?? '');
   });
   const peopleIds = new Set(people.map(c => c.organization_id));
   return {
@@ -83,3 +86,4 @@ export function groupByCategory<T extends { category: string; name: string }>(or
   const extra = [...new Set(organizations.map(o => o.category).filter(c => !known.has(c)))].sort((a, b) => a.localeCompare(b, 'nl'));
   return [...addressCategories, ...extra].map(category => ({ category, items: organizations.filter(o => o.category === category).sort((a, b) => a.name.localeCompare(b.name, 'nl')) })).filter(g => g.items.length);
 }
+

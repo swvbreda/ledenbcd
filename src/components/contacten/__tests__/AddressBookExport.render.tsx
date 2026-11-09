@@ -21,7 +21,7 @@ describe('local address-book export', () => {
     expect(exportEmails(scope, true)).toEqual(['One@example.org', 'two@example.org', 'a@example.org']);
     expect(exportEmails({ organizations: [org('b')], contacts: [data.contacts[2]] }, false)).toEqual([]);
   });
-  it('CSV includes contacts without email, only seven approved fields and never notes/IDs', () => {
+  it('CSV includes contacts without email, contact fields and parliamentary context, never notes/IDs', () => {
     const csv = contactsCsv(data);
     expect(csv.startsWith('\uFEFF"Categorie";"Organisatie"')).toBe(true);
     expect(csv.split('\r\n')).toHaveLength(5);

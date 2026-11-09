@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import AddressBookPage from '../AddressBookPage';
 import { emptyOrganization, type AddressBook } from '@/lib/addressBook';
 const o = (id: string, name: string, category: string) => ({ ...emptyOrganization, id, created_at: '', name, category });
 const data: AddressBook = {
-  organizations: [o('1', 'SYNTH Gemeente B', 'Gemeente'), o('2', 'SYNTH Gemeente A', 'Gemeente'), o('3', 'SYNTH Ministerie', 'Ministerie')],
+  organizations: [o('1', 'SYNTH Gemeente B', 'Gemeente'), o('2', 'SYNTH Gemeente A', 'Gemeente'), { ...o('3', 'SYNTH Ministerie', 'Ministerie'), email: 'algemeen@example.invalid', phone: '0700000000', website: 'https://ministerie.example.invalid', address: 'SYNTH Straat 1', postal_code: '0000 AA', city: 'SYNTH Stad' }],
   contacts: [{ id: 'c', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '3', name: 'SYNTH Ada', position: '', department: 'DGX', email: '', phone: '', note: 'Mailbron: x\nhttps://outlook.cloud.microsoft/mail/id/Q\n\nBel liever.' },
     { id: 'd', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '3', name: 'SYNTH Bea', position: 'Beleidsadviseur', department: '', email: 'bea@example.invalid', phone: '0101', note: '' },
     { id: 'e', created_at: '', party: '', committees: '', policy_areas: '', organization_id: '2', name: 'SYNTH Cor', position: 'Burgemeester', department: '', email: '', phone: '', note: '' }],
@@ -17,7 +17,8 @@ vi.mock('@tanstack/react-router', () => ({ Link: ({ children, params, hash }: { 
 vi.mock('@/components/BcdHeroBanner', () => ({ default: ({ title }: { title: string }) => <h1>{title}</h1> }));
 afterEach(cleanup);
 const setup = (props: Record<string, string> = {}) => { const qc = new QueryClient(); qc.setQueryData(['ab', 'u'], data); return { qc, ...render(<QueryClientProvider client={qc}><AddressBookPage {...props} /></QueryClientProvider>) }; };
-const head = (n: RegExp) => screen.getByRole('button', { name: n });
+const head = (n: RegExp) => screen.getAllByRole('button', { name: n }).find(button => button.getAttribute('aria-controls')?.startsWith('categorie-'))!;
+const ministryContacts = () => screen.getByRole('button', { name: /^(Toon|Verberg) \d+ (contactpersoon|contactpersonen) van SYNTH Ministerie$/ });
 describe('category groups in the real overview', () => {
   it('shows only non-empty groups with counts, all closed, and toggles manually', async () => {
     setup();
@@ -35,19 +36,41 @@ describe('category groups in the real overview', () => {
     setup(props);
     expect(head(/Ministerie/).getAttribute('aria-expanded')).toBe('true');
   });
-  it('clearing filters collapses again; person card shows role placeholder without source', () => {
+  it('a category filter leaves the ministry people collapsed, while a person filter opens only the matches', () => {
+    const { qc, rerender } = setup({ category: 'Ministerie' });
+    expect(ministryContacts().getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByText('SYNTH Bea')).toBeNull();
+    rerender(<QueryClientProvider client={qc}><AddressBookPage category="Ministerie" query="bea" /></QueryClientProvider>);
+    expect(ministryContacts().getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('SYNTH Bea')).toBeTruthy();
+    expect(screen.queryByText('SYNTH Ada')).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Selecteer alle contactpersonen van SYNTH Ministerie' }));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
+    fireEvent.click(ministryContacts());
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
+  });
+  it('clearing filters collapses again; person row shows role placeholder without source', () => {
     const { qc, rerender } = setup({ query: 'ada' });
     expect(screen.getByText('Functie nog aan te vullen')).toBeTruthy();
     expect(screen.getByText('DGX')).toBeTruthy();
     rerender(<QueryClientProvider client={qc}><AddressBookPage /></QueryClientProvider>);
     expect(head(/Ministerie/).getAttribute('aria-expanded')).toBe('false');
   });
-  it('open category shows contact rows directly with function and mail', () => {
+  it('a ministry shows general details first and opens its people with function and mail', () => {
     setup(); fireEvent.click(head(/Ministerie/));
+    expect(screen.getAllByText('SYNTH Ministerie')).toHaveLength(1);
+    expect(screen.getByText('algemeen@example.invalid')).toBeTruthy();
+    expect(screen.getByText('0700000000')).toBeTruthy();
+    expect(screen.getByText('SYNTH Straat 1')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Website van SYNTH Ministerie' }).getAttribute('href')).toBe('https://ministerie.example.invalid/');
+    expect(screen.queryByText('SYNTH Ada')).toBeNull();
+    expect(screen.queryByText('SYNTH Bea')).toBeNull();
+    expect(ministryContacts().getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(ministryContacts());
     const rows = screen.getAllByRole('row').map(r => r.textContent);
     expect(rows.some(t => /SYNTH Bea.*Beleidsadviseur.*bea@example.invalid.*0101/.test(t ?? ''))).toBe(true);
     expect(screen.getByText('SYNTH Ada').closest('a')?.getAttribute('href')).toBe('/contacten/3#persoon-c');
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent).slice(1, 7)).toEqual(['Organisatie', 'Naam', 'Functie', 'Afdeling', 'E-mail', 'Telefoon']);
+    expect(within(screen.getByRole('table', { name: 'Contactpersonen van SYNTH Ministerie' })).getAllByRole('columnheader').map(h => h.textContent).slice(1)).toEqual(['Naam', 'Functie', 'Afdeling', 'E-mail', 'Telefoon']);
     expect(screen.getByText('Bel liever.')).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Mailbron|outlook/);
   });
@@ -77,6 +100,7 @@ describe('category groups in the real overview', () => {
     const { qc, rerender } = setup();
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
     fireEvent.click(head(/Ministerie/));
+    fireEvent.click(ministryContacts());
     fireEvent.click(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }));
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
     fireEvent.click(head(/Ministerie/));
@@ -87,7 +111,7 @@ describe('category groups in the real overview', () => {
   });
   it('select all applies only to its table; detail scope contains only this organization', () => {
     setup(); fireEvent.click(head(/Ministerie/));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Alles selecteren: Contactpersonen: Ministeries' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Alle contactpersonen selecteren: Ministeries' }));
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 2 contactpersonen');
     fireEvent.click(screen.getByRole('button', { name: 'Selectie wissen' }));
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
@@ -102,9 +126,11 @@ describe('category groups in the real overview', () => {
     const page = (query = '') => <QueryClientProvider client={qc}><AddressBookPage query={query} /></QueryClientProvider>;
     const { rerender } = render(page());
     fireEvent.click(head(/Ministerie/));
+    fireEvent.click(ministryContacts());
     fireEvent.click(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }));
     fireEvent.click(head(/Ministerie/));
     fireEvent.click(head(/Ministerie/));
+    fireEvent.click(ministryContacts());
     expect(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }).getAttribute('data-state')).toBe('checked');
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
     rerender(page('cor'));
@@ -112,8 +138,10 @@ describe('category groups in the real overview', () => {
     rerender(page());
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
     fireEvent.click(head(/Ministerie/));
+    fireEvent.click(ministryContacts());
     expect(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }).getAttribute('data-state')).toBe('unchecked');
     fireEvent.click(screen.getByRole('button', { name: 'E-mailadressen kopiëren' }));
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('bea@example.invalid; cor@example.invalid'));
   });
 });
+
