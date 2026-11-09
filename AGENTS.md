@@ -1,6 +1,8 @@
 # Project architecture decisions
 
 - Board minutes use separate board_minutes_* tables and the private board-minutes bucket; existing has_role/is_board_member govern reads, admin-checked RPCs own append-only versions/adoption and attachment metadata, and authenticated Blob downloads never mint shareable URLs, so other workspaces and member workflows remain isolated.
+- Board archive ZIP imports are processed locally with bounded expansion and per-original hashes, then caller-authorized import/attachment RPCs preserve source versions and immutable private provenance; historical actions never enter task workflows and print presentation never rewrites source text.
+- Topical completeness never depends solely on has_summary. Formatted ZIPs bind existing source IDs and original PDF hashes before writes; the admin RPC locks latest versions and deduplicates full-content fingerprints, preserving append-only provenance and inactive historical actions.
 
 - The internal address book uses only address_book_organizations/contact rows and existing has_role/is_board_member RLS for every operation; its user-scoped query cache and forms never invoke member-account or external-party workflows.
 

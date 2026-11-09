@@ -575,6 +575,20 @@
       "when": 1794259858742,
       "tag": "0081_board_minutes_latest_version_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1794260176522,
+      "tag": "0082_board_minutes_import_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1794261078978,
+      "tag": "0083_board_minutes_formatted_revision",
+      "breakpoints": true
     }
   ]
 }

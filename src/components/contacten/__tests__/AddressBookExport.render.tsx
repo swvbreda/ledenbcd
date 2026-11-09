@@ -5,7 +5,7 @@ import { exportScope, exportEmails, contactsCsv, csvCell } from '@/lib/addressBo
 import { ExportToolbar } from '../ExportToolbar';
 
 const org = (id: string) => ({ ...emptyOrganization, id, created_at: '', name: `Org ${id}`, email: `${id}@example.org` });
-const contact = (id: string, organization_id: string, email: string) => ({ id, organization_id, created_at: '', name: id, email, position: '', department: '', phone: '', note: 'SECRET SOURCE' });
+const contact = (id: string, organization_id: string, email: string) => ({ id, organization_id, created_at: '', party: '', committees: '', policy_areas: '', name: id, email, position: '', department: '', phone: '', note: 'SECRET SOURCE' });
 const data: AddressBook = { organizations: [org('a'), org('b')], contacts: [contact('1', 'a', 'One@example.org; two@example.org'), contact('2', 'a', 'ONE@example.org, invalid'), contact('3', 'b', '')] };
 afterEach(cleanup);
 describe('local address-book export', () => {

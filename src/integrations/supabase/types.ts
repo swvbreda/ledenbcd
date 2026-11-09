@@ -42,9 +42,7 @@ export type Database = {
       }
       address_book_contacts: {
         Row: {
-          party: string
           committees: string
-          policy_areas: string
           created_at: string
           department: string
           email: string
@@ -52,13 +50,13 @@ export type Database = {
           name: string
           note: string
           organization_id: string
+          party: string
           phone: string
+          policy_areas: string
           position: string
         }
         Insert: {
-          party?: string
           committees?: string
-          policy_areas?: string
           created_at?: string
           department?: string
           email?: string
@@ -66,13 +64,13 @@ export type Database = {
           name: string
           note?: string
           organization_id: string
+          party?: string
           phone?: string
+          policy_areas?: string
           position?: string
         }
         Update: {
-          party?: string
           committees?: string
-          policy_areas?: string
           created_at?: string
           department?: string
           email?: string
@@ -80,7 +78,9 @@ export type Database = {
           name?: string
           note?: string
           organization_id?: string
+          party?: string
           phone?: string
+          policy_areas?: string
           position?: string
         }
         Relationships: [
@@ -962,6 +962,38 @@ export type Database = {
             foreignKeyName: "board_minutes_files_version_id_fkey"
             columns: ["version_id"]
             isOneToOne: false
+            referencedRelation: "board_minutes_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_minutes_import_details: {
+        Row: {
+          created_at: string
+          created_by: string
+          details: Json
+          source_text: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          details: Json
+          source_text?: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          details?: Json
+          source_text?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_import_details_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: true
             referencedRelation: "board_minutes_versions"
             referencedColumns: ["id"]
           },
@@ -6761,6 +6793,38 @@ export type Database = {
         Returns: string
       }
       board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_import_formatted: {
+        Args: {
+          p_actions: Json
+          p_date: string
+          p_decisions: Json
+          p_details: Json
+          p_expected: string
+          p_hash: string
+          p_report: string
+          p_source_id: string
+          p_source_text: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
+      board_minutes_import_revision: {
+        Args: {
+          p_actions: Json
+          p_date: string
+          p_decisions: Json
+          p_details: Json
+          p_hash: string
+          p_report: string
+          p_source: string
+          p_source_id: string
+          p_source_text: string
+          p_title: string
+          p_url: string
+        }
+        Returns: string
+      }
       board_minutes_save: {
         Args: {
           p_actions: Json
