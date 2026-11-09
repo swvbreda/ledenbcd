@@ -5,7 +5,7 @@ import { safeWebsite } from '@/lib/addressBook';
 
 export function EmailLink({ email }: { email: string }) {
   if (!email) return null;
-  return <div className="flex min-w-0 items-center gap-1"><a className="min-w-0 break-all text-primary underline underline-offset-2" href={`mailto:${email}`}>{email}</a><Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" title="E-mailadres kopiëren" aria-label={`Kopieer ${email}`} onClick={async () => {
+  return <div className="flex min-w-0 items-center gap-1"><a className="min-w-0 break-all text-primary underline underline-offset-2" href={`mailto:${email}`}>{email}</a><Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="E-mailadres kopiëren" aria-label={`Kopieer ${email}`} onClick={async () => {
     try { await navigator.clipboard.writeText(email); toast.success('E-mailadres gekopieerd'); }
     catch { toast.error('Kopiëren mislukt. Selecteer het e-mailadres om het te kopiëren.'); }
   }}><Copy size={15} /></Button></div>;
