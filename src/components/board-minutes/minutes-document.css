@@ -15,6 +15,13 @@
 .minutes-document dd { overflow-wrap: anywhere; }
 .minutes-document ol { list-style: decimal; padding-left: 20pt; }
 .minutes-document li { margin: 0 0 8pt; overflow-wrap: anywhere; }
+.minutes-actions td { overflow-wrap: anywhere; }
+@media screen and (max-width: 639px) {
+  .minutes-actions, .minutes-actions tbody, .minutes-actions tr, .minutes-actions td { display: block; width: 100%; }
+  .minutes-actions thead { display: none; }
+  .minutes-actions tr { margin-bottom: 16px; border-bottom: 1px solid hsl(var(--border)); }
+  .minutes-actions td::before { content: attr(data-label); display: block; font-weight: bold; }
+}
 @page { size: A4; margin: 20mm; }
 @media print {
   body * { visibility: hidden; }

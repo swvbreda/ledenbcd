@@ -42,7 +42,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 $$;
 REVOKE ALL ON FUNCTION public.board_minutes_task_staff() FROM PUBLIC,anon,authenticated;
 
-CREATE FUNCTION public.board_minutes_task_guard() RETURNS trigger LANGUAGE plpgsql SET search_path='' AS $$
+CREATE FUNCTION public.board_minutes_task_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 BEGIN
  IF TG_OP='UPDATE' AND NEW.board_minutes_private IS DISTINCT FROM OLD.board_minutes_private
  AND EXISTS(SELECT 1 FROM public.board_minutes_action_links WHERE task_id=OLD.id) THEN RAISE EXCEPTION 'Privé taakbinding is onveranderlijk.'; END IF;
@@ -70,7 +70,7 @@ END $$;
 CREATE FUNCTION public.board_minutes_sync_tasks(p_version uuid,p_activate boolean DEFAULT false) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE v public.board_minutes_versions; m public.board_minutes_meetings; rows jsonb; r jsonb; aid uuid; tid uuid;
- i integer:=0; n integer; prior uuid; part text; people uuid[]; matches uuid[]; unresolved boolean; explicit_id uuid; oldrow public.board_minutes_action_versions;
+ i integer:=0; n integer; prior uuid; part text; people uuid[]; matches uuid[]; unresolved boolean; explicit_id uuid; oldrow public.board_minutes_action_versions; due date;
 BEGIN
  IF auth.uid() IS NULL OR NOT public.board_minutes_can_read() OR NOT public.has_role(auth.uid(),'admin') THEN RAISE EXCEPTION 'Alleen beheerders.' USING ERRCODE='42501'; END IF;
  SELECT * INTO v FROM public.board_minutes_versions WHERE id=p_version;
@@ -115,7 +115,9 @@ BEGIN
      WHERE lower(btrim(t.title))=lower(btrim(r->>'action')) AND NOT EXISTS(SELECT 1 FROM public.board_minutes_action_links l WHERE l.task_id=t.id);
      IF n>1 THEN RAISE EXCEPTION 'Meerdere exact passende taken; beheerder moet eerst kiezen.'; END IF;
      IF n=1 AND EXISTS(SELECT 1 FROM public.internal_tasks t WHERE t.id=tid AND (t.project_id IS NOT NULL OR t.source_system IS NOT NULL OR EXISTS(SELECT 1 FROM public.planner_task_links p WHERE p.task_id=t.id) OR EXISTS(SELECT 1 FROM public.outlook_deadline_outbox o WHERE o.task_id=t.id))) THEN RAISE EXCEPTION 'Bestaande taak heeft externe/projectbinding; eerst veilig beoordelen.'; END IF;
-     IF tid IS NULL THEN INSERT INTO public.internal_tasks(title,board_minutes_private,created_by) VALUES(r->>'action',true,auth.uid()) RETURNING id INTO tid;
+     due:=NULL;
+     IF coalesce(r->>'deadline','') ~ '^\d{4}-\d{2}-\d{2}$' THEN BEGIN due:=(r->>'deadline')::date; EXCEPTION WHEN datetime_field_overflow OR invalid_datetime_format THEN due:=NULL; END; END IF;
+     IF tid IS NULL THEN INSERT INTO public.internal_tasks(title,deadline,board_minutes_private,created_by) VALUES(r->>'action',due,true,auth.uid()) RETURNING id INTO tid;
      ELSE UPDATE public.internal_tasks SET board_minutes_private=true WHERE id=tid; END IF;
      INSERT INTO public.board_minutes_action_links(id,meeting_id,task_id) VALUES(aid,m.id,tid);
    END IF;
@@ -152,6 +154,7 @@ BEGIN
 END $$;
 CREATE CONSTRAINT TRIGGER board_minutes_auto_tasks AFTER INSERT ON public.board_minutes_versions DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.board_minutes_auto_tasks();
 CREATE CONSTRAINT TRIGGER board_minutes_import_auto_tasks AFTER INSERT ON public.board_minutes_import_details DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.board_minutes_auto_tasks();
+REVOKE ALL ON FUNCTION public.board_minutes_task_guard(), public.board_minutes_new_task_scope(), public.board_minutes_auto_tasks() FROM PUBLIC,anon,authenticated;
 
 CREATE FUNCTION public.board_minutes_task_assignment(p_action uuid,p_users uuid[],p_confirm boolean) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE l public.board_minutes_action_links;
