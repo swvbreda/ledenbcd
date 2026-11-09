@@ -1,5 +1,9 @@
 # Roadmap
 
+## Gedeelde bestuurstaak — niet publiceren
+- [ ] ‘Bestuur’ bindt één bestaande taak aan alle huidige echte bestuursregisterleden; aspiranten/admin-zonder-bestuursfunctie uitgesloten. Ontbrekende/ambigue accountkoppeling zichtbaar, nooit verzinnen.
+- [ ] ‘Simone en betrokken bestuursleden’ matcht alleen Simone; gedeelde afronding/heropening/idempotentie en privacy geïsoleerd controleren. Geen berichten of echte taakstatusproef.
+
 ## Bestuursnotulen → bestaande taken — niet publiceren
 - [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
 - [x] Adminactivatie nieuwste concept 6 november, automatische nieuwe uploadnotulen/vervolgversies, actuele status en admin-toewijzing gebouwd; migratie 0084 toegepast. Live: 182 vergaderingen, 0 privétaken/koppelingen/geactiveerde vergaderingen; geen herimport of taakmutatie.
