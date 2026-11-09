@@ -1,6 +1,6 @@
 -- Isolated database only; synthetic identities, authoritative role helpers, rollback.
 BEGIN;
-DO $$ DECLARE v uuid; v2 uuid; v3 uuid; mid uuid; f uuid; h text:=repeat('a',64); actor uuid; n integer; path text; BEGIN
+DO $$ DECLARE v uuid; v2 uuid; v3 uuid; v4 uuid; mid uuid; f uuid; h text:=repeat('a',64); actor uuid; n integer; path text; BEGIN
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
  SET LOCAL ROLE authenticated;
  v:=public.board_minutes_save_revision(NULL,NULL,'topical','synthetic-original','2026-11-06','Synthetic board minutes','Private report','["Decision"]','["Action"]','https://example.invalid/source',true,h);
@@ -20,11 +20,15 @@ DO $$ DECLARE v uuid; v2 uuid; v3 uuid; mid uuid; f uuid; h text:=repeat('a',64)
  v3:=public.board_minutes_save_revision(NULL,NULL,'topical','synthetic-original','2026-11-06','Synthetic board minutes','Private report revised','["Decision"]','["Action"]','https://example.invalid/source',true,repeat('b',64));
  IF v3=v2 THEN RAISE EXCEPTION 'Changed original hash lost'; END IF;
  SELECT count(*) INTO n FROM public.board_minutes_versions WHERE meeting_id=mid; IF n<>3 THEN RAISE EXCEPTION 'Version history lost'; END IF;
+ PERFORM public.board_minutes_adopt(v3,true);
+ v4:=public.board_minutes_save_revision(mid,v3,'topical','synthetic-original','2026-11-06','Synthetic board minutes','Private report revised','["Decision"]','["Action"]','https://example.invalid/source',true,repeat('b',64));
+ IF v4=v3 OR EXISTS(SELECT 1 FROM public.board_minutes_adoptions WHERE version_id=v4) THEN RAISE EXCEPTION 'New concept after adoption lost'; END IF;
+ BEGIN PERFORM public.board_minutes_attach(v2,path,'Original name.pdf',h,12); RAISE EXCEPTION 'Old draft accepts attachment'; EXCEPTION WHEN raise_exception THEN IF SQLERRM='Old draft accepts attachment' THEN RAISE; END IF; END;
  BEGIN PERFORM public.board_minutes_save_revision(mid,v,'topical','synthetic-original','2026-11-06','Stale edit','Different','[]','[]',NULL,true,NULL); RAISE EXCEPTION 'Stale overwrite'; EXCEPTION WHEN serialization_failure THEN NULL; END;
  BEGIN UPDATE storage.objects SET name='changed' WHERE bucket_id='board-minutes'; RAISE EXCEPTION 'Storage overwrite allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  RESET ROLE;
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true); SET LOCAL ROLE authenticated;
- SELECT count(*) INTO n FROM public.board_minutes_versions; IF n<>3 THEN RAISE EXCEPTION 'Board cannot read'; END IF;
+ SELECT count(*) INTO n FROM public.board_minutes_versions; IF n<>4 THEN RAISE EXCEPTION 'Board cannot read'; END IF;
  SELECT count(*) INTO n FROM storage.objects WHERE bucket_id='board-minutes'; IF n<>1 THEN RAISE EXCEPTION 'Board cannot download'; END IF;
  BEGIN PERFORM public.board_minutes_adopt(v3,true); RAISE EXCEPTION 'Board can adopt'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  BEGIN PERFORM public.board_minutes_save_revision(mid,v3,'topical','synthetic-original','2026-11-06','Forbidden','x','[]','[]',NULL,true,NULL); RAISE EXCEPTION 'Board can manage'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;

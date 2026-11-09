@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Bestuur → Vergaderingen en notulen — niet publiceren
-- [ ] Afzonderlijk besloten archief, bestaande bestuurs/adminrechten, onveranderlijke versies en privé originele bestanden; beheer/vaststellen uitsluitend admin.
-- [ ] Overzicht/zoeken/jaarfilter, detail/besluiten/acties, veilige upload/import en broninspectie zonder externe writes.
-- [ ] Gerichte rechten-, versie-, import- en schermtests; wijzigingen afbakenen en beperkingen rapporteren.
+- [x] /bestuur/notulen en /bestuur/notulen/$id, afzonderlijk besloten archief met bestaande bestuurs/adminrechten, append-only versies en private board-minutes bucket; alleen admin beheren/vaststellen. Migraties 0079–0081 toegepast.
+- [x] Overzicht/inhoudzoeken/jaarfilter, detail/besluiten/acties, originele upload/download, bron-id/hash-dedup en tekstovername PDF/DOCX/TXT. Topical: takenkoppeling, 12 bestuursagenda-items zonder meeting_url, geen beschikbare verslagimport; geen externe writes.
+- [x] 17 regeltests + 3 echte componenttests, afzonderlijke PostgreSQL-rechten/versies/opslagproef (rollback 0/0), desktop/390px overzicht en synthetische download, bouw OK. Scope uitsluitend notulen/menu/documentatie/gegenereerde schema/routerbestanden en mammoth-afhankelijkheid.
+- [ ] Volledige ingelogde upload→herladen→vaststellen→downloadcontrole: eigen preview-sessie ontbreekt; eigen-account mint gaf geen match, geen ander account gekozen. Topical-import wacht op toegestane verslagbron; OneDrive-documenten en nieuw concept wachten op aanlevering. Niet publiceren.
 
 ## Contacten categorieën + Functie-filter — niet publiceren
 - [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.
