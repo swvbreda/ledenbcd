@@ -5,7 +5,7 @@ GRANT USAGE ON SCHEMA public,auth,storage TO authenticated,anon;
 CREATE TYPE public.app_role AS ENUM('admin','user','extern','inhuur');
 CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb,deleted_at timestamptz,banned_until timestamptz);
 CREATE TABLE public.user_roles(user_id uuid,role public.app_role);
-CREATE TABLE public.board_members(naam text,email text,bond_email text);
+CREATE TABLE public.board_members(naam text,email text,bond_email text,id uuid DEFAULT gen_random_uuid() PRIMARY KEY,type text DEFAULT 'bestuurslid');
 CREATE TABLE public.account_access_revocations(user_id uuid);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 CREATE FUNCTION public.has_role(uuid,text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=$1 AND role::text=$2)$$;
@@ -21,4 +21,17 @@ CREATE TABLE public.task_notifications(recipient_id uuid,task_id uuid,event_key 
 CREATE FUNCTION public.outlook_deadline_enqueue(uuid) RETURNS void LANGUAGE sql AS $$INSERT INTO public.outlook_deadline_outbox VALUES($1)$$;
 INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000001','tester@example.invalid','{"full_name":"Tester One"}',NULL,NULL),('00000000-0000-0000-0000-000000000006','other@example.invalid','{"full_name":"Other Person"}',NULL,NULL);
 INSERT INTO public.user_roles VALUES('00000000-0000-0000-0000-000000000001','admin'),('00000000-0000-0000-0000-000000000006','admin');
-INSERT INTO public.board_members VALUES('Tester One','tester@example.invalid',NULL),('Other Person','other@example.invalid',NULL);
+INSERT INTO public.board_members(naam,email,bond_email) VALUES('Tester One','tester@example.invalid',NULL),('Other Person','other@example.invalid',NULL);
+INSERT INTO auth.users VALUES
+('00000000-0000-0000-0000-000000000007','boardonly@example.invalid','{}',NULL,NULL),
+('00000000-0000-0000-0000-000000000008','aspirant@example.invalid','{}',NULL,NULL),
+('00000000-0000-0000-0000-000000000009','notboard@example.invalid','{}',NULL,NULL),
+('00000000-0000-0000-0000-000000000010','banned@example.invalid','{}',NULL,'2099-01-01'),
+('00000000-0000-0000-0000-000000000011','tester-member@example.invalid','{}',NULL,NULL);
+INSERT INTO public.user_roles VALUES('00000000-0000-0000-0000-000000000008','admin'),('00000000-0000-0000-0000-000000000009','admin');
+INSERT INTO public.board_members(naam,email,bond_email,type) VALUES
+('Board Only','boardonly@example.invalid',NULL,'bestuurslid'),
+('Aspirant Local','aspirant@example.invalid',NULL,'aspirant'),
+('Banned Board','banned@example.invalid',NULL,'bestuurslid'),
+('Missing Board',NULL,NULL,'bestuurslid');
+UPDATE public.board_members SET bond_email='tester-member@example.invalid' WHERE naam='Tester One';

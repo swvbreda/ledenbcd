@@ -9,6 +9,7 @@ trap '$U pg_ctl -D "$D/data" stop -m fast >/dev/null' EXIT
 P=(psql -h "$D" -p 55469 -U postgres -X -q -v ON_ERROR_STOP=1)
 "${P[@]}" -f "$ROOT/supabase/tests/board_minutes_tasks_setup.sql"
 for n in 0079 0080 0081 0082 0084; do "${P[@]}" -f $(ls "$ROOT"/drizzle/migrations/${n}_*.sql); done
+if [ -n "${SHARED_BOARD_SQL:-}" ]; then "${P[@]}" -f "$SHARED_BOARD_SQL"; else "${P[@]}" -f $(ls "$ROOT"/drizzle/migrations/0085_*.sql); fi
 "${P[@]}" -f "$ROOT/drizzle/migrations/0032_server_owned_work_timestamps.sql"
 sed -n '11,27p' "$ROOT/drizzle/migrations/0027_project_workspace.sql" | "${P[@]}"
 "${P[@]}" <<'SQL'
