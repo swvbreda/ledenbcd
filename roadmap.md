@@ -1,8 +1,9 @@
 # Roadmap
 
 ## Gedeelde bestuurstaak — niet publiceren
-- [ ] ‘Bestuur’ bindt één bestaande taak aan alle huidige echte bestuursregisterleden; aspiranten/admin-zonder-bestuursfunctie uitgesloten. Ontbrekende/ambigue accountkoppeling zichtbaar, nooit verzinnen.
-- [ ] ‘Simone en betrokken bestuursleden’ matcht alleen Simone; gedeelde afronding/heropening/idempotentie en privacy geïsoleerd controleren. Geen berichten of echte taakstatusproef.
+- [x] Migratie 0085: één gedeelde privétaak, echte registerleden en actieve accountmatching, geen aspiranten/admin-zonder-bestuursfunctie. Zeven bestuursnamen, zes actieve beheeraccountmatches; één ontbrekend account blijft zichtbaar, geen account/rechten aangemaakt.
+- [x] 41 regeltests, 9 bedieningstests (defecte optionele canvas tijdelijk gestubd) en geïsoleerde SQL-proef met afronden/heropenen/idempotentie/privacy geslaagd; bouw OK. Geen berichten, live 0 privétaken.
+- [ ] Simone activeert via nieuwste concept → '15 conceptacties aan taken koppelen' → 'Bevestig taakregistratie'; ingelogde eindcontrole ontbreekt, agent signed_out, geen mint/alternatieve identiteit of publicatie.
 
 ## Bestuursnotulen → bestaande taken — niet publiceren
 - [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
