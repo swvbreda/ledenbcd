@@ -1,12 +1,25 @@
 import {describe,it,expect} from 'vitest';
-import {importRevisionSchema,minutesStatus,prepareMinutesPackage,sha256} from '../boardMinutesImport';
+import {importRevisionSchema,minutesStatus,prepareMinutesPackage,sha256,topicalReport} from '../boardMinutesImport';
 const bytes=new TextEncoder().encode('%PDF-1.7 synthetic original');
 async function packageFixture(){
  const hash=await sha256(bytes),path=`originals/topical/${hash}.pdf`;
- const record={source_id:'synthetic-1',source_url:'https://example.invalid/1',meeting_date:'2026-04-02',title:'Synthetic board meeting',status:'historisch-onbevestigd',review_required:true,file_name:'Original.pdf',sha256:hash,archive_path:path,full_export_text:'Agenda only, invited persons not attendance',summary_text:'',has_summary:false};
+ const record={source_id:'synthetic-1',source_url:'https://example.invalid/1',meeting_date:'2026-06-04',title:'Synthetic board meeting',status:'historisch-onbevestigd',review_required:true,file_name:'Original.pdf',sha256:hash,archive_path:path,full_export_text:'Agenda only, invited persons not attendance',summary_text:'',has_summary:false};
  return {entries:{'manifest.json':new TextEncoder().encode(JSON.stringify({schema_version:1,read_at:'2026-11-09',excluded:[{reason:'ALV'}],onedrive_meetings:[],topical_meetings:[record]})),[path]:bytes},record,path};
 }
 describe('private archive import rules',()=>{
+ it('2 April AI-verslag is preserved verbatim with contradictory source warning, not attendance',async()=>{
+  const {entries,record}=await packageFixture();record.meeting_date='2026-04-02';record.full_export_text='Genodigden: synthetic\nAI-verslag\nSynthetic AI content\nNotulen\nSynthetic agenda';
+  const manifest=JSON.parse(new TextDecoder().decode(entries['manifest.json']));manifest.topical_meetings=[record];entries['manifest.json']=new TextEncoder().encode(JSON.stringify(manifest));
+  const r=(await prepareMinutesPackage(entries)).originals[0]?.revision;
+  expect(r?.input.report).toBe('Synthetic AI content');expect(r?.details.reportMissing).toBe(false);expect(r?.details.reportKind).toBe('ai-report');expect(r?.details.sourceWarning).toContain('tegenstrijdig');expect(r?.details.attendance).toBeUndefined();expect(r?.details.reviewRequired).toBe(true);expect(r?.sourceText).toBe(record.full_export_text);
+ });
+ it('7 May retains brief notes and its historical action only as source text',()=>{
+  const r=topicalReport({meeting_date:'2026-05-07',has_summary:false,summary_text:'',full_export_text:'Genodigden: synthetic\nNotulen\nSynthetic note\nActies\n☑ Synthetic historical action'});
+  expect(r.report).toBe('Synthetic note\nActies\n☑ Synthetic historical action');expect(r.reportMissing).toBe(false);expect(r.reportKind).toBe('brief-notes');expect(r.sourceWarning).toContain('één historische actie');
+ });
+ it('4 June agenda is the only corrected report-missing export',()=>{const r=topicalReport({meeting_date:'2026-06-04',has_summary:false,summary_text:'',full_export_text:'Notulen\n1. Synthetic agenda'});expect(r.report).toBe('');expect(r.reportMissing).toBe(true);expect(r.reportKind).toBe('agenda-only');});
+ it('missing summary heading alone never proves missing report',()=>{const r=topicalReport({meeting_date:'2026-08-01',has_summary:false,summary_text:'',full_export_text:'Synthetic unclassified source'});expect(r.reportMissing).toBe(false);expect(r.reportKind).toBe('source-review');expect(r.report).toBe('Synthetic unclassified source');});
+ it('other summaries are preserved without rewriting',()=>{const r=topicalReport({meeting_date:'2026-03-01',has_summary:true,summary_text:'Synthetic exact summary',full_export_text:'Synthetic full source'});expect(r.report).toBe('Synthetic exact summary');expect(r.reportKind).toBe('summary');});
  it('6 November concept groups PDF/DOCX and never records 7500 as adopted decision',async()=>{const entries={'verslag.json':new TextEncoder().encode(JSON.stringify({title:'Synthetic concept',metadata:['Concept'],decisions:['Te bevestigen: € 7.500 dinerbijdrage'],actions:[]})),'verslag.txt':new TextEncoder().encode('Synthetic concept only'),'Original.pdf':bytes,'Original.docx':new Uint8Array([80,75,3,4])};const p=await prepareMinutesPackage(entries);expect(p.meetings).toBe(1);expect(p.originals).toHaveLength(2);expect(p.originals[0]?.revision.input.sourceId).toBe('handmatig:2026-11-06:bestuur');expect(p.originals[0]?.revision.input.decisions).toEqual([]);expect(p.originals[0]?.revision.input.report).toContain('€ 7.500: TE BEVESTIGEN');expect(p.originals[0]?.revision.details.attendance).toBe('Onbekend; nog te bevestigen');expect(p.originals[0]?.revision.details.status).toBe('concept');expect(p.originals[0]?.revision).toEqual(p.originals[1]?.revision);});
  it('agenda without summary stays report-missing and preserves source, never actions or attendance',async()=>{const {entries}=await packageFixture();const p=await prepareMinutesPackage(entries);expect(p.meetings).toBe(1);expect(p.excluded).toBe(1);expect(p.originals[0]?.revision.input.report).toBe('');expect(p.originals[0]?.revision.sourceText).toContain('Agenda');expect(p.originals[0]?.revision.details.attendance).toBeUndefined();expect(p.originals[0]?.revision.input.actions).toEqual([]);expect(minutesStatus(false,p.originals[0]?.revision.details)).toBe('Verslag ontbreekt');});
  it('original hash mismatch stops the package before any writes',async()=>{const {entries,path}=await packageFixture();entries[path]=new TextEncoder().encode('%PDF-changed');await expect(prepareMinutesPackage(entries)).rejects.toThrow('hash');});
