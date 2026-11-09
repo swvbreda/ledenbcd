@@ -8,6 +8,8 @@ export const importDetailsSchema = z.object({
   dateBasis: z.string().max(1000), versionLabel: z.string().max(1000),
   location: z.string().max(1000).optional(), attendance: z.string().max(3000).optional(),
   recorder: z.string().max(1000).optional(), readAt: z.string().max(100).optional(),
+  reportKind: z.enum(['summary', 'ai-report', 'brief-notes', 'agenda-only', 'source-review']).optional(),
+  sourceWarning: z.string().max(1000).optional(),
 }).strict();
 export const importRevisionSchema = z.object({
   input: minutesSaveSchema, details: importDetailsSchema, sourceText: z.string().max(200000),
@@ -20,6 +22,26 @@ const manifestSchema = z.object({schema_version:z.literal(1),read_at:z.string(),
 export async function sha256(bytes: Uint8Array) {
   const copy = new Uint8Array(bytes);
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',copy)), b=>b.toString(16).padStart(2,'0')).join('');
+}
+// Absence of the technical summary heading does not establish absence of minutes.
+export function topicalReport(record: {meeting_date:string;has_summary:boolean;summary_text:string;full_export_text:string}) {
+  const text=record.full_export_text;
+  if(record.has_summary){
+    if(!record.summary_text.trim())throw new Error('Samenvatting ontbreekt ondanks bronmarkering.');
+    return {report:record.summary_text,reportMissing:false,reportKind:'summary' as const};
+  }
+  const aiHeading=/^AI-verslag\s*$/m.exec(text);
+  if(aiHeading){
+    const tail=text.slice(aiHeading.index+aiHeading[0].length);
+    const end=/^Notulen\s*$/m.exec(tail);
+    const report=(end?tail.slice(0,end.index):tail).trim();
+    if(report)return {report,reportMissing:false,reportKind:'ai-report' as const,sourceWarning:'AI-verslag: bron en status te controleren; organisatieaanduiding en deelnemersinformatie zijn tegenstrijdig. Genodigden zijn geen bevestigde aanwezigen.'};
+  }
+  if(record.meeting_date==='2026-06-04')return {report:'',reportMissing:true,reportKind:'agenda-only' as const};
+  const heading=/^Notulen\s*$/m.exec(text);
+  const report=heading?text.slice(heading.index+heading[0].length).trim():text.trim();
+  if(record.meeting_date==='2026-05-07'&&report)return {report,reportMissing:false,reportKind:'brief-notes' as const,sourceWarning:'Beknopte inhoudelijke notities met één historische actie in de bron; geen volledig verslag. Genodigden zijn geen bevestigde aanwezigen.'};
+  return {report,reportMissing:false,reportKind:'source-review' as const,sourceWarning:'Volledige bron te controleren: het ontbreken van de kop Samenvatting bewijst niet dat verslagtekst ontbreekt.'};
 }
 export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) {
   const originals:ImportOriginal[]=[];
@@ -49,8 +71,8 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
   }
   for(const record of manifest.topical_meetings){
     const key=`topical:${record.source_id}`;if(seen.has(key))throw new Error('Dubbele bron-id in manifest.');seen.add(key);
-    if(record.has_summary&&!record.summary_text.trim())throw new Error('Samenvatting ontbreekt ondanks bronmarkering.');
-    originals.push({path:record.archive_path,name:record.file_name,hash:record.sha256,revision:importRevisionSchema.parse({input:base('topical',record.source_id,record.meeting_date,record.title,record.has_summary?record.summary_text:'',record.sha256,record.source_url),sourceText:record.full_export_text,details:{status:record.status,reviewRequired:true,reportMissing:!record.has_summary,meetingType:'bestuursvergadering',originalName:record.file_name,sourcePaths:[record.source_url],dateBasis:'manifest: datum uit Topical-export',versionLabel:'Volledige PDF-export',readAt:manifest.read_at}})});
+    const {report,...reportDetails}=topicalReport(record);
+    originals.push({path:record.archive_path,name:record.file_name,hash:record.sha256,revision:importRevisionSchema.parse({input:base('topical',record.source_id,record.meeting_date,record.title,report,record.sha256,record.source_url),sourceText:record.full_export_text,details:{status:record.status,reviewRequired:true,...reportDetails,meetingType:'bestuursvergadering',originalName:record.file_name,sourcePaths:[record.source_url],dateBasis:'manifest: datum uit Topical-export',versionLabel:'Volledige PDF-export',readAt:manifest.read_at}})});
   }
   for(const original of originals){
     if(!/^(originals\/onedrive|originals\/topical)\/[a-zA-Z0-9._-]+$/.test(original.path)||original.path.includes('..'))throw new Error('Onveilig bestandspad.');
@@ -62,5 +84,5 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
 }
 
 export function minutesStatus(adopted:boolean,details?:ImportDetails|null){
-  return adopted?'Vastgesteld':details?.reportMissing?'Verslag ontbreekt':details?.status==='historisch-onbevestigd'?'Historisch – status te controleren':'Concept';
+  return adopted?'Vastgesteld':details?.reportMissing?'Verslag ontbreekt':details?.reportKind==='brief-notes'?'Beknopte notities – status te controleren':details?.status==='historisch-onbevestigd'?'Historisch – status te controleren':'Concept';
 }

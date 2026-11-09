@@ -12,6 +12,8 @@ export function MinutesDocument({version,details,status}:{version:MinuteVersion;
       {details?.recorder&&<><dt>Verslag</dt><dd>{details.recorder}</dd></>}
     </dl>
     {details?.reviewRequired&&<p>Datum, broninhoud en status nog te controleren.</p>}
+    {details?.reportKind==='ai-report'&&<p><strong>AI-verslag</strong></p>}
+    {details?.sourceWarning&&<p>{details.sourceWarning}</p>}
     {details?.sourcePaths.length? <details className="minutes-no-print"><summary>Bronverwijzingen</summary>{details.sourcePaths.map((path,i)=><p key={i} className="break-all">{path}</p>)}<p>{details.dateBasis}</p><p>{details.versionLabel}</p></details>:null}
     {details?.reportMissing?<p>Verslag ontbreekt</p>:paragraphs.map((text,i)=><p key={i} className="whitespace-pre-wrap break-words">{text.split('\n').map((line,j)=>{const heading=line.trim().length>0&&line.length<100&&!/[.!?;:]$/.test(line.trim())&&(j===0||text.split('\n').length===1);return <span key={j}>{j>0&&<br/>}{heading?<strong>{line}</strong>:line}</span>;})}</p>)}
     <h2>Besluiten</h2>{version.decisions.length?<ol>{version.decisions.map((d,i)=><li key={i}>{d}</li>)}</ol>:<p>Geen afzonderlijk geregistreerde besluiten; raadpleeg de oorspronkelijke bron.</p>}
