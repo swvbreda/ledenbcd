@@ -46,4 +46,14 @@ describe('local address-book export', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('button', { name: 'E-mailadressen kopiëren' }).hasAttribute('disabled')).toBe(true);
   });
+  it('general address option defaults off and affects emails only, not CSV rows', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    render(<ExportToolbar results={data} selected={new Set(['3'])} onClear={() => {}} />);
+    expect(screen.getByRole('checkbox').getAttribute('data-state')).toBe('unchecked');
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: 'E-mailadressen kopiëren' }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('b@example.org'));
+    expect(contactsCsv(exportScope(data, new Set(['3']))).split('\r\n')).toHaveLength(3);
+  });
 });
