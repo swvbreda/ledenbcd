@@ -94,4 +94,26 @@ describe('category groups in the real overview', () => {
     cleanup(); setup({ id: '3' });
     expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 2 contactpersonen');
   });
+  it('A→B→A permanently clears selection and copies the full scope, while category toggles preserve it', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const qc = new QueryClient();
+    qc.setQueryData(['ab', 'u'], { ...data, contacts: data.contacts.map(c => c.id === 'e' ? { ...c, email: 'cor@example.invalid' } : c) });
+    const page = (query = '') => <QueryClientProvider client={qc}><AddressBookPage query={query} /></QueryClientProvider>;
+    const { rerender } = render(page());
+    fireEvent.click(head(/Ministerie/));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }));
+    fireEvent.click(head(/Ministerie/));
+    fireEvent.click(head(/Ministerie/));
+    expect(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }).getAttribute('data-state')).toBe('checked');
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('selectie · 1 contactpersoon');
+    rerender(page('cor'));
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 1 contactpersoon');
+    rerender(page());
+    expect(screen.getByLabelText('Export Contacten').textContent).toContain('alle resultaten · 3 contactpersonen');
+    fireEvent.click(head(/Ministerie/));
+    expect(screen.getByRole('checkbox', { name: 'Selecteer SYNTH Bea' }).getAttribute('data-state')).toBe('unchecked');
+    fireEvent.click(screen.getByRole('button', { name: 'E-mailadressen kopiëren' }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('bea@example.invalid; cor@example.invalid'));
+  });
 });
