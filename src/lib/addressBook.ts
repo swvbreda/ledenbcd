@@ -66,9 +66,14 @@ export function cleanFields<T extends Record<string, string>>(input: T): T {
 const sourceStart = /^\s*(bron|bronnen|mailbron|aanvullende bron|brongegevens)\s*:/i;
 const sourceLine = /outlook\.(cloud\.)?(microsoft|office|live)\.com?|outlook\.cloud\.microsoft|\b(gecontroleerd|vastgelegd|geraadpleegd|overgenomen) op \d/i;
 export function visibleNote(note: string): string {
-  return (note ?? '').split(/\n\s*\n/).map(p => p.split('\n').filter(l => !sourceStart.test(l) && !sourceLine.test(l)).join('\n').trim())
-    .filter(p => p && !sourceStart.test(p)).join('\n\n');
+  // A paragraph that starts as a source block is dropped entirely (incl. its follow-up lines);
+  // in other paragraphs only individual provenance lines are removed.
+  return (note ?? '').split(/\n\s*\n/).filter(p => !sourceStart.test(p))
+    .map(p => p.split('\n').filter(l => !sourceStart.test(l) && !sourceLine.test(l)).join('\n').trim()).filter(Boolean).join('\n\n');
 }
 export function groupByCategory<T extends { category: string; name: string }>(organizations: T[]) {
-  return addressCategories.map(category => ({ category, items: organizations.filter(o => o.category === category).sort((a, b) => a.name.localeCompare(b.name, 'nl')) })).filter(g => g.items.length);
+  // Unknown stored categories get their own group at the end instead of disappearing.
+  const known = new Set<string>(addressCategories);
+  const extra = [...new Set(organizations.map(o => o.category).filter(c => !known.has(c)))].sort((a, b) => a.localeCompare(b, 'nl'));
+  return [...addressCategories, ...extra].map(category => ({ category, items: organizations.filter(o => o.category === category).sort((a, b) => a.name.localeCompare(b.name, 'nl')) })).filter(g => g.items.length);
 }

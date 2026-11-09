@@ -53,11 +53,14 @@ describe('card notes and category groups', () => {
     const note = 'Mailbron: ‘Uitnodiging’, 01-02-2026. Bron: https://outlook.cloud.microsoft/mail/id/X. Gecontroleerd op 9 november 2026.\n\nAanvullende bron: e-mail.\n\nBereikbaar op dinsdag; liever bellen.';
     expect(vn(note)).toBe('Bereikbaar op dinsdag; liever bellen.');
     expect(vn('Bron: Outlook-uitnodiging. Vastgelegd op 9 november 2026.')).toBe('');
+    expect(vn('Bron: mail.\nVervolgregel zonder kenmerk.\n\nPraktisch.')).toBe('Praktisch.');
+    expect(vn('Liever mailen.\nGecontroleerd op 9 november 2026.')).toBe('Liever mailen.');
     expect(vn('Aanwezig bij Foundation Dinner.')).toBe('Aanwezig bij Foundation Dinner.');
   });
   it('groups only non-empty categories alphabetically', () => {
     const g = gb([{ category: 'Gemeente', name: 'Utrecht' }, { category: 'Gemeente', name: 'Amsterdam' }, { category: 'Tweede Kamer', name: 'TK' }]);
     expect(g.map(x => [x.category, x.items.length])).toEqual([['Tweede Kamer', 1], ['Gemeente', 2]]);
     expect(g[1].items[0].name).toBe('Amsterdam');
+    expect(gb([{ category: 'Onbekend X', name: 'A' }, { category: 'Gemeente', name: 'B' }]).map(x => x.category)).toEqual(['Gemeente', 'Onbekend X']);
   });
 });
