@@ -7,6 +7,22 @@ async function packageFixture(){
  return {entries:{'manifest.json':new TextEncoder().encode(JSON.stringify({schema_version:1,read_at:'2026-11-09',excluded:[{reason:'ALV'}],onedrive_meetings:[],topical_meetings:[record]})),[path]:bytes},record,path};
 }
 describe('private archive import rules',()=>{
+ it('sections exclusively compose report; TXT metadata and embedded actions remain only source',async()=>{
+  const source='Full TXT: metadata, decisions and embedded actions';
+  const rows=[{action:'Concrete synthetic task',owner:'Person A',deadline:''}];
+  const entries={'verslag.json':new TextEncoder().encode(JSON.stringify({title:'Synthetic',metadata:['Aanwezig: A'],decisions:['Separate decision'],actions:['Legacy action'],sections:[{heading:'Diner',paragraphs:['€ 7.500 te bevestigen.']}],action_rows:rows})),'verslag.txt':new TextEncoder().encode(source),'Original.pdf':bytes,'Original.docx':new Uint8Array([80,75,3,4])};
+  const r=(await prepareMinutesPackage(entries)).originals[0]?.revision;
+  expect(r?.input.report).toBe('Diner\n\n€ 7.500 te bevestigen.');expect(r?.sourceText).toBe(source);expect(r?.input.decisions).toEqual(['Separate decision']);expect(r?.input.actions).toEqual(['Legacy action']);expect(r?.details.action_rows).toEqual(rows);expect(r?.details.status).toBe('concept');
+ });
+ it('empty supplied sections never fall back to full TXT',async()=>{
+  const entries={'verslag.json':new TextEncoder().encode(JSON.stringify({title:'Synthetic',metadata:[],decisions:[],actions:[],sections:[]})),'verslag.txt':new TextEncoder().encode('Embedded actions must not enter report'),'Original.pdf':bytes,'Original.docx':new Uint8Array([80,75,3,4])};expect((await prepareMinutesPackage(entries)).originals[0]?.revision.input.report).toBe('');
+ });
+ it('action rows reject blank tasks, non-text deadlines and invented completion fields',async()=>{
+  const base={title:'Synthetic',metadata:[],decisions:[],actions:[]};
+  for(const row of [{action:' ',owner:'A',deadline:''},{action:'Task',owner:'A',deadline:123},{action:'Task',owner:'A',deadline:'',completed:true}]){
+   const entries={'verslag.json':new TextEncoder().encode(JSON.stringify({...base,action_rows:[row]})),'verslag.txt':new TextEncoder().encode('Source'),'Original.pdf':bytes,'Original.docx':new Uint8Array([80,75,3,4])};await expect(prepareMinutesPackage(entries)).rejects.toThrow();
+  }
+ });
  it('attendance accepts only explicit presence, never invited or absent people',()=>{expect(conceptAttendance(['Genodigden: A','Afwezig: B'])).toBeUndefined();expect(conceptAttendance(['Aanwezigen:','A, B'])).toBe('A, B');});
  it('corrected text and either changed original make one new shared revision fingerprint',async()=>{
   const entries={'verslag.json':new TextEncoder().encode(JSON.stringify({title:'Synthetic',metadata:['Aanwezig: A'],decisions:[],actions:[]})),'verslag.txt':new TextEncoder().encode('Original text'),'Original.pdf':bytes,'Original.docx':new Uint8Array([80,75,3,4])};
