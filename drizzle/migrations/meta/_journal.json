@@ -568,6 +568,13 @@
       "when": 1794259447082,
       "tag": "0080_board_minutes_revision_originals",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1794259858742,
+      "tag": "0081_board_minutes_latest_version_guards",
+      "breakpoints": true
     }
   ]
 }
