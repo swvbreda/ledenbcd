@@ -3,9 +3,19 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { minutesSaveSchema, requireMinutesAccess, validateMinutesBytes, MINUTES_BUCKET, type MinuteVersion, type MinutesArchive } from './boardMinutes';
 import { importRevisionSchema, importDetailsSchema } from './boardMinutesImport';
+import {minutesReadTables,minutesPageSize,type MinutesReadPage} from './boardMinutesLoad';
 
 // Generated RPC types do not model PostgreSQL nullable input parameters.
 type RevisionArgs = { p_meeting:string|null; p_expected:string|null; p_source:string; p_source_id:string; p_date:string; p_title:string; p_report:string; p_decisions:string[]; p_actions:string[]; p_url:string|null; p_confirm:boolean; p_file_hash:string|null };
+
+export const loadBoardMinutesPage=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>z.object({table:z.enum(minutesReadTables),offset:z.number().int().min(0).max(9999)}).parse(d)).handler(async({data,context}):Promise<MinutesReadPage>=>{
+  const canManage=await requireMinutesAccess(context);
+  const names={meetings:'board_minutes_meetings',versions:'board_minutes_versions',files:'board_minutes_files',adoptions:'board_minutes_adoptions',imports:'board_minutes_import_details'} as const;
+  const key=data.table==='imports'?'version_id':'id';
+  const {data:rows,error}=await context.supabase.from(names[data.table]).select(data.table==='imports'?'version_id,details,source_text':'*').order(key).range(data.offset,data.offset+minutesPageSize(data.table)-1).abortSignal(AbortSignal.timeout(15000));
+  if(error)throw new Error('Bestuursnotulen konden niet worden geladen; probeer opnieuw.');
+  return {canManage,rows:data.table==='imports'?(rows??[]).map(row=>{const r=row as unknown as {version_id:string;details:unknown;source_text:string};return {...r,details:importDetailsSchema.parse(r.details)};}):rows??[]};
+});
 
 export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }): Promise<MinutesArchive> => {
   const canManage = await requireMinutesAccess(context);

@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { adoptBoardMinutes, loadBoardMinutes, saveBoardMinutes, uploadBoardMinutesFile } from '@/lib/boardMinutes.functions';
+import { adoptBoardMinutes, loadBoardMinutesPage, saveBoardMinutes, uploadBoardMinutesFile } from '@/lib/boardMinutes.functions';
+import {readMinutesArchive,type MinutesReadTable,type MinutesReadPage} from '@/lib/boardMinutesLoad';
 import { downloadMinutesBlob, filterMinutes, MINUTES_BUCKET, minutesSourceLabel, safeMinutesUrl, validateMinutesBytes, type MinutesInput, type MinutesArchive, type MinuteFile, type MinuteVersion } from '@/lib/boardMinutes';
 import { MinutesForm } from './MinutesForm';
 import { MinutesDownload } from './MinutesDownload';
@@ -17,7 +18,7 @@ import { MinutesImport } from './MinutesImport';
 import { MinutesDocument } from './MinutesDocument';
 import { minutesStatus } from '@/lib/boardMinutesImport';
 
-export const minutesQuery = (userId: string) => queryOptions({ queryKey: ['board-minutes',userId], queryFn: () => loadBoardMinutes(), staleTime: 0 });
+export const minutesQuery = (userId: string,read:(table:MinutesReadTable,offset:number)=>Promise<MinutesReadPage>) => queryOptions({ queryKey: ['board-minutes',userId], queryFn: () => readMinutesArchive(read), staleTime: 30000,retry:false });
 class Boundary extends Component<{ children: ReactNode; reset: ()=>void }, {failed:boolean}> {
   override state={failed:false};
   static getDerivedStateFromError(){return{failed:true};}
@@ -30,7 +31,9 @@ export default function MinutesPage({id}:{id?:string}) {
   return <QueryErrorResetBoundary>{({reset})=><Boundary key={`${auth.user?.id}:${id??'index'}`} reset={reset}><Suspense fallback={<p role="status" className="p-6">Notulen laden…</p>}><MinutesContent id={id} userId={auth.user?.id??''}/></Suspense></Boundary>}</QueryErrorResetBoundary>;
 }
 function MinutesContent({id,userId}:{id?:string;userId:string}) {
-  const {data}=useSuspenseQuery(minutesQuery(userId));
+  const loadPage=useServerFn(loadBoardMinutesPage);
+  const options=minutesQuery(userId,(table,offset)=>loadPage({data:{table,offset}}));
+  const {data}=useSuspenseQuery(options);
   const qc=useQueryClient();const navigate=useNavigate();
   const save=useServerFn(saveBoardMinutes);const upload=useServerFn(uploadBoardMinutesFile);const adopt=useServerFn(adoptBoardMinutes);
   const [editing,setEditing]=useState(false);const [confirmAdopt,setConfirmAdopt]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -42,7 +45,7 @@ function MinutesContent({id,userId}:{id?:string;userId:string}) {
   const adopted=data.adoptions.find(a=>a.version_id===version?.id);
   const imported=data.imports?.find(d=>d.version_id===version?.id);
   const status=minutesStatus(!!adopted,imported?.details);
-  async function refresh(){await qc.invalidateQueries({queryKey:minutesQuery(userId).queryKey});}
+  async function refresh(){await qc.invalidateQueries({queryKey:options.queryKey});}
   async function saveInput(input:MinutesInput,file:File|null){
     let sourceId=input.sourceId;
     let fileHash:string|null=null;
