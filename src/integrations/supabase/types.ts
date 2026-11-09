@@ -897,6 +897,113 @@ export type Database = {
         }
         Relationships: []
       }
+      board_minutes_action_assignees: {
+        Row: {
+          action_id: string
+          user_id: string
+        }
+        Insert: {
+          action_id: string
+          user_id: string
+        }
+        Update: {
+          action_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_action_assignees_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_action_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_minutes_action_links: {
+        Row: {
+          created_at: string
+          id: string
+          manual_assignment: boolean
+          meeting_id: string
+          needs_assignment: boolean
+          task_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manual_assignment?: boolean
+          meeting_id: string
+          needs_assignment?: boolean
+          task_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manual_assignment?: boolean
+          meeting_id?: string
+          needs_assignment?: boolean
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_action_links_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_minutes_action_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "internal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_minutes_action_versions: {
+        Row: {
+          action: string
+          action_id: string
+          deadline: string
+          owner: string
+          row_index: number
+          version_id: string
+        }
+        Insert: {
+          action: string
+          action_id: string
+          deadline: string
+          owner: string
+          row_index: number
+          version_id: string
+        }
+        Update: {
+          action?: string
+          action_id?: string
+          deadline?: string
+          owner?: string
+          row_index?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_action_versions_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_action_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_minutes_action_versions_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "board_minutes_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_minutes_adoptions: {
         Row: {
           adopted_at: string
@@ -1009,6 +1116,7 @@ export type Database = {
           id: string
           source: string
           source_id: string
+          tasks_enabled: boolean
         }
         Insert: {
           created_at?: string
@@ -1016,6 +1124,7 @@ export type Database = {
           id?: string
           source: string
           source_id: string
+          tasks_enabled?: boolean
         }
         Update: {
           created_at?: string
@@ -1023,6 +1132,7 @@ export type Database = {
           id?: string
           source?: string
           source_id?: string
+          tasks_enabled?: boolean
         }
         Relationships: []
       }
@@ -3334,6 +3444,7 @@ export type Database = {
       internal_tasks: {
         Row: {
           assignee_id: string | null
+          board_minutes_private: boolean
           completed_at: string | null
           completed_by: string | null
           created_at: string
@@ -3355,6 +3466,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          board_minutes_private?: boolean
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
@@ -3376,6 +3488,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          board_minutes_private?: boolean
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
@@ -6848,6 +6961,10 @@ export type Database = {
         }
         Returns: string
       }
+      board_minutes_save_action_revision: {
+        Args: { p_input: Json }
+        Returns: string
+      }
       board_minutes_save_revision: {
         Args: {
           p_actions: Json
@@ -6865,6 +6982,23 @@ export type Database = {
         }
         Returns: string
       }
+      board_minutes_sync_tasks: {
+        Args: { p_activate?: boolean; p_version: string }
+        Returns: number
+      }
+      board_minutes_task_assignment: {
+        Args: { p_action: string; p_confirm: boolean; p_users: string[] }
+        Returns: undefined
+      }
+      board_minutes_task_staff: {
+        Args: never
+        Returns: {
+          aliases: string[]
+          name: string
+          user_id: string
+        }[]
+      }
+      board_minutes_tasks: { Args: { p_version: string }; Returns: Json }
       can_read_whatsapp_inbox: { Args: { _user_id: string }; Returns: boolean }
       claim_internal_task: { Args: { _task_id: string }; Returns: boolean }
       claim_member_login_link: { Args: { _email: string }; Returns: boolean }

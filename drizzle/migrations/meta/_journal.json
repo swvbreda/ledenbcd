@@ -589,6 +589,13 @@
       "when": 1794261078978,
       "tag": "0083_board_minutes_formatted_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1794264577495,
+      "tag": "0084_board_minutes_existing_tasks",
+      "breakpoints": true
     }
   ]
 }
