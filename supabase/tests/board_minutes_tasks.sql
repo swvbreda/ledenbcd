@@ -55,8 +55,8 @@ DO $$ DECLARE v uuid; mid uuid; v2 uuid; aid uuid; tid uuid; n integer; result j
  v2:=public.board_minutes_save_action_revision(jsonb_build_object('meetingId',NULL,'expectedVersion',NULL,'source','upload','sourceId','synthetic-future','date','2026-11-11','title','New minutes','report','Report','decisions','[]'::jsonb,'actions','["Automatic new task"]'::jsonb,'sourceUrl','','confirm',true,'action_rows',jsonb_build_array(jsonb_build_object('action','Automatic new task','owner','Tester','deadline',''))));
  SET CONSTRAINTS ALL IMMEDIATE;
  IF (SELECT count(*) FROM public.internal_tasks)<>4 OR jsonb_array_length(public.board_minutes_tasks(v2)->'rows')<>1 THEN RAISE EXCEPTION 'New save did not auto-sync'; END IF;
- IF EXISTS(SELECT 1 FROM public.task_notifications) OR EXISTS(SELECT 1 FROM public.outlook_deadline_outbox) THEN RAISE EXCEPTION 'Automatic save notified somebody'; END IF;
  RESET ROLE;
+ IF EXISTS(SELECT 1 FROM public.task_notifications) OR EXISTS(SELECT 1 FROM public.outlook_deadline_outbox) THEN RAISE EXCEPTION 'Automatic save notified somebody'; END IF;
  RAISE NOTICE 'PASS: multiple explicit names, collective review, date, idempotency, rename, completion/reopen crossview, admin choice, member denial, no external effects';
 END $$;
 SET CONSTRAINTS ALL IMMEDIATE;
