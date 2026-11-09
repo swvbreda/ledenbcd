@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MINUTES_ACCEPT, minutesSaveSchema, type MinutesInput, type MinuteVersion, type MinuteMeeting } from '@/lib/boardMinutes';
+import { extractMinutesText } from '@/lib/boardMinutesExtract';
 
 export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: MinuteMeeting; version?: MinuteVersion; onSave: (input: MinutesInput, file: File | null) => Promise<void>; onClose: () => void }) {
   const [date,setDate]=useState(version?.meeting_date ?? '');
@@ -18,6 +19,8 @@ export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: M
   const [confirm,setConfirm]=useState(false);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState('');
+  const [extracting,setExtracting]=useState(false);
+  async function readFile() {if(!file||extracting)return;setExtracting(true);setError('');try{const text=await extractMinutesText(file);if(!text.trim())throw new Error('Geen leesbare tekst gevonden; voeg de verslagtekst handmatig toe.');setReport(text);}catch(e){setError(e instanceof Error?e.message:'Verslagtekst lezen mislukt.');}finally{setExtracting(false);}}
   async function submit(e: FormEvent) {
     e.preventDefault(); if(saving) return; setError('');
     const parsed=minutesSaveSchema.safeParse({ meetingId: meeting?.id ?? null, expectedVersion: version?.id ?? null, source, sourceId, date,title,report,decisions: decisions.split('\n').map(s=>s.trim()).filter(Boolean), actions:actions.split('\n').map(s=>s.trim()).filter(Boolean), sourceUrl,confirm });
@@ -31,6 +34,7 @@ export function MinutesForm({ meeting, version, onSave, onClose }: { meeting?: M
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm">Bron<select aria-label="Bron" disabled={!!meeting} value={source} onChange={e=>setSource(e.target.value as MinutesInput['source'])} className="h-10 w-full rounded-md border border-input bg-background px-3"><option value="upload">Upload</option><option value="onedrive">OneDrive</option><option value="topical">Topical</option></select></label><label className="space-y-1 text-sm">Bron-id<Input aria-label="Bron-id" disabled={!!meeting} required={source!=='upload'} maxLength={500} value={sourceId} onChange={e=>setSourceId(e.target.value)}/></label></div>
     <label className="block space-y-1 text-sm">Bronverwijzing<Input aria-label="Bronverwijzing" type="url" value={sourceUrl} onChange={e=>setSourceUrl(e.target.value)}/></label>
     <label className="block space-y-1 text-sm">Oorspronkelijk bestand<Input aria-label="Oorspronkelijk bestand" type="file" accept={MINUTES_ACCEPT} required={!version} onChange={e=>setFile(e.target.files?.[0]??null)}/></label>
+    {file&&<Button type="button" variant="outline" disabled={extracting||saving} onClick={readFile}>{extracting?'Verslagtekst lezen…':'Verslagtekst uit bestand overnemen'}</Button>}
     <label className="block space-y-1 text-sm">Verslag<Textarea aria-label="Verslag" rows={9} maxLength={200000} value={report} onChange={e=>setReport(e.target.value)}/></label>
     <label className="block space-y-1 text-sm">Besluiten<Textarea aria-label="Besluiten" rows={4} value={decisions} onChange={e=>setDecisions(e.target.value)}/></label>
     <label className="block space-y-1 text-sm">Acties<Textarea aria-label="Acties" rows={4} value={actions} onChange={e=>setActions(e.target.value)}/></label>

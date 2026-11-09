@@ -38,8 +38,9 @@ function MinutesContent({id,userId}:{id?:string;userId:string}) {
   async function refresh(){await qc.invalidateQueries({queryKey:minutesQuery(userId).queryKey});}
   async function saveInput(input:MinutesInput,file:File|null){
     let sourceId=input.sourceId;
-    if(file){const bytes=new Uint8Array(await file.arrayBuffer());validateMinutesBytes(file.name,bytes);if(!input.meetingId&&input.source==='upload'&&!sourceId){const hash=await crypto.subtle.digest('SHA-256',bytes);sourceId=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');}}
-    const saved=await save({data:{...input,sourceId}});
+    let fileHash:string|null=null;
+    if(file){const bytes=new Uint8Array(await file.arrayBuffer());validateMinutesBytes(file.name,bytes);const hash=await crypto.subtle.digest('SHA-256',bytes);fileHash=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');if(!input.meetingId&&input.source==='upload'&&!sourceId)sourceId=fileHash;}
+    const saved=await save({data:{...input,sourceId,fileHash}});
     try {if(file){const form=new FormData();form.set('versionId',saved.id);form.set('file',file);await upload({data:form});}}
     catch(e){await refresh();await navigate({to:'/bestuur/notulen/$id',params:{id:saved.meeting_id}});throw new Error(`Concept opgeslagen; originele bijlage nog niet gekoppeld. ${e instanceof Error?e.message:''}`);}
     await refresh();setChosen(saved.id);await navigate({to:'/bestuur/notulen/$id',params:{id:saved.meeting_id}});

@@ -10,6 +10,7 @@ export const minutesSaveSchema = z.object({
   report: z.string().max(200000), decisions: z.array(z.string().max(3000)).max(200),
   actions: z.array(z.string().max(3000)).max(200),
   sourceUrl: z.string().max(2000).refine(v => !v || safeMinutesUrl(v) !== null, 'Gebruik een veilige https-bronverwijzing.'),
+  fileHash: z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
   confirm: z.literal(true),
 }).superRefine((d, ctx) => {
   if (d.source !== 'upload' && !d.sourceId) ctx.addIssue({ code: 'custom', path: ['sourceId'], message: 'Bron-id is verplicht bij import.' });
@@ -56,7 +57,7 @@ export function validateMinutesBytes(name: string, bytes: Uint8Array): { ext: st
   throw new Error('Alleen geldige PDF-, DOCX-, DOC- en UTF-8 TXT-bestanden zijn toegestaan.');
 }
 
-export async function requireMinutesAccess(ctx: { supabase: { rpc: (name: string, input?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> }; userId: string }, manage = false) {
+export async function requireMinutesAccess(ctx: { supabase: { rpc: (name: 'board_minutes_can_read' | 'has_role', input?: { _user_id: string; _role: 'admin' }) => PromiseLike<{ data: unknown; error: unknown }> }; userId: string }, manage = false) {
   const [read, admin] = await Promise.all([
     ctx.supabase.rpc('board_minutes_can_read'),
     ctx.supabase.rpc('has_role', { _user_id: ctx.userId, _role: 'admin' }),

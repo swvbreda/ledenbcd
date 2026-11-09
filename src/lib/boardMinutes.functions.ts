@@ -17,10 +17,10 @@ export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([r
 
 export const saveBoardMinutes = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(d => minutesSaveSchema.parse(d)).handler(async ({ data, context }) => {
   await requireMinutesAccess(context, true);
-  const { data: id, error } = await context.supabase.rpc('board_minutes_save', {
+  const { data: id, error } = await context.supabase.rpc('board_minutes_save_revision', {
     p_meeting: data.meetingId, p_expected: data.expectedVersion, p_source: data.source, p_source_id: data.sourceId,
     p_date: data.date, p_title: data.title, p_report: data.report, p_decisions: data.decisions, p_actions: data.actions,
-    p_url: data.sourceUrl || null, p_confirm: data.confirm,
+    p_url: data.sourceUrl || null, p_confirm: data.confirm, p_file_hash: data.fileHash ?? null,
   });
   if (error) throw new Error(error.message);
   const { data: version, error: readError } = await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id', id).single();
