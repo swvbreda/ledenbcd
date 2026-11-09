@@ -1,5 +1,10 @@
 # Roadmap
 
+## Intern adresboek Contacten — niet publiceren
+- [ ] Eigen afgeschermde organisatie- en contactopslag; bestaande admin/bestuurshelpers verifiëren en RLS testen.
+- [ ] Overzicht/detail, zoeken, formulieren, desktop/mobielmenu en gecontroleerde opslag/verwijdering.
+- [ ] Geïsoleerde CRUD-/rechtencontroles, relevante tests, previewcontrole en review met beperkingen.
+
 ## Lokale woordvoerders — gerichte dashboardreview 6 november (niet publiceren)
 - [x] Productie bevat eerdere fix én resterende Aspirant-tak/incomplete fallback; actuele website levert vier woordvoerders. Echte dashboardcomponent gebruikt alleen bronroster onder Lokale woordvoerders; geen oude fallback, expliciete fout/herpoging, Joachim blijft bestuurder. Acht tests en desktop/mobiele presentatiecontrole geslaagd, build OK; docs/dashboard-spokespeople-review.md. Geen publicatie/rechten/data/verzending.
 - [ ] Echte ingelogde dashboard/toestelcontrole: sessie signed_out, geen authmint; screenshot met Aspirant niet volledig verklaard door huidige live predicate, oudere geladen client mogelijk maar onbewezen. Review door Simone nodig.
