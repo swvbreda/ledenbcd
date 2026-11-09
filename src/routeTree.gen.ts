@@ -74,6 +74,8 @@ import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/publi
 import { Route as EnquetesIdReviewRouteImport } from './routes/enquetes.$id.review'
 import { Route as ExternGemeenteGemeenteRouteImport } from './routes/extern/gemeente.$gemeente'
 import { Route as ExternProductIdRouteImport } from './routes/extern/product.$id'
+import { Route as DashboardBestuurNotulenIndexRouteImport } from './routes/_dashboard/bestuur.notulen.index'
+import { Route as DashboardBestuurNotulenIdRouteImport } from './routes/_dashboard/bestuur.notulen.$id'
 import { Route as DashboardCoffeeshopregisterGemeenteGemeenteRouteImport } from './routes/_dashboard/coffeeshopregister.gemeente.$gemeente'
 import { Route as DashboardEnquetesIdIndexRouteImport } from './routes/_dashboard/enquetes.$id.index'
 import { Route as DashboardEnquetesIdBeheerRouteImport } from './routes/_dashboard/enquetes.$id.beheer'
@@ -422,6 +424,18 @@ const ExternProductIdRoute = ExternProductIdRouteImport.update({
   path: '/extern/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardBestuurNotulenIndexRoute =
+  DashboardBestuurNotulenIndexRouteImport.update({
+    id: '/bestuur/notulen/',
+    path: '/bestuur/notulen/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardBestuurNotulenIdRoute =
+  DashboardBestuurNotulenIdRouteImport.update({
+    id: '/bestuur/notulen/$id',
+    path: '/bestuur/notulen/$id',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardCoffeeshopregisterGemeenteGemeenteRoute =
   DashboardCoffeeshopregisterGemeenteGemeenteRouteImport.update({
     id: '/coffeeshopregister/gemeente/$gemeente',
@@ -528,11 +542,13 @@ export interface FileRoutesByFullPath {
   '/leden/': typeof DashboardLedenIndexRoute
   '/ledenvoordelen/': typeof DashboardLedenvoordelenIndexRoute
   '/locaties/': typeof DashboardLocatiesIndexRoute
+  '/bestuur/notulen/$id': typeof DashboardBestuurNotulenIdRoute
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
+  '/bestuur/notulen/': typeof DashboardBestuurNotulenIndexRoute
   '/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
@@ -601,11 +617,13 @@ export interface FileRoutesByTo {
   '/leden': typeof DashboardLedenIndexRoute
   '/ledenvoordelen': typeof DashboardLedenvoordelenIndexRoute
   '/locaties': typeof DashboardLocatiesIndexRoute
+  '/bestuur/notulen/$id': typeof DashboardBestuurNotulenIdRoute
   '/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
+  '/bestuur/notulen': typeof DashboardBestuurNotulenIndexRoute
   '/enquetes/$id': typeof DashboardEnquetesIdIndexRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
@@ -676,11 +694,13 @@ export interface FileRoutesById {
   '/_dashboard/leden/': typeof DashboardLedenIndexRoute
   '/_dashboard/ledenvoordelen/': typeof DashboardLedenvoordelenIndexRoute
   '/_dashboard/locaties/': typeof DashboardLocatiesIndexRoute
+  '/_dashboard/bestuur/notulen/$id': typeof DashboardBestuurNotulenIdRoute
   '/_dashboard/coffeeshopregister/gemeente/$gemeente': typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   '/_dashboard/enquetes/$id/beheer': typeof DashboardEnquetesIdBeheerRoute
   '/api/public/agenda-image/$code': typeof ApiPublicAgendaImageCodeRoute
   '/api/public/member-logo/$id': typeof ApiPublicMemberLogoIdRoute
   '/api/public/shop-logo/$id': typeof ApiPublicShopLogoIdRoute
+  '/_dashboard/bestuur/notulen/': typeof DashboardBestuurNotulenIndexRoute
   '/_dashboard/enquetes/$id/': typeof DashboardEnquetesIdIndexRoute
   '/api/public/_connector/whatsapp/webhook': typeof ApiPublicConnectorWhatsappWebhookRoute
 }
@@ -751,11 +771,13 @@ export interface FileRouteTypes {
     | '/leden/'
     | '/ledenvoordelen/'
     | '/locaties/'
+    | '/bestuur/notulen/$id'
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
+    | '/bestuur/notulen/'
     | '/enquetes/$id/'
     | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -824,11 +846,13 @@ export interface FileRouteTypes {
     | '/leden'
     | '/ledenvoordelen'
     | '/locaties'
+    | '/bestuur/notulen/$id'
     | '/coffeeshopregister/gemeente/$gemeente'
     | '/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
+    | '/bestuur/notulen'
     | '/enquetes/$id'
     | '/api/public/whatsapp/webhook'
   id:
@@ -898,11 +922,13 @@ export interface FileRouteTypes {
     | '/_dashboard/leden/'
     | '/_dashboard/ledenvoordelen/'
     | '/_dashboard/locaties/'
+    | '/_dashboard/bestuur/notulen/$id'
     | '/_dashboard/coffeeshopregister/gemeente/$gemeente'
     | '/_dashboard/enquetes/$id/beheer'
     | '/api/public/agenda-image/$code'
     | '/api/public/member-logo/$id'
     | '/api/public/shop-logo/$id'
+    | '/_dashboard/bestuur/notulen/'
     | '/_dashboard/enquetes/$id/'
     | '/api/public/_connector/whatsapp/webhook'
   fileRoutesById: FileRoutesById
@@ -1404,6 +1430,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExternProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_dashboard/bestuur/notulen/': {
+      id: '/_dashboard/bestuur/notulen/'
+      path: '/bestuur/notulen'
+      fullPath: '/bestuur/notulen/'
+      preLoaderRoute: typeof DashboardBestuurNotulenIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/_dashboard/bestuur/notulen/$id': {
+      id: '/_dashboard/bestuur/notulen/$id'
+      path: '/bestuur/notulen/$id'
+      fullPath: '/bestuur/notulen/$id'
+      preLoaderRoute: typeof DashboardBestuurNotulenIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/_dashboard/coffeeshopregister/gemeente/$gemeente': {
       id: '/_dashboard/coffeeshopregister/gemeente/$gemeente'
       path: '/coffeeshopregister/gemeente/$gemeente'
@@ -1489,8 +1529,10 @@ interface DashboardRouteChildren {
   DashboardLedenIndexRoute: typeof DashboardLedenIndexRoute
   DashboardLedenvoordelenIndexRoute: typeof DashboardLedenvoordelenIndexRoute
   DashboardLocatiesIndexRoute: typeof DashboardLocatiesIndexRoute
+  DashboardBestuurNotulenIdRoute: typeof DashboardBestuurNotulenIdRoute
   DashboardCoffeeshopregisterGemeenteGemeenteRoute: typeof DashboardCoffeeshopregisterGemeenteGemeenteRoute
   DashboardEnquetesIdBeheerRoute: typeof DashboardEnquetesIdBeheerRoute
+  DashboardBestuurNotulenIndexRoute: typeof DashboardBestuurNotulenIndexRoute
   DashboardEnquetesIdIndexRoute: typeof DashboardEnquetesIdIndexRoute
 }
 
@@ -1527,9 +1569,11 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardLedenIndexRoute: DashboardLedenIndexRoute,
   DashboardLedenvoordelenIndexRoute: DashboardLedenvoordelenIndexRoute,
   DashboardLocatiesIndexRoute: DashboardLocatiesIndexRoute,
+  DashboardBestuurNotulenIdRoute: DashboardBestuurNotulenIdRoute,
   DashboardCoffeeshopregisterGemeenteGemeenteRoute:
     DashboardCoffeeshopregisterGemeenteGemeenteRoute,
   DashboardEnquetesIdBeheerRoute: DashboardEnquetesIdBeheerRoute,
+  DashboardBestuurNotulenIndexRoute: DashboardBestuurNotulenIndexRoute,
   DashboardEnquetesIdIndexRoute: DashboardEnquetesIdIndexRoute,
 }
 
