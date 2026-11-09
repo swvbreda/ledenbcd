@@ -1,0 +1,2 @@
+ALTER TABLE public.address_book_organizations DROP CONSTRAINT address_book_organizations_category_check;
+ALTER TABLE public.address_book_organizations ADD CONSTRAINT address_book_organizations_category_check CHECK (category IN ('Tweede Kamer','Eerste Kamer','Ministerie','Gemeente','Brancheorganisatie','Overig','Banken','Betalingsverkeer','Toezichthouders','Advocatuur','Maatschappelijke organisaties','Bedrijven'));
