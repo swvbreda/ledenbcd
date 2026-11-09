@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { minutesSaveSchema, validateMinutesBytes } from './boardMinutes';
+import { minutesSaveSchema, validateMinutesBytes, type MinutesArchive } from './boardMinutes';
 
 export const importDetailsSchema = z.object({
   status: z.enum(['historisch-onbevestigd', 'concept']), reviewRequired: z.literal(true),
@@ -20,6 +20,18 @@ export const importRevisionSchema = z.object({
 export type ImportDetails = z.infer<typeof importDetailsSchema>;
 export type ImportRevision = z.infer<typeof importRevisionSchema>;
 export type ImportOriginal = { revision: ImportRevision; path: string; name: string; hash: string };
+export function bindFormattedRevisions(originals:ImportOriginal[],archive:MinutesArchive){
+  return originals.map(original=>{
+    if(!original.revision.details.formatted)return original;
+    const r=original.revision;
+    const meeting=archive.meetings.find(m=>m.source==='topical'&&m.source_id===r.input.sourceId);
+    if(!meeting)throw new Error('Bestaande Topical-vergadering niet gevonden; historische import eerst afronden.');
+    const versions=archive.versions.filter(v=>v.meeting_id===meeting.id).sort((a,b)=>b.version-a.version),latest=versions[0];
+    if(!latest||!versions.some(v=>v.meeting_date===r.input.date))throw new Error('Vergaderdatum wijkt af van historische bron.');
+    if(!archive.files.some(f=>versions.some(v=>v.id===f.version_id)&&f.sha256===r.details.originalSourceSha256&&f.path.endsWith('.pdf')))throw new Error('Oorspronkelijke PDF-bron ontbreekt of hash wijkt af.');
+    return {...original,revision:{...r,input:{...r.input,meetingId:meeting.id,expectedVersion:latest.id}}};
+  });
+}
 const docSchema = z.object({file_name:z.string(),sha256:z.string().regex(/^[a-f0-9]{64}$/),archive_path:z.string(),text:z.string(),source_path:z.string(),other_source_paths:z.array(z.string()).optional(),date_basis:z.string(),source_version_label:z.string()});
 const manifestSchema = z.object({schema_version:z.literal(1),read_at:z.string(),excluded:z.array(z.unknown()),onedrive_meetings:z.array(z.object({source_id:z.string(),meeting_date:z.string(),meeting_type:z.enum(['bestuursvergadering','dagelijks-bestuur']),title:z.string(),status:z.literal('historisch-onbevestigd'),review_required:z.literal(true),documents:z.array(docSchema).min(1),display_text_source_sha256:z.string()})),topical_meetings:z.array(z.object({source_id:z.string(),source_url:z.string(),meeting_date:z.string(),title:z.string(),status:z.literal('historisch-onbevestigd'),review_required:z.literal(true),file_name:z.string(),sha256:z.string(),archive_path:z.string(),full_export_text:z.string(),summary_text:z.string(),has_summary:z.boolean()}))});
 export const formattedManifestSchema=z.object({schema_version:z.literal(2),kind:z.literal('topical-formatted'),read_at:z.string().max(100),topical_formatted:z.array(z.object({

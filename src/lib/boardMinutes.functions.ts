@@ -23,7 +23,11 @@ export const loadBoardMinutes = createServerFn({ method: 'POST' }).middleware([r
 export const importBoardMinutes = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>importRevisionSchema.parse(d)).handler(async({data,context})=>{
   await requireMinutesAccess(context,true);
   const i=data.input;
-  const {data:id,error}=await context.supabase.rpc('board_minutes_import_revision',{p_source:i.source,p_source_id:i.sourceId,p_date:i.date,p_title:i.title,p_report:i.report,p_decisions:i.decisions,p_actions:i.actions,p_url:(i.sourceUrl||null) as unknown as string,p_hash:i.fileHash??'',p_details:data.details,p_source_text:data.sourceText});
+  const common={p_source_id:i.sourceId,p_date:i.date,p_title:i.title,p_report:i.report,p_decisions:i.decisions,p_actions:i.actions,p_url:(i.sourceUrl||null) as unknown as string,p_hash:i.fileHash??'',p_details:data.details,p_source_text:data.sourceText};
+  if(data.details.formatted&&(i.source!=='topical'||!i.expectedVersion))throw new Error('Controleer eerst de bestaande Topical-versie.');
+  const {data:id,error}=data.details.formatted
+    ?await context.supabase.rpc('board_minutes_import_formatted',{...common,p_expected:i.expectedVersion??''})
+    :await context.supabase.rpc('board_minutes_import_revision',{...common,p_source:i.source});
   if(error||!id)throw new Error(error?.message??'Import mislukt.');
   const {data:version,error:readError}=await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id',id).single();
   if(readError||!version)throw new Error('Import kon niet worden teruggelezen.');
