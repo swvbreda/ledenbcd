@@ -1,4 +1,5 @@
--- Existing identities, real helpers and actual authenticated/anon SQL roles.
+-- Run in isolated Postgres with actual has_role/is_board_member/auth.uid definitions.
+-- Synthetic role/profile/board inputs; helpers and authenticated/anon RLS are not mocked.
 -- Synthetic records exist only inside this rolled-back transaction; no auth/session mint.
 BEGIN;
 DO $$
@@ -26,6 +27,10 @@ BEGIN
  (org_id,'SYNTHETISCH Persoon B','SYNTHETISCH Secretaris','synthetic-b@example.invalid');
  SELECT count(*) INTO n FROM public.address_book_contacts WHERE organization_id=org_id;
  IF n<>2 THEN RAISE EXCEPTION 'Admin insert/read failed'; END IF;
+ UPDATE public.address_book_contacts SET position='SYNTHETISCH Gewijzigde functie' WHERE organization_id=org_id AND name='SYNTHETISCH Persoon A';
+ GET DIAGNOSTICS affected=ROW_COUNT; IF affected<>1 THEN RAISE EXCEPTION 'Admin contact update failed'; END IF;
+ SELECT count(*) INTO n FROM public.address_book_contacts WHERE organization_id=org_id AND position='SYNTHETISCH Gewijzigde functie';
+ IF n<>1 THEN RAISE EXCEPTION 'Updated contact readback failed'; END IF;
  UPDATE public.address_book_organizations SET abbreviation='SYNTH' WHERE id=org_id;
  GET DIAGNOSTICS affected=ROW_COUNT; IF affected<>1 THEN RAISE EXCEPTION 'Admin update failed'; END IF;
  INSERT INTO public.address_book_contacts(organization_id,name) VALUES(org_id,'SYNTHETISCH Delete test') RETURNING id INTO contact_id;
@@ -85,7 +90,7 @@ BEGIN
  SELECT count(*) INTO n FROM public.address_book_contacts WHERE organization_id=org_id;
  IF n<>0 THEN RAISE EXCEPTION 'Address-book-only cascade failed'; END IF;
  RESET ROLE;
- RAISE NOTICE 'PASS: real admin/board CRUD, member/extern/unlinked-inhuur denied, anonymous denied, two contacts/cascade; rollback follows';
+ RAISE NOTICE 'PASS: actual helpers/RLS with synthetic roles: admin/board CRUD, member/extern/unlinked-inhuur denied, anonymous denied, two contacts/cascade; rollback follows';
 END $$;
 ROLLBACK;
 SELECT (SELECT count(*) FROM public.address_book_organizations) AS organizations_after_rollback, (SELECT count(*) FROM public.address_book_contacts) AS contacts_after_rollback;
