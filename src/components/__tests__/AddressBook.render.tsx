@@ -11,6 +11,14 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 const org = { ...emptyOrganization, id: 'org-a', created_at: '', name: 'SYNTHETISCH Ministerie', abbreviation: 'SM', category: 'Ministerie' };
 const data: AddressBook = { organizations: [org], contacts: [{ id: 'c-a', created_at: '', organization_id: org.id, name: 'SYNTHETISCH Ada', position: 'Beleidsadviseur', department: 'Fractie S', email: 'ada@example.invalid', phone: '', note: '' }, { id: 'c-b', created_at: '', organization_id: org.id, name: 'SYNTHETISCH Bob', position: 'Secretaris', department: '', email: 'bob@example.invalid', phone: '', note: '' }] };
 describe('address book rules', () => {
+ it('editing never submits id or created_at as editable fields', async () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  render(<AddressForm title="Organisatie bewerken" initial={{ ...org }} organization onSave={save} onClose={() => {}} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Opslaan' }));
+  await waitFor(() => expect(save).toHaveBeenCalledOnce());
+  expect(save.mock.calls[0][0]).not.toHaveProperty('id');
+  expect(save.mock.calls[0][0]).not.toHaveProperty('created_at');
+ });
  it.each(['ADA','BELEIDSADVISEUR','ADA@EXAMPLE.INVALID','FRACTIE S'])('searches person fields without case sensitivity: %s', query => { const result = searchAddressBook(data, query, ''); expect(result.contacts.map(c => c.id)).toEqual(['c-a']); expect(result.organizations.map(o => o.id)).toEqual(['org-a']); });
  it('searches organizations and abbreviation and respects category', () => { expect(searchAddressBook(data, 'sm', '').organizations).toHaveLength(1); expect(searchAddressBook(data, 'ada', 'Tweede Kamer').contacts).toHaveLength(0); });
  it('uses the six approved categories and Overig default', () => { expect(addressCategories).toEqual(['Tweede Kamer','Eerste Kamer','Ministerie','Gemeente','Brancheorganisatie','Overig']); expect(emptyOrganization.category).toBe('Overig'); });
