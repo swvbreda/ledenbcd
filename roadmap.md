@@ -1,5 +1,8 @@
 # Roadmap
 
+## Notulen laden — gerichte correctie, niet publiceren
+- [x] In bestaande ingelogde preview vastlopen vóór serveraanvraag gereproduceerd; bearer-middleware las opnieuw brokeropslag. Auth-eventtoken nu alleen in geheugen voor transport, sign-out wist het, servercontrole ongewijzigd. 14 auth/regressietests geslaagd; na reload 182 notulen zichtbaar.
+
 ## Bestuursnotulen → bestaande taken — niet publiceren
 - [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
 - [x] Adminactivatie nieuwste concept 6 november, automatische nieuwe uploadnotulen/vervolgversies, actuele status en admin-toewijzing gebouwd; migratie 0084 toegepast. Live: 182 vergaderingen, 0 privétaken/koppelingen/geactiveerde vergaderingen; geen herimport of taakmutatie.
