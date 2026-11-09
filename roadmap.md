@@ -1,5 +1,10 @@
 # Roadmap
 
+## Bestuur → Vergaderingen en notulen — niet publiceren
+- [ ] Afzonderlijk besloten archief, bestaande bestuurs/adminrechten, onveranderlijke versies en privé originele bestanden; beheer/vaststellen uitsluitend admin.
+- [ ] Overzicht/zoeken/jaarfilter, detail/besluiten/acties, veilige upload/import en broninspectie zonder externe writes.
+- [ ] Gerichte rechten-, versie-, import- en schermtests; wijzigingen afbakenen en beperkingen rapporteren.
+
 ## Contacten categorieën + Functie-filter — niet publiceren
 - [x] 12 categorieën (migratie 0078 toegepast, alleen CHECK), labels, Functie-filter met URL-state, filters wissen; 20 tests.
 - [ ] Herindeling 51 organisaties (17 gecontroleerde categorie-updates): assistent voert uit na review, daarna publicatie. Geen actie voor Simone.
