@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { minutesSaveSchema, validateMinutesBytes, type MinutesArchive } from './boardMinutes';
+import { minuteActionRowsSchema } from './boardMinutesTasks';
 
 export const importDetailsSchema = z.object({
   status: z.enum(['historisch-onbevestigd', 'concept']), reviewRequired: z.literal(true),
@@ -13,6 +14,8 @@ export const importDetailsSchema = z.object({
   metadata: z.array(z.string().max(3000)).max(30).optional(),
   originalSourceSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   formatted: z.literal(true).optional(), formattedFingerprint: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  action_rows: minuteActionRowsSchema.optional(),
+  sections: z.array(z.object({ heading:z.string().max(1000), paragraphs:z.array(z.string().max(20000)).max(200) }).strict()).max(100).optional(),
 }).strict();
 export const importRevisionSchema = z.object({
   input: minutesSaveSchema, details: importDetailsSchema, sourceText: z.string().max(200000),
@@ -100,14 +103,15 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
   if(!manifestBytes){
     const json=entries['verslag.json'],txt=entries['verslag.txt'];
     if(!json||!txt)throw new Error('manifest.json ontbreekt.');
-    const concept=z.object({title:z.string(),metadata:z.array(z.string()),decisions:z.array(z.string()),actions:z.array(z.string())}).parse(JSON.parse(new TextDecoder().decode(json)));
+    const concept=z.object({title:z.string(),metadata:z.array(z.string()),decisions:z.array(z.string()),actions:z.array(z.string()),action_rows:minuteActionRowsSchema.optional(),sections:importDetailsSchema.shape.sections}).parse(JSON.parse(new TextDecoder().decode(json)));
     const text=new TextDecoder('utf-8',{fatal:true}).decode(txt);
     const attachments=Object.entries(entries).filter(([name])=>/\.(pdf|docx)$/i.test(name));
     if(attachments.length!==2||!attachments.some(([n])=>n.endsWith('.pdf'))||!attachments.some(([n])=>n.endsWith('.docx')))throw new Error('Concept vereist originele PDF en DOCX.');
     const hash=await sha256(json);
     const decisions=concept.decisions.filter(d=>!/^te bevestigen:/i.test(d));
-    const report=`Concept; deelnemerslijst onbekend. Dinerbijdrage € 7.500: TE BEVESTIGEN, geen vastgesteld besluit of betaalopdracht.\n\n${text}`;
-    for(const [name,bytes]of attachments){validateMinutesBytes(name,bytes);const fileHash=await sha256(bytes);originals.push({path:name,name,hash:fileHash,revision:importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'upload',sourceId:'handmatig:2026-11-06:bestuur',date:'2026-11-06',title:concept.title,report,decisions,actions:concept.actions,sourceUrl:'',fileHash:hash,confirm:true},sourceText:text,details:{status:'concept',reviewRequired:true,reportMissing:false,meetingType:'bestuursvergadering',originalName:'Conceptpakket DOCX/PDF',sourcePaths:[],dateBasis:'Aangeleverd concept 6 november 2026',versionLabel:'Concept',attendance:'Onbekend; nog te bevestigen',recorder:'Secretariaat'}})});}
+    const report=concept.sections ? concept.sections.map(s=>[s.heading,...s.paragraphs].join('\n\n')).join('\n\n') : text;
+    const attendance=concept.metadata.find(m=>/^Aanwezig\s*:/i.test(m))?.replace(/^Aanwezig\s*:\s*/i,'');
+    for(const [name,bytes]of attachments){validateMinutesBytes(name,bytes);const fileHash=await sha256(bytes);originals.push({path:name,name,hash:fileHash,revision:importRevisionSchema.parse({input:{meetingId:null,expectedVersion:null,source:'upload',sourceId:'handmatig:2026-11-06:bestuur',date:'2026-11-06',title:concept.title,report,decisions,actions:concept.actions,sourceUrl:'',fileHash:hash,confirm:true},sourceText:text,details:{status:'concept',reviewRequired:true,reportMissing:false,meetingType:'bestuursvergadering',originalName:'Conceptpakket DOCX/PDF',sourcePaths:[],dateBasis:'Aangeleverd concept 6 november 2026',versionLabel:'Concept',attendance,metadata:concept.metadata,action_rows:concept.action_rows,sections:concept.sections,recorder:'Secretariaat'}})});}
     return {originals,meetings:1,excluded:0};
   }
   if(manifestBytes.length>10*1024*1024)throw new Error('Manifest is te groot.');

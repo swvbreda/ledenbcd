@@ -1,5 +1,11 @@
 # Roadmap
 
+## Bestuursnotulen → bestaande taken — niet publiceren
+- [x] Bestaande admin-taakrechten behouden; aparte privé actie-/versiebinding en meerdere expliciete betrokkenen zonder rechtenuitbreiding; geen melding/Microsoft/projectbinding of MCP-feed.
+- [x] Adminactivatie nieuwste concept 6 november, automatische nieuwe uploadnotulen/vervolgversies, actuele status en admin-toewijzing gebouwd; migratie 0084 toegepast. Live: 182 vergaderingen, 0 privétaken/koppelingen/geactiveerde vergaderingen; geen herimport of taakmutatie.
+- [x] Geïsoleerde SQL-proef met echte validatie/afrond/melding/Outlook-triggers en 40 regeltests + 8 componenttests; automatische bouw OK.
+- [ ] Simone activeert de 15 acties via nieuwste concept → '15 conceptacties aan taken koppelen' → 'Bevestig taakregistratie'; eigen sessie ontbreekt, geen mint/alternatieve identiteit. Ingelogde eindcontrole/publicatie door gebruiker.
+
 ## Bestuur → Vergaderingen en notulen — niet publiceren
 - [x] Rechten-timeout onderzocht: Cloud gezond/geen hangende DB-query; bootstrap las dezelfde sessie herhaald via preview-broker (getUser zonder token + iedere REST/RPC). Nu Auth-aangeleverd token expliciet server-geverifieerd en RLS caller-client zonder sessieopslag; 20s ongewijzigd, geen rechten/MFA/bypass/herimport. Read-only: 182 vergaderingen, 320 privéobjecten, 13 complete nieuwste opmaakversies, 0 vaststellingen. 12 AuthProvider-tests incl. blokkerende opslag en geweigerde token; eigen sessie blijft onbeschikbaar voor agent, laatste UIcontrole door gebruiker. Bestaande bouwblokkade in drie Contacten-testselectors alleen ongeldig exact verwijderd (string matching blijft exact).
 - [x] Schema-2 topical-formatted ZIP in bestaande Archiefpakket-bediening: exact 13 bestaande bronIDs/26 gehashte DOCX/PDF, gedeelde append-only versie per paar, originele PDF-hash en alle bestaande vergaderingen vóór writes gecontroleerd, latest-lock/full-content-idempotentie, geen vaststelling/taakactivatie. Metadata te controleren, AI/brief/agenda onderscheiden. 35 regeltests + 4 componenttests en geïsoleerde SQL-versie/rechtenproef geslaagd; migratie 0083 toegepast/read-only teruggelezen, bouw OK. Geen werkelijke import door assistent; eigen browserketen wacht op aangeleverd schema-2-pakket en gebruikersupload.

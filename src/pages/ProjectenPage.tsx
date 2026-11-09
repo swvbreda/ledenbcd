@@ -54,6 +54,7 @@ type Task = {
   deadline: string | null; priority: TaskPriority; status: TaskStatus; source_system?: string | null; source_ref?: string | null;
   created_by?: string | null; created_at?: string; created_origin?: "medewerker" | "bronimport" | null;
   completed_at?: string | null; completed_by?: string | null; local_only_completed_by?: string | null;
+  board_minutes_private?: boolean;
 };
 type Staff = { user_id: string; email: string; full_name: string | null };
 
@@ -100,6 +101,8 @@ function ProjectenInner() {
   });
   const tasksQ = useQuery({
     queryKey: ["internal-tasks", uid],
+    refetchInterval:5000,
+    refetchOnWindowFocus:true,
     queryFn: async () => {
       const { data, error } = await db.from("internal_tasks").select("*").order("deadline", { ascending: true, nullsFirst: false });
       if (error) throw error;
@@ -202,6 +205,8 @@ function ProjectenInner() {
     },
     onSuccess: (id) => {
       toast.success("Taak opgeslagen"); setEditTask(null); invalidate();
+      qc.invalidateQueries({queryKey:['minutes-tasks']});
+      if(origTask(id)?.board_minutes_private)return;
       // Push mag het opslaan nooit blokkeren; status blijft per melding zichtbaar/herhaalbaar.
       void dispatchFn({ data: { taskId: id } }).catch((e) => console.warn("Taakpush niet verstuurd:", e));
     },
@@ -219,7 +224,7 @@ function ProjectenInner() {
   // Afronden in de lijst is altijd één klik lokaal; externe afronding alleen via het Topical-tabblad.
   const completeTask = useMutation({
     mutationFn: (t: Task) => completeTaskLocally(db, t),
-    onSuccess: (_d, t) => { qc.setQueryData<Task[]>(["internal-tasks", uid], (old) => markCompletedInList(old, t.id)); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); },
+    onSuccess: (_d, t) => { qc.setQueryData<Task[]>(["internal-tasks", uid], (old) => markCompletedInList(old, t.id)); toast.success("Taak afgerond"); invalidate(); qc.invalidateQueries({ queryKey: ["topical-links"] }); qc.invalidateQueries({queryKey:['minutes-tasks']}); },
     onError: (e) => toast.error("Afronden mislukt: " + errMsg(e)),
   });
   const saveProject = useMutation({
@@ -513,7 +518,7 @@ function ProjectenInner() {
           <PlannerPanel
             projects={activeProjects.map((p) => ({ id: p.id, title: p.title }))}
             staff={staffQ.data ?? []}
-            tasks={(tasksQ.data ?? []).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
+            tasks={(tasksQ.data ?? []).filter(t=>!t.board_minutes_private).map((t) => ({ id: t.id, title: t.title, project_id: t.project_id }))}
             onSynced={invalidate}
           />
         </TabsContent>
@@ -536,7 +541,7 @@ function ProjectenInner() {
               <div><Label htmlFor="t-desc">Omschrijving</Label><Textarea id="t-desc" value={editTask.id && editTask.description === origTask(editTask.id)?.description ? presentText(editTask.description) : editTask.description ?? ""} onChange={(e) => setEditTask({ ...editTask, description: e.target.value })} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Project</Label>
-                  <Select value={editTask.project_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, project_id: v === NONE ? null : v })}>
+                  <Select disabled={editTask.board_minutes_private} value={editTask.project_id ?? NONE} onValueChange={(v) => setEditTask({ ...editTask, project_id: v === NONE ? null : v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value={NONE}>Geen project</SelectItem>{activeProjects.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
                   </Select></div>
