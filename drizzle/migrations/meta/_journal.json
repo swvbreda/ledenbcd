@@ -547,6 +547,13 @@
       "when": 1794215025189,
       "tag": "0077_address_book_minimal_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794220137002,
+      "tag": "0078_address_book_more_categories",
+      "breakpoints": true
     }
   ]
 }
