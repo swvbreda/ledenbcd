@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createClient, type User, type Session } from "@supabase/supabase-js";
+import { type User, type Session } from "@supabase/supabase-js";
+import { makeCallerClient } from "@/lib/callerClient";
 import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
@@ -98,10 +99,7 @@ async function loadAccessSnapshot(userId: string, accessToken: string): Promise<
   // Use the session already delivered by Auth, not repeated broker-storage reads.
   // The auth server still verifies the token; every database request retains RLS.
   let token = accessToken;
-  const callerClient = () => createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const callerClient = () => makeCallerClient(token);
   let caller = callerClient();
   const rolesPromise = fetchRolesWithSessionRecovery({
     expectedUserId: userId,
@@ -154,7 +152,7 @@ async function loadAccessSnapshot(userId: string, accessToken: string): Promise<
       console.warn("ensure_member_link mislukt", e);
     }
     if (memberPasswordlessEnabled) {
-      const { data, error } = await caller.rpc("current_member_id");
+      const { data, error } = await caller.rpc("current_member_id" as never);
       if (error) throw error;
       return typeof data === "number" ? [data] : [];
     }
