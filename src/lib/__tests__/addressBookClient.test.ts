@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getSession = vi.fn();
-const created: Array<{ headers: Record<string, string> }> = [];
+const created: Array<{ accessToken: () => Promise<string> }> = [];
 const rows = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: () => getSession() }, from: () => { throw new Error("generated client must not be used"); } } }));
 vi.mock("@supabase/supabase-js", () => ({

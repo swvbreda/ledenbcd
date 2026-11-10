@@ -152,7 +152,7 @@ async function loadAccessSnapshot(userId: string, accessToken: string): Promise<
       console.warn("ensure_member_link mislukt", e);
     }
     if (memberPasswordlessEnabled) {
-      const { data, error } = await caller.rpc("current_member_id");
+      const { data, error } = await caller.rpc("current_member_id" as never);
       if (error) throw error;
       return typeof data === "number" ? [data] : [];
     }
