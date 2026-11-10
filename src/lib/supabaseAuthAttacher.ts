@@ -3,16 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthBearer } from "@/lib/authBearer";
 import { withAuthTimeout } from "@/lib/authAccess";
 
-/** Resolve the bearer: Auth-event token first, bounded storage fallback otherwise. */
+export const BEARER_FALLBACK_MS = 10_000;
+
+/**
+ * Resolve the bearer: Auth-event token first; before any Auth event a bounded
+ * storage read. A fallback result is discarded when an Auth event (refresh,
+ * account switch, sign-out) arrived while it was pending.
+ */
 export async function resolveBearer(): Promise<string | null> {
-  const delivered = getAuthBearer();
-  if (delivered.delivered) return delivered.token;
+  const start = getAuthBearer();
+  if (start.delivered) return start.token;
+  let token: string | null = null;
   try {
-    const { data } = await withAuthTimeout(supabase.auth.getSession(), 10000, "De inlogservice");
-    return data.session?.access_token ?? null;
+    const { data } = await withAuthTimeout(supabase.auth.getSession(), BEARER_FALLBACK_MS, "De inlogservice");
+    token = data.session?.access_token ?? null;
   } catch {
-    return null;
+    token = null;
   }
+  const now = getAuthBearer();
+  if (now.generation !== start.generation) return now.token;
+  return token;
 }
 
 /**
