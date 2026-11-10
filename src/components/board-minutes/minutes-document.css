@@ -15,13 +15,8 @@
 .minutes-document dd { overflow-wrap: anywhere; }
 .minutes-document ol { list-style: decimal; padding-left: 20pt; }
 .minutes-document li { margin: 0 0 8pt; overflow-wrap: anywhere; }
-.minutes-actions td { overflow-wrap: anywhere; }
-@media screen and (max-width: 639px) {
-  .minutes-actions, .minutes-actions tbody, .minutes-actions tr, .minutes-actions td { display: block; width: 100%; }
-  .minutes-actions thead { display: none; }
-  .minutes-actions tr { margin-bottom: 16px; border-bottom: 1px solid hsl(var(--border)); }
-  .minutes-actions td::before { content: attr(data-label); display: block; font-weight: bold; }
-}
+.minutes-actions { min-width: 36rem; }
+.minutes-actions th, .minutes-actions td { overflow-wrap: anywhere; }
 @page { size: A4; margin: 20mm; }
 @media print {
   body * { visibility: hidden; }
@@ -29,5 +24,8 @@
   .minutes-document { position: absolute; top: 0; left: 0; max-width: 100%; }
   .minutes-document h1, .minutes-document h2 { break-after: avoid; }
   .minutes-document p, .minutes-document li { orphans: 3; widows: 3; }
+  .minutes-actions-scroll { overflow: visible; }
+  .minutes-actions { min-width: 0; width: 100%; table-layout: fixed; }
+  .minutes-actions thead { display: table-header-group; }
   .minutes-no-print { display: none; }
 }
