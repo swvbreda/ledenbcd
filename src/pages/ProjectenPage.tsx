@@ -30,7 +30,7 @@ import { useDossierRegister, useSetProjectDossiers, useSetDossierProjectHidden, 
 import { buildTree, dossierScope, projectInScope, projectOverviewView } from "@/lib/dossierRegister";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
-import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
+import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, groupMinutesResponsibles, type MinutesResponsibles, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
   isOverdue,
