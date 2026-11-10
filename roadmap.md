@@ -122,3 +122,8 @@
 - [ ] Fase 4: agenda-herinneringen (wacht op sjabloontekst)
 
 - [ ] Wachtwoordresetmails terug naar Resend — geblokkeerd: Lovable Cloud ondersteunt geen Resend/SMTP voor inlogmails; keuze gebruiker nodig
+
+## Preview-fout + acceptatie gedeelde bestuurstaak
+- [x] Preview hersteld (verse start, pagina laadt 200, geen fouten)
+- [x] 7 bestuursnamen, 6 admins, Tim de Wilde zonder account
+- [ ] Activeren 15 acties via UI (gebruiker)
