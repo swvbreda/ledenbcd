@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
+import { callerSupabase } from '@/lib/callerClient';
 import { completeTaskLocally,type LocalCompleteDb } from '@/lib/internalWork';
 import { activateMinutesTasks,assignMinutesTask,loadMinutesTasks } from '@/lib/boardMinutesTasks.functions';
 import type { MinutesTaskRow } from '@/lib/boardMinutesTasks';
@@ -20,7 +20,7 @@ export function MinutesTaskControls({versionId,userId,canActivate}:{versionId:st
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[confirm,setConfirm]=useState(false);
   const [editing,setEditing]=useState<MinutesTaskRow|null>(null),[people,setPeople]=useState<string[]>([]);
   async function run(fn:()=>Promise<unknown>){setBusy(true);setError('');try{await fn();await Promise.all([qc.invalidateQueries({queryKey:['minutes-tasks',userId]}),qc.invalidateQueries({queryKey:['internal-tasks',userId]})]);setConfirm(false);setEditing(null);}catch(e){setError(e instanceof Error?e.message:'Taakwijziging mislukt.');}finally{setBusy(false);}}
-  async function status(t:MinutesTaskRow){if(!t.task_id)return;if(t.status!=='afgerond'){await completeTaskLocally(supabase as unknown as LocalCompleteDb,{id:t.task_id});return;}const{data,error}=await supabase.from('internal_tasks').update({status:'te_doen'}).eq('id',t.task_id).select('id');if(error||!data?.length)throw new Error('Heropenen niet toegestaan.');}
+  async function status(t:MinutesTaskRow){if(!t.task_id)return;const supabase=await callerSupabase();if(t.status!=='afgerond'){await completeTaskLocally(supabase as unknown as LocalCompleteDb,{id:t.task_id});return;}const{data,error}=await supabase.from('internal_tasks').update({status:'te_doen'}).eq('id',t.task_id).select('id');if(error||!data?.length)throw new Error('Heropenen niet toegestaan.');}
   return <section className="minutes-no-print space-y-3 border-t border-border pt-5" aria-label="Actuele bestuurstaken"><h2 className="font-display text-xl">Actuele bestuurstaken</h2>
     {q.isPending&&<p role="status">Taken laden…</p>}{(error||q.error)&&<p role="alert" className="text-destructive">{error||'Actuele taken konden niet worden geladen.'}</p>}
     {canActivate&&q.data&&!q.data.enabled&&<Button onClick={()=>setConfirm(true)}>15 conceptacties aan taken koppelen</Button>}
