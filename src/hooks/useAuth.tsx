@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createClient, type User, type Session } from "@supabase/supabase-js";
+import { type User, type Session } from "@supabase/supabase-js";
+import { makeCallerClient } from "@/lib/callerClient";
 import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
