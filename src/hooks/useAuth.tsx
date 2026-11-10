@@ -2,11 +2,10 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback, ty
 import { supabase } from "@/integrations/supabase/client";
 import { type User, type Session } from "@supabase/supabase-js";
 import { loadAccessSnapshot as loadAccessSnapshotWith } from "@/lib/accessSnapshot";
-import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } from "@/lib/invokeFunction";
+import { SESSION_EXPIRED_EVENT_NAME, refreshSessionShared } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
-import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
+import { withAuthTimeout } from "@/lib/authAccess";
 import { setAuthBearer } from "@/lib/authBearer";
 import { decideSessionExpiry, interpretInitialSession, shouldIgnoreAuthEvent } from "@/lib/sessionRestore";
 import {
