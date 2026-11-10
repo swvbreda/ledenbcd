@@ -57,7 +57,7 @@ export function ContactTable({ contacts, organizations, category = '', onEdit, o
         const note = c ? visibleNote(c.note) : o ? visibleNote(o.note) : '';
         return <tr key={c?.id ?? o?.id} id={actions && c ? `persoon-${c.id}` : undefined} className="align-top even:bg-muted/40">
           {selection && <td className={cell}>{c && <Checkbox className="h-5 w-5" aria-label={`Selecteer ${c.name}`} checked={selected?.has(c.id) ?? false} onCheckedChange={v => onSelection?.([c.id], v === true)} />}</td>}
-          {showOrganizations && <td className={`${cell} min-w-40 max-w-56 break-words`}>{o && <><Link to="/contacten/$id" params={{ id: o.id }} className="font-semibold text-primary underline underline-offset-2">{o.name}</Link>{c && contacts.find(p => p.organization_id === o.id)?.id === c.id && visibleNote(o.note) && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1">Organisatienotitie</summary><p className="whitespace-pre-wrap break-words">{visibleNote(o.note)}</p></details>}</>}</td>}
+          {showOrganizations && <td className={`${cell} min-w-40 max-w-56 break-words`}>{o && <><Link to="/contacten/$id" params={{ id: o.id }} className="font-semibold text-primary underline underline-offset-2">{o.name}</Link>{c && contacts.find(p => p.organization_id === o.id)?.id === c.id && visibleNote(o.note) && <p className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">{visibleNote(o.note)}</p>}</>}</td>}
           {c ? <>
             <td className={`${cell} min-w-36 max-w-56 font-semibold`}>{actions ? <span className="break-words">{c.name}</span> : <Link to="/contacten/$id" params={{ id: c.organization_id }} hash={`persoon-${c.id}`} className="break-words text-primary underline underline-offset-2">{c.name}</Link>}{note && <details className="mt-1 text-xs font-normal text-muted-foreground"><summary className="cursor-pointer py-1">Notitie</summary><p className="whitespace-pre-wrap break-words">{note}</p></details>}</td>
             {parliamentary && <td className={`${cell} min-w-28 max-w-40 break-words`}>{c.party || dash}</td>}
@@ -69,7 +69,7 @@ export function ContactTable({ contacts, organizations, category = '', onEdit, o
               {onEdit && <Button className="h-8 w-8" size="icon" variant="ghost" title="Contactpersoon bewerken" aria-label={`Bewerk ${c.name}`} onClick={() => onEdit(c)}><Pencil size={15} /></Button>}
               {onDelete && <Button className="h-8 w-8" size="icon" variant="ghost" title="Contactpersoon verwijderen" aria-label={`Verwijder ${c.name}`} onClick={() => onDelete(c)}><Trash2 size={15} /></Button>}
             </td>}
-          </> : <td className={`${cell} text-muted-foreground`} colSpan={personCols + Number(actions)}>Geen contactpersonen.{note && <details className="text-xs"><summary className="cursor-pointer py-1">Notitie</summary><p className="whitespace-pre-wrap">{note}</p></details>}</td>}
+          </> : <td className={`${cell} text-muted-foreground`} colSpan={personCols + Number(actions)}>Geen contactpersonen.{note && <p className="whitespace-pre-wrap break-words text-xs">{note}</p>}</td>}
         </tr>;
       })}</tbody>
     </table>
