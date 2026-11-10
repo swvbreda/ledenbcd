@@ -4,6 +4,7 @@ import { getAuthBearer } from "@/lib/authBearer";
 import { withAuthTimeout } from "@/lib/authAccess";
 
 export const BEARER_FALLBACK_MS = 10_000;
+export const AUTH_TRANSPORT_RETRY_MESSAGE = "Je sessie is gewijzigd. Probeer opnieuw.";
 
 /**
  * Resolve the bearer: Auth-event token first; before any Auth event a bounded
@@ -32,7 +33,13 @@ export async function resolveBearer(): Promise<string | null> {
  */
 export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
+    const generation = getAuthBearer().generation;
     const token = await resolveBearer();
+    // Never resume an old request under a refreshed or different session.
+    if (getAuthBearer().generation !== generation) {
+      throw new Error(AUTH_TRANSPORT_RETRY_MESSAGE);
+    }
     return next({ headers: token ? { Authorization: `Bearer ${token}` } : {} });
   },
 );
+
