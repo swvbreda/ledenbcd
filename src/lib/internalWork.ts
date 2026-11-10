@@ -32,6 +32,7 @@ export interface TaskLike {
   status: TaskStatus;
   deadline: string | null;
   assignee_id: string | null;
+  responsible_ids?: readonly string[];
   project_id: string | null;
 }
 
