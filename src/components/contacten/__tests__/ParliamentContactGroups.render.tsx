@@ -208,7 +208,8 @@ describe('Tweede Kamer grouping in the real address book', () => {
   it('keeps other categories and the Tweede Kamer detail page outside the new grouping', () => {
     const { update } = setup({ category: '' });
     fireEvent.click(categoryHead(/^Eerste Kamer /));
-    expect(screen.getByRole('table', { name: 'Contactpersonen: Eerste Kamer' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Toon 1 contactpersoon van SYNTH Eerste Kamer' }));
+    expect(screen.getByRole('table', { name: 'Contactpersonen van SYNTH Eerste Kamer' })).toBeTruthy();
     expect(screen.getByText('SYNTH Sena')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Per partij' })).toBeNull();
     fireEvent.click(categoryHead(/^Ministeries /));
