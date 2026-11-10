@@ -5,8 +5,8 @@ const created: Array<{ headers: Record<string, string> }> = [];
 const rows = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: () => getSession() }, from: () => { throw new Error("generated client must not be used"); } } }));
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: (_u: string, _k: string, opts: { global: { headers: Record<string, string> } }) => {
-    created.push({ headers: opts.global.headers });
+  createClient: (_u: string, _k: string, opts: { accessToken: () => Promise<string> }) => {
+    created.push({ accessToken: opts.accessToken });
     return { from: () => { const c: Record<string, unknown> = {}; c.select = () => c; c.order = () => c; c.range = () => c; c.abortSignal = () => rows(); return c; } };
   },
 }));
@@ -26,7 +26,7 @@ describe("Contacten load", () => {
     const result = await run() as { organizations: unknown[]; contacts: unknown[] };
     expect(result.organizations).toHaveLength(1);
     expect(getSession).not.toHaveBeenCalled();
-    expect(created[0].headers.Authorization).toBe("Bearer tok-1");
+    expect(await created[0].accessToken()).toBe("tok-1");
   });
 
   it("asks to sign in again when no token exists", async () => {
