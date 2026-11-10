@@ -57,7 +57,7 @@ export function OrganizationTable({ organizations, contacts, label, selected, on
                 <span className="break-words">{organization.name}</span>
               </button> : organization.name}</h3>
               <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">{organization.abbreviation && <span>{organization.abbreviation}</span>}<Link to="/contacten/$id" params={{ id: organization.id }} className="text-primary underline underline-offset-2" aria-label={`Gegevens bekijken van ${organization.name}`}>Gegevens bekijken</Link></div>
-              {note && <details className="mt-1 text-xs text-muted-foreground"><summary className="cursor-pointer py-1">Organisatienotitie</summary><p className="whitespace-pre-wrap break-words">{note}</p></details>}
+              {note && <p className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">{note}</p>}
             </th>
             <td className={`${cell} min-w-48 max-w-64`}>{organization.email ? <EmailLink email={organization.email} /> : dash}</td>
             <td className={`${cell} whitespace-nowrap`}>{organization.phone ? <a className="text-primary underline" href={`tel:${organization.phone.replace(/[^+\d]/g, '')}`}>{organization.phone}</a> : dash}</td>
