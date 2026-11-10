@@ -317,7 +317,7 @@ export function AppSidebar() {
             <SidebarGroupContent><SidebarMenu><SidebarMenuItem><SidebarMenuButton asChild>
               <NavLink to="/bestuur/notulen" onClick={closeMobile} activeClassName="bg-sidebar-accent text-sidebar-primary-foreground font-medium">
                 <FileLock2 className="mr-2 h-4 w-4" />
-                {!collapsed && <span>Vergaderingen en notulen</span>}
+                {!collapsed && <span>Notulen en gespreksverslagen</span>}
               </NavLink>
             </SidebarMenuButton></SidebarMenuItem></SidebarMenu></SidebarGroupContent>
           </SidebarGroup>}

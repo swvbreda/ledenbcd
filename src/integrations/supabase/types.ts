@@ -1150,27 +1150,39 @@ export type Database = {
       }
       board_minutes_meetings: {
         Row: {
+          category: string
           created_at: string
           created_by: string
+          date_known: boolean
           id: string
+          meeting_year: number | null
           source: string
           source_id: string
+          subcategory: string | null
           tasks_enabled: boolean
         }
         Insert: {
+          category?: string
           created_at?: string
           created_by: string
+          date_known?: boolean
           id?: string
+          meeting_year?: number | null
           source: string
           source_id: string
+          subcategory?: string | null
           tasks_enabled?: boolean
         }
         Update: {
+          category?: string
           created_at?: string
           created_by?: string
+          date_known?: boolean
           id?: string
+          meeting_year?: number | null
           source?: string
           source_id?: string
+          subcategory?: string | null
           tasks_enabled?: boolean
         }
         Relationships: []
@@ -6980,6 +6992,22 @@ export type Database = {
         }
         Returns: string
       }
+      board_minutes_import_report: {
+        Args: {
+          p_category: string
+          p_date: string
+          p_date_known: boolean
+          p_details: Json
+          p_hash: string
+          p_report: string
+          p_source_id: string
+          p_source_text: string
+          p_subcategory: string
+          p_title: string
+          p_year: number
+        }
+        Returns: string
+      }
       board_minutes_import_revision: {
         Args: {
           p_actions: Json
@@ -7032,6 +7060,10 @@ export type Database = {
           p_url: string
         }
         Returns: string
+      }
+      board_minutes_set_category: {
+        Args: { p_category: string; p_meeting: string; p_subcategory: string }
+        Returns: undefined
       }
       board_minutes_sync_tasks: {
         Args: { p_activate?: boolean; p_version: string }

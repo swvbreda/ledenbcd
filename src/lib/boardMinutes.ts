@@ -20,7 +20,9 @@ export const minutesSaveSchema = z.object({
   if (!Number.isFinite(date.valueOf()) || date.toISOString().slice(0, 10) !== d.date) ctx.addIssue({ code: 'custom', path: ['date'], message: 'Ongeldige vergaderdatum.' });
 });
 export type MinutesInput = z.infer<typeof minutesSaveSchema>;
-export type MinuteMeeting = { id: string; source: string; source_id: string; created_at: string; created_by: string };
+export type MinuteMeeting = { id: string; source: string; source_id: string; created_at: string; created_by: string; category?: string; subcategory?: string | null; date_known?: boolean; meeting_year?: number | null };
+/** Display year: unknown dates never derive a year from the technical placeholder date. */
+export const meetingYear = (m: MinuteMeeting, v: { meeting_date: string }) => m.date_known === false ? (m.meeting_year ? String(m.meeting_year) : '') : v.meeting_date.slice(0, 4);
 export type MinuteVersion = { id: string; meeting_id: string; version: number; meeting_date: string; title: string; report: string; decisions: string[]; actions: string[]; source_url: string | null; content_hash: string; created_at: string; created_by: string };
 export type MinuteFile = { id: string; version_id: string; path: string; original_name: string; sha256: string; size_bytes: number; created_at: string; created_by: string };
 export type MinuteAdoption = { id: string; version_id: string; adopted_at: string; adopted_by: string };
@@ -30,14 +32,16 @@ export function safeMinutesUrl(value: string): string | null {
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : null; } catch { return null; }
 }
 export const minutesSourceLabel = (s: string) => ({ upload: 'Upload', onedrive: 'OneDrive', topical: 'Topical' })[s] ?? s;
-export function filterMinutes(archive: MinutesArchive, query: string, year: string) {
+export function filterMinutes(archive: MinutesArchive, query: string, year: string, category = '', subcategory = '') {
   const words = query.trim().toLocaleLowerCase('nl').split(/\s+/).filter(Boolean);
   return archive.meetings.flatMap(meeting => {
     const versions = archive.versions.filter(v => v.meeting_id === meeting.id).sort((a,b) => b.version-a.version);
     const latest = versions[0];
-    if (!latest || (year && latest.meeting_date.slice(0,4) !== year)) return [];
+    if (!latest || (year && (year === 'onbekend' ? meetingYear(meeting, latest) !== '' : meetingYear(meeting, latest) !== year))) return [];
+    if (category && (meeting.category ?? 'bestuursvergaderingen') !== category) return [];
+    if (subcategory && (meeting.subcategory?.trim() || 'Gemeente onbekend') !== subcategory) return [];
     const matching = versions.find(v => {
-      const haystack = [v.title,v.report,...v.decisions,...v.actions,archive.imports?.find(d=>d.version_id===v.id)?.source_text??''].join(' ').toLocaleLowerCase('nl');
+      const haystack = [meeting.subcategory??'',v.title,v.report,...v.decisions,...v.actions,archive.imports?.find(d=>d.version_id===v.id)?.source_text??''].join(' ').toLocaleLowerCase('nl');
       return words.every(w => haystack.includes(w));
     });
     return matching ? [{ meeting, latest, matchingVersion: matching.id }] : [];
