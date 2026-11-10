@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidTeamsUrl, isOverdue, filterTasks } from "@/lib/internalWork";
+import { isValidTeamsUrl, isOverdue, filterTasks, groupMinutesResponsibles } from "@/lib/internalWork";
 
 describe("Teams-link", () => {
   it("accepteert https Teams-link", () => expect(isValidTeamsUrl("https://teams.microsoft.com/l/channel/abc")).toBe(true));
