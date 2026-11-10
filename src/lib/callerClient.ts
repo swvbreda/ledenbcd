@@ -7,6 +7,18 @@ import { getAuthBearer } from "@/lib/authBearer";
  * Non-persistent database client carrying the caller's verified-by-server token,
  * so direct table reads never wait on broker session storage. RLS still applies.
  */
+/**
+ * `accessToken` option only: the client gets no own GoTrue instance, so requests never
+ * wait on the shared navigator auth lock / initialize / getSession of the main client.
+ */
+export function makeCallerClient(token: string): SupabaseClient<Database> {
+  return createClient<Database>(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
+    accessToken: async () => token,
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+}
+
 let cached: { token: string; client: SupabaseClient<Database> } | null = null;
 
 export async function callerSupabase(): Promise<SupabaseClient<Database>> {
@@ -20,11 +32,7 @@ export async function callerSupabase(): Promise<SupabaseClient<Database>> {
   if (cached?.token !== token) {
     cached = {
       token,
-      client: createClient<Database>(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
-        accessToken: async () => token,
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-        global: { headers: { Authorization: `Bearer ${token}` } },
-      }),
+      client: makeCallerClient(token),
     };
   }
   return cached.client;

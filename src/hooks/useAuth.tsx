@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createClient, type User, type Session } from "@supabase/supabase-js";
-import { SESSION_EXPIRED_EVENT_NAME, handleRpcAuthError, refreshSessionShared } from "@/lib/invokeFunction";
+import { type User, type Session } from "@supabase/supabase-js";
+import { loadAccessSnapshot as loadAccessSnapshotWith } from "@/lib/accessSnapshot";
+import { SESSION_EXPIRED_EVENT_NAME, refreshSessionShared } from "@/lib/invokeFunction";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
-import { memberPasswordlessEnabled } from "@/lib/memberAccessFlag";
-import { fetchRolesWithSessionRecovery, withAuthTimeout } from "@/lib/authAccess";
+import { withAuthTimeout } from "@/lib/authAccess";
 import { setAuthBearer } from "@/lib/authBearer";
 import { decideSessionExpiry, interpretInitialSession, shouldIgnoreAuthEvent } from "@/lib/sessionRestore";
 import {
@@ -93,88 +93,6 @@ const SESSION_TIMEOUT_MS = 15_000;
 // periode levert hetzelfde resultaat. De eigen 30s-ticker herstelt vaak eerder.
 const SESSION_RETRY_MS = 20_000;
 
-async function loadAccessSnapshot(userId: string, accessToken: string): Promise<AccessSnapshot> {
-  if (!accessToken) throw new Error("Geen geldige sessie voor de rechtencontrole");
-  // Use the session already delivered by Auth, not repeated broker-storage reads.
-  // The auth server still verifies the token; every database request retains RLS.
-  let token = accessToken;
-  const callerClient = () => createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  let caller = callerClient();
-  const rolesPromise = fetchRolesWithSessionRecovery({
-    expectedUserId: userId,
-    getAuthenticatedUserId: async () => {
-      const { data, error } = await supabase.auth.getUser(token);
-      if (error) throw error;
-      return data.user?.id ?? null;
-    },
-    fetchRoles: async () => {
-      const { data, error } = await caller
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId);
-      if (error) throw error;
-      return data?.map((row) => row.role) ?? [];
-    },
-    refreshSession: async () => {
-      const { data, error } = await refreshSessionOnce();
-      if (error) throw error;
-      if (data.session?.user.id !== userId) {
-        throw new Error("De vernieuwde sessie hoort niet bij de ingelogde gebruiker");
-      }
-      token = data.session.access_token;
-      caller = callerClient();
-    },
-  });
-
-  // Ledenkoppeling (eerst herstellen, dan lezen) en bestuursregels parallel ophalen;
-  // alles wordt pas als één geheel toegepast, nooit half.
-  const readProfileIds = async () => {
-    const { data, error } = await caller.from("member_profiles").select("member_id").eq("user_id", userId);
-    if (error) throw error;
-    return data?.map((p) => p.member_id) ?? [];
-  };
-  const memberIdsPromise = (async () => {
-    // ensure_member_link voegt alleen ontbrekende koppelingen toe en geeft het aantal
-    // nieuwe terug. Daarom tegelijk lezen en alleen opnieuw lezen als er iets bijkwam:
-    // scheelt een rondgang op het kritieke pad zonder een nieuwe koppeling te missen.
-    const profilesPromise = memberPasswordlessEnabled ? null : readProfileIds();
-    profilesPromise?.catch(() => {});
-    let linked = 0;
-    try {
-      const { data: linkCount, error: linkError } = await caller.rpc("ensure_member_link");
-      if (linkError && handleRpcAuthError(linkError)) {
-        throw new Error("Sessie verlopen tijdens het laden van de ledenkoppeling");
-      }
-      linked = typeof linkCount === "number" ? linkCount : 0;
-    } catch (e) {
-      if (e instanceof Error && e.message.startsWith("Sessie verlopen")) throw e;
-      console.warn("ensure_member_link mislukt", e);
-    }
-    if (memberPasswordlessEnabled) {
-      const { data, error } = await caller.rpc("current_member_id");
-      if (error) throw error;
-      return typeof data === "number" ? [data] : [];
-    }
-    return linked > 0 || !profilesPromise ? readProfileIds() : profilesPromise;
-  })();
-  const boardRowsPromise = caller.from("board_members").select("lid_id, lid_ids").then((r) => { if(r.error)throw r.error; return r.data ?? []; });
-
-  memberIdsPromise.catch(() => {});
-  // Alles tegelijk: rollen, ledenkoppeling en bestuur. Rechten pas na geslaagde rolcontrole.
-  const [roles, memberIds, boardRows] = await Promise.all([rolesPromise, memberIdsPromise, boardRowsPromise]);
-  const isBoard =
-    memberIds.length > 0 &&
-    (boardRows as any[]).some((row) => {
-      if (row?.lid_id && memberIds.includes(row.lid_id)) return true;
-      const ids: number[] = Array.isArray(row?.lid_ids) ? row.lid_ids : [];
-      return ids.some((id) => memberIds.includes(id));
-    });
-  return { roles, memberIds, isBoard };
-}
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -203,7 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       load: (id) => {
         const current = sessionRef.current;
         if (!current || current.user.id !== id) return Promise.reject(new Error("Sessie hoort niet bij de rechtencontrole"));
-        return loadAccessSnapshot(id, current.access_token);
+        return loadAccessSnapshotWith(id, current.access_token, {
+          getUser: (t) => supabase.auth.getUser(t),
+          refreshSession: () => refreshSessionOnce(),
+        });
       },
       timeoutMs: ACCESS_TIMEOUT_MS,
       timeoutLabel: "Het laden van gebruikersrechten",
