@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { minutesSaveSchema, validateMinutesBytes, type MinutesArchive } from './boardMinutes';
 import { minuteActionRowsSchema } from './boardMinutesTasks';
+import { MINUTES_CATEGORY_IDS, type MinutesCategory } from './boardMinutesCategories';
 
 export const importDetailsSchema = z.object({
   status: z.enum(['historisch-onbevestigd', 'concept']), reviewRequired: z.literal(true),
-  reportMissing: z.boolean(), meetingType: z.enum(['bestuursvergadering', 'dagelijks-bestuur']),
+  reportMissing: z.boolean(), meetingType: z.enum(['bestuursvergadering', 'dagelijks-bestuur', 'gespreksverslag']),
   originalName: z.string().max(255), sourcePaths: z.array(z.string().max(2000)).max(100),
   dateBasis: z.string().max(1000), versionLabel: z.string().max(1000),
   location: z.string().max(1000).optional(), attendance: z.string().max(3000).optional(),
@@ -22,7 +23,42 @@ export const importRevisionSchema = z.object({
 }).refine(d => !d.details.reportMissing || d.input.report === '', 'Een agenda is geen volledig verslag.');
 export type ImportDetails = z.infer<typeof importDetailsSchema>;
 export type ImportRevision = z.infer<typeof importRevisionSchema>;
-export type ImportOriginal = { revision: ImportRevision; path: string; name: string; hash: string };
+export type ReportPlacement = { category: MinutesCategory; subcategory: string | null; year: number | null; dateKnown: boolean };
+export type ImportOriginal = { revision: ImportRevision; path: string; name: string; hash: string; placement?: ReportPlacement };
+const reportCategory = z.enum(MINUTES_CATEGORY_IDS).refine(c => c !== 'bestuursvergaderingen', 'Bestuursnotulen gebruiken het bestuursarchief.');
+/** Contract for conversation reports (gespreksverslagen); see src/components/board-minutes/AGENTS.md. */
+export const reportManifestSchema = z.object({ schema_version: z.literal(1), kind: z.literal('gespreksverslagen'), read_at: z.string().max(100),
+  records: z.array(z.object({
+    source_id: z.string().regex(/^verslag:[A-Za-z0-9._:-]{1,200}$/), category: reportCategory, subcategory: z.string().trim().min(1).max(120).nullable().optional(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(), year: z.number().int().min(1990).max(2100).nullable(), title: z.string().trim().min(1).max(300),
+    report: z.string().max(200000).default(''),
+    documents: z.array(z.object({ archive_path: z.string().max(200).regex(/^verslagen\/[A-Za-z0-9._ -]{1,150}\.(pdf|docx|doc|txt)$/), file_name: z.string().max(255), sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict()).min(1).max(20),
+  }).strict().superRefine((r, ctx) => {
+    if (r.date && r.year !== null && Number(r.date.slice(0, 4)) !== r.year) ctx.addIssue({ code: 'custom', message: 'Jaar wijkt af van datum.' });
+    if (r.subcategory && r.category !== 'gemeenten') ctx.addIssue({ code: 'custom', message: 'Subcategorie alleen bij Gemeenten.' });
+  })).min(1).max(1000) }).strict();
+async function prepareReportPackage(entries: Record<string, Uint8Array>, raw: unknown) {
+  const manifest = reportManifestSchema.parse(raw), originals: ImportOriginal[] = [], seen = new Set<string>(), paths = new Set<string>();
+  for (const r of manifest.records) {
+    if (seen.has(r.source_id)) throw new Error('Dubbele bron-id in manifest.'); seen.add(r.source_id);
+    const dateKnown = !!r.date, year = r.date ? Number(r.date.slice(0, 4)) : r.year;
+    // Unknown dates use a hidden technical placeholder; the UI shows "Datum onbekend".
+    const date = r.date ?? `${year ?? 1900}-01-01`;
+    const fileHash = await sha256(new TextEncoder().encode(JSON.stringify(r)));
+    const revision = importRevisionSchema.parse({ input: { meetingId: null, expectedVersion: null, source: 'onedrive', sourceId: r.source_id, date, title: r.title, report: r.report, decisions: [], actions: [], sourceUrl: '', fileHash, confirm: true },
+      sourceText: r.report, details: { status: 'historisch-onbevestigd', reviewRequired: true, reportMissing: false, meetingType: 'gespreksverslag', originalName: r.documents[0].file_name, sourcePaths: r.documents.map(d => d.archive_path),
+        dateBasis: dateKnown ? 'Aangeleverd manifest' : 'Datum onbekend in bron', versionLabel: 'Gespreksverslag', readAt: manifest.read_at, ...(r.report ? {} : { reportKind: 'source-review' as const, sourceWarning: 'Inhoud staat in het oorspronkelijke bronbestand.' }) } });
+    for (const d of r.documents) {
+      if (paths.has(d.archive_path)) throw new Error('Dubbel bestandspad.'); paths.add(d.archive_path);
+      const bytes = entries[d.archive_path]; if (!bytes) throw new Error('Oorspronkelijk bestand ontbreekt.');
+      validateMinutesBytes(d.file_name, bytes);
+      if (await sha256(bytes) !== d.sha256) throw new Error('Bestandhash wijkt af van manifest.');
+      originals.push({ path: d.archive_path, name: d.file_name, hash: d.sha256, revision, placement: { category: r.category, subcategory: r.subcategory ?? null, year, dateKnown } });
+    }
+  }
+  if (Object.keys(entries).some(p => !p.endsWith('/') && p !== 'manifest.json' && !paths.has(p))) throw new Error('Onverwacht bestand in verslagenpakket.');
+  return { originals, meetings: seen.size, excluded: 0, formatted: false, reports: true };
+}
 export function bindFormattedRevisions(originals:ImportOriginal[],archive:MinutesArchive){
   return originals.map(original=>{
     if(!original.revision.details.formatted)return original;
@@ -117,6 +153,7 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
   if(manifestBytes.length>10*1024*1024)throw new Error('Manifest is te groot.');
   const raw=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(manifestBytes));
   if(raw.schema_version===2)return prepareFormattedPackage(entries,raw);
+  if(raw.kind==='gespreksverslagen')return prepareReportPackage(entries,raw);
   const manifest=manifestSchema.parse(raw);
   const seen=new Set<string>();
   const base=(source:'onedrive'|'topical',sourceId:string,date:string,title:string,report:string,hash:string,url='')=>({meetingId:null,expectedVersion:null,source,sourceId,date,title,report,decisions:[],actions:[],sourceUrl:url,fileHash:hash,confirm:true as const});
@@ -141,5 +178,5 @@ export async function prepareMinutesPackage(entries: Record<string,Uint8Array>) 
 }
 
 export function minutesStatus(adopted:boolean,details?:ImportDetails|null){
-  return adopted?'Vastgesteld':details?.reportMissing?'Verslag ontbreekt':details?.reportKind==='brief-notes'?'Beknopte notities – status te controleren':details?.status==='historisch-onbevestigd'?'Historisch – status te controleren':'Concept';
+  return details?.meetingType==='gespreksverslag'&&!adopted?'Gespreksverslag':adopted?'Vastgesteld':details?.reportMissing?'Verslag ontbreekt':details?.reportKind==='brief-notes'?'Beknopte notities – status te controleren':details?.status==='historisch-onbevestigd'?'Historisch – status te controleren':'Concept';
 }

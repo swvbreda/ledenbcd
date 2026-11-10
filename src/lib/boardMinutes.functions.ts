@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { minutesSaveSchema, requireMinutesAccess, validateMinutesBytes, MINUTES_BUCKET, type MinuteVersion, type MinutesArchive } from './boardMinutes';
 import { importRevisionSchema, importDetailsSchema } from './boardMinutesImport';
+import { MINUTES_CATEGORY_IDS } from './boardMinutesCategories';
 
 // Generated RPC types do not model PostgreSQL nullable input parameters.
 type RevisionArgs = { p_meeting:string|null; p_expected:string|null; p_source:string; p_source_id:string; p_date:string; p_title:string; p_report:string; p_decisions:string[]; p_actions:string[]; p_url:string|null; p_confirm:boolean; p_file_hash:string|null };
@@ -89,4 +90,23 @@ export const uploadBoardMinutesFile = createServerFn({ method: 'POST' }).middlew
   const { data: id, error: attachError } = await sb.rpc('board_minutes_attach', { p_version: data.versionId, p_path: path, p_name: data.file.name, p_hash: hash, p_size: data.file.size });
   if (attachError) throw new Error(`Bestand behouden, koppelen mislukt: ${attachError.message}`);
   return { id, originalName: data.file.name };
+});
+export const setBoardMinutesCategory = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>z.object({meetingId:z.string().uuid(),category:z.enum(MINUTES_CATEGORY_IDS),subcategory:z.string().trim().max(120).nullable()}).parse(d)).handler(async({data,context})=>{
+  await requireMinutesAccess(context,true);
+  const {error}=await context.supabase.rpc('board_minutes_set_category',{p_meeting:data.meetingId,p_category:data.category,p_subcategory:(data.subcategory??'') as string});
+  if(error)throw new Error(error.message);
+  return {ok:true};
+});
+
+const reportImportSchema=z.object({revision:importRevisionSchema,placement:z.object({category:z.enum(MINUTES_CATEGORY_IDS),subcategory:z.string().max(120).nullable(),year:z.number().int().nullable(),dateKnown:z.boolean()})});
+/** Conversation reports never create tasks or messages and are never adopted. */
+export const importBoardReport = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(d=>reportImportSchema.parse(d)).handler(async({data,context})=>{
+  await requireMinutesAccess(context,true);
+  const i=data.revision.input,p=data.placement;
+  if(data.revision.details.meetingType!=='gespreksverslag')throw new Error('Ongeldig gespreksverslag.');
+  const {data:id,error}=await context.supabase.rpc('board_minutes_import_report',{p_category:p.category,p_subcategory:(p.subcategory??'') as string,p_year:p.year as number,p_date_known:p.dateKnown,p_source_id:i.sourceId,p_date:i.date,p_title:i.title,p_report:i.report,p_hash:i.fileHash??'',p_details:data.revision.details,p_source_text:data.revision.sourceText});
+  if(error||!id)throw new Error(error?.message??'Import mislukt.');
+  const {data:version,error:readError}=await context.supabase.from('board_minutes_versions').select('meeting_id,id').eq('id',id).single();
+  if(readError||!version)throw new Error('Import kon niet worden teruggelezen.');
+  return version;
 });
