@@ -32,11 +32,48 @@ export interface TaskLike {
   status: TaskStatus;
   deadline: string | null;
   assignee_id: string | null;
+  responsible_ids?: readonly string[];
   project_id: string | null;
 }
 
 export function isOverdue(t: Pick<TaskLike, "status" | "deadline">, today: string): boolean {
   return !!t.deadline && t.status !== "afgerond" && t.deadline < today;
+}
+
+/** Eigen taak: enkelvoudige assignee_id of één van de gekoppelde (notulen-)verantwoordelijken. */
+export function isMyTask(t: { assignee_id: string | null; responsible_ids?: readonly string[] }, userId: string | null): boolean {
+  if (!userId) return false;
+  return t.assignee_id === userId || !!t.responsible_ids?.includes(userId);
+}
+
+export interface MinutesResponsibles { userIds: string[]; names: string[]; collective: boolean }
+/**
+ * Bundelt privé notulen-verantwoordelijken per taak (één taak, nooit duplicaten).
+ * Namen zonder account blijven zichtbaar; account-ID's alleen voor 'Mijn taken'.
+ */
+export function groupMinutesResponsibles(
+  links: { id: string; task_id: string | null; collective_board: boolean | null }[],
+  assignees: { action_id: string; user_id: string }[],
+  board: { action_id: string; user_id: string | null; name: string | null }[],
+  nameOf: (uid: string) => string,
+): Map<string, MinutesResponsibles> {
+  const out = new Map<string, MinutesResponsibles>();
+  const byAction = new Map<string, MinutesResponsibles>();
+  for (const l of links) {
+    if (!l.task_id) continue;
+    const r = out.get(l.task_id) ?? { userIds: [], names: [], collective: false };
+    r.collective ||= !!l.collective_board;
+    out.set(l.task_id, r); byAction.set(l.id, r);
+  }
+  const add = (r: MinutesResponsibles | undefined, uid: string | null, name: string | null) => {
+    if (!r) return;
+    if (uid && !r.userIds.includes(uid)) r.userIds.push(uid);
+    const n = (name?.trim() || (uid ? nameOf(uid) : "")).trim();
+    if (n && !r.names.includes(n)) r.names.push(n);
+  };
+  for (const b of board) add(byAction.get(b.action_id), b.user_id, b.name);
+  for (const a of assignees) add(byAction.get(a.action_id), a.user_id, null);
+  return out;
 }
 
 export interface TaskFilter {
@@ -52,7 +89,7 @@ export function filterTasks<T extends TaskLike>(tasks: T[], f: TaskFilter, userI
     if (f.projectId !== "all" && f.projectId !== "none" && t.project_id !== f.projectId) return false;
     if (f.status === "open" && t.status === "afgerond") return false;
     if (f.status !== "open" && f.status !== "all" && t.status !== f.status) return false;
-    if (f.mine && (!userId || t.assignee_id !== userId)) return false;
+    if (f.mine && !isMyTask(t, userId)) return false;
     if (f.overdue && !isOverdue(t, today)) return false;
     return true;
   });

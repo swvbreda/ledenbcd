@@ -30,7 +30,7 @@ import { useDossierRegister, useSetProjectDossiers, useSetDossierProjectHidden, 
 import { buildTree, dossierScope, projectInScope, projectOverviewView } from "@/lib/dossierRegister";
 import { NOT_RECORDED, completerLabel, creatorLabel, displayName, latestSourceByProject, participantIds, projectProgress } from "@/lib/projectWorkspace";
 import { useServerFn } from "@tanstack/react-start";
-import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
+import { completeTaskLocally, splitTaskViews, viewForTask, markCompletedInList, groupMinutesResponsibles, type MinutesResponsibles, type TaskView, type ViewFilter, type OpenStatusFilter } from "@/lib/internalWork";
 import { dispatchTaskPushes } from "@/lib/taskNotifications.functions";
 import {
   isOverdue,
@@ -133,6 +133,32 @@ function ProjectenInner() {
       return latestSourceByProject(data ?? []);
     },
   });
+  // Privé notulen-verantwoordelijken (admin/bestuur-RLS); alleen lezen, voor weergave en 'Mijn taken'.
+  const respQ = useQuery({
+    queryKey: ["minutes-task-responsibles", uid],
+    enabled: !!uid,
+    refetchInterval: 30000,
+    queryFn: async () => {
+      const [l, a, b] = await Promise.all([
+        db.from("board_minutes_action_links").select("id,task_id,collective_board"),
+        db.from("board_minutes_action_assignees").select("action_id,user_id"),
+        db.from("board_minutes_action_board_members").select("action_id,user_id,name"),
+      ]);
+      const err = l.error || a.error || b.error; if (err) throw err;
+      return { links: l.data ?? [], assignees: a.data ?? [], board: b.data ?? [] };
+    },
+  });
+  const responsibles = useMemo(() => respQ.data
+    ? groupMinutesResponsibles(respQ.data.links as any, respQ.data.assignees as any, respQ.data.board as any, (id) => displayName(staffQ.data?.find((s) => s.user_id === id)))
+    : new Map<string, MinutesResponsibles>(), [respQ.data, staffQ.data]);
+  const tasksWithResp = useMemo(() => (tasksQ.data ?? []).map((t) => {
+    const r = responsibles.get(t.id); return r ? { ...t, responsible_ids: r.userIds } : t;
+  }), [tasksQ.data, responsibles]);
+  const assigneeLabel = (t: Task) => {
+    const r = responsibles.get(t.id);
+    if (!r || r.names.length === 0) return staffName(t.assignee_id);
+    return (r.collective ? "Gedeeld bestuur: " : "") + r.names.join(", ");
+  };
   const origTask = (id: string) => tasksQ.data?.find((x) => x.id === id);
   const staffName = (id: string | null) => (id ? displayName(staffQ.data?.find((s) => s.user_id === id)) : "—");
 
@@ -161,8 +187,11 @@ function ProjectenInner() {
   const setDossierFilter = (id: string | null) => setSearchParams((prev) => { const n = new URLSearchParams(prev); if (id) n.set("dossier", id); else n.delete("dossier"); return n; });
   const scope = useMemo(() => (dossierFilter ? dossierScope(dossierFilter, dView.dossiers) : null), [dossierFilter, dView.dossiers]);
   const visibleProjects = (projectsQ.data ?? []).filter((p) => (showArchived || !p.archived_at) && (!scope || projectInScope(p.id, scope, reg.links)));
-  const split = useMemo(() => splitTaskViews(tasksQ.data ?? [], filter, uid, today), [tasksQ.data, filter, uid, today]);
-  const tasks = view === "open" ? split.open : split.done;
+  const split = useMemo(() => splitTaskViews(tasksWithResp, filter, uid, today), [tasksWithResp, filter, uid, today]);
+  const [focusOnly, setFocusOnly] = useState(true);
+  const focusId = searchParams.get("task");
+  const focusedTask = focusId && focusOnly ? tasksWithResp.find((t) => t.id === focusId) : undefined;
+  const tasks = focusedTask ? [focusedTask] : view === "open" ? split.open : split.done;
   const projectTitle = (id: string | null) => (id ? projectsQ.data?.find((p) => p.id === id)?.title ?? "—" : "Geen project");
 
   const invalidate = () => {
@@ -330,6 +359,12 @@ function ProjectenInner() {
             </Button>
           </div>
 
+          {focusedTask && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+              <span>Alleen de geopende taak wordt getoond (alleen bekijken; niets wordt opgeslagen).</span>
+              <Button size="sm" variant="outline" className="ml-auto" onClick={() => setFocusOnly(false)}>Toon alle taken</Button>
+            </div>
+          )}
           {tasksQ.isLoading ? (
             <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Taken laden...</p>
           ) : tasksQ.error ? null : tasks.length === 0 ? (
@@ -348,7 +383,7 @@ function ProjectenInner() {
                         <Badge variant="outline" className="font-medium">{TASK_STATUS_LABEL[t.status]}</Badge>
                         <Badge variant={t.priority === "hoog" ? "destructive" : "secondary"}>{PRIORITY_LABEL[t.priority]}</Badge>
                         <span>{projectTitle(t.project_id)}</span>
-                        <span>· {staffName(t.assignee_id)}</span>
+                        <span>· {assigneeLabel(t)}</span>
                         {t.deadline && <span className={late ? "text-destructive font-medium" : ""}>· {late ? "Verlopen " : "Deadline "}{t.deadline}</span>}
                                               </div>
                     </div>
