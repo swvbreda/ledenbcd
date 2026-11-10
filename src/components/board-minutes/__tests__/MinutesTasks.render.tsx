@@ -9,6 +9,7 @@ vi.mock('@tanstack/react-start',()=>({useServerFn:(f:any)=>f}));
 vi.mock('@/lib/boardMinutesTasks.functions',()=>({loadMinutesTasks:mocks.load,activateMinutesTasks:mocks.activate,assignMinutesTask:mocks.assign}));
 vi.mock('@/lib/internalWork',()=>({completeTaskLocally:mocks.complete}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{from:()=>({update:mocks.update})}}));
+vi.mock('@/lib/callerClient',()=>({callerSupabase:async()=>({from:()=>({update:mocks.update})})}));
 afterEach(()=>{cleanup();vi.clearAllMocks();});
 const row={action_id:'a',row_index:0,action:'Synthetic task',owner:'Tester + betrokken bestuursleden',deadline:'',task_id:'t',status:'te_doen',assignees:[{user_id:'u',name:'Tester'}],needs_assignment:true,completed_by:null,completed_name:null,completed_at:null};
 function mount(value:MinutesTasksResult,canActivate=false){mocks.load.mockResolvedValue(value);return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MinutesTaskControls versionId="v" userId="u" canActivate={canActivate}/></QueryClientProvider>);}

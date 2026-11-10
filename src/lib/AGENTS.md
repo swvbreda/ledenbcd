@@ -8,3 +8,4 @@
 # Auth transport
 
 - Server-function bearer transport uses the in-memory token delivered by Auth events (cleared on sign-out) with a bounded storage fallback; it never authorizes locally, because unbounded broker-storage reads hung requests before they left the browser.
+- Direct browser table/storage reads for Contacten and Notulen use `callerClient.ts` (non-persistent client with the Auth-event bearer, bounded load); generated-client reads re-enter broker session storage and can hang before the request leaves.
