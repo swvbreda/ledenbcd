@@ -14,6 +14,8 @@ import { getAuthBearer } from "@/lib/authBearer";
 export function makeCallerClient(token: string): SupabaseClient<Database> {
   return createClient<Database>(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
     accessToken: async () => token,
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
 }
 
