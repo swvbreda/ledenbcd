@@ -57,6 +57,7 @@ describe("rechtencontrole met hangende hoofd-auth (initialize/getSession/lock)",
 
   it("een hangende stap geeft een benoemde fout zonder token", async () => {
     stubFetch([]);
+    vi.stubGlobal("window", globalThis);
     const p = loadAccessSnapshot("u1", "event-token", {
       getUser: () => never(),
       refreshSession: () => never(),
