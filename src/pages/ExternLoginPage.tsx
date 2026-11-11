@@ -42,13 +42,18 @@ const ExternLoginPage = () => {
     setLoading(true);
     setError("");
     try { localStorage.setItem("remember_me", String(isNative || rememberMe)); } catch {}
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message === "Invalid login credentials"
-        ? "Ongeldig e-mailadres of wachtwoord"
-        : error.message);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      if (error) {
+        setError(error.message === "Invalid login credentials"
+          ? "Ongeldig e-mailadres of wachtwoord"
+          : error.message);
+      }
+    } catch {
+      setError("Inloggen is tijdelijk niet mogelijk. Probeer het opnieuw.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -90,7 +95,27 @@ const ExternLoginPage = () => {
     } catch {setError("Bevestig eerst uw e-mailadres. Uw aanvraag kon niet worden ingediend.");}
     finally {setLoading(false);}
   };
-  if (user && !isExtern) return <div className="min-h-screen bg-background flex items-center justify-center p-4"><div className="max-w-sm space-y-4"><h1 className="font-display text-xl">Organisatieaanvraag</h1><p>Bevestig uw e-mailadres. Het bestuur beoordeelt uw aanvraag voordat toegang wordt verleend.</p><input aria-label="Organisatienaam" value={orgName} onChange={e=>setOrgName(e.target.value)} className="border border-input rounded-md p-2 w-full"/><input aria-label="Contactnaam" value={contactName} onChange={e=>setContactName(e.target.value)} className="border border-input rounded-md p-2 w-full"/><select aria-label="Organisatietype" value={orgType} onChange={e=>setOrgType(e.target.value)}><option value="bank">Bank</option><option value="overheid">Overheid</option><option value="leverancier">Leverancier</option><option value="anders">Anders</option></select>{error&&<p className="text-destructive">{error}</p>}<Button onClick={()=>void submitOrganization()} disabled={loading||!orgName.trim()||!contactName.trim()}>Aanvraag indienen</Button></div></div>;
+  if (user && !isExtern) return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-sm space-y-4">
+        <h1 className="font-display text-xl">Organisatieaanvraag</h1>
+        <p>Vul hieronder uw organisatiegegevens opnieuw in na het bevestigen van uw e-mailadres. Het bestuur beoordeelt uw aanvraag voordat toegang wordt verleend.</p>
+        <label className="block text-sm font-medium">Organisatienaam
+          <input aria-label="Organisatienaam" value={orgName} onChange={e=>setOrgName(e.target.value)} className="border border-input rounded-md p-2 w-full"/>
+        </label>
+        <label className="block text-sm font-medium">Uw naam
+          <input aria-label="Contactnaam" value={contactName} onChange={e=>setContactName(e.target.value)} className="border border-input rounded-md p-2 w-full"/>
+        </label>
+        <label className="block text-sm font-medium">Type organisatie
+          <select aria-label="Organisatietype" value={orgType} onChange={e=>setOrgType(e.target.value)} className="border border-input rounded-md p-2 w-full">
+            <option value="bank">Bank</option><option value="overheid">Overheid</option><option value="leverancier">Leverancier</option><option value="anders">Anders</option>
+          </select>
+        </label>
+        {error&&<p className="text-destructive">{error}</p>}
+        <Button onClick={()=>void submitOrganization()} disabled={loading||!orgName.trim()||!contactName.trim()}>Aanvraag indienen</Button>
+      </div>
+    </div>
+  );
   if (user) return <Navigate to="/extern" replace />;
 
   return (
