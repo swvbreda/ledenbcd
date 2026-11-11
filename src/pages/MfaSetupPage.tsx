@@ -95,7 +95,7 @@ export default function MfaSetupPage() {
       if (challenge.error) throw challenge.error;
       const verified = await supabase.auth.mfa.verify({ factorId: replaceFactor, challengeId: challenge.data.id, code });
       if (verified.error) throw verified.error;
-      const result = await invokeWithAuth("reset-mfa", { factorId: replaceFactor });
+      const result = await invokeWithAuth("reset-mfa", { body: { factorId: replaceFactor } });
       if (result.error) throw result.error;
       setReplaceFactor(""); setCode("");
       await enrollFactor();
