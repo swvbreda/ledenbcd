@@ -1,5 +1,12 @@
 # Roadmap
 
+## Beveiligingsketens registratie, externe claims, MFA-herstel en aanvraagstatus
+- [ ] Authconfig/schema/callers/indirecte paden inspecteren; bestaande accounts en rollen behouden.
+- [ ] Registratie pas na onafhankelijke mailbevestiging koppelen; leads blijven toegestaan; externe claims alleen na expliciete goedkeuring.
+- [ ] MFA-zelfverwijdering beperken tot recent geverifieerde AAL2 en één eigen factor; verloren-factorroute zonder reset.
+- [ ] Statusenumeratie sluiten met eigenaarbinding; migratie toepassen en bestaande Edge Functions deployen.
+- [ ] Gerichte fixtures/regressies en automatische bouw controleren; geen echte mails/accounts/factorresets/taken als test.
+
 ## Gedeelde bestuurstaak — niet publiceren
 - [x] Migratie 0085: één gedeelde privétaak, echte registerleden en actieve accountmatching, geen aspiranten/admin-zonder-bestuursfunctie. Zeven bestuursnamen, zes actieve beheeraccountmatches; één ontbrekend account blijft zichtbaar, geen account/rechten aangemaakt.
 - [x] 41 regeltests, 9 bedieningstests (defecte optionele canvas tijdelijk gestubd) en geïsoleerde SQL-proef met afronden/heropenen/idempotentie/privacy geslaagd; bouw OK. Geen berichten, live 0 privétaken.
