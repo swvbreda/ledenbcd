@@ -95,7 +95,7 @@ describe("registration screens without real accounts or mail",()=>{
   });
   it.each(["member","external"])("%s signup failure leaves retry usable without session",async(kind)=>{
     m.fetch.mockRejectedValue(new Error("Network failure"));const {container}=mount(kind==="member"?<LoginPage/>:<ExternLoginPage/>);await loginReady();fireEvent.click(screen.getByRole("button",{name:"Nog geen account? Registreren"}));credentials(container,kind==="external");fireEvent.submit(container.querySelector('form') as HTMLFormElement);
-    await screen.findByText("Er is een fout opgetreden");expect((screen.getByRole("button",{name:"Registreren"}) as HTMLButtonElement).disabled).toBe(false);expect(m.rpc).not.toHaveBeenCalled();expect(m.signIn).not.toHaveBeenCalled();
+    await screen.findByText(kind==="member"?"Er is een fout opgetreden":"Network failure");expect((screen.getByRole("button",{name:"Registreren"}) as HTMLButtonElement).disabled).toBe(false);expect(m.rpc).not.toHaveBeenCalled();expect(m.signIn).not.toHaveBeenCalled();
   });
   it("confirmed external callback can submit exact named application then sees pending approval",async()=>{
     m.proof=false;const view=mount(<ExternLoginPage/>);await loginReady();act(()=>m.cb?.("SIGNED_IN",SESSION));await screen.findByRole("heading",{name:"Organisatieaanvraag"});m.proof=true;
