@@ -4359,6 +4359,7 @@ export type Database = {
           message: string | null
           phone: string | null
           request_type: string
+          requester_user_id: string | null
           status: string
         }
         Insert: {
@@ -4373,6 +4374,7 @@ export type Database = {
           message?: string | null
           phone?: string | null
           request_type?: string
+          requester_user_id?: string | null
           status?: string
         }
         Update: {
@@ -4387,6 +4389,7 @@ export type Database = {
           message?: string | null
           phone?: string | null
           request_type?: string
+          requester_user_id?: string | null
           status?: string
         }
         Relationships: []
@@ -5870,6 +5873,24 @@ export type Database = {
           },
         ]
       }
+      signup_email_proofs: {
+        Row: {
+          email: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          email: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          email?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       support_attachments: {
         Row: {
           created_at: string
@@ -6940,6 +6961,7 @@ export type Database = {
         Args: { _member_id: number }
         Returns: number
       }
+      approved_supplier_owner: { Args: { p_org: string }; Returns: boolean }
       archive_member_with_renumber: {
         Args: { _member_id: number }
         Returns: number
@@ -7498,6 +7520,11 @@ export type Database = {
       set_vault_secret: {
         Args: { _name: string; _value: string }
         Returns: undefined
+      }
+      signup_verified_email: { Args: never; Returns: string }
+      submit_verified_external_signup: {
+        Args: { p_contact: string; p_name: string; p_type: string }
+        Returns: string
       }
       support_add_attachment: {
         Args: {

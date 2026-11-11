@@ -3,12 +3,14 @@ import { Navigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, LogIn, Building2, UserPlus, User, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { callerSupabase } from "@/lib/callerClient";
 import bcdLogo from "@/assets/bcd-logo.png";
 import { Capacitor } from "@capacitor/core";
 
 const ExternLoginPage = () => {
   const isNative = Capacitor.isNativePlatform();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isExtern, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,9 +35,7 @@ const ExternLoginPage = () => {
     );
   }
 
-  if (user) {
-    return <Navigate to="/extern" replace />;
-  }
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,37 +68,30 @@ const ExternLoginPage = () => {
     }
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extern-signup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            password,
-            organization_name: orgName,
-            organization_type: orgType,
-            contact_name: contactName,
-          }),
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok || data?.error) {
-        setError(data?.error || "Registratie mislukt.");
-        setLoading(false);
-        return;
-      }
+      const settings = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/settings`, {headers:{apikey:import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}});
+      if(!settings.ok || (await settings.json()).mailer_autoconfirm !== false) throw new Error("Registratie wacht op veilige e-mailbevestigingsinstellingen. Neem contact op met het secretariaat.");
+      const { data, error: signupError } = await supabase.auth.signUp({email:email.trim().toLowerCase(),password,options:{emailRedirectTo:`${window.location.origin}/extern-login`}});
+      if(signupError) throw signupError;
+      if(data.session) throw new Error("Automatische bevestiging is niet toegestaan.");
       setRegisterSuccess(true);
-    } catch {
-      setError("Er is een fout opgetreden");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Er is een fout opgetreden");
     }
     setLoading(false);
   };
+
+  const submitOrganization = async () => {
+    setLoading(true); setError("");
+    try {
+      const client=await callerSupabase();
+      const {error}=await client.rpc("submit_verified_external_signup",{p_name:orgName,p_type:orgType,p_contact:contactName});
+      if(error) throw error;
+      window.location.assign("/extern");
+    } catch {setError("Bevestig eerst uw e-mailadres. Uw aanvraag kon niet worden ingediend.");}
+    finally {setLoading(false);}
+  };
+  if (user && !isExtern) return <div className="min-h-screen bg-background flex items-center justify-center p-4"><div className="max-w-sm space-y-4"><h1 className="font-display text-xl">Organisatieaanvraag</h1><p>Bevestig uw e-mailadres. Het bestuur beoordeelt uw aanvraag voordat toegang wordt verleend.</p><input aria-label="Organisatienaam" value={orgName} onChange={e=>setOrgName(e.target.value)} className="border border-input rounded-md p-2 w-full"/><input aria-label="Contactnaam" value={contactName} onChange={e=>setContactName(e.target.value)} className="border border-input rounded-md p-2 w-full"/><select aria-label="Organisatietype" value={orgType} onChange={e=>setOrgType(e.target.value)}><option value="bank">Bank</option><option value="overheid">Overheid</option><option value="leverancier">Leverancier</option><option value="anders">Anders</option></select>{error&&<p className="text-destructive">{error}</p>}<Button onClick={()=>void submitOrganization()} disabled={loading||!orgName.trim()||!contactName.trim()}>Aanvraag indienen</Button></div></div>;
+  if (user) return <Navigate to="/extern" replace />;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background p-4 z-50">
@@ -119,7 +112,7 @@ const ExternLoginPage = () => {
               <div className="p-3 bg-success/10 rounded-md">
                 <p className="text-sm text-success font-medium">Registratie ontvangen!</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Uw aanvraag wordt beoordeeld door het bestuur. U ontvangt bericht wanneer uw account is goedgekeurd.
+                  Bevestig eerst uw e-mailadres via de ontvangen link. Log daarna in en dien uw organisatieaanvraag in; toegang volgt pas na expliciete goedkeuring.
                 </p>
               </div>
               <button
