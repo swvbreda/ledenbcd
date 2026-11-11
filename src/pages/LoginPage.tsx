@@ -102,18 +102,22 @@ const LoginPage = () => {
     setError("");
     try { localStorage.setItem("remember_me", String(biometric.isNative || rememberMe)); } catch {}
     const cleanEmail = email.trim().toLowerCase();
-    const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-    if (error) {
-      setError(error.message === "Invalid login credentials"
-        ? "Ongeldig e-mailadres of wachtwoord. Tik op het oogje om te controleren wat je hebt ingetypt."
-        : error.message);
-      setLoading(false);
-    } else {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      if (error) {
+        setError(error.message === "Invalid login credentials"
+          ? "Ongeldig e-mailadres of wachtwoord. Tik op het oogje om te controleren wat je hebt ingetypt."
+          : error.message);
+        return;
+      }
       // Login succeeded — offer biometric save if available and not yet stored
       if (biometric.isAvailable && !biometric.hasCredentials) {
         setPendingCredentials({ email: cleanEmail, password });
         setShowBiometricPrompt(true);
       }
+    } catch {
+      setError("Inloggen is tijdelijk niet mogelijk. Probeer het opnieuw.");
+    } finally {
       setLoading(false);
     }
   };
