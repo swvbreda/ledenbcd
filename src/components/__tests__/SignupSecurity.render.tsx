@@ -84,6 +84,19 @@ describe("registration screens without real accounts or mail",()=>{
   it("external autoconfirm true fails closed before signup",async()=>{
     m.fetch.mockResolvedValue(reply({mailer_autoconfirm:true}));const {container}=mount(<ExternLoginPage/>);await loginReady();fireEvent.click(screen.getByRole("button",{name:"Nog geen account? Registreren"}));credentials(container,true);fireEvent.submit(container.querySelector('form') as HTMLFormElement);await screen.findByText(/Registratie wacht op veilige/);expect(m.signUp).not.toHaveBeenCalled();
   });
+  it("external signup unexpectedly returning a session is not reported as confirmed",async()=>{
+    m.fetch.mockResolvedValue(reply({mailer_autoconfirm:false}));m.signUp.mockResolvedValue({data:{session:SESSION},error:null});
+    const {container}=mount(<ExternLoginPage/>);await loginReady();fireEvent.click(screen.getByRole("button",{name:"Nog geen account? Registreren"}));credentials(container,true);fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    await screen.findByText("Automatische bevestiging is niet toegestaan.");expect(m.rpc).not.toHaveBeenCalled();expect(m.navigate).not.toHaveBeenCalled();
+  });
+  it("unconfirmed member login refusal never invokes member linking",async()=>{
+    m.signIn.mockResolvedValue({error:{message:"Email not confirmed"}});const {container}=mount(<LoginPage/>);await loginReady();credentials(container);fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    await screen.findByText("Email not confirmed");expect(m.rpc).not.toHaveBeenCalled();expect(m.navigate).not.toHaveBeenCalled();
+  });
+  it.each(["member","external"])("%s signup failure leaves retry usable without session",async(kind)=>{
+    m.fetch.mockRejectedValue(new Error("Network failure"));const {container}=mount(kind==="member"?<LoginPage/>:<ExternLoginPage/>);await loginReady();fireEvent.click(screen.getByRole("button",{name:"Nog geen account? Registreren"}));credentials(container,kind==="external");fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    await screen.findByText("Er is een fout opgetreden");expect((screen.getByRole("button",{name:"Registreren"}) as HTMLButtonElement).disabled).toBe(false);expect(m.rpc).not.toHaveBeenCalled();expect(m.signIn).not.toHaveBeenCalled();
+  });
   it("confirmed external callback can submit exact named application then sees pending approval",async()=>{
     m.proof=false;const view=mount(<ExternLoginPage/>);await loginReady();act(()=>m.cb?.("SIGNED_IN",SESSION));await screen.findByRole("heading",{name:"Organisatieaanvraag"});m.proof=true;
     fireEvent.change(screen.getByRole("textbox",{name:"Organisatienaam"}),{target:{value:"Fixture supplier"}});fireEvent.change(screen.getByRole("textbox",{name:"Contactnaam"}),{target:{value:"Fixture Contact"}});fireEvent.change(screen.getByRole("combobox",{name:"Organisatietype"}),{target:{value:"leverancier"}});fireEvent.click(screen.getByRole("button",{name:"Aanvraag indienen"}));
