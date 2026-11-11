@@ -610,6 +610,13 @@
       "when": 1794304116999,
       "tag": "0086_board_minutes_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1794431482925,
+      "tag": "0087_verified_signup_and_private_request_status",
+      "breakpoints": true
     }
   ]
 }
