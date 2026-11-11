@@ -1,11 +1,12 @@
 # Roadmap
 
 ## Beveiligingsketens registratie, externe claims, MFA-herstel en aanvraagstatus
-- [ ] Authconfig/schema/callers/indirecte paden inspecteren; bestaande accounts en rollen behouden.
-- [ ] Registratie pas na onafhankelijke mailbevestiging koppelen; leads blijven toegestaan; externe claims alleen na expliciete goedkeuring.
-- [ ] MFA-zelfverwijdering beperken tot recent geverifieerde AAL2 en één eigen factor; verloren-factorroute zonder reset.
-- [ ] Statusenumeratie sluiten met eigenaarbinding; migratie toepassen en bestaande Edge Functions deployen.
-- [ ] Gerichte fixtures/regressies en automatische bouw controleren; geen echte mails/accounts/factorresets/taken als test.
+- [x] Authconfig/schema/callers/indirecte paden geïnspecteerd; bestaande accounts/rollen en authtransport ongewijzigd.
+- [ ] Registratie activeren: More → Users → Auth settings → Email → Auto-confirm email UIT; huidige HIBP-waarde niet uitleesbaar, configure_auth zou die onbedoeld overschrijven. Registratie fail-closed zolang aan; proof-trigger + actuele member/lead-claim gereed.
+- [x] Externe aanvragen pas met private bevestigingsproof; geen productclaims op naam/wildcards; pending productmutaties RLS-geweigerd; goedgekeurde bestaande links behouden.
+- [x] MFA-zelfverwijdering recent cryptografisch geverifieerde AAL2/één eigen factor, caller Auth-delete; verloren-factorroute zonder reset. Algemene MFA-overslag niet gewijzigd, vraag aan gebruiker gesteld.
+- [x] Migratie 0087 toegepast en schema/triggers teruggelezen; member-signup/extern-signup/reset-mfa/manage-users gedeployd, invalid-token live weigeringen 401/400.
+- [x] 7 Deno-tests, 26 bestaande authregressies, echte geïsoleerde PostgreSQL-proef, Deno-check en tsgo geslaagd; automatische build OK. Auth-rendercheck start niet door bestaande ontbrekende canvas.node. Geen echte mails/accounts/factorresets/taken als test.
 
 ## Gedeelde bestuurstaak — niet publiceren
 - [x] Migratie 0085: één gedeelde privétaak, echte registerleden en actieve accountmatching, geen aspiranten/admin-zonder-bestuursfunctie. Zeven bestuursnamen, zes actieve beheeraccountmatches; één ontbrekend account blijft zichtbaar, geen account/rechten aangemaakt.
