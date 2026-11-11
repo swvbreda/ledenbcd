@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
-import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, LogIn, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -219,22 +218,10 @@ export default function MfaVerifyPage() {
               </form>
               <button
                 type="button"
-                onClick={async () => {
-                  // Use admin edge function to unenroll all TOTP factors (bypasses AAL2)
-                  try {
-                    await invokeWithAuth("reset-mfa", {});
-                  } catch (e) {
-                    console.error("reset-mfa error:", e);
-                  }
-                  // Clear email MFA marker too
-                  if (user?.id) {
-                    try { localStorage.removeItem(`emfa_${user.id}`); } catch {}
-                  }
-                  navigate("/mfa-setup", { replace: true });
-                }}
+                onClick={() => toast.info("Neem contact op met het secretariaat voor aantoonbaar geautoriseerd beheerherstel. Een inlogsessie alleen kan uw authenticator niet verwijderen.")}
                 className="text-xs text-muted-foreground hover:text-primary transition-colors block w-full text-center"
               >
-                Code kwijt? Opnieuw instellen
+                Code kwijt? Beheerherstel
               </button>
             </>
           )}

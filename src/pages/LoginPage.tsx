@@ -231,25 +231,7 @@ const LoginPage = () => {
       setStatusInfo({ state: "error", message: "Vul je e-mailadres in" });
       return;
     }
-    setStatusInfo({ state: "checking" });
-    const { data, error: rpcError } = await supabase.rpc("get_membership_request_status", {
-      _email: email.trim(),
-    });
-    if (rpcError) {
-      setStatusInfo({ state: "error", message: "Kon status niet ophalen" });
-      return;
-    }
-    const row = Array.isArray(data) ? data[0] : null;
-    if (!row) {
-      setStatusInfo({ state: "none" });
-    } else {
-      setStatusInfo({
-        state: "found",
-        status: row.status,
-        created_at: row.created_at,
-        has_login: row.has_login,
-      });
-    }
+    setStatusInfo({ state: "error", message: "Je aanvraag wordt door het secretariaat behandeld. Raadpleeg de ontvangen bevestiging of neem contact op met het secretariaat voor je status." });
   };
 
   const renderStatusMessage = () => {
@@ -352,8 +334,8 @@ const LoginPage = () => {
           ) : registerSuccess ? (
             <div className="text-center space-y-3">
               <div className="p-3 bg-success/10 rounded-md">
-                <p className="text-sm text-success font-medium">Account succesvol aangemaakt!</p>
-                <p className="text-xs text-muted-foreground mt-1">Je kunt nu inloggen met je e-mailadres en wachtwoord.</p>
+                <p className="text-sm text-success font-medium">Controleer je e-mail</p>
+                <p className="text-xs text-muted-foreground mt-1">Controleer je e-mail en bevestig je adres via de link. Pas daarna kun je inloggen; ledenrechten worden uitsluitend aan je bevestigde adres gekoppeld.</p>
               </div>
               <button
                 onClick={() => { switchMode("login"); }}

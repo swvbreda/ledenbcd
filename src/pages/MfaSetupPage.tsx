@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
-import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, CheckCircle2, Smartphone, ArrowRight, ExternalLink, Copy, Check, Mail, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,14 +62,11 @@ export default function MfaSetupPage() {
 
   const enrollFactor = async () => {
     setEnrolling(true);
-    // Use admin edge function to remove all existing TOTP factors (bypasses AAL2 requirement)
-    try {
-      const { error: resetError } = await invokeWithAuth("reset-mfa", {});
-      if (resetError) {
-        console.error("reset-mfa error:", resetError);
-      }
-    } catch (e) {
-      console.error("Failed to call reset-mfa:", e);
+    // Enrollment never resets verified factors.
+    const {data:factors,error:factorError}=await supabase.auth.mfa.listFactors();
+    if(factorError || factors?.totp.some(f=>f.status==="verified")) {
+      toast.error("Er is al een authenticator. Verifieer die eerst; bij verlies helpt het secretariaat met beheerherstel.");
+      setEnrolling(false); return;
     }
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
