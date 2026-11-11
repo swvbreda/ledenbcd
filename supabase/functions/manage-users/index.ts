@@ -8,39 +8,38 @@ const corsHeaders = {
 async function syncSupplierBenefits(adminClient: ReturnType<typeof createClient>, orgId: string) {
   const { data: org, error: orgError } = await adminClient
     .from("external_organizations")
-    .select("id, name, type, contact_email")
+    .select("id, name, type, contact_email, approved")
     .eq("id", orgId)
     .maybeSingle();
 
   if (orgError) throw orgError;
-  if (!org || org.type !== "leverancier") {
+  if (!org || !org.approved || org.type !== "leverancier") {
     return { linkedCount: 0, benefitIds: [] as string[] };
   }
 
   const benefitIds = new Set<string>();
   const normalizedEmail = org.contact_email?.trim().toLowerCase();
-  const normalizedName = org.name.trim();
+  // Never grant ownership by a submitted organization name or wildcard.
+  const { data: links, error: linksError } = await adminClient.from("external_org_users").select("user_id").eq("org_id",orgId);
+  if (linksError) throw linksError;
+  let verified = false;
+  for (const link of links ?? []) {
+    const { data, error } = await adminClient.auth.admin.getUserById(link.user_id);
+    if (error) throw error;
+    const { data: proof } = await adminClient.from("signup_email_proofs").select("email").eq("user_id",link.user_id).eq("email",normalizedEmail ?? "").maybeSingle();
+    if (proof && data.user?.email?.trim().toLowerCase() === normalizedEmail && data.user.email_confirmed_at) verified = true;
+  }
+  if (!verified) throw new Error("Exacte mailkoppeling is nog niet onafhankelijk bevestigd");
 
   if (normalizedEmail) {
     const { data: emailMatches, error: emailError } = await adminClient
       .from("member_benefits")
       .select("id")
       .is("supplier_org_id", null)
-      .ilike("contact_email", normalizedEmail);
+      .eq("contact_email", normalizedEmail);
 
     if (emailError) throw emailError;
     emailMatches?.forEach(({ id }) => benefitIds.add(id));
-  }
-
-  if (normalizedName) {
-    const { data: nameMatches, error: nameError } = await adminClient
-      .from("member_benefits")
-      .select("id")
-      .is("supplier_org_id", null)
-      .ilike("provider_name", normalizedName);
-
-    if (nameError) throw nameError;
-    nameMatches?.forEach(({ id }) => benefitIds.add(id));
   }
 
   const ids = Array.from(benefitIds);
