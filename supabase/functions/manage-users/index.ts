@@ -1,11 +1,11 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function syncSupplierBenefits(adminClient: ReturnType<typeof createClient>, orgId: string) {
+async function syncSupplierBenefits(adminClient: SupabaseClient, orgId: string) {
   const { data: org, error: orgError } = await adminClient
     .from("external_organizations")
     .select("id, name, type, contact_email, approved")
