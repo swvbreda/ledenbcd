@@ -1,85 +1,25 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    // Get the user's JWT to identify them
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-
-    // Verify JWT via Supabase (JWKS-backed)
-    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: verified, error: verifyErr } = await adminClient.auth.getUser(token);
-    if (verifyErr || !verified?.user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const userId = verified.user.id;
-
-    const { data: adminUser, error: adminError } = await adminClient.auth.admin.getUserById(userId);
-    
-    if (adminError || !adminUser?.user) {
-      console.error("getUserById error:", adminError);
-      return new Response(JSON.stringify({ error: "Could not fetch user" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const factors = adminUser.user.factors || [];
-    const totpFactors = factors.filter((f: any) => f.factor_type === "totp");
-
-    let unenrolled = 0;
-    for (const factor of totpFactors) {
-      const res = await fetch(
-        `${SUPABASE_URL}/auth/v1/admin/users/${userId}/factors/${factor.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            "apikey": SUPABASE_SERVICE_ROLE_KEY,
-          },
-        }
-      );
-      if (res.ok) {
-        unenrolled++;
-        console.log(`Unenrolled factor ${factor.id} for user ${userId}`);
-      } else {
-        console.error(`Failed to unenroll factor ${factor.id}:`, await res.text());
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, unenrolled, total: totpFactors.length }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("reset-mfa error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.2";
+import { recentAal2 } from './security.ts';
+const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type'};
+Deno.serve(async req=>{
+ if(req.method==='OPTIONS')return new Response(null,{headers:cors});
+ const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json'}});
+ if(req.method!=='POST')return json({error:'Method not allowed'},405);
+ try{
+  const url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_ANON_KEY');
+  const token=req.headers.get('authorization')?.replace(/^Bearer\s+/i,'');
+  if(!url||!key||!token)return json({error:'Niet ingelogd.'},401);
+  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const {data:user,error}=await client.auth.getUser(token);
+  if(error||!user.user)return json({error:'Ongeldige sessie.'},401);
+  // getClaims cryptographically verifies the JWT (including legacy HS256 via Auth); never decode-only.
+  const {data:verified,error:claimsError}=await client.auth.getClaims(token);
+  if(claimsError||!verified||!recentAal2(verified.claims,user.user.id,Math.floor(Date.now()/1000)))return json({error:'Verifieer uw authenticator opnieuw. Voor een verloren factor: neem contact op met het secretariaat voor beheerherstel.'},403);
+  const p=await req.json();
+  if(typeof p.factorId!=='string'||!user.user.factors?.some(f=>f.id===p.factorId&&f.factor_type==='totp'))return json({error:'Selecteer één eigen authenticator.'},400);
+  // Auth enforces ownership/AAL2 itself; there is no privileged delete or bulk reset.
+  const r=await fetch(url+'/auth/v1/factors/'+encodeURIComponent(p.factorId),{method:'DELETE',headers:{apikey:key,Authorization:'Bearer '+token}});
+  if(!r.ok)return json({error:'Authenticator kon niet worden verwijderd.'},r.status===401?401:403);
+  return json({success:true,unenrolled:1});
+ }catch{return json({error:'Verwijderen kon niet worden verwerkt.'},400);}
 });
