@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { consumePostLoginPath } from "@/lib/postLoginPath";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithAuth } from "@/lib/invokeFunction";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, CheckCircle2, Smartphone, ArrowRight, ExternalLink, Copy, Check, Mail, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export default function MfaSetupPage() {
   const [loading, setLoading] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [replaceFactor, setReplaceFactor] = useState("");
 
   // Email state
   const [emailSent, setEmailSent] = useState(false);
@@ -64,7 +66,9 @@ export default function MfaSetupPage() {
     setEnrolling(true);
     // Enrollment never resets verified factors.
     const {data:factors,error:factorError}=await supabase.auth.mfa.listFactors();
-    if(factorError || factors?.totp.some(f=>f.status==="verified")) {
+    const existing = factors?.totp.find(f=>f.status==="verified");
+    if(factorError || existing) {
+      if (existing) setReplaceFactor(existing.id);
       toast.error("Er is al een authenticator. Verifieer die eerst; bij verlies helpt het secretariaat met beheerherstel.");
       setEnrolling(false); return;
     }
@@ -82,6 +86,21 @@ export default function MfaSetupPage() {
     setFactorId(data.id);
     setSecret(data.totp.secret);
     setEnrolling(false);
+  };
+
+  const replaceAuthenticator = async () => {
+    setLoading(true);
+    try {
+      const challenge = await supabase.auth.mfa.challenge({ factorId: replaceFactor });
+      if (challenge.error) throw challenge.error;
+      const verified = await supabase.auth.mfa.verify({ factorId: replaceFactor, challengeId: challenge.data.id, code });
+      if (verified.error) throw verified.error;
+      const result = await invokeWithAuth("reset-mfa", { factorId: replaceFactor });
+      if (result.error) throw result.error;
+      setReplaceFactor(""); setCode("");
+      await enrollFactor();
+    } catch { toast.error("Verifieer uw bestaande authenticator. Bij verlies: beheerherstel via het secretariaat."); }
+    finally { setLoading(false); }
   };
 
   const handleCopySecret = async () => {
@@ -161,6 +180,8 @@ export default function MfaSetupPage() {
   };
 
   if (!user) return null;
+
+  if (replaceFactor) return <div className="min-h-screen bg-background flex items-center justify-center p-4"><Card className="p-6 space-y-4 max-w-sm"><h1 className="font-display text-xl">Authenticator vervangen</h1><p>Bevestig met de code van uw bestaande authenticator. Alleen deze factor wordt verwijderd.</p><Input aria-label="Bestaande authenticatorcode" inputMode="numeric" maxLength={6} value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,""))}/><Button disabled={loading||code.length!==6} onClick={()=>void replaceAuthenticator()}>Verifiëren en vervangen</Button><p className="text-sm text-muted-foreground">Code kwijt? Neem contact op met het secretariaat voor beheerherstel.</p></Card></div>;
 
   // Step indicator for TOTP flow
   const totalSteps = 3;
