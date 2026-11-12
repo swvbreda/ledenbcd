@@ -1,5 +1,9 @@
 # Roadmap
 
+## Project monitoring: eigen bestuurstaak afronden/heropenen
+- [x] UI/RPC admin-only bevestigd; 7 gekoppelde bestuursaccounts, 1 zonder adminrol.
+- [ ] Smalle serverstatusmutatie en per-taakbediening; wacht op plangoedkeuring wegens autorisatiewijziging. Geen echte taken gewijzigd.
+
 ## Beveiligingsketens registratie, externe claims, MFA-herstel en aanvraagstatus
 - [x] Authconfig/schema/callers/indirecte paden geïnspecteerd; bestaande accounts/rollen en authtransport ongewijzigd.
 - [ ] Registratie activeren: More → Users → Auth settings → Email → Auto-confirm email UIT; huidige HIBP-waarde niet uitleesbaar, configure_auth zou die onbedoeld overschrijven. Registratie fail-closed zolang aan; proof-trigger + actuele member/lead-claim gereed.
