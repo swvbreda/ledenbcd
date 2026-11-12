@@ -6990,6 +6990,7 @@ export type Database = {
         Returns: string
       }
       board_minutes_can_read: { Args: never; Returns: boolean }
+      board_minutes_can_status: { Args: { p_task: string }; Returns: boolean }
       board_minutes_current_board: {
         Args: never
         Returns: {
@@ -7085,6 +7086,10 @@ export type Database = {
       }
       board_minutes_set_category: {
         Args: { p_category: string; p_meeting: string; p_subcategory: string }
+        Returns: undefined
+      }
+      board_minutes_set_task_status: {
+        Args: { p_completed: boolean; p_task: string }
         Returns: undefined
       }
       board_minutes_sync_tasks: {
