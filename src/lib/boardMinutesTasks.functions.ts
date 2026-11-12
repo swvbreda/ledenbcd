@@ -4,6 +4,14 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { requireMinutesAccess } from './boardMinutes';
 import type { MinutesTasksResult } from './boardMinutesTasks';
 
+export const setMinutesTaskStatus = createServerFn({method:'POST'}).middleware([requireSupabaseAuth])
+  .inputValidator(d=>z.object({taskId:z.string().uuid(),completed:z.boolean()}).strict().parse(d)).handler(async({data,context})=>{
+    await requireMinutesAccess(context);
+    const {error}=await context.supabase.rpc('board_minutes_set_task_status',{p_task:data.taskId,p_completed:data.completed});
+    if(error)throw new Error(error.message);
+    return {ok:true};
+  });
+
 export const loadMinutesTasks = createServerFn({method:'POST'}).middleware([requireSupabaseAuth])
   .inputValidator(d=>z.object({versionId:z.string().uuid()}).parse(d)).handler(async({data,context}):Promise<MinutesTasksResult>=>{
     await requireMinutesAccess(context);

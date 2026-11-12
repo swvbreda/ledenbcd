@@ -15,7 +15,7 @@ export type MinutesTaskRow = {
   action_id: string | null; row_index: number; action: string; owner: string; deadline: string;
   task_id: string | null; status: string | null; assignees: { user_id: string; name: string }[];
   needs_assignment: boolean; completed_by: string | null; completed_name: string | null; completed_at: string | null;
-  collective_board?: boolean; board_responsibles?: {user_id:string|null;name:string}[];
+  collective_board?: boolean; board_responsibles?: {user_id:string|null;name:string}[]; can_status?: boolean;
 };
 export type MinutesTasksResult = { enabled: boolean; can_manage: boolean; rows: MinutesTaskRow[]; staff: {user_id:string;name:string}[] };
 
