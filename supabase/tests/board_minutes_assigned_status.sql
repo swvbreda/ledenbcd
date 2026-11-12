@@ -30,12 +30,24 @@ DO $$ DECLARE v uuid; aid uuid; tid uuid; solo uuid; before_task jsonb; after_ta
  IF public.board_minutes_tasks(v)->'rows'->0->>'status'<>'te_doen' THEN RAISE EXCEPTION 'Reopen projection incorrect'; END IF;
  RESET ROLE;
  IF EXISTS(SELECT 1 FROM public.internal_tasks WHERE id=tid AND (completed_at IS NOT NULL OR completed_by IS NOT NULL)) OR NOT EXISTS(SELECT 1 FROM public.board_minutes_action_links WHERE id=aid AND task_id=tid) THEN RAISE EXCEPTION 'Reopen audit/binding incorrect'; END IF;
+ INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000003','external@example.invalid','{}',NULL,NULL);
+ INSERT INTO public.user_roles VALUES('00000000-0000-0000-0000-000000000003','extern');
  FOREACH denied IN ARRAY ARRAY['00000000-0000-0000-0000-000000000003'::uuid,'00000000-0000-0000-0000-000000000010'::uuid,'00000000-0000-0000-0000-000000000011'::uuid] LOOP
   INSERT INTO public.board_minutes_action_assignees VALUES(aid,denied) ON CONFLICT DO NOTHING;
   PERFORM set_config('request.jwt.claim.sub',denied::text,true); SET LOCAL ROLE authenticated;
   BEGIN PERFORM public.board_minutes_set_task_status(tid,true); RAISE EXCEPTION 'Invalid/non-board/banned assigned account allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   RESET ROLE;
  END LOOP;
+ INSERT INTO public.board_minutes_action_assignees SELECT id,'00000000-0000-0000-0000-000000000007'::uuid FROM public.board_minutes_action_links WHERE task_id=solo;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000007',true); SET LOCAL ROLE authenticated;
+ PERFORM public.board_minutes_set_task_status(solo,true);
+ IF public.board_minutes_tasks(v)->'rows'->1->>'status'<>'afgerond' THEN RAISE EXCEPTION 'Explicit non-admin assignee denied'; END IF;
+ RESET ROLE;
+ UPDATE auth.users SET deleted_at=now() WHERE id='00000000-0000-0000-0000-000000000007';
+ SET LOCAL ROLE authenticated;
+ BEGIN PERFORM public.board_minutes_set_task_status(tid,true); RAISE EXCEPTION 'Deleted account allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ RESET ROLE;
+ UPDATE auth.users SET deleted_at=NULL WHERE id='00000000-0000-0000-0000-000000000007';
  INSERT INTO public.account_access_revocations VALUES('00000000-0000-0000-0000-000000000007');
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000007',true); SET LOCAL ROLE authenticated;
  BEGIN PERFORM public.board_minutes_set_task_status(tid,true); RAISE EXCEPTION 'Revoked account allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
