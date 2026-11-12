@@ -48,5 +48,6 @@ DO $$ DECLARE v uuid; aid uuid; tid uuid; solo uuid; before_task jsonb; after_ta
  IF EXISTS(SELECT 1 FROM public.task_notifications) OR EXISTS(SELECT 1 FROM public.outlook_deadline_outbox) THEN RAISE EXCEPTION 'Notification side effects'; END IF;
  RAISE NOTICE 'PASS: assigned non-admin shared status, unassigned/invalid/banned/revoked/anonymous denial, audit, same task, no general access or notifications';
 END $$;
+SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
 SET CONSTRAINTS ALL IMMEDIATE;
 ROLLBACK;
