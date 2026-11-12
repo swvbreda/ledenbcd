@@ -2,7 +2,9 @@
 
 ## Project monitoring: eigen bestuurstaak afronden/heropenen
 - [x] UI/RPC admin-only bevestigd; 7 gekoppelde bestuursaccounts, 1 zonder adminrol.
-- [ ] Smalle serverstatusmutatie en per-taakbediening; wacht op plangoedkeuring wegens autorisatiewijziging. Geen echte taken gewijzigd.
+- [x] Na plangoedkeuring: migratie 0088 toegepast, servercontrole op actief account/huidig bestuur/toewijzing; per-taak afronden/heropenen zonder algemene taakrechten. Bestaande afrondtriggers en adminbediening behouden.
+- [x] Twee geïsoleerde PostgreSQL-proeven en 11 regel-/renderchecks geslaagd; automatische bouw OK. Live 15 privétaken/1 afgerond onveranderd, geen berichten of publicatie.
+- [ ] Ingelogde eindcontrole door gebruiker: geen bestaande sessie beschikbaar (signed_out); geen sessie gemint en geen echte taakstatus gewijzigd als test.
 
 ## Beveiligingsketens registratie, externe claims, MFA-herstel en aanvraagstatus
 - [x] Authconfig/schema/callers/indirecte paden geïnspecteerd; bestaande accounts/rollen en authtransport ongewijzigd.
