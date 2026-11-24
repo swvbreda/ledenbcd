@@ -19,8 +19,9 @@ CREATE TRIGGER task_outlook AFTER INSERT OR UPDATE ON public.internal_tasks FOR 
 SQL
 "${P[@]}" -f "$ROOT/supabase/tests/board_minutes_tasks.sql"
 "${P[@]}" <<'SQL'
-ALTER TABLE public.board_minutes_meetings ADD COLUMN category text DEFAULT 'Bestuursvergaderingen';
 CREATE OR REPLACE FUNCTION public.is_board_member(uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$ SELECT $1='00000000-0000-0000-0000-000000000002'::uuid OR EXISTS(SELECT 1 FROM public.board_minutes_current_board() b WHERE b.user_id=$1) $$;
 SQL
+"${P[@]}" -f "$(ls "$ROOT"/drizzle/migrations/0086_*.sql)"
 "${P[@]}" -f "$(ls "$ROOT"/drizzle/migrations/0088_*.sql)"
+"${P[@]}" -f "$(ls "$ROOT"/drizzle/migrations/0089_*.sql)"
 "${P[@]}" -f "$ROOT/supabase/tests/board_minutes_assigned_status.sql"

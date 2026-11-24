@@ -6,5 +6,5 @@
 - Private tasks never attach to projects/Microsoft, trigger notifications, or enter the external MCP feed; old archive rows stay disarmed and only the explicitly requested current concept has an activation button.
 # Categories and conversation reports
 
-- Meeting category lives on board_minutes_meetings (default Bestuursvergaderingen) and changes only via admin RPC `board_minutes_set_category`; a trigger forces tasks_enabled=false outside Bestuursvergaderingen and task-linked minutes cannot leave it, so reports never enter task sync.
+- Meeting category lives on board_minutes_meetings (stored key `bestuursvergaderingen`, display label Bestuursvergaderingen) and changes only via admin RPC `board_minutes_set_category`; status authorization compares the stored key, and SQL tests apply the real category migration/constraints. A trigger forces tasks_enabled=false outside this category and task-linked minutes cannot leave it, so reports never enter task sync.
 - Conversation reports import only via `board_minutes_import_report` (ZIP manifest kind `gespreksverslagen`, `verslag:` source ids, idempotent by source id + hash, never adopted); unknown dates set date_known=false with a hidden placeholder date that the UI never shows.

@@ -6,6 +6,12 @@ DO $$ DECLARE v uuid; aid uuid; tid uuid; solo uuid; before_task jsonb; after_ta
  PERFORM public.board_minutes_sync_tasks(v,false);
  SELECT l.id,l.task_id INTO aid,tid FROM public.board_minutes_action_links l JOIN public.board_minutes_action_versions a ON a.action_id=l.id WHERE a.version_id=v AND a.row_index=0;
  SELECT l.task_id INTO solo FROM public.board_minutes_action_links l JOIN public.board_minutes_action_versions a ON a.action_id=l.id WHERE a.version_id=v AND a.row_index=1;
+ IF NOT EXISTS(SELECT 1 FROM public.board_minutes_meetings m JOIN public.board_minutes_versions bv ON bv.meeting_id=m.id WHERE bv.id=v AND m.category='bestuursvergaderingen' AND m.tasks_enabled) THEN RAISE EXCEPTION 'Real lowercase category/default missing'; END IF;
+ BEGIN
+  UPDATE public.board_minutes_meetings SET category='Bestuursvergaderingen' WHERE id=(SELECT meeting_id FROM public.board_minutes_versions WHERE id=v);
+  RAISE EXCEPTION 'Invalid capitalized category accepted';
+ EXCEPTION WHEN check_violation THEN NULL; END;
+ IF NOT (public.board_minutes_tasks(v)->>'can_manage')::boolean OR NOT (public.board_minutes_tasks(v)->'rows'->0->>'can_status')::boolean THEN RAISE EXCEPTION 'Admin status permission missing for real category'; END IF;
  SELECT to_jsonb(t)-ARRAY['status','completed_at','completed_by','updated_at'] INTO before_task FROM public.internal_tasks t WHERE id=tid;
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000007',true);
  SET LOCAL ROLE authenticated;

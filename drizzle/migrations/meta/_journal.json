@@ -624,6 +624,13 @@
       "when": 1794505599869,
       "tag": "0088_board_minutes_assigned_status",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1795507546621,
+      "tag": "0089_board_minutes_status_category_fix",
+      "breakpoints": true
     }
   ]
 }

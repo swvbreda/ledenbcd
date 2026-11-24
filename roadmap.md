@@ -1,5 +1,9 @@
 # Roadmap
 
+## Project monitoring: categoriecontrole bestuurstaakstatus
+- [x] Hoofdletterfout bevestigd in actuele code en database; migratie 0089 herstelt uitsluitend de opgeslagen categoriesleutel, geen taak-/accountwijzigingen.
+- [x] Echte categoriedefault/constraint en toegewezen bestuurder/admin getest: SQL-proeven en 5 renderchecks geslaagd; regressie faalt aantoonbaar zonder 0089. Actuele databasefunctie teruggelezen en bouw OK; geen live taakmutatie of publicatie. Ingelogde eindcontrole door gebruiker blijft nodig.
+
 ## Project monitoring: eigen bestuurstaak afronden/heropenen
 - [x] UI/RPC admin-only bevestigd; 7 gekoppelde bestuursaccounts, 1 zonder adminrol.
 - [x] Na plangoedkeuring: migratie 0088 toegepast, servercontrole op actief account/huidig bestuur/toewijzing; per-taak afronden/heropenen zonder algemene taakrechten. Bestaande afrondtriggers en adminbediening behouden.
