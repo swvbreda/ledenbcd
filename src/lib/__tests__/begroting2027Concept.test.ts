@@ -31,21 +31,37 @@ describe("Begroting 2027 concept", () => {
   });
 });
 
-import { UITGAVEN_2027, conceptTotals } from "@/lib/begroting2027Concept.server";
+import { UITGAVEN_2027, conceptTotals, RESERVE_2027 } from "@/lib/begroting2027Concept.server";
 describe("Uitgavenraming 2027", () => {
   const t = conceptTotals(UITGAVEN_2027, 407500);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
-      "Algemene kosten": 55900, "Dagelijks bestuur": 137000, Advieskosten: 213500, Donaties: 6000,
+      "Algemene kosten": 54400, "Dagelijks bestuur": 127000, Advieskosten: 203500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
     });
   });
-  it("totaal 412.400 en planresultaat -4.900 (volledige staffel)", () => {
-    expect(t.expenses).toBe(412400);
-    expect(t.resultFull).toBe(-4900);
+  it("totaal 392.500 en planresultaat +15.000 (volledige staffel)", () => {
+    expect(t.expenses).toBe(392500);
+    expect(t.resultFull).toBe(15000);
+  });
+  it("goedgekeurde posten: secretariaat 5.000, onderzoek 40.000, kantoor 9.000, personeel 5.000, onvoorzien 1.600, loon 102.000", () => {
+    const line = (n: string) => UITGAVEN_2027.flatMap((c) => c.lines).find((l) => l.name === n)?.budgeted;
+    expect(line("Secretariaatskosten")).toBe(5000);
+    expect(line("Onderzoek")).toBe(40000);
+    expect(line("Kantoorkosten")).toBe(9000);
+    expect(line("Aanvullende personeelskosten")).toBe(5000);
+    expect(line("Jaarlijkse onvoorziene uitgaven")).toBe(1600);
+    expect(line("Voorzitter - Het Strategiebureau")).toBe(102000);
+  });
+  it("reserve los van kosten: 115.000 voorlopig + 15.000 = 130.000, geen kostenpost", () => {
+    expect(RESERVE_2027.beginVoorlopig).toBe(true);
+    expect(RESERVE_2027.begin + t.resultFull).toBe(RESERVE_2027.eind);
+    expect(RESERVE_2027.eind).toBe(130000);
+    expect(UITGAVEN_2027.flatMap((c) => c.lines).some((l) => /reserve/i.test(l.name))).toBe(false);
   });
   it("snapshot levert uitgaven en contributie 407.500 alleen aan beheerder", async () => {
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(conceptTotals(s.uitgaven, 407500).expenses).toBe(412400);
+    expect(conceptTotals(s.uitgaven, 407500).expenses).toBe(392500);
+    expect(s.reserve).toEqual({ begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 });
     expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(407500);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });

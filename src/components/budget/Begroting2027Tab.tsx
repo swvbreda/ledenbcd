@@ -114,7 +114,9 @@ export default function Begroting2027Tab() {
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote uitgaven</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.expenses} /></td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote contributie</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Banksaldo 31 december 2026</td><td className="px-3 py-1.5 text-right text-muted-foreground">Nog vast te stellen</td></tr>
-                <tr><td className="px-3 py-1.5">Reserve uit 2026</td><td className="px-3 py-1.5 text-right text-muted-foreground">Nog vast te stellen</td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Beginreserve (voorlopig)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.begin} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Toevoeging uit planresultaat</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.result} /></td></tr>
+                <tr className="font-semibold"><td className="px-3 py-1.5">Beoogde eindreserve</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.begin + view.result} /></td></tr>
               </tbody>
             </table>
           </Section>
@@ -146,7 +148,8 @@ export default function Begroting2027Tab() {
                     <li>De geboekte kosten van 2026 zijn mogelijk nog niet volledig.</li>
                     <li>Geen herberekening van btw; de BCD kan geen btw aftrekken.</li>
                     <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de voorgenomen premietarieven 2027 (AWf/Aof/WKO), de onbekende Whk en nog niet geregelde arbodienst/verzuimverzekering en salarisadministratie kunnen het totaal veranderen.</li>
-                    <li>Geen automatische overdracht van reserves; PCN-terugbetalingen zijn niet meegerekend.</li>
+                    <li>De reserve is geen kostenpost. Beginreserve is een voorlopige aanname, geen banksaldo of vastgestelde balans.</li>
+                    <li>PCN-terugbetalingen zijn niet meegerekend.</li>
                     <li>De begroting en boekingen van 2026 zijn niet aangepast.</li>
                   </ul>
                 </CollapsibleContent>

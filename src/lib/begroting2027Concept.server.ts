@@ -214,7 +214,7 @@ export type ConceptCategory = { name: string; lines: ConceptLine[] };
 export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Algemene kosten", lines: [
     { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Afgeronde werkbudgetraming voor een volledig jaar." },
-    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 (planningsbudget, niet onderbouwd) + kantoorhuur € 6.000. Huurcontract Officez/BCD: € 400 per maand excl. btw, servicekosten inbegrepen; eerste jaarlijkse aanpassing 1 september 2027, minimaal 2%. Facturen 60.03.01097 en 60.03.01043 bevestigen € 400 + € 84 btw = € 484 (het contracttotaal van € 485 wijkt rekenkundig af). Zonder btw-aftrek minimaal 8 × € 484 + 4 × € 493,68 = € 5.846,72; de werkelijke indexering kan hoger zijn. De € 6.000 laat € 153,28 ruimte, geen definitieve geïndexeerde huur. Waarborgsom is geen kosten." },
+    { name: "Kantoorkosten", budgeted: 9000, actual2026: 3694.51, basis: "Kantoorhuur € 6.000 + kantoorartikelen/kantoorsoftware € 3.000. Huurcontract Officez/BCD: € 400 per maand excl. btw (€ 484 incl. btw), eerste jaarlijkse aanpassing 1 september 2027, minimaal 2%; minimaal € 5.846,72 op jaarbasis. Waarborgsom is geen kosten." },
     { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Planningsbudget voor een volledig jaar." },
     { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Planningsbudget; bestaande toerekening behouden, geen andere boekingen verschoven." },
     { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
@@ -224,14 +224,15 @@ export const UITGAVEN_2027: ConceptCategory[] = [
   ] },
   { name: "Dagelijks bestuur", lines: [
     { name: "Voorzitter - Het Strategiebureau", budgeted: 102000, actual2026: null, basis: "Voorlopige raming, niet compleet; geen bevestigde loonberekening 2027. In 2027 vervangt loondienst de eerdere kosten als opdrachtnemer; eerdere facturen en salaris niet bij elkaar optellen. Salaris: bruto € 6.760 per maand × 12 = € 81.120 + 8% vakantiegeld € 6.489,60 = € 87.609,60 per jaar (arbeidsovereenkomst 2026, loonstrook oktober). Werkgeverspremies 2027 (broncontrole 25-11-2026) over het maximumpremieloon € 82.543: werkgevers-Zvw 6,27% = € 5.175,45 en maximumpremieloon definitief (Staatscourant 2026-39593, 13 november 2026); AWf laag 2,74% = € 2.261,68, Aof laag 6,67% = € 5.505,62 en WKO 0,50% = € 412,72 zijn voorgenomen tarieven (Kamerstuk 37020-XV-2, tabel 130) en nog definitief te controleren. Samen € 13.355,47 excl. Whk, onder aanname van dezelfde lage-premie-indeling als oktober 2026. Whk 2027 voor BCD is onbekend; uitsluitend als tijdelijke begrotingsaanname 12 × € 82 = € 984 volgens oktober 2026, geen bevestigd tarief. Totaal € 101.949,07, afgerond begroot € 102.000; niet afdoende voor overige personeelskosten. Vorige bron: loonaangifte oktober 2026 (e-mail Daan Kottmann, 'Loonheffingen BCD', 21 november 2026 10:10), afgeronde aangifte-euro's. Ingehouden loonheffing en nettoloon zijn onderdelen van het brutosalaris en worden niet nogmaals boven op het brutosalaris geteld. Open begrotingspunten, bedrag onbekend (niet nul, niet verzekerd): arbodienst/verzuimverzekering nog niet geregeld; vaste prijs salarisadministratie nog niet geregeld, af te stemmen met Administratiekosten (€ 5.500) om dubbel budget te voorkomen. Pensioen: volgens het contract buiten de verplichte pensioenregeling; geen aanvullende afspraak aangetroffen. Reiskosten en onkostenvergoedingen staan op eigen posten en zijn hier niet bijgeteld." },
-    { name: "Secretariaatskosten", budgeted: 20000, actual2026: null, basis: "Bestaand gepland budget behouden; geen bevestigde afspraak. Overlap met taken uit het dienstverband controleren." },
+    { name: "Secretariaatskosten", budgeted: 5000, actual2026: null, basis: "Budgetkeuze: losse hulp. In 2026 niets uitgegeven; geen contract. Niet voor taken uit het dienstverband." },
+    { name: "Aanvullende personeelskosten", budgeted: 5000, actual2026: null, basis: "Voorlopige reservering voor arbodienst, eventuele verzuimverzekering en salarisadministratie. Nog niet geregeld, geen offerte; niet dubbel met administratiekosten." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
   ] },
   { name: "Advieskosten", lines: [
     { name: "Juridische kosten / bestuurlijk advies", budgeted: 150000, actual2026: null, basis: "Eerder jaarlijks beleidsbudget behouden, geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
     { name: "Juridische kosten / bestuurlijk advies (2025)", budgeted: 0, actual2026: null, basis: "Regel behouden voor herkenbare opbouw. Het meegenomen bedrag van € 42.196 is in 2026 opgebruikt en wordt niet opnieuw meegenomen." },
-    { name: "Onderzoek", budgeted: 50000, actual2026: null, basis: "Eerder beleidsbudget; geen bevestigde verplichtingen." },
+    { name: "Onderzoek", budgeted: 40000, actual2026: null, basis: "Budgetkeuze; geen bestaande verplichting." },
     { name: "Communicatie / marketing", budgeted: 10000, actual2026: 8849.26, basis: "Planningsbudget." },
     { name: "Drukwerk", budgeted: 1500, actual2026: 952.69, basis: "Planningsbudget." },
     { name: "Verzendkosten", budgeted: 2000, actual2026: null, basis: "Eerder beleidsbudget behouden." },
@@ -240,6 +241,9 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Donatie Stg. Maatschappij en cannabis", budgeted: 3000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
     { name: "Donatie Stg VOC", budgeted: 2000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
     { name: "Donatie overige", budgeted: 1000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
+  ] },
+  { name: "Onvoorziene uitgaven", lines: [
+    { name: "Jaarlijkse onvoorziene uitgaven", budgeted: 1600, actual2026: null, basis: "Kostenpost voor onvoorziene uitgaven; staat los van de reserve." },
   ] },
 ];
 
@@ -253,7 +257,10 @@ export function minimaleHuur2027(maandInclBtw: number): number {
   return Math.round((8 * maandInclBtw + 4 * Math.round(maandInclBtw * 1.02 * 100) / 100) * 100) / 100;
 }
 
-export const WERKGEVER_WAARSCHUWING = "Loonbudget €102.000 (voorlopig, niet compleet): €101.949,07 op jaarbasis met maximumpremieloon en Zvw 2027 definitief, AWf/Aof/WKO voorgenomen en Whk als tijdelijke aanname. Arbodienst/verzuimverzekering en salarisadministratie nog niet geregeld, bedrag onbekend.";
+export const WERKGEVER_WAARSCHUWING = "Loonbudget €102.000 (voorlopig, niet compleet): €101.949,07 op jaarbasis met maximumpremieloon en Zvw 2027 definitief, AWf/Aof/WKO voorgenomen en Whk als tijdelijke aanname. Arbodienst, verzuimverzekering en salarisadministratie nog niet geregeld; voorlopig € 5.000 gereserveerd onder Aanvullende personeelskosten.";
+
+/** Reserve is een balansdoel (resultaatbestemming), géén kostenpost. Beginreserve is een voorlopige aanname, geen geverifieerde balans. */
+export const RESERVE_2027 = { begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 } as const;
 
 export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number) {
   const perCategory = cats.map((c) => ({ name: c.name, total: c.lines.reduce((s, l) => s + l.budgeted, 0) }));
@@ -275,6 +282,7 @@ export type Begroting2027Snapshot = {
   aansluiting: { start: { label: string; aantal: number }; stappen: { label: string; delta: number }[]; tussenstappen: { naStap: number; label: string }[]; kerngegevensNoot: string };
   controlepunten: string[];
   werkgeverWaarschuwing: string;
+  reserve: { begin: number; beginVoorlopig: boolean; toevoeging: number; eind: number };
 };
 
 type RoleClient = { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown; error: unknown }> };
@@ -295,6 +303,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     aansluiting: JSON.parse(JSON.stringify(VESTIGINGEN_AANSLUITING_2027)),
     controlepunten: [...CONTROLEPUNTEN],
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
+    reserve: { ...RESERVE_2027 },
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
     inkomsten: [
       { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Volledige staffel (niet vastgesteld)." },
