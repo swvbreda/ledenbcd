@@ -70,7 +70,7 @@ export default function Begroting2027Tab() {
       <BankBalancesCard />
 
       <div className="mt-4">
-        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} scenario={scenario} onScenario={setScenario} groups={B.groups} peildatum={B.peildatum} />
+        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} scenario={scenario} onScenario={setScenario} groups={B.groups} peildatum={B.peildatum} registratie={B.ledenRegistratie} />
       </div>
 
       <div className="mt-4">

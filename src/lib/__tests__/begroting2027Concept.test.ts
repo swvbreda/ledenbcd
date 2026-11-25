@@ -3,15 +3,15 @@ import { BEGROTING_2027, scenarioTotals, begroting2027ForCaller } from "@/lib/be
 import { parseFinanceSearch } from "@/lib/dossierRegister";
 
 describe("Begroting 2027 concept", () => {
-  it("volledige staffel telt op tot 402.500 en 121 groepen", () => {
+  it("volledige staffel telt op tot 404.500 en 121 groepen", () => {
     const t = scenarioTotals(BEGROTING_2027.rows);
-    expect(t.full).toBe(402500);
+    expect(t.full).toBe(404500);
     expect(t.groups).toBe(121);
     expect(BEGROTING_2027.totalFull).toBe(t.full);
   });
-  it("50% van de verhoging geeft 382.750", () => {
-    expect(scenarioTotals(BEGROTING_2027.rows).half).toBe(382750);
-    expect(BEGROTING_2027.totalHalf).toBe(382750);
+  it("50% van de verhoging geeft 383.750", () => {
+    expect(scenarioTotals(BEGROTING_2027.rows).half).toBe(383750);
+    expect(BEGROTING_2027.totalHalf).toBe(383750);
   });
   it("oude deeplink ?tab=begroting-2027 wordt dashboard + jaar 2027", () => {
     const p = parseFinanceSearch(new URLSearchParams("tab=begroting-2027&year=2026"), [2027, 2026, 2025], 2026);
@@ -25,8 +25,8 @@ describe("Begroting 2027 concept", () => {
   const client = (data: unknown) => ({ rpc: async () => ({ data, error: null }) });
   it("beheerder krijgt de snapshot", async () => {
     const s = await begroting2027ForCaller(client(true), "u1");
-    expect(s.totalFull).toBe(402500);
-    expect(s.totalHalf).toBe(382750);
+    expect(s.totalFull).toBe(404500);
+    expect(s.totalHalf).toBe(383750);
   });
   it("niet-beheerder of fout wordt geweigerd", async () => {
     await expect(begroting2027ForCaller(client(false), "u1")).rejects.toThrow("Geen rechten");
@@ -36,21 +36,21 @@ describe("Begroting 2027 concept", () => {
 
 import { UITGAVEN_2027, conceptTotals } from "@/lib/begroting2027Concept.server";
 describe("Uitgavenraming 2027", () => {
-  const t = conceptTotals(UITGAVEN_2027, 402500, 382750);
+  const t = conceptTotals(UITGAVEN_2027, 404500, 383750);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
       "Algemene kosten": 55900, "Dagelijks bestuur": 137000, Advieskosten: 213500, Donaties: 6000,
     });
   });
-  it("totaal 412.400 en planresultaten -9.900 / -29.650", () => {
+  it("totaal 412.400 en planresultaten -7.900 / -28.650", () => {
     expect(t.expenses).toBe(412400);
-    expect(t.resultFull).toBe(-9900);
-    expect(t.resultHalf).toBe(-29650);
+    expect(t.resultFull).toBe(-7900);
+    expect(t.resultHalf).toBe(-28650);
   });
-  it("snapshot levert uitgaven en contributie 402.500 alleen aan beheerder", async () => {
+  it("snapshot levert uitgaven en contributie 404.500 alleen aan beheerder", async () => {
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(conceptTotals(s.uitgaven, 402500, 382750).expenses).toBe(412400);
-    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(402500);
+    expect(conceptTotals(s.uitgaven, 404500, 383750).expenses).toBe(412400);
+    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(404500);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
 });

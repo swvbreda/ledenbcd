@@ -14,11 +14,12 @@ export const BEGROTING_2027 = {
     { label: "1 locatie", count: 103, amount: 3000 },
     { label: "2–3 locaties", count: 11, amount: 4500 },
     { label: "4–6 locaties", count: 6, amount: 6000 },
-    { label: "7–10 locaties", count: 1, amount: 8000 },
+    { label: "7–10 locaties", count: 0, amount: 8000 },
+    { label: "Meer dan 10 locaties", count: 1, amount: 10000 },
   ],
   /** Snapshotwaarden zoals aangeleverd; tests controleren dat ze kloppen met de tabel. */
-  totalFull: 402500,
-  totalHalf: 382750,
+  totalFull: 404500,
+  totalHalf: 383750,
   totalGroups: 121,
 } as const;
 
@@ -32,21 +33,24 @@ export function scenarioTotals(rows: readonly { count: number; amount: number }[
 }
 
 /** Groepen met meerdere shops uit de ramingssnapshot van 25 november 2026 (lid-ID, naam, aantal shops). Deels voorlopige indeling. */
-export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number }[] = [
+export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; minimum?: boolean }[] = [
   { id: 1, name: "The Bulldog", shops: 5 }, { id: 5, name: "Green House", shops: 5 }, { id: 8, name: "Coffeeshop Relax", shops: 2 },
-  { id: 9, name: "Boere Jongens", shops: 4 }, { id: 20, name: "Easy Times", shops: 2 }, { id: 21, name: "Hunters", shops: 9 },
+  { id: 9, name: "Boere Jongens", shops: 4 }, { id: 20, name: "Easy Times", shops: 2 }, { id: 21, name: "Hunters", shops: 11, minimum: true },
   { id: 30, name: "Siberië", shops: 5 }, { id: 35, name: "Dampkring The Original", shops: 2 }, { id: 57, name: "Kadinsky", shops: 3 },
   { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
   { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
   { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 }, { id: 150, name: "GOA", shops: 2 },
 ];
 
+/** Alleen-lezen telling ledenregistratie (member_type member) op 25 november 2026, afgestemd met de raming. */
+export const LEDENREGISTRATIE_2027 = { geregistreerd: 125, uitgesloten: ["Coffeeshop Scolo", "Baba Souvernir", "Demo Coffeeshop", "Coffeeshop Tyson"] } as const;
+
 export const CONTROLEPUNTEN: string[] = [
   "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47). Zonder deze aanname +€ 2.000.",
-  "Hunters: 9 actuele locaties in plaats van het oude aantal 11. Indien 11: +€ 2.000.",
+  "Hunters: volgens gebruikerscorrectie (25 november 2026) meer dan 10 locaties, dus staffel € 10.000 (+€ 2.000; bij 50% +€ 1.000). Exact aantal nog onbekend; minimaal 11 meegeteld, niet bevestigd. De ledenregistratie noemt nog 9 locaties.",
   "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres. Bij 2 locaties: −€ 1.500.",
   "Ballonnetje, Noon en Prix d'Ami: nu afzonderlijk gerekend. Als één groep van 3: −€ 4.500.",
   "Vier voorlopige Hilversumse leden: wel meegenomen (€ 12.000) voor 2027 volgens notities; formulieren nog nodig.",
@@ -116,7 +120,8 @@ export type Begroting2027Snapshot = {
   totalFull: number;
   totalHalf: number;
   totalGroups: number;
-  groups: { id: number; name: string; shops: number }[];
+  groups: { id: number; name: string; shops: number; minimum?: boolean }[];
+  ledenRegistratie: { geregistreerd: number; uitgesloten: string[] };
   controlepunten: string[];
   werkgeverWaarschuwing: string;
 };
@@ -135,11 +140,12 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
     groups: MEERDERE_SHOPS_2027.map((g) => ({ ...g })),
+    ledenRegistratie: { geregistreerd: LEDENREGISTRATIE_2027.geregistreerd, uitgesloten: [...LEDENREGISTRATIE_2027.uitgesloten] },
     controlepunten: [...CONTROLEPUNTEN],
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
     inkomsten: [
-      { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Scenario volledige staffel (niet vastgesteld). Alternatief 50% van de verhoging: € 382.750." },
+      { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Scenario volledige staffel (niet vastgesteld). Alternatief 50% van de verhoging: € 383.750." },
       { name: "Donaties en overige baten", budgeted: 0, actual2026: null, basis: "Niet bevestigd; daarom niet geraamd." },
     ],
   };
