@@ -8,6 +8,15 @@ export type Group = { id: number; name: string; shops: number; minimum?: boolean
 
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
+export type Aansluiting = { start: { label: string; aantal: number }; stappen: readonly { label: string; delta: number }[]; tussenstappen: readonly { naStap: number; label: string }[]; overlap: { label: string; delta: number }; kerngegevensNoot: string };
+
+/** Rekenbrug: lopend totaal per stap, eindtotaal en unieke-locatie-indicatie na overlap. */
+export function aansluitingTotalen(a: Aansluiting) {
+  let lopend = a.start.aantal;
+  const stappen = a.stappen.map((s) => ({ ...s, totaal: (lopend += s.delta) }));
+  return { stappen, eind: lopend, uniek: lopend + a.overlap.delta };
+}
+
 /** Staffelindex volgens de voorgestelde staffel: 1 | 2–3 | 4–6 | 7–10 | meer dan 10 locaties. */
 export function staffelIndex(shops: number): number {
   return shops <= 1 ? 0 : shops <= 3 ? 1 : shops <= 6 ? 2 : shops <= 10 ? 3 : 4;
@@ -28,8 +37,9 @@ export function contributieRows(rows: readonly Row[], staffel: readonly Staffel[
   return { lines, count, single, multi: count - single, minimum: groups.some((g) => g.minimum), shops: lines.reduce((t, l) => t + l.shops, 0), total: lines.reduce((t, l) => t + l.total, 0) };
 }
 
-export default function ContributieInkomsten2027({ rows, staffel, groups = [], peildatum, registratie }: {
+export default function ContributieInkomsten2027({ rows, staffel, groups = [], peildatum, registratie, aansluiting }: {
   rows: readonly Row[]; staffel: readonly Staffel[]; groups?: readonly Group[]; peildatum?: string;
+  aansluiting?: Aansluiting;
   registratie?: { geregistreerd: number; uitgesloten: readonly { id: number; name: string; reden: string }[] };
 }) {
   const t = contributieRows(rows, staffel, groups);
@@ -40,8 +50,33 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [], p
         <h3 id="contrib-2027" className="text-sm font-semibold">Contributie-inkomsten 2027 <span className="font-normal text-muted-foreground">(concept, prognose)</span></h3>
       </div>
       <p className="px-3 pt-2 text-sm" data-testid="contrib-summary">
-        {t.minimum ? "Minimaal " : ""}<span className="font-semibold tabular-nums">{t.shops}</span> coffeeshops in deze raming, verdeeld over <span className="font-semibold tabular-nums">{t.count}</span> leden/groepen: <span className="tabular-nums">{t.single}</span> met 1 shop en <span className="tabular-nums">{t.multi}</span> groepen met meerdere shops.
+        <span className="font-semibold tabular-nums">{t.shops}</span> vestigingen in ramingsgroepen (som per groep, niet gegarandeerd unieke coffeeshops), verdeeld over <span className="font-semibold tabular-nums">{t.count}</span> leden/groepen: <span className="tabular-nums">{t.single}</span> met 1 shop en <span className="tabular-nums">{t.multi}</span> groepen met meerdere shops.
       </p>
+      {aansluiting && (() => {
+        const a = aansluitingTotalen(aansluiting);
+        return (
+          <div className="px-3 pt-2" data-testid="contrib-aansluiting">
+            <h4 className="mb-1 text-xs font-semibold">Aansluiting vestigingen</h4>
+            <div className="overflow-x-auto overscroll-x-contain">
+              <table className="w-full min-w-[28rem] text-xs">
+                <tbody>
+                  <tr className="border-b border-border/50"><td className="py-1 pr-2">{aansluiting.start.label}</td><td className="py-1 pr-2 text-right tabular-nums" /><td className="py-1 text-right tabular-nums">{aansluiting.start.aantal}</td></tr>
+                  {a.stappen.map((s, i) => (
+                    <tr key={s.label} className="border-b border-border/50">
+                      <td className="py-1 pr-2">{s.label}{aansluiting.tussenstappen.filter((t) => t.naStap === i).map((t) => <span key={t.label} className="text-muted-foreground"> → {s.totaal} {t.label}</span>)}</td>
+                      <td className="py-1 pr-2 text-right tabular-nums">{s.delta > 0 ? `+${s.delta}` : `−${-s.delta}`}</td>
+                      <td className="py-1 text-right tabular-nums">{s.totaal}</td>
+                    </tr>
+                  ))}
+                  <tr className="font-semibold"><td className="py-1 pr-2">Vestigingen in ramingsgroepen (som per groep)</td><td /><td className="py-1 text-right tabular-nums" data-testid="aansluiting-eind">{a.eind}</td></tr>
+                  <tr className="text-muted-foreground"><td className="py-1 pr-2">Indicatie unieke locaties na overlap: {aansluiting.overlap.label}</td><td className="py-1 pr-2 text-right tabular-nums">−{-aansluiting.overlap.delta}</td><td className="py-1 text-right tabular-nums" data-testid="aansluiting-uniek">{a.uniek}</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">De overlap verandert de groepscontributie nog niet; de 121 ramingsgroepen en € 404.500 blijven voorlopig staan. {aansluiting.kerngegevensNoot}</p>
+          </div>
+        );
+      })()}
       {registratie && (
         <p className="px-3 pt-1 text-xs text-muted-foreground" data-testid="contrib-registratie">
           Aansluiting ramingsbron: {registratie.geregistreerd} registraties − {registratie.uitgesloten.length} niet afzonderlijk geraamd ({registratie.uitgesloten.map((u) => `${u.name}: ${u.reden}`).join("; ")}) = {registratie.geregistreerd - registratie.uitgesloten.length} ramingsleden/groepen. Niets verwijderd; dit is de ramingssnapshot, niet het actuele ledendashboard, en geen bevestigd aantal betalende leden.
@@ -53,7 +88,7 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [], p
             <tr className="border-b text-left text-muted-foreground">
               <th className="py-1.5 pr-2 font-medium">Aantal shops per lid/groep</th>
               <th className="py-1.5 pr-2 text-right font-medium">Aantal leden/groepen</th>
-              <th className="py-1.5 pr-2 text-right font-medium">Aantal coffeeshops</th>
+              <th className="py-1.5 pr-2 text-right font-medium">Vestigingen (som per groep)</th>
               <th className="py-1.5 pr-2 text-right font-medium">Jaarbijdrage per lid/groep</th>
               <th className="py-1.5 text-right font-medium">Geraamde inkomsten</th>
             </tr>
@@ -104,7 +139,7 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [], p
           </CollapsibleContent>
         </Collapsible>
       )}
-      <p className="px-3 pb-2 pt-1 text-xs text-muted-foreground">Een groep met meerdere shops telt hier eenmaal als lid/groep. {t.minimum ? "Minimaal " : ""}{t.shops} is het aantal coffeeshops in deze raming, geen actueel of volledig ledentotaal. Staffel niet vastgesteld; geraamd, niet ontvangen. Aannames en controlepunten staan onder Toelichting contributieraming.</p>
+      <p className="px-3 pb-2 pt-1 text-xs text-muted-foreground">Een groep met meerdere shops telt hier eenmaal als lid/groep. {t.shops} is de som van vestigingen per ramingsgroep, geen uniek of actueel totaal van coffeeshops. Staffel niet vastgesteld; geraamd, niet ontvangen. Aannames en controlepunten staan onder Toelichting contributieraming.</p>
     </section>
   );
 }

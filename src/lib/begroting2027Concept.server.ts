@@ -53,13 +53,27 @@ export const LEDENREGISTRATIE_2027 = {
   ],
 } as const;
 
+/** Rekenbrug van geregistreerde coffeeshopvermeldingen (/leden, 25 november 2026) naar vestigingen in ramingsgroepen. */
+export const VESTIGINGEN_AANSLUITING_2027 = {
+  start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 181 },
+  stappen: [
+    { label: "Vestigingen van 6 leads (Freak 1, Kruidenier 1, Purple Rain 1, Grass Company 4, Happy Corner 1, Toermalijn 2)", delta: -10 },
+    { label: "Niet afzonderlijk geraamd: Scolo, Baba, Demo, Tyson", delta: -4 },
+    { label: "Dubbele locatie binnen The Plug (Eerste/1e Oosterparkstraat 47)", delta: -1 },
+    { label: "Hunters-correctie naar 13 (bevestigd door Simone)", delta: 4 },
+  ],
+  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
+  overlap: { label: "The Plug East (#51) overlapt met The Plug (#66); facturatievraag uitgezet", delta: -1 },
+  kerngegevensNoot: "Kerngegevens toont 169: dat is 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie. Een andere telling; niet verwarren.",
+} as const;
+
 export const CONTROLEPUNTEN: string[] = [
   "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47). Zonder deze aanname +€ 2.000.",
   "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000). De ledenregistratie noemt nog 9 locaties.",
-  "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres. Bij 2 locaties: −€ 1.500.",
+  "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres (bestaand, voorlopig; geen broncorrectie). Bij 2 locaties: −€ 1.500.",
   "Ballonnetje, Noon en Prix d'Ami: nu afzonderlijk gerekend. Als één groep van 3: −€ 4.500.",
   "Vier voorlopige Hilversumse leden: wel meegenomen (€ 12.000) voor 2027 volgens notities; formulieren nog nodig.",
   "Vrijstelling Alien en bijzondere 2026-afspraak Bull: niet automatisch verlengd.",
@@ -129,6 +143,7 @@ export type Begroting2027Snapshot = {
   totalGroups: number;
   groups: { id: number; name: string; shops: number; minimum?: boolean }[];
   ledenRegistratie: { geregistreerd: number; uitgesloten: { id: number; name: string; reden: string }[] };
+  aansluiting: { start: { label: string; aantal: number }; stappen: { label: string; delta: number }[]; tussenstappen: { naStap: number; label: string }[]; overlap: { label: string; delta: number }; kerngegevensNoot: string };
   controlepunten: string[];
   werkgeverWaarschuwing: string;
 };
@@ -147,6 +162,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalGroups: BEGROTING_2027.totalGroups,
     groups: MEERDERE_SHOPS_2027.map((g) => ({ ...g })),
     ledenRegistratie: { geregistreerd: LEDENREGISTRATIE_2027.geregistreerd, uitgesloten: LEDENREGISTRATIE_2027.uitgesloten.map((u) => ({ ...u })) },
+    aansluiting: JSON.parse(JSON.stringify(VESTIGINGEN_AANSLUITING_2027)),
     controlepunten: [...CONTROLEPUNTEN],
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),

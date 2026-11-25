@@ -46,7 +46,7 @@ describe("Coffeeshops en groepen 2027", () => {
   });
   it("toont 170 coffeeshops, registratie en Hunters 13", () => {
     render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} registratie={{ geregistreerd: 125, uitgesloten: [{ id: 32, name: "Scolo", reden: "alleen bij GOA meegerekend" }, { id: 125, name: "Baba", reden: "eerder uitgesloten" }, { id: 140, name: "Demo", reden: "testrecord" }, { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" }] }} />);
-    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^170 coffeeshops in deze raming.*121.*103 met 1 shop.*18 groepen/);
+    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^170 vestigingen in ramingsgroepen \(som per groep, niet gegarandeerd unieke coffeeshops\).*121.*103 met 1 shop.*18 groepen/);
     expect(screen.getByTestId("contrib-shops").textContent).toBe("170");
     fireEvent.click(screen.getByText("Welke leden hebben meerdere shops?"));
     expect(screen.getByRole("link", { name: "Hunters" }).getAttribute("href")).toBe("/leden/21");
@@ -54,5 +54,31 @@ describe("Coffeeshops en groepen 2027", () => {
     expect(screen.queryByText(/minimaal|exact onbekend/i)).toBeNull();
     expect(screen.getByText("13 shops")).toBeTruthy();
     expect(screen.getByTestId("contrib-registratie").textContent).toMatch(/125 registraties − 4 niet afzonderlijk geraamd.*Demo: testrecord.*= 121 ramingsleden\/groepen/);
+  });
+});
+
+const aansluiting = {
+  start: { label: "Geregistreerde coffeeshopvermeldingen", aantal: 181 },
+  stappen: [{ label: "leads", delta: -10 }, { label: "uitgesloten", delta: -4 }, { label: "Plug dubbel", delta: -1 }, { label: "Hunters", delta: 4 }],
+  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
+  overlap: { label: "Plug East", delta: -1 },
+  kerngegevensNoot: "Kerngegevens 169",
+};
+describe("Aansluiting vestigingen 2027", () => {
+  it("181 − 10 − 4 − 1 + 4 = 170 en 169 unieke indicatie", async () => {
+    const { aansluitingTotalen, contributieRows } = await import("../ContributieInkomsten2027");
+    const a = aansluitingTotalen(aansluiting);
+    expect(a.stappen.map((s) => s.totaal)).toEqual([171, 167, 166, 170]);
+    expect(a.eind).toBe(170);
+    expect(a.uniek).toBe(169);
+    expect(a.eind).toBe(contributieRows(rows, staffel, groups).shops);
+  });
+  it("toont de rekenbrug zonder groepscontributie te wijzigen", () => {
+    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} aansluiting={aansluiting} />);
+    expect(screen.getByTestId("aansluiting-eind").textContent).toBe("170");
+    expect(screen.getByTestId("aansluiting-uniek").textContent).toBe("169");
+    expect(screen.getByTestId("contrib-aansluiting").textContent).toMatch(/171 bij 125 leden/);
+    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(404500);
+    expect(screen.queryByText(/coffeeshops in deze raming/)).toBeNull();
   });
 });
