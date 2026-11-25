@@ -8,13 +8,13 @@ export type Group = { id: number; name: string; shops: number; minimum?: boolean
 
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-export type Aansluiting = { start: { label: string; aantal: number }; stappen: readonly { label: string; delta: number }[]; tussenstappen: readonly { naStap: number; label: string }[]; overlap: { label: string; delta: number }; kerngegevensNoot: string };
+export type Aansluiting = { start: { label: string; aantal: number }; stappen: readonly { label: string; delta: number }[]; tussenstappen: readonly { naStap: number; label: string }[]; kerngegevensNoot: string };
 
-/** Rekenbrug: lopend totaal per stap, eindtotaal en unieke-locatie-indicatie na overlap. */
+/** Rekenbrug: lopend totaal per stap en eindtotaal. */
 export function aansluitingTotalen(a: Aansluiting) {
   let lopend = a.start.aantal;
   const stappen = a.stappen.map((s) => ({ ...s, totaal: (lopend += s.delta) }));
-  return { stappen, eind: lopend, uniek: lopend + a.overlap.delta };
+  return { stappen, eind: lopend };
 }
 
 /** Staffelindex volgens de voorgestelde staffel: 1 | 2–3 | 4–6 | 7–10 | meer dan 10 locaties. */
@@ -69,11 +69,10 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [], p
                     </tr>
                   ))}
                   <tr className="font-semibold"><td className="py-1 pr-2">Vestigingen in ramingsgroepen (som per groep)</td><td /><td className="py-1 text-right tabular-nums" data-testid="aansluiting-eind">{a.eind}</td></tr>
-                  <tr className="text-muted-foreground"><td className="py-1 pr-2">Indicatie unieke locaties na overlap: {aansluiting.overlap.label}</td><td className="py-1 pr-2 text-right tabular-nums">−{-aansluiting.overlap.delta}</td><td className="py-1 text-right tabular-nums" data-testid="aansluiting-uniek">{a.uniek}</td></tr>
                 </tbody>
               </table>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">De overlap verandert de groepscontributie nog niet; de 121 ramingsgroepen en € 404.500 blijven voorlopig staan. {aansluiting.kerngegevensNoot}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{aansluiting.kerngegevensNoot}</p>
           </div>
         );
       })()}

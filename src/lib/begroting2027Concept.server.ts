@@ -11,16 +11,16 @@ export const BEGROTING_2027 = {
     { label: "Meer dan 10 locaties", amount: 10000 },
   ],
   rows: [
-    { label: "1 locatie", count: 103, amount: 3000 },
+    { label: "1 locatie", count: 102, amount: 3000 },
     { label: "2–3 locaties", count: 11, amount: 4500 },
     { label: "4–6 locaties", count: 6, amount: 6000 },
     { label: "7–10 locaties", count: 0, amount: 8000 },
     { label: "Meer dan 10 locaties", count: 1, amount: 10000 },
   ],
   /** Snapshotwaarden zoals aangeleverd; tests controleren dat ze kloppen met de tabel. */
-  totalFull: 404500,
+  totalFull: 401500,
   totalHalf: 383750,
-  totalGroups: 121,
+  totalGroups: 120,
 } as const;
 
 export const BASE_CONTRIBUTION = 3000;
@@ -50,6 +50,7 @@ export const LEDENREGISTRATIE_2027 = {
     { id: 125, name: "Baba", reden: "eerder uitgesloten" },
     { id: 140, name: "Demo", reden: "testrecord" },
     { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" },
+    { id: 51, name: "The Plug East", reden: "valt onder groepscontributie The Plug (#66)" },
   ],
 } as const;
 
@@ -58,20 +59,19 @@ export const VESTIGINGEN_AANSLUITING_2027 = {
   start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 181 },
   stappen: [
     { label: "Vestigingen van 6 leads (Freak 1, Kruidenier 1, Purple Rain 1, Grass Company 4, Happy Corner 1, Toermalijn 2)", delta: -10 },
-    { label: "Niet afzonderlijk geraamd: Scolo, Baba, Demo, Tyson", delta: -4 },
+    { label: "Niet afzonderlijk geraamd: Scolo, Baba, Demo, Tyson, The Plug East (#51, valt onder The Plug)", delta: -5 },
     { label: "Dubbele locatie binnen The Plug (Eerste/1e Oosterparkstraat 47)", delta: -1 },
     { label: "Hunters-correctie naar 13 (bevestigd door Simone)", delta: 4 },
   ],
   tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
-  overlap: { label: "The Plug East (#51) overlapt met The Plug (#66); facturatievraag uitgezet", delta: -1 },
-  kerngegevensNoot: "Kerngegevens toont 169: dat is 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie. Een andere telling; niet verwarren.",
+  kerngegevensNoot: "125 leden en 181 geregistreerde vermeldingen zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
 } as const;
 
 export const CONTROLEPUNTEN: string[] = [
   "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
-  "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47). Zonder deze aanname +€ 2.000.",
+  "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47), inclusief The Plug East (#51), dat volgens bevestiging van de gebruiker onder de groepscontributie van The Plug valt. Zonder de ontdubbeling +€ 2.000.",
   "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000). De ledenregistratie noemt nog 9 locaties.",
   "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres (bestaand, voorlopig; geen broncorrectie). Bij 2 locaties: −€ 1.500.",
   "Ballonnetje, Noon en Prix d'Ami: nu afzonderlijk gerekend. Als één groep van 3: −€ 4.500.",
@@ -143,7 +143,7 @@ export type Begroting2027Snapshot = {
   totalGroups: number;
   groups: { id: number; name: string; shops: number; minimum?: boolean }[];
   ledenRegistratie: { geregistreerd: number; uitgesloten: { id: number; name: string; reden: string }[] };
-  aansluiting: { start: { label: string; aantal: number }; stappen: { label: string; delta: number }[]; tussenstappen: { naStap: number; label: string }[]; overlap: { label: string; delta: number }; kerngegevensNoot: string };
+  aansluiting: { start: { label: string; aantal: number }; stappen: { label: string; delta: number }[]; tussenstappen: { naStap: number; label: string }[]; kerngegevensNoot: string };
   controlepunten: string[];
   werkgeverWaarschuwing: string;
 };
