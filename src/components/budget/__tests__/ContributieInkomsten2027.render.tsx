@@ -52,13 +52,13 @@ describe("Coffeeshops en groepen 2027", () => {
     expect(contributieRows(rows, staffel, "half", groups).total).toBe(383750);
   });
   it("toont minimaal 168 coffeeshops, registratie en Hunters >10", () => {
-    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} scenario="half" onScenario={() => {}} groups={groups} registratie={{ geregistreerd: 125, uitgesloten: ["Coffeeshop Scolo", "Baba Souvernir", "Demo Coffeeshop", "Coffeeshop Tyson"] }} />);
+    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} scenario="half" onScenario={() => {}} groups={groups} registratie={{ geregistreerd: 125, uitgesloten: [{ id: 32, name: "Scolo", reden: "alleen bij GOA meegerekend" }, { id: 125, name: "Baba", reden: "eerder uitgesloten" }, { id: 140, name: "Demo", reden: "testrecord" }, { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" }] }} />);
     expect(screen.getByTestId("contrib-summary").textContent).toMatch(/Minimaal 168 coffeeshops in deze raming.*121.*103 met 1 shop.*18 groepen/);
     expect(screen.getByTestId("contrib-shops").textContent).toBe("min. 168");
     fireEvent.click(screen.getByText("Welke leden hebben meerdere shops?"));
     expect(screen.getByRole("link", { name: "Hunters" }).getAttribute("href")).toBe("/leden/21");
     expect(screen.getByText(/Meer dan 10 locaties: 1 groep, minimaal 11 shops/).textContent).toMatch(/6\.500/);
     expect(screen.getByText(/meer dan 10 \(min\. 11, exact onbekend\)/)).toBeTruthy();
-    expect(screen.getByTestId("contrib-registratie").textContent).toMatch(/125 leden, waarvan 4 niet in de raming.*= 121/);
+    expect(screen.getByTestId("contrib-registratie").textContent).toMatch(/125 registraties − 4 niet afzonderlijk geraamd.*Demo: testrecord.*= 121 ramingsleden\/groepen/);
   });
 });

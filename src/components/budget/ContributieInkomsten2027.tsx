@@ -37,7 +37,7 @@ export function contributieRows(rows: readonly Row[], staffel: readonly Staffel[
 
 export default function ContributieInkomsten2027({ rows, staffel, scenario, onScenario, groups = [], peildatum, registratie }: {
   rows: readonly Row[]; staffel: readonly Staffel[]; scenario: Scenario; onScenario: (s: Scenario) => void; groups?: readonly Group[]; peildatum?: string;
-  registratie?: { geregistreerd: number; uitgesloten: readonly string[] };
+  registratie?: { geregistreerd: number; uitgesloten: readonly { id: number; name: string; reden: string }[] };
 }) {
   const t = contributieRows(rows, staffel, scenario, groups);
   const [open, setOpen] = useState(false);
@@ -57,7 +57,7 @@ export default function ContributieInkomsten2027({ rows, staffel, scenario, onSc
       </p>
       {registratie && (
         <p className="px-3 pt-1 text-xs text-muted-foreground" data-testid="contrib-registratie">
-          Ledenregistratie: {registratie.geregistreerd} leden, waarvan {registratie.uitgesloten.length} niet in de raming ({registratie.uitgesloten.join(", ")}) = {registratie.geregistreerd - registratie.uitgesloten.length} leden/groepen in de raming. Dit zijn geen bevestigd betalende leden.
+          Aansluiting ramingsbron: {registratie.geregistreerd} registraties − {registratie.uitgesloten.length} niet afzonderlijk geraamd ({registratie.uitgesloten.map((u) => `${u.name}: ${u.reden}`).join("; ")}) = {registratie.geregistreerd - registratie.uitgesloten.length} ramingsleden/groepen. Niets verwijderd; dit is de ramingssnapshot, niet het actuele ledendashboard, en geen bevestigd aantal betalende leden.
         </p>
       )}
       <div className="overflow-x-auto overscroll-x-contain px-3 py-2">

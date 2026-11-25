@@ -42,8 +42,16 @@ export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; min
   { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 }, { id: 150, name: "GOA", shops: 2 },
 ];
 
-/** Alleen-lezen telling ledenregistratie (member_type member) op 25 november 2026, afgestemd met de raming. */
-export const LEDENREGISTRATIE_2027 = { geregistreerd: 125, uitgesloten: ["Coffeeshop Scolo", "Baba Souvernir", "Demo Coffeeshop", "Coffeeshop Tyson"] } as const;
+/** Aansluiting binnen de ramingsbron (contributieraming-2027.json, 25 november 2026): 125 registraties, 4 met € 0 geraamd. Niet gelijkgesteld aan het actuele ledendashboard. */
+export const LEDENREGISTRATIE_2027 = {
+  geregistreerd: 125,
+  uitgesloten: [
+    { id: 32, name: "Scolo", reden: "alleen bij GOA meegerekend" },
+    { id: 125, name: "Baba", reden: "eerder uitgesloten" },
+    { id: 140, name: "Demo", reden: "testrecord" },
+    { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" },
+  ],
+} as const;
 
 export const CONTROLEPUNTEN: string[] = [
   "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
@@ -121,7 +129,7 @@ export type Begroting2027Snapshot = {
   totalHalf: number;
   totalGroups: number;
   groups: { id: number; name: string; shops: number; minimum?: boolean }[];
-  ledenRegistratie: { geregistreerd: number; uitgesloten: string[] };
+  ledenRegistratie: { geregistreerd: number; uitgesloten: { id: number; name: string; reden: string }[] };
   controlepunten: string[];
   werkgeverWaarschuwing: string;
 };
@@ -140,7 +148,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
     groups: MEERDERE_SHOPS_2027.map((g) => ({ ...g })),
-    ledenRegistratie: { geregistreerd: LEDENREGISTRATIE_2027.geregistreerd, uitgesloten: [...LEDENREGISTRATIE_2027.uitgesloten] },
+    ledenRegistratie: { geregistreerd: LEDENREGISTRATIE_2027.geregistreerd, uitgesloten: LEDENREGISTRATIE_2027.uitgesloten.map((u) => ({ ...u })) },
     controlepunten: [...CONTROLEPUNTEN],
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
