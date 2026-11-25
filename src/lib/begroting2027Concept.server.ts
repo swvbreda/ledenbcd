@@ -43,7 +43,51 @@ export const CONTROLEPUNTEN: string[] = [
   "Vrijstelling Alien en bijzondere 2026-afspraak Bull: niet automatisch verlengd.",
 ];
 
+export type ConceptLine = { name: string; budgeted: number; actual2026: number | null; basis: string };
+export type ConceptCategory = { name: string; lines: ConceptLine[] };
+
+/** Voorgestelde ramingen (geen bevestigde contracten), volgorde en namen gelijk aan de 2026-begroting. */
+export const UITGAVEN_2027: ConceptCategory[] = [
+  { name: "Algemene kosten", lines: [
+    { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Afgeronde werkbudgetraming voor een volledig jaar." },
+    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 + kantoorhuur € 6.000. Huur op basis van bevestigde kantoorfactuur € 484 per maand (12 × € 484 = € 5.808, afgerond € 6.000), uitgaande van een volledig jaar. Verdeling en mogelijke overlap nog controleren." },
+    { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Planningsbudget voor een volledig jaar." },
+    { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Planningsbudget; bestaande toerekening behouden, geen andere boekingen verschoven." },
+    { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
+    { name: "Contributies (kosten)", budgeted: 500, actual2026: 418.11, basis: "Afgerond op de huidige kosten." },
+    { name: "Representatiekosten", budgeted: 3000, actual2026: 2341.40, basis: "Afgerond op de huidige kosten." },
+    { name: "Reiskosten", budgeted: 3500, actual2026: 2719.26, basis: "Afgerond op de huidige kosten." },
+  ] },
+  { name: "Dagelijks bestuur", lines: [
+    { name: "Voorzitter - Het Strategiebureau", budgeted: 98000, actual2026: null, basis: "Voorlopige plaatsvervanger overgenomen uit 2026 in verband met loondienst in 2027. Geen gevalideerde totale loonkosten: definitieve werkgeverslasten, pensioen en vakantiegeldreservering ontbreken nog. Eerdere facturen en salaris niet bij elkaar optellen." },
+    { name: "Secretariaatskosten", budgeted: 20000, actual2026: null, basis: "Bestaand gepland budget behouden; geen bevestigde afspraak. Overlap met taken uit het dienstverband controleren." },
+    { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
+    { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
+  ] },
+  { name: "Advieskosten", lines: [
+    { name: "Juridische kosten / bestuurlijk advies", budgeted: 150000, actual2026: null, basis: "Eerder jaarlijks beleidsbudget behouden, geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
+    { name: "Juridische kosten / bestuurlijk advies (2025)", budgeted: 0, actual2026: null, basis: "Regel behouden voor herkenbare opbouw. Het meegenomen bedrag van € 42.196 is in 2026 opgebruikt en wordt niet opnieuw meegenomen." },
+    { name: "Onderzoek", budgeted: 50000, actual2026: null, basis: "Eerder beleidsbudget; geen bevestigde verplichtingen." },
+    { name: "Communicatie / marketing", budgeted: 10000, actual2026: 8849.26, basis: "Planningsbudget." },
+    { name: "Drukwerk", budgeted: 1500, actual2026: 952.69, basis: "Planningsbudget." },
+    { name: "Verzendkosten", budgeted: 2000, actual2026: null, basis: "Eerder beleidsbudget behouden." },
+  ] },
+  { name: "Donaties", lines: [
+    { name: "Donatie Stg. Maatschappij en cannabis", budgeted: 3000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
+    { name: "Donatie Stg VOC", budgeted: 2000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
+    { name: "Donatie overige", budgeted: 1000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
+  ] },
+];
+
+export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number, incomeHalf: number) {
+  const perCategory = cats.map((c) => ({ name: c.name, total: c.lines.reduce((s, l) => s + l.budgeted, 0) }));
+  const expenses = perCategory.reduce((s, c) => s + c.total, 0);
+  return { perCategory, expenses, resultFull: incomeFull - expenses, resultHalf: incomeHalf - expenses };
+}
+
 export type Begroting2027Snapshot = {
+  uitgaven: ConceptCategory[];
+  inkomsten: ConceptLine[];
   peildatum: string;
   staffel: { label: string; amount: number }[];
   rows: { label: string; count: number; amount: number }[];
@@ -67,5 +111,10 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
     controlepunten: [...CONTROLEPUNTEN],
+    uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
+    inkomsten: [
+      { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Scenario volledige staffel (niet vastgesteld). Alternatief 50% van de verhoging: € 382.750." },
+      { name: "Donaties en overige baten", budgeted: 0, actual2026: null, basis: "Niet bevestigd; daarom niet geraamd." },
+    ],
   };
 }

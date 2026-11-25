@@ -1,92 +1,217 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useMemo, useState } from "react";
+import { ChevronDown, StickyNote } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getBegroting2027 } from "@/lib/begroting2027.functions";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import BankBalancesCard from "@/components/budget/BankBalancesCard";
+import BudgetVsActualTable from "@/components/budget/BudgetVsActualTable";
+import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
+import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
+import type { BudgetCategory } from "@/hooks/useBudget";
+import { getBegroting2027 } from "@/lib/begroting2027.functions";
 
+type Line = { name: string; budgeted: number; actual2026: number | null; basis: string };
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const noop = () => {};
+
+/** Zet conceptregels om naar de vorm van de bestaande begrotingstabellen (zonder boekingen). */
+export function toCategories(cats: { name: string; lines: Line[] }[]): BudgetCategory[] {
+  return cats.map((c, i) => ({
+    id: `c2027-${i}`, year: 2027, name: c.name, sort_order: i,
+    line_items: c.lines.map((l, j) => ({ id: `c2027-${i}-${j}`, category_id: `c2027-${i}`, name: l.name, budgeted_amount: l.budgeted, sort_order: j, expenses: [] })),
+  }));
+}
+
+function Section({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="flex items-center gap-2 bg-muted/50 px-3 py-2"><h3 className="text-sm font-semibold">{title}</h3></div>
+      {children}
+    </div>
+  );
+}
 
 export default function Begroting2027Tab() {
-  const [open, setOpen] = useState(false);
   const fetchConcept = useServerFn(getBegroting2027);
   const { data: B, isLoading, isError } = useQuery({ queryKey: ["begroting-2027-concept"], queryFn: () => fetchConcept(), retry: false, staleTime: Infinity });
+  const [scenario, setScenario] = useState<"full" | "half">("full");
+  const [detail, setDetail] = useState<Line | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [contribOpen, setContribOpen] = useState(false);
+
+  const view = useMemo(() => {
+    if (!B) return null;
+    const income = scenario === "full" ? B.totalFull : B.totalHalf;
+    const inkomsten = B.inkomsten.map((l) => (l.name === "Contributies" ? { ...l, budgeted: income } : l));
+    const all = [{ name: "Inkomsten", lines: inkomsten }, ...B.uitgaven];
+    const lookup = new Map<string, Line>();
+    all.forEach((c, i) => c.lines.forEach((l, j) => lookup.set(`c2027-${i}-${j}`, l)));
+    const expenses = B.uitgaven.reduce((s, c) => s + c.lines.reduce((t, l) => t + l.budgeted, 0), 0);
+    const other = inkomsten.filter((l) => l.name !== "Contributies").reduce((s, l) => s + l.budgeted, 0);
+    return { categories: toCategories(all), lookup, expenses, income, other, result: income + other - expenses, resultFull: B.totalFull + other - expenses, resultHalf: B.totalHalf + other - expenses };
+  }, [B, scenario]);
+
   if (isLoading) return <LoadingSpinner message="Concept laden..." />;
-  if (isError || !B) return <p className="text-sm text-muted-foreground">Dit concept kan niet worden geladen. Alleen beheerders kunnen het bekijken.</p>;
-  const CONTROLEPUNTEN = B.controlepunten;
+  if (isError || !B || !view) return <p className="text-sm text-muted-foreground">Dit concept kan niet worden geladen. Alleen beheerders kunnen het bekijken.</p>;
+
   return (
-    <div className="min-w-0 space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="min-w-0">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="font-display text-xl uppercase">Begroting 2027</h2>
         <Badge variant="outline" className="border-primary text-primary">Concept</Badge>
-        <span className="text-sm text-muted-foreground">Peildatum {B.peildatum}</span>
+        <span className="text-sm text-muted-foreground">Voorstel per {B.peildatum} · niet vastgesteld door de ALV</span>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Planningsconcept, los van de begroting en administratie van andere jaren. Niet vastgesteld door de ALV,
-        geen bankgeld en geen vastgesteld inkomen. Er worden geen facturen aangemaakt.
-      </p>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Card><CardHeader className="pb-1"><CardTitle className="text-sm font-medium">Scenario volledige staffel</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold tabular-nums">{eur(B.totalFull)}</div><p className="text-xs text-muted-foreground">Raming contributies, 100% van de verhoging</p></CardContent></Card>
-        <Card><CardHeader className="pb-1"><CardTitle className="text-sm font-medium">Scenario 50% van de verhoging</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold tabular-nums">{eur(B.totalHalf)}</div><p className="text-xs text-muted-foreground">Raming contributies bij gefaseerde invoering</p></CardContent></Card>
+      <p className="mb-1 text-xs text-muted-foreground">Huidige banksaldi (actueel, geen beginsaldo voor 2027):</p>
+      <BankBalancesCard />
+
+      <div className="mt-4">
+        <BudgetVsActualTable categories={view.categories} year={2027} concept />
+        <p className="mt-2 text-xs text-muted-foreground">Ramingen, geen boekingen. Begrotingsruimte is geen banksaldo. Klik op een post voor de onderbouwing.</p>
       </div>
-      <p className="text-xs text-muted-foreground">Welke fase in 2027 geldt, moet nog worden bevestigd. Beide scenario's zijn ramingen.</p>
 
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Raming bij volledige staffel</CardTitle></CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b text-left text-muted-foreground"><th className="py-1.5 pr-2 font-medium">Staffel</th><th className="py-1.5 pr-2 text-right font-medium">Leden/groepen</th><th className="py-1.5 pr-2 text-right font-medium">Bijdrage</th><th className="py-1.5 text-right font-medium">Subtotaal</th></tr></thead>
-            <tbody>
-              {B.rows.map((r) => (
-                <tr key={r.label} className="border-b"><td className="py-1.5 pr-2">{r.label}</td><td className="py-1.5 pr-2 text-right tabular-nums">{r.count}</td><td className="py-1.5 pr-2 text-right tabular-nums">{eur(r.amount)}</td><td className="py-1.5 text-right tabular-nums">{eur(r.count * r.amount)}</td></tr>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_420px]">
+        <div className="space-y-3">
+          {view.categories.map((cat) => (
+            <BudgetCategoryTable
+              key={cat.id}
+              category={cat}
+              readOnly
+              noRealisation
+              onAddLineItem={noop}
+              onUpdateLineItem={noop}
+              onDeleteLineItem={noop}
+              onDeleteCategory={noop}
+              onOpenExpenses={(id) => setDetail(view.lookup.get(id) ?? null)}
+            />
+          ))}
+          <div className="overflow-x-auto rounded-lg border border-border bg-primary/5 overscroll-x-contain">
+            <table className="w-full min-w-[38rem] text-sm">
+              <colgroup><col className="w-[30%]" /><col className="w-[20%]" /><col className="w-[20%]" /><col className="w-[20%]" /><col className="w-[10%]" /></colgroup>
+              <tbody>
+                <tr className="font-bold">
+                  <td className="px-3 py-2">Totaal begrote uitgaven</td>
+                  <td className="px-3 py-2"><CurrencyCell value={view.expenses} /></td>
+                  <td className="px-3 py-2 text-right text-muted-foreground" title="Nog geen realisatie opgenomen">—</td>
+                  <td className="px-3 py-2"><CurrencyCell value={view.expenses} /></td>
+                  <td />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <Section title="Middelen balans">
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote uitgaven</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.expenses} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote contributie</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Banksaldo 31 december 2026</td><td className="px-3 py-1.5 text-right text-muted-foreground">Nog vast te stellen</td></tr>
+                <tr><td className="px-3 py-1.5">Reserve uit 2026</td><td className="px-3 py-1.5 text-right text-muted-foreground">Nog vast te stellen</td></tr>
+              </tbody>
+            </table>
+          </Section>
+
+          <Section title="Resultaat (plan)">
+            <div role="radiogroup" aria-label="Contributiescenario" className="flex flex-wrap gap-1 border-b border-border/50 px-3 py-2">
+              {([["full", "Volledige staffel"], ["half", "50% van de verhoging"]] as const).map(([k, label]) => (
+                <button key={k} type="button" role="radio" aria-checked={scenario === k} onClick={() => setScenario(k)}
+                  className={`rounded-sm px-2 py-1 text-xs font-medium ${scenario === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{label}</button>
               ))}
-              <tr className="font-semibold"><td className="py-1.5 pr-2">Totaal</td><td className="py-1.5 pr-2 text-right tabular-nums">{B.totalGroups}</td><td /><td className="py-1.5 text-right tabular-nums">{eur(B.totalFull)}</td></tr>
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+            </div>
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Contributie (scenario)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Overige inkomsten</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.other} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote uitgaven</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.expenses} /></td></tr>
+                <tr className="bg-primary/5 font-semibold"><td className="px-3 py-2">Planresultaat 2027</td><td className={`px-3 py-2 text-right ${view.result < 0 ? "text-destructive" : ""}`}><CurrencyText value={view.result} /></td></tr>
+              </tbody>
+            </table>
+            <p className="px-3 py-2 text-xs text-muted-foreground">
+              {scenario === "full" ? `Bij 50% van de verhoging: ${eur(view.resultHalf)}.` : `Bij volledige staffel: ${eur(view.resultFull)}.`} Scenario niet vastgesteld; geen werkelijk resultaat.
+            </p>
+          </Section>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Voorgestelde staffel</CardTitle></CardHeader>
-          <CardContent>
-            <ul className="space-y-1 text-sm">{B.staffel.map((s) => <li key={s.label} className="flex justify-between gap-2"><span>{s.label}</span><span className="tabular-nums">{eur(s.amount)}</span></li>)}</ul>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Bron</CardTitle></CardHeader>
-          <CardContent className="space-y-1 text-sm text-muted-foreground">
-            <p>ALV-presentatie 3 juni 2026 (versie 20260603), dia 16: voorstel, gefaseerd 50% / 100%.</p>
-            <p>Aangevuld met de actuele ledenregistratie en profielcorrecties.</p>
-            <p>De bron noemt optelling van locaties binnen dezelfde rechtspersoon; nog niet alle groepen zijn geverifieerd.</p>
-          </CardContent>
-        </Card>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <div className="flex items-center gap-2 bg-muted/50 px-3 py-2"><StickyNote size={14} /><h3 className="text-sm font-semibold">Notities</h3></div>
+            <div className="space-y-2 p-3 text-sm text-muted-foreground">
+              <p>Begrotingsvoorstel per {B.peildatum}, niet vastgesteld door de ALV. Ramingen zijn afgerond op de nu geboekte kosten.</p>
+              <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
+                <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-foreground">
+                  Meer toelichting <ChevronDown className={`h-3 w-3 text-brand-red transition-transform ${notesOpen ? "rotate-180" : ""}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                    <li>De geboekte kosten van 2026 zijn mogelijk nog niet volledig.</li>
+                    <li>Geen herberekening van btw; de BCD kan geen btw aftrekken.</li>
+                    <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de onzekere loonkosten kunnen het totaal veranderen.</li>
+                    <li>Geen automatische overdracht van reserves; PCN-terugbetalingen zijn niet meegerekend.</li>
+                    <li>De begroting en boekingen van 2026 zijn niet aangepast.</li>
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <Card>
-          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 text-left font-semibold">
-            Controlepunten ({CONTROLEPUNTEN.length})
-            <ChevronDown className={`h-4 w-4 text-brand-red transition-transform ${open ? "rotate-180" : ""}`} />
+      <Collapsible open={contribOpen} onOpenChange={setContribOpen} className="mt-4">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <CollapsibleTrigger className="flex w-full items-center justify-between bg-muted/50 px-3 py-2 text-left text-sm font-semibold">
+            Toelichting contributieraming
+            <ChevronDown className={`h-4 w-4 text-brand-red transition-transform ${contribOpen ? "rotate-180" : ""}`} />
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <CardContent className="pt-0">
-              <ul className="list-disc space-y-1 pl-5 text-sm">{CONTROLEPUNTEN.map((c) => <li key={c}>{c}</li>)}</ul>
-            </CardContent>
+            <div className="space-y-4 p-3 text-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b text-left text-muted-foreground"><th className="py-1.5 pr-2 font-medium">Staffel</th><th className="py-1.5 pr-2 text-right font-medium">Leden/groepen</th><th className="py-1.5 pr-2 text-right font-medium">Bijdrage</th><th className="py-1.5 text-right font-medium">Subtotaal</th></tr></thead>
+                  <tbody>
+                    {B.rows.map((r) => (
+                      <tr key={r.label} className="border-b"><td className="py-1.5 pr-2">{r.label}</td><td className="py-1.5 pr-2 text-right tabular-nums">{r.count}</td><td className="py-1.5 pr-2 text-right tabular-nums">{eur(r.amount)}</td><td className="py-1.5 text-right tabular-nums">{eur(r.count * r.amount)}</td></tr>
+                    ))}
+                    <tr className="font-semibold"><td className="py-1.5 pr-2">Totaal volledige staffel</td><td className="py-1.5 pr-2 text-right tabular-nums">{B.totalGroups}</td><td /><td className="py-1.5 text-right tabular-nums">{eur(B.totalFull)}</td></tr>
+                    <tr><td className="py-1.5 pr-2" colSpan={3}>Scenario 50% van de verhoging</td><td className="py-1.5 text-right tabular-nums">{eur(B.totalHalf)}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <h4 className="mb-1 font-semibold">Voorgestelde staffel</h4>
+                <ul className="space-y-1">{B.staffel.map((s) => <li key={s.label} className="flex justify-between gap-2"><span>{s.label}</span><span className="tabular-nums">{eur(s.amount)}</span></li>)}</ul>
+              </div>
+              <div className="space-y-1 text-muted-foreground">
+                <p>Bron: ALV-presentatie 3 juni 2026 (versie 20260603), dia 16: voorstel, gefaseerd 50% / 100%. Aangevuld met de actuele ledenregistratie en profielcorrecties.</p>
+                <p>De bron noemt optelling van locaties binnen dezelfde rechtspersoon; nog niet alle groepen zijn geverifieerd.</p>
+              </div>
+              <div>
+                <h4 className="mb-1 font-semibold">Controlepunten ({B.controlepunten.length})</h4>
+                <ul className="list-disc space-y-1 pl-5">{B.controlepunten.map((c) => <li key={c}>{c}</li>)}</ul>
+              </div>
+            </div>
           </CollapsibleContent>
-        </Card>
+        </div>
       </Collapsible>
 
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Uitgaven</CardTitle></CardHeader>
-        <CardContent className="text-sm text-muted-foreground">Uitgavenraming 2027 nog uit te werken. Er is daarom nog geen resultaat of beschikbaar budget.</CardContent>
-      </Card>
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{detail?.name}</DialogTitle>
+            <DialogDescription>Raming 2027 (concept)</DialogDescription>
+          </DialogHeader>
+          {detail && (
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Begroot 2027</dt><dd><CurrencyText value={detail.budgeted} /></dd></div>
+              <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Geboekt 2026 (peildatum)</dt><dd>{detail.actual2026 == null ? "—" : <CurrencyText value={detail.actual2026} />}</dd></div>
+              <div className="flex justify-between gap-2"><dt className="text-muted-foreground">Realisatie 2027</dt><dd className="text-muted-foreground">Nog geen realisatie opgenomen</dd></div>
+              <div><dt className="text-muted-foreground">Onderbouwing</dt><dd className="mt-1">{detail.basis}</dd></div>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

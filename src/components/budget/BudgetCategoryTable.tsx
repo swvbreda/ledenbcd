@@ -24,6 +24,10 @@ interface Props {
     remainingValue?: number;
     remainingHint?: string;
   } | null;
+  /** Statisch concept: geen toevoeg-/verwijderknoppen. Standaard uit. */
+  readOnly?: boolean;
+  /** Nog geen realisatie: kolom toont "—" en restant heet begrotingsruimte. Standaard uit. */
+  noRealisation?: boolean;
 }
 
 export default function BudgetCategoryTable({
@@ -34,6 +38,8 @@ export default function BudgetCategoryTable({
   onDeleteCategory,
   onOpenExpenses,
   getCellClicks,
+  readOnly = false,
+  noRealisation = false,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -66,7 +72,8 @@ export default function BudgetCategoryTable({
   const totalRemaining = category.line_items.reduce((s, li) => s + remainingOf(li), 0);
 
   const spentLabel = isIncome ? "Ontvangen" : "Uitgaven";
-  const remainingLabel = isIncome ? "Nog te ontvangen" : "Beschikbaar";
+  const remainingLabel = noRealisation ? (isIncome ? "Nog te ontvangen" : "Begrotingsruimte") : (isIncome ? "Nog te ontvangen" : "Beschikbaar");
+  const dash = <span className="block text-right text-muted-foreground" title="Nog geen realisatie opgenomen">—</span>;
   const remainingClass = (v: number) =>
     isIncome
       ? (v <= 0 ? "text-green-600" : "")
@@ -115,7 +122,7 @@ export default function BudgetCategoryTable({
                 </td>
                 <td className="text-right px-3 py-2 text-sm">
                   <span className="text-muted-foreground text-xs">{spentLabel}: </span>
-                  <strong className="text-foreground"><CurrencyText value={totalSpent} className="justify-end" /></strong>
+                  <strong className="text-foreground">{noRealisation ? "—" : <CurrencyText value={totalSpent} className="justify-end" />}</strong>
                 </td>
                 <td className="text-right px-3 py-2 text-sm">
                   <span className="text-muted-foreground text-xs">{remainingLabel}: </span>
@@ -163,7 +170,7 @@ export default function BudgetCategoryTable({
                   </td>
                   <td className="px-3 py-1.5" onClick={cellBtn(clicks?.spent)}>
                     <div className="flex flex-col items-end">
-                      {spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
+                      {noRealisation ? dash : spentValue !== 0 ? <CurrencyCell value={spentValue} className={clickableClass(clicks?.spent)} /> : ""}
                     </div>
                   </td>
 
@@ -174,12 +181,12 @@ export default function BudgetCategoryTable({
                     </div>
                   </td>
                   <td className="px-1">
-                    <button
+                    {!readOnly && <button
                       onClick={(e) => { e.stopPropagation(); onDeleteLineItem(li.id); }}
                       className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 size={12} />
-                    </button>
+                    </button>}
                   </td>
                 </tr>
               );
@@ -187,7 +194,7 @@ export default function BudgetCategoryTable({
             <tr className="bg-muted/30 font-medium">
               <td className="px-3 py-1.5">Subtotaal</td>
               <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalBudgeted} /></td>
-              <td className="px-3 py-1.5 font-semibold"><CurrencyCell value={totalSpent} /></td>
+              <td className="px-3 py-1.5 font-semibold">{noRealisation ? dash : <CurrencyCell value={totalSpent} />}</td>
               <td className="px-3 py-1.5 font-semibold">
                 <CurrencyCell value={totalRemaining} className={totalRemainingClass} />
               </td>
@@ -198,7 +205,7 @@ export default function BudgetCategoryTable({
         )}
       </table>
 
-      {expanded && (
+      {expanded && !readOnly && (
         <>
           {adding ? (
             <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50">

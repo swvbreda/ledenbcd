@@ -6,9 +6,11 @@ interface Props {
   year: number;
   /** Canoniek uitgaventotaal uit de boekhouding; leidend voor de hoofdkaart. */
   canonicalSpent?: number;
+  /** Concept zonder realisatie: geen uitgegeven-bedragen, ruimte = begrotingsruimte. Standaard uit. */
+  concept?: boolean;
 }
 
-export default function BudgetVsActualTable({ categories, year, canonicalSpent }: Props) {
+export default function BudgetVsActualTable({ categories, year, canonicalSpent, concept = false }: Props) {
   if (categories.length === 0) return null;
 
 
@@ -47,7 +49,12 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
   return (
     <div className="border border-border rounded-lg bg-card p-3 space-y-3">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h3 className="text-sm font-semibold">Begroting vs Werkelijk — {year}</h3>
+        <h3 className="text-sm font-semibold">{concept ? `Begroting ${year} (concept)` : `Begroting vs Werkelijk — ${year}`}</h3>
+        {concept ? (
+          <div className="text-xs text-muted-foreground">
+            <span className="tabular-nums"><CurrencyText value={totalBudgeted} /></span> begroot · nog geen realisatie opgenomen
+          </div>
+        ) : (
         <div className="text-xs text-muted-foreground">
           <span className="tabular-nums"><CurrencyText value={totalSpent} /></span>
           {" van "}
@@ -57,6 +64,7 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
             <CurrencyText value={totalAvailable} />
           </span>
         </div>
+        )}
       </div>
 
       <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -72,9 +80,9 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
           <tr className="text-muted-foreground border-b border-border/40">
             <th className="text-left font-medium py-1">Categorie</th>
             <th className="text-right font-medium py-1">Begroot</th>
-            <th className="text-right font-medium py-1">Uitgegeven</th>
+            <th className="text-right font-medium py-1">{concept ? "Realisatie" : "Uitgegeven"}</th>
             <th className="text-right font-medium py-1 w-16">%</th>
-            <th className="text-right font-medium py-1">Beschikbaar</th>
+            <th className="text-right font-medium py-1">{concept ? "Begrotingsruimte" : "Beschikbaar"}</th>
           </tr>
         </thead>
         <tbody>
@@ -86,12 +94,12 @@ export default function BudgetVsActualTable({ categories, year, canonicalSpent }
                 <td className="py-2 pr-3">{c.name}</td>
                 <td className="py-1 text-right tabular-nums"><CurrencyCell value={c.budgeted} /></td>
                 <td className="py-1 text-right tabular-nums">
-                  <CurrencyCell value={c.spent} />
+                  {concept ? <span className="text-muted-foreground" title="Nog geen realisatie opgenomen">—</span> : <CurrencyCell value={c.spent} />}
                 </td>
 
 
                 <td className={`py-1 text-right tabular-nums ${catOver ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                  {c.budgeted > 0 ? `${catPct}%` : "—"}
+                  {c.budgeted > 0 && !concept ? `${catPct}%` : "—"}
                 </td>
                 <td className="py-1 text-right tabular-nums">
                   <CurrencyCell
