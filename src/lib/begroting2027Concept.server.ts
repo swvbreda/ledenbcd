@@ -35,7 +35,7 @@ export function scenarioTotals(rows: readonly { count: number; amount: number }[
 /** Groepen met meerdere shops uit de ramingssnapshot van 25 november 2026 (lid-ID, naam, aantal shops). Deels voorlopige indeling. */
 export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; minimum?: boolean }[] = [
   { id: 1, name: "The Bulldog", shops: 5 }, { id: 5, name: "Green House", shops: 5 }, { id: 8, name: "Coffeeshop Relax", shops: 2 },
-  { id: 9, name: "Boere Jongens", shops: 4 }, { id: 20, name: "Easy Times", shops: 2 }, { id: 21, name: "Hunters", shops: 11, minimum: true },
+  { id: 9, name: "Boere Jongens", shops: 4 }, { id: 20, name: "Easy Times", shops: 2 }, { id: 21, name: "Hunters", shops: 13 },
   { id: 30, name: "Siberië", shops: 5 }, { id: 35, name: "Dampkring The Original", shops: 2 }, { id: 57, name: "Kadinsky", shops: 3 },
   { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
   { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
@@ -58,7 +58,7 @@ export const CONTROLEPUNTEN: string[] = [
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47). Zonder deze aanname +€ 2.000.",
-  "Hunters: volgens gebruikerscorrectie (25 november 2026) meer dan 10 locaties, dus staffel € 10.000 (+€ 2.000; bij 50% +€ 1.000). Exact aantal nog onbekend; minimaal 11 meegeteld, niet bevestigd. De ledenregistratie noemt nog 9 locaties.",
+  "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000, bij 50% +€ 1.000). De ledenregistratie noemt nog 9 locaties.",
   "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres. Bij 2 locaties: −€ 1.500.",
   "Ballonnetje, Noon en Prix d'Ami: nu afzonderlijk gerekend. Als één groep van 3: −€ 4.500.",
   "Vier voorlopige Hilversumse leden: wel meegenomen (€ 12.000) voor 2027 volgens notities; formulieren nog nodig.",

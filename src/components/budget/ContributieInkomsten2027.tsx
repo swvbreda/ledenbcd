@@ -112,7 +112,7 @@ export default function ContributieInkomsten2027({ rows, staffel, scenario, onSc
                   </ul>
                 </div>
               ))}
-              <p className="text-xs text-muted-foreground">Bron: ramingssnapshot{peildatum ? ` van ${peildatum}` : ""} (concept). Groepsindelingen en aantallen shops zijn deels voorlopig en niet gecontroleerd op eigendom of unieke vestigingen; zie de controlepunten (o.a. Hunters meer dan 10, exact aantal onbekend, The Plug 6 i.p.v. 7, Coffeeshop 010 met adresloze locaties, GOA/Scolo, Boere Jongens 4 volgens snapshot).</p>
+              <p className="text-xs text-muted-foreground">Bron: ramingssnapshot{peildatum ? ` van ${peildatum}` : ""} (concept). Groepsindelingen en aantallen shops zijn deels voorlopig en niet gecontroleerd op eigendom of unieke vestigingen; zie de controlepunten (o.a. Hunters 13 volgens bevestiging 25 november 2026, The Plug 6 i.p.v. 7, Coffeeshop 010 met adresloze locaties, GOA/Scolo, Boere Jongens 4 volgens snapshot).</p>
             </div>
           </CollapsibleContent>
         </Collapsible>
