@@ -12,6 +12,7 @@ import BudgetCategoryTable from "@/components/budget/BudgetCategoryTable";
 import { CurrencyCell, CurrencyText } from "@/components/budget/CurrencyAmount";
 import type { BudgetCategory } from "@/hooks/useBudget";
 import { getBegroting2027 } from "@/lib/begroting2027.functions";
+import ContributieInkomsten2027 from "@/components/budget/ContributieInkomsten2027";
 
 type Line = { name: string; budgeted: number; actual2026: number | null; basis: string };
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -69,6 +70,10 @@ export default function Begroting2027Tab() {
       <BankBalancesCard />
 
       <div className="mt-4">
+        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} scenario={scenario} onScenario={setScenario} />
+      </div>
+
+      <div className="mt-4">
         <BudgetVsActualTable categories={view.categories} year={2027} concept />
         <p className="mt-2 text-xs text-muted-foreground">Ramingen, geen boekingen. Begrotingsruimte is geen banksaldo. Klik op een post voor de onderbouwing.</p>
       </div>
@@ -119,12 +124,7 @@ export default function Begroting2027Tab() {
           <p role="note" className="rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-xs text-foreground">{B.werkgeverWaarschuwing}</p>
 
           <Section title="Resultaat (plan)">
-            <div role="radiogroup" aria-label="Contributiescenario" className="flex flex-wrap gap-1 border-b border-border/50 px-3 py-2">
-              {([["full", "Volledige staffel"], ["half", "50% van de verhoging"]] as const).map(([k, label]) => (
-                <button key={k} type="button" role="radio" aria-checked={scenario === k} onClick={() => setScenario(k)}
-                  className={`rounded-sm px-2 py-1 text-xs font-medium ${scenario === k ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{label}</button>
-              ))}
-            </div>
+            <p className="border-b border-border/50 px-3 py-1.5 text-xs text-muted-foreground">Scenario: {scenario === "full" ? "volledige staffel" : "50% van de verhoging"} (kies bij Contributie-inkomsten 2027)</p>
             <table className="w-full text-sm">
               <tbody>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Contributie (scenario)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
@@ -169,18 +169,6 @@ export default function Begroting2027Tab() {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="space-y-4 p-3 text-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b text-left text-muted-foreground"><th className="py-1.5 pr-2 font-medium">Staffel</th><th className="py-1.5 pr-2 text-right font-medium">Leden/groepen</th><th className="py-1.5 pr-2 text-right font-medium">Bijdrage</th><th className="py-1.5 text-right font-medium">Subtotaal</th></tr></thead>
-                  <tbody>
-                    {B.rows.map((r) => (
-                      <tr key={r.label} className="border-b"><td className="py-1.5 pr-2">{r.label}</td><td className="py-1.5 pr-2 text-right tabular-nums">{r.count}</td><td className="py-1.5 pr-2 text-right tabular-nums">{eur(r.amount)}</td><td className="py-1.5 text-right tabular-nums">{eur(r.count * r.amount)}</td></tr>
-                    ))}
-                    <tr className="font-semibold"><td className="py-1.5 pr-2">Totaal volledige staffel</td><td className="py-1.5 pr-2 text-right tabular-nums">{B.totalGroups}</td><td /><td className="py-1.5 text-right tabular-nums">{eur(B.totalFull)}</td></tr>
-                    <tr><td className="py-1.5 pr-2" colSpan={3}>Scenario 50% van de verhoging</td><td className="py-1.5 text-right tabular-nums">{eur(B.totalHalf)}</td></tr>
-                  </tbody>
-                </table>
-              </div>
               <div>
                 <h4 className="mb-1 font-semibold">Voorgestelde staffel</h4>
                 <ul className="space-y-1">{B.staffel.map((s) => <li key={s.label} className="flex justify-between gap-2"><span>{s.label}</span><span className="tabular-nums">{eur(s.amount)}</span></li>)}</ul>
