@@ -1,6 +1,11 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 export type Scenario = "full" | "half";
 type Row = { label: string; count: number; amount: number };
 type Staffel = { label: string; amount: number };
+export type Group = { id: number; name: string; shops: number };
 
 const BASE = 3000;
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -10,22 +15,30 @@ export function scenarioAmount(full: number, scenario: Scenario): number {
   return scenario === "full" ? full : BASE + (full - BASE) / 2;
 }
 
-/** Leidt de tabel af uit de server-snapshot; staffels zonder leden/groepen tonen 0. */
-export function contributieRows(rows: readonly Row[], staffel: readonly Staffel[], scenario: Scenario) {
-  const lines = staffel.map((s) => {
-    const count = rows.filter((r) => r.label === s.label).reduce((t, r) => t + r.count, 0);
-    const amount = scenarioAmount(s.amount, scenario);
-    return { label: s.label, count, amount, total: count * amount };
-  });
-  const single = lines[0]?.count ?? 0;
-  const count = lines.reduce((t, l) => t + l.count, 0);
-  return { lines, count, single, multi: count - single, total: lines.reduce((t, l) => t + l.total, 0) };
+/** Staffelindex volgens de voorgestelde staffel: 1 | 2–3 | 4–6 | 7–10 | meer dan 10 locaties. */
+export function staffelIndex(shops: number): number {
+  return shops <= 1 ? 0 : shops <= 3 ? 1 : shops <= 6 ? 2 : shops <= 10 ? 3 : 4;
 }
 
-export default function ContributieInkomsten2027({ rows, staffel, scenario, onScenario }: {
-  rows: readonly Row[]; staffel: readonly Staffel[]; scenario: Scenario; onScenario: (s: Scenario) => void;
+/** Leidt de tabel af uit de server-snapshot; staffels zonder leden/groepen tonen 0. */
+export function contributieRows(rows: readonly Row[], staffel: readonly Staffel[], scenario: Scenario, groups: readonly Group[] = []) {
+  const single = rows.find((r) => r.label === staffel[0]?.label)?.count ?? 0;
+  const lines = staffel.map((s, i) => {
+    const count = rows.filter((r) => r.label === s.label).reduce((t, r) => t + r.count, 0);
+    const members = i === 0 ? [] : groups.filter((g) => staffelIndex(g.shops) === i);
+    const shops = i === 0 ? single : members.reduce((t, g) => t + g.shops, 0);
+    const amount = scenarioAmount(s.amount, scenario);
+    return { label: s.label, count, shops, members, amount, total: count * amount };
+  });
+  const count = lines.reduce((t, l) => t + l.count, 0);
+  return { lines, count, single, multi: count - single, shops: lines.reduce((t, l) => t + l.shops, 0), total: lines.reduce((t, l) => t + l.total, 0) };
+}
+
+export default function ContributieInkomsten2027({ rows, staffel, scenario, onScenario, groups = [], peildatum }: {
+  rows: readonly Row[]; staffel: readonly Staffel[]; scenario: Scenario; onScenario: (s: Scenario) => void; groups?: readonly Group[]; peildatum?: string;
 }) {
-  const t = contributieRows(rows, staffel, scenario);
+  const t = contributieRows(rows, staffel, scenario, groups);
+  const [open, setOpen] = useState(false);
   return (
     <section aria-labelledby="contrib-2027" className="overflow-hidden rounded-lg border border-border">
       <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/50 px-3 py-2">
@@ -37,15 +50,16 @@ export default function ContributieInkomsten2027({ rows, staffel, scenario, onSc
           ))}
         </div>
       </div>
-      <p className="px-3 pt-2 text-sm">
-        <span className="font-semibold tabular-nums">{t.count}</span> leden/groepen in de raming, waarvan <span className="tabular-nums">{t.single}</span> met 1 shop en <span className="tabular-nums">{t.multi}</span> groepen met meerdere shops.
+      <p className="px-3 pt-2 text-sm" data-testid="contrib-summary">
+        <span className="font-semibold tabular-nums">{t.shops}</span> coffeeshops in deze raming, verdeeld over <span className="font-semibold tabular-nums">{t.count}</span> leden/groepen: <span className="tabular-nums">{t.single}</span> met 1 shop en <span className="tabular-nums">{t.multi}</span> groepen met meerdere shops.
       </p>
       <div className="overflow-x-auto overscroll-x-contain px-3 py-2">
-        <table className="w-full min-w-[34rem] text-sm">
+        <table className="w-full min-w-[40rem] text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="py-1.5 pr-2 font-medium">Aantal shops per lid/groep</th>
               <th className="py-1.5 pr-2 text-right font-medium">Aantal leden/groepen</th>
+              <th className="py-1.5 pr-2 text-right font-medium">Aantal coffeeshops</th>
               <th className="py-1.5 pr-2 text-right font-medium">Jaarbijdrage per lid/groep</th>
               <th className="py-1.5 text-right font-medium">Geraamde inkomsten</th>
             </tr>
@@ -55,6 +69,7 @@ export default function ContributieInkomsten2027({ rows, staffel, scenario, onSc
               <tr key={l.label} className="border-b border-border/50">
                 <td className="py-1.5 pr-2">{l.label}</td>
                 <td className="py-1.5 pr-2 text-right tabular-nums">{l.count}</td>
+                <td className="py-1.5 pr-2 text-right tabular-nums">{l.shops}</td>
                 <td className="py-1.5 pr-2 text-right tabular-nums">{eur(l.amount)}</td>
                 <td className="py-1.5 text-right tabular-nums">{eur(l.total)}</td>
               </tr>
@@ -62,13 +77,40 @@ export default function ContributieInkomsten2027({ rows, staffel, scenario, onSc
             <tr className="font-semibold">
               <td className="py-1.5 pr-2">Totaal ({scenario === "full" ? "volledige staffel" : "50% van de verhoging"})</td>
               <td className="py-1.5 pr-2 text-right tabular-nums">{t.count}</td>
+              <td className="py-1.5 pr-2 text-right tabular-nums" data-testid="contrib-shops">{t.shops}</td>
               <td />
               <td className="py-1.5 text-right tabular-nums" data-testid="contrib-total">{eur(t.total)}</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p className="px-3 pb-2 text-xs text-muted-foreground">Een groep met meerdere shops telt hier eenmaal; dit is geen totaal van alle vestigingen. Scenario niet vastgesteld; geraamd, niet ontvangen. Aannames en controlepunten staan onder Toelichting contributieraming.</p>
+      {groups.length > 0 && (
+        <Collapsible open={open} onOpenChange={setOpen} className="border-t border-border/50">
+          <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium">
+            Welke leden hebben meerdere shops?
+            <ChevronDown className={`h-4 w-4 text-brand-red transition-transform ${open ? "rotate-180" : ""}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="space-y-3 px-3 pb-3 text-sm">
+              {t.lines.slice(1).filter((l) => l.members.length > 0).map((l) => (
+                <div key={l.label}>
+                  <h4 className="mb-1 text-xs font-semibold">{l.label}: {l.members.length} {l.members.length === 1 ? "groep" : "groepen"}, {l.shops} shops · {eur(l.amount)} per groep</h4>
+                  <ul className="divide-y divide-border/50 rounded-md border border-border/50">
+                    {l.members.map((g) => (
+                      <li key={g.id} className="flex items-center justify-between gap-2 px-2 py-1">
+                        <a href={`/leden/${g.id}`} className="font-medium hover:text-brand-red">{g.name}</a>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{g.shops} shops</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">Bron: ramingssnapshot{peildatum ? ` van ${peildatum}` : ""} (concept). Groepsindelingen en aantallen shops zijn deels voorlopig en niet gecontroleerd op eigendom of unieke vestigingen; zie de controlepunten (o.a. Hunters 9 of oud 11, The Plug 6 i.p.v. 7, Coffeeshop 010 met adresloze locaties, GOA/Scolo, Boere Jongens 4 volgens snapshot).</p>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+      <p className="px-3 pb-2 pt-1 text-xs text-muted-foreground">Een groep met meerdere shops telt hier eenmaal als lid/groep. {t.shops} is het aantal coffeeshops in deze raming, geen actueel of volledig ledentotaal. Scenario niet vastgesteld; geraamd, niet ontvangen. Aannames en controlepunten staan onder Toelichting contributieraming.</p>
     </section>
   );
 }

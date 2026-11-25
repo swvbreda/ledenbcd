@@ -31,6 +31,16 @@ export function scenarioTotals(rows: readonly { count: number; amount: number }[
   return { full, half: base + (full - base) / 2, groups };
 }
 
+/** Groepen met meerdere shops uit de ramingssnapshot van 25 november 2026 (lid-ID, naam, aantal shops). Deels voorlopige indeling. */
+export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number }[] = [
+  { id: 1, name: "The Bulldog", shops: 5 }, { id: 5, name: "Green House", shops: 5 }, { id: 8, name: "Coffeeshop Relax", shops: 2 },
+  { id: 9, name: "Boere Jongens", shops: 4 }, { id: 20, name: "Easy Times", shops: 2 }, { id: 21, name: "Hunters", shops: 9 },
+  { id: 30, name: "Siberië", shops: 5 }, { id: 35, name: "Dampkring The Original", shops: 2 }, { id: 57, name: "Kadinsky", shops: 3 },
+  { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
+  { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
+  { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 }, { id: 150, name: "GOA", shops: 2 },
+];
+
 export const CONTROLEPUNTEN: string[] = [
   "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
   "Baba en Demo: uitgesloten.",
@@ -106,6 +116,7 @@ export type Begroting2027Snapshot = {
   totalFull: number;
   totalHalf: number;
   totalGroups: number;
+  groups: { id: number; name: string; shops: number }[];
   controlepunten: string[];
   werkgeverWaarschuwing: string;
 };
@@ -123,6 +134,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalFull: BEGROTING_2027.totalFull,
     totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
+    groups: MEERDERE_SHOPS_2027.map((g) => ({ ...g })),
     controlepunten: [...CONTROLEPUNTEN],
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
