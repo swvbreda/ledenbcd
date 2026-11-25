@@ -42,3 +42,30 @@ export const CONTROLEPUNTEN: string[] = [
   "Vier voorlopige Hilversumse leden: wel meegenomen (€ 12.000) voor 2027 volgens notities; formulieren nog nodig.",
   "Vrijstelling Alien en bijzondere 2026-afspraak Bull: niet automatisch verlengd.",
 ];
+
+export type Begroting2027Snapshot = {
+  peildatum: string;
+  staffel: { label: string; amount: number }[];
+  rows: { label: string; count: number; amount: number }[];
+  totalFull: number;
+  totalHalf: number;
+  totalGroups: number;
+  controlepunten: string[];
+};
+
+type RoleClient = { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown; error: unknown }> };
+
+/** Alleen een beheerder (has_role onder de eigen sessie/RLS) krijgt de snapshot. */
+export async function begroting2027ForCaller(client: RoleClient, userId: string): Promise<Begroting2027Snapshot> {
+  const { data, error } = await client.rpc("has_role", { _user_id: userId, _role: "admin" });
+  if (error || data !== true) throw new Error("Geen rechten");
+  return {
+    peildatum: BEGROTING_2027.peildatum,
+    staffel: BEGROTING_2027.staffel.map((s) => ({ ...s })),
+    rows: BEGROTING_2027.rows.map((r) => ({ ...r })),
+    totalFull: BEGROTING_2027.totalFull,
+    totalHalf: BEGROTING_2027.totalHalf,
+    totalGroups: BEGROTING_2027.totalGroups,
+    controlepunten: [...CONTROLEPUNTEN],
+  };
+}

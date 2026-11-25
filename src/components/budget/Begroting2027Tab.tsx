@@ -3,12 +3,20 @@ import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { BEGROTING_2027 as B, CONTROLEPUNTEN } from "@/lib/begroting2027Concept";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getBegroting2027 } from "@/lib/begroting2027.functions";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const eur = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
 export default function Begroting2027Tab() {
   const [open, setOpen] = useState(false);
+  const fetchConcept = useServerFn(getBegroting2027);
+  const { data: B, isLoading, isError } = useQuery({ queryKey: ["begroting-2027-concept"], queryFn: () => fetchConcept(), retry: false, staleTime: Infinity });
+  if (isLoading) return <LoadingSpinner message="Concept laden..." />;
+  if (isError || !B) return <p className="text-sm text-muted-foreground">Dit concept kan niet worden geladen. Alleen beheerders kunnen het bekijken.</p>;
+  const CONTROLEPUNTEN = B.controlepunten;
   return (
     <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center gap-2">
