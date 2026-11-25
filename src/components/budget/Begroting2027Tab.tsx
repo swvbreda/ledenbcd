@@ -147,7 +147,7 @@ export default function Begroting2027Tab() {
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
                     <li>De geboekte kosten van 2026 zijn mogelijk nog niet volledig.</li>
                     <li>Geen herberekening van btw; de BCD kan geen btw aftrekken.</li>
-                    <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de voorgenomen premietarieven 2027 (AWf/Aof/WKO), de onbekende Whk en nog niet geregelde arbodienst/verzuimverzekering en salarisadministratie kunnen het totaal veranderen.</li>
+                    <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de nog niet definitieve personeelskosten 2027 kunnen het totaal veranderen.</li>
                     <li>De reserve is geen kostenpost. Beginreserve is een voorlopige aanname, geen banksaldo of vastgestelde balans.</li>
                     <li>PCN-terugbetalingen zijn niet meegerekend.</li>
                     <li>De begroting en boekingen van 2026 zijn niet aangepast.</li>

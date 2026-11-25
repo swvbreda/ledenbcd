@@ -31,7 +31,7 @@ describe("Begroting 2027 concept", () => {
   });
 });
 
-import { UITGAVEN_2027, conceptTotals, RESERVE_2027 } from "@/lib/begroting2027Concept.server";
+import { UITGAVEN_2027, conceptTotals, RESERVE_2027, PERSONEELSKOSTEN_2027 } from "@/lib/begroting2027Concept.server";
 describe("Uitgavenraming 2027", () => {
   const t = conceptTotals(UITGAVEN_2027, 407500);
   it("groepstotalen kloppen", () => {
@@ -43,16 +43,23 @@ describe("Uitgavenraming 2027", () => {
     expect(t.expenses).toBe(392500);
     expect(t.resultFull).toBe(15000);
   });
-  it("goedgekeurde posten: secretariaat 5.000, onderzoek 30.000, juridisch 145.000, marketing/merchandise 25.000, kantoor 9.000, personeel 5.000, onvoorzien 1.600, loon 102.000", () => {
+  it("goedgekeurde posten: secretariaat 5.000, onderzoek 30.000, juridisch 145.000, marketing/merchandise 25.000, kantoor 9.000, Voorzitter 107.000, onvoorzien 1.600", () => {
     const line = (n: string) => UITGAVEN_2027.flatMap((c) => c.lines).find((l) => l.name === n)?.budgeted;
     expect(line("Secretariaatskosten")).toBe(5000);
     expect(line("Onderzoek")).toBe(30000);
     expect(line("Juridische kosten / bestuurlijk advies")).toBe(145000);
     expect(line("Communicatie / marketing / merchandise")).toBe(25000);
     expect(line("Kantoorkosten")).toBe(9000);
-    expect(line("Aanvullende personeelskosten")).toBe(5000);
     expect(line("Jaarlijkse onvoorziene uitgaven")).toBe(1600);
-    expect(line("Voorzitter - Het Strategiebureau")).toBe(102000);
+    expect(line("Personeelskosten – Voorzitter")).toBe(107000);
+    expect(PERSONEELSKOSTEN_2027.voorzitter.loon).toBe(102000);
+    expect(PERSONEELSKOSTEN_2027.voorzitter.aanvullend).toBe(5000);
+    const all = UITGAVEN_2027.flatMap((c) => c.lines);
+    expect(all.filter((l) => /Voorzitter|personeel/i.test(l.name))).toHaveLength(1);
+    expect(JSON.stringify(all)).not.toMatch(/Strategiebureau/);
+    expect(line("Secretariaatskosten")).toBe(5000);
+    expect(line("Ondersteuning")).toBe(10000);
+    expect(line("Onkosten vergoedingen")).toBe(5000);
   });
   it("reserve los van kosten: 115.000 voorlopig + 15.000 = 130.000, geen kostenpost", () => {
     expect(RESERVE_2027.beginVoorlopig).toBe(true);
@@ -70,7 +77,7 @@ describe("Uitgavenraming 2027", () => {
   });
 });
 
-import { jaarsalarisInclVakantiegeld, minimaleHuur2027, WERKGEVER_WAARSCHUWING } from "../begroting2027Concept.server";
+import { jaarsalarisInclVakantiegeld, minimaleHuur2027, WERKGEVER_WAARSCHUWING_INTERN } from "../begroting2027Concept.server";
 describe("2027 onderbouwing", () => {
   it("jaarsalaris 6760 p/m + 8% vakantiegeld = 87609,60", () => {
     expect(jaarsalarisInclVakantiegeld(6760)).toBe(87609.6);
@@ -83,8 +90,10 @@ describe("2027 onderbouwing", () => {
     expect(minimaleHuur2027(484)).toBe(5846.72);
     expect(6000 - minimaleHuur2027(484)).toBeCloseTo(153.28, 2);
   });
-  it("waarschuwing noemt loonbudget 102.000", () => {
-    expect(WERKGEVER_WAARSCHUWING).toContain("Loonbudget €102.000");
+  it("interne waarschuwing noemt loonbudget 102.000; zichtbare tekst splitst niet en noemt geen Strategiebureau", async () => {
+    expect(WERKGEVER_WAARSCHUWING_INTERN).toContain("Loonbudget €102.000");
+    const snap = JSON.stringify(await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1"));
+    expect(snap).not.toMatch(/Strategiebureau|vakantiegeld|Zvw|102\.000/);
   });
 });
 

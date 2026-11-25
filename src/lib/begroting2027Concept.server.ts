@@ -211,6 +211,16 @@ export type ConceptLine = { name: string; budgeted: number; actual2026: number |
 export type ConceptCategory = { name: string; lines: ConceptLine[] };
 
 /** Voorgestelde ramingen (geen bevestigde contracten), volgorde en namen gelijk aan de 2026-begroting. */
+/** Interne (server-only) basis personeelskosten per functie; in de UI alleen als één totaal per functie. */
+export const PERSONEELSKOSTEN_2027 = {
+  voorzitter: {
+    loon: 102000,
+    loonBasis: "Voorlopige raming, niet compleet; geen bevestigde loonberekening 2027. In 2027 vervangt loondienst de eerdere kosten als opdrachtnemer; eerdere facturen en salaris niet bij elkaar optellen. Salaris: bruto € 6.760 per maand × 12 = € 81.120 + 8% vakantiegeld € 6.489,60 = € 87.609,60 per jaar (arbeidsovereenkomst 2026, loonstrook oktober). Werkgeverspremies 2027 (broncontrole 25-11-2026) over het maximumpremieloon € 82.543: werkgevers-Zvw 6,27% = € 5.175,45 en maximumpremieloon definitief (Staatscourant 2026-39593, 13 november 2026); AWf laag 2,74% = € 2.261,68, Aof laag 6,67% = € 5.505,62 en WKO 0,50% = € 412,72 zijn voorgenomen tarieven (Kamerstuk 37020-XV-2, tabel 130) en nog definitief te controleren. Samen € 13.355,47 excl. Whk, onder aanname van dezelfde lage-premie-indeling als oktober 2026. Whk 2027 voor BCD is onbekend; uitsluitend als tijdelijke begrotingsaanname 12 × € 82 = € 984 volgens oktober 2026, geen bevestigd tarief. Totaal € 101.949,07, afgerond begroot € 102.000; niet afdoende voor overige personeelskosten. Vorige bron: loonaangifte oktober 2026 (e-mail Daan Kottmann, 'Loonheffingen BCD', 21 november 2026 10:10), afgeronde aangifte-euro's. Ingehouden loonheffing en nettoloon zijn onderdelen van het brutosalaris en worden niet nogmaals boven op het brutosalaris geteld. Open begrotingspunten, bedrag onbekend (niet nul, niet verzekerd): arbodienst/verzuimverzekering nog niet geregeld; vaste prijs salarisadministratie nog niet geregeld, af te stemmen met Administratiekosten (€ 5.500) om dubbel budget te voorkomen. Pensioen: volgens het contract buiten de verplichte pensioenregeling; geen aanvullende afspraak aangetroffen. Reiskosten en onkostenvergoedingen staan op eigen posten en zijn hier niet bijgeteld.",
+    aanvullend: 5000,
+    aanvullendBasis: "Voorlopige reservering voor arbodienst, eventuele verzuimverzekering en salarisadministratie. Nog niet geregeld, geen offerte; niet dubbel met administratiekosten.",
+  },
+} as const;
+
 export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Algemene kosten", lines: [
     { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Afgeronde werkbudgetraming voor een volledig jaar." },
@@ -223,9 +233,8 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Reiskosten", budgeted: 3500, actual2026: 2719.26, basis: "Afgerond op de huidige kosten." },
   ] },
   { name: "Dagelijks bestuur", lines: [
-    { name: "Voorzitter - Het Strategiebureau", budgeted: 102000, actual2026: null, basis: "Voorlopige raming, niet compleet; geen bevestigde loonberekening 2027. In 2027 vervangt loondienst de eerdere kosten als opdrachtnemer; eerdere facturen en salaris niet bij elkaar optellen. Salaris: bruto € 6.760 per maand × 12 = € 81.120 + 8% vakantiegeld € 6.489,60 = € 87.609,60 per jaar (arbeidsovereenkomst 2026, loonstrook oktober). Werkgeverspremies 2027 (broncontrole 25-11-2026) over het maximumpremieloon € 82.543: werkgevers-Zvw 6,27% = € 5.175,45 en maximumpremieloon definitief (Staatscourant 2026-39593, 13 november 2026); AWf laag 2,74% = € 2.261,68, Aof laag 6,67% = € 5.505,62 en WKO 0,50% = € 412,72 zijn voorgenomen tarieven (Kamerstuk 37020-XV-2, tabel 130) en nog definitief te controleren. Samen € 13.355,47 excl. Whk, onder aanname van dezelfde lage-premie-indeling als oktober 2026. Whk 2027 voor BCD is onbekend; uitsluitend als tijdelijke begrotingsaanname 12 × € 82 = € 984 volgens oktober 2026, geen bevestigd tarief. Totaal € 101.949,07, afgerond begroot € 102.000; niet afdoende voor overige personeelskosten. Vorige bron: loonaangifte oktober 2026 (e-mail Daan Kottmann, 'Loonheffingen BCD', 21 november 2026 10:10), afgeronde aangifte-euro's. Ingehouden loonheffing en nettoloon zijn onderdelen van het brutosalaris en worden niet nogmaals boven op het brutosalaris geteld. Open begrotingspunten, bedrag onbekend (niet nul, niet verzekerd): arbodienst/verzuimverzekering nog niet geregeld; vaste prijs salarisadministratie nog niet geregeld, af te stemmen met Administratiekosten (€ 5.500) om dubbel budget te voorkomen. Pensioen: volgens het contract buiten de verplichte pensioenregeling; geen aanvullende afspraak aangetroffen. Reiskosten en onkostenvergoedingen staan op eigen posten en zijn hier niet bijgeteld." },
+    { name: "Personeelskosten – Voorzitter", budgeted: PERSONEELSKOSTEN_2027.voorzitter.loon + PERSONEELSKOSTEN_2027.voorzitter.aanvullend, actual2026: null, basis: "Totale werkgeverskosten voor de functie Voorzitter (voorlopige raming 2027)." },
     { name: "Secretariaatskosten", budgeted: 5000, actual2026: null, basis: "Budgetkeuze: losse hulp. In 2026 niets uitgegeven; geen contract. Niet voor taken uit het dienstverband." },
-    { name: "Aanvullende personeelskosten", budgeted: 5000, actual2026: null, basis: "Voorlopige reservering voor arbodienst, eventuele verzuimverzekering en salarisadministratie. Nog niet geregeld, geen offerte; niet dubbel met administratiekosten." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
   ] },
@@ -257,7 +266,8 @@ export function minimaleHuur2027(maandInclBtw: number): number {
   return Math.round((8 * maandInclBtw + 4 * Math.round(maandInclBtw * 1.02 * 100) / 100) * 100) / 100;
 }
 
-export const WERKGEVER_WAARSCHUWING = "Loonbudget €102.000 (voorlopig, niet compleet): €101.949,07 op jaarbasis met maximumpremieloon en Zvw 2027 definitief, AWf/Aof/WKO voorgenomen en Whk als tijdelijke aanname. Arbodienst, verzuimverzekering en salarisadministratie nog niet geregeld; voorlopig € 5.000 gereserveerd onder Aanvullende personeelskosten.";
+export const WERKGEVER_WAARSCHUWING_INTERN = "Loonbudget €102.000 (voorlopig, niet compleet): €101.949,07 op jaarbasis met maximumpremieloon en Zvw 2027 definitief, AWf/Aof/WKO voorgenomen en Whk als tijdelijke aanname. Arbodienst, verzuimverzekering en salarisadministratie nog niet geregeld; voorlopig € 5.000 gereserveerd onder Aanvullende personeelskosten.";
+export const WERKGEVER_WAARSCHUWING = "Personeelskosten zijn een voorlopige raming; de werkgeverskosten 2027 zijn nog niet definitief.";
 
 /** Reserve is een balansdoel (resultaatbestemming), géén kostenpost. Beginreserve is een voorlopige aanname, geen geverifieerde balans. */
 export const RESERVE_2027 = { begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 } as const;
