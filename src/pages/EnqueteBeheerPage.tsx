@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, GripVertical, Link2, Copy, Shield, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { isStickerSurvey, stickerRequests, stickerCsv } from "@/lib/stickerRequests";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Question {
@@ -138,7 +139,20 @@ export default function EnqueteBeheerPage() {
     return { type: "text", texts };
   };
 
+  const exportStickerCSV = () => {
+    const csv = stickerCsv(stickerRequests(questions, responses as any));
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `stickeraanvragen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV gedownload!");
+  };
+
   const exportCSV = (qs: Question[], resps: ResponseRow[]) => {
+    if (isStickerSurvey(id)) return exportStickerCSV();
     const approved = resps.filter((r) => r.status === "approved");
     // Group by respondent key: use submitted_at as unique key per submission batch
     const respondentMap = new Map<string, Map<string, string>>();
@@ -328,6 +342,34 @@ export default function EnqueteBeheerPage() {
                   <Download size={14} className="mr-1" /> Export CSV
                 </Button>
               </div>
+              {isStickerSurvey(id) && (() => {
+                const reqs = stickerRequests(questions, responses as any);
+                return (
+                  <Card>
+                    <CardHeader className="pb-2"><CardTitle className="text-base">Aanvragen ({reqs.length})</CardTitle></CardHeader>
+                    <CardContent className="overflow-x-auto">
+                      <table className="w-full min-w-[56rem] text-xs" data-testid="sticker-aanvragen">
+                        <thead className="bg-muted/50 text-left">
+                          <tr>{["Naam aanvrager", "Coffeeshop", "Gewenste jaren", "Vestigingen", "Afleveren t.a.v.", "Afleveradres", "Bron"].map((h) => <th key={h} className="px-2 py-1.5 font-medium">{h}</th>)}</tr>
+                        </thead>
+                        <tbody>
+                          {reqs.map((r) => (
+                            <tr key={r.key} className="border-t border-muted/50 align-top">
+                              <td className="px-2 py-1.5 font-medium">{r.aanvrager}</td>
+                              <td className="px-2 py-1.5">{r.coffeeshop}</td>
+                              <td className="px-2 py-1.5">{r.jaren}</td>
+                              <td className="px-2 py-1.5">{r.vestigingen}</td>
+                              <td className="px-2 py-1.5">{r.ontvanger}</td>
+                              <td className="px-2 py-1.5">{r.straat === "Onbekend" && r.postcode === "Onbekend" ? "Onbekend" : `${r.straat} ${r.huisnummer}${r.toevoeging ? " " + r.toevoeging : ""}, ${r.postcode} ${r.plaats}`}</td>
+                              <td className="px-2 py-1.5 text-muted-foreground">{r.bron}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
               {questions.map((q, idx) => {
                 const result = getResults(q.id, q);
                 const qResponses = responses.filter((r) => r.question_id === q.id && r.status === "approved");

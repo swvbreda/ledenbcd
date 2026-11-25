@@ -1,3 +1,4 @@
+import { isStickerSurvey } from "@/lib/stickerRequests";
 import { useEffect, useState } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,6 +143,20 @@ export default function EnqueteExternPage() {
   };
 
   // Access code screen
+  if (isStickerSurvey(id)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="py-8 space-y-3 text-center">
+            <p className="font-medium">Stickers vraag je aan via het ledenportaal.</p>
+            <p className="text-sm text-muted-foreground">Log in en vul daar de aanvraag in, zodat we weten naar wie en welke coffeeshop we de stickers sturen.</p>
+            <a href={`/enquetes/${id}`} className="inline-block text-sm font-medium text-primary underline">Inloggen en aanvragen</a>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">

@@ -7527,6 +7527,10 @@ export type Database = {
         Returns: undefined
       }
       signup_verified_email: { Args: never; Returns: string }
+      submit_sticker_request: {
+        Args: { p_aanvrager: string; p_answers: Json; p_coffeeshop: string }
+        Returns: string
+      }
       submit_verified_external_signup: {
         Args: { p_contact: string; p_name: string; p_type: string }
         Returns: string

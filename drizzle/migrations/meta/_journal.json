@@ -631,6 +631,13 @@
       "when": 1795507546621,
       "tag": "0089_board_minutes_status_category_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1795640593380,
+      "tag": "0090_sticker_request_identified",
+      "breakpoints": true
     }
   ]
 }

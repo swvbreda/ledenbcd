@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, Check } from "lucide-react";
 import { addressGroup, ADDRESS_FIELDS } from "@/lib/surveyAddressGroup";
+import { isStickerSurvey, STICKER_NOTICE, stickerPrefill } from "@/lib/stickerRequests";
 
 interface Question {
   id: string;
@@ -48,6 +49,10 @@ export default function EnqueteInvullenPage() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const address = useMemo(() => addressGroup(id, questions), [id, questions]);
   const addressIds = useMemo(() => new Set(address?.map((q) => q.id) ?? []), [address]);
+  const sticker = isStickerSurvey(id);
+  const [aanvrager, setAanvrager] = useState("");
+  const [coffeeshop, setCoffeeshop] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
   const [completedLocations, setCompletedLocations] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -71,7 +76,16 @@ export default function EnqueteInvullenPage() {
     return locations;
   }, [linkedMemberIds, allMembersAndLeads, isAdmin]);
 
-  const hasMultipleLocations = memberLocations.length > 1;
+  const hasMultipleLocations = !sticker && memberLocations.length > 1;
+
+  useEffect(() => {
+    if (!sticker || prefilled || !user || allMembersAndLeads.length === 0) return;
+    const linked = allMembersAndLeads.filter((m) => linkedMemberIds.includes(m.id));
+    const p = stickerPrefill(user.email, linked);
+    setAanvrager((v) => v || p.aanvrager);
+    setCoffeeshop((v) => v || p.coffeeshop);
+    setPrefilled(true);
+  }, [sticker, prefilled, user, allMembersAndLeads, linkedMemberIds]);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -149,6 +163,13 @@ export default function EnqueteInvullenPage() {
       return;
     }
 
+    if (sticker) {
+      if (!aanvrager.trim() || !coffeeshop.trim()) {
+        toast.error("Vul naam aanvrager en naam coffeeshop in.");
+        return;
+      }
+    }
+
     // Validate required
     for (const q of questions) {
       if (q.required) {
@@ -161,6 +182,18 @@ export default function EnqueteInvullenPage() {
     }
 
     setSubmitting(true);
+
+    if (sticker) {
+      const { error } = await supabase.rpc("submit_sticker_request", { p_aanvrager: aanvrager.trim(), p_coffeeshop: coffeeshop.trim(), p_answers: answers });
+      if (error) {
+        toast.error("Aanvraag niet opgeslagen: " + error.message);
+        setSubmitting(false);
+        return;
+      }
+      toast.success("Bedankt! Je stickeraanvraag is ontvangen.");
+      navigate("/enquetes");
+      return;
+    }
 
     const locationName = selectedLocation || null;
 
@@ -264,10 +297,28 @@ export default function EnqueteInvullenPage() {
           <CardTitle>{survey.title}</CardTitle>
           {survey.description && <CardDescription>{survey.description}</CardDescription>}
           <p className="text-xs text-muted-foreground mt-2">
-            Je antwoorden worden volledig anoniem opgeslagen.
+            {sticker ? STICKER_NOTICE : "Je antwoorden worden volledig anoniem opgeslagen."}
           </p>
         </CardHeader>
       </Card>
+
+      {sticker && (
+        <Card>
+          <CardContent className="pt-6">
+            <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <legend className="sr-only">Aanvrager</legend>
+              <div className="space-y-1">
+                <Label htmlFor="sticker-aanvrager" className="text-sm font-medium">Naam aanvrager<span className="text-destructive ml-1">*</span></Label>
+                <Input id="sticker-aanvrager" required autoComplete="name" maxLength={200} value={aanvrager} onChange={(e) => setAanvrager(e.target.value)} placeholder="Voor- en achternaam" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sticker-coffeeshop" className="text-sm font-medium">Naam coffeeshop<span className="text-destructive ml-1">*</span></Label>
+                <Input id="sticker-coffeeshop" required autoComplete="organization" maxLength={200} value={coffeeshop} onChange={(e) => setCoffeeshop(e.target.value)} placeholder="Naam van je coffeeshop" />
+              </div>
+            </fieldset>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Location selector */}
       {hasMultipleLocations && (
