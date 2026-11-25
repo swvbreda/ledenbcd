@@ -58,7 +58,7 @@ export const CONTROLEPUNTEN: string[] = [
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47). Zonder deze aanname +€ 2.000.",
-  "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000, bij 50% +€ 1.000). De ledenregistratie noemt nog 9 locaties.",
+  "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000). De ledenregistratie noemt nog 9 locaties.",
   "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres. Bij 2 locaties: −€ 1.500.",
   "Ballonnetje, Noon en Prix d'Ami: nu afzonderlijk gerekend. Als één groep van 3: −€ 4.500.",
   "Vier voorlopige Hilversumse leden: wel meegenomen (€ 12.000) voor 2027 volgens notities; formulieren nog nodig.",
@@ -113,10 +113,10 @@ export function minimaleHuur2027(maandInclBtw: number): number {
 
 export const WERKGEVER_WAARSCHUWING = "Loonbudget €102.000 (voorlopig, niet compleet): €101.949,07 op jaarbasis met maximumpremieloon en Zvw 2027 definitief, AWf/Aof/WKO voorgenomen en Whk als tijdelijke aanname. Arbodienst/verzuimverzekering en salarisadministratie nog niet geregeld, bedrag onbekend.";
 
-export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number, incomeHalf: number) {
+export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number) {
   const perCategory = cats.map((c) => ({ name: c.name, total: c.lines.reduce((s, l) => s + l.budgeted, 0) }));
   const expenses = perCategory.reduce((s, c) => s + c.total, 0);
-  return { perCategory, expenses, resultFull: incomeFull - expenses, resultHalf: incomeHalf - expenses };
+  return { perCategory, expenses, resultFull: incomeFull - expenses };
 }
 
 export type Begroting2027Snapshot = {
@@ -126,7 +126,6 @@ export type Begroting2027Snapshot = {
   staffel: { label: string; amount: number }[];
   rows: { label: string; count: number; amount: number }[];
   totalFull: number;
-  totalHalf: number;
   totalGroups: number;
   groups: { id: number; name: string; shops: number; minimum?: boolean }[];
   ledenRegistratie: { geregistreerd: number; uitgesloten: { id: number; name: string; reden: string }[] };
@@ -145,7 +144,6 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     staffel: BEGROTING_2027.staffel.map((s) => ({ ...s })),
     rows: BEGROTING_2027.rows.map((r) => ({ ...r })),
     totalFull: BEGROTING_2027.totalFull,
-    totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
     groups: MEERDERE_SHOPS_2027.map((g) => ({ ...g })),
     ledenRegistratie: { geregistreerd: LEDENREGISTRATIE_2027.geregistreerd, uitgesloten: LEDENREGISTRATIE_2027.uitgesloten.map((u) => ({ ...u })) },
@@ -153,7 +151,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
     inkomsten: [
-      { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Scenario volledige staffel (niet vastgesteld). Alternatief 50% van de verhoging: € 383.750." },
+      { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Volledige staffel (niet vastgesteld)." },
       { name: "Donaties en overige baten", budgeted: 0, actual2026: null, basis: "Niet bevestigd; daarom niet geraamd." },
     ],
   };

@@ -38,22 +38,21 @@ function Section({ title, children }: { title: React.ReactNode; children: React.
 export default function Begroting2027Tab() {
   const fetchConcept = useServerFn(getBegroting2027);
   const { data: B, isLoading, isError } = useQuery({ queryKey: ["begroting-2027-concept"], queryFn: () => fetchConcept(), retry: false, staleTime: Infinity });
-  const [scenario, setScenario] = useState<"full" | "half">("full");
   const [detail, setDetail] = useState<Line | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
   const [contribOpen, setContribOpen] = useState(false);
 
   const view = useMemo(() => {
     if (!B) return null;
-    const income = scenario === "full" ? B.totalFull : B.totalHalf;
+    const income = B.totalFull;
     const inkomsten = B.inkomsten.map((l) => (l.name === "Contributies" ? { ...l, budgeted: income } : l));
     const all = [{ name: "Inkomsten", lines: inkomsten }, ...B.uitgaven];
     const lookup = new Map<string, Line>();
     all.forEach((c, i) => c.lines.forEach((l, j) => lookup.set(`c2027-${i}-${j}`, l)));
     const expenses = B.uitgaven.reduce((s, c) => s + c.lines.reduce((t, l) => t + l.budgeted, 0), 0);
     const other = inkomsten.filter((l) => l.name !== "Contributies").reduce((s, l) => s + l.budgeted, 0);
-    return { categories: toCategories(all), lookup, expenses, income, other, result: income + other - expenses, resultFull: B.totalFull + other - expenses, resultHalf: B.totalHalf + other - expenses };
-  }, [B, scenario]);
+    return { categories: toCategories(all), lookup, expenses, income, other, result: income + other - expenses };
+  }, [B]);
 
   if (isLoading) return <LoadingSpinner message="Concept laden..." />;
   if (isError || !B || !view) return <p className="text-sm text-muted-foreground">Dit concept kan niet worden geladen. Alleen beheerders kunnen het bekijken.</p>;
@@ -70,7 +69,7 @@ export default function Begroting2027Tab() {
       <BankBalancesCard />
 
       <div className="mt-4">
-        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} scenario={scenario} onScenario={setScenario} groups={B.groups} peildatum={B.peildatum} registratie={B.ledenRegistratie} />
+        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} groups={B.groups} peildatum={B.peildatum} registratie={B.ledenRegistratie} />
       </div>
 
       <div className="mt-4">
@@ -124,18 +123,15 @@ export default function Begroting2027Tab() {
           <p role="note" className="rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-xs text-foreground">{B.werkgeverWaarschuwing}</p>
 
           <Section title="Resultaat (plan)">
-            <p className="border-b border-border/50 px-3 py-1.5 text-xs text-muted-foreground">Scenario: {scenario === "full" ? "volledige staffel" : "50% van de verhoging"} (kies bij Contributie-inkomsten 2027)</p>
             <table className="w-full text-sm">
               <tbody>
-                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Contributie (scenario)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
+                <tr className="border-b border-border/50"><td className="px-3 py-1.5">Contributie (volledige staffel)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.income} /></td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Overige inkomsten</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.other} /></td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Begrote uitgaven</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.expenses} /></td></tr>
                 <tr className="bg-primary/5 font-semibold"><td className="px-3 py-2">Planresultaat 2027</td><td className={`px-3 py-2 text-right ${view.result < 0 ? "text-destructive" : ""}`}><CurrencyText value={view.result} /></td></tr>
               </tbody>
             </table>
-            <p className="px-3 py-2 text-xs text-muted-foreground">
-              {scenario === "full" ? `Bij 50% van de verhoging: ${eur(view.resultHalf)}.` : `Bij volledige staffel: ${eur(view.resultFull)}.`} Scenario niet vastgesteld; geen werkelijk resultaat.
-            </p>
+            <p className="px-3 py-2 text-xs text-muted-foreground">Contributie volgens de volledige staffel; niet vastgesteld, geen werkelijk resultaat.</p>
           </Section>
 
           <div className="overflow-hidden rounded-lg border border-border">
@@ -174,7 +170,7 @@ export default function Begroting2027Tab() {
                 <ul className="space-y-1">{B.staffel.map((s) => <li key={s.label} className="flex justify-between gap-2"><span>{s.label}</span><span className="tabular-nums">{eur(s.amount)}</span></li>)}</ul>
               </div>
               <div className="space-y-1 text-muted-foreground">
-                <p>Bron: ALV-presentatie 3 juni 2026 (versie 20260603), dia 16: voorstel, gefaseerd 50% / 100%. Aangevuld met de actuele ledenregistratie en profielcorrecties.</p>
+                <p>Bron: ALV-presentatie 3 juni 2026 (versie 20260603), dia 16: voorstel contributiestaffel. Aangevuld met de actuele ledenregistratie en profielcorrecties.</p>
                 <p>De bron noemt optelling van locaties binnen dezelfde rechtspersoon; nog niet alle groepen zijn geverifieerd.</p>
               </div>
               <div>
