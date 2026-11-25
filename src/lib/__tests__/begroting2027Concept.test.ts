@@ -42,7 +42,7 @@ describe("Uitgavenraming 2027", () => {
       "Algemene kosten": 55900, "Dagelijks bestuur": 136000, Advieskosten: 213500, Donaties: 6000,
     });
   });
-  it("totaal 408.400 en planresultaten -5.900 / -25.650", () => {
+  it("totaal 411.400 en planresultaten -8.900 / -28.650", () => {
     expect(t.expenses).toBe(411400);
     expect(t.resultFull).toBe(-8900);
     expect(t.resultHalf).toBe(-28650);
