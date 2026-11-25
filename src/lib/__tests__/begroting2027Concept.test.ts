@@ -36,18 +36,19 @@ describe("Uitgavenraming 2027", () => {
   const t = conceptTotals(UITGAVEN_2027, 407500);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
-      "Algemene kosten": 54400, "Dagelijks bestuur": 127000, Advieskosten: 203500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
+      "Algemene kosten": 54400, "Dagelijks bestuur": 147000, Advieskosten: 183500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
     });
   });
   it("totaal 392.500 en planresultaat +15.000 (volledige staffel)", () => {
     expect(t.expenses).toBe(392500);
     expect(t.resultFull).toBe(15000);
   });
-  it("goedgekeurde posten: secretariaat 5.000, onderzoek 30.000, juridisch 145.000, marketing/merchandise 25.000, kantoor 9.000, Voorzitter 107.000, onvoorzien 1.600", () => {
+  it("goedgekeurde posten: secretariaat 0, onderzoek 20.000, juridisch 135.000, ondersteunend medewerker 25.000, marketing/merchandise 25.000, kantoor 9.000, Voorzitter 107.000, onvoorzien 1.600", () => {
     const line = (n: string) => UITGAVEN_2027.flatMap((c) => c.lines).find((l) => l.name === n)?.budgeted;
-    expect(line("Secretariaatskosten")).toBe(5000);
-    expect(line("Onderzoek")).toBe(30000);
-    expect(line("Juridische kosten / bestuurlijk advies")).toBe(145000);
+    expect(line("Secretariaatskosten")).toBe(0);
+    expect(line("Onderzoek")).toBe(20000);
+    expect(line("Juridische kosten / bestuurlijk advies")).toBe(135000);
+    expect(line("Personeelskosten – Ondersteunend medewerker")).toBe(25000);
     expect(line("Communicatie / marketing / merchandise")).toBe(25000);
     expect(line("Kantoorkosten")).toBe(9000);
     expect(line("Jaarlijkse onvoorziene uitgaven")).toBe(1600);
@@ -55,9 +56,9 @@ describe("Uitgavenraming 2027", () => {
     expect(PERSONEELSKOSTEN_2027.voorzitter.loon).toBe(102000);
     expect(PERSONEELSKOSTEN_2027.voorzitter.aanvullend).toBe(5000);
     const all = UITGAVEN_2027.flatMap((c) => c.lines);
-    expect(all.filter((l) => /Voorzitter|personeel/i.test(l.name))).toHaveLength(1);
+    expect(all.filter((l) => /Voorzitter|personeel/i.test(l.name)).map((l) => l.name)).toEqual(["Personeelskosten – Voorzitter", "Personeelskosten – Ondersteunend medewerker"]);
+    expect(all.some((l) => l.budgeted === 120000)).toBe(false);
     expect(JSON.stringify(all)).not.toMatch(/Strategiebureau/);
-    expect(line("Secretariaatskosten")).toBe(5000);
     expect(line("Ondersteuning")).toBe(10000);
     expect(line("Onkosten vergoedingen")).toBe(5000);
   });
