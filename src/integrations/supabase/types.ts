@@ -7528,7 +7528,12 @@ export type Database = {
       }
       signup_verified_email: { Args: never; Returns: string }
       submit_sticker_request: {
-        Args: { p_aanvrager: string; p_answers: Json; p_coffeeshop: string }
+        Args: {
+          p_aanvrager: string
+          p_answers: Json
+          p_coffeeshop: string
+          p_location?: string
+        }
         Returns: string
       }
       submit_verified_external_signup: {

@@ -356,7 +356,7 @@ export default function EnqueteBeheerPage() {
                           {reqs.map((r) => (
                             <tr key={r.key} className="border-t border-muted/50 align-top">
                               <td className="px-2 py-1.5 font-medium">{r.aanvrager}</td>
-                              <td className="px-2 py-1.5">{r.coffeeshop}</td>
+                              <td className="px-2 py-1.5">{r.coffeeshop}{r.vestiging && r.vestiging !== r.coffeeshop ? <span className="block text-muted-foreground">{r.vestiging}</span> : null}</td>
                               <td className="px-2 py-1.5">{r.jaren}</td>
                               <td className="px-2 py-1.5">{r.vestigingen}</td>
                               <td className="px-2 py-1.5">{r.ontvanger}</td>

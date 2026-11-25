@@ -23,6 +23,11 @@ describe("stickeraanvragen", () => {
     expect(rows.find((r) => r.key === "r1")).toMatchObject({ aanvrager: "Piet", coffeeshop: "De Shop", jaren: "2025, 2026", vestigingen: "1", ontvanger: "Jan", straat: "Damrak", plaats: "Amsterdam", toevoeging: "" });
     expect(stickerCsv(rows).split("\n")).toHaveLength(3);
   });
+  it("twee vestigingen van één account geven twee aparte rijen met eigen vestiging", () => {
+    const a = (req: string, loc: string) => ({ question_id: "q0", submitted_at: "t3", answer: { value: "1", aanvrager: "Piet", coffeeshop: "Groep", location: loc, request_id: req } });
+    const rows = stickerRequests(qs, [a("r1", "Shop A (Utrecht)"), a("r2", "Shop B (Zeist)")]);
+    expect(rows.map((r) => r.vestiging)).toEqual(["Shop A (Utrecht)", "Shop B (Zeist)"]);
+  });
   it("vooraf invullen alleen bij eenduidige gegevens", () => {
     const m = { naam: "De Shop", contacten: [{ naam: "Piet", email: "p@x.nl" }] };
     expect(stickerPrefill("P@x.nl", [m])).toEqual({ aanvrager: "Piet", coffeeshop: "De Shop" });

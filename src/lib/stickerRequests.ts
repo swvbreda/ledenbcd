@@ -9,7 +9,7 @@ type Q = { id: string; question_text: string; sort_order: number };
 type R = { question_id: string; submitted_at: string; answer: Record<string, unknown> | null };
 
 export type StickerRequest = {
-  key: string; datum: string; aanvrager: string; coffeeshop: string; jaren: string; vestigingen: string;
+  key: string; datum: string; aanvrager: string; coffeeshop: string; vestiging: string; jaren: string; vestigingen: string;
   ontvanger: string; straat: string; huisnummer: string; toevoeging: string; postcode: string; plaats: string; bron: string;
 };
 
@@ -43,6 +43,7 @@ export function stickerRequests(questions: readonly Q[], responses: readonly R[]
       key, datum: rows[0]!.submitted_at,
       aanvrager: or(meta("aanvrager")),
       coffeeshop: or(isNew ? meta("coffeeshop") : legacyCoffeeshop(ontvangerRaw)),
+      vestiging: meta("location"),
       jaren: or(val(qJaren?.id)), vestigingen: or(val(qVest?.id)),
       ontvanger: or(isNew ? ontvangerRaw : ""),
       straat: or(val(byTitle("Straatnaam"))), huisnummer: or(val(byTitle("Huisnummer"))),
@@ -52,10 +53,10 @@ export function stickerRequests(questions: readonly Q[], responses: readonly R[]
   }).sort((a, b) => a.datum.localeCompare(b.datum));
 }
 
-export const STICKER_CSV_HEADERS = ["Datum", "Naam aanvrager", "Naam coffeeshop", "Gewenste jaren", "Aantal vestigingen", "Afleveren t.a.v.", "Straatnaam", "Huisnummer", "Toevoeging", "Postcode", "Plaats", "Bron"];
+export const STICKER_CSV_HEADERS = ["Datum", "Naam aanvrager", "Naam coffeeshop", "Vestiging", "Gewenste jaren", "Aantal vestigingen", "Afleveren t.a.v.", "Straatnaam", "Huisnummer", "Toevoeging", "Postcode", "Plaats", "Bron"];
 export function stickerCsv(rows: readonly StickerRequest[]): string {
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  return [STICKER_CSV_HEADERS, ...rows.map((r) => [r.datum.slice(0, 16).replace("T", " "), r.aanvrager, r.coffeeshop, r.jaren, r.vestigingen, r.ontvanger, r.straat, r.huisnummer, r.toevoeging, r.postcode, r.plaats, r.bron])]
+  return [STICKER_CSV_HEADERS, ...rows.map((r) => [r.datum.slice(0, 16).replace("T", " "), r.aanvrager, r.coffeeshop, r.vestiging, r.jaren, r.vestigingen, r.ontvanger, r.straat, r.huisnummer, r.toevoeging, r.postcode, r.plaats, r.bron])]
     .map((l) => l.map(esc).join(",")).join("\n");
 }
 

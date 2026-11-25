@@ -158,9 +158,9 @@ export default function EnquetesPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                     {s.active && !completed && (
-                       <Button size="sm" onClick={() => navigate(`/enquetes/${s.id}`)}>
-                         Invullen
+                     {s.active && (
+                       <Button size="sm" variant={completed ? "outline" : "default"} onClick={() => navigate(`/enquetes/${s.id}`)}>
+                         {completed ? "Andere vestiging invullen" : "Invullen"}
                        </Button>
                      )}
                      {s.active && (

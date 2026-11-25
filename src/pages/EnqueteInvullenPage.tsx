@@ -76,7 +76,7 @@ export default function EnqueteInvullenPage() {
     return locations;
   }, [linkedMemberIds, allMembersAndLeads, isAdmin]);
 
-  const hasMultipleLocations = !sticker && memberLocations.length > 1;
+  const hasMultipleLocations = memberLocations.length > 1;
 
   useEffect(() => {
     if (!sticker || prefilled || !user || allMembersAndLeads.length === 0) return;
@@ -129,6 +129,13 @@ export default function EnqueteInvullenPage() {
       setSelectedLocation(loc.plaats ? `${loc.naam} (${loc.plaats})` : loc.naam);
     }
   }, [memberLocations, selectedLocation]);
+
+  // Stickeraanvraag: gekozen vestiging vult de coffeeshopnaam voor, zonder handmatige invoer te overschrijven.
+  useEffect(() => {
+    if (!sticker || !selectedLocation) return;
+    const loc = memberLocations.find((l) => (l.plaats ? `${l.naam} (${l.plaats})` : l.naam) === selectedLocation);
+    if (loc?.naam) setCoffeeshop((v) => v || loc.naam);
+  }, [sticker, selectedLocation, memberLocations]);
 
   const getLocationLabel = (loc: Location) =>
     loc.plaats ? `${loc.naam} (${loc.plaats})` : loc.naam;
@@ -183,19 +190,17 @@ export default function EnqueteInvullenPage() {
 
     setSubmitting(true);
 
+    const locationName = selectedLocation || null;
+
     if (sticker) {
-      const { error } = await supabase.rpc("submit_sticker_request", { p_aanvrager: aanvrager.trim(), p_coffeeshop: coffeeshop.trim(), p_answers: answers });
+      const { error } = await supabase.rpc("submit_sticker_request", { p_aanvrager: aanvrager.trim(), p_coffeeshop: coffeeshop.trim(), p_answers: answers, ...(selectedLocation ? { p_location: selectedLocation } : {}) });
       if (error) {
         toast.error("Aanvraag niet opgeslagen: " + error.message);
         setSubmitting(false);
         return;
       }
       toast.success("Bedankt! Je stickeraanvraag is ontvangen.");
-      navigate("/enquetes");
-      return;
-    }
-
-    const locationName = selectedLocation || null;
+    } else {
 
     // Insert anonymous responses (with location metadata)
     const rows = questions.map((q) => ({
@@ -226,11 +231,12 @@ export default function EnqueteInvullenPage() {
       return;
     }
 
+    toast.success("Bedankt! Je antwoorden zijn anoniem opgeslagen.");
+    }
+
     if (locationName) {
       setCompletedLocations((prev) => [...prev, locationName]);
     }
-
-    toast.success("Bedankt! Je antwoorden zijn anoniem opgeslagen.");
 
     // If more locations to fill, reset form
     const remainingLocations = memberLocations.filter(
@@ -240,6 +246,7 @@ export default function EnqueteInvullenPage() {
     if (remainingLocations.length > 0) {
       setAnswers({});
       setSelectedLocation("");
+      if (sticker) setCoffeeshop("");
       setSubmitting(false);
       toast.info(`Nog ${remainingLocations.length} vestiging(en) om in te vullen.`);
     } else {

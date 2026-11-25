@@ -638,6 +638,13 @@
       "when": 1795640593380,
       "tag": "0090_sticker_request_identified",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1795640784857,
+      "tag": "0091_sticker_request_per_location",
+      "breakpoints": true
     }
   ]
 }
