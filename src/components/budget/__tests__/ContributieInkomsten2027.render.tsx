@@ -44,17 +44,37 @@ describe("Coffeeshops en groepen 2027", () => {
     expect(t.lines.slice(1).map((l) => l.members.length)).toEqual(t.lines.slice(1).map((l) => l.count));
     expect(t.total).toBe(407500);
   });
-  it("toont rustig overzicht: 122/171, Hunters 13, geen rekenbrug of voorbehouden", () => {
-    const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} />);
-    expect(screen.getByRole("heading", { name: "Contributieraming 2027" })).toBeTruthy();
-    expect(screen.getByTestId("contrib-shops").textContent).toBe("171");
-    fireEvent.click(screen.getByText("Welke leden hebben meerdere shops?"));
-    expect(screen.getByRole("link", { name: "Hunters" }).getAttribute("href")).toBe("/leden/21");
-    expect(screen.getByText(/Meer dan 10 locaties: 1 groep, 13 shops/)).toBeTruthy();
-    expect(container.textContent).not.toMatch(/Aansluiting|som per groep|gegarandeerd|Kerngegevens|controlepunt|registraties/i);
+  it("staffelregels openen een venster met de juiste leden; lege staffel is niet klikbaar", async () => {
+    const { RAMINGSLEDEN_2027: leden } = await import("@/lib/begroting2027Concept.server");
+    const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} leden={leden} />);
+    expect(leden).toHaveLength(122);
+    expect(leden.reduce((t, g) => t + g.shops, 0)).toBe(171);
     expect(screen.getByTestId("contrib-summary").textContent).toBe("122 leden/groepen · 171 coffeeshops");
-    expect(screen.getByRole("link", { name: "Tyson" }).closest("li")?.textContent).toMatch(/2 shops/);
-    expect(container.textContent).not.toMatch(/nog niet meegerekend/);
+    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(407500);
+    expect(container.textContent).not.toMatch(/Welke leden hebben meerdere shops|Aansluiting|controlepunt/i);
+    const row = (label: string) => screen.getByText(label).closest("tr")!;
+    fireEvent.keyDown(row("1 locatie"), { key: "Enter" });
+    expect(screen.getByTestId("staffel-dialog-summary").textContent).toMatch(/^104 leden\/groepen · 104 coffeeshops/);
+    expect(screen.getByTestId("staffel-dialog-list").querySelectorAll("li")).toHaveLength(104);
+    expect(screen.getByRole("link", { name: "Coffeeshop Scolo" }).getAttribute("href")).toBe("/leden/32");
+    expect(screen.queryByRole("link", { name: "Demo Coffeeshop" })).toBeNull();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    cleanup();
+    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} leden={leden} />);
+    fireEvent.keyDown(screen.getByText("2–3 locaties").closest("tr")!, { key: " " });
+    expect(screen.getByTestId("staffel-dialog-list").querySelectorAll("li")).toHaveLength(11);
+    expect(screen.getByRole("link", { name: "Coffeeshop Tyson" }).closest("li")?.textContent).toMatch(/2 shops/);
+    cleanup();
+    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} leden={leden} />);
+    fireEvent.click(screen.getByText("Meer dan 10 locaties").closest("tr")!);
+    expect(screen.getByRole("link", { name: "Hunters" }).getAttribute("href")).toBe("/leden/21");
+    expect(screen.getByTestId("staffel-dialog-summary").textContent).toMatch(/^1 lid\/groep · 13 coffeeshops/);
+    cleanup();
+    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} leden={leden} />);
+    const empty = screen.getByText("7–10 locaties").closest("tr")!;
+    expect(empty.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(empty);
+    expect(screen.queryByTestId("staffel-dialog-list")).toBeNull();
   });
 });
 

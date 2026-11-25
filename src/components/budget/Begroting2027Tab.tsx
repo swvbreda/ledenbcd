@@ -68,7 +68,7 @@ export default function Begroting2027Tab() {
       <BankBalancesCard />
 
       <div className="mt-4">
-        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} groups={B.groups} />
+        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} groups={B.groups} leden={B.leden} />
       </div>
 
       <div className="mt-4">

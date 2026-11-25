@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Row = { label: string; count: number; amount: number };
 type Staffel = { label: string; amount: number };
@@ -37,11 +37,19 @@ export function contributieRows(rows: readonly Row[], staffel: readonly Staffel[
   return { lines, count, single, multi: count - single, minimum: groups.some((g) => g.minimum), shops: lines.reduce((t, l) => t + l.shops, 0), total: lines.reduce((t, l) => t + l.total, 0) };
 }
 
-export default function ContributieInkomsten2027({ rows, staffel, groups = [] }: {
-  rows: readonly Row[]; staffel: readonly Staffel[]; groups?: readonly Group[];
+/** Leden/groepen per staffel uit de volledige ledenlijst (incl. 1 locatie). */
+export function ledenPerStaffel(leden: readonly Group[], staffelCount: number) {
+  return Array.from({ length: staffelCount }, (_, i) => leden.filter((g) => staffelIndex(g.shops) === i).sort((x, y) => x.name.localeCompare(y.name, "nl")));
+}
+
+export default function ContributieInkomsten2027({ rows, staffel, groups = [], leden }: {
+  rows: readonly Row[]; staffel: readonly Staffel[]; groups?: readonly Group[]; leden?: readonly Group[];
 }) {
   const t = contributieRows(rows, staffel, groups);
-  const [open, setOpen] = useState(false);
+  const perStaffel = leden ? ledenPerStaffel(leden, staffel.length) : t.lines.map((l) => l.members);
+  const [sel, setSel] = useState<number | null>(null);
+  const line = sel == null ? null : t.lines[sel];
+  const members = sel == null ? [] : perStaffel[sel] ?? [];
   return (
     <section aria-labelledby="contrib-2027" className="overflow-hidden rounded-lg border border-border">
       <div className="flex flex-wrap items-baseline justify-between gap-2 bg-muted/50 px-3 py-2">
@@ -60,15 +68,28 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [] }:
             </tr>
           </thead>
           <tbody>
-            {t.lines.map((l) => (
-              <tr key={l.label} className="border-b border-border/50">
-                <td className="py-1.5 pr-2">{l.label}</td>
-                <td className="py-1.5 pr-2 text-right tabular-nums">{l.count}</td>
-                <td className="py-1.5 pr-2 text-right tabular-nums">{l.shops}</td>
-                <td className="py-1.5 pr-2 text-right tabular-nums">{eur(l.amount)}</td>
-                <td className="py-1.5 text-right tabular-nums">{eur(l.total)}</td>
-              </tr>
-            ))}
+            {t.lines.map((l, i) => {
+              const clickable = (perStaffel[i]?.length ?? 0) > 0;
+              const open = () => clickable && setSel(i);
+              return (
+                <tr
+                  key={l.label}
+                  className={`border-b border-border/50 ${clickable ? "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-2 focus-visible:outline-primary" : "text-muted-foreground"}`}
+                  tabIndex={clickable ? 0 : -1}
+                  role="button"
+                  aria-disabled={!clickable}
+                  aria-label={clickable ? `${l.label}: toon ${l.count} leden/groepen` : `${l.label}: geen leden/groepen`}
+                  onClick={open}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } }}
+                >
+                  <td className="py-1.5 pr-2"><span className="inline-flex items-center gap-1">{l.label}{clickable && <ChevronRight className="h-3.5 w-3.5 text-brand-red" aria-hidden />}</span></td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{l.count}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{l.shops}</td>
+                  <td className="py-1.5 pr-2 text-right tabular-nums">{eur(l.amount)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{eur(l.total)}</td>
+                </tr>
+              );
+            })}
             <tr className="font-semibold">
               <td className="py-1.5 pr-2">Totaal</td>
               <td className="py-1.5 pr-2 text-right tabular-nums">{t.count}</td>
@@ -79,31 +100,24 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [] }:
           </tbody>
         </table>
       </div>
-      {groups.length > 0 && (
-        <Collapsible open={open} onOpenChange={setOpen} className="border-t border-border/50">
-          <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium">
-            Welke leden hebben meerdere shops?
-            <ChevronDown className={`h-4 w-4 text-brand-red transition-transform ${open ? "rotate-180" : ""}`} />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="space-y-3 px-3 pb-3 text-sm">
-              {t.lines.slice(1).filter((l) => l.members.length > 0).map((l) => (
-                <div key={l.label}>
-                  <h4 className="mb-1 text-xs font-semibold">{l.label}: {l.members.length} {l.members.length === 1 ? "groep" : "groepen"}, {l.shops} shops · {eur(l.amount)} per groep</h4>
-                  <ul className="divide-y divide-border/50 rounded-md border border-border/50">
-                    {l.members.map((g) => (
-                      <li key={g.id} className="flex items-center justify-between gap-2 px-2 py-1">
-                        <a href={`/leden/${g.id}`} className="font-medium hover:text-brand-red">{g.name}</a>
-                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{g.shops} shops</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+      <Dialog open={sel != null} onOpenChange={(o) => !o && setSel(null)}>
+        <DialogContent className="flex max-h-[85vh] w-[calc(100vw-2rem)] max-w-lg flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>{line?.label}</DialogTitle>
+            <DialogDescription data-testid="staffel-dialog-summary">
+              {members.length} {members.length === 1 ? "lid/groep" : "leden/groepen"} · {members.reduce((s, g) => s + g.shops, 0)} coffeeshops · {line ? eur(line.amount) : ""} per lid/groep
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="min-h-0 flex-1 divide-y divide-border/50 overflow-y-auto overflow-x-hidden rounded-md border border-border/50 text-sm" data-testid="staffel-dialog-list">
+            {members.map((g) => (
+              <li key={g.id} className="flex items-start justify-between gap-2 px-2 py-1.5">
+                <a href={`/leden/${g.id}`} className="min-w-0 break-words font-medium hover:text-brand-red">{g.name}</a>
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{g.shops} {g.shops === 1 ? "shop" : "shops"} · {line ? eur(line.amount) : ""}</span>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
