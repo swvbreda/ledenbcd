@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, Check } from "lucide-react";
+import { addressGroup, ADDRESS_FIELDS } from "@/lib/surveyAddressGroup";
 
 interface Question {
   id: string;
@@ -45,6 +46,8 @@ export default function EnqueteInvullenPage() {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const address = useMemo(() => addressGroup(id, questions), [id, questions]);
+  const addressIds = useMemo(() => new Set(address?.map((q) => q.id) ?? []), [address]);
   const [completedLocations, setCompletedLocations] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -321,7 +324,38 @@ export default function EnqueteInvullenPage() {
         </Card>
       ) : (!hasMultipleLocations || (selectedLocation && !currentLocationDone)) && (
         <>
-          {questions.map((q, idx) => (
+          {questions.map((q, idx) => addressIds.has(q.id) ? (
+            q.id === address![0]!.id ? (
+              <Card key="afleveradres">
+                <CardContent className="pt-6">
+                  <fieldset className="space-y-3">
+                    <legend className="mb-1 text-sm font-medium">Afleveradres</legend>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+                      {address!.map((aq, i) => {
+                        const f = ADDRESS_FIELDS[i]!;
+                        return (
+                          <div key={aq.id} className={`space-y-1 ${i === 0 ? "col-span-2" : "col-span-1"} ${f.span}`}>
+                            <Label htmlFor={`addr-${aq.id}`} className="text-xs font-medium">
+                              {aq.question_text}
+                              {aq.required ? <span className="text-destructive ml-1">*</span> : <span className="ml-1 font-normal text-muted-foreground">(optioneel)</span>}
+                            </Label>
+                            <Input
+                              id={`addr-${aq.id}`}
+                              placeholder={f.placeholder}
+                              autoComplete={f.autoComplete}
+                              required={aq.required}
+                              value={answers[aq.id] ?? ""}
+                              onChange={(e) => setAnswer(aq.id, e.target.value)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                </CardContent>
+              </Card>
+            ) : null
+          ) : (
             <Card key={q.id}>
               <CardContent className="pt-6 space-y-3">
                 <Label className="text-sm font-medium">
