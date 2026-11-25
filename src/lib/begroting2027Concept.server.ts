@@ -43,8 +43,9 @@ export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; min
 ];
 
 /**
- * Alle 122 geraamde leden/groepen (alleen lid-ID, zakelijke naam, shops), afgeleid op 25 november 2026 uit de 125 actuele leden
- * met de bevestigde correcties (Hunters 13, Tyson 2, GOA 1, Scolo 1 apart, The Plug 6 incl. East) en zonder Baba, Demo en The Plug East.
+ * Alle 122 geraamde leden/groepen (alleen lid-ID, zakelijke naam, shops), afgeleid op 25 november 2026 uit de 124 actuele leden
+ * met de bevestigde correcties (Hunters 13, Tyson 2, GOA 1, Scolo 1 apart, The Plug 6 incl. East) en zonder Baba en The Plug East.
+ * Historisch: testrecord Demo (#140) is op 25 november 2026 met toestemming als lid verwijderd en telt niet meer mee.
  * Shops buiten MEERDERE_SHOPS_2027 tellen als 1 volgens de ramingssnapshot. Server-only; geen contactgegevens.
  */
 export const RAMINGSLEDEN_2027: { id: number; name: string; shops: number }[] = [
@@ -172,33 +173,32 @@ export const RAMINGSLEDEN_2027: { id: number; name: string; shops: number }[] = 
   { id: 10001, name: "De Loods", shops: 1 },
 ];
 
-/** Aansluiting binnen de ramingsbron (contributieraming-2027.json, 25 november 2026): 125 registraties, drie niet afzonderlijk geraamd. Niet gelijkgesteld aan het actuele ledendashboard. */
+/** Aansluiting binnen de ramingsbron (actuele ledenlijst 25 november 2026): 124 registraties, twee niet afzonderlijk geraamd; Demo (#140) historisch verwijderd. Niet gelijkgesteld aan het actuele ledendashboard. */
 export const LEDENREGISTRATIE_2027 = {
-  geregistreerd: 125,
+  geregistreerd: 124,
   uitgesloten: [
     { id: 125, name: "Baba", reden: "eerder uitgesloten" },
-    { id: 140, name: "Demo", reden: "testrecord" },
     { id: 51, name: "The Plug East", reden: "valt onder groepscontributie The Plug (#66)" },
   ],
 } as const;
 
 /** Rekenbrug van geregistreerde coffeeshopvermeldingen (/leden, 25 november 2026) naar vestigingen in ramingsgroepen. */
 export const VESTIGINGEN_AANSLUITING_2027 = {
-  start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 181 },
+  start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 180 },
   stappen: [
     { label: "Vestigingen van 6 leads (Freak 1, Kruidenier 1, Purple Rain 1, Grass Company 4, Happy Corner 1, Toermalijn 2)", delta: -10 },
-    { label: "Niet afzonderlijk geraamd: Baba, Demo, The Plug East (#51, valt onder The Plug)", delta: -3 },
+    { label: "Niet afzonderlijk geraamd: Baba, The Plug East (#51, valt onder The Plug)", delta: -2 },
     { label: "Dubbele locatie binnen The Plug (Eerste/1e Oosterparkstraat 47)", delta: -1 },
     { label: "Hunters-correctie naar 13 (bevestigd door Simone)", delta: 4 },
     { label: "Tyson voorlopig 2 coffeeshops (registratie 1)", delta: 1 },
     { label: "GOA 1 locatie; Scolo (#32) apart lid", delta: -1 },
   ],
-  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
-  kerngegevensNoot: "125 leden en 181 geregistreerde vermeldingen zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
+  tussenstappen: [{ naStap: 0, label: "bij 124 leden" }],
+  kerngegevensNoot: "124 leden en 180 geregistreerde vermeldingen (na verwijdering testrecord Demo #140) zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
 } as const;
 
 export const CONTROLEPUNTEN: string[] = [
-  "Baba en Demo: uitgesloten.",
+  "Baba: uitgesloten.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47), inclusief The Plug East (#51), dat volgens bevestiging van de gebruiker onder de groepscontributie van The Plug valt. Zonder de ontdubbeling +€ 2.000.",
   "Hunters: 13 locaties volgens bevestiging van Simone (25 november 2026), dus staffel meer dan 10 locaties (€ 10.000; +€ 2.000). De ledenregistratie noemt nog 9 locaties.",
   "Coffeeshop 010: 5 locaties, waarvan 3 zonder adres (bestaand, voorlopig; geen broncorrectie). Bij 2 locaties: −€ 1.500.",

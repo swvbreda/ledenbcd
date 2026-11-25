@@ -79,16 +79,16 @@ describe("Coffeeshops en groepen 2027", () => {
 });
 
 const aansluiting = {
-  start: { label: "Geregistreerde coffeeshopvermeldingen", aantal: 181 },
-  stappen: [{ label: "leads", delta: -10 }, { label: "uitgesloten", delta: -3 }, { label: "Plug dubbel", delta: -1 }, { label: "Hunters", delta: 4 }, { label: "Tyson", delta: 1 }, { label: "GOA", delta: -1 }],
-  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
+  start: { label: "Geregistreerde coffeeshopvermeldingen", aantal: 180 },
+  stappen: [{ label: "leads", delta: -10 }, { label: "uitgesloten", delta: -2 }, { label: "Plug dubbel", delta: -1 }, { label: "Hunters", delta: 4 }, { label: "Tyson", delta: 1 }, { label: "GOA", delta: -1 }],
+  tussenstappen: [{ naStap: 0, label: "bij 124 leden" }],
   kerngegevensNoot: "Kerngegevens 169",
 };
 describe("Aansluiting vestigingen 2027", () => {
-  it("181 − 10 − 3 − 1 + 4 + 1 − 1 = 171", async () => {
+  it("180 − 10 − 2 − 1 + 4 + 1 − 1 = 171", async () => {
     const { aansluitingTotalen, contributieRows } = await import("../ContributieInkomsten2027");
     const a = aansluitingTotalen(aansluiting);
-    expect(a.stappen.map((s) => s.totaal)).toEqual([171, 168, 167, 171, 172, 171]);
+    expect(a.stappen.map((s) => s.totaal)).toEqual([170, 168, 167, 171, 172, 171]);
     expect(a.eind).toBe(171);
     expect(a.eind).toBe(contributieRows(rows, staffel, groups).shops);
   });

@@ -72,16 +72,19 @@ describe("2027 onderbouwing", () => {
 import { VESTIGINGEN_AANSLUITING_2027 as VA, LEDENREGISTRATIE_2027 } from "../begroting2027Concept.server";
 const s0 = () => ({ ledenRegistratie: LEDENREGISTRATIE_2027 });
 describe("Aansluiting vestigingen snapshot", () => {
-  it("server-snapshot: 181 − 10 − 3 − 1 + 4 + 1 − 1 = 171", async () => {
+  it("server-snapshot: 180 − 10 − 2 − 1 + 4 + 1 − 1 = 171", async () => {
     const eind = VA.stappen.reduce<number>((t, s) => t + s.delta, VA.start.aantal);
     expect(eind).toBe(171);
     expect(s0().ledenRegistratie.geregistreerd - s0().ledenRegistratie.uitgesloten.length).toBe(122);
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(s.aansluiting.start.aantal).toBe(181);
+    expect(s.aansluiting.start.aantal).toBe(180);
     expect(s.totalFull).toBe(407500);
     expect(s.groups.find((g) => g.id === 144)?.shops).toBe(2);
     expect(s.groups.some((g) => g.id === 150 || g.id === 32)).toBe(false);
     expect(JSON.stringify(s.ledenRegistratie)).not.toContain("Scolo");
+    expect(s.ledenRegistratie.geregistreerd).toBe(124);
+    expect(s.ledenRegistratie.uitgesloten.map((u) => u.id)).toEqual([125, 51]);
+    expect(s.leden.some((g) => g.id === 140)).toBe(false);
     expect(JSON.stringify(s.ledenRegistratie)).not.toContain("Tyson");
     expect(s.controlepunten.join(" ")).not.toContain("Tyson");
   });
