@@ -40,7 +40,6 @@ export default function Begroting2027Tab() {
   const { data: B, isLoading, isError } = useQuery({ queryKey: ["begroting-2027-concept"], queryFn: () => fetchConcept(), retry: false, staleTime: Infinity });
   const [detail, setDetail] = useState<Line | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
-  const [contribOpen, setContribOpen] = useState(false);
 
   const view = useMemo(() => {
     if (!B) return null;
@@ -69,7 +68,7 @@ export default function Begroting2027Tab() {
       <BankBalancesCard />
 
       <div className="mt-4">
-        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} groups={B.groups} peildatum={B.peildatum} registratie={B.ledenRegistratie} aansluiting={B.aansluiting} />
+        <ContributieInkomsten2027 rows={B.rows} staffel={B.staffel} groups={B.groups} />
       </div>
 
       <div className="mt-4">
@@ -156,31 +155,6 @@ export default function Begroting2027Tab() {
           </div>
         </div>
       </div>
-
-      <Collapsible open={contribOpen} onOpenChange={setContribOpen} className="mt-4">
-        <div className="overflow-hidden rounded-lg border border-border">
-          <CollapsibleTrigger className="flex w-full items-center justify-between bg-muted/50 px-3 py-2 text-left text-sm font-semibold">
-            Toelichting contributieraming
-            <ChevronDown className={`h-4 w-4 text-brand-red transition-transform ${contribOpen ? "rotate-180" : ""}`} />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="space-y-4 p-3 text-sm">
-              <div>
-                <h4 className="mb-1 font-semibold">Voorgestelde staffel</h4>
-                <ul className="space-y-1">{B.staffel.map((s) => <li key={s.label} className="flex justify-between gap-2"><span>{s.label}</span><span className="tabular-nums">{eur(s.amount)}</span></li>)}</ul>
-              </div>
-              <div className="space-y-1 text-muted-foreground">
-                <p>Bron: ALV-presentatie 3 juni 2026 (versie 20260603), dia 16: voorstel contributiestaffel. Aangevuld met de actuele ledenregistratie en profielcorrecties.</p>
-                <p>De bron noemt optelling van locaties binnen dezelfde rechtspersoon; nog niet alle groepen zijn geverifieerd.</p>
-              </div>
-              <div>
-                <h4 className="mb-1 font-semibold">Controlepunten ({B.controlepunten.length})</h4>
-                <ul className="list-disc space-y-1 pl-5">{B.controlepunten.map((c) => <li key={c}>{c}</li>)}</ul>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent>

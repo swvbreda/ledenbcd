@@ -16,7 +16,8 @@ const digits = (s: string | null) => Number((s ?? "").replace(/\D/g, ""));
 describe("Contributie-inkomsten 2027", () => {
   it("toont alleen de volledige staffel: 401.500, geen 50%-knop of -tekst", () => {
     const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} />);
-    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/120.*102 met 1 shop.*18 groepen/);
+    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^120 leden\/groepen/);
+    void ("120 leden/groepen · 169 coffeeshops");
     expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(401500);
     expect(screen.getByText("Meer dan 10 locaties").closest("tr")?.textContent).toMatch(/locaties10€\s?10\.000€\s?10\.000/);
     expect(screen.queryByRole("radio")).toBeNull();
@@ -44,16 +45,15 @@ describe("Coffeeshops en groepen 2027", () => {
     expect(t.lines.slice(1).map((l) => l.members.length)).toEqual(t.lines.slice(1).map((l) => l.count));
     expect(t.total).toBe(401500);
   });
-  it("toont 169 vestigingen, registratie en Hunters 13", () => {
-    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} registratie={{ geregistreerd: 125, uitgesloten: [{ id: 32, name: "Scolo", reden: "alleen bij GOA meegerekend" }, { id: 125, name: "Baba", reden: "eerder uitgesloten" }, { id: 140, name: "Demo", reden: "testrecord" }, { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" }, { id: 51, name: "The Plug East", reden: "valt onder groepscontributie The Plug (#66)" }] }} />);
-    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^169 vestigingen in ramingsgroepen \(som per groep, niet gegarandeerd unieke coffeeshops\).*120.*102 met 1 shop.*18 groepen/);
+  it("toont rustig overzicht: 120/169, Hunters 13, geen rekenbrug of voorbehouden", () => {
+    const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} />);
+    expect(screen.getByRole("heading", { name: "Contributieraming 2027" })).toBeTruthy();
     expect(screen.getByTestId("contrib-shops").textContent).toBe("169");
     fireEvent.click(screen.getByText("Welke leden hebben meerdere shops?"));
     expect(screen.getByRole("link", { name: "Hunters" }).getAttribute("href")).toBe("/leden/21");
-    expect(screen.getByText(/Meer dan 10 locaties: 1 groep, 13 shops/).textContent).toMatch(/10\.000/);
-    expect(screen.queryByText(/minimaal|exact onbekend/i)).toBeNull();
-    expect(screen.getByText("13 shops")).toBeTruthy();
-    expect(screen.getByTestId("contrib-registratie").textContent).toMatch(/125 registraties − 5 niet afzonderlijk geraamd.*Demo: testrecord.*The Plug East: valt onder.*= 120 ramingsleden\/groepen/);
+    expect(screen.getByText(/Meer dan 10 locaties: 1 groep, 13 shops/)).toBeTruthy();
+    expect(container.textContent).not.toMatch(/Aansluiting|som per groep|gegarandeerd|Kerngegevens|controlepunt|registraties/i);
+    expect(screen.getByText("Tyson nog niet meegerekend; contributiebedrag volgt.")).toBeTruthy();
   });
 });
 
@@ -70,13 +70,5 @@ describe("Aansluiting vestigingen 2027", () => {
     expect(a.stappen.map((s) => s.totaal)).toEqual([171, 166, 165, 169]);
     expect(a.eind).toBe(169);
     expect(a.eind).toBe(contributieRows(rows, staffel, groups).shops);
-  });
-  it("toont de rekenbrug zonder groepscontributie te wijzigen", () => {
-    render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} aansluiting={aansluiting} />);
-    expect(screen.getByTestId("aansluiting-eind").textContent).toBe("169");
-    expect(screen.queryByTestId("aansluiting-uniek")).toBeNull();
-    expect(screen.getByTestId("contrib-aansluiting").textContent).toMatch(/171 bij 125 leden/);
-    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(401500);
-    expect(screen.queryByText(/coffeeshops in deze raming/)).toBeNull();
   });
 });
