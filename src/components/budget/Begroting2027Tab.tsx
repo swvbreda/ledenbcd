@@ -139,7 +139,7 @@ export default function Begroting2027Tab() {
           <div className="overflow-hidden rounded-lg border border-border">
             <div className="flex items-center gap-2 bg-muted/50 px-3 py-2"><StickyNote size={14} /><h3 className="text-sm font-semibold">Notities</h3></div>
             <div className="space-y-2 p-3 text-sm text-muted-foreground">
-              <p>Begrotingsvoorstel per {B.peildatum}, niet vastgesteld door de ALV. Ramingen zijn afgerond op de nu geboekte kosten.</p>
+              <p>Begrotingsvoorstel per {B.peildatum}, niet vastgesteld door de ALV. Ramingen op basis van de begroting 2026, geboekte kosten en voorlopige aannames.</p>
               <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
                 <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-foreground">
                   Meer toelichting <ChevronDown className={`h-3 w-3 text-brand-red transition-transform ${notesOpen ? "rotate-180" : ""}`} />

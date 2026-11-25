@@ -50,7 +50,7 @@ export type ConceptCategory = { name: string; lines: ConceptLine[] };
 export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Algemene kosten", lines: [
     { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Afgeronde werkbudgetraming voor een volledig jaar." },
-    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 + kantoorhuur € 6.000. Huur op basis van bevestigde kantoorfactuur € 484 per maand (12 × € 484 = € 5.808, afgerond € 6.000), uitgaande van een volledig jaar. Verdeling en mogelijke overlap nog controleren." },
+    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 + kantoorhuur € 6.000. Huur op basis van kantoorfactuur van € 484; voorlopig aangenomen dat dit een maandbedrag is (12 × € 484 = € 5.808, afgerond € 6.000), uitgaande van een volledig jaar. Factuurperiode en overlap met bestaande kantoorkosten nog controleren." },
     { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Planningsbudget voor een volledig jaar." },
     { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Planningsbudget; bestaande toerekening behouden, geen andere boekingen verschoven." },
     { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
@@ -59,7 +59,7 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Reiskosten", budgeted: 3500, actual2026: 2719.26, basis: "Afgerond op de huidige kosten." },
   ] },
   { name: "Dagelijks bestuur", lines: [
-    { name: "Voorzitter - Het Strategiebureau", budgeted: 98000, actual2026: null, basis: "Voorlopige plaatsvervanger overgenomen uit 2026 in verband met loondienst in 2027. Geen gevalideerde totale loonkosten: definitieve werkgeverslasten, pensioen en vakantiegeldreservering ontbreken nog. Eerdere facturen en salaris niet bij elkaar optellen." },
+    { name: "Voorzitter - Het Strategiebureau", budgeted: 98000, actual2026: null, basis: "Voorlopige begrotingsruimte overgenomen uit 2026 in verband met loondienst in 2027. Geen gevalideerde totale loonkosten: definitieve werkgeverslasten, pensioen en vakantiegeldreservering ontbreken nog. Eerdere facturen en salaris niet bij elkaar optellen." },
     { name: "Secretariaatskosten", budgeted: 20000, actual2026: null, basis: "Bestaand gepland budget behouden; geen bevestigde afspraak. Overlap met taken uit het dienstverband controleren." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
