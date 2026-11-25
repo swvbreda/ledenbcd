@@ -230,10 +230,10 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
   ] },
   { name: "Advieskosten", lines: [
-    { name: "Juridische kosten / bestuurlijk advies", budgeted: 150000, actual2026: null, basis: "Eerder jaarlijks beleidsbudget behouden, geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
+    { name: "Juridische kosten / bestuurlijk advies", budgeted: 145000, actual2026: null, basis: "Eerder jaarlijks beleidsbudget behouden, geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
     { name: "Juridische kosten / bestuurlijk advies (2025)", budgeted: 0, actual2026: null, basis: "Regel behouden voor herkenbare opbouw. Het meegenomen bedrag van € 42.196 is in 2026 opgebruikt en wordt niet opnieuw meegenomen." },
-    { name: "Onderzoek", budgeted: 40000, actual2026: null, basis: "Budgetkeuze; geen bestaande verplichting." },
-    { name: "Communicatie / marketing", budgeted: 10000, actual2026: 8849.26, basis: "Planningsbudget." },
+    { name: "Onderzoek", budgeted: 30000, actual2026: null, basis: "Budgetkeuze; geen bestaande verplichting. € 10.000 verschoven naar communicatie/marketing/merchandise." },
+    { name: "Communicatie / marketing / merchandise", budgeted: 25000, actual2026: 8849.26, basis: "Budgetkeuze inclusief merchandise: € 10.000 + € 15.000 extra, gefinancierd uit onderzoek (−€ 10.000) en juridisch (−€ 5.000). Geen merchandiseopbrengsten geraamd; geen verplaatsing van facturen." },
     { name: "Drukwerk", budgeted: 1500, actual2026: 952.69, basis: "Planningsbudget." },
     { name: "Verzendkosten", budgeted: 2000, actual2026: null, basis: "Eerder beleidsbudget behouden." },
   ] },

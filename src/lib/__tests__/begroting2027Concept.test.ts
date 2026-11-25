@@ -43,10 +43,12 @@ describe("Uitgavenraming 2027", () => {
     expect(t.expenses).toBe(392500);
     expect(t.resultFull).toBe(15000);
   });
-  it("goedgekeurde posten: secretariaat 5.000, onderzoek 40.000, kantoor 9.000, personeel 5.000, onvoorzien 1.600, loon 102.000", () => {
+  it("goedgekeurde posten: secretariaat 5.000, onderzoek 30.000, juridisch 145.000, marketing/merchandise 25.000, kantoor 9.000, personeel 5.000, onvoorzien 1.600, loon 102.000", () => {
     const line = (n: string) => UITGAVEN_2027.flatMap((c) => c.lines).find((l) => l.name === n)?.budgeted;
     expect(line("Secretariaatskosten")).toBe(5000);
-    expect(line("Onderzoek")).toBe(40000);
+    expect(line("Onderzoek")).toBe(30000);
+    expect(line("Juridische kosten / bestuurlijk advies")).toBe(145000);
+    expect(line("Communicatie / marketing / merchandise")).toBe(25000);
     expect(line("Kantoorkosten")).toBe(9000);
     expect(line("Aanvullende personeelskosten")).toBe(5000);
     expect(line("Jaarlijkse onvoorziene uitgaven")).toBe(1600);
@@ -63,6 +65,7 @@ describe("Uitgavenraming 2027", () => {
     expect(conceptTotals(s.uitgaven, 407500).expenses).toBe(392500);
     expect(s.reserve).toEqual({ begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 });
     expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(407500);
+    expect(s.inkomsten.reduce((a, l) => a + l.budgeted, 0)).toBe(407500);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
 });
