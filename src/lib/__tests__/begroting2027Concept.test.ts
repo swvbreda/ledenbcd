@@ -72,7 +72,7 @@ describe("2027 onderbouwing", () => {
 import { VESTIGINGEN_AANSLUITING_2027 as VA } from "../begroting2027Concept.server";
 describe("Aansluiting vestigingen snapshot", () => {
   it("server-snapshot: 181 − 10 − 4 − 1 + 4 = 170, overlap −1 = 169", async () => {
-    const eind = VA.stappen.reduce((t, s) => t + s.delta, VA.start.aantal);
+    const eind = VA.stappen.reduce<number>((t, s) => t + s.delta, VA.start.aantal);
     expect(eind).toBe(170);
     expect(eind + VA.overlap.delta).toBe(169);
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
