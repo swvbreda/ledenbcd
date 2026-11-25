@@ -54,3 +54,18 @@ describe("Uitgavenraming 2027", () => {
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
 });
+
+import { jaarsalarisInclVakantiegeld, minimaleHuur2027, WERKGEVER_WAARSCHUWING } from "../begroting2027Concept.server";
+describe("2027 onderbouwing", () => {
+  it("jaarsalaris 6760 p/m + 8% vakantiegeld = 87609,60", () => {
+    expect(jaarsalarisInclVakantiegeld(6760)).toBe(87609.6);
+    expect(98000 - jaarsalarisInclVakantiegeld(6760)).toBeCloseTo(10390.4, 2);
+  });
+  it("minimale huur 2027 = 5846,72 en past binnen 6000", () => {
+    expect(minimaleHuur2027(484)).toBe(5846.72);
+    expect(6000 - minimaleHuur2027(484)).toBeCloseTo(153.28, 2);
+  });
+  it("waarschuwing noemt 98.000 begroot", () => {
+    expect(WERKGEVER_WAARSCHUWING).toContain("Begroot €98.000");
+  });
+});

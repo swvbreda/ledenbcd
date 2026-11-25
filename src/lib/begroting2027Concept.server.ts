@@ -50,7 +50,7 @@ export type ConceptCategory = { name: string; lines: ConceptLine[] };
 export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Algemene kosten", lines: [
     { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Afgeronde werkbudgetraming voor een volledig jaar." },
-    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 + kantoorhuur € 6.000. Huur op basis van kantoorfactuur van € 484; voorlopig aangenomen dat dit een maandbedrag is (12 × € 484 = € 5.808, afgerond € 6.000), uitgaande van een volledig jaar. Factuurperiode en overlap met bestaande kantoorkosten nog controleren." },
+    { name: "Kantoorkosten", budgeted: 10500, actual2026: 3694.51, basis: "Kantoorartikelen € 4.500 (planningsbudget, niet onderbouwd) + kantoorhuur € 6.000. Huurcontract Officez/BCD: € 400 per maand excl. btw, servicekosten inbegrepen; eerste jaarlijkse aanpassing 1 september 2027, minimaal 2%. Facturen 60.03.01097 en 60.03.01043 bevestigen € 400 + € 84 btw = € 484 (het contracttotaal van € 485 wijkt rekenkundig af). Zonder btw-aftrek minimaal 8 × € 484 + 4 × € 493,68 = € 5.846,72; de werkelijke indexering kan hoger zijn. De € 6.000 laat € 153,28 ruimte, geen definitieve geïndexeerde huur. Waarborgsom is geen kosten." },
     { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Planningsbudget voor een volledig jaar." },
     { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Planningsbudget; bestaande toerekening behouden, geen andere boekingen verschoven." },
     { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
@@ -59,7 +59,7 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Reiskosten", budgeted: 3500, actual2026: 2719.26, basis: "Afgerond op de huidige kosten." },
   ] },
   { name: "Dagelijks bestuur", lines: [
-    { name: "Voorzitter - Het Strategiebureau", budgeted: 98000, actual2026: null, basis: "Voorlopige begrotingsruimte overgenomen uit 2026 in verband met loondienst in 2027. Geen gevalideerde totale loonkosten: definitieve werkgeverslasten, pensioen en vakantiegeldreservering ontbreken nog. Eerdere facturen en salaris niet bij elkaar optellen." },
+    { name: "Voorzitter - Het Strategiebureau", budgeted: 98000, actual2026: null, basis: "Voorlopige begrotingsruimte. In 2027 vervangt loondienst de eerdere kosten als opdrachtnemer; eerdere facturen en salaris niet bij elkaar optellen. Arbeidsovereenkomst 2026: bruto € 6.760 per maand + 8% vakantiegeld = € 81.120 + € 6.489,60 = € 87.609,60 per jaar; de definitieve loonstrook oktober bevestigt € 6.760 en € 540,80 vakantiegeldopbouw. Werkgeverspremies staan daar niet op; het originele loonjournaal en een werkgeverskostenraming 2027 ontbreken. De € 98.000 laat € 10.390,40 voor werkgeverslasten en overige personeelskosten; niet gecontroleerd of dat voldoende is. Nettoloon en inhoudingen zijn geen extra werkgeverskosten. De werknemer valt volgens het contract buiten de verplichte pensioenregeling; er is geen pensioenbedrag geraamd en niet vastgesteld dat alle pensioenkosten nul zijn." },
     { name: "Secretariaatskosten", budgeted: 20000, actual2026: null, basis: "Bestaand gepland budget behouden; geen bevestigde afspraak. Overlap met taken uit het dienstverband controleren." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
@@ -79,6 +79,18 @@ export const UITGAVEN_2027: ConceptCategory[] = [
   ] },
 ];
 
+/** Onderbouwd jaarsalaris uit de arbeidsovereenkomst: 12 × bruto + 8% vakantiegeld. */
+export function jaarsalarisInclVakantiegeld(brutoPerMaand: number): number {
+  return Math.round(brutoPerMaand * 12 * 1.08 * 100) / 100;
+}
+
+/** Minimale huur 2027 incl. niet-aftrekbare btw: jan–aug huidig, sep–dec minimaal 2% hoger. */
+export function minimaleHuur2027(maandInclBtw: number): number {
+  return Math.round((8 * maandInclBtw + 4 * Math.round(maandInclBtw * 1.02 * 100) / 100) * 100) / 100;
+}
+
+export const WERKGEVER_WAARSCHUWING = "Werkgeverskosten nog voorlopig: €87.609,60 salaris inclusief vakantiegeld onderbouwd; werkgeverspremies nog te bevestigen. Begroot €98.000.";
+
 export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number, incomeHalf: number) {
   const perCategory = cats.map((c) => ({ name: c.name, total: c.lines.reduce((s, l) => s + l.budgeted, 0) }));
   const expenses = perCategory.reduce((s, c) => s + c.total, 0);
@@ -95,6 +107,7 @@ export type Begroting2027Snapshot = {
   totalHalf: number;
   totalGroups: number;
   controlepunten: string[];
+  werkgeverWaarschuwing: string;
 };
 
 type RoleClient = { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown; error: unknown }> };
@@ -111,6 +124,7 @@ export async function begroting2027ForCaller(client: RoleClient, userId: string)
     totalHalf: BEGROTING_2027.totalHalf,
     totalGroups: BEGROTING_2027.totalGroups,
     controlepunten: [...CONTROLEPUNTEN],
+    werkgeverWaarschuwing: WERKGEVER_WAARSCHUWING,
     uitgaven: UITGAVEN_2027.map((c) => ({ name: c.name, lines: c.lines.map((l) => ({ ...l })) })),
     inkomsten: [
       { name: "Contributies", budgeted: BEGROTING_2027.totalFull, actual2026: null, basis: "Scenario volledige staffel (niet vastgesteld). Alternatief 50% van de verhoging: € 382.750." },

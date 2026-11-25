@@ -147,3 +147,5 @@
 - [x] Preview hersteld (verse start, pagina laadt 200, geen fouten)
 - [x] 7 bestuursnamen, 6 admins, Tim de Wilde zonder account
 - [ ] Activeren 15 acties via UI (gebruiker)
+
+- [x] 2027 concept: salaris-/huuronderbouwing en werkgeverswaarschuwing
