@@ -39,17 +39,17 @@ describe("Uitgavenraming 2027", () => {
   const t = conceptTotals(UITGAVEN_2027, 402500, 382750);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
-      "Algemene kosten": 55900, "Dagelijks bestuur": 133000, Advieskosten: 213500, Donaties: 6000,
+      "Algemene kosten": 55900, "Dagelijks bestuur": 136000, Advieskosten: 213500, Donaties: 6000,
     });
   });
   it("totaal 408.400 en planresultaten -5.900 / -25.650", () => {
-    expect(t.expenses).toBe(408400);
-    expect(t.resultFull).toBe(-5900);
-    expect(t.resultHalf).toBe(-25650);
+    expect(t.expenses).toBe(411400);
+    expect(t.resultFull).toBe(-8900);
+    expect(t.resultHalf).toBe(-28650);
   });
   it("snapshot levert uitgaven en contributie 402.500 alleen aan beheerder", async () => {
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(conceptTotals(s.uitgaven, 402500, 382750).expenses).toBe(408400);
+    expect(conceptTotals(s.uitgaven, 402500, 382750).expenses).toBe(411400);
     expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(402500);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
@@ -59,13 +59,13 @@ import { jaarsalarisInclVakantiegeld, minimaleHuur2027, WERKGEVER_WAARSCHUWING }
 describe("2027 onderbouwing", () => {
   it("jaarsalaris 6760 p/m + 8% vakantiegeld = 87609,60", () => {
     expect(jaarsalarisInclVakantiegeld(6760)).toBe(87609.6);
-    expect(98000 - jaarsalarisInclVakantiegeld(6760)).toBeCloseTo(10390.4, 2);
+    expect(jaarsalarisInclVakantiegeld(6760) + 12 * (710 + 403)).toBeCloseTo(100965.6, 2);
   });
   it("minimale huur 2027 = 5846,72 en past binnen 6000", () => {
     expect(minimaleHuur2027(484)).toBe(5846.72);
     expect(6000 - minimaleHuur2027(484)).toBeCloseTo(153.28, 2);
   });
-  it("waarschuwing noemt 98.000 begroot", () => {
-    expect(WERKGEVER_WAARSCHUWING).toContain("Begroot €98.000");
+  it("waarschuwing noemt loonbudget 101.000", () => {
+    expect(WERKGEVER_WAARSCHUWING).toContain("Loonbudget €101.000");
   });
 });

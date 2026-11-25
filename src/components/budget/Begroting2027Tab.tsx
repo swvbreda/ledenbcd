@@ -150,7 +150,7 @@ export default function Begroting2027Tab() {
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
                     <li>De geboekte kosten van 2026 zijn mogelijk nog niet volledig.</li>
                     <li>Geen herberekening van btw; de BCD kan geen btw aftrekken.</li>
-                    <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de nog niet bevestigde werkgeverspremies kunnen het totaal veranderen.</li>
+                    <li>Het nog niet toegewezen bedrag van € 7.500 uit 2026 en de nog niet bevestigde loontarieven 2027 en overige personeelskosten kunnen het totaal veranderen.</li>
                     <li>Geen automatische overdracht van reserves; PCN-terugbetalingen zijn niet meegerekend.</li>
                     <li>De begroting en boekingen van 2026 zijn niet aangepast.</li>
                   </ul>
