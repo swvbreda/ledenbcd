@@ -98,7 +98,7 @@ export function jaarplanRef(d: Pick<RegisterDossier, "jaarplan_kind" | "jaarplan
 }
 
 // ---- Financiën deeplinks ----
-export const FINANCE_TABS = ["dashboard", "intern", "contributie", "boekingen", "dossiers", "todo", "controle"] as const;
+export const FINANCE_TABS = ["dashboard", "intern", "contributie", "boekingen", "dossiers", "todo", "controle", "begroting-2027"] as const;
 export type FinanceTab = (typeof FINANCE_TABS)[number];
 
 export function financeDossierHref(alias: string, year: number): string {

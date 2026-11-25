@@ -13,6 +13,7 @@ import InternalDeclarationsView from "@/components/budget/InternalDeclarationsVi
 import PaidPreflightPanel from "@/components/budget/PaidPreflightPanel";
 import AdminReviewPanel from "@/components/budget/AdminReviewPanel";
 import ContributieTab from "@/components/budget/ContributieTab";
+import Begroting2027Tab from "@/components/budget/Begroting2027Tab";
 import PdfImportDialog from "@/components/budget/PdfImportDialog";
 import BoekingenOverzicht from "@/components/budget/BoekingenOverzicht";
 import DuplicatesDialog from "@/components/budget/DuplicatesDialog";
@@ -169,7 +170,10 @@ export default function FinancienPage() {
         subtitle="Begroting, contributie, declaraties en uitgaven beheren"
       />
 
-      {/* Year selector */}
+      {/* Year selector — verborgen op het vaste 2027-concept; jaarstate blijft ongewijzigd */}
+      {tab === "begroting-2027" ? (
+        <p className="text-sm text-muted-foreground">Dit tabblad toont altijd het concept voor 2027, los van het gekozen boekjaar.</p>
+      ) : (
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
@@ -184,6 +188,7 @@ export default function FinancienPage() {
           </Select>
         </div>
       </div>
+      )}
 
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
@@ -191,7 +196,7 @@ export default function FinancienPage() {
         <>
 
         <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-1">
-          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-6">
+          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-7">
             <TabsTrigger value="dashboard" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dashboard
             </TabsTrigger>
@@ -210,8 +215,15 @@ export default function FinancienPage() {
             <TabsTrigger value="controle" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Controle &amp; sync
             </TabsTrigger>
+            <TabsTrigger value="begroting-2027" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
+              Begroting 2027
+            </TabsTrigger>
           </TabsList>
 
+
+          <TabsContent value="begroting-2027">
+            <Begroting2027Tab />
+          </TabsContent>
 
           <TabsContent value="dashboard">
             <BankBalancesCard />
