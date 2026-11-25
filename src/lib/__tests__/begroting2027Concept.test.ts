@@ -3,10 +3,10 @@ import { BEGROTING_2027, scenarioTotals, begroting2027ForCaller } from "@/lib/be
 import { parseFinanceSearch } from "@/lib/dossierRegister";
 
 describe("Begroting 2027 concept", () => {
-  it("volledige staffel telt op tot 401.500 en 120 groepen", () => {
+  it("volledige staffel telt op tot 406.000 en 121 groepen", () => {
     const t = scenarioTotals(BEGROTING_2027.rows);
-    expect(t.full).toBe(401500);
-    expect(t.groups).toBe(120);
+    expect(t.full).toBe(406000);
+    expect(t.groups).toBe(121);
     expect(BEGROTING_2027.totalFull).toBe(t.full);
   });
   it("oude deeplink ?tab=begroting-2027 wordt dashboard + jaar 2027", () => {
@@ -21,7 +21,7 @@ describe("Begroting 2027 concept", () => {
   const client = (data: unknown) => ({ rpc: async () => ({ data, error: null }) });
   it("beheerder krijgt de snapshot", async () => {
     const s = await begroting2027ForCaller(client(true), "u1");
-    expect(s.totalFull).toBe(401500);
+    expect(s.totalFull).toBe(406000);
     expect(s).not.toHaveProperty("totalHalf");
     expect(JSON.stringify(s)).not.toMatch(/50% van de verhoging|383\.?750|28\.?650|half/i);
   });
@@ -33,20 +33,20 @@ describe("Begroting 2027 concept", () => {
 
 import { UITGAVEN_2027, conceptTotals } from "@/lib/begroting2027Concept.server";
 describe("Uitgavenraming 2027", () => {
-  const t = conceptTotals(UITGAVEN_2027, 401500);
+  const t = conceptTotals(UITGAVEN_2027, 406000);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
       "Algemene kosten": 55900, "Dagelijks bestuur": 137000, Advieskosten: 213500, Donaties: 6000,
     });
   });
-  it("totaal 412.400 en planresultaat -10.900 (volledige staffel)", () => {
+  it("totaal 412.400 en planresultaat -6.400 (volledige staffel)", () => {
     expect(t.expenses).toBe(412400);
-    expect(t.resultFull).toBe(-10900);
+    expect(t.resultFull).toBe(-6400);
   });
-  it("snapshot levert uitgaven en contributie 401.500 alleen aan beheerder", async () => {
+  it("snapshot levert uitgaven en contributie 406.000 alleen aan beheerder", async () => {
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(conceptTotals(s.uitgaven, 401500).expenses).toBe(412400);
-    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(401500);
+    expect(conceptTotals(s.uitgaven, 406000).expenses).toBe(412400);
+    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(406000);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
 });
@@ -72,12 +72,15 @@ describe("2027 onderbouwing", () => {
 import { VESTIGINGEN_AANSLUITING_2027 as VA, LEDENREGISTRATIE_2027 } from "../begroting2027Concept.server";
 const s0 = () => ({ ledenRegistratie: LEDENREGISTRATIE_2027 });
 describe("Aansluiting vestigingen snapshot", () => {
-  it("server-snapshot: 181 − 10 − 5 − 1 + 4 = 169", async () => {
+  it("server-snapshot: 181 − 10 − 4 − 1 + 4 + 1 = 171", async () => {
     const eind = VA.stappen.reduce<number>((t, s) => t + s.delta, VA.start.aantal);
-    expect(eind).toBe(169);
-    expect(s0().ledenRegistratie.geregistreerd - s0().ledenRegistratie.uitgesloten.length).toBe(120);
+    expect(eind).toBe(171);
+    expect(s0().ledenRegistratie.geregistreerd - s0().ledenRegistratie.uitgesloten.length).toBe(121);
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
     expect(s.aansluiting.start.aantal).toBe(181);
-    expect(s.totalFull).toBe(401500);
+    expect(s.totalFull).toBe(406000);
+    expect(s.groups.find((g) => g.id === 144)?.shops).toBe(2);
+    expect(JSON.stringify(s.ledenRegistratie)).not.toContain("Tyson");
+    expect(s.controlepunten.join(" ")).not.toContain("Tyson");
   });
 });

@@ -12,15 +12,15 @@ export const BEGROTING_2027 = {
   ],
   rows: [
     { label: "1 locatie", count: 102, amount: 3000 },
-    { label: "2–3 locaties", count: 11, amount: 4500 },
+    { label: "2–3 locaties", count: 12, amount: 4500 },
     { label: "4–6 locaties", count: 6, amount: 6000 },
     { label: "7–10 locaties", count: 0, amount: 8000 },
     { label: "Meer dan 10 locaties", count: 1, amount: 10000 },
   ],
   /** Snapshotwaarden zoals aangeleverd; tests controleren dat ze kloppen met de tabel. */
-  totalFull: 401500,
+  totalFull: 406000,
   totalHalf: 383750,
-  totalGroups: 120,
+  totalGroups: 121,
 } as const;
 
 export const BASE_CONTRIBUTION = 3000;
@@ -40,16 +40,16 @@ export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; min
   { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
   { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
   { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 }, { id: 150, name: "GOA", shops: 2 },
+  { id: 144, name: "Tyson", shops: 2 }, // voorlopig 2 coffeeshops volgens bevestiging 25-11-2026; geen factuur
 ];
 
-/** Aansluiting binnen de ramingsbron (contributieraming-2027.json, 25 november 2026): 125 registraties, 4 met € 0 geraamd. Niet gelijkgesteld aan het actuele ledendashboard. */
+/** Aansluiting binnen de ramingsbron (contributieraming-2027.json, 25 november 2026): 125 registraties, vier niet afzonderlijk geraamd. Niet gelijkgesteld aan het actuele ledendashboard. */
 export const LEDENREGISTRATIE_2027 = {
   geregistreerd: 125,
   uitgesloten: [
     { id: 32, name: "Scolo", reden: "alleen bij GOA meegerekend" },
     { id: 125, name: "Baba", reden: "eerder uitgesloten" },
     { id: 140, name: "Demo", reden: "testrecord" },
-    { id: 144, name: "Tyson", reden: "bedrag wacht op bevestiging" },
     { id: 51, name: "The Plug East", reden: "valt onder groepscontributie The Plug (#66)" },
   ],
 } as const;
@@ -59,16 +59,16 @@ export const VESTIGINGEN_AANSLUITING_2027 = {
   start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 181 },
   stappen: [
     { label: "Vestigingen van 6 leads (Freak 1, Kruidenier 1, Purple Rain 1, Grass Company 4, Happy Corner 1, Toermalijn 2)", delta: -10 },
-    { label: "Niet afzonderlijk geraamd: Scolo, Baba, Demo, Tyson, The Plug East (#51, valt onder The Plug)", delta: -5 },
+    { label: "Niet afzonderlijk geraamd: Scolo, Baba, Demo, The Plug East (#51, valt onder The Plug)", delta: -4 },
     { label: "Dubbele locatie binnen The Plug (Eerste/1e Oosterparkstraat 47)", delta: -1 },
     { label: "Hunters-correctie naar 13 (bevestigd door Simone)", delta: 4 },
+    { label: "Tyson voorlopig 2 coffeeshops (registratie 1)", delta: 1 },
   ],
   tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
   kerngegevensNoot: "125 leden en 181 geregistreerde vermeldingen zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
 } as const;
 
 export const CONTROLEPUNTEN: string[] = [
-  "Tyson: uitgesloten; bedrag wacht nog op bevestiging.",
   "Baba en Demo: uitgesloten.",
   "Scolo: alleen bij GOA meegerekend in plaats van apart plus GOA — groepering controleren.",
   "The Plug: 6 unieke locaties aangenomen in plaats van 7 (Eerste/1e Oosterparkstraat 47), inclusief The Plug East (#51), dat volgens bevestiging van de gebruiker onder de groepscontributie van The Plug valt. Zonder de ontdubbeling +€ 2.000.",

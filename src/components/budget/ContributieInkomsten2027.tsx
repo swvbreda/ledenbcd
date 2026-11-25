@@ -104,7 +104,6 @@ export default function ContributieInkomsten2027({ rows, staffel, groups = [] }:
           </CollapsibleContent>
         </Collapsible>
       )}
-      <p className="px-3 pb-2 pt-1 text-xs text-muted-foreground">Tyson nog niet meegerekend; contributiebedrag volgt.</p>
     </section>
   );
 }
