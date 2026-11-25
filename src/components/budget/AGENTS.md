@@ -1,3 +1,3 @@
 # Budget components
 
-- Finance planning concepts (e.g. `?tab=begroting-2027`) are static dated snapshots with no DB reads/writes and never touch the selected year state, so drafts cannot alter or be mistaken for booked budgets.
+- Finance planning concepts are static dated snapshots served by an admin-checked server function and shown as a concept year tab (`?tab=dashboard&year=<concept year>`; legacy `?tab=begroting-<year>` redirects there); the concept year disables auto-sync and shows no booked-budget sections, so drafts cannot alter or be mistaken for booked budgets.

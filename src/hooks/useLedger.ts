@@ -296,7 +296,8 @@ export function useLedgerMutations(year: number) {
  * Houdt het geselecteerde boekjaar automatisch actueel: bij openen, bij
  * jaarwissel en periodiek. Altijd de volledige jaarsync, nooit een deelperiode.
  */
-export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number }) {
+export function useAutoYearSync(year: number, options?: { staleMs?: number; intervalMs?: number; enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const staleMs = options?.staleMs ?? YEAR_SYNC_STALE_MS;
   const intervalMs = options?.intervalMs ?? 60_000;
   const { data: syncState, isPending: logLoadingRaw, error: logError } = useInformerSyncState();
@@ -319,7 +320,7 @@ export function useAutoYearSync(year: number, options?: { staleMs?: number; inte
   useEffect(() => {
     let cancelled = false;
     const check = () => {
-      if (cancelled) return;
+      if (cancelled || !enabled) return;
       const ok = shouldStartYearSync({
         log: logRef.current,
         year,
@@ -346,7 +347,7 @@ export function useAutoYearSync(year: number, options?: { staleMs?: number; inte
       cancelled = true;
       clearInterval(id);
     };
-  }, [year, staleMs, intervalMs, logLoading]);
+  }, [year, staleMs, intervalMs, logLoading, enabled]);
 
   const lastOk = lastSuccessfulYearSync(log, year);
   return {

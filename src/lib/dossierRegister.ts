@@ -98,7 +98,7 @@ export function jaarplanRef(d: Pick<RegisterDossier, "jaarplan_kind" | "jaarplan
 }
 
 // ---- Financiën deeplinks ----
-export const FINANCE_TABS = ["dashboard", "intern", "contributie", "boekingen", "dossiers", "todo", "controle", "begroting-2027"] as const;
+export const FINANCE_TABS = ["dashboard", "intern", "contributie", "boekingen", "dossiers", "todo", "controle"] as const;
 export type FinanceTab = (typeof FINANCE_TABS)[number];
 
 export function financeDossierHref(alias: string, year: number): string {
@@ -116,15 +116,20 @@ export function unquoteSearch(raw: string | null): string | null {
   return raw;
 }
 
+/** Conceptjaar: alleen de beveiligde begrotingsraming, geen boekingen of sync. */
+export const FINANCE_CONCEPT_YEAR = 2027;
+
 export function parseFinanceSearch(params: URLSearchParams, years: number[], fallbackYear: number) {
   const t = unquoteSearch(params.get("tab"));
+  // Oude deeplink ?tab=begroting-2027 → ?tab=dashboard&year=2027.
+  if (t === "begroting-2027") return { tab: "dashboard" as FinanceTab, year: FINANCE_CONCEPT_YEAR, dossier: null, legacyConcept: true };
   const tab: FinanceTab = (FINANCE_TABS as readonly string[]).includes(t ?? "") ? (t as FinanceTab) : "dashboard";
   const yRaw = unquoteSearch(params.get("year"));
   const y = yRaw && /^\d{4}$/.test(yRaw) ? Number(yRaw) : NaN;
   const year = Number.isInteger(y) && years.includes(y) ? y : fallbackYear;
   const raw = unquoteSearch(params.get("dossier"));
   const dossier = raw && raw.trim() && raw.length <= 200 ? raw.trim() : null;
-  return { tab, year, dossier };
+  return { tab, year, dossier } as { tab: FinanceTab; year: number; dossier: string | null; legacyConcept?: true };
 }
 
 export function projectsDossierHref(dossierId: string): string {

@@ -36,12 +36,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigate, useSearchParams } from "@/lib/router-compat";
-import { parseFinanceSearch, unquoteSearch, type FinanceTab } from "@/lib/dossierRegister";
+import { FINANCE_CONCEPT_YEAR, parseFinanceSearch, unquoteSearch, type FinanceTab } from "@/lib/dossierRegister";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+const bookedYears = Array.from({ length: 10 }, (_, i) => currentYear - i);
+const years = bookedYears.includes(FINANCE_CONCEPT_YEAR) ? bookedYears : [FINANCE_CONCEPT_YEAR, ...bookedYears];
 
 export default function FinancienPage() {
   // Deeplinks: ?tab=dossiers&year=2026&dossier=<exact financieel label>, gevalideerd.
@@ -55,6 +56,7 @@ export default function FinancienPage() {
     // Ook bij terugnavigeren/verwijderen van parameters: terug naar gevalideerde standaard.
     setYearState(p.year);
     setTabState(p.tab);
+    if (p.legacyConcept) setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set("tab", "dashboard"); n.set("year", String(FINANCE_CONCEPT_YEAR)); n.delete("dossier"); return n; }, { replace: true });
   }, [searchKey]);
   const updateParams = (patch: Record<string, string | null>) => setSearchParams((prev) => {
     const n = new URLSearchParams(prev);
@@ -63,11 +65,14 @@ export default function FinancienPage() {
     for (const [k, v] of Object.entries(patch)) { if (v == null) n.delete(k); else n.set(k, v); }
     return n;
   }, { replace: true });
-  const setYear = (y: number) => { setYearState(y); if (searchParams.has("year")) updateParams({ year: String(y) }); };
+  const setYear = (y: number) => { setYearState(y); updateParams({ year: String(y) }); };
   const setTab = (t: string) => { setTabState(t as FinanceTab); if (searchParams.has("tab") || searchParams.has("dossier")) updateParams({ tab: t, dossier: t === "dossiers" ? searchParams.get("dossier") : null }); };
   // Het volledige geselecteerde boekjaar wordt automatisch bijgewerkt,
   // ongeacht welk financieel tabblad actief is.
-  const autoSync = useAutoYearSync(year);
+  // Conceptjaar 2027: nooit automatisch synchroniseren.
+  const isConceptYear = year === FINANCE_CONCEPT_YEAR;
+  const autoSync = useAutoYearSync(year, { enabled: !isConceptYear });
+  const quickYears = [FINANCE_CONCEPT_YEAR - 1, FINANCE_CONCEPT_YEAR].filter((y) => years.includes(y));
   const { user, isAdmin } = useAuth();
   const allocationOptions = useDeclarationAllocationOptions(year, !!isAdmin);
   const { data: yearSettings } = useBudgetYearSettings(year);
@@ -170,25 +175,33 @@ export default function FinancienPage() {
         subtitle="Begroting, contributie, declaraties en uitgaven beheren"
       />
 
-      {/* Year selector — verborgen op het vaste 2027-concept; jaarstate blijft ongewijzigd */}
-      {tab === "begroting-2027" ? (
-        <p className="text-sm text-muted-foreground">Dit tabblad toont altijd het concept voor 2027, los van het gekozen boekjaar.</p>
-      ) : (
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger className="w-[140px] h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((y) => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Jaartabs 2026/2027 + oudere jaren */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div role="tablist" aria-label="Boekjaar" className="inline-flex rounded-md bg-muted/60 p-1">
+          {quickYears.map((y) => (
+            <button
+              key={y}
+              type="button"
+              role="tab"
+              aria-selected={year === y}
+              onClick={() => setYear(y)}
+              className={`rounded-sm px-4 py-1.5 text-sm font-medium tabular-nums transition-colors ${year === y ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {y}{y === FINANCE_CONCEPT_YEAR ? " (concept)" : ""}
+            </button>
+          ))}
         </div>
+        <Select value={quickYears.includes(year) ? "" : String(year)} onValueChange={(v) => setYear(Number(v))}>
+          <SelectTrigger className="w-[140px] h-9" aria-label="Ouder boekjaar">
+            <SelectValue placeholder="Ouder jaar" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.filter((y) => !quickYears.includes(y)).map((y) => (
+              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      )}
 
       {isLoading ? (
         <LoadingSpinner message="Financiële gegevens laden..." />
@@ -196,7 +209,7 @@ export default function FinancienPage() {
         <>
 
         <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-1">
-          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-7">
+          <TabsList className="grid h-auto w-full max-w-full grid-cols-2 gap-1 bg-muted/60 p-1 sm:grid-cols-4 lg:grid-cols-6">
             <TabsTrigger value="dashboard" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Dashboard
             </TabsTrigger>
@@ -215,15 +228,21 @@ export default function FinancienPage() {
             <TabsTrigger value="controle" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
               Controle &amp; sync
             </TabsTrigger>
-            <TabsTrigger value="begroting-2027" className="h-auto min-w-0 whitespace-normal break-words px-2 py-2 text-center leading-tight data-[state=active]:bg-background data-[state=active]:shadow-xs">
-              Begroting 2027
-            </TabsTrigger>
           </TabsList>
 
 
-          <TabsContent value="begroting-2027">
-            <Begroting2027Tab />
-          </TabsContent>
+          {isConceptYear ? (
+            <>
+              <TabsContent value="dashboard">
+                <Begroting2027Tab />
+              </TabsContent>
+              {(["intern", "contributie", "boekingen", "dossiers", "todo", "controle"] as const).map((v) => (
+                <TabsContent key={v} value={v}>
+                  <p className="rounded-md border p-4 text-sm text-muted-foreground">Voor 2027 is alleen het begrotingsconcept beschikbaar, onder Dashboard.</p>
+                </TabsContent>
+              ))}
+            </>
+          ) : (<>
 
           <TabsContent value="dashboard">
             <BankBalancesCard />
@@ -453,6 +472,7 @@ export default function FinancienPage() {
               }}
             />
           </TabsContent>
+          </>)}
         </Tabs>
         </>
       )}

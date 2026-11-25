@@ -13,11 +13,13 @@ describe("Begroting 2027 concept", () => {
     expect(scenarioTotals(BEGROTING_2027.rows).half).toBe(382750);
     expect(BEGROTING_2027.totalHalf).toBe(382750);
   });
-  it("deeplink ?tab=begroting-2027 werkt en laat het jaar ongemoeid", () => {
-    const p = parseFinanceSearch(new URLSearchParams("tab=begroting-2027&year=2026"), [2026, 2025], 2026);
-    expect(p.tab).toBe("begroting-2027");
-    expect(p.year).toBe(2026);
-    expect(parseFinanceSearch(new URLSearchParams("tab=begroting-2027"), [2026, 2025], 2025).year).toBe(2025);
+  it("oude deeplink ?tab=begroting-2027 wordt dashboard + jaar 2027", () => {
+    const p = parseFinanceSearch(new URLSearchParams("tab=begroting-2027&year=2026"), [2027, 2026, 2025], 2026);
+    expect(p).toMatchObject({ tab: "dashboard", year: 2027, legacyConcept: true });
+  });
+  it("?year=2027 is geldig en 2026 blijft standaard", () => {
+    expect(parseFinanceSearch(new URLSearchParams("tab=dashboard&year=2027"), [2027, 2026], 2026).year).toBe(2027);
+    expect(parseFinanceSearch(new URLSearchParams(""), [2027, 2026], 2026)).toMatchObject({ tab: "dashboard", year: 2026 }); expect(parseFinanceSearch(new URLSearchParams(""), [2027, 2026], 2026).legacyConcept).toBeUndefined();
   });
 
   const client = (data: unknown) => ({ rpc: async () => ({ data, error: null }) });
