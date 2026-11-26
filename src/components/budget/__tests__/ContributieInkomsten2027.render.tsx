@@ -16,8 +16,8 @@ const digits = (s: string | null) => Number((s ?? "").replace(/\D/g, ""));
 describe("Contributie-inkomsten 2027", () => {
   it("toont alleen de volledige staffel: 407.500, geen 50%-knop of -tekst", () => {
     const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} />);
-    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^122 leden\/groepen/);
-    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(407500);
+    expect(screen.getByTestId("contrib-summary").textContent).toMatch(/^123 leden\/groepen/);
+    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(413500);
     expect(screen.getByText("Meer dan 10 locaties").closest("tr")?.textContent).toMatch(/locaties10€\s?10\.000€\s?10\.000/);
     expect(screen.queryByRole("radio")).toBeNull();
     expect(screen.queryByRole("radiogroup")).toBeNull();
@@ -32,25 +32,25 @@ const groups = [
 ].map(([id, name, shops]) => ({ id: id as number, name: name as string, shops: shops as number }));
 
 describe("Coffeeshops en groepen 2027", () => {
-  it("18 groepen, 67 shops, 171 totaal en verdeling 11/6/0/1", async () => {
+  it("18 groepen, 67 shops, 175 totaal en verdeling 11/7/0/1", async () => {
     const { contributieRows } = await import("../ContributieInkomsten2027");
     const t = contributieRows(rows, staffel, groups);
     expect(groups.length).toBe(18);
     expect(groups.reduce((s, g) => s + g.shops, 0)).toBe(67);
-    expect(t.shops).toBe(171);
+    expect(t.shops).toBe(175);
     expect(t.minimum).toBe(false);
     expect(t.lines.map((l) => l.shops)).toEqual([104, 24, 30, 0, 13]);
     expect(t.lines.slice(1).map((l) => l.members.length)).toEqual([11, 6, 0, 1]);
     expect(t.lines.slice(1).map((l) => l.members.length)).toEqual(t.lines.slice(1).map((l) => l.count));
-    expect(t.total).toBe(407500);
+    expect(t.total).toBe(413500);
   });
   it("staffelregels openen een venster met de juiste leden; lege staffel is niet klikbaar", async () => {
     const { RAMINGSLEDEN_2027: leden } = await import("@/lib/begroting2027Concept.server");
     const { container } = render(<ContributieInkomsten2027 rows={rows} staffel={staffel} groups={groups} leden={leden} />);
-    expect(leden).toHaveLength(122);
-    expect(leden.reduce((t, g) => t + g.shops, 0)).toBe(171);
-    expect(screen.getByTestId("contrib-summary").textContent).toBe("122 leden/groepen · 171 coffeeshops");
-    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(407500);
+    expect(leden).toHaveLength(123);
+    expect(leden.reduce((t, g) => t + g.shops, 0)).toBe(175);
+    expect(screen.getByTestId("contrib-summary").textContent).toBe("123 leden/groepen · 175 coffeeshops");
+    expect(digits(screen.getByTestId("contrib-total").textContent)).toBe(413500);
     expect(container.textContent).not.toMatch(/Welke leden hebben meerdere shops|Aansluiting|controlepunt/i);
     const row = (label: string) => screen.getByText(label).closest("tr")!;
     fireEvent.keyDown(row("1 locatie"), { key: "Enter" });
@@ -81,15 +81,15 @@ describe("Coffeeshops en groepen 2027", () => {
 const aansluiting = {
   start: { label: "Geregistreerde coffeeshopvermeldingen", aantal: 180 },
   stappen: [{ label: "leads", delta: -10 }, { label: "uitgesloten", delta: -2 }, { label: "Plug dubbel", delta: -1 }, { label: "Hunters", delta: 4 }, { label: "Tyson", delta: 1 }, { label: "GOA", delta: -1 }],
-  tussenstappen: [{ naStap: 0, label: "bij 124 leden" }],
+  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
   kerngegevensNoot: "Kerngegevens 169",
 };
 describe("Aansluiting vestigingen 2027", () => {
-  it("180 − 10 − 2 − 1 + 4 + 1 − 1 = 171", async () => {
+  it("180 − 6 − 2 − 1 + 4 + 1 − 1 = 175", async () => {
     const { aansluitingTotalen, contributieRows } = await import("../ContributieInkomsten2027");
     const a = aansluitingTotalen(aansluiting);
-    expect(a.stappen.map((s) => s.totaal)).toEqual([170, 168, 167, 171, 172, 171]);
-    expect(a.eind).toBe(171);
+    expect(a.stappen.map((s) => s.totaal)).toEqual([170, 168, 167, 175, 172, 175]);
+    expect(a.eind).toBe(175);
     expect(a.eind).toBe(contributieRows(rows, staffel, groups).shops);
   });
 });

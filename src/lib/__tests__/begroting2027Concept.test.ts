@@ -3,10 +3,10 @@ import { BEGROTING_2027, scenarioTotals, begroting2027ForCaller } from "@/lib/be
 import { parseFinanceSearch } from "@/lib/dossierRegister";
 
 describe("Begroting 2027 concept", () => {
-  it("volledige staffel telt op tot 407.500 en 122 groepen", () => {
+  it("volledige staffel telt op tot 407.500 en 123 groepen", () => {
     const t = scenarioTotals(BEGROTING_2027.rows);
-    expect(t.full).toBe(407500);
-    expect(t.groups).toBe(122);
+    expect(t.full).toBe(413500);
+    expect(t.groups).toBe(123);
     expect(BEGROTING_2027.totalFull).toBe(t.full);
   });
   it("oude deeplink ?tab=begroting-2027 wordt dashboard + jaar 2027", () => {
@@ -21,7 +21,7 @@ describe("Begroting 2027 concept", () => {
   const client = (data: unknown) => ({ rpc: async () => ({ data, error: null }) });
   it("beheerder krijgt de snapshot", async () => {
     const s = await begroting2027ForCaller(client(true), "u1");
-    expect(s.totalFull).toBe(407500);
+    expect(s.totalFull).toBe(413500);
     expect(s).not.toHaveProperty("totalHalf");
     expect(JSON.stringify(s)).not.toMatch(/50% van de verhoging|383\.?750|28\.?650|half/i);
   });
@@ -33,7 +33,7 @@ describe("Begroting 2027 concept", () => {
 
 import { UITGAVEN_2027, conceptTotals, RESERVE_2027, PERSONEELSKOSTEN_2027 } from "@/lib/begroting2027Concept.server";
 describe("Uitgavenraming 2027", () => {
-  const t = conceptTotals(UITGAVEN_2027, 407500);
+  const t = conceptTotals(UITGAVEN_2027, 413500);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
       "Algemene kosten": 54400, "Dagelijks bestuur": 182000, Advieskosten: 148500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
@@ -70,10 +70,10 @@ describe("Uitgavenraming 2027", () => {
   });
   it("snapshot levert uitgaven en contributie 407.500 alleen aan beheerder", async () => {
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
-    expect(conceptTotals(s.uitgaven, 407500).expenses).toBe(392500);
-    expect(s.reserve).toEqual({ begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 });
-    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(407500);
-    expect(s.inkomsten.reduce((a, l) => a + l.budgeted, 0)).toBe(407500);
+    expect(conceptTotals(s.uitgaven, 413500).expenses).toBe(392500);
+    expect(s.reserve).toEqual({ begin: 115000, beginVoorlopig: true, toevoeging: 21000, eind: 130000 });
+    expect(s.inkomsten.find((l) => l.name === "Contributies")?.budgeted).toBe(413500);
+    expect(s.inkomsten.reduce((a, l) => a + l.budgeted, 0)).toBe(413500);
     await expect(begroting2027ForCaller({ rpc: async () => ({ data: false, error: null }) }, "u1")).rejects.toThrow();
   });
 });
@@ -101,17 +101,17 @@ describe("2027 onderbouwing", () => {
 import { VESTIGINGEN_AANSLUITING_2027 as VA, LEDENREGISTRATIE_2027 } from "../begroting2027Concept.server";
 const s0 = () => ({ ledenRegistratie: LEDENREGISTRATIE_2027 });
 describe("Aansluiting vestigingen snapshot", () => {
-  it("server-snapshot: 180 − 10 − 2 − 1 + 4 + 1 − 1 = 171", async () => {
+  it("server-snapshot: 180 − 6 − 2 − 1 + 4 + 1 − 1 = 175", async () => {
     const eind = VA.stappen.reduce<number>((t, s) => t + s.delta, VA.start.aantal);
-    expect(eind).toBe(171);
-    expect(s0().ledenRegistratie.geregistreerd - s0().ledenRegistratie.uitgesloten.length).toBe(122);
+    expect(eind).toBe(175);
+    expect(s0().ledenRegistratie.geregistreerd - s0().ledenRegistratie.uitgesloten.length).toBe(123);
     const s = await begroting2027ForCaller({ rpc: async () => ({ data: true, error: null }) }, "u1");
     expect(s.aansluiting.start.aantal).toBe(180);
-    expect(s.totalFull).toBe(407500);
+    expect(s.totalFull).toBe(413500);
     expect(s.groups.find((g) => g.id === 144)?.shops).toBe(2);
     expect(s.groups.some((g) => g.id === 150 || g.id === 32)).toBe(false);
     expect(JSON.stringify(s.ledenRegistratie)).not.toContain("Scolo");
-    expect(s.ledenRegistratie.geregistreerd).toBe(124);
+    expect(s.ledenRegistratie.geregistreerd).toBe(125);
     expect(s.ledenRegistratie.uitgesloten.map((u) => u.id)).toEqual([125, 51]);
     expect(s.leden.some((g) => g.id === 140)).toBe(false);
     expect(JSON.stringify(s.ledenRegistratie)).not.toContain("Tyson");

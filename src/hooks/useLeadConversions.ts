@@ -1,3 +1,5 @@
+import { mergeMemberLocations } from "@/lib/memberLocations";
+import type { Location } from "@/data/types";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +82,16 @@ export async function convertLead(params: {
   if (readErr) throw readErr;
   if (!leadRows || leadRows.length === 0) throw new Error("Lead niet gevonden");
 
-  const leadData = leadRows[0].data as Record<string, unknown>;
+  // 1a. Neem ook de bewaarde bewerkingen (member_edits) van de lead mee, zoals
+  // de ledenpagina ze toont: anders vallen latere vestigingen/factuuradres weg.
+  const { data: editRows } = await supabase
+    .from("member_edits")
+    .select("data")
+    .eq("member_id", params.leadId);
+  const leadData = mergeLeadEdits(
+    leadRows[0].data as Record<string, unknown>,
+    (editRows?.[0]?.data ?? null) as Record<string, unknown> | null,
+  );
 
   // 1b. Heeft dit dossier een vastgelegde contributievrijstelling, dan blijft
   // het dossiernummer ongewijzigd. Anders zou de vrijstelling losraken van het
@@ -140,6 +151,12 @@ export async function convertLead(params: {
       .update({ member_id: lidnummer })
       .eq("member_id", params.leadId);
 
+    // 4b. Bevestigde registerkoppelingen horen bij het nieuwe lidnummer.
+    await supabase
+      .from("coffeeshop_member_links")
+      .update({ member_id: lidnummer })
+      .eq("member_id", params.leadId);
+
     // 5. Delete old lead row
     await supabase
       .from("members_data")
@@ -190,4 +207,18 @@ export async function revertConversion(leadId: number) {
 export function getNextLidnummer(existingMaxId: number, conversions: LeadConversion[]): number {
   const convMax = conversions.reduce((max, c) => Math.max(max, c.lidnummer), 0);
   return Math.max(existingMaxId, convMax) + 1;
+}
+
+/** Leadgegevens plus bewaarde bewerkingen, met dezelfde locatiesamenvoeging als de ledenpagina. */
+export function mergeLeadEdits(
+  base: Record<string, unknown>,
+  edit: Record<string, unknown> | null,
+): Record<string, unknown> {
+  if (!edit) return base;
+  const deleted = Array.isArray(edit._verwijderdeLocaties) ? (edit._verwijderdeLocaties as string[]) : [];
+  return {
+    ...base,
+    ...edit,
+    locaties: mergeMemberLocations(base.locaties as Location[] | undefined, edit.locaties as Location[] | undefined, deleted),
+  };
 }

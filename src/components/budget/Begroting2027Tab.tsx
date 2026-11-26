@@ -117,7 +117,8 @@ export default function Begroting2027Tab() {
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Banksaldo 31 december 2026</td><td className="px-3 py-1.5 text-right text-muted-foreground">Nog vast te stellen</td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Beginreserve (voorlopig)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.begin} /></td></tr>
                 <tr className="border-b border-border/50"><td className="px-3 py-1.5">Toevoeging uit planresultaat</td><td className="px-3 py-1.5 text-right"><CurrencyText value={view.result} /></td></tr>
-                <tr className="font-semibold"><td className="px-3 py-1.5">Beoogde eindreserve</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.begin + view.result} /></td></tr>
+                <tr className="border-b border-border/50 font-semibold"><td className="px-3 py-1.5">Verwachte eindreserve (bij planresultaat)</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.begin + view.result} /></td></tr>
+                <tr><td className="px-3 py-1.5">Reservedoel</td><td className="px-3 py-1.5 text-right"><CurrencyText value={B.reserve.eind} /></td></tr>
               </tbody>
             </table>
           </Section>

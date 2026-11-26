@@ -13,14 +13,14 @@ export const BEGROTING_2027 = {
   rows: [
     { label: "1 locatie", count: 104, amount: 3000 },
     { label: "2–3 locaties", count: 11, amount: 4500 },
-    { label: "4–6 locaties", count: 6, amount: 6000 },
+    { label: "4–6 locaties", count: 7, amount: 6000 },
     { label: "7–10 locaties", count: 0, amount: 8000 },
     { label: "Meer dan 10 locaties", count: 1, amount: 10000 },
   ],
   /** Snapshotwaarden zoals aangeleverd; tests controleren dat ze kloppen met de tabel. */
-  totalFull: 407500,
-  totalHalf: 383750,
-  totalGroups: 122,
+  totalFull: 413500,
+  totalHalf: 391250,
+  totalGroups: 123,
 } as const;
 
 export const BASE_CONTRIBUTION = 3000;
@@ -39,7 +39,8 @@ export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; min
   { id: 30, name: "Siberië", shops: 5 }, { id: 35, name: "Dampkring The Original", shops: 2 }, { id: 57, name: "Kadinsky", shops: 3 },
   { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
   { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
-  { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 },   { id: 144, name: "Tyson", shops: 2 }, // voorlopig 2 coffeeshops volgens bevestiging 25-11-2026; geen factuur
+  { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 },   { id: 144, name: "Tyson", shops: 2 },
+  { id: 151, name: "Grasscompany", shops: 4 }, // lead #143 omgezet 26-11-2026; eerste factuur 2027 // voorlopig 2 coffeeshops volgens bevestiging 25-11-2026; geen factuur
 ];
 
 /**
@@ -170,12 +171,13 @@ export const RAMINGSLEDEN_2027: { id: number; name: string; shops: number }[] = 
   { id: 148, name: "Galaxy", shops: 1 },
   { id: 149, name: "Koffie en Dromen Almere BV", shops: 1 },
   { id: 150, name: "GOA", shops: 1 },
+  { id: 151, name: "Grasscompany", shops: 4 },
   { id: 10001, name: "De Loods", shops: 1 },
 ];
 
 /** Aansluiting binnen de ramingsbron (actuele ledenlijst 25 november 2026): 124 registraties, twee niet afzonderlijk geraamd; Demo (#140) historisch verwijderd. Niet gelijkgesteld aan het actuele ledendashboard. */
 export const LEDENREGISTRATIE_2027 = {
-  geregistreerd: 124,
+  geregistreerd: 125,
   uitgesloten: [
     { id: 125, name: "Baba", reden: "eerder uitgesloten" },
     { id: 51, name: "The Plug East", reden: "valt onder groepscontributie The Plug (#66)" },
@@ -186,15 +188,15 @@ export const LEDENREGISTRATIE_2027 = {
 export const VESTIGINGEN_AANSLUITING_2027 = {
   start: { label: "Geregistreerde coffeeshopvermeldingen (Leden → Coffeeshops)", aantal: 180 },
   stappen: [
-    { label: "Vestigingen van 6 leads (Freak 1, Kruidenier 1, Purple Rain 1, Grass Company 4, Happy Corner 1, Toermalijn 2)", delta: -10 },
+    { label: "Vestigingen van 5 leads (Freak 1, Kruidenier 1, Purple Rain 1, Happy Corner 1, Toermalijn 2)", delta: -6 },
     { label: "Niet afzonderlijk geraamd: Baba, The Plug East (#51, valt onder The Plug)", delta: -2 },
     { label: "Dubbele locatie binnen The Plug (Eerste/1e Oosterparkstraat 47)", delta: -1 },
     { label: "Hunters-correctie naar 13 (bevestigd door Simone)", delta: 4 },
     { label: "Tyson voorlopig 2 coffeeshops (registratie 1)", delta: 1 },
     { label: "GOA 1 locatie; Scolo (#32) apart lid", delta: -1 },
   ],
-  tussenstappen: [{ naStap: 0, label: "bij 124 leden" }],
-  kerngegevensNoot: "124 leden en 180 geregistreerde vermeldingen (na verwijdering testrecord Demo #140) zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
+  tussenstappen: [{ naStap: 0, label: "bij 125 leden" }],
+  kerngegevensNoot: "125 leden (incl. Grasscompany #151, omgezet uit lead #143) en 180 geregistreerde vermeldingen (na verwijdering testrecord Demo #140) zijn brongegevens en blijven ongewijzigd. Kerngegevens toont ook 169, maar anders berekend: 171 min de overlap Scolo/GOA en The Plug East/The Plug, vóór de uitsluitingen en de Hunters-correctie.",
 } as const;
 
 export const CONTROLEPUNTEN: string[] = [
@@ -275,7 +277,7 @@ export const WERKGEVER_WAARSCHUWING_INTERN = "Loonbudget €102.000 (voorlopig, 
 export const WERKGEVER_WAARSCHUWING = "Personeelskosten zijn een voorlopige raming; de werkgeverskosten 2027 zijn nog niet definitief.";
 
 /** Reserve is een balansdoel (resultaatbestemming), géén kostenpost. Beginreserve is een voorlopige aanname, geen geverifieerde balans. */
-export const RESERVE_2027 = { begin: 115000, beginVoorlopig: true, toevoeging: 15000, eind: 130000 } as const;
+export const RESERVE_2027 = { begin: 115000, beginVoorlopig: true, toevoeging: 21000, eind: 130000 } as const;
 
 export function conceptTotals(cats: readonly ConceptCategory[], incomeFull: number) {
   const perCategory = cats.map((c) => ({ name: c.name, total: c.lines.reduce((s, l) => s + l.budgeted, 0) }));
