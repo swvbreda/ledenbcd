@@ -36,19 +36,19 @@ describe("Uitgavenraming 2027", () => {
   const t = conceptTotals(UITGAVEN_2027, 407500);
   it("groepstotalen kloppen", () => {
     expect(Object.fromEntries(t.perCategory.map((c) => [c.name, c.total]))).toEqual({
-      "Algemene kosten": 54400, "Dagelijks bestuur": 147000, Advieskosten: 183500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
+      "Algemene kosten": 54400, "Dagelijks bestuur": 182000, Advieskosten: 148500, Donaties: 6000, "Onvoorziene uitgaven": 1600,
     });
   });
   it("totaal 392.500 en planresultaat +15.000 (volledige staffel)", () => {
     expect(t.expenses).toBe(392500);
     expect(t.resultFull).toBe(15000);
   });
-  it("goedgekeurde posten: secretariaat 0, onderzoek 20.000, juridisch 135.000, ondersteunend medewerker 25.000, marketing/merchandise 25.000, kantoor 9.000, Voorzitter 107.000, onvoorzien 1.600", () => {
+  it("goedgekeurde posten: secretariaat 15.000, onderzoek 20.000, juridisch 100.000, ondersteunend medewerker 45.000, marketing/merchandise 25.000, kantoor 9.000, Voorzitter 107.000, onvoorzien 1.600", () => {
     const line = (n: string) => UITGAVEN_2027.flatMap((c) => c.lines).find((l) => l.name === n)?.budgeted;
-    expect(line("Secretariaatskosten")).toBe(0);
+    expect(line("Secretariaatskosten")).toBe(15000);
     expect(line("Onderzoek")).toBe(20000);
-    expect(line("Juridische kosten / bestuurlijk advies")).toBe(135000);
-    expect(line("Personeelskosten – Ondersteunend medewerker")).toBe(25000);
+    expect(line("Juridische kosten / bestuurlijk advies")).toBe(100000);
+    expect(line("Personeelskosten – Ondersteunend medewerker")).toBe(45000);
     expect(line("Communicatie / marketing / merchandise")).toBe(25000);
     expect(line("Kantoorkosten")).toBe(9000);
     expect(line("Jaarlijkse onvoorziene uitgaven")).toBe(1600);

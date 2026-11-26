@@ -220,8 +220,8 @@ export const PERSONEELSKOSTEN_2027 = {
     aanvullendBasis: "Voorlopige reservering voor arbodienst, eventuele verzuimverzekering en salarisadministratie. Nog niet geregeld, geen offerte; niet dubbel met administratiekosten.",
   },
   ondersteunendMedewerker: {
-    jaarbudget: 25000,
-    basis: "Voorlopig jaarbudget inclusief werkgeverskosten; uren en salaris nog niet bekend, geen contract. Gefinancierd uit secretariaat (−€ 5.000), onderzoek (−€ 10.000) en juridisch (−€ 10.000).",
+    jaarbudget: 45000,
+    basis: "Voorlopig jaarbudget inclusief werkgeverskosten; uren en salaris nog niet bekend, geen contract.",
   },
 } as const;
 
@@ -239,15 +239,15 @@ export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Dagelijks bestuur", lines: [
     { name: "Personeelskosten – Voorzitter", budgeted: PERSONEELSKOSTEN_2027.voorzitter.loon + PERSONEELSKOSTEN_2027.voorzitter.aanvullend, actual2026: null, basis: "Totale werkgeverskosten voor de functie Voorzitter (voorlopige raming 2027)." },
     { name: "Personeelskosten – Ondersteunend medewerker", budgeted: PERSONEELSKOSTEN_2027.ondersteunendMedewerker.jaarbudget, actual2026: null, basis: "Voorlopig jaarbudget inclusief werkgeverskosten; uren en salaris nog niet bekend, geen contract." },
-    { name: "Secretariaatskosten", budgeted: 0, actual2026: null, basis: "Secretariaatstaken gaan naar de ondersteunend medewerker; geen apart budget." },
+    { name: "Secretariaatskosten", budgeted: 15000, actual2026: null, basis: "Apart budget voor secretariaatsondersteuning, naast de ondersteunend medewerker." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Planningsbudget." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Planningsbudget." },
   ] },
   { name: "Advieskosten", lines: [
-    { name: "Juridische kosten / bestuurlijk advies", budgeted: 135000, actual2026: null, basis: "Eerder jaarlijks beleidsbudget behouden, geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
+    { name: "Juridische kosten / bestuurlijk advies", budgeted: 100000, actual2026: null, basis: "Budgetkeuze; geen doorgetrokken historische kosten. Dossierplan en verwachte PCN-terugbetalingen nog niet bevestigd." },
     { name: "Juridische kosten / bestuurlijk advies (2025)", budgeted: 0, actual2026: null, basis: "Regel behouden voor herkenbare opbouw. Het meegenomen bedrag van € 42.196 is in 2026 opgebruikt en wordt niet opnieuw meegenomen." },
-    { name: "Onderzoek", budgeted: 20000, actual2026: null, basis: "Budgetkeuze; geen bestaande verplichting. Verlaagd ten gunste van communicatie/marketing/merchandise en de ondersteunend medewerker." },
-    { name: "Communicatie / marketing / merchandise", budgeted: 25000, actual2026: 8849.26, basis: "Budgetkeuze inclusief merchandise: € 10.000 + € 15.000 extra, gefinancierd uit onderzoek (−€ 10.000) en juridisch (−€ 5.000). Geen merchandiseopbrengsten geraamd; geen verplaatsing van facturen." },
+    { name: "Onderzoek", budgeted: 20000, actual2026: null, basis: "Budgetkeuze; geen bestaande verplichting. Geen doorgetrokken historische kosten." },
+    { name: "Communicatie / marketing / merchandise", budgeted: 25000, actual2026: 8849.26, basis: "Budgetkeuze inclusief merchandise. Geen merchandiseopbrengsten geraamd; geen verplaatsing van facturen." },
     { name: "Drukwerk", budgeted: 1500, actual2026: 952.69, basis: "Planningsbudget." },
     { name: "Verzendkosten", budgeted: 2000, actual2026: null, basis: "Eerder beleidsbudget behouden." },
   ] },
