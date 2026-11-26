@@ -162,7 +162,7 @@ export default function Begroting2027Tab() {
                 <CollapsibleContent>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
                     <li>Afspraak voor 2027: elke offerte, factuur of contract telt één keer. Bij splitsen tellen de delen samen op tot het bronbedrag.</li>
-                    <li>Software staat alleen bij ICT. Softwarejaarplan nog te toetsen aan budget.</li>
+                    <li>Software volgt één gezamenlijk jaarplan per account of contract. Elke factuur of elk deel ervan hoort bij één post, op basis van het doel. Samen nooit meer dan de factuur, en geen extra abonnement per post.</li>
                     <li>Gezamenlijke salarisadministratie en arbo staan één keer bij de Voorzitter.</li>
                     <li>Klik op een post voor wat eronder valt. Kosten van 2026 zijn niet verplaatst.</li>
                   </ul>

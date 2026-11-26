@@ -227,10 +227,10 @@ export const PERSONEELSKOSTEN_2027 = {
 
 export const UITGAVEN_2027: ConceptCategory[] = [
   { name: "Algemene kosten", lines: [
-    { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Accountant, boekhouding en jaarwerk. Geen salarisadministratie, arbo of software." },
-    { name: "Kantoorkosten", budgeted: 9000, actual2026: 3694.51, basis: "Kantoorhuur € 6.000 + kantoorartikelen/inrichting € 3.000. Geen waarborgsom, software/ICT of zaalhuur. Huur: € 484 per maand incl. btw, vanaf 1 september 2027 minimaal 2% hoger (minimaal € 5.846,72 per jaar)." },
-    { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Externe zaalhuur, catering en bijeenkomsten. Geen vaste kantoorhuur, waarborgsom of software." },
-    { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Alle software op één plek: algemene abonnementen, hosting, mail, domeinen, AI (zoals Lovable en OpenAI), notulensoftware en credits, met één jaarbudget per account. Software komt in 2027 niet ook op andere posten. Softwarejaarplan nog te toetsen aan budget." },
+    { name: "Administratiekosten / accountantskosten", budgeted: 5500, actual2026: 4747.30, basis: "Accountant, boekhouding en jaarwerk, plus het administratieve deel van de gezamenlijke (AI-)software. Geen salarisadministratie of arbo." },
+    { name: "Kantoorkosten", budgeted: 9000, actual2026: 3694.51, basis: "Kantoorhuur € 6.000 + kantoorartikelen/kantoorsoftware € 3.000, waaronder de notulensoftware (één keer, alleen hier). Geen waarborgsom, algemene ICT of zaalhuur. Huur: € 484 per maand incl. btw, vanaf 1 september 2027 minimaal 2% hoger (minimaal € 5.846,72 per jaar)." },
+    { name: "Vergaderkosten", budgeted: 25500, actual2026: 22800.81, basis: "Externe zaalhuur, catering en bijeenkomsten, plus het deel AI-software voor vergadervoorbereiding. Geen vaste kantoorhuur, waarborgsom of notulensoftware." },
+    { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Algemene hosting, mail, domeinen en algemene ICT. Gezamenlijke software (zoals Lovable en OpenAI) is per doel over posten verdeeld; elk deel één keer, samen nooit meer dan het brontotaal." },
     { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
     { name: "Contributies (kosten)", budgeted: 500, actual2026: 418.11, basis: "Afgerond op de huidige kosten." },
     { name: "Representatiekosten", budgeted: 3000, actual2026: 2341.40, basis: "Afgerond op de huidige kosten." },
@@ -240,14 +240,14 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "Personeelskosten – Voorzitter", budgeted: PERSONEELSKOSTEN_2027.voorzitter.loon + PERSONEELSKOSTEN_2027.voorzitter.aanvullend, actual2026: null, basis: "Eigen loon, werkgeverslasten en eigen verzuimverzekering/voorzieningen van de Voorzitter. Hierin zit ook € 5.000 voor de gezamenlijke salarisadministratie en arbobasis voor beide werknemers; dekking voor twee werknemers nog te bevestigen. Voorlopige raming." },
     { name: "Personeelskosten – Ondersteunend medewerker", budgeted: PERSONEELSKOSTEN_2027.ondersteunendMedewerker.jaarbudget, actual2026: null, basis: "Eigen loon, werkgeverslasten en eigen verzuimverzekering/voorzieningen. Gezamenlijke salarisadministratie en arbo staan bij de Voorzitter, niet hier. Uren en salaris nog niet bekend, geen contract." },
     { name: "Secretariaatskosten", budgeted: 15000, actual2026: null, basis: "Uitbesteed secretariaatswerk buiten de uren en taken van de ondersteunend medewerker. Taken vooraf afspreken." },
-    { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Specialistische externe hulp buiten beide functies en het secretariaat. Geen software." },
+    { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Specialistische externe hulp en het deel AI-software voor werkondersteuning, buiten de taken van beide functies en het secretariaat." },
     { name: "Onkosten vergoedingen", budgeted: 5000, actual2026: 4410, basis: "Overige aantoonbare zakelijke uitgaven. Elke kostensoort telt één keer, wie ook voorschiet; de terugbetaling zelf is geen extra kost." },
   ] },
   { name: "Advieskosten", lines: [
     { name: "Juridische kosten / bestuurlijk advies", budgeted: 100000, actual2026: null, basis: "Brutokostenplafond inclusief niet-aftrekbare btw, vóór PCN-vergoedingen. PCN wordt alleen apart geraamd als er een afspraak is; niet stilzwijgend verrekend." },
     { name: "Juridische kosten / bestuurlijk advies (2025)", budgeted: 0, actual2026: null, basis: "Regel behouden voor herkenbare opbouw. Het meegenomen bedrag van € 42.196 is in 2026 opgebruikt en wordt niet opnieuw meegenomen." },
     { name: "Onderzoek", budgeted: 20000, actual2026: null, basis: "Onderzoeksopdrachten, los van juridische kosten. Geen bestaande verplichting." },
-    { name: "Communicatie / marketing / merchandise", budgeted: 25000, actual2026: 8849.26, basis: "Campagnes en merchandise, inclusief productie, bedrukking en verzending voor de campagne. Geen merchandiseopbrengsten geraamd." },
+    { name: "Communicatie / marketing / merchandise", budgeted: 25000, actual2026: 8849.26, basis: "Campagnes, het deel AI-software voor communicatie en merchandise, inclusief productie, bedrukking en verzending voor de campagne. Geen merchandiseopbrengsten geraamd." },
     { name: "Drukwerk", budgeted: 1500, actual2026: 952.69, basis: "Alleen overig verenigingsdrukwerk; geen merchandise of campagnes." },
     { name: "Verzendkosten", budgeted: 2000, actual2026: null, basis: "Overige ledenpost; niet wat al in een marketingofferte zit." },
   ] },
