@@ -217,7 +217,7 @@ export const PERSONEELSKOSTEN_2027 = {
     loon: 102000,
     loonBasis: "Voorlopige raming, niet compleet; geen bevestigde loonberekening 2027. In 2027 vervangt loondienst de eerdere kosten als opdrachtnemer; eerdere facturen en salaris niet bij elkaar optellen. Salaris: bruto € 6.760 per maand × 12 = € 81.120 + 8% vakantiegeld € 6.489,60 = € 87.609,60 per jaar (arbeidsovereenkomst 2026, loonstrook oktober). Werkgeverspremies 2027 (broncontrole 25-11-2026) over het maximumpremieloon € 82.543: werkgevers-Zvw 6,27% = € 5.175,45 en maximumpremieloon definitief (Staatscourant 2026-39593, 13 november 2026); AWf laag 2,74% = € 2.261,68, Aof laag 6,67% = € 5.505,62 en WKO 0,50% = € 412,72 zijn voorgenomen tarieven (Kamerstuk 37020-XV-2, tabel 130) en nog definitief te controleren. Samen € 13.355,47 excl. Whk, onder aanname van dezelfde lage-premie-indeling als oktober 2026. Whk 2027 voor BCD is onbekend; uitsluitend als tijdelijke begrotingsaanname 12 × € 82 = € 984 volgens oktober 2026, geen bevestigd tarief. Totaal € 101.949,07, afgerond begroot € 102.000; niet afdoende voor overige personeelskosten. Vorige bron: loonaangifte oktober 2026 (e-mail Daan Kottmann, 'Loonheffingen BCD', 21 november 2026 10:10), afgeronde aangifte-euro's. Ingehouden loonheffing en nettoloon zijn onderdelen van het brutosalaris en worden niet nogmaals boven op het brutosalaris geteld. Open begrotingspunten, bedrag onbekend (niet nul, niet verzekerd): arbodienst/verzuimverzekering nog niet geregeld; vaste prijs salarisadministratie nog niet geregeld; gezamenlijke payroll/arbo valt binnen de aanvullende € 5.000, niet onder Administratiekosten. Pensioen: volgens het contract buiten de verplichte pensioenregeling; geen aanvullende afspraak aangetroffen. Reiskosten en onkostenvergoedingen staan op eigen posten en zijn hier niet bijgeteld.",
     aanvullend: 5000,
-    aanvullendBasis: "Voorlopige reservering voor de gezamenlijke salarisadministratie en arbobasis van beide werknemers, eenmalig hier; niet nogmaals bij de ondersteunend medewerker of Administratiekosten. Dekking voor twee werknemers nog te bevestigen; geen offerte.",
+    aanvullendBasis: "Binnen dit totaal is € 5.000 voorlopig gereserveerd voor aanvullende voorzieningen van de voorzitter en de gezamenlijke salarisadministratie/arbobasis. Prijs en dekking, ook voor twee werknemers, nog te bevestigen. Een eigen verzuimverzekering is een mogelijk onderdeel van die voorzieningen, geen bevestigd contract; de € 102.000 bevat die niet volledig. De gezamenlijke kosten niet nogmaals bij de ondersteunend medewerker of Administratiekosten.",
   },
   ondersteunendMedewerker: {
     jaarbudget: 45000,
@@ -233,11 +233,11 @@ export const UITGAVEN_2027: ConceptCategory[] = [
     { name: "ICT / Hosting / Domein / Mail", budgeted: 7000, actual2026: 5864, basis: "Algemene hosting, mail, domeinen en algemene ICT. Gezamenlijke software (zoals Lovable en OpenAI) is per doel over posten verdeeld; elk deel één keer, samen nooit meer dan het brontotaal." },
     { name: "Bankkosten", budgeted: 400, actual2026: 324.88, basis: "Afgerond op de huidige kosten." },
     { name: "Contributies (kosten)", budgeted: 500, actual2026: 418.11, basis: "Afgerond op de huidige kosten." },
-    { name: "Representatiekosten", budgeted: 3000, actual2026: 2341.40, basis: "Afgerond op de huidige kosten." },
+    { name: "Representatiekosten", budgeted: 3000, actual2026: 2341.40, basis: "Relatiegeschenken en zakelijke ontvangst buiten vergaderingen, campagnes en merchandise. Geen vergadercatering." },
     { name: "Reiskosten", budgeted: 3500, actual2026: 2719.26, basis: "Vervoer en parkeren." },
   ] },
   { name: "Dagelijks bestuur", lines: [
-    { name: "Personeelskosten – Voorzitter", budgeted: PERSONEELSKOSTEN_2027.voorzitter.loon + PERSONEELSKOSTEN_2027.voorzitter.aanvullend, actual2026: null, basis: "Eigen loon, werkgeverslasten en eigen verzuimverzekering/voorzieningen van de Voorzitter. Hierin zit ook € 5.000 voor de gezamenlijke salarisadministratie en arbobasis voor beide werknemers; dekking voor twee werknemers nog te bevestigen. Voorlopige raming." },
+    { name: "Personeelskosten – Voorzitter", budgeted: PERSONEELSKOSTEN_2027.voorzitter.loon + PERSONEELSKOSTEN_2027.voorzitter.aanvullend, actual2026: null, basis: "Loon en werkgeverslasten van de voorzitter. Binnen dit totaal is € 5.000 voorlopig gereserveerd voor aanvullende voorzieningen van de voorzitter en de gezamenlijke salarisadministratie/arbobasis. Prijs en dekking, ook voor twee werknemers, nog te bevestigen. Een eigen verzuimverzekering kan daaronder vallen; geen bevestigd contract. Voorlopige raming." },
     { name: "Personeelskosten – Ondersteunend medewerker", budgeted: PERSONEELSKOSTEN_2027.ondersteunendMedewerker.jaarbudget, actual2026: null, basis: "Eigen loon, werkgeverslasten en eigen verzuimverzekering/voorzieningen. Gezamenlijke salarisadministratie en arbo staan bij de Voorzitter, niet hier. Uren en salaris nog niet bekend, geen contract." },
     { name: "Secretariaatskosten", budgeted: 15000, actual2026: null, basis: "Uitbesteed secretariaatswerk buiten de uren en taken van de ondersteunend medewerker. Taken vooraf afspreken." },
     { name: "Ondersteuning", budgeted: 10000, actual2026: 8719.73, basis: "Specialistische externe hulp en het deel AI-software voor werkondersteuning, buiten de taken van beide functies en het secretariaat." },
@@ -253,8 +253,8 @@ export const UITGAVEN_2027: ConceptCategory[] = [
   ] },
   { name: "Donaties", lines: [
     { name: "Donatie Stg. Maatschappij en cannabis", budgeted: 3000, actual2026: null, basis: "Gift zonder tegenprestatie; plafond, geen toezegging voor 2027." },
-    { name: "Donatie Stg VOC", budgeted: 2000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
-    { name: "Donatie overige", budgeted: 1000, actual2026: null, basis: "Gepland plafond behouden; geen toezegging voor 2027." },
+    { name: "Donatie Stg VOC", budgeted: 2000, actual2026: null, basis: "Gift zonder tegenprestatie; plafond, geen toezegging voor 2027." },
+    { name: "Donatie overige", budgeted: 1000, actual2026: null, basis: "Gift zonder tegenprestatie; plafond, geen toezegging voor 2027." },
   ] },
   { name: "Onvoorziene uitgaven", lines: [
     { name: "Jaarlijkse onvoorziene uitgaven", budgeted: 1600, actual2026: null, basis: "Jaarlijkse buffer voor onvoorziene kosten; geen toevoeging aan de reserve." },
