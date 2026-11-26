@@ -40,7 +40,7 @@ export const MEERDERE_SHOPS_2027: { id: number; name: string; shops: number; min
   { id: 60, name: "7th heaven", shops: 2 }, { id: 62, name: "Terps Army", shops: 2 }, { id: 66, name: "The Plug", shops: 6 },
   { id: 67, name: "Taffne", shops: 2 }, { id: 86, name: "Coffeeshop Aarden", shops: 3 }, { id: 99, name: "NCC Power Flower", shops: 2 },
   { id: 117, name: "Coffeeshop 010 B.V.", shops: 5 }, { id: 119, name: "Out of time", shops: 2 },   { id: 144, name: "Tyson", shops: 2 },
-  { id: 151, name: "Grasscompany", shops: 4 }, // lead #143 omgezet 26-11-2026; eerste factuur 2027 // voorlopig 2 coffeeshops volgens bevestiging 25-11-2026; geen factuur
+  { id: 151, name: "Grasscompany", shops: 4 }, // lead #143 omgezet 26-11-2026; eerste factuur 2027
 ];
 
 /**
@@ -175,7 +175,7 @@ export const RAMINGSLEDEN_2027: { id: number; name: string; shops: number }[] = 
   { id: 10001, name: "De Loods", shops: 1 },
 ];
 
-/** Aansluiting binnen de ramingsbron (actuele ledenlijst 25 november 2026): 124 registraties, twee niet afzonderlijk geraamd; Demo (#140) historisch verwijderd. Niet gelijkgesteld aan het actuele ledendashboard. */
+/** Aansluiting binnen de ramingsbron (ledenlijst bijgewerkt 26 november 2026): 125 registraties, twee niet afzonderlijk geraamd; Demo (#140) historisch verwijderd. Niet gelijkgesteld aan het actuele ledendashboard. */
 export const LEDENREGISTRATIE_2027 = {
   geregistreerd: 125,
   uitgesloten: [
