@@ -645,6 +645,13 @@
       "when": 1795640784857,
       "tag": "0091_sticker_request_per_location",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1795678247063,
+      "tag": "0092_member_anonymous_survey_insert",
+      "breakpoints": true
     }
   ]
 }
